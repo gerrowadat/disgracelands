@@ -287,10 +287,28 @@ Two important sub-details:
 ascii_pfiles 2.1 compatible, one text file per player under
 `lib/pfiles/<letter>/<name>`, plus `plr_index`. `tools/bin2ascii.c` already
 produces this layout and it round-trips against genuine WipeMud-written
-files (`docs/pfile-conversion.md`). Two open items inherited from that
-work: the `Aff`/`Pref` bitfields need the letter-encoded `asciiflag_conv`
-representation rather than `bin2ascii`'s current plain decimal, and
-`pfdefaults.h`-style omission of zero-valued fields needs matching.
+files (`docs/pfile-conversion.md`).
+
+**`docs/ascii-pfile-format.md` is the specification to implement against** —
+directory layout, `plr_index`, the `tag: value` convention, the
+default-omission rule, every field, the three multi-line block types
+(`Desc`/`Skil`/`Affs`) and their terminators, and the bitflag encoding.
+The Go codec should be written from that document and validated against
+the real files, not reverse-engineered again from
+`welmar/pfiles/ascii_pfiles_2.1/full_src/db.c`.
+
+One asymmetry to carry over deliberately: `Act`/`Aff`/`Pref` have two
+valid representations. `sprintbits()` writes one letter per set bit in bit
+order (`a`–`z` for bits 0–25, uppercase above), and `asciiflag_conv()`
+reads that form *or* falls back to a plain decimal number when the field
+is all digits. `bin2ascii` writes plain decimal, which is valid input but
+not what a real `save_char()` emits. **The Go reader must accept both
+forms; the Go writer should emit the letter form** so its output is
+byte-comparable against genuine files. Note the digit-string trap in the
+worked example — `Act : 128` is ambiguous between "decimal 128" (bit 7)
+and a letter string, and is only unambiguous because pure-digit fields
+take the decimal branch. That branch ordering is load-bearing and needs a
+test.
 
 Building this second implementation early is what proves the interface is
 actually an interface and not a binary-shaped hole.
@@ -705,7 +723,10 @@ they touch:
 
 - `TODO.md` — what's left in the C tree; items 1, 3 and 5 are largely
   superseded by this plan, items 2 and 4 are not.
-- `docs/pfile-conversion.md` — the binary→ascii work this plan's §5 builds on.
+- `docs/pfile-conversion.md` — the binary→ascii conversion tools and what
+  was verified; the groundwork this plan's §5 builds on.
+- `docs/ascii-pfile-format.md` — the field-by-field ascii format spec; the
+  implementation reference for §5.3.
 - `docs/non-stock-features.md` — the definitive list of what a "faithful"
   port has to reproduce.
 - `docs/circlemud-archive-report.md` — why this tree and not the other one.
