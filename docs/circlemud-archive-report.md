@@ -88,20 +88,25 @@ which was FreeBSD/x86 throughout.
 | Path | CircleMUD version | Patched with | Binary arch (if present) | Role |
 |---|---|---|---|---|
 | `welmar/oldmud/CircleMUD3` | 3.0 bpl19 (`0x030013`) | stock-ish (no OLC/DG in this tree) | FreeBSD 4.5, i386 | Oldest surviving install. Tiny syslog (~50KB). |
-| `welmar/CircleMUD3` | 3.0 bpl20 (`0x030014`) | **OasisOLC** + **DG Scripts** + mail/houses | FreeBSD 5.4, i386 | The long-running **production** copy, pre-2003-wipe. Has the fullest world (53 zones) and the richest player history (see §5). |
+| `welmar/CircleMUD3` | 3.0 bpl20 (`0x030014`) | **OasisOLC** + mail/houses, no DG Scripts (see below) | FreeBSD 5.4, i386 | The long-running **production** copy, pre-2003-wipe. Has the fullest world (53 zones) and the richest player history (see §5). |
 | `welmar/testmud` | 3.0 bpl20 (`0x030014`) | same patch set as CircleMUD3 | binary not present in archive | Builder/dev sandbox, port 4438. Smaller world (46 zones), separate `log/` history running to Oct 2002. |
-| `welmar/WipeMud` | **3.1** (`0x030100`, final release) | OasisOLC + DG Scripts, **ascii_pfiles 2.1** applied | FreeBSD 4.6.2, i386 | Result of the May 2003 upgrade+wipe. Port 4444. Most current **code**, least populated **world state** (9 characters). |
+| `welmar/WipeMud` | **3.1** (`0x030100`, final release) | OasisOLC + **DG Scripts** + races + context-help OLC, **ascii_pfiles 2.1** applied | FreeBSD 4.6.2, i386 | Result of the May 2003 upgrade+wipe. Port 4444. Most current **code**, least populated **world state** (9 characters). |
 | `CircleMUD3` (repo root) | 3.0 bpl20 (`0x030014`) | same as `welmar/CircleMUD3` | **Linux x86-64**, glibc, kernel 2.6.15-era | Source-identical to `welmar/CircleMUD3` (only `.o` files and 3 `conf.h` lines differ — `crypt.h`/`socklen_t` detection). This is your own later attempt (file dates Oct 2013) to get the old code building on modern Linux. Not a distinct lineage. |
 | `c.tgz` (top level) | 3.0 bpl20 | same | — | Tarball of the same `CircleMUD3` tree (2,326 entries), no player/world divergence found. Redundant backup, safe to treat as a duplicate of `welmar/CircleMUD3`. |
 | `circle-3.1-w-goodies.tar.gz` (top level) | n/a | n/a | n/a | **Not actually a tarball** — `file` reports it as an XHTML document (looks like a saved 404/error page from a long-dead download link). Misleading filename; contains no code. |
 
 None of these are "stock" CircleMUD in the sense of an unmodified upstream
-release — every runnable tree carries the **OasisOLC** (online building) and
-**DG Scripts** (scripting/triggers) add-on patches that were extremely
-common in the CircleMUD community circa 2000-2003. The one genuinely
-unmodified stock copy in the archive is buried in `tarfiles/circle30bpl19.tar`
-(see §3), useful as a diff baseline if you ever want to see exactly what
-Disgracelands changed.
+release — every runnable tree carries the **OasisOLC** (online building)
+add-on, extremely common in the CircleMUD community circa 2000-2003.
+**DG Scripts** (scripting/triggers) is a separate add-on that only made it
+into `welmar/WipeMud` — `CircleMUD3` (the tree that was actually played)
+never has it, confirmed by grep: no `dg_*.c` file, no `dg_*` symbol
+referenced anywhere, no `dg_*.o` in its Makefile. See
+`docs/non-stock-features.md` for the full breakdown of what's genuinely
+custom vs. third-party add-on vs. present in one tree but not the other.
+The one genuinely unmodified stock copy in the archive is buried in
+`tarfiles/circle30bpl19.tar` (see §3), useful as a diff baseline if you
+ever want to see exactly what Disgracelands changed.
 
 ### Non-CircleMUD material that looks related but isn't Disgracelands' own code
 
@@ -134,8 +139,9 @@ CircleMUD embeds its version as a hex macro in `structs.h`:
 
 For an unmodified reference copy of 3.0 bpl19 to diff against, see
 `tarfiles/circle30bpl19.tar` — this is a plain upstream tarball with no
-Disgracelands-specific changes, useful for isolating exactly what your OLC/
-DG Scripts/local patches changed.
+Disgracelands-specific changes, useful for isolating exactly what your
+OLC/local patches changed. See `docs/non-stock-features.md` for that
+work already done.
 
 ---
 
@@ -147,7 +153,7 @@ and the crontab, the story appears to be:
 1. **Pre-2001ish** — MUD runs as `welmar/oldmud/CircleMUD3`, bpl19, on
    FreeBSD 4.5/i386.
 2. **2001–2003** — Upgraded to bpl20 (`welmar/CircleMUD3`), patched with
-   OasisOLC + DG Scripts, on FreeBSD 5.4/i386. This is the long-lived
+   OasisOLC (not DG Scripts — see §2), on FreeBSD 5.4/i386. This is the long-lived
    production era: `welmar/scripts/crontab.mud` backs up
    `~mud/CircleMUD3/lib/world` nightly (`welmar/scripts/world_backup.sh`),
    producing the 1,184 files in `welmar/world-backups` (Sept 2002 – Dec
@@ -281,6 +287,14 @@ base to get the older/richer roster into the same safe text format.
 ---
 
 ## 7. Baseline decision, and the stock-3.1 comparison behind it
+
+**See `docs/non-stock-features.md` for the full, feature-by-feature
+version of this section** — every `<DoC>`-tagged change in both trees,
+read and characterized, not just counted. It confirms the "~21 dropped
+mods" finding below was directionally right but understates it: several
+of those aren't just untagged in `WipeMud`, the functionality is
+genuinely gone (most notably the entire Paladin alignment mechanic and
+all 7 new spells).
 
 You asked me to check whether `WipeMud` actually carries local modifications
 before treating it as "just stock 3.1" — good instinct, since a stock

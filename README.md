@@ -27,6 +27,7 @@ what's actually left.
   timeline) and `docs/circlemud-archive-report.md` (the full investigation
   of the original archive this project is drawn from)
 - **Player-file format**: `docs/pfile-conversion.md`
+- **What's actually custom vs. stock CircleMUD**: `docs/non-stock-features.md`
 
 ## Repo structure
 
