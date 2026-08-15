@@ -35,15 +35,23 @@ func newReader(r io.Reader, name string) *reader {
 	return &reader{br: bufio.NewReader(r), name: name}
 }
 
-// rawLine reads one line, stripping the trailing newline. It does not skip
-// comments. ok is false at end of file.
+// rawLine reads one line, stripping only the trailing newline. It does not
+// skip comments and it does not touch carriage returns. ok is false at end of
+// file.
+//
+// Keeping the carriage returns matters. Several world files contain runs of
+// literal CR bytes before the newline — obj/0.obj's bug object has fifteen —
+// and fread_string only ever overwrites the line's *final* character, so
+// those runs survive into the loaded string and are what players see.
+// Trimming them here would silently differ from the C server on every such
+// line. get_line does strip them, which is why the two callers differ.
 func (r *reader) rawLine() (line string, ok bool) {
 	s, err := r.br.ReadString('\n')
 	if s == "" && err != nil {
 		return "", false
 	}
 	r.lineNo++
-	return strings.TrimRight(s, "\r\n"), true
+	return strings.TrimSuffix(s, "\n"), true
 }
 
 // getLine returns the next structural line, skipping comment lines (those
@@ -61,10 +69,16 @@ func (r *reader) getLine() (line string, ok bool) {
 		if !ok {
 			return "", false
 		}
-		if s == "" || strings.HasPrefix(s, "*") {
+		// The skip test is on the line's *first* byte, before any trimming:
+		// get_line loops while *temp is '*', '\n' or '\r'. A line beginning
+		// with a carriage return is therefore skipped whatever follows it,
+		// which is not the same as "the line is blank once trimmed".
+		if s == "" || s[0] == '*' || s[0] == '\r' {
 			continue
 		}
-		return s, true
+		// Only then does it strip trailing CRs and LFs — unlike
+		// fread_string, which keeps them.
+		return strings.TrimRight(s, "\r\n"), true
 	}
 }
 

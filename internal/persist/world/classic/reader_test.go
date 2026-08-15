@@ -106,6 +106,50 @@ func TestReadString(t *testing.T) {
 	}
 }
 
+func TestReadStringKeepsExistingCarriageReturns(t *testing.T) {
+	// fread_string overwrites only the line's *final* character with "\r\n",
+	// so any carriage returns already in the line survive. Several files rely
+	// on this without meaning to: obj/0.obj's bug object has fifteen CRs
+	// before its newline, and the C server shows all of them. Trimming them
+	// here silently differed from the C server on every such line, which is
+	// exactly what the parity harness caught.
+	r := newReader(strings.NewReader("Please\r\r\r\n~\n"), "t")
+	got, err := r.readString("test")
+	if err != nil {
+		t.Fatalf("readString: %v", err)
+	}
+	if want := "Please\r\r\r\r\n"; got != want {
+		t.Errorf("readString() = %q, want %q", got, want)
+	}
+}
+
+func TestGetLineStripsCarriageReturnsThatReadStringKeeps(t *testing.T) {
+	// The two readers deliberately differ: get_line strips every trailing CR
+	// and LF, fread_string keeps them.
+	r := newReader(strings.NewReader("0 d 1\r\r\n"), "t")
+	got, ok := r.getLine()
+	if !ok {
+		t.Fatal("getLine() ended early")
+	}
+	if got != "0 d 1" {
+		t.Errorf("getLine() = %q, want %q", got, "0 d 1")
+	}
+}
+
+func TestGetLineSkipsLinesBeginningWithCarriageReturn(t *testing.T) {
+	// get_line's skip test looks at the raw first byte, so a line starting
+	// with CR is skipped whatever follows it — which is not the same as
+	// "blank once trimmed".
+	r := newReader(strings.NewReader("\rnot reached\nreal line\n"), "t")
+	got, ok := r.getLine()
+	if !ok {
+		t.Fatal("getLine() ended early")
+	}
+	if got != "real line" {
+		t.Errorf("getLine() = %q, want %q", got, "real line")
+	}
+}
+
 func TestReadStringUnterminatedIsAnError(t *testing.T) {
 	// The C code exits the process here. An error that names the file and
 	// line is more useful and equally impossible to ignore.

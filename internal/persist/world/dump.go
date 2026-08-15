@@ -34,8 +34,8 @@ import (
 type DumpRoom struct {
 	Vnum       game.RoomVnum   `json:"vnum"`
 	Zone       game.ZoneVnum   `json:"zone"`
-	Name       string          `json:"name"`
-	Desc       string          `json:"desc"`
+	Name       Text            `json:"name"`
+	Desc       Text            `json:"desc"`
 	Flags      string          `json:"flags"`
 	FlagBits   uint64          `json:"flag_bits"`
 	Sector     int32           `json:"sector"`
@@ -46,8 +46,8 @@ type DumpRoom struct {
 // DumpExit is one exit; null in the exits array means no exit that way.
 type DumpExit struct {
 	Dir      string        `json:"dir"`
-	Desc     string        `json:"desc"`
-	Keywords string        `json:"keywords"`
+	Desc     Text          `json:"desc"`
+	Keywords Text          `json:"keywords"`
 	DoorFlag int32         `json:"door_flag"`
 	Key      game.ObjVnum  `json:"key"`
 	ToRoom   game.RoomVnum `json:"to_room"`
@@ -55,23 +55,23 @@ type DumpExit struct {
 
 // DumpExtraDesc is a keyword-triggered description.
 type DumpExtraDesc struct {
-	Keywords string `json:"keywords"`
-	Desc     string `json:"desc"`
+	Keywords Text `json:"keywords"`
+	Desc     Text `json:"desc"`
 }
 
 // DumpMob is a mobile prototype in the parity format.
 type DumpMob struct {
 	Vnum        game.MobVnum `json:"vnum"`
-	Keywords    string       `json:"keywords"`
-	ShortDesc   string       `json:"short_desc"`
-	LongDesc    string       `json:"long_desc"`
-	Desc        string       `json:"desc"`
+	Keywords    Text         `json:"keywords"`
+	ShortDesc   Text         `json:"short_desc"`
+	LongDesc    Text         `json:"long_desc"`
+	Desc        Text         `json:"desc"`
 	ActFlags    string       `json:"act_flags"`
 	ActBits     uint64       `json:"act_bits"`
 	AffFlags    string       `json:"aff_flags"`
 	AffBits     uint64       `json:"aff_bits"`
 	Alignment   int32        `json:"alignment"`
-	Enhanced    bool         `json:"enhanced"`
+	Enhanced    *bool        `json:"enhanced"`
 	Level       int32        `json:"level"`
 	Thac0       int32        `json:"thac0"`
 	HitRoll     int32        `json:"hitroll"`
@@ -90,10 +90,10 @@ type DumpMob struct {
 // DumpObj is an object prototype in the parity format.
 type DumpObj struct {
 	Vnum       game.ObjVnum     `json:"vnum"`
-	Keywords   string           `json:"keywords"`
-	ShortDesc  string           `json:"short_desc"`
-	Desc       string           `json:"desc"`
-	ActionDesc string           `json:"action_desc"`
+	Keywords   Text             `json:"keywords"`
+	ShortDesc  Text             `json:"short_desc"`
+	Desc       Text             `json:"desc"`
+	ActionDesc Text             `json:"action_desc"`
 	Type       int32            `json:"type"`
 	ExtraFlags string           `json:"extra_flags"`
 	ExtraBits  uint64           `json:"extra_bits"`
@@ -112,7 +112,7 @@ type DumpObj struct {
 // DumpZone is a zone in the parity format.
 type DumpZone struct {
 	Vnum      game.ZoneVnum `json:"vnum"`
-	Name      string        `json:"name"`
+	Name      Text          `json:"name"`
 	Bottom    game.RoomVnum `json:"bottom"`
 	Top       game.RoomVnum `json:"top"`
 	Lifespan  int32         `json:"lifespan"`
@@ -120,15 +120,49 @@ type DumpZone struct {
 	Commands  []DumpReset   `json:"commands"`
 }
 
-// DumpReset is one reset command. Arg3 is omitted for the two-argument
-// opcodes rather than dumped as a zero, because the C loader leaves it
-// uninitialised there and a zero would be a lie.
+// DumpReset is one reset command, as the server holds it after renumbering.
+//
+// Command is the opcode the server ended up with, so a command whose vnums
+// did not resolve appears as "*" — disabled — exactly as renum_zone_table()
+// leaves it. Disabled says the same thing more legibly for a human reading a
+// diff.
+//
+// Arg3 is null for the two-argument opcodes rather than dumped as a zero,
+// because the C loader leaves it uninitialised there and a zero would be a
+// lie.
 type DumpReset struct {
-	Command string `json:"command"`
-	IfFlag  int32  `json:"if_flag"`
-	Arg1    int32  `json:"arg1"`
-	Arg2    int32  `json:"arg2"`
-	Arg3    *int32 `json:"arg3"`
+	Command  string `json:"command"`
+	Disabled bool   `json:"disabled"`
+	IfFlag   int32  `json:"if_flag"`
+	Arg1     *int32 `json:"arg1"`
+	Arg2     *int32 `json:"arg2"`
+	Arg3     *int32 `json:"arg3"`
+}
+
+// DumpShop is a shop in the parity format.
+type DumpShop struct {
+	Vnum       game.ShopVnum   `json:"vnum"`
+	Producing  []game.ObjVnum  `json:"producing"`
+	ProfitBuy  string          `json:"profit_buy"`
+	ProfitSell string          `json:"profit_sell"`
+	BuyTypes   []DumpShopBuy   `json:"buy_types"`
+	Messages   []Text          `json:"messages"`
+	Temper     int32           `json:"temper"`
+	Flags      string          `json:"flags"`
+	FlagBits   uint64          `json:"flag_bits"`
+	Keeper     game.MobVnum    `json:"keeper"`
+	TradeWith  int32           `json:"trade_with"`
+	Rooms      []game.RoomVnum `json:"rooms"`
+	Open1      int32           `json:"open1"`
+	Close1     int32           `json:"close1"`
+	Open2      int32           `json:"open2"`
+	Close2     int32           `json:"close2"`
+}
+
+// DumpShopBuy is one entry of a shop's buy list.
+type DumpShopBuy struct {
+	Type    int32 `json:"type"`
+	Keyword Text  `json:"keyword"`
 }
 
 // Dump is the whole thing, with counts up front so a truncated comparison
@@ -139,6 +173,7 @@ type Dump struct {
 	Rooms   []DumpRoom `json:"rooms"`
 	Mobiles []DumpMob  `json:"mobiles"`
 	Objects []DumpObj  `json:"objects"`
+	Shops   []DumpShop `json:"shops"`
 }
 
 // DumpCounts is the record census.
@@ -147,35 +182,63 @@ type DumpCounts struct {
 	Mobiles int `json:"mobiles"`
 	Objects int `json:"objects"`
 	Zones   int `json:"zones"`
+	Shops   int `json:"shops"`
+}
+
+// Options control what BuildDump emits.
+type Options struct {
+	// Parity omits the fields the C server does not retain after loading, so
+	// the two dumps can be compared directly. Two mob fields fall into this
+	// category: the simple/enhanced distinction, which parse_enhanced_mob()
+	// consumes without recording, and the espec key/value lines, which
+	// interpret_espec() folds into ordinary fields and then discards. The Go
+	// loader keeps both because they are useful; the C loader cannot report
+	// them at all, so comparing them would only ever produce noise.
+	Parity bool
 }
 
 // BuildDump converts a loaded world into the parity format.
-func BuildDump(w *game.World) *Dump {
+func BuildDump(w *game.World) *Dump { return BuildDumpWithOptions(w, Options{}) }
+
+// BuildDumpWithOptions is BuildDump with explicit options.
+func BuildDumpWithOptions(w *game.World, opts Options) *Dump {
+	res := newResolver(w)
+
 	d := &Dump{
 		Counts: DumpCounts{
 			Rooms: len(w.Rooms), Mobiles: len(w.Mobiles),
 			Objects: len(w.Objects), Zones: len(w.Zones),
+			Shops: len(w.Shops),
 		},
 		Zones:   make([]DumpZone, 0, len(w.Zones)),
 		Rooms:   make([]DumpRoom, 0, len(w.Rooms)),
 		Mobiles: make([]DumpMob, 0, len(w.Mobiles)),
 		Objects: make([]DumpObj, 0, len(w.Objects)),
+		Shops:   make([]DumpShop, 0, len(w.Shops)),
 	}
 
 	for _, z := range w.Zones {
 		dz := DumpZone{
-			Vnum: z.Vnum, Name: z.Name, Bottom: z.Bottom, Top: z.Top,
+			Vnum: z.Vnum, Name: Text(z.Name), Bottom: z.Bottom, Top: z.Top,
 			Lifespan: z.Lifespan, ResetMode: z.ResetMode,
 			Commands: make([]DumpReset, 0, len(z.Commands)),
 		}
 		for _, c := range z.Commands {
-			dr := DumpReset{
-				Command: string(c.Command), IfFlag: c.IfFlag,
-				Arg1: c.Arg1, Arg2: c.Arg2,
-			}
-			if c.NumArgs() == 3 {
-				arg3 := c.Arg3
-				dr.Arg3 = &arg3
+			opcode, a1, a2, a3, disabled := res.resetCommand(c)
+			dr := DumpReset{Command: string(opcode), Disabled: disabled, IfFlag: c.IfFlag}
+
+			// A disabled command is dumped as its disabled self and nothing
+			// more. renum_zone_table() rewrites the opcode to '*', which
+			// destroys both which command it was - and so how many arguments
+			// it took - and the arguments themselves, some of which it had
+			// already overwritten with real numbers before noticing the
+			// failure. Neither side can reconstruct them, so both dump nulls.
+			// That the command is dead is the part worth comparing.
+			if !disabled {
+				dr.Arg1, dr.Arg2 = &a1, &a2
+				if c.NumArgs() == 3 {
+					dr.Arg3 = &a3
+				}
 			}
 			dz.Commands = append(dz.Commands, dr)
 		}
@@ -184,7 +247,7 @@ func BuildDump(w *game.World) *Dump {
 
 	for _, r := range w.Rooms {
 		dr := DumpRoom{
-			Vnum: r.Vnum, Zone: r.Zone, Name: r.Name, Desc: r.Description,
+			Vnum: r.Vnum, Zone: r.Zone, Name: Text(r.Name), Desc: Text(r.Description),
 			Flags: r.Flags.String(), FlagBits: uint64(r.Flags),
 			Sector:     r.SectorType,
 			Exits:      make([]*DumpExit, game.NumDirections),
@@ -195,9 +258,12 @@ func BuildDump(w *game.World) *Dump {
 				continue
 			}
 			dr.Exits[i] = &DumpExit{
-				Dir: game.Direction(i).String(), Desc: e.Description,
-				Keywords: e.Keywords, DoorFlag: e.DoorFlag,
-				Key: e.Key, ToRoom: e.ToRoom,
+				Dir: game.Direction(i).String(), Desc: Text(e.Description),
+				Keywords: Text(e.Keywords), DoorFlag: e.DoorFlag,
+				Key: e.Key,
+				// Post-resolution: an exit to a room that does not exist is
+				// NOWHERE in the running server, and the file's vnum is gone.
+				ToRoom: res.room(e.ToRoom),
 			}
 		}
 		d.Rooms = append(d.Rooms, dr)
@@ -208,12 +274,16 @@ func BuildDump(w *game.World) *Dump {
 		if especs == nil {
 			especs = []game.Espec{}
 		}
+		enhanced := &m.Enhanced
+		if opts.Parity {
+			enhanced, especs = nil, []game.Espec{}
+		}
 		d.Mobiles = append(d.Mobiles, DumpMob{
-			Vnum: m.Vnum, Keywords: m.Keywords, ShortDesc: m.ShortDesc,
-			LongDesc: m.LongDesc, Desc: m.Description,
+			Vnum: m.Vnum, Keywords: Text(m.Keywords), ShortDesc: Text(m.ShortDesc),
+			LongDesc: Text(m.LongDesc), Desc: Text(m.Description),
 			ActFlags: m.ActionFlags.String(), ActBits: uint64(m.ActionFlags),
 			AffFlags: m.AffectionFlags.String(), AffBits: uint64(m.AffectionFlags),
-			Alignment: m.Alignment, Enhanced: m.Enhanced,
+			Alignment: m.Alignment, Enhanced: enhanced,
 			Level: m.Level, Thac0: m.Thac0, HitRoll: m.HitRoll(),
 			ArmorClass: m.ArmorClass, ArmorScaled: m.ArmorClassScaled(),
 			HitDice: diceString(m.HitDice), DamageDice: diceString(m.DamageDice),
@@ -229,8 +299,8 @@ func BuildDump(w *game.World) *Dump {
 			affects = []game.ObjAffect{}
 		}
 		d.Objects = append(d.Objects, DumpObj{
-			Vnum: o.Vnum, Keywords: o.Keywords, ShortDesc: o.ShortDesc,
-			Desc: o.Description, ActionDesc: o.ActionDesc, Type: o.Type,
+			Vnum: o.Vnum, Keywords: Text(o.Keywords), ShortDesc: Text(o.ShortDesc),
+			Desc: Text(o.Description), ActionDesc: Text(o.ActionDesc), Type: o.Type,
 			ExtraFlags: o.ExtraFlags.String(), ExtraBits: uint64(o.ExtraFlags),
 			WearFlags: o.WearFlags.String(), WearBits: uint64(o.WearFlags),
 			PermAffect: o.PermAffect, Values: o.Values,
@@ -240,13 +310,60 @@ func BuildDump(w *game.World) *Dump {
 		})
 	}
 
+	for _, s := range w.Shops {
+		ds := DumpShop{
+			Vnum:      s.Vnum,
+			Producing: emptyIfNil(s.Producing),
+			// Formatted rather than emitted as a JSON number: the C struct
+			// holds these as float, and "1.15" round-tripped through two
+			// languages' float printers is not reliably the same text. A
+			// fixed format both sides use verbatim is.
+			ProfitBuy:  formatProfit(s.ProfitBuy),
+			ProfitSell: formatProfit(s.ProfitSell),
+			BuyTypes:   make([]DumpShopBuy, 0, len(s.BuyTypes)),
+			Messages:   make([]Text, game.NumShopMessages),
+			Temper:     s.Temper,
+			Flags:      s.Flags.String(),
+			FlagBits:   uint64(s.Flags),
+			Keeper:     s.Keeper,
+			TradeWith:  s.TradeWith,
+			Rooms:      emptyIfNil(s.Rooms),
+			Open1:      s.Open1,
+			Close1:     s.Close1,
+			Open2:      s.Open2,
+			Close2:     s.Close2,
+		}
+		for _, b := range s.BuyTypes {
+			ds.BuyTypes = append(ds.BuyTypes, DumpShopBuy{Type: b.Type, Keyword: Text(b.Keyword)})
+		}
+		for i, m := range s.Messages {
+			ds.Messages[i] = Text(m)
+		}
+		d.Shops = append(d.Shops, ds)
+	}
+
 	return d
+}
+
+// emptyIfNil keeps a nil slice from dumping as null, so an empty list and a
+// missing one cannot be confused in a diff.
+func emptyIfNil[T any](in []T) []T {
+	if in == nil {
+		return []T{}
+	}
+	return in
+}
+
+// formatProfit renders a shop's profit multiplier. Six decimal places is what
+// C's "%f" defaults to, and matching it exactly is the point.
+func formatProfit(f float32) string {
+	return fmt.Sprintf("%.6f", f)
 }
 
 func dumpExtras(in []game.ExtraDesc) []DumpExtraDesc {
 	out := make([]DumpExtraDesc, 0, len(in))
 	for _, e := range in {
-		out = append(out, DumpExtraDesc{Keywords: e.Keywords, Desc: e.Description})
+		out = append(out, DumpExtraDesc{Keywords: Text(e.Keywords), Desc: Text(e.Description)})
 	}
 	return out
 }

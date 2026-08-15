@@ -107,6 +107,10 @@ int no_specials = 0;		/* Suppress ass. of special routines */
 int max_players = 0;		/* max descriptors available */
 int tics = 0;			/* for extern checkpointing */
 int scheck = 0;			/* for syntax checking mode */
+/* <DoC> */
+const char *dump_world_file = NULL;	/* -J: dump world as JSON and exit	*/
+void dump_world_json(FILE *f);		/* worlddump.c				*/
+/* </DoC> */
 struct timeval null_time;	/* zero-valued time structure */
 byte reread_wizlist;		/* signal: SIGUSR1 */
 byte emergency_unban;		/* signal: SIGUSR2 */
@@ -269,6 +273,18 @@ int main(int argc, char **argv)
       scheck = 1;
       puts("Syntax check mode enabled.");
       break;
+    /* <DoC> World-dump mode for the Go port's parity harness. */
+    case 'J':
+      if (*(argv[pos] + 2))
+	dump_world_file = argv[pos] + 2;
+      else if (++pos < argc)
+	dump_world_file = argv[pos];
+      else {
+	puts("SYSERR: File name expected after option -J.");
+	exit(1);
+      }
+      break;
+    /* </DoC> */
     case 'q':
       no_rent_check = 1;
       puts("Quick boot mode -- rent check supressed.");
@@ -285,6 +301,7 @@ int main(int argc, char **argv)
       /* From: Anil Mahajan <amahajan@proxicom.com> */
       printf("Usage: %s [-c] [-m] [-q] [-r] [-s] [-d pathname] [port #]\n"
               "  -c             Enable syntax check mode.\n"
+              "  -J <file>      Dump the loaded world to <file> as JSON and exit.\n"
               "  -d <directory> Specify library directory (defaults to 'lib').\n"
               "  -h             Print this command line argument help.\n"
               "  -m             Start in mini-MUD mode.\n"
@@ -327,7 +344,29 @@ int main(int argc, char **argv)
   }
   log("Using %s as data directory.", dir);
 
-  if (scheck)
+  if (dump_world_file) {
+    /*
+     * <DoC>
+     * World-dump mode, for the Go port's parity harness. Loads the world
+     * exactly as a real boot does - including renum_world() and
+     * renum_zone_table(), whose effects are the interesting part - then
+     * writes it as JSON and exits without opening a socket or touching
+     * player data. See src/worlddump.c and
+     * docs/proposals/go-port-plan.md §11.
+     */
+    FILE *dumpfl;
+
+    boot_world();
+    if (!(dumpfl = fopen(dump_world_file, "w"))) {
+      log("SYSERR: Cannot open world dump file '%s': %s", dump_world_file,
+	  strerror(errno));
+      exit(1);
+    }
+    log("Dumping world to %s.", dump_world_file);
+    dump_world_json(dumpfl);
+    fclose(dumpfl);
+    /* </DoC> */
+  } else if (scheck)
     boot_world();
   else {
     log("Running game on port %d.", port);

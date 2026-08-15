@@ -75,6 +75,11 @@ locally.
 
 ## Not yet done
 
+- Nothing here is new, but note the C tree now carries one addition for the
+  Go port: `src/worlddump.c` and the `-J <file>` option, which dump the
+  loaded world as JSON and exit. It is read-only with respect to the game
+  and is not reachable from normal operation. See
+  `docs/proposals/go-port-plan.md` §11.
 - The `sprintf`-into-shared-`buf` warnings throughout (`db.c`,
   `improved-edit.c`, `tedit.c`, `zedit.c`, `listrent.c`, `shopconv.c`, ...)
   are worth auditing properly before this runs unattended on the open
@@ -110,6 +115,15 @@ Two binaries:
 - **`dlctl`** — offline tooling: world linting, player-file conversion and
   inspection. The jobs `src/util/` and `tools/` do today. Subcommands that
   need a persistence layer report which plan phase implements them.
+
+To check the Go loader still agrees with the C one:
+
+```sh
+scripts/world-parity.sh
+```
+
+It builds both servers, dumps the world each one loaded, and diffs them.
+This also runs in CI.
 
 ## Current state: Phase 0
 

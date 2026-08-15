@@ -63,24 +63,102 @@ func TestLoadReportsAMissingDirectory(t *testing.T) {
 	}
 }
 
+// resolvableWorld is a world whose reset commands all point at records that
+// exist, so nothing is disabled by resolution.
+func resolvableWorld(cmds ...game.ResetCommand) *game.World {
+	return &game.World{
+		Rooms:   []*game.RoomDef{{Vnum: 101}},
+		Mobiles: []*game.MobDef{{Vnum: 100}},
+		Objects: []*game.ObjDef{{Vnum: 200}},
+		Zones:   []*game.ZoneDef{{Vnum: 1, Commands: cmds}},
+	}
+}
+
 func TestDumpOmitsArg3ForTwoArgumentCommands(t *testing.T) {
 	// The C loader leaves arg3 uninitialised for G and R, so dumping a zero
 	// there would assert something the source data does not say.
-	w := &game.World{Zones: []*game.ZoneDef{{
-		Vnum: 1,
-		Commands: []game.ResetCommand{
-			{Command: 'M', Arg1: 100, Arg2: 1, Arg3: 101},
-			{Command: 'G', Arg1: 200, Arg2: 1},
-		},
-	}}}
+	d := world.BuildDump(resolvableWorld(
+		game.ResetCommand{Command: 'M', Arg1: 100, Arg2: 1, Arg3: 101},
+		game.ResetCommand{Command: 'G', Arg1: 200, Arg2: 1},
+	))
 
-	d := world.BuildDump(w)
 	cmds := d.Zones[0].Commands
 	if cmds[0].Arg3 == nil || *cmds[0].Arg3 != 101 {
 		t.Errorf("M command Arg3 = %v, want 101", cmds[0].Arg3)
 	}
 	if cmds[1].Arg3 != nil {
 		t.Errorf("G command Arg3 = %v, want nil", *cmds[1].Arg3)
+	}
+}
+
+func TestDumpDisablesUnresolvableResetCommands(t *testing.T) {
+	// renum_zone_table() rewrites the opcode to '*' when a vnum does not
+	// resolve, which permanently disables the command. A dump that showed the
+	// original opcode would claim the server does something it does not.
+	d := world.BuildDump(resolvableWorld(
+		game.ResetCommand{Command: 'M', Arg1: 100, Arg2: 1, Arg3: 101}, // fine
+		game.ResetCommand{Command: 'M', Arg1: 999, Arg2: 1, Arg3: 101}, // no such mob
+	))
+
+	cmds := d.Zones[0].Commands
+	if cmds[0].Disabled {
+		t.Error("a command with resolvable vnums was disabled")
+	}
+	if !cmds[1].Disabled {
+		t.Fatal("a command loading a mob that does not exist was not disabled")
+	}
+	if cmds[1].Command != "*" {
+		t.Errorf("disabled command opcode = %q, want %q", cmds[1].Command, "*")
+	}
+	// Its arguments are gone in the C server, so claiming to know them would
+	// be a lie that shows up as a spurious diff.
+	if cmds[1].Arg1 != nil || cmds[1].Arg2 != nil || cmds[1].Arg3 != nil {
+		t.Errorf("disabled command kept its arguments: %+v", cmds[1])
+	}
+}
+
+func TestDumpResolvesExitsToNowhere(t *testing.T) {
+	// An exit whose destination does not exist is NOWHERE in the running
+	// server; the file's vnum is not recoverable from it.
+	rooms := []*game.RoomDef{{Vnum: 1}, {Vnum: 2}}
+	rooms[0].Exits[game.North] = &game.ExitDef{ToRoom: 2}   // exists
+	rooms[0].Exits[game.South] = &game.ExitDef{ToRoom: 999} // does not
+
+	d := world.BuildDump(&game.World{Rooms: rooms})
+	exits := d.Rooms[0].Exits
+
+	if exits[game.North].ToRoom != 2 {
+		t.Errorf("north exit ToRoom = %d, want 2", exits[game.North].ToRoom)
+	}
+	if exits[game.South].ToRoom != game.NoRoom {
+		t.Errorf("south exit ToRoom = %d, want %d (unresolvable)", exits[game.South].ToRoom, game.NoRoom)
+	}
+}
+
+func TestParityModeOmitsFieldsTheCServerDiscards(t *testing.T) {
+	// parse_enhanced_mob() consumes the E block without recording that it saw
+	// one, and interpret_espec() folds the key/value lines into ordinary
+	// fields and discards them. Comparing either against the C dump could
+	// only ever produce noise.
+	w := &game.World{Mobiles: []*game.MobDef{{
+		Vnum: 1, Enhanced: true,
+		Especs: []game.Espec{{Key: "BareHandAttack", Value: "12"}},
+	}}}
+
+	full := world.BuildDump(w)
+	if full.Mobiles[0].Enhanced == nil || !*full.Mobiles[0].Enhanced {
+		t.Error("Enhanced was dropped from a non-parity dump")
+	}
+	if len(full.Mobiles[0].Especs) != 1 {
+		t.Error("Especs were dropped from a non-parity dump")
+	}
+
+	parity := world.BuildDumpWithOptions(w, world.Options{Parity: true})
+	if parity.Mobiles[0].Enhanced != nil {
+		t.Error("Enhanced survived into a parity dump")
+	}
+	if len(parity.Mobiles[0].Especs) != 0 {
+		t.Error("Especs survived into a parity dump")
 	}
 }
 

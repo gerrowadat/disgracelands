@@ -23,7 +23,7 @@ func worldFlags(fs *flag.FlagSet) (dir, format *string, mini *bool) {
 
 // loadWorld opens the configured source and loads it, returning findings
 // where the source can produce them.
-func loadWorld(ctx context.Context, dir, format string, mini bool) (*world.Dump, []classic.Warning, error) {
+func loadWorld(ctx context.Context, dir, format string, mini bool, opts world.Options) (*world.Dump, []classic.Warning, error) {
 	src, err := world.Open(format, world.Config{Dir: dir, Mini: mini})
 	if err != nil {
 		return nil, nil, err
@@ -38,14 +38,14 @@ func loadWorld(ctx context.Context, dir, format string, mini bool) (*world.Dump,
 		if err != nil {
 			return nil, warnings, err
 		}
-		return world.BuildDump(w), warnings, nil
+		return world.BuildDumpWithOptions(w, opts), warnings, nil
 	}
 
 	w, err := src.Load(ctx)
 	if err != nil {
 		return nil, nil, err
 	}
-	return world.BuildDump(w), nil, nil
+	return world.BuildDumpWithOptions(w, opts), nil, nil
 }
 
 // cmdWorldLint checks the world files and reports what it finds. It replaces
@@ -60,7 +60,7 @@ func cmdWorldLint(args []string) error {
 		return err
 	}
 
-	dump, findings, err := loadWorld(context.Background(), *dir, *format, *mini)
+	dump, findings, err := loadWorld(context.Background(), *dir, *format, *mini, world.Options{})
 	if err != nil {
 		// A load failure is itself the finding, and the most important one.
 		fmt.Fprintf(os.Stderr, "error: %v\n", err)
@@ -110,11 +110,14 @@ func cmdWorldDump(args []string) error {
 	fs := flag.NewFlagSet("world dump", flag.ContinueOnError)
 	dir, format, mini := worldFlags(fs)
 	outPath := fs.String("out", "-", "Output file, or - for stdout")
+	parity := fs.Bool("parity", false,
+		"Omit fields the C server does not retain, for diffing against its dump")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
 
-	dump, _, err := loadWorld(context.Background(), *dir, *format, *mini)
+	dump, _, err := loadWorld(context.Background(), *dir, *format, *mini,
+		world.Options{Parity: *parity})
 	if err != nil {
 		return err
 	}

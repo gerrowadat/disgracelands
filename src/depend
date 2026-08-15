@@ -101,5 +101,6 @@ utils.o: utils.c conf.h sysdep.h structs.h utils.h db.h comm.h \
  screen.h spells.h handler.h interpreter.h
 weather.o: weather.c conf.h sysdep.h structs.h utils.h comm.h \
  handler.h interpreter.h db.h
+worlddump.o: worlddump.c conf.h sysdep.h structs.h utils.h db.h shop.h
 zedit.o: zedit.c conf.h sysdep.h structs.h comm.h interpreter.h \
  utils.h db.h constants.h genolc.h genzon.h oasis.h

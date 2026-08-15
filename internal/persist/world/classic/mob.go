@@ -45,6 +45,8 @@ func (l *loader) parseMobile(r *reader, vnum game.MobVnum) (*game.MobDef, error)
 	}
 
 	mob.ActionFlags = l.parseFlagField(r, what, "action flags", fields[0])
+	// parse_mobile() force-sets this on every mobile regardless of the file.
+	mob.ActionFlags = mob.ActionFlags.Set(game.MobIsNPC)
 	mob.AffectionFlags = l.parseFlagField(r, what, "affection flags", fields[1])
 
 	align, ok := scanInt(fields[2])

@@ -587,17 +587,30 @@ Three decisions made during the build, all revisable:
 3. **`--log-level=debug` implies `AddSource`.** Small, and easy to reverse
    if it turns out to be noisy.
 
-**Phase 1 — World loading. 🟡 In progress.** `game` type definitions with
-explicit widths. `persist/world` interface + `classic` implementation.
-`dlctl world lint` and `dlctl world dump`. Parity harness against a
-dump-and-exit path added to the C server. *Done when: the Go loader
-reproduces the C loader's view of all 47 zones exactly.*
+**Phase 1 — World loading. ✅ Done.** `game` type definitions with explicit
+widths. `persist/world` interface + `classic` implementation. `dlctl world
+lint` and `dlctl world dump`. Parity harness against a dump-and-exit path
+added to the C server. *Done when: the Go loader reproduces the C loader's
+view of all 47 zones exactly.*
 
-Loader, types, interface, lint and dump are built and load the real world:
-**2981 rooms, 944 mobiles, 1199 objects, 47 zones**, with no error-level
-findings.
+**Met, and checked rather than argued.** `scripts/world-parity.sh` builds
+both servers, has each dump the world it loaded, and diffs the results:
 
-Two corrections to what this document previously said:
+```
+    2981 rooms, 944 mobiles, 1199 objects, 47 zones, 77 shops
+    identical
+```
+
+Zero differing fields across all 5,248 records. It runs in CI, so it stays
+true.
+
+The C side is `src/worlddump.c` plus a `-J <file>` option, which loads the
+world exactly as a real boot does — including `renum_world()` and
+`renum_zone_table()`, whose effects are the interesting part — then writes
+JSON and exits without opening a socket or touching player data. It is
+marked `<DoC>` like every other local change to the C tree.
+
+Three corrections to what this document previously said:
 
 - **47 zones, not 55.** The earlier figure counted files in `lib/world/zon/`,
   including `index` and `index.mini`. Six `.zon` files are not listed in the
@@ -607,22 +620,36 @@ Two corrections to what this document previously said:
   line beginning with `#` to size a malloc — including `#` lines inside
   descriptions. `lib/world` has seven of those in room files (ASCII-art
   signs in `wld/54.wld` and `wld/64.wld`) and one in `obj/142.obj`, so the C
-  server allocates 2988 slots and fills 2981. The Go counts are exactly
-  2988−7 and 1200−1, which is a real cross-check of both loaders even before
-  the dump-based harness exists.
+  server allocates 2988 slots and fills 2981.
+- **§13.1 (Latin-1 vs UTF-8) is answered for the loader.** It treats text as
+  opaque bytes and neither validates nor transcodes, so `wld/90.wld`'s
+  CP1252 apostrophes survive a round trip. What to *present* to a player
+  remains a Phase 3 question for the protocol layer.
 
-**Still outstanding for Phase 1**, and the reason it is not done:
+### What the parity harness caught
 
-- The **dump-and-exit path in the C server**, without which "reproduces the
-  C loader's view exactly" is an argument rather than a test. The Go side of
-  the harness (`dlctl world dump`) is built and its output is deterministic.
-- **Shops** (`shp/`), which `Source` declares but `classic` does not yet
-  read. They are a separate parser in `shop.c` and no zone data depends on
-  them loading.
-- Open question §13.1 (Latin-1 vs UTF-8) is **answered for the loader**: it
-  treats text as opaque bytes and neither validates nor transcodes, so
-  `wld/90.wld`'s CP1252 apostrophes survive a round trip. What to *present*
-  to a player remains a Phase 3 question for the protocol layer.
+Building it was worth it on the first run. Three real bugs, two of them in
+the Go loader, none of which any hand-written test had found:
+
+1. **Trailing carriage returns were being eaten.** `fread_string` overwrites
+   only a line's *final* character with CRLF, so CRs already in the line
+   survive into the string. Several files have them — `obj/0.obj`'s bug
+   object carries fifteen — and the C server shows them all. The Go reader
+   trimmed them, differing from the C server on every such line.
+2. **`MOB_ISNPC` was missing.** `parse_mobile()` force-sets it on every
+   mobile regardless of the file. 560 of 944 mobs differed.
+3. **Non-UTF-8 bytes did not survive the dump.** `encoding/json` replaces
+   every invalid byte with U+FFFD, so two different corrupt bytes dumped
+   identically — a parity format that can hide the differences it exists to
+   find. Strings now escape byte by byte to pure ASCII, which the C side
+   reproduces trivially.
+
+Two fields are excluded from the comparison, via `dlctl world dump
+--parity`, because the C server does not retain them: whether a mob used the
+enhanced (`E`) format, which `parse_enhanced_mob()` consumes without
+recording, and the espec key/value lines, which `interpret_espec()` folds
+into ordinary fields and discards. The Go loader keeps both because they are
+useful; comparing them could only ever produce noise.
 
 **Phase 2 — Player loading.** `persist/player` interface, `binary`
 implementation (§4/§5.2), `ascii` implementation, `dlctl pfile

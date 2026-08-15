@@ -204,7 +204,7 @@ Findings come in three severities:
 errors. Exit status is non-zero if anything at the failing severity was
 found, so it works directly as a CI step.
 
-The shipped world currently reports **0 errors, 6 warnings, 8 notes**. The
+The shipped world currently reports **0 errors, 20 warnings, 8 notes**. The
 warnings are worth knowing about:
 
 - Four complete zones (23, 90, 92, 147) and two further `.zon` files exist
@@ -212,6 +212,10 @@ warnings are worth knowing about:
   is silent in the C server: a builder who adds a zone and forgets the index
   gets no error, just a world quietly missing their work.
 - Two rooms have exits locked by key objects that do not exist.
+- Two shops sell things that do not exist — shop #5484 lists ten of them —
+  and two operate in rooms that do not exist. The C loader drops the missing
+  products silently, so those shopkeepers have simply had nothing to sell
+  for years.
 
 The notes are all the drink-container weight adjustment, which is normal
 CircleMUD behaviour rather than a problem — the loader raises a container's
@@ -224,13 +228,29 @@ dlctl world dump --world-dir=lib/world --out=go.json
 ```
 
 Writes the loaded world as canonical JSON: deterministic ordering, values
-as they are *after* load-time adjustments, and absent exits explicitly null
-so a missing exit cannot be confused with an exit to nowhere. It exists so
-that "the Go loader agrees with the C loader" is something you run rather
-than something you assert.
+as they are *after* load-time adjustments and reference resolution, and
+absent exits explicitly null so a missing exit cannot be confused with an
+exit to nowhere. Strings are escaped byte by byte, because `lib/world` is
+not UTF-8 and a dump that "fixed" those bytes could hide a real difference.
 
-The C side of that comparison is not built yet, so for now the check is the
-record counts — see `docs/proposals/go-port-plan.md` §10.
+The C server dumps the same format with `bin/circle -J <file>`, which loads
+the world exactly as a real boot does and then exits without opening a
+socket. To compare the two:
+
+```sh
+scripts/world-parity.sh
+```
+
+It builds both servers if needed, dumps from each, and diffs:
+
+```
+    2981 rooms, 944 mobiles, 1199 objects, 47 zones, 77 shops
+    identical
+```
+
+This runs in CI. If you change the Go loader and it starts reporting
+differences, the Go loader is wrong — the C server is the reference
+implementation, and it is the one that has been running the game.
 
 ## Exposure
 

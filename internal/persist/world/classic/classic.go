@@ -38,6 +38,7 @@ var recordKinds = []struct {
 	{"mob", "mob"},
 	{"obj", "obj"},
 	{"zon", "zon"},
+	{"shp", "shp"},
 }
 
 // Source reads a classic world directory.
@@ -144,6 +145,7 @@ func (s *Source) LoadWithWarnings(ctx context.Context) (*game.World, []Warning, 
 	}
 
 	l.assignRoomZones(w)
+	l.resolveShopReferences(w)
 	l.checkReferences(w)
 
 	return w, l.warnings, nil
@@ -234,13 +236,16 @@ func (l *loader) loadFile(w *game.World, sub, name string) error {
 
 	r := newReader(f, path)
 
-	if sub == "zon" {
+	switch sub {
+	case "zon":
 		zone, err := l.parseZone(r, path)
 		if err != nil {
 			return err
 		}
 		w.Zones = append(w.Zones, zone)
 		return nil
+	case "shp":
+		return l.parseShopFile(w, r, path)
 	}
 
 	return l.loadRecords(w, r, sub, path)

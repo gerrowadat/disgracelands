@@ -31,7 +31,7 @@ OBJFILES = act.comm.o act.informative.o act.item.o act.movement.o \
 	house.o improved-edit.o interpreter.o limits.o magic.o mail.o medit.o \
 	mobact.o modify.o oasis.o objsave.o oedit.o olc.o random.o redit.o \
 	sedit.o shop.o spec_assign.o spec_procs.o spell_parser.o spells.o \
-	tedit.o utils.o weather.o zedit.o
+	tedit.o utils.o weather.o worlddump.o zedit.o
 
 CXREF_FILES = act.comm.c act.informative.c act.item.c act.movement.c \
 	act.offensive.c act.other.c act.social.c act.wizard.c alias.c ban.c \

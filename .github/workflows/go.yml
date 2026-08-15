@@ -83,6 +83,22 @@ jobs:
           done < flags.txt
           exit $missing
 
+  # The acceptance criterion for Phase 1: both servers load the world and must
+  # hold the same thing afterwards. It runs here rather than in the Go test
+  # job because it needs the C tree built, which needs a C toolchain and about
+  # a minute.
+  parity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version: '1.25'
+
+      - name: World parity - the Go and C loaders must agree
+        run: ./scripts/world-parity.sh
+
   lint:
     runs-on: ubuntu-latest
     steps:
