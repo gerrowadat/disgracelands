@@ -1,0 +1,89 @@
+# CI for the Go port. The C tree has its own build (BUILDING.md) and is not
+# covered here; see docs/go-port-plan.md §2 for why both exist.
+name: go
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+          check-latest: true
+
+      - name: Verify go.mod is tidy
+        run: |
+          go mod tidy
+          git diff --exit-code go.mod go.sum
+
+      - name: Build
+        run: go build ./...
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Check formatting
+        run: |
+          unformatted=$(gofmt -l .)
+          if [ -n "$unformatted" ]; then
+            echo "These files need gofmt:"
+            echo "$unformatted"
+            exit 1
+          fi
+
+      # -race is not optional here. The port keeps the C server's single
+      # game goroutine (docs/go-port-plan.md §3.1), and the whole safety
+      # argument for that design rests on nothing else touching world state.
+      - name: Test
+        run: go test -race -count=1 ./...
+
+      - name: Phase 0 acceptance - dlmud --help lists the full option set
+        run: |
+          go run ./cmd/dlmud --help > help.txt 2>&1 || true
+          for opt in lib-dir player-format world-format listen-telnet listen-telnets \
+                     listen-ws tls-cert pulse-interval log-format metrics-addr \
+                     allow-legacy-passwords; do
+            grep -q -- "-$opt" help.txt || { echo "missing --$opt in --help"; exit 1; }
+          done
+          grep -q 'DL_LIB_DIR' help.txt || { echo "--help does not document env vars"; exit 1; }
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+      - uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+
+  container:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: build/Dockerfile
+          push: false
+          load: true
+          tags: disgracelands:ci
+          build-args: |
+            VERSION=ci
+            COMMIT=${{ github.sha }}
+
+      - name: Image runs and reports its version
+        run: docker run --rm --entrypoint /usr/local/bin/dlctl disgracelands:ci version

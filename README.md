@@ -37,6 +37,11 @@ what's actually left.
 src/            The game itself (C source + Makefiles). Start here for code.
 cnf/            autoconf input (configure.in, acconfig.h) - see BUILDING.md
 configure       Generated from cnf/ - run this before `make`
+cmd/            Go port: the dlmud server and dlctl tooling binaries.
+internal/       Go port: everything else. In progress, no game in it yet -
+                see docs/go-port-plan.md. The C tree above stays the
+                working game and the reference implementation throughout.
+build/          Dockerfile and compose file for the Go server.
 lib/            Runtime game data: world files, help text, boards, etc.
                 No player data ships here - see "Player data" below.
 bin/            Build output (compiled binaries). Not committed - gitignored.

@@ -1,5 +1,11 @@
 # Building Reborn (Disgracelands) on a modern Linux box
 
+There are two trees here. This document is about the **C tree** (`src/`),
+which is the game as it actually is. For the **Go tree** (`cmd/`,
+`internal/`), which is the in-progress port, skip to
+[Building the Go tree](#building-the-go-tree) at the end — it needs none of
+the setup below, and the two builds do not interact.
+
 This is CircleMUD 3.0 bpl20-era C code from ~2002 (patched with OasisOLC,
 DG Scripts, and Disgracelands' own local mods — see the `<DoC>` tags
 throughout `src/`). It predates C99 and was written against a much more
@@ -76,4 +82,56 @@ locally.
   triggered) buffer-overflow-shaped bugs, not just style complaints.
 - No 64-bit-vs-32-bit audit of anything that touches saved binary data
   (the player database — see `docs/pfile-conversion.md`) has been done
-  beyond the player-file struct itself.
+  beyond the player-file struct itself. The Go port addresses this
+  systematically rather than incrementally — see `docs/go-port-plan.md` §4.
+
+---
+
+# Building the Go tree
+
+The in-progress port (`docs/go-port-plan.md`). Needs Go 1.25+ and nothing
+else — no autoconf, no 32-bit toolchain, no `./configure`.
+
+```sh
+go build ./...          # both binaries
+go test -race ./...     # -race is not optional here, see the plan's §3.1
+go run ./cmd/dlmud --help
+```
+
+Two binaries:
+
+- **`dlmud`** — the server. Every option can also be set from the
+  environment (`--lib-dir` ↔ `DL_LIB_DIR`); precedence is flag >
+  environment > default. `--help` lists the lot.
+- **`dlctl`** — offline tooling: world linting, player-file conversion and
+  inspection. The jobs `src/util/` and `tools/` do today. Subcommands that
+  need a persistence layer report which plan phase implements them.
+
+## Current state: Phase 0
+
+**There is no game in it yet.** `dlmud` boots, reports itself ready, serves
+diagnostics and shuts down cleanly on SIGTERM. That is the whole of Phase 0.
+Phases 1 and 2 add world and player loading, Phase 3 the listeners and pulse
+loop — see `docs/go-port-plan.md` §10.
+
+It needs at least one listener, and the TLS listener (on by default) needs a
+certificate, so the shortest thing that actually starts is:
+
+```sh
+go run ./cmd/dlmud --listen-telnets= --listen-telnet=:4000 --metrics-addr=:9090
+```
+
+Plaintext telnet is implemented but off unless asked for; the server warns
+when it is on. `--metrics-addr` serves `/metrics`, `/healthz` and `/readyz`.
+
+## Container
+
+```sh
+docker build -f build/Dockerfile -t disgracelands .
+docker compose -f build/docker-compose.yml up --build
+```
+
+The runtime image is distroless/static with no shell (~13MB), which is why
+`autorun`'s restart-in-a-shell-loop model is replaced by the container
+runtime's restart policy plus SIGTERM handling in the server. `lib/` is a
+volume, since it is mutable state.

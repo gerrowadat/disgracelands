@@ -41,6 +41,16 @@ lib/house/*
 !lib/house/README
 !lib/house/.gitkeep
 
+# Go build products. The Go tree builds with `go build ./...`; nothing it
+# produces belongs in git. Note this is distinct from bin/ above, which is the
+# C tree's output directory (see BUILDING.md).
+/dlmud
+/dlctl
+/out/
+*.test
+*.out
+coverage.txt
+
 # editor/OS cruft
 *~
 .DS_Store

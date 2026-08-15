@@ -5,8 +5,9 @@ pluggable player- and world-file formats, and packaged as a normal modern
 service (flags, env vars, structured logs, containers) rather than a
 2002-era autoconf tree driven by `autorun`.
 
-This is a design/sequencing document, not an implementation. Nothing here
-has been built yet.
+This is a design/sequencing document. **Phase 0 (§10) is built**; everything
+from Phase 1 on is still a plan. See `BUILDING.md` for how to build and run
+what exists.
 
 ---
 
@@ -87,9 +88,10 @@ docs/go-port-plan.md    (this file)
 the runtime data directory both servers read — that is what makes
 side-by-side parity testing possible.
 
-Module path: `github.com/<org>/disgracelands` (needs confirming — see §12).
-Go version: whatever is current at start, minimum 1.22 for `log/slog` and
-the routing/iterator conveniences.
+Module path: `github.com/gerrowadat/disgracelands`, matching the remote.
+Go version: 1.25, which is what the tree is built and tested against;
+`log/slog`, `net/http`'s method-aware routing patterns and `iter.Seq2` are
+all in use, so 1.23 is the realistic floor.
 
 ---
 
@@ -540,10 +542,50 @@ Each phase ends with something runnable. The C server stays the live
 reference throughout; nothing is deleted from `src/` until the Go server
 has been playing for a while.
 
-**Phase 0 — Foundations.** Go module, layout, CI (build, vet, `-race`
-tests, lint, container build). `config` package with the full flag/env
-surface. `obs` package. Nothing game-related. *Done when: `dlmud --help`
-prints the complete option set and the container builds.*
+**Phase 0 — Foundations. ✅ Done.** Go module, layout, CI (build, vet,
+`-race` tests, lint, container build). `config` package with the full
+flag/env surface. `obs` package. Nothing game-related. *Done when: `dlmud
+--help` prints the complete option set and the container builds.*
+
+Both criteria met. What landed, and the three decisions taken while
+building it:
+
+- **`internal/config`** — every setting declared once, with the environment
+  variable name *derived* from the flag name rather than written out
+  separately, so the two cannot drift. The `-d`/`-o`/`-m`/`-q`/`-r`/`-s`
+  aliases write through to the same targets as their long forms rather than
+  being separate settings, and a bare port argument is rejected with a
+  message naming `--listen-telnet`. Bare defaults are deliberately *invalid*
+  — the TLS listener is on by default and has no certificate — so an
+  unconfigured server fails loudly instead of starting somewhere unreachable.
+- **`internal/obs`** — `log/slog` with text/JSON handlers, a Prometheus
+  registry, and `/healthz` + `/readyz` (liveness independent of readiness).
+  The pulse histogram's buckets are derived from the configured pulse
+  interval rather than fixed, since what matters is the ratio to the budget.
+  `mudlog()`'s in-game echo level survives as the `wizvis` attribute;
+  nothing consumes it until the session layer exists.
+- **`cmd/dlmud`** — boots, warns, reports ready, handles SIGTERM. Verified
+  end to end in the container: `docker stop` shuts down cleanly in ~0.2s
+  with exit 0.
+- **`cmd/dlctl`** — command structure, with unimplemented subcommands
+  reporting the phase that implements them rather than failing vaguely.
+- **Container** — 13MB distroless/static, non-root, `CGO_ENABLED=0`, with
+  `LICENSE` copied in per §12.1.
+
+Three decisions made during the build, all revisable:
+
+1. **Standard-library `flag`, not `pflag` or `kong`.** §9.1 left this open.
+   Stdlib handles `--long-form` fine, and the env derivation is ~20 lines,
+   so a dependency bought nothing. The cost is that `--flag` and `-flag` are
+   equivalent and short aliases appear in `--help` alongside long forms.
+2. **No config-file layer yet.** §9.1's config file is for the game tuning
+   currently in `src/config.c` — rent costs, level caps, message strings —
+   and none of those values exist yet. The precedence chain has the slot;
+   filling it before there is anything to put in it would have meant picking
+   a format and a dependency for no benefit. Lands with the values it
+   configures.
+3. **`--log-level=debug` implies `AddSource`.** Small, and easy to reverse
+   if it turns out to be noisy.
 
 **Phase 1 — World loading.** `game` type definitions with explicit widths.
 `persist/world` interface + `classic` implementation. `dlctl world lint`
@@ -696,22 +738,21 @@ tree is the one being ported.
 Not blocking the plan, but they need answers before or during the phases
 they touch:
 
-1. **Go module path** — what import path? (Phase 0.)
-2. **Latin-1 vs UTF-8.** The world files, help text and player descriptions
+1. **Latin-1 vs UTF-8.** The world files, help text and player descriptions
    are 8-bit-clean but not UTF-8. Does the Go server transcode on load
    (clean, but changes the on-disk world if OLC ever writes back), on
    output per-client via CHARSET (faithful, more complex), or neither?
    (Phase 1.)
-3. **Does `lib/` stay the on-disk contract**, or does the Go server get its
+2. **Does `lib/` stay the on-disk contract**, or does the Go server get its
    own data directory layout with a migration? Staying compatible is what
    makes side-by-side parity testing work, so this plan assumes it stays —
    but it does constrain things. (Phase 1.)
-4. **How faithful does OLC need to be** — a port of OasisOLC's exact menu
+3. **How faithful does OLC need to be** — a port of OasisOLC's exact menu
    trees, or a modern equivalent that produces the same files? (Phase 6.)
-5. **Is a web client actually wanted**, or is WebSocket support just about
+4. **Is a web client actually wanted**, or is WebSocket support just about
    keeping the option open? Affects how much goes into GMCP, and note the
    greeting-file requirement in §12.3. (Phase 3.)
-6. **Password reset path for the 2001–2008 roster.** Those DES hashes are
+5. **Password reset path for the 2001–2008 roster.** Those DES hashes are
    8-effective-characters with a public salt; anyone who had an account
    then may not be reachable now. Force-reset on first login, or accept the
    legacy hash and upgrade transparently? This plan assumes the latter,

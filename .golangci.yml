@@ -1,0 +1,38 @@
+# Linter configuration for the Go port. Deliberately close to the defaults:
+# the value is in catching real mistakes, not in enforcing house style on a
+# codebase that does not exist yet.
+version: "2"
+
+linters:
+  enable:
+    - errcheck
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    # The port is full of integer-width conversions between the C layouts and
+    # the game model, which is exactly the class of bug docs/go-port-plan.md §4
+    # exists to prevent. Flag the unchecked ones.
+    - gosec
+
+  settings:
+    gosec:
+      excludes:
+        # Not relevant: this is a MUD, not a cryptographic system. Game
+        # randomness does not need crypto/rand; password hashing is handled
+        # explicitly (docs/go-port-plan.md §5.2) and reviewed on its own terms.
+        - G404
+
+  exclusions:
+    rules:
+      # Test code opens files it just created and calls its own test servers.
+      # Both are gosec findings that mean nothing here, and test helpers may
+      # ignore errors that production code may not.
+      - path: _test\.go
+        linters:
+          - errcheck
+          - gosec
+
+formatters:
+  enable:
+    - gofmt

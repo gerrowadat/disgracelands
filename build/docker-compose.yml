@@ -1,0 +1,42 @@
+# Local development stack. Run from the repository root:
+#   docker compose -f build/docker-compose.yml up --build
+#
+# This is a Phase 0 foundations build: the server boots, reports itself ready
+# and serves diagnostics, but there is no game in it yet. See
+# docs/go-port-plan.md §10.
+
+services:
+  dlmud:
+    build:
+      context: ..
+      dockerfile: build/Dockerfile
+      args:
+        VERSION: dev
+    # Plaintext telnet only, because a local dev stack has no certificate.
+    # Anything reachable by anyone else needs --listen-telnets and a real cert;
+    # see docs/go-port-plan.md §7.
+    command:
+      - --lib-dir=/lib
+      - --listen-telnet=:4000
+      - --listen-telnets=
+      - --metrics-addr=:9090
+      - --log-format=json
+    ports:
+      - "4000:4000"   # telnet
+      - "9090:9090"   # metrics, healthz, readyz
+    volumes:
+      # The real runtime data directory, so the container sees the same world
+      # and player files the C server does.
+      - ../lib:/lib
+    # docker stop sends SIGTERM, which the server handles by saving and
+    # shutting down cleanly. Give it room to finish.
+    stop_grace_period: 45s
+    restart: unless-stopped
+    healthcheck:
+      # distroless has no shell and no curl, so the check runs the server
+      # binary's own health probe rather than shelling out.
+      test: ["CMD", "/usr/local/bin/dlctl", "version"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
