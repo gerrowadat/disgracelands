@@ -18,6 +18,11 @@ import (
 	"github.com/gerrowadat/disgracelands/internal/buildinfo"
 )
 
+// errQuiet makes the process exit non-zero without printing anything further.
+// A command that has already reported its findings in detail should not then
+// append a one-line summary of the same failure.
+var errQuiet = errors.New("")
+
 // command is one dlctl subcommand. Groups are expressed by a space in the
 // name ("world lint"), which keeps dispatch flat and the help text grouped.
 type command struct {
@@ -38,12 +43,12 @@ var commands = []command{
 	{
 		name:    "world lint",
 		summary: "Check world files for errors (replaces src/util/scheck and dlmud -c)",
-		phase:   1,
+		run:     cmdWorldLint,
 	},
 	{
 		name:    "world dump",
 		summary: "Dump the loaded world as canonical JSON, for parity diffing against the C loader",
-		phase:   1,
+		run:     cmdWorldDump,
 	},
 	{
 		name:    "pfile convert",
@@ -67,7 +72,9 @@ func main() {
 		if errors.Is(err, flag.ErrHelp) {
 			return
 		}
-		fmt.Fprintf(os.Stderr, "dlctl: %v\n", err)
+		if !errors.Is(err, errQuiet) {
+			fmt.Fprintf(os.Stderr, "dlctl: %v\n", err)
+		}
 		os.Exit(1)
 	}
 }

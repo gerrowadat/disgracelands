@@ -60,6 +60,14 @@ jobs:
       # docs/configuration.md is the operator-facing copy of the flag set, and
       # a settings reference that silently drops a flag is worse than none.
       # This cannot check the prose is accurate, only that nothing is missing.
+      # The world files are data, and data rots: an exit to a deleted room or
+      # a reset command for a mob that no longer exists is invisible until a
+      # player walks into it. Linting in CI catches that at the commit that
+      # causes it. Errors fail the build; warnings do not, because the
+      # shipped world has had several since long before this repo existed.
+      - name: Lint the world files
+        run: go run ./cmd/dlctl world lint --world-dir=lib/world
+
       - name: docs/configuration.md covers every flag
         run: |
           go run ./cmd/dlmud --help 2>&1 \

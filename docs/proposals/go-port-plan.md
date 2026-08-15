@@ -365,7 +365,7 @@ read-only" instead of half-writing something.
 ### 6.1 Default: `classic`
 
 The format in `lib/world/` today: `zone.lst` plus `wld/`, `mob/`, `obj/`,
-`shp/`, `zon/` (54/52/53/20/55 files respectively). Records are `#vnum`,
+`shp/`, `zon/`. Records are `#vnum`,
 `~`-terminated strings, letter-encoded bitflags, `S`/`$` terminators, with
 the mob `E`-format extension and dice notation (`5d10+550`).
 
@@ -587,11 +587,42 @@ Three decisions made during the build, all revisable:
 3. **`--log-level=debug` implies `AddSource`.** Small, and easy to reverse
    if it turns out to be noisy.
 
-**Phase 1 — World loading.** `game` type definitions with explicit widths.
-`persist/world` interface + `classic` implementation. `dlctl world lint`
-and `dlctl world dump`. Parity harness against a dump-and-exit path added
-to the C server. *Done when: the Go loader reproduces the C loader's view
-of all 55 zones exactly.*
+**Phase 1 — World loading. 🟡 In progress.** `game` type definitions with
+explicit widths. `persist/world` interface + `classic` implementation.
+`dlctl world lint` and `dlctl world dump`. Parity harness against a
+dump-and-exit path added to the C server. *Done when: the Go loader
+reproduces the C loader's view of all 47 zones exactly.*
+
+Loader, types, interface, lint and dump are built and load the real world:
+**2981 rooms, 944 mobiles, 1199 objects, 47 zones**, with no error-level
+findings.
+
+Two corrections to what this document previously said:
+
+- **47 zones, not 55.** The earlier figure counted files in `lib/world/zon/`,
+  including `index` and `index.mini`. Six `.zon` files are not listed in the
+  index and the C server never opens them, so 47 is what actually loads.
+- **The C server's boot log over-reports.** It prints 2988 rooms and 1200
+  objects, but those come from `count_hash_records()`, which counts every
+  line beginning with `#` to size a malloc — including `#` lines inside
+  descriptions. `lib/world` has seven of those in room files (ASCII-art
+  signs in `wld/54.wld` and `wld/64.wld`) and one in `obj/142.obj`, so the C
+  server allocates 2988 slots and fills 2981. The Go counts are exactly
+  2988−7 and 1200−1, which is a real cross-check of both loaders even before
+  the dump-based harness exists.
+
+**Still outstanding for Phase 1**, and the reason it is not done:
+
+- The **dump-and-exit path in the C server**, without which "reproduces the
+  C loader's view exactly" is an argument rather than a test. The Go side of
+  the harness (`dlctl world dump`) is built and its output is deterministic.
+- **Shops** (`shp/`), which `Source` declares but `classic` does not yet
+  read. They are a separate parser in `shop.c` and no zone data depends on
+  them loading.
+- Open question §13.1 (Latin-1 vs UTF-8) is **answered for the loader**: it
+  treats text as opaque bytes and neither validates nor transcodes, so
+  `wld/90.wld`'s CP1252 apostrophes survive a round trip. What to *present*
+  to a player remains a Phase 3 question for the protocol layer.
 
 **Phase 2 — Player loading.** `persist/player` interface, `binary`
 implementation (§4/§5.2), `ascii` implementation, `dlctl pfile

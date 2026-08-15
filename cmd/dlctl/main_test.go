@@ -30,10 +30,31 @@ func TestUnknownCommandIsRejected(t *testing.T) {
 }
 
 func TestMultiWordCommandsMatchBeforeTheirPrefix(t *testing.T) {
-	// "world lint" must not be mistaken for an unknown "world" command.
-	err := run([]string{"world", "lint"})
-	if err == nil || !strings.Contains(err.Error(), "world lint") {
-		t.Errorf("run([world lint]) = %v, want a not-implemented error naming \"world lint\"", err)
+	// "pfile convert" must not be mistaken for an unknown "pfile" command.
+	err := run([]string{"pfile", "convert"})
+	if err == nil || !strings.Contains(err.Error(), "pfile convert") {
+		t.Errorf("run([pfile convert]) = %v, want a not-implemented error naming \"pfile convert\"", err)
+	}
+}
+
+func TestBareGroupNameIsUnknown(t *testing.T) {
+	// "world" on its own is not a command; only "world <something>" is.
+	err := run([]string{"world"})
+	if err == nil || !strings.Contains(err.Error(), "unknown command") {
+		t.Errorf("run([world]) = %v, want an unknown-command error", err)
+	}
+}
+
+func TestWorldLintDispatches(t *testing.T) {
+	// Not a test of linting — that lives with the parser — but of dispatch:
+	// a real subcommand must reach its implementation rather than falling
+	// through to "unknown command" or a phase stub.
+	err := run([]string{"world", "lint", "--world-dir", "does/not/exist"})
+	if err == nil {
+		t.Fatal("world lint on a missing directory succeeded, want an error")
+	}
+	if strings.Contains(err.Error(), "unknown command") || strings.Contains(err.Error(), "not implemented") {
+		t.Errorf("world lint did not reach its implementation: %v", err)
 	}
 }
 

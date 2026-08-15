@@ -183,6 +183,55 @@ of the top-level `README.md`.
 what it can do; subcommands that are not built yet say which phase
 implements them rather than failing obscurely.
 
+### Checking the world files
+
+```sh
+dlctl world lint --world-dir=lib/world
+```
+
+Replaces `src/util/scheck` and the C server's `-c` mode, and unlike either
+it runs without starting a server, so it belongs in CI.
+
+Findings come in three severities:
+
+| Severity | Meaning |
+|---|---|
+| `error` | The C server refuses to boot on this. Fix it first. |
+| `warn` | The world is playable but something in it does not work — an exit to a room that was deleted, a reset command referring to a missing mob. |
+| `info` | The loader changed the data in a way the file does not state. Not a defect. |
+
+`--quiet` hides the notes; `--strict` exits non-zero on warnings as well as
+errors. Exit status is non-zero if anything at the failing severity was
+found, so it works directly as a CI step.
+
+The shipped world currently reports **0 errors, 6 warnings, 8 notes**. The
+warnings are worth knowing about:
+
+- Four complete zones (23, 90, 92, 147) and two further `.zon` files exist
+  in `lib/world/` but appear in no index, so nothing ever loads them. This
+  is silent in the C server: a builder who adds a zone and forgets the index
+  gets no error, just a world quietly missing their work.
+- Two rooms have exits locked by key objects that do not exist.
+
+The notes are all the drink-container weight adjustment, which is normal
+CircleMUD behaviour rather than a problem — the loader raises a container's
+weight when it is lighter than the liquid it holds.
+
+### Comparing against the C server
+
+```sh
+dlctl world dump --world-dir=lib/world --out=go.json
+```
+
+Writes the loaded world as canonical JSON: deterministic ordering, values
+as they are *after* load-time adjustments, and absent exits explicitly null
+so a missing exit cannot be confused with an exit to nowhere. It exists so
+that "the Go loader agrees with the C loader" is something you run rather
+than something you assert.
+
+The C side of that comparison is not built yet, so for now the check is the
+record counts — see `docs/proposals/go-port-plan.md` §10.
+
 ## Exposure
 
 Nothing here has been penetration-tested, and the game layer that would be
