@@ -2,8 +2,8 @@
 
 A field-by-field reference for the text player-file format used by
 `welmar/WipeMud` (in the archive) and produced by this repo's
-`tools/bin2ascii.c`. Companion to `docs/pfile-conversion.md` (which covers
-the *tools and what was verified*) and `docs/non-stock-features.md` (which
+`tools/bin2ascii.c`. Companion to `pfile-conversion.md` (which covers
+the *tools and what was verified*) and `non-stock-features.md` (which
 covers `Race:`/`Rmrt:`, the two fields that are Disgracelands-specific
 extensions to this format rather than part of it upstream).
 
@@ -15,7 +15,7 @@ drawn from reading its reference implementation
 (`welmar/pfiles/ascii_pfiles_2.1/full_src/db.c`'s `load_char()` and
 `save_char()`, `sprintbits()`/`asciiflag_conv()`) and cross-checked
 against real files in `welmar/WipeMud/lib/pfiles/`. **Not currently wired
-into this repo's own `src/db.c`** — see `docs/pfile-conversion.md` and
+into this repo's own `src/db.c`** — see `pfile-conversion.md` and
 `TODO.md` for that gap.
 
 ---
@@ -97,14 +97,14 @@ apply throughout:
 | `Titl` | Title | string |
 | `Desc` | Description shown on `look` | multi-line block, see below |
 | `Sex ` | 0=neutral, 1=male, 2=female | int |
-| `Clas` | Class index (0=Magic User, 1=Cleric, 2=Thief, 3=Warrior, 4=Paladin — Disgracelands-specific 5th class, see `docs/non-stock-features.md`) | int |
+| `Clas` | Class index (0=Magic User, 1=Cleric, 2=Thief, 3=Warrior, 4=Paladin — Disgracelands-specific 5th class, see `non-stock-features.md`) | int |
 | `Race` | *(WipeMud only, not upstream ascii_pfiles)* Race index (0=Human, 1=Elf, 2=Gnome, 3=Dwarf) | int |
 | `Levl` | Level | int |
 | `Home` | Home town/starting location index | int |
 | `Brth` | Birth (character-creation) time | Unix timestamp, always written |
 | `Plyd` | Total seconds played | int, always written |
 | `Last` | Last-login time | Unix timestamp, always written |
-| `Host` | Last connection host, as `hostname:port` on this codebase (see `docs/non-stock-features.md` — stock format is hostname only) | string |
+| `Host` | Last connection host, as `hostname:port` on this codebase (see `non-stock-features.md` — stock format is hostname only) | string |
 | `Hite` | Height | int |
 | `Wate` | Weight | int |
 | `Str ` | Strength | `value/percentile` (the "18/00"-style exceptional-strength bonus for warriors) |
@@ -122,7 +122,7 @@ apply throughout:
 | `Exp ` | Experience points | int |
 | `Hrol` | Hitroll bonus | int |
 | `Drol` | Damroll bonus | int |
-| `Alin` | Alignment (-1000..1000; also drives the Paladin fall-from-grace mechanic, see `docs/non-stock-features.md`) | int |
+| `Alin` | Alignment (-1000..1000; also drives the Paladin fall-from-grace mechanic, see `non-stock-features.md`) | int |
 | `Id  ` | Numeric player ID | int, always written |
 | `Act ` | Player flags (`PLR_*` — killer, thief, frozen, banned, etc.) | bitflags, see below |
 | `Aff ` | Affected-by flags (`AFF_*` — poison, invisible, sanctuary, etc.) | bitflags, see below |
@@ -135,7 +135,7 @@ apply throughout:
 | `Badp` | Consecutive bad password attempts | int |
 | `Hung`/`Thir`/`Drnk` | Hunger/thirst/drunkenness condition timers | int each (omitted entirely for immortals — they don't need food/drink) |
 | `Lern` | Practice sessions remaining | int |
-| `Rmrt` | *(Disgracelands-specific, not upstream ascii_pfiles)* Remort vector bitmask — which classes' skills/spells this character can access. See `docs/non-stock-features.md`. | int (not letter-encoded, despite being a bitmask) |
+| `Rmrt` | *(Disgracelands-specific, not upstream ascii_pfiles)* Remort vector bitmask — which classes' skills/spells this character can access. See `non-stock-features.md`. | int (not letter-encoded, despite being a bitmask) |
 | `Skil` | Skill/spell percentages | multi-line block, see below (omitted for immortals — they get all skills at 100% automatically on load) |
 | `Affs` | Active spell/skill affects | multi-line block, see below |
 | `PfIn`/`PfOt` | Custom poofin/poofout messages | string (only present if the patch was built with `ASCII_SAVE_POOFS` defined - not confirmed either way for the copy this project is based on) |
@@ -253,7 +253,7 @@ Rmrt: 0
 ```
 
 Note what's *not* here: no `Skil` block (this Zod is an implementor,
-skills are auto-maxed on load per `docs/circlemud-archive-report.md` §5's
+skills are auto-maxed on load per `circlemud-archive-report.md` §5's
 "if this is our first player --- he be God" logic, no need to save them),
 no `Affs` block (nothing active), no `Hung`/`Thir`/`Drnk` (immortals don't
 eat or drink), no `Desc` (never set one).

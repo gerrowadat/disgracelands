@@ -1,6 +1,6 @@
 // Package config resolves the server's runtime settings.
 //
-// Precedence is flags > environment > defaults, per docs/go-port-plan.md §9.1.
+// Precedence is flags > environment > defaults, per docs/proposals/go-port-plan.md §9.1.
 // Every setting is declared exactly once, in [register]; the environment
 // variable name is derived from the flag name rather than written out
 // separately, so the two cannot drift apart.
@@ -31,7 +31,7 @@ type Config struct {
 	PlayerDir string // empty means "derive from LibDir"
 	WorldDir  string // empty means "derive from LibDir"
 
-	// Pluggable format selection (docs/go-port-plan.md §5, §6).
+	// Pluggable format selection (docs/proposals/go-port-plan.md §5, §6).
 	PlayerFormat string
 	WorldFormat  string
 
@@ -103,7 +103,7 @@ var (
 
 // Default returns the configuration used when nothing is specified. Every
 // default reproduces the C server's behaviour where one exists, with the
-// documented exception of TelnetAddr (see docs/go-port-plan.md §0: plaintext
+// documented exception of TelnetAddr (see docs/proposals/go-port-plan.md §0: plaintext
 // telnet is implemented but off unless asked for).
 func Default() Config {
 	return Config{

@@ -17,9 +17,9 @@ These were settled up front and the rest of the plan assumes them:
 
 | Question | Decision |
 |---|---|
-| **Fidelity** | Faithful core, known bugs fixed. Same game feel, same mechanics (remort bitmask, Paladin alignment, the balance tweaks in `docs/non-stock-features.md`); the `sprintf`-overlap class of bugs from `TODO.md` §3 and integer-width bugs get fixed as they're encountered, each deviation recorded. Deliberate rules changes are a separate, later conversation. |
+| **Fidelity** | Faithful core, known bugs fixed. Same game feel, same mechanics (remort bitmask, Paladin alignment, the balance tweaks in `docs/investigations/non-stock-features.md`); the `sprintf`-overlap class of bugs from `TODO.md` §3 and integer-width bugs get fixed as they're encountered, each deviation recorded. Deliberate rules changes are a separate, later conversation. |
 | **Repo layout** | Same repo, new top-level Go tree. The C tree in `src/` stays buildable and authoritative for the whole port — it is the reference implementation and the parity oracle. |
-| **Scripting** | Design the seam, defer the engine. Trigger/event interfaces get defined so DG Scripts, Lua, or anything else can drop in later; v1 ships no interpreter. The tree that was actually played has no DG Scripts (`docs/non-stock-features.md`), so nothing regresses. |
+| **Scripting** | Design the seam, defer the engine. Trigger/event interfaces get defined so DG Scripts, Lua, or anything else can drop in later; v1 ships no interpreter. The tree that was actually played has no DG Scripts (`docs/investigations/non-stock-features.md`), so nothing regresses. |
 | **Protocols** | TLS-wrapped telnet, WebSocket, and telnet option negotiation (MSSP/MCCP/GMCP/MXP). |
 
 **One assumption flagged:** plain unencrypted telnet was *not* selected in
@@ -81,7 +81,7 @@ internal/
 pkg/                Only if something genuinely wants an external consumer.
 build/
   Dockerfile  docker-compose.yml
-docs/go-port-plan.md    (this file)
+docs/proposals/go-port-plan.md    (this file)
 ```
 
 `src/`, `lib/`, `doc/`, `tools/`, `reference/` are untouched. `lib/` stays
@@ -159,13 +159,13 @@ This is where the current tree is genuinely broken, and the port has to be
 deliberate about it.
 
 **The concrete existing trap** (already documented in
-`docs/pfile-conversion.md`): `struct char_file_u` contains `time_t birth`,
-`time_t last_logon`, and multiple `long` fields (`idnum`, `act`,
-`affected_by`, `pref`, the `spare17..21` slots — `structs.h:818–886`).
-These are 4 bytes in the 32-bit build that wrote the real 2001–2008 data
-and 8 bytes on a native 64-bit build, so a 64-bit `fread()` of the same
-file silently misreads everything past the first `long`. `tools/bin2ascii.c`
-has to be built `-m32` for exactly this reason.
+`docs/investigations/pfile-conversion.md`): `struct char_file_u` contains
+`time_t birth`, `time_t last_logon`, and multiple `long` fields (`idnum`,
+`act`, `affected_by`, `pref`, the `spare17..21` slots —
+`structs.h:818–886`). These are 4 bytes in the 32-bit build that wrote the
+real 2001–2008 data and 8 bytes on a native 64-bit build, so a 64-bit
+`fread()` of the same file silently misreads everything past the first
+`long`. `tools/bin2ascii.c` has to be built `-m32` for exactly this reason.
 
 **Rules for the Go port:**
 
@@ -203,8 +203,8 @@ has to be built `-m32` for exactly this reason.
    the C code relies on wraparound or on a value being clamped by its own
    narrowness (hit points, `apply_saving_throw[5]`), the Go code clamps
    explicitly and logs. Several of the "balance tweaks" in
-   `docs/non-stock-features.md` may depend on this; each needs checking
-   against the C behaviour as it's ported.
+   `docs/investigations/non-stock-features.md` may depend on this; each
+   needs checking against the C behaviour as it's ported.
 7. **Overflow checks on arithmetic that reaches player-controllable
    magnitudes**: gold, experience, `played` seconds. The C code overflows
    silently; the Go code saturates at a documented cap.
@@ -289,14 +289,14 @@ Two important sub-details:
 ascii_pfiles 2.1 compatible, one text file per player under
 `lib/pfiles/<letter>/<name>`, plus `plr_index`. `tools/bin2ascii.c` already
 produces this layout and it round-trips against genuine WipeMud-written
-files (`docs/pfile-conversion.md`).
+files (`docs/investigations/pfile-conversion.md`).
 
-**`docs/ascii-pfile-format.md` is the specification to implement against** —
-directory layout, `plr_index`, the `tag: value` convention, the
-default-omission rule, every field, the three multi-line block types
-(`Desc`/`Skil`/`Affs`) and their terminators, and the bitflag encoding.
-The Go codec should be written from that document and validated against
-the real files, not reverse-engineered again from
+**`docs/investigations/ascii-pfile-format.md` is the specification to
+implement against** — directory layout, `plr_index`, the `tag: value`
+convention, the default-omission rule, every field, the three multi-line
+block types (`Desc`/`Skil`/`Affs`) and their terminators, and the bitflag
+encoding. The Go codec should be written from that document and validated
+against the real files, not reverse-engineered again from
 `welmar/pfiles/ascii_pfiles_2.1/full_src/db.c`.
 
 One asymmetry to carry over deliberately: `Act`/`Aff`/`Pref` have two
@@ -374,7 +374,7 @@ real attention:
 
 - The C parser is forgiving in undocumented ways and the real world files
   exploit that. **Write the Go parser against `lib/world/` itself, not
-  against the format documentation in `doc/building.doc`** — where they
+  against the format documentation in `doc/building.txt`** — where they
   disagree, the live data wins, and the disagreement gets recorded.
 - Every parse must produce identical results to the C loader. The parity
   harness for this is: boot both servers, dump the loaded world to a
@@ -646,11 +646,13 @@ WipeMud race system (`TODO.md` §2).
   saving throws — asserting no overflow and no negative-where-impossible
   across the full input range, which is where the 64-bit work either holds
   or doesn't.
-- **A deviations log** (`docs/go-port-deviations.md`, created in Phase 1):
-  every intentional difference from the C behaviour, with the C line
-  reference, what it did, what Go does, and why. Under the "fix known bugs"
-  fidelity decision this file is the deliverable that keeps "fixed a bug"
-  distinguishable from "accidentally changed the game".
+- **A deviations log** (`docs/deviations.md`, created in Phase 1): every
+  intentional difference from the C behaviour, with the C line reference,
+  what it did, what Go does, and why. Under the "fix known bugs" fidelity
+  decision this file is the deliverable that keeps "fixed a bug"
+  distinguishable from "accidentally changed the game". It belongs in
+  `docs/` proper rather than here — it is a record of what the running
+  server does, not a plan.
 
 ---
 
@@ -721,8 +723,8 @@ entry is intact.
 5. Third-party add-ons carry their own terms on top: OasisOLC and (if ever
    pulled in) DG Scripts, context-sensitive help, and ascii_pfiles each
    have author credits in their headers — see the table in
-   `docs/non-stock-features.md`. Per requirement 5 above, those headers
-   carry across to the corresponding Go files.
+   `docs/investigations/non-stock-features.md`. Per requirement 5 above,
+   those headers carry across to the corresponding Go files.
 6. Publishing the repo publicly is fine and always was; it's *charging for
    it or taking donations for it* that isn't.
 
@@ -762,15 +764,23 @@ they touch:
 
 ## Related documents
 
+Operator documentation for what has actually been built lives in `docs/`
+itself — `docs/configuration.md` and `docs/operations.md`.
+
+Background this plan draws on, all under `docs/investigations/`:
+
+- `pfile-conversion.md` — the binary→ascii conversion tools and what was
+  verified; the groundwork §5 builds on.
+- `ascii-pfile-format.md` — the field-by-field ascii format spec; the
+  implementation reference for §5.3.
+- `non-stock-features.md` — the definitive list of what a "faithful" port
+  has to reproduce.
+- `circlemud-archive-report.md` — why this tree and not the other one.
+
+And outside `docs/`:
+
 - `TODO.md` — what's left in the C tree; items 1, 3 and 5 are largely
   superseded by this plan, items 2 and 4 are not.
-- `docs/pfile-conversion.md` — the binary→ascii conversion tools and what
-  was verified; the groundwork this plan's §5 builds on.
-- `docs/ascii-pfile-format.md` — the field-by-field ascii format spec; the
-  implementation reference for §5.3.
-- `docs/non-stock-features.md` — the definitive list of what a "faithful"
-  port has to reproduce.
-- `docs/circlemud-archive-report.md` — why this tree and not the other one.
-- `BUILDING.md` — the C build, which stays working throughout.
+- `BUILDING.md` — both builds, C and Go.
 - `doc/license.doc` — the CircleMUD + DikuMUD licenses the port inherits;
   see §12.

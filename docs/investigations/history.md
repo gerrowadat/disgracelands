@@ -10,7 +10,7 @@ pass, done 2026-08-15.
 Everything here refers to paths in the **archive**
 (`/home/doc/git/disgracelands/welmar/...`), not this repo — `Reborn` only
 carries the code, deliberately not the historical logs/backups it's built
-from. See `docs/circlemud-archive-report.md` for the full investigation
+from. See `circlemud-archive-report.md` for the full investigation
 this is distilled from.
 
 ## Timeline
@@ -135,5 +135,5 @@ actually stopped around then, isn't determinable from what's preserved.
 
 `Reborn/` (this repository) is seeded from `welmar/CircleMUD3` — the tree
 that was actually played 2001–2008 — rather than the more "final" but
-short-lived `WipeMud`/3.1 branch. See `docs/circlemud-archive-report.md`
+short-lived `WipeMud`/3.1 branch. See `circlemud-archive-report.md`
 §7 for why, and `TODO.md` for what's left to do.

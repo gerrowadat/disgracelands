@@ -9,9 +9,9 @@ It is **not** a stock CircleMUD checkout: this is CircleMUD 3.0 patchlevel
 20 plus the OasisOLC and DG Scripts add-ons plus years of Disgracelands'
 own local modifications (marked `<DoC>`/`</DoC>` in the source), pulled
 out of the tree that was actually live the longest — see
-`docs/circlemud-archive-report.md` for how that was determined and why it
-isn't the more "final"-looking but short-lived CircleMUD 3.1 upgrade
-attempt the original project also has lying around.
+`docs/investigations/circlemud-archive-report.md` for how that was
+determined, and why it isn't the more "final"-looking but short-lived
+CircleMUD 3.1 upgrade attempt the original project also has lying around.
 
 ## Status / where to start
 
@@ -21,15 +21,18 @@ player data, and the live game still reads/writes an old binary save
 format that hasn't been wired up to anything portable — see `TODO.md` for
 what's actually left.
 
-- **Building it**: `BUILDING.md`
+- **Building it** (both trees): `BUILDING.md`
 - **What's left to do**: `TODO.md`
-- **How Disgracelands got here**: `docs/history.md` (best-guess real-world
-  timeline) and `docs/circlemud-archive-report.md` (the full investigation
-  of the original archive this project is drawn from)
-- **Player-file conversion (tools, what was verified)**: `docs/pfile-conversion.md`
-- **Player-file format (field-by-field reference)**: `docs/ascii-pfile-format.md`
-- **Porting the engine to Go**: `docs/go-port-plan.md`
-- **What's actually custom vs. stock CircleMUD**: `docs/non-stock-features.md`
+- **All documentation, with a map of what's where**: `docs/README.md`
+
+The short version of that map:
+
+- **Running the Go server**: `docs/configuration.md` and
+  `docs/operations.md`
+- **The Go port's design and phasing**: `docs/proposals/go-port-plan.md`
+- **How Disgracelands got here, and what's custom about it**:
+  `docs/investigations/` — the archive investigation, the timeline, the
+  non-stock feature inventory, and the player-file format work
 
 ## Repo structure
 
@@ -39,7 +42,7 @@ cnf/            autoconf input (configure.in, acconfig.h) - see BUILDING.md
 configure       Generated from cnf/ - run this before `make`
 cmd/            Go port: the dlmud server and dlctl tooling binaries.
 internal/       Go port: everything else. In progress, no game in it yet -
-                see docs/go-port-plan.md. The C tree above stays the
+                see docs/proposals/go-port-plan.md. The C tree above stays the
                 working game and the reference implementation throughout.
 build/          Dockerfile and compose file for the Go server.
 lib/            Runtime game data: world files, help text, boards, etc.
@@ -49,7 +52,10 @@ log/            Runtime logs. Not committed - gitignored, kept as empty dir.
 doc/            Original stock CircleMUD documentation (building, coding,
                 running, wizhelp, etc.) - upstream reference material,
                 distinct from this project's own docs/ below.
-docs/           This project's own documentation (see "Status" above).
+docs/           This project's own documentation. The root is operator
+                docs for the Go server; docs/proposals/ is work not yet
+                done; docs/investigations/ is archaeology on the original
+                codebase. See docs/README.md.
 tools/          Modern tooling written for this revival (e.g. the binary
                 player-database-to-ascii_pfiles converter) - distinct
                 from src/util/ (the original CircleMUD-era utilities) and

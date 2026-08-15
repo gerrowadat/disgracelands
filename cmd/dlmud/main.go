@@ -1,6 +1,6 @@
 // Command dlmud is the Disgracelands server.
 //
-// Phase 0 of docs/go-port-plan.md: this wires up configuration, logging,
+// Phase 0 of docs/proposals/go-port-plan.md: this wires up configuration, logging,
 // metrics, health and signal handling. There is no game in it yet — it boots,
 // reports itself ready, serves diagnostics, and shuts down cleanly. Each later
 // phase fills in a layer between "ready" and "shutting down".
@@ -95,7 +95,7 @@ func run(args []string) error {
 
 	// Phase 1+ inserts world loading here, Phase 2 player storage, and Phase 3
 	// the listeners and pulse loop. Readiness flips once those are up.
-	logger.Warn("no game engine yet: this is a Phase 0 foundations build, see docs/go-port-plan.md")
+	logger.Warn("no game engine yet: this is a Phase 0 foundations build, see docs/proposals/go-port-plan.md")
 	health.SetReady(true)
 
 	logger.Info("ready")

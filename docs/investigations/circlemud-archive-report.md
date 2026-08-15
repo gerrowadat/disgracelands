@@ -102,7 +102,7 @@ add-on, extremely common in the CircleMUD community circa 2000-2003.
 into `welmar/WipeMud` — `CircleMUD3` (the tree that was actually played)
 never has it, confirmed by grep: no `dg_*.c` file, no `dg_*` symbol
 referenced anywhere, no `dg_*.o` in its Makefile. See
-`docs/non-stock-features.md` for the full breakdown of what's genuinely
+`non-stock-features.md` for the full breakdown of what's genuinely
 custom vs. third-party add-on vs. present in one tree but not the other.
 The one genuinely unmodified stock copy in the archive is buried in
 `tarfiles/circle30bpl19.tar` (see §3), useful as a diff baseline if you
@@ -140,7 +140,7 @@ CircleMUD embeds its version as a hex macro in `structs.h`:
 For an unmodified reference copy of 3.0 bpl19 to diff against, see
 `tarfiles/circle30bpl19.tar` — this is a plain upstream tarball with no
 Disgracelands-specific changes, useful for isolating exactly what your
-OLC/local patches changed. See `docs/non-stock-features.md` for that
+OLC/local patches changed. See `non-stock-features.md` for that
 work already done.
 
 ---
@@ -288,7 +288,7 @@ base to get the older/richer roster into the same safe text format.
 
 ## 7. Baseline decision, and the stock-3.1 comparison behind it
 
-**See `docs/non-stock-features.md` for the full, feature-by-feature
+**See `non-stock-features.md` for the full, feature-by-feature
 version of this section** — every `<DoC>`-tagged change in both trees,
 read and characterized, not just counted. It confirms the "~21 dropped
 mods" finding below was directionally right but understates it: several
@@ -462,7 +462,7 @@ Current state, across 4 commits:
    `Reborn/tools/pfiledump.c` reads ascii pfiles back. Both a genuine
    WipeMud-produced ascii pfile and a freshly-converted CircleMUD3 one
    parse cleanly; all 108 converted characters pass a clean sweep.
-   Full detail in `Reborn/docs/pfile-conversion.md`.
+   Full detail in `Reborn/docs/investigations/pfile-conversion.md`.
 
 **A concrete non-SPARC portability trap turned up along the way**: `struct
 char_file_u` has several `long`-typed fields (`idnum`, `act`, `affected_by`,
@@ -475,12 +475,12 @@ rebuild too, SPARC or not. `bin2ascii` is deliberately built 32-bit to
 avoid it, and the resulting ascii files are architecture-independent going
 forward.
 
-**Not done yet** (see `Reborn/docs/pfile-conversion.md` for the honest
-scope note): the live game binary still reads/writes the old binary format
-at runtime — the conversion above is a proven-correct one-shot offline
-migration, not yet wired into `db.c`'s actual login/save path. That's
-real, password-adjacent work spanning several files
-(`comm.c`, `interpreter.c`, `act.wizard.c`, `house.c`, `mail.c`, the
-`src/util/` tools), and was deliberately left as documented follow-up
-rather than rushed. `Reborn`'s own `db.c` has zero local `<DoC>` mods
-(§7), so it's one of the lower-risk files to eventually patch.
+**Not done yet** (see `Reborn/docs/investigations/pfile-conversion.md` for
+the honest scope note): the live game binary still reads/writes the old
+binary format at runtime — the conversion above is a proven-correct
+one-shot offline migration, not yet wired into `db.c`'s actual login/save
+path. That's real, password-adjacent work spanning several files (`comm.c`,
+`interpreter.c`, `act.wizard.c`, `house.c`, `mail.c`, the `src/util/`
+tools), and was deliberately left as documented follow-up rather than
+rushed. `Reborn`'s own `db.c` has zero local `<DoC>` mods (§7), so it's one
+of the lower-risk files to eventually patch.

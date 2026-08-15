@@ -21,6 +21,6 @@ build.
 - **`bin2ascii.c`** — converts the classic binary player database
   (`struct char_file_u` records) into the portable `ascii_pfiles` text
   format. Must be built 32-bit — see the comment at the top of the file
-  for why. Full writeup: `../docs/pfile-conversion.md`.
+  for why. Full writeup: `../docs/investigations/pfile-conversion.md`.
 - **`pfiledump.c`** — reads and prints any `ascii_pfiles`-format player
   file. Ordinary native build.

@@ -7,7 +7,7 @@
  *
  * This exists to prove the ascii pfile format is actually readable
  * end-to-end (not just "we wrote something that looks plausible") -
- * see docs/pfile-conversion.md.
+ * see docs/investigations/pfile-conversion.md.
  *
  * Build (from Reborn/, the repo root):
  *   gcc -std=gnu89 -w -o bin/pfiledump tools/pfiledump.c

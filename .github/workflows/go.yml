@@ -1,5 +1,5 @@
 # CI for the Go port. The C tree has its own build (BUILDING.md) and is not
-# covered here; see docs/go-port-plan.md §2 for why both exist.
+# covered here; see docs/proposals/go-port-plan.md §2 for why both exist.
 name: go
 
 on:
@@ -42,7 +42,7 @@ jobs:
           fi
 
       # -race is not optional here. The port keeps the C server's single
-      # game goroutine (docs/go-port-plan.md §3.1), and the whole safety
+      # game goroutine (docs/proposals/go-port-plan.md §3.1), and the whole safety
       # argument for that design rests on nothing else touching world state.
       - name: Test
         run: go test -race -count=1 ./...
@@ -56,6 +56,24 @@ jobs:
             grep -q -- "-$opt" help.txt || { echo "missing --$opt in --help"; exit 1; }
           done
           grep -q 'DL_LIB_DIR' help.txt || { echo "--help does not document env vars"; exit 1; }
+
+      # docs/configuration.md is the operator-facing copy of the flag set, and
+      # a settings reference that silently drops a flag is worse than none.
+      # This cannot check the prose is accurate, only that nothing is missing.
+      - name: docs/configuration.md covers every flag
+        run: |
+          go run ./cmd/dlmud --help 2>&1 \
+            | sed -n 's/^  -\([a-z][a-z0-9-]*\).*/\1/p' \
+            | sort -u > flags.txt
+          missing=0
+          while read -r flag; do
+            # Single-letter names are the C-compatibility aliases, documented
+            # as a group rather than one row each.
+            [ "${#flag}" -le 1 ] && continue
+            grep -q -- "--$flag" docs/configuration.md || {
+              echo "docs/configuration.md does not mention --$flag"; missing=1; }
+          done < flags.txt
+          exit $missing
 
   lint:
     runs-on: ubuntu-latest

@@ -2,8 +2,9 @@
 
 Current state: compiles clean on modern Linux, boots, serves the real
 Disgracelands banner, world data loads. No player data ships with the
-repo on purpose (see `.gitignore` and `docs/pfile-conversion.md`) — a
-fresh checkout starts blank, and per `src/db.c`'s
+repo on purpose (see `.gitignore` and
+`docs/investigations/pfile-conversion.md`) — a fresh checkout starts blank,
+and per `src/db.c`'s
 "if this is our first player --- he be God" (~line 2705), whoever
 registers first on a blank `lib/etc/players` is auto-promoted to
 Implementor. That's the intended way to bootstrap a fresh install, not a
@@ -30,7 +31,8 @@ Right now `src/db.c` still reads/writes the original binary
 `bin2ascii`/`pfiledump` prove the ascii format is readable, but nothing in
 the actual game uses it yet. This is the biggest real remaining piece of
 work. Reference implementation, scope, and known gaps (the `Aff`/`Pref`
-flag encoding in particular) are written up in `docs/pfile-conversion.md`.
+flag encoding in particular) are written up in
+`docs/investigations/pfile-conversion.md`.
 Touches: `db.c` (low risk — zero local `<DoC>` mods), plus `comm.c`,
 `interpreter.c`, `act.wizard.c`, `house.c`, `mail.c`, and the
 `src/util/*` tools that currently assume the binary format directly.
@@ -47,9 +49,9 @@ It has at least one feature `CircleMUD3` never got: a race system
 in `bin2ascii`'s output). Worth a look before deciding it's not wanted —
 diff `reference/WipeMud-src/src` against `src/` to see what else is there
 that isn't in the `<DoC>`-tag comparison already done in
-`docs/circlemud-archive-report.md` §7 (that comparison only covered files
-both trees share; anything WipeMud-only, like `races.c`, wouldn't show up
-in it).
+`docs/investigations/circlemud-archive-report.md` §7 (that comparison only
+covered files both trees share; anything WipeMud-only, like `races.c`,
+wouldn't show up in it).
 
 ## 3. Audit the build warnings that look like real bugs
 

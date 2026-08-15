@@ -14,7 +14,7 @@
  * build and 8 bytes on a native 64-bit build - a plain 64-bit fread()
  * of this struct silently misreads the file (wrong offsets past the
  * first `long`, not just wrong byte order). This has nothing to do with
- * SPARC/endianness (see docs/circlemud-archive-report.md S0/S5) - it's
+ * SPARC/endianness (see docs/investigations/circlemud-archive-report.md S0/S5) - it's
  * an ILP32-vs-LP64 struct layout mismatch that would bite on a 64-bit
  * Linux or 64-bit FreeBSD rebuild just as much as anywhere else.
  *
@@ -180,7 +180,7 @@ int main(int argc, char **argv) {
     write_ascii_pfile(argv[2], &rec);
     /* plr_index uses the lowercased name (matches the filename), and a
      * literal "0" rather than an empty string for zero flags - see
-     * docs/ascii-pfile-format.md for why. */
+     * docs/investigations/ascii-pfile-format.md for why. */
     strncpy(lname, rec.name, MAX_NAME_LENGTH);
     lname[MAX_NAME_LENGTH] = '\0';
     lowercase(lname);
@@ -196,6 +196,6 @@ int main(int argc, char **argv) {
          count, ok, argv[2]);
   printf("sizeof(struct char_file_u) here = %zu (sanity check against the\n"
          "source file size: it should divide evenly, same as the analysis\n"
-         "in docs/circlemud-archive-report.md S5)\n", sizeof(struct char_file_u));
+         "in docs/investigations/circlemud-archive-report.md S5)\n", sizeof(struct char_file_u));
   return 0;
 }

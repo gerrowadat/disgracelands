@@ -1,7 +1,7 @@
 // Command dlctl is the offline tooling for Disgracelands: format conversion,
 // world linting, and the jobs the C tree spread across src/util/ and tools/.
 //
-// Phase 0 of docs/go-port-plan.md establishes the command structure. The
+// Phase 0 of docs/proposals/go-port-plan.md establishes the command structure. The
 // subcommands that need the persistence layers report which phase implements
 // them rather than pretending to work.
 package main
@@ -93,7 +93,7 @@ func run(args []string) error {
 		}
 		rest := args[len(strings.Fields(c.name)):]
 		if c.run == nil {
-			return fmt.Errorf("%q is not implemented yet: it lands in Phase %d, see docs/go-port-plan.md §10", c.name, c.phase)
+			return fmt.Errorf("%q is not implemented yet: it lands in Phase %d, see docs/proposals/go-port-plan.md §10", c.name, c.phase)
 		}
 		return c.run(rest)
 	}

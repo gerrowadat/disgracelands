@@ -1,11 +1,11 @@
 # Non-stock features: what Disgracelands actually changed
 
-An enumeration of everything in the two source trees (`../reference/CircleMUD3-src`
-— "the regular mud", the one actually played 2001–2008 — and
-`../reference/WipeMud-src` — the abandoned May 2003 upgrade attempt) that
-isn't in stock CircleMUD, and which of the two trees each feature is
-actually in. See `docs/circlemud-archive-report.md` for how these two
-trees relate, and `docs/history.md` for the timeline.
+An enumeration of everything in the two source trees
+(`reference/CircleMUD3-src` — "the regular mud", the one actually played
+2001–2008 — and `reference/WipeMud-src` — the abandoned May 2003 upgrade
+attempt) that isn't in stock CircleMUD, and which of the two trees each
+feature is actually in. See `circlemud-archive-report.md` for how these two
+trees relate, and `history.md` for the timeline.
 
 ## Method
 
@@ -18,7 +18,7 @@ Two independent checks, cross-referenced:
    lists finds whole files that don't exist upstream at all.
 2. **The `<DoC>`/`</DoC>` comment convention.** Both trees mark local
    changes to otherwise-stock files this way (see
-   `docs/circlemud-archive-report.md` §7). Every tagged block in both
+   `circlemud-archive-report.md` §7). Every tagged block in both
    trees was read and characterized for this document — not just counted.
 
 **Caveat**: `<DoC>` tags are not a complete inventory. Some custom content
@@ -41,7 +41,7 @@ hand-rolled from scratch:
 | **OasisOLC** | ✅ | ✅ | Online building/editing (`redit`/`oedit`/`medit`/`zedit`/`sedit`/`tedit`, the `gen*.c` generic-editor framework) — build the world in-game instead of hand-editing flat files. |
 | **DG Scripts** | ❌ | ✅ | A full scripting/trigger engine for mobs/objects/rooms (`dg_*.c`, 10 files). Public patch, versioned internally as "DG Scripts 0.99 pl9, 07/02", authored by George Greer (`egreen`) — one of the actual CircleMUD core maintainers, not a random third party. **Not present in the tree that was actually played.** |
 | **Context-sensitive help for OLC** | ❌ | ✅ | `context_help.c`, credited in its own header comment to "Welcor" (a known CircleMUD-community patch author, not local). |
-| **ascii_pfiles 2.1** | ❌ (native binary `struct char_file_u` dump) | ✅ | Converts player saves from a raw binary struct to one human-readable text file per player. See `docs/pfile-conversion.md`. |
+| **ascii_pfiles 2.1** | ❌ (native binary `struct char_file_u` dump) | ✅ | Converts player saves from a raw binary struct to one human-readable text file per player. See `pfile-conversion.md`. |
 
 One correction to an earlier draft of the archive report: **CircleMUD3
 does not have DG Scripts.** No `dg_*.c` file exists in it, nothing in it
@@ -224,7 +224,7 @@ Plus race-appropriate height/weight ranges rolled at creation, and
 race-restricted equipment (`ITEM_ANTI_HUMAN`/`_ELF`/`_DWARF`/`_GNOME`
 object flags, checked the same way the stock class-restriction flags
 are). `bin2ascii.c`'s converter already stubs a `Race: 0` field in its
-output in anticipation of this (§ `docs/pfile-conversion.md`).
+output in anticipation of this (§ `pfile-conversion.md`).
 
 ### DG Scripts, context-sensitive OLC help, ascii pfiles
 
@@ -257,6 +257,6 @@ symbols directly:
 
 Practical read: if a future decision ever revisits "should we use WipeMud
 instead," the honest cost isn't just the empty player roster (already
-covered in `docs/circlemud-archive-report.md`) — it's losing the entire
+covered in `circlemud-archive-report.md`) — it's losing the entire
 Paladin class mechanic and the new spells outright, and reducing the
 remort system to bookkeeping with nothing plugged into it.

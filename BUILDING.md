@@ -81,16 +81,20 @@ locally.
   internet again — several look like genuine (if old and apparently never
   triggered) buffer-overflow-shaped bugs, not just style complaints.
 - No 64-bit-vs-32-bit audit of anything that touches saved binary data
-  (the player database — see `docs/pfile-conversion.md`) has been done
-  beyond the player-file struct itself. The Go port addresses this
-  systematically rather than incrementally — see `docs/go-port-plan.md` §4.
+  (the player database — see `docs/investigations/pfile-conversion.md`)
+  has been done beyond the player-file struct itself. The Go port
+  addresses this systematically rather than incrementally — see
+  `docs/proposals/go-port-plan.md` §4.
 
 ---
 
 # Building the Go tree
 
-The in-progress port (`docs/go-port-plan.md`). Needs Go 1.25+ and nothing
-else — no autoconf, no 32-bit toolchain, no `./configure`.
+The in-progress port (`docs/proposals/go-port-plan.md`). Needs Go 1.25+ and
+nothing else — no autoconf, no 32-bit toolchain, no `./configure`.
+
+This section covers *building*. For running and administering the result,
+see `docs/operations.md`; for the full settings list, `docs/configuration.md`.
 
 ```sh
 go build ./...          # both binaries
@@ -112,7 +116,7 @@ Two binaries:
 **There is no game in it yet.** `dlmud` boots, reports itself ready, serves
 diagnostics and shuts down cleanly on SIGTERM. That is the whole of Phase 0.
 Phases 1 and 2 add world and player loading, Phase 3 the listeners and pulse
-loop — see `docs/go-port-plan.md` §10.
+loop — see `docs/proposals/go-port-plan.md` §10.
 
 It needs at least one listener, and the TLS listener (on by default) needs a
 certificate, so the shortest thing that actually starts is:

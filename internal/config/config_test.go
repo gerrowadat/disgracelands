@@ -58,7 +58,7 @@ func TestDefaultsAreValid(t *testing.T) {
 }
 
 func TestPlaintextTelnetIsOffByDefault(t *testing.T) {
-	// docs/go-port-plan.md §0: implemented, but never on unless asked for.
+	// docs/proposals/go-port-plan.md §0: implemented, but never on unless asked for.
 	if got := Default().TelnetAddr; got != "" {
 		t.Errorf("Default().TelnetAddr = %q, want empty", got)
 	}
