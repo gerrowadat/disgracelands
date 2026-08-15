@@ -1,0 +1,5 @@
+gcc -I. -DCIRCLE_UNIX  -g -O2 -Wall  -c autoeq_conv.c
+gcc -g -O2 -Wall  act.comm.o act.informative.o act.item.o act.movement.o  act.offensive.o act.other.o act.social.o act.wizard.o alias.o ban.o  boards.o castle.o class.o config.o constants.o db.o fight.o  graph.o handler.o house.o interpreter.o limits.o magic.o mail.o  mobact.o modify.o objsave.o olc.o random.o shop.o spec_assign.o  spec_procs.o spell_parser.o spells.o utils.o weather.o autoeq_conv.o -o autoeq_conv
+*** Error code 1
+
+Stop in /old-disk/guest/mud/CircleMUD3/src.
