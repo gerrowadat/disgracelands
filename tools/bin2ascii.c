@@ -173,14 +173,22 @@ int main(int argc, char **argv) {
     die("couldn't open plr_index for writing");
 
   while (fread(&rec, sizeof(struct char_file_u), 1, in) == 1) {
+    char lname[MAX_NAME_LENGTH + 1];
     count++;
     if (!rec.name[0])
       continue; /* deleted/empty slot */
     write_ascii_pfile(argv[2], &rec);
-    fprintf(idx, "%d %s %d %d %ld\n", count,
-            rec.name, rec.level, 0, (long)rec.last_logon);
+    /* plr_index uses the lowercased name (matches the filename), and a
+     * literal "0" rather than an empty string for zero flags - see
+     * docs/ascii-pfile-format.md for why. */
+    strncpy(lname, rec.name, MAX_NAME_LENGTH);
+    lname[MAX_NAME_LENGTH] = '\0';
+    lowercase(lname);
+    fprintf(idx, "%d %s %d 0 %ld\n", count,
+            lname, rec.level, (long)rec.last_logon);
     ok++;
   }
+  fprintf(idx, "~\n"); /* plr_index terminator, per the reference format */
   fclose(idx);
   fclose(in);
 

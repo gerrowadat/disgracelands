@@ -26,7 +26,8 @@ what's actually left.
 - **How Disgracelands got here**: `docs/history.md` (best-guess real-world
   timeline) and `docs/circlemud-archive-report.md` (the full investigation
   of the original archive this project is drawn from)
-- **Player-file format**: `docs/pfile-conversion.md`
+- **Player-file conversion (tools, what was verified)**: `docs/pfile-conversion.md`
+- **Player-file format (field-by-field reference)**: `docs/ascii-pfile-format.md`
 - **What's actually custom vs. stock CircleMUD**: `docs/non-stock-features.md`
 
 ## Repo structure

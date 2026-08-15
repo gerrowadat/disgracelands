@@ -1,14 +1,16 @@
 # Player-file conversion: binary → ascii_pfiles
 
+Covers the conversion tools and what's been verified. For the ascii
+format itself, field by field, see `ascii-pfile-format.md`.
+
 ## What this is
 
 CircleMUD3 (this tree's origin) stored all players as fixed-size
 `struct char_file_u` records in one flat binary file, `lib/etc/players`
-(108 real characters, played 2001–2008 — see
-`../../docs/circlemud-archive-report.md` in the archive repo for the full
-history). That format is architecture-sensitive: it's a raw `fwrite()` of
-a C struct, so reading it back correctly depends on matching struct
-layout exactly, not just byte order.
+(108 real characters, played 2001–2008 — see `circlemud-archive-report.md`
+for the full history). That format is architecture-sensitive: it's a raw
+`fwrite()` of a C struct, so reading it back correctly depends on matching
+struct layout exactly, not just byte order.
 
 `welmar/WipeMud` (the abandoned 2003 upgrade attempt) had already moved to
 the `ascii_pfiles 2.1` third-party patch — one human-readable text file per
