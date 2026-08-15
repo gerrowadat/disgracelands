@@ -43,6 +43,10 @@ doc/            Original stock CircleMUD documentation (building, coding,
                 running, wizhelp, etc.) - upstream reference material,
                 distinct from this project's own docs/ below.
 docs/           This project's own documentation (see "Status" above).
+tools/          Modern tooling written for this revival (e.g. the binary
+                player-database-to-ascii_pfiles converter) - distinct
+                from src/util/ (the original CircleMUD-era utilities) and
+                reference/ below. See tools/README.md.
 reference/      Code-only snapshots of the two other Disgracelands-lineage
                 codebases (the pre-upgrade CircleMUD3 baseline itself, and
                 the abandoned CircleMUD 3.1 "WipeMud" upgrade attempt) -

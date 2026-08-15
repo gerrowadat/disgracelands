@@ -456,10 +456,10 @@ Current state, across 4 commits:
    certainly where the `welmar` account/directory name actually comes
    from, nothing SPARC-related), and served the login prompt over a raw
    socket connection.
-4. **Player-file conversion built and verified**: `Reborn/src/util/bin2ascii.c`
+4. **Player-file conversion built and verified**: `Reborn/tools/bin2ascii.c`
    converts the real 108-character binary database into the
    `ascii_pfiles` text format (must be built 32-bit — see below);
-   `Reborn/src/util/pfiledump.c` reads ascii pfiles back. Both a genuine
+   `Reborn/tools/pfiledump.c` reads ascii pfiles back. Both a genuine
    WipeMud-produced ascii pfile and a freshly-converted CircleMUD3 one
    parse cleanly; all 108 converted characters pass a clean sweep.
    Full detail in `Reborn/docs/pfile-conversion.md`.

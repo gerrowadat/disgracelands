@@ -18,11 +18,11 @@
  * an ILP32-vs-LP64 struct layout mismatch that would bite on a 64-bit
  * Linux or 64-bit FreeBSD rebuild just as much as anywhere else.
  *
- * Build (from Reborn/src):
- *   gcc -m32 -std=gnu89 -fcommon -w -I. -o ../bin/bin2ascii util/bin2ascii.c
+ * Build (from Reborn/, the repo root):
+ *   gcc -m32 -std=gnu89 -fcommon -w -Isrc -o bin/bin2ascii tools/bin2ascii.c
  *
  * Usage:
- *   bin2ascii <path-to-binary-players-db> <output-pfiles-dir>
+ *   bin/bin2ascii <path-to-binary-players-db> <output-pfiles-dir>
  *
  * Writes <output-pfiles-dir>/<first-letter>/<lowercased-name> for every
  * record, plus a plr_index file, in the same shape WipeMud's real

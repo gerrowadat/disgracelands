@@ -16,7 +16,7 @@ this repo: `../welmar/CircleMUD3/lib/etc/players` (binary). To use it
 locally:
 
 ```sh
-gcc -m32 -std=gnu89 -fcommon -w -Isrc -o bin/bin2ascii src/util/bin2ascii.c
+gcc -m32 -std=gnu89 -fcommon -w -Isrc -o bin/bin2ascii tools/bin2ascii.c
 bin/bin2ascii ../welmar/CircleMUD3/lib/etc/players lib/pfiles
 ```
 

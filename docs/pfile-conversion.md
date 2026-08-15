@@ -16,7 +16,7 @@ player instead of a binary blob. That's the right target format for
 `Reborn` too: portable, diffable, and (bonus) directly git-trackable per
 player if you ever want that.
 
-## Tools (`src/util/`)
+## Tools (`tools/`)
 
 - **`bin2ascii.c`** — reads the binary `struct char_file_u` database and
   writes one ascii_pfiles-format file per player under `lib/pfiles/<first
@@ -35,7 +35,7 @@ player if you ever want that.
 ## What was actually verified
 
 ```
-$ gcc -m32 -std=gnu89 -fcommon -w -Isrc -o bin/bin2ascii src/util/bin2ascii.c
+$ gcc -m32 -std=gnu89 -fcommon -w -Isrc -o bin/bin2ascii tools/bin2ascii.c
 $ bin/bin2ascii lib/etc/players lib/pfiles
 bin2ascii: 108 records read, 108 non-empty players converted into lib/pfiles
 

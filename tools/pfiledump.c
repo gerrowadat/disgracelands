@@ -2,14 +2,17 @@
  * pfiledump.c - read and print any ascii_pfiles-format player file
  * (WipeMud's genuine post-conversion files, or ones freshly produced by
  * bin2ascii). Pure text parsing, no structs.h dependency, so this is a
- * completely ordinary native build (part of `make utils`) - it doesn't
- * care what compiled the game binary or what wrote the ascii file.
+ * completely ordinary native build - it doesn't care what compiled the
+ * game binary or what wrote the ascii file.
  *
  * This exists to prove the ascii pfile format is actually readable
  * end-to-end (not just "we wrote something that looks plausible") -
  * see docs/pfile-conversion.md.
  *
- * Usage: pfiledump <path-to-ascii-pfile> [<path> ...]
+ * Build (from Reborn/, the repo root):
+ *   gcc -std=gnu89 -w -o bin/pfiledump tools/pfiledump.c
+ *
+ * Usage: bin/pfiledump <path-to-ascii-pfile> [<path> ...]
  */
 
 #include <stdio.h>
