@@ -28,6 +28,7 @@ what's actually left.
   of the original archive this project is drawn from)
 - **Player-file conversion (tools, what was verified)**: `docs/pfile-conversion.md`
 - **Player-file format (field-by-field reference)**: `docs/ascii-pfile-format.md`
+- **Porting the engine to Go**: `docs/go-port-plan.md`
 - **What's actually custom vs. stock CircleMUD**: `docs/non-stock-features.md`
 
 ## Repo structure
