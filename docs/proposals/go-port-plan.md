@@ -22,6 +22,15 @@ These were settled up front and the rest of the plan assumes them:
 | **Scripting** | Design the seam, defer the engine. Trigger/event interfaces get defined so DG Scripts, Lua, or anything else can drop in later; v1 ships no interpreter. The tree that was actually played has no DG Scripts (`docs/investigations/non-stock-features.md`), so nothing regresses. |
 | **Protocols** | TLS-wrapped telnet, WebSocket, and telnet option negotiation (MSSP/MCCP/GMCP/MXP). |
 
+**Decisions taken since, each reversing or settling something above:**
+
+| Question | Decision |
+|---|---|
+| **Text encoding** | **UTF-8 throughout.** The server works in UTF-8 and nothing else. Old CP1252 data is converted once by `dlctl convert`, not decoded per-connection forever — the same principle the player formats follow (§5.2). The world loader still reads bytes transparently, because transcoding at load time would change what a writer later emits; `dlctl world lint` reports anything not yet converted. Answers what was §13.1. |
+| **Web client** | **Wanted, not merely kept open.** A self-hosted optional web front end is a real intention, so GMCP and the WebSocket transport get built properly rather than minimally. The reasoning is worth recording: telnet clients are ageing out, and a MUD whose only door is TinyFugue has a shrinking number of people who can walk through it. Answers what was §13.4. |
+| **Legacy passwords** | **Accepted and upgraded on login; nobody is reset.** Answers what was §13.5. |
+| **Old data directories** | **Converted, not carried.** `dlctl convert` takes an original CircleMUD `lib/` and produces a directory the server runs on. It refuses to guess: the binary formats it does not yet understand are copied byte for byte and reported, because a byte-level transcode of a struct dump corrupts it twice over. |
+
 **One assumption flagged:** plain unencrypted telnet was *not* selected in
 that list. This plan keeps a plaintext telnet listener implemented and
 present, but **off by default**, enabled only with `--listen-telnet`. That
@@ -815,6 +824,24 @@ around and move (`look`, `north`, `who`, `quit`). *Done when: a real player
 can log in with an archived character over TLS and walk from the Temple of
 Midgaard to New Thalos.*
 
+Three things that are not optional in this phase, for reasons outside the
+phase itself:
+
+- **`credits` and `help circlemud` are licence compliance**, not features to
+  defer (§12). They belong alongside `look` and `who`.
+- **The greeting file must be emitted on every transport**, WebSocket
+  included. A web client that renders its own splash screen and skips it is
+  a licence violation, not a UI choice — worth a test in the parity harness.
+- **GMCP is built properly**, because a web front end is intended rather
+  than hypothetical (§0). Out-of-band structured data for prompts, vitals
+  and room information is what lets a browser client be a real client
+  instead of a screen-scraper.
+
+Output is UTF-8 (§0). The protocol layer negotiates CHARSET and transcodes
+*outbound* for clients that ask for something else, which is a per-connection
+concern and the right place for it — as against decoding the world files on
+every read, which is what `dlctl convert` exists to make unnecessary.
+
 **Phase 4 — Rules core.** Combat, magic, skills, classes including the
 remort bitmask, affects, position/regen, death and corpses, zone resets,
 mobile activity. The largest phase; the deviations log from the fidelity
@@ -983,25 +1010,14 @@ tree is the one being ported.
 Not blocking the plan, but they need answers before or during the phases
 they touch:
 
-1. **Latin-1 vs UTF-8.** The world files, help text and player descriptions
-   are 8-bit-clean but not UTF-8. Does the Go server transcode on load
-   (clean, but changes the on-disk world if OLC ever writes back), on
-   output per-client via CHARSET (faithful, more complex), or neither?
-   (Phase 1.)
-2. **Does `data/` stay the on-disk contract**, or does the Go server get its
+1. **Does `data/` stay the on-disk contract**, or does the Go server get its
    own data directory layout with a migration? Staying compatible is what
    makes side-by-side parity testing work, so this plan assumes it stays —
    but it does constrain things. (Phase 1.)
-3. **How faithful does OLC need to be** — a port of OasisOLC's exact menu
+2. **How faithful does OLC need to be** — a port of OasisOLC's exact menu
    trees, or a modern equivalent that produces the same files? (Phase 6.)
-4. **Is a web client actually wanted**, or is WebSocket support just about
-   keeping the option open? Affects how much goes into GMCP, and note the
-   greeting-file requirement in §12.3. (Phase 3.)
-5. **Password reset path for the 2001–2008 roster.** Those DES hashes are
-   8-effective-characters with a public salt; anyone who had an account
-   then may not be reachable now. Force-reset on first login, or accept the
-   legacy hash and upgrade transparently? This plan assumes the latter,
-   which is friendlier and weaker. (Phase 2.)
+
+All the others are now decided; see §0.
 
 ---
 

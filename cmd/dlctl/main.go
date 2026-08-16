@@ -48,6 +48,11 @@ var commands = []command{
 		run:     cmdVersion,
 	},
 	{
+		name:    "convert",
+		summary: "Convert an old CircleMUD data directory into one the server can run on",
+		run:     cmdConvert,
+	},
+	{
 		name:    "world lint",
 		summary: "Check world files for errors (replaces the C tree's scheck, and dlmud -c)",
 		run:     cmdWorldLint,

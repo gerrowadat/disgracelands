@@ -206,6 +206,10 @@ Findings come in three severities:
 errors. Exit status is non-zero if anything at the failing severity was
 found, so it works directly as a CI step.
 
+`world lint` also reports world text that is not valid UTF-8, which is how
+you find out a directory still needs converting. The server works in UTF-8;
+see `dlctl convert` above.
+
 The shipped world currently reports **0 errors, 20 warnings, 8 notes**. The
 warnings are worth knowing about:
 
@@ -223,7 +227,43 @@ The notes are all the drink-container weight adjustment, which is normal
 CircleMUD behaviour rather than a problem — the loader raises a container's
 weight when it is lighter than the liquid it holds.
 
-### Converting an old roster
+### Converting an old data directory
+
+If you have an original CircleMUD `lib/`, convert the whole thing once:
+
+```sh
+dlctl convert --from=/path/to/old/lib --to=data --dry-run   # look first
+dlctl convert --from=/path/to/old/lib --to=data
+```
+
+That does three things: reformats the binary player database as ascii
+pfiles, converts text from CP1252 to UTF-8, and copies everything else
+across. `--encoding=latin1` if the source really is Latin-1 rather than
+CP1252 — they differ only at bytes 0x80–0x9F, which is exactly where the
+curly quotes a word processor inserts live, so the default is usually right.
+
+**It refuses to guess.** Several files in a CircleMUD data directory are
+struct dumps rather than text — the message boards, player mail, house
+contents, rent files. Running a byte-level transcode over one of those
+corrupts it twice: once by rewriting bytes that were never characters, and
+again by changing the length of text whose length is stored separately in
+the file. Those are copied byte for byte and listed at the end of the run,
+each with the phase that will handle it:
+
+```
+5 file(s) are binary formats this cannot convert yet. They have been
+copied exactly as they are, because a byte-level conversion would corrupt
+them — they hold struct fields and length-prefixed text, not characters.
+
+  etc/board.mort
+    message board: a struct dump with length-prefixed text; converted when boards are implemented
+```
+
+Converting into a directory that already has something in it needs
+`--force`, and converting a directory into itself is refused outright — a
+conversion that failed part way would otherwise leave it half done.
+
+### Converting only the player roster
 
 The server runs on the ascii format and refuses to start on the original
 binary one — see `docs/configuration.md`. An existing data directory is

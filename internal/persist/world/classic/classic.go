@@ -21,6 +21,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/gerrowadat/disgracelands/internal/game"
 	"github.com/gerrowadat/disgracelands/internal/persist/world"
@@ -153,6 +154,7 @@ func (s *Source) LoadWithWarnings(ctx context.Context) (*game.World, []Warning, 
 	l.assignRoomZones(w)
 	l.resolveShopReferences(w)
 	l.checkReferences(w)
+	l.checkEncoding(w)
 
 	return w, l.warnings, nil
 }
@@ -349,6 +351,64 @@ func (l *loader) assignRoomZones(w *game.World) {
 			room.Zone = -1
 			l.errorf("room #%d is outside every zone's vnum range; the C loader exits on this", room.Vnum)
 		}
+	}
+}
+
+// checkEncoding reports world text that is not valid UTF-8.
+//
+// The parser deliberately treats these files as opaque bytes, because
+// transcoding at load time would change what a writer later emits. The server
+// works in UTF-8 though, so anything that is not is a conversion that has not
+// happened — `dlctl convert` does it once, rather than every connection
+// decoding it forever.
+//
+// This is a warning rather than an error: the C server neither knew nor cared
+// what encoding its files were in, and a world with a stray CP1252 apostrophe
+// still loads and still plays.
+func (l *loader) checkEncoding(w *game.World) {
+	type counter struct {
+		records int
+		example string
+	}
+	var bad counter
+
+	note := func(what, text string) {
+		if text == "" || utf8.ValidString(text) {
+			return
+		}
+		bad.records++
+		if bad.example == "" {
+			bad.example = what
+		}
+	}
+
+	for _, r := range w.Rooms {
+		note(fmt.Sprintf("room #%d", r.Vnum), r.Name)
+		note(fmt.Sprintf("room #%d", r.Vnum), r.Description)
+		for _, e := range r.ExtraDescs {
+			note(fmt.Sprintf("room #%d extra description", r.Vnum), e.Description)
+		}
+		for dir, e := range r.Exits {
+			if e != nil {
+				note(fmt.Sprintf("room #%d %s exit", r.Vnum, game.Direction(dir)), e.Description)
+			}
+		}
+	}
+	for _, m := range w.Mobiles {
+		note(fmt.Sprintf("mob #%d", m.Vnum), m.ShortDesc)
+		note(fmt.Sprintf("mob #%d", m.Vnum), m.LongDesc)
+		note(fmt.Sprintf("mob #%d", m.Vnum), m.Description)
+	}
+	for _, o := range w.Objects {
+		note(fmt.Sprintf("object #%d", o.Vnum), o.ShortDesc)
+		note(fmt.Sprintf("object #%d", o.Vnum), o.Description)
+	}
+
+	if bad.records > 0 {
+		l.warnf("%d piece(s) of world text are not valid UTF-8 (first: %s). "+
+			"The server works in UTF-8; convert the directory once with "+
+			"`dlctl convert` rather than leaving it to be decoded per connection",
+			bad.records, bad.example)
 	}
 }
 
