@@ -724,7 +724,7 @@ recording, and the espec key/value lines, which `interpret_espec()` folds
 into ordinary fields and discards. The Go loader keeps both because they are
 useful; comparing them could only ever produce noise.
 
-**Phase 2 — Player loading. 🟡 In progress.** `persist/player` interface,
+**Phase 2 — Player loading. ✅ Done.** `persist/player` interface,
 `binary` implementation (§4/§5.3), `ascii` implementation, `dlctl pfile
 convert|verify|dump`. Password verification and rehash-on-login logic,
 unit-tested against known vectors.
@@ -781,12 +781,28 @@ the binary format holds — including the remort vector, which lives in what
 upstream calls a spare slot and is exactly the sort of thing a conversion
 drops without anyone noticing until a character's skills stop working.
 
-**Still outstanding:** the password work itself — DES verification for the
-existing roster, a modern scheme to upgrade to, and the rehash-on-login path
-that connects them. Nothing else blocks it now. **Read §5.3.1 before
-starting it**: the stored hash is a 10-character prefix of a 13-character
-one, and an implementation that compares all 13 rejects every correct
-password on the roster while reporting nothing but "wrong password".
+**Credentials are done.** `internal/auth` verifies a stored credential and,
+on a correct legacy password, returns a replacement for the caller to save.
+The policy is settled: legacy hashes are accepted, upgraded transparently on
+login, and nobody is made to reset anything.
+
+DES `crypt(3)` is implemented in `internal/auth/descrypt` rather than
+imported. The standard library has none, `crypto/des` cannot be used as a
+black box because the salt perturbs the E expansion *inside* the round
+function, and cgo is ruled out by the static container build — which left a
+dependency for an algorithm being actively retired, or 300 self-contained
+lines that get deleted with it. Correctness is not argued: the tests compare
+it against the system libcrypt over **9,680 password/salt pairs**, and that
+runs in CI.
+
+§5.3.1's warning earned its place twice over. The verifier compares only the
+stored 10 characters, and there is a test that fails if it ever compares 13.
+Separately, two successive drafts of the "wrong password is rejected" test
+used passwords that differ only after the eighth character — which DES
+cannot distinguish, so they are *correct* passwords. Both drafts failed for
+that reason before the property sank in.
+
+**Phase 2 is complete.**
 
 **A note on verification.** The 32-bit checks skip on a machine without
 32-bit libc headers, which is most of them. CI installs `gcc-multilib` and

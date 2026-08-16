@@ -140,15 +140,20 @@ These correspond one-to-one with the C server's single-letter options.
 |---|---|---|
 | `--allow-legacy-passwords` | `true` | Accept pre-2008 DES `crypt(3)` password hashes. |
 
-*(inert)* — password handling lands in Phase 2.
-
 The original playerfile stores DES `crypt(3)` hashes, salted with the
-character's own name and truncated to 10 stored characters, which means
-only the first 8 characters of a password ever mattered. Those hashes have
-to be accepted for the 2001–2008 roster to be able to log in at all. The
-intent is that a successful login transparently rehashes to a modern
-algorithm, after which this can be turned off. The server warns at startup
-while it is enabled.
+character's own name and truncated to 10 stored characters — which means
+**only the first 8 characters of a password ever mattered**, and the salt is
+derivable from the character's name. Those hashes have to be accepted for
+the 2001–2008 roster to be able to log in at all.
+
+**A successful login replaces the hash with argon2id**, in place, without
+the player noticing or being asked to reset anything. Once every active
+character has logged in at least once, this can be turned off; the server
+warns at startup while it is enabled.
+
+Turning it off locks out anyone who has not logged in since the migration,
+so it fails with a distinguishable error rather than looking like a wrong
+password.
 
 ## Logging and diagnostics
 
