@@ -29,6 +29,7 @@ These were settled up front and the rest of the plan assumes them:
 | **Text encoding** | **UTF-8 throughout.** The server works in UTF-8 and nothing else. Old CP1252 data is converted once by `dlctl convert`, not decoded per-connection forever — the same principle the player formats follow (§5.2). The world loader still reads bytes transparently, because transcoding at load time would change what a writer later emits; `dlctl world lint` reports anything not yet converted. Answers what was §13.1. |
 | **Web client** | **Wanted, not merely kept open.** A self-hosted optional web front end is a real intention, so GMCP and the WebSocket transport get built properly rather than minimally. The reasoning is worth recording: telnet clients are ageing out, and a MUD whose only door is TinyFugue has a shrinking number of people who can walk through it. Answers what was §13.4. |
 | **Legacy passwords** | **Accepted and upgraded on login; nobody is reset.** Answers what was §13.5. |
+| **Fidelity, restated** | **As faithful to the patched C server as possible.** The row above says "faithful core"; this sharpens it. Where a choice exists between what the C server does and what a modern design would prefer, the C server wins, and a deviation needs a reason written down next to it. The existing exceptions stand — bugs are fixed, integer widths are made honest, credentials are modernised — but each is a deliberate, recorded departure rather than licence to redesign. When in doubt, read the C and do that. |
 | **Old data directories** | **Converted, not carried.** `dlctl convert` takes an original CircleMUD `lib/` and produces a directory the server runs on. It refuses to guess: the binary formats it does not yet understand are copied byte for byte and reported, because a byte-level transcode of a struct dump corrupts it twice over. |
 
 **One assumption flagged:** plain unencrypted telnet was *not* selected in
@@ -841,6 +842,28 @@ Output is UTF-8 (§0). The protocol layer negotiates CHARSET and transcodes
 *outbound* for clients that ask for something else, which is a per-connection
 concern and the right place for it — as against decoding the world files on
 every read, which is what `dlctl convert` exists to make unnecessary.
+
+**Three behaviours settled, all resolved towards the C server:**
+
+| Question | Decision |
+|---|---|
+| **Character creation** | The **full C flow**: name, password, sex, class, rolled stats — `CON_QSEX` and `CON_QCLASS` included. Not a reduced version with class deferred. |
+| **Saving** | On quit, and on a periodic autosave matching the C's `PULSE_AUTOSAVE` of 60 seconds. Writes happen off the world goroutine so a slow disk cannot stall the game. |
+| **Link loss** | The character **lingers in the world** for a reconnect, as the C's `CON_DISCONNECT` does, rather than being removed at once. Needs a reconnect path in the login flow and a reaper to time linkdead bodies out. |
+
+**This moves a phase boundary, and the plan should say so rather than let it
+drift.** Class selection at creation needs the class tables, and those belong
+to Phase 4 — including the two things that make Disgracelands' classes
+non-stock: the Paladin as a fifth class, and how `remort_vector` interacts
+with a character who has just been made
+(`docs/investigations/non-stock-features.md`). So Phase 3 now pulls that much
+of Phase 4 forward. The alternative was a creation flow that differs from the
+C's, which the fidelity decision in §0 rules out.
+
+One question falls out of it that is game design rather than porting, and
+wants an answer before the code is written: **is Paladin selectable at
+creation, or only reachable by remort?** The C tree is the authority and
+should be read before guessing.
 
 **Phase 4 — Rules core.** Combat, magic, skills, classes including the
 remort bitmask, affects, position/regen, death and corpses, zone resets,
