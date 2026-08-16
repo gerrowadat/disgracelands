@@ -223,12 +223,35 @@ The notes are all the drink-container weight adjustment, which is normal
 CircleMUD behaviour rather than a problem — the loader raises a container's
 weight when it is lighter than the liquid it holds.
 
+### Converting an old roster
+
+The server runs on the ascii format and refuses to start on the original
+binary one — see `docs/configuration.md`. An existing data directory is
+converted once:
+
+```sh
+dlctl pfile convert --from=binary --from-dir=data/etc \
+                    --to=ascii    --to-dir=data/pfiles
+```
+
+`--dry-run` reports what it would do without writing anything, which is
+worth doing first. The conversion **refuses rather than truncates**: before
+writing each character it asks the destination what it can hold and reports
+anything that would not fit, because a truncated name is a different
+character.
+
+Passwords are carried across as-is. They are still legacy `crypt(3)` hashes
+and upgrade individually on each character's next successful login.
+
+Conversion runs in both directions, which is how you compare a converted
+roster against the C server, or undo a migration.
+
 ### Inspecting player data
 
 ```sh
 dlctl pfile verify --player-dir=data/etc     # is this file what you think?
-dlctl pfile dump   --player-dir=data/etc     # list the roster
-dlctl pfile dump   --player-dir=data/etc --name=zod
+dlctl pfile dump   --player-dir=data/pfiles  # list the roster
+dlctl pfile dump   --player-dir=data/pfiles --name=zod
 ```
 
 `verify` is the one to run before trusting a migration. It reports the record

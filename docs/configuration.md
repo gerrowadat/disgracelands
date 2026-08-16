@@ -26,7 +26,7 @@ every flag appears here, but it cannot check that the prose is accurate.
 | Flag | Default | Meaning |
 |---|---|---|
 | `--lib-dir` | `lib` | Runtime data directory: world files, help text, boards, player data. The same directory the C server takes with `-d`. |
-| `--player-dir` | *(empty)* | Player-data directory. Empty means "use `--lib-dir`". |
+| `--player-dir` | *(empty)* | Player-data directory. Empty means `<lib-dir>/pfiles`. |
 | `--world-dir` | *(empty)* | World-data directory. Empty means `<lib-dir>/world`. |
 
 `data/` is **mutable state** — players, houses, boards, mail, and any world
@@ -36,17 +36,29 @@ files edited in-game. Back it up; mount it as a volume in a container.
 
 | Flag | Default | Values |
 |---|---|---|
-| `--player-format` | `binary` | `binary`, `ascii` |
+| `--player-format` | `ascii` | `ascii` |
 | `--world-format` | `classic` | `classic` |
 
-*(inert)* — the persistence layer lands in Phases 1 and 2.
+`ascii` is the ascii_pfiles 2.1 one-text-file-per-player format.
 
-`binary` is the original `struct char_file_u` flat file the C server writes
-today; `ascii` is the ascii_pfiles 2.1 one-text-file-per-player format. The
-defaults are chosen so that pointing the Go server at an existing `data/`
-needs no migration and no flags. See
-`docs/investigations/ascii-pfile-format.md` for what the ascii format
-actually contains, and `docs/proposals/go-port-plan.md` §5 for why this is
+**The server will not start on `--player-format=binary`**, and says so with
+the conversion command in the error. The binary format is the original
+`struct char_file_u` flat file the C server writes, and its password field
+is eleven bytes — it cannot hold a modern hash at all, and every other field
+in it is fixed-width. It remains fully readable and writable by `dlctl`,
+because conversion needs both directions; it is simply not something a live
+server should be stuck behind. See
+`docs/proposals/go-port-plan.md` §5.2.
+
+Convert an existing roster once:
+
+```sh
+dlctl pfile convert --from=binary --from-dir=data/etc \
+                    --to=ascii    --to-dir=data/pfiles
+```
+
+See `docs/investigations/ascii-pfile-format.md` for what the ascii format
+contains, and `docs/proposals/go-port-plan.md` §5 for why formats are
 pluggable at all.
 
 An unknown format name is rejected at startup rather than deep inside boot.

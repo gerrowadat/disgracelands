@@ -261,72 +261,89 @@ titles, whether they support fields added after 2008). Saving a record a
 format can't represent is a logged, non-silent truncation, and `dlctl`
 refuses a migration that would lose data unless `--allow-lossy` is passed.
 
-### 5.2 Default: `binary`
+### 5.2 The server runs on `ascii`; `binary` is a conversion format
 
-Byte-compatible with the current `struct char_file_u` in `data/etc/players`,
-decoded per §4. This is the default so that a fresh checkout of the Go
-server, pointed at an existing `data/`, boots and reads the real roster with
-no migration step and no flags.
+**Superseded decision.** This section originally made `binary` the default,
+on the reasoning that pointing the Go server at an existing `data/` should
+need no migration and no flags. That is a real convenience and it is not
+worth what it costs.
 
-Two important sub-details:
+The binary format's password field is **eleven bytes**. Not "awkwardly
+small" — it cannot hold any modern hash at all, so a server running on it
+can never store anything better than the DES `crypt(3)` it inherited.
+Everything else in the record is fixed-width too: a twenty-byte name, an
+80-byte title, 32 affect slots, 32-bit timestamps that overflow in 2038.
+Keeping it as the live format would mean carrying every one of those limits
+into a server being written in 2026 in order to save one conversion command.
 
-- **The password field.** `MAX_PWD_LENGTH` is 10 and `interpreter.c:1462`
-  does `strncmp(CRYPT(arg, GET_PASSWD(ch)), GET_PASSWD(ch), MAX_PWD_LENGTH)`
-  with the *character's name* as salt — classic DES `crypt(3)`, truncated
-  to 10 stored chars, which means only the first 8 characters of a password
-  ever mattered and the salt is public. The Go port must verify legacy
-  hashes to let existing characters log in, then **transparently rehash to
-  bcrypt or argon2id on successful login** and store the result in a new
-  field. Legacy DES verification is behind `--allow-legacy-passwords`
-  (default on, with a startup warning naming the count of accounts still on
-  it), so it can eventually be turned off. New characters never get a DES
-  hash. This is a "fix the known bug" case under the fidelity decision, not
-  a rules change.
-- **The `spare0..7` / `spare17..21` fields** exist precisely because
-  `char_file_u` can't grow without breaking compatibility. The Go binary
-  store keeps them addressable so anything currently squatting in them
-  (worth grepping for before writing the codec) survives round-trip.
+So:
 
-### 5.3 Second implementation: `ascii`
+- **The server runs on `ascii` or better.** `--player-format=binary` is
+  rejected at startup, with the conversion command in the error message.
+- **The tooling reads and writes both.** Conversion needs both directions:
+  going back is how you compare a converted roster against the C server, and
+  how you undo a migration that turned out to be premature.
+- **`binary` is still a full implementation**, not a stub. It is verified
+  against a C compiler in both data models (§4), because reading the
+  archived roster correctly is the whole point of it.
 
-ascii_pfiles 2.1 compatible, one text file per player under
+### 5.3 `binary` — the archived format
+
+Byte-compatible with `struct char_file_u`, decoded per §4. Its job is to
+read what the C server wrote, and to write it back for comparison.
+
+Two details of it are load-bearing:
+
+- **The password.** `MAX_PWD_LENGTH` is 10 and `interpreter.c:1462` does
+  `strncmp(CRYPT(arg, GET_PASSWD(ch)), GET_PASSWD(ch), MAX_PWD_LENGTH)` with
+  the *character's name* as salt — classic DES `crypt(3)`, so only the first
+  eight characters of a password ever mattered and the salt is public. Those
+  hashes must be verifiable for the existing roster to log in, then upgraded
+  in place on success. That upgrade is only possible once the record is in a
+  format that can store the result, which is §5.2's point.
+- **The `spare` slots** exist because `char_file_u` cannot grow without
+  breaking compatibility, and the C server's own comments tell people to use
+  them. Disgracelands did: the remort vector lives in one. They are carried
+  through conversion rather than assumed to be junk.
+
+### 5.4 `ascii` — what the server runs on
+
+ascii_pfiles 2.1 compatible: one text file per player under
 `data/pfiles/<letter>/<name>`, plus `plr_index`.
-`reference/tools/bin2ascii.c` already produces this layout and it
-round-trips against genuine WipeMud-written files
-(`docs/investigations/pfile-conversion.md`).
+`docs/investigations/ascii-pfile-format.md` specifies it field by field, and
+the implementation is written against that document rather than against the
+reference C a second time.
 
-**`docs/investigations/ascii-pfile-format.md` is the specification to
-implement against** — directory layout, `plr_index`, the `tag: value`
-convention, the default-omission rule, every field, the three multi-line
-block types (`Desc`/`Skil`/`Affs`) and their terminators, and the bitflag
-encoding. The Go codec should be written from that document and validated
-against the real files, not reverse-engineered again from
-`welmar/pfiles/ascii_pfiles_2.1/full_src/db.c`.
+No fixed-width fields, so no limits on names, titles, descriptions, affects
+or skill numbers; timestamps are decimal text, so 2038 is not an event. It
+stores a scheme-prefixed credential (`argon2id:$argon2id$...`), and a bare
+unprefixed hash is DES by definition, since that is all the format ever held
+before — a DES hash cannot contain a colon, so the two cannot be confused.
 
-One asymmetry to carry over deliberately: `Act`/`Aff`/`Pref` have two
-valid representations. `sprintbits()` writes one letter per set bit in bit
-order (`a`–`z` for bits 0–25, uppercase above), and `asciiflag_conv()`
-reads that form *or* falls back to a plain decimal number when the field
-is all digits. `bin2ascii` writes plain decimal, which is valid input but
-not what a real `save_char()` emits. **The Go reader must accept both
-forms; the Go writer should emit the letter form** so its output is
-byte-comparable against genuine files. Note the digit-string trap in the
-worked example — `Act : 128` is ambiguous between "decimal 128" (bit 7)
-and a letter string, and is only unambiguous because pure-digit fields
-take the decimal branch. That branch ordering is load-bearing and needs a
-test.
+The index is rebuilt wholesale on every write rather than maintained
+incrementally. It is slower and it cannot drift, and an index disagreeing
+with the files is a class of bug that then simply does not arise.
 
-Building this second implementation early is what proves the interface is
-actually an interface and not a binary-shaped hole.
+### 5.5 Migration
 
-### 5.4 Migration
+```
+dlctl pfile convert --from=binary --from-dir=data/etc \
+                    --to=ascii    --to-dir=data/pfiles
+```
 
-`dlctl pfile convert --from=binary --to=ascii --in=data/etc/players
---out=lib/pfiles` replaces `reference/tools/bin2ascii.c`, natively 64-bit,
-no `-m32` required. Plus `dlctl pfile verify` (§4) and `dlctl pfile dump`
-(replaces `reference/tools/pfiledump.c`).
+Replaces `reference/tools/bin2ascii.c`, and needs no 32-bit build: the
+32-bit layout is a parameter of the decoder rather than a property of the
+binary doing the decoding.
 
-### 5.5 The rest of the player-adjacent state
+It refuses rather than truncates. Before writing each character it asks the
+destination format what it can hold and reports anything that would not fit,
+because a truncated name is a different character and finding that out after
+the conversion is worse than not converting. `--dry-run` reports without
+writing; `--force` overwrites characters already present.
+
+Also `dlctl pfile verify` (§4) and `dlctl pfile dump`.
+
+### 5.6 The rest of the player-adjacent state
 
 `data/plrobjs` (rent/crash files, `objsave.c`), `data/plralias`,
 `data/house/` + `data/etc/hcontrol`, `data/etc/board.*`, and the mail system
@@ -661,7 +678,7 @@ into ordinary fields and discards. The Go loader keeps both because they are
 useful; comparing them could only ever produce noise.
 
 **Phase 2 — Player loading. 🟡 In progress.** `persist/player` interface,
-`binary` implementation (§4/§5.2), `ascii` implementation, `dlctl pfile
+`binary` implementation (§4/§5.3), `ascii` implementation, `dlctl pfile
 convert|verify|dump`. Password verification and rehash-on-login logic,
 unit-tested against known vectors.
 
@@ -705,12 +722,21 @@ matches `bin2ascii` output.*
   updates because positions are referenced elsewhere), and `dlctl pfile
   dump|verify`.
 
-**Still outstanding:** the `ascii` format, `dlctl pfile convert`, and the
-password work — DES verification for the existing roster plus a modern
-scheme to upgrade to. The binary format cannot store a modern hash at all
-(its password field is eleven bytes), so moving off it is a *prerequisite*
-for better password hashing rather than an independent improvement, which
-was not obvious before building this.
+**Also built:** the `ascii` format and `dlctl pfile convert`, and with them
+a decision that reversed §5.2 — the server runs on `ascii` and refuses to
+start on `binary`. The binary format cannot store a modern hash at all (its
+password field is eleven bytes), so keeping it as the live format would have
+meant carrying every one of its fixed-width limits into a server written in
+2026 to save a single conversion command.
+
+Conversion is checked in both directions, on a record exercising every field
+the binary format holds — including the remort vector, which lives in what
+upstream calls a spare slot and is exactly the sort of thing a conversion
+drops without anyone noticing until a character's skills stop working.
+
+**Still outstanding:** the password work itself — DES verification for the
+existing roster, a modern scheme to upgrade to, and the rehash-on-login path
+that connects them. Nothing else blocks it now.
 
 **A note on verification.** The 32-bit checks skip on a machine without
 32-bit libc headers, which is most of them. CI installs `gcc-multilib` and
@@ -891,7 +917,7 @@ Background this plan draws on, all under `docs/investigations/`:
 - `pfile-conversion.md` — the binary→ascii conversion tools and what was
   verified; the groundwork §5 builds on.
 - `ascii-pfile-format.md` — the field-by-field ascii format spec; the
-  implementation reference for §5.3.
+  implementation reference for §5.4.
 - `non-stock-features.md` — the definitive list of what a "faithful" port
   has to reproduce.
 - `circlemud-archive-report.md` — why this tree and not the other one.

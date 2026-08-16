@@ -75,12 +75,16 @@ type Config struct {
 	ShowVersion bool
 }
 
-// PlayerPath returns the player-data directory, defaulting to LibDir.
+// PlayerPath returns the player-data directory, defaulting to LibDir/pfiles.
+//
+// The ascii format keeps a tree of one file per character, so it wants a
+// directory of its own rather than sharing data/etc with the boards, the ban
+// list and the rest of the C server's odds and ends.
 func (c *Config) PlayerPath() string {
 	if c.PlayerDir != "" {
 		return c.PlayerDir
 	}
-	return c.LibDir
+	return c.LibDir + "/pfiles"
 }
 
 // WorldPath returns the world-data directory, defaulting to LibDir/world.
@@ -96,9 +100,15 @@ func (c *Config) WorldPath() string {
 // authoritative list is the registry in internal/persist; until those
 // packages exist, this is the list.
 var (
-	knownPlayerFormats = []string{"binary", "ascii"}
-	knownWorldFormats  = []string{"classic"}
-	knownLogFormats    = []string{"text", "json"}
+	// The server runs on ascii or better. The binary format stays readable
+	// and writable by the tooling — conversion needs both directions — but a
+	// live server will not start on it: its password field is eleven bytes,
+	// so a modern credential cannot be stored at all, and every other field
+	// is fixed-width. See docs/proposals/go-port-plan.md §5.2.
+	knownPlayerFormats  = []string{"ascii", "binary"}
+	serverPlayerFormats = []string{"ascii"}
+	knownWorldFormats   = []string{"classic"}
+	knownLogFormats     = []string{"text", "json"}
 )
 
 // Default returns the configuration used when nothing is specified. Every
@@ -108,7 +118,7 @@ var (
 func Default() Config {
 	return Config{
 		LibDir:               "data",
-		PlayerFormat:         "binary",
+		PlayerFormat:         "ascii",
 		WorldFormat:          "classic",
 		TelnetAddr:           "",
 		TelnetsAddr:          ":4443",
@@ -210,10 +220,11 @@ func Load(args []string, lookupEnv func(string) (string, bool), out io.Writer) (
 	str("log-level", "Log level: debug, info, warn, error", &logLevel)
 
 	str("lib-dir", "Runtime data directory (world, text, player data)", &cfg.LibDir)
-	str("player-dir", "Player-data directory (default: --lib-dir)", &cfg.PlayerDir)
+	str("player-dir", "Player-data directory (default: <lib-dir>/pfiles)", &cfg.PlayerDir)
 	str("world-dir", "World-data directory (default: <lib-dir>/world)", &cfg.WorldDir)
 
-	str("player-format", "Player-file format: "+strings.Join(knownPlayerFormats, ", "), &cfg.PlayerFormat)
+	str("player-format", "Player-file format the server runs on: "+strings.Join(serverPlayerFormats, ", ")+
+		" (the tooling also reads and writes: "+strings.Join(knownPlayerFormats, ", ")+")", &cfg.PlayerFormat)
 	str("world-format", "World-file format: "+strings.Join(knownWorldFormats, ", "), &cfg.WorldFormat)
 
 	str("listen-telnet", "Plaintext telnet listen address (empty = disabled)", &cfg.TelnetAddr)
@@ -334,6 +345,12 @@ func Load(args []string, lookupEnv func(string) (string, bool), out io.Writer) (
 func (c *Config) Validate() error {
 	if !contains(knownPlayerFormats, c.PlayerFormat) {
 		return fmt.Errorf("--player-format: unknown format %q (have: %s)", c.PlayerFormat, strings.Join(knownPlayerFormats, ", "))
+	}
+	if !contains(serverPlayerFormats, c.PlayerFormat) {
+		return fmt.Errorf("--player-format: the server cannot run on %q; it is a conversion format only. "+
+			"Convert the roster first:\n"+
+			"    dlctl pfile convert --from=%s --from-dir=<dir> --to=ascii --to-dir=<dir>",
+			c.PlayerFormat, c.PlayerFormat)
 	}
 	if !contains(knownWorldFormats, c.WorldFormat) {
 		return fmt.Errorf("--world-format: unknown format %q (have: %s)", c.WorldFormat, strings.Join(knownWorldFormats, ", "))
