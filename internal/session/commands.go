@@ -263,6 +263,7 @@ func doHelp(c *Context) error {
 
 func doQuit(c *Context) error {
 	c.Send("Goodbye, friend.. Come back soon!\r\n")
+	c.Session.MarkQuit()
 	c.Session.Close()
 	return nil
 }

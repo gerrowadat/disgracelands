@@ -47,6 +47,10 @@ const (
 	// StateNewPassword and StateConfirmPassword: a new character setting one.
 	StateNewPassword
 	StateConfirmPassword
+	// StateQuerySex and StateQueryClass complete the creation sequence,
+	// matching the C's CON_QSEX and CON_QCLASS.
+	StateQuerySex
+	StateQueryClass
 	// StateReadMOTD: press return, having read the message of the day.
 	StateReadMOTD
 	// StatePlaying: in the world.
@@ -68,6 +72,10 @@ func (s State) String() string {
 		return "new-password"
 	case StateConfirmPassword:
 		return "confirm-password"
+	case StateQuerySex:
+		return "query-sex"
+	case StateQueryClass:
+		return "query-class"
 	case StateReadMOTD:
 		return "read-motd"
 	case StatePlaying:
@@ -100,13 +108,24 @@ type Session struct {
 	state     State
 	character *game.Character
 
-	// pending holds the name and password being entered during login.
-	pendingName string
-	pendingHash string
+	// pending holds what has been gathered so far during creation.
+	pendingName     string
+	pendingPassword string
+	pendingSex      int32
 
 	closed atomic.Bool
+	quit   atomic.Bool
 	closer sync.Once
 }
+
+// MarkQuit records that the player left deliberately rather than losing
+// their connection. The two are handled differently: a quitter is removed
+// from the world, a dropped connection leaves the character standing so it
+// can be reconnected to.
+func (s *Session) MarkQuit() { s.quit.Store(true) }
+
+// Quit reports whether the player left deliberately.
+func (s *Session) Quit() bool { return s.quit.Load() }
 
 // Deps are what a session needs from the rest of the server.
 type Deps struct {
@@ -131,7 +150,15 @@ type Deps struct {
 type TextFiles interface {
 	Greeting() string
 	MOTD() string
+	// ImmortalMOTD is shown instead of MOTD to characters of immortal level,
+	// as the C does at interpreter.c:1504.
+	ImmortalMOTD() string
 	Credits() string
+	// Welcome and Start are WELC_MESSG and START_MESSG: the first shown to
+	// everyone entering the game, the second only to a character doing it for
+	// the first time.
+	Welcome() string
+	Start() string
 }
 
 // LoginHandler performs the steps that need more than the connection.
@@ -141,8 +168,14 @@ type LoginHandler interface {
 	// Authenticate checks a password and returns the character on success.
 	// A nil character with a nil error means the password was wrong.
 	Authenticate(ctx context.Context, name, password string) (*game.Character, error)
-	// Create makes a new character with the given password.
-	Create(ctx context.Context, name, password string) (*game.Character, error)
+	// Create makes a new character. The request carries everything the C's
+	// creation sequence gathers before a character exists.
+	Create(ctx context.Context, req CreateRequest) (*game.Character, error)
+	// Reconnect returns a character already in the world under this name,
+	// whose connection has dropped, or nil. The C keeps a linkdead body
+	// standing rather than removing it, so a dropped connection can be
+	// resumed; this is how the login sequence finds it again.
+	Reconnect(ctx context.Context, name string) *game.Character
 	// Enter puts an authenticated character into the world.
 	Enter(ctx context.Context, s *Session, c *game.Character) error
 	// Leave takes them out again.
@@ -265,8 +298,12 @@ func (s *Session) Serve(ctx context.Context, deps Deps) {
 	// The licence requires the login sequence to name the DikuMUD and
 	// CircleMUD creators, and this is the login sequence. Every transport
 	// reaches this line; none may skip it.
+	//
+	// Only the greeting is sent. The file ends with the name prompt itself —
+	// that is where the C server's prompt comes from too, since it sends
+	// GREETINGS on connect and nanny() prints nothing until input arrives.
+	// Adding a prompt here would show it twice.
 	s.Send("%s", deps.Text.Greeting())
-	s.Send("By what name do you wish to be known? ")
 
 	if err := s.readLoop(ctx, deps); err != nil && !isDisconnect(err) {
 		s.logger.Info("session ended", "error", err)
@@ -331,4 +368,12 @@ func isDisconnect(err error) bool {
 		errors.Is(err, io.EOF) ||
 		errors.Is(err, net.ErrClosed) ||
 		errors.Is(err, context.Canceled)
+}
+
+// CreateRequest is everything gathered before a character exists.
+type CreateRequest struct {
+	Name     string
+	Password string
+	Sex      int32
+	Class    int32
 }

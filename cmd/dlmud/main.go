@@ -14,6 +14,7 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"flag"
 	"fmt"
@@ -22,10 +23,37 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/gerrowadat/disgracelands/internal/auth"
 	"github.com/gerrowadat/disgracelands/internal/buildinfo"
 	"github.com/gerrowadat/disgracelands/internal/config"
+	"github.com/gerrowadat/disgracelands/internal/engine"
+	"github.com/gerrowadat/disgracelands/internal/game"
 	"github.com/gerrowadat/disgracelands/internal/obs"
+	"github.com/gerrowadat/disgracelands/internal/persist/player"
+	"github.com/gerrowadat/disgracelands/internal/persist/world"
+	"github.com/gerrowadat/disgracelands/internal/server"
+
+	// Register the formats the server can be configured to use.
+	_ "github.com/gerrowadat/disgracelands/internal/persist/player/ascii"
+	_ "github.com/gerrowadat/disgracelands/internal/persist/world/classic"
 )
+
+// tlsConfig builds the TLS settings for the telnets listener.
+func tlsConfig(cfg *config.Config) (*tls.Config, error) {
+	if cfg.TLSCert != "" {
+		cert, err := tls.LoadX509KeyPair(cfg.TLSCert, cfg.TLSKey)
+		if err != nil {
+			return nil, fmt.Errorf("loading the TLS certificate: %w", err)
+		}
+		// TLS 1.2 is the floor: anything older has no business carrying a
+		// password in 2026, and no client anyone still uses needs it.
+		return &tls.Config{Certificates: []tls.Certificate{cert}, MinVersion: tls.VersionTLS12}, nil
+	}
+	if cfg.TLSACMEDomain != "" {
+		return nil, fmt.Errorf("ACME certificates are not implemented yet; use --tls-cert and --tls-key")
+	}
+	return nil, fmt.Errorf("the TLS listener needs --tls-cert and --tls-key")
+}
 
 // shutdownTimeout bounds the graceful shutdown. The C server's autosave pulse
 // was 60s, so an ungraceful stop could lose a minute of play; the whole point
@@ -99,11 +127,91 @@ func run(args []string) error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	// Phase 1+ inserts world loading here, Phase 2 player storage, and Phase 3
-	// the listeners and pulse loop. Readiness flips once those are up.
-	logger.Warn("no game engine yet: this is a Phase 0 foundations build, see docs/proposals/go-port-plan.md")
-	health.SetReady(true)
+	// Load the world before anything can connect to it. A world that will
+	// not load is a boot failure, not something to serve around.
+	logger.Info("loading the world", "dir", cfg.WorldPath(), "format", cfg.WorldFormat)
+	worldSrc, err := world.Open(cfg.WorldFormat, world.Config{Dir: cfg.WorldPath(), Mini: cfg.MiniMUD})
+	if err != nil {
+		return err
+	}
+	defer func() { _ = worldSrc.Close() }()
 
+	defs, err := worldSrc.Load(ctx)
+	if err != nil {
+		return err
+	}
+	live := game.NewLive(defs)
+	logger.Info("world loaded",
+		"rooms", len(defs.Rooms), "mobiles", len(defs.Mobiles),
+		"objects", len(defs.Objects), "zones", len(defs.Zones), "shops", len(defs.Shops))
+
+	players, err := player.Open(cfg.PlayerFormat, player.Config{Dir: cfg.PlayerPath()})
+	if err != nil {
+		return err
+	}
+	defer func() { _ = players.Close() }()
+
+	// The greeting and the credits are licence obligations; LoadText refuses
+	// to return if either is missing, which is deliberate.
+	text, err := server.LoadText(cfg.LibDir)
+	if err != nil {
+		return err
+	}
+
+	eng := engine.New(engine.Options{
+		World: live, Interval: cfg.PulseInterval,
+		Logger: logger, Metrics: metrics,
+	})
+	go eng.Run(ctx)
+
+	srv := server.New(server.Options{
+		Engine:   eng,
+		Players:  players,
+		Auth:     auth.Verifier{AllowLegacy: cfg.AllowLegacyPasswords},
+		Text:     text,
+		Logger:   logger,
+		Restrict: cfg.Restrict,
+	})
+	go srv.RunAutosave(ctx)
+
+	limits := server.Limits{
+		MaxPerHost: cfg.MaxConnsPerIP,
+		LoginGrace: cfg.LoginGraceTime,
+	}
+
+	var listeners []*server.Listener
+	if cfg.TelnetAddr != "" {
+		ln, err := server.ListenTelnet(cfg.TelnetAddr)
+		if err != nil {
+			return err
+		}
+		listeners = append(listeners, ln)
+	}
+	if cfg.TelnetsAddr != "" {
+		tlsCfg, err := tlsConfig(cfg)
+		if err != nil {
+			return err
+		}
+		ln, err := server.ListenTLS(cfg.TelnetsAddr, tlsCfg)
+		if err != nil {
+			return err
+		}
+		listeners = append(listeners, ln)
+	}
+	if len(listeners) == 0 {
+		return fmt.Errorf("no listeners could be started")
+	}
+
+	for _, ln := range listeners {
+		logger.Info("listening", "transport", ln.Name, "addr", ln.Addr().String())
+		go func(ln *server.Listener) {
+			if err := srv.Accept(ctx, ln, limits); err != nil {
+				logger.Error("listener failed", "transport", ln.Name, "error", err)
+			}
+		}(ln)
+	}
+
+	health.SetReady(true)
 	logger.Info("ready")
 	<-ctx.Done()
 

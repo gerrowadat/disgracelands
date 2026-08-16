@@ -10,6 +10,8 @@ import (
 	"context"
 	"strings"
 	"unicode"
+
+	"github.com/gerrowadat/disgracelands/internal/game"
 )
 
 // This is the port of interpreter.c's nanny(): the state machine every
@@ -48,7 +50,11 @@ func (s *Session) handle(ctx context.Context, deps Deps, line string) error {
 	case StateNewPassword:
 		return s.handleNewPassword(deps, line)
 	case StateConfirmPassword:
-		return s.handleConfirmPassword(ctx, deps, line)
+		return s.handleConfirmPassword(deps, line)
+	case StateQuerySex:
+		return s.handleQuerySex(deps, line)
+	case StateQueryClass:
+		return s.handleQueryClass(ctx, deps, line)
 	case StateReadMOTD:
 		return s.handleReadMOTD(ctx, deps)
 	case StatePlaying:
@@ -126,10 +132,31 @@ func (s *Session) handlePassword(ctx context.Context, deps Deps, line string) er
 		return nil
 	}
 
+	// If their previous connection dropped, their character is still
+	// standing where they left it. Reconnect to that body rather than
+	// putting a second copy of them into the world.
+	if existing := deps.Login.Reconnect(ctx, character.Name); existing != nil {
+		s.logger.Info("reconnecting to a linkdead character", "character", existing.Name)
+		s.character = existing
+		s.state = StatePlaying
+		existing.Client = s
+		s.Send("Reconnecting.\r\n")
+		return deps.Commands.Do(ctx, s, "look")
+	}
+
 	s.character = character
 	s.state = StateReadMOTD
-	s.Send("%s\r\n*** PRESS RETURN: ", deps.Text.MOTD())
+	s.Send("%s\r\n*** PRESS RETURN: ", motdFor(deps, character))
 	return nil
+}
+
+// motdFor picks the message of the day, which is a different file for
+// immortals (interpreter.c:1504).
+func motdFor(deps Deps, c *game.Character) string {
+	if c != nil && c.Record != nil && c.Record.Level >= game.LevelImmortal {
+		return deps.Text.ImmortalMOTD()
+	}
+	return deps.Text.MOTD()
 }
 
 func (s *Session) handleNewPassword(deps Deps, line string) error {
@@ -143,22 +170,64 @@ func (s *Session) handleNewPassword(deps Deps, line string) error {
 		s.Send("Illegal password.\r\nPassword: ")
 		return nil
 	}
-	s.pendingHash = password
+	s.pendingPassword = password
 	s.state = StateConfirmPassword
 	s.Send("Please retype password: ")
 	return nil
 }
 
-func (s *Session) handleConfirmPassword(ctx context.Context, deps Deps, line string) error {
-	if strings.TrimSpace(line) != s.pendingHash {
-		s.pendingHash = ""
+func (s *Session) handleConfirmPassword(deps Deps, line string) error {
+	if strings.TrimSpace(line) != s.pendingPassword {
+		s.pendingPassword = ""
 		s.state = StateNewPassword
 		s.Send("Passwords don't match.\r\nGive me a password for %s: ", s.pendingName)
 		return nil
 	}
+	// The C asks sex next, then class. Same order, same wording.
+	s.state = StateQuerySex
+	s.Send("\r\nWhat is your sex (M/F)? ")
+	return nil
+}
 
-	character, err := deps.Login.Create(ctx, s.pendingName, s.pendingHash)
-	s.pendingHash = ""
+func (s *Session) handleQuerySex(deps Deps, line string) error {
+	arg := strings.TrimSpace(line)
+	if arg == "" {
+		s.Send("That is not a sex.\r\nWhat IS your sex? ")
+		return nil
+	}
+	sex := game.ParseSex(arg[0])
+	if sex < 0 {
+		s.Send("That is not a sex.\r\nWhat IS your sex? ")
+		return nil
+	}
+	s.pendingSex = sex
+	s.state = StateQueryClass
+	s.Send("%s\r\nClass: ", game.CreationMenu)
+	return nil
+}
+
+func (s *Session) handleQueryClass(ctx context.Context, deps Deps, line string) error {
+	arg := strings.TrimSpace(line)
+	class := game.ClassUndefined
+	if arg != "" {
+		// ParseCreationClass, not ParseClass: Paladin is reached by
+		// remorting and is not on the menu. See internal/game/class.go for
+		// the discrepancy in the C that this deliberately does not
+		// reproduce.
+		class = game.ParseCreationClass(arg[0])
+	}
+	if class == game.ClassUndefined {
+		s.Send("\r\nThat's not a class.\r\nClass: ")
+		return nil
+	}
+
+	character, err := deps.Login.Create(ctx, CreateRequest{
+		Name:     s.pendingName,
+		Password: s.pendingPassword,
+		Sex:      s.pendingSex,
+		Class:    class,
+	})
+	s.pendingPassword = ""
 	if err != nil {
 		s.logger.Error("creating a character", "name", s.pendingName, "error", err)
 		s.Send("Something went wrong creating your character. Try again shortly.\r\n")
@@ -168,11 +237,20 @@ func (s *Session) handleConfirmPassword(ctx context.Context, deps Deps, line str
 
 	s.character = character
 	s.state = StateReadMOTD
-	s.Send("\r\n%s\r\n*** PRESS RETURN: ", deps.Text.MOTD())
+	s.Send("\r\n%s\r\n*** PRESS RETURN: ", motdFor(deps, character))
 	return nil
 }
 
 func (s *Session) handleReadMOTD(ctx context.Context, deps Deps) error {
+	// A character who has never entered the world is still at level zero:
+	// the C runs do_start at this point and not before (interpreter.c:1684),
+	// so the first character on an empty roster — who is made an Implementor
+	// during creation — correctly never runs it. Enter does the honours,
+	// since it is the side that owns the record.
+	firstTime := s.character != nil && s.character.Record != nil && s.character.Record.Level == 0
+
+	s.Send("%s", deps.Text.Welcome())
+
 	if err := deps.Login.Enter(ctx, s, s.character); err != nil {
 		s.logger.Error("entering the world", "error", err)
 		s.Send("Something went wrong putting you into the world. Try again shortly.\r\n")
@@ -181,6 +259,10 @@ func (s *Session) handleReadMOTD(ctx context.Context, deps Deps) error {
 	}
 	s.state = StatePlaying
 	s.logger.Info("entered the world", "character", s.character.Name)
+
+	if firstTime {
+		s.Send("%s", deps.Text.Start())
+	}
 
 	// Show them where they are, which is what the C server does on entry.
 	return deps.Commands.Do(ctx, s, "look")
