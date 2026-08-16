@@ -5,9 +5,11 @@ pluggable player- and world-file formats, and packaged as a normal modern
 service (flags, env vars, structured logs, containers) rather than a
 2002-era autoconf tree driven by `autorun`.
 
-This is a design/sequencing document. **Phase 0 (§10) is built**; everything
-from Phase 1 on is still a plan. See `BUILDING.md` for how to build and run
-what exists.
+This is a design/sequencing document. **Phases 0–3 (§10) are built** — the
+server takes logins and players can move around — and everything from Phase
+4 on, the rules core included, is still a plan. Each built phase carries a
+retrospective in §10 saying what actually landed and where it diverged from
+what was planned. See `BUILDING.md` for how to build and run what exists.
 
 ---
 
@@ -826,6 +828,30 @@ menu, and enough commands to look around and move (`look`, `north`, `who`,
 archived character over TLS and walk from the Temple of Midgaard to New
 Thalos.*
 
+**Met, and walked rather than argued.** Against a server on the real world
+files with an empty roster, over the TLS listener, driven by a scripted
+client:
+
+```
+    Walker, credential "WaApIYE9Szu2A" (DES crypt(3), salted "Wa")
+    logged in over telnets, menu choice 1, room 3001 The Temple Of Midgaard
+    s s s e e s s e e e e e e e e e e e n n n          21 moves
+    room 5411 Outside The Southern Gate Of New Thalos
+    "upgraded a legacy password" character=Walker
+    saved: Room: 5411, Pass: argon2id:$argon2id$v=19$...
+```
+
+Three things at once: a pre-2008 credential verified by the DES path and
+silently upgraded to argon2id on the way in, the walk itself, and the
+position surviving the save.
+
+One qualification, since the criterion says *archived character*. The 108
+real records are local-only and never in this repo, so this character was
+created here and then given a genuine DES hash of the kind the roster holds
+— the same hash the C's `crypt()` produces for that name and password. What
+it does not exercise is the archive's own bytes, which is Phase 2's
+criterion rather than this one.
+
 Three things that are not optional in this phase, for reasons outside the
 phase itself:
 
@@ -929,6 +955,26 @@ This is a deviation and is recorded as one. It is the first case of the
 fidelity rule in §0 running into a place where the C contradicts itself, and
 the reasoning is worth keeping: reproducing the accident would let a new
 player skip the mechanic the class exists to reward.
+
+### What is not in it
+
+A phase marked done without its gaps is worse than one not marked at all.
+These are the three, and none of them is a deviation — they are simply not
+built, so they are not in `docs/deviations.md`:
+
+- **`--listen-ws` starts nothing.** The WebSocket transport is the one part
+  of this phase not built, so the greeting requirement above holds for every
+  transport that exists rather than for every transport intended. It is not
+  rescheduled into a numbered phase: it belongs with the web client in the
+  "Later" list, and the requirement travels with it.
+- **`--max-players` is not enforced.** The per-address cap and the login
+  grace period are what limit connections today.
+- **Movement ignores door state.** `EX_CLOSED` is not checked, because there
+  is no `open`/`close` and no door state to check yet, so a closed door is
+  walked through. It belongs with the rules core in Phase 4.
+
+The two configuration gaps are marked *(inert)* in `docs/configuration.md`
+rather than left to be discovered at runtime.
 
 **Phase 4 — Rules core.** Combat, magic, skills, classes including the
 remort bitmask, affects, position/regen, death and corpses, zone resets,

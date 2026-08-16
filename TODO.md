@@ -2,8 +2,8 @@
 
 The project is a Go port of the Disgracelands server. What to do next is
 mostly "the next phase", and that lives in
-`docs/proposals/go-port-plan.md` §10 — currently **Phase 2, player
-loading**.
+`docs/proposals/go-port-plan.md` §10 — currently **Phase 4, the rules
+core**, with Phases 0–3 done.
 
 This file is for the things that are not phases: work on the C server in
 `reference/moderncserver/`, and decisions that are still open.
@@ -17,14 +17,16 @@ this repo: `../welmar/CircleMUD3/lib/etc/players`, in the original binary
 format. To convert it locally:
 
 ```sh
-cd reference/moderncserver
-gcc -m32 -std=gnu89 -fcommon -w -Isrc -o bin/bin2ascii ../tools/bin2ascii.c
-bin/bin2ascii ../../../welmar/CircleMUD3/lib/etc/players ../../data/pfiles
+go run ./cmd/dlctl pfile convert \
+  --from=binary --from-dir=../welmar/CircleMUD3/lib/etc \
+  --to=ascii    --to-dir=data/pfiles
 ```
 
-The `-m32` is not optional — see `docs/investigations/pfile-conversion.md`
-for why, and note that Phase 2 replaces this with `dlctl pfile convert`,
-which needs no 32-bit toolchain.
+That is Phase 2's replacement for the old `-m32` `bin2ascii` route, and it
+needs no 32-bit toolchain; the C tool is still in `reference/tools/` and
+`docs/investigations/pfile-conversion.md` explains why it needed one.
+`dlctl convert` does the whole data directory, roster included, if that is
+what you have.
 
 The output (`data/pfiles/`) is gitignored and stays local. No player data
 has ever been committed here, deliberately: it is real people's password
@@ -59,8 +61,8 @@ with it (0 errors, 20 warnings), which is more than was known before.
 
 ### 4. Hosting and exposure
 
-Nothing here has been hardened for 2026, and the Go port has no game in it
-yet, so there is nothing to expose. When there is:
+Nothing here has been hardened for 2026. The Go port now takes logins, so
+there is something to expose and a reason not to yet:
 `docs/operations.md` has the current posture and
 `docs/proposals/go-port-plan.md` §7 covers what the network layer will do
 about it.
@@ -89,10 +91,11 @@ in that tree has to change them too.
 Kept here so it is clear these were decided rather than forgotten.
 
 - **Wiring ascii pfiles into the C server's live login/save path.** This was
-  the biggest remaining item and the Go port takes it over: Phase 2 builds
-  both formats behind one interface, with the binary format as the default
-  so an existing `data/` needs no migration. Doing it in C as well would be
-  the same security-adjacent work twice.
+  the biggest remaining item and the Go port took it over: Phase 2 built
+  both formats behind one interface, and the Go server runs on ascii and
+  refuses to start on binary, converting with `dlctl pfile convert` instead.
+  Doing it in C as well would have been the same security-adjacent work
+  twice.
 - **Deciding how to run it across restarts.** `autorun` and friends are
   superseded by the container runtime's restart policy plus real SIGTERM
   handling; see `docs/operations.md`.

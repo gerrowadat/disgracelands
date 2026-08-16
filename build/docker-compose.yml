@@ -1,8 +1,8 @@
 # Local development stack. Run from the repository root:
 #   docker compose -f build/docker-compose.yml up --build
 #
-# This is a Phase 0 foundations build: the server boots, reports itself ready
-# and serves diagnostics, but there is no game in it yet. See
+# The server it starts is at Phase 3: players can connect, log in and move
+# around, but the rules core is not built. See
 # docs/proposals/go-port-plan.md §10.
 
 services:

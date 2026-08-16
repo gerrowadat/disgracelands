@@ -5,10 +5,10 @@ How to run `dlmud`, what it exposes while running, and what to watch.
 For the full settings list see `docs/configuration.md`. For building from
 source see `BUILDING.md`.
 
-> **Current state:** there is no game in the server yet. It boots, reports
-> itself ready, serves diagnostics and shuts down cleanly. Everything about
-> process management, health checking and logging below is real and works;
-> anything about players connecting does not, yet. See
+> **Current state:** players can connect, log in, and walk around; the rules
+> core — combat, skills, shops, zone resets — is Phase 4 onwards, so the
+> world is unpopulated. Everything below about process management, health
+> checking, logging and player data is real and works. See
 > `docs/proposals/go-port-plan.md` §10 for what arrives when.
 
 ## Starting it
@@ -158,7 +158,9 @@ gods actually watch a running game, and it is preserved — log records carry
 a `wizvis` attribute holding the minimum level that should see them
 in-game.
 
-Nothing consumes it yet, because there are no sessions to echo to.
+Nothing consumes it yet. There are sessions to echo to now, but the
+immortal side — who is watching, and at what level — arrives with the
+commands that use it.
 
 ## Backups
 
@@ -180,8 +182,8 @@ of the top-level `README.md`.
 
 `dlctl` handles the jobs that do not need a running server — the work
 `reference/moderncserver/src/util/` and `reference/tools/` do for the C
-tree. `dlctl` with no arguments lists what it can do; subcommands that are
-not built yet say which phase implements them rather than failing
+tree. `dlctl` with no arguments lists what it can do; anything added ahead
+of the layer it needs says which phase implements it rather than failing
 obscurely.
 
 ### Checking the world files
@@ -337,9 +339,10 @@ implementation, and it is the one that has been running the game.
 
 ## Exposure
 
-Nothing here has been penetration-tested, and the game layer that would be
-the interesting attack surface does not exist yet. The sane posture until
-it does, and for a while after:
+Nothing here has been penetration-tested, and there is now something to
+attack: the listeners, the telnet parser and the login flow all take input
+from strangers, and the roster they authenticate against holds twenty-year-
+old password hashes. The sane posture for now, and for a while yet:
 
 - TLS listener only; leave `--listen-telnet` off.
 - `--metrics-addr` and `--debug-addr` on loopback or not at all.

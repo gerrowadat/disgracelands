@@ -8,9 +8,10 @@
 // world linting, and the jobs the C tree spread across its src/util/ and
 // reference/tools/.
 //
-// Phase 0 of docs/proposals/go-port-plan.md establishes the command structure. The
-// subcommands that need the persistence layers report which phase implements
-// them rather than pretending to work.
+// Every subcommand listed here is implemented. The structure keeps room for
+// ones that are not: a command declared ahead of the layer it needs reports
+// which phase of docs/proposals/go-port-plan.md implements it rather than
+// pretending to work.
 package main
 
 import (

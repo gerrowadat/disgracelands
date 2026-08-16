@@ -16,10 +16,19 @@ everything it does.
 real Disgracelands login banner with the original world loaded. Until the Go
 port catches up, that is the game.
 
-**The Go port has no game in it yet.** It boots, loads the world, reports
-itself ready, serves diagnostics and shuts down cleanly — Phases 0 and 1 of
-`docs/proposals/go-port-plan.md`. Players cannot connect: the listeners and
-the pulse loop arrive in Phase 3, and player data in Phase 2.
+**The Go port takes connections, and has no rules in it yet.** Phases 0–3 of
+`docs/proposals/go-port-plan.md` are done: it loads the world, listens on
+TLS or plaintext telnet, negotiates telnet properly (hidden passwords,
+CHARSET, GMCP), logs in an archived character or creates a new one through
+the full C creation flow, and shows the main menu — description editor,
+background story, change password, delete character — before putting them
+in the world to look, move, `who`, `credits`, `help` and `quit`. Characters
+autosave, and a dropped link leaves the body in the world to reconnect to.
+
+What is missing is the game itself: no combat, skills, spells or levelling,
+no shops, boards or mail, and no zone resets — so the world is empty of
+mobiles and objects and you are walking through the scenery. That is
+Phase 4 onwards.
 
 The two servers load the world identically — every field of all 5,248
 records — and `scripts/world-parity.sh` checks that in CI.
@@ -60,7 +69,7 @@ reference/      Everything that is not the Go port.
                   Buildable and runnable. See its README.md.
   tools/          C helper programs written for this revival (the binary
                   player-database-to-ascii_pfiles converter and a dumper).
-                  Superseded by dlctl subcommands in Phase 2.
+                  Superseded by dlctl's pfile subcommands.
   CircleMUD3-src/ Code-only snapshot of the pre-upgrade baseline.
   WipeMud-src/    Code-only snapshot of the abandoned CircleMUD 3.1
                   upgrade attempt. See reference/README.md.
