@@ -909,16 +909,38 @@ rewrite argument explicitly. Non-commercial also means no donations, no
 paid hosting, no "support the server" tip jar — worth knowing before
 anyone plans how to pay for hosting under §9.
 
-**The good news:** the tree is currently compliant and there's nothing to
-fix, only something to preserve. `data/text/greetings` already carries both
-sets of creators above the name prompt, `data/text/credits` is the stock
-text with Disgracelands' additions after it, and the `CIRCLEMUD` help
-entry is intact.
+**The good news:** the tree is compliant, and that is now checked rather
+than asserted. `data/text/greetings` carries both sets of creators above the
+name prompt, `data/text/credits` is the stock text with Disgracelands'
+additions after it, and the `CIRCLEMUD` help entry is intact.
+
+`scripts/license-check.sh` runs in CI and verifies the five requirements
+that can be verified from the tree: that `LICENSE` still ends with
+`doc/license.doc` byte for byte, that no stock C file's leading comment
+block differs from the pre-upgrade baseline import (78 files), that every
+file written for this project carries its own notice, that the credit files
+are present and name the DikuMUD creators, and that the login-sequence file
+does too. The in-game half — that `credits` and `help circlemud` actually
+display those files, on every transport — cannot be checked until Phase 3
+implements the commands, and gets its own test then.
+
+**Copyright and its limits.** Copyright in the Disgracelands-specific
+material, the original 2001–2008 server and this revival alike, is Dave
+O'Connor's. That ownership does not loosen anything above: a derivative work
+cannot be relicensed on terms more permissive than what it derives from, so
+the CircleMUD and DikuMUD licenses govern the Go port as fully as they
+govern the C tree. `LICENSE` says so in a preamble above a marker line, with
+the upstream license reproduced unmodified below it — prepended rather than
+interleaved, because the license requires itself to be distributed AS IS.
 
 **What this means concretely for the port:**
 
-1. `LICENSE` in the Go tree is `reference/moderncserver/doc/license.doc`,
-   unchanged. Any `go.mod`-adjacent licensing metadata says the same.
+1. `LICENSE` in the Go tree carries `reference/moderncserver/doc/license.doc`
+   unchanged, below a preamble that names this project's copyright, states
+   that it is a derivative work, and spells out the inherited requirements.
+   Nothing in the preamble narrows the license below it, and the marker line
+   between them says so. Any `go.mod`-adjacent licensing metadata says the
+   same.
 2. The `credits` and `help circlemud` commands are **not optional
    features** to be deferred to a late phase — they are license
    compliance, and belong in Phase 3 alongside `look` and `who`.
@@ -936,8 +958,18 @@ entry is intact.
    have author credits in their headers — see the table in
    `docs/investigations/non-stock-features.md`. Per requirement 5 above,
    those headers carry across to the corresponding Go files.
+   `internal/persist/player/ascii` is the first case and does: its notice
+   credits ascii_pfiles 2.1 to Alan K. Miles, after Chris Jacobson's
+   original. OasisOLC's `gen*.c` layer is the next one due, whenever the
+   online-building phase lands.
 6. Publishing the repo publicly is fine and always was; it's *charging for
    it or taking donations for it* that isn't.
+7. Every source file written for this project — Go, the C files added to
+   the reference tree, the shell scripts — opens with a five-line notice
+   naming this copyright, the CircleMUD and DikuMUD copyrights, and
+   `LICENSE`. New files must do the same; `scripts/license-check.sh` fails
+   the build otherwise. The notice sits above the package doc comment,
+   separated by a blank line, so `go doc` output is unaffected.
 
 If there's a specific relicensing announcement making some CircleMUD
 release LGPL, that would change all of this — but it would need to be a

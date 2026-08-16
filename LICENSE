@@ -1,3 +1,81 @@
+                           Disgracelands - Reborn
+              Copyright (C) 2001-2008, 2026 Dave O'Connor
+
+This repository is a DERIVATIVE WORK of CircleMUD, which is itself a
+derivative work of DikuMUD.  That is true of every part of it: the C server
+under reference/, the Go port at the root, the tooling, the documentation,
+and the game data under data/.
+
+Copyright in the material written for Disgracelands - the original
+2001-2008 server and this revival, including the Go port, which contains
+none of CircleMUD's C code - is held by Dave O'Connor.  That copyright
+does not and cannot grant anyone terms more permissive than the licenses
+this work derives from.  The CircleMUD license and the DikuMUD license,
+both reproduced verbatim below, govern this work in its entirety, and no
+part of it may be used except in compliance with them.
+
+In particular, and without narrowing anything below:
+
+-- NON-COMMERCIAL.  This work must not be used to make money or to obtain
+   compensation of any kind.  No fees to play, no donations, no paid
+   perks, no reimbursement of hosting or hardware costs, no selling copies
+   or charging for distribution.
+
+-- CREDIT.  data/text/credits must be preserved as it stands (additions
+   are allowed; removals and edits are not) and must be displayed by the
+   `credits` command.  The `CIRCLEMUD` help entry must stay intact and be
+   shown in full by `help circlemud`.  The login sequence - everything a
+   player sees between connecting and playing - must name the DikuMUD and
+   CircleMUD creators; that is data/text/greetings, and it must be sent on
+   every transport, with no client-side splash screen substituted for it.
+
+-- SHIP THIS FILE.  This license must accompany any copy or portion of
+   this work, including works derived from it, AS IS.
+
+-- KEEP THE NOTICES.  Notices of copyright, licensing or authorship must
+   not be removed, changed or modified in any source file - CircleMUD's,
+   DikuMUD's, a third-party patch author's, or this project's.
+
+-- A REWRITE IS NOT AN EXEMPTION.  The Go port reimplements CircleMUD's
+   mechanics, file formats and world data in a different language; it is a
+   derivative work all the same, and the CircleMUD license addresses the
+   "our MUD is totally rewritten" claim explicitly (see below).
+
+Authorship, for the credit requirement:
+
+-- DikuMUD (1990, 1991) - Sebastian Hammer, Michael Seifert, Hans Henrik
+   Staerfeldt, Tom Madsen and Katja Nyboe, at DIKU, University of
+   Copenhagen.  Additional contributions from Michael Curran, Bill Wisner,
+   Mads Haar and Stephan Dahl.
+-- CircleMUD (1993-2001) - Jeremy Elson, the Trustees of the Johns Hopkins
+   University, and the CircleMUD Group.
+-- Third-party CircleMUD patches present in this tree (OasisOLC, DG
+   Scripts, ascii_pfiles, context-sensitive help) carry their own author
+   credits in their file headers.  Those credits stay, in the C sources
+   and in any Go file ported from them.  See
+   docs/investigations/non-stock-features.md.
+-- ascii_pfiles 2.1, the player-file format the server runs on - Alan K.
+   Miles, building on an original by Chris Jacobson.  Credited in
+   internal/persist/player/ascii, which implements it.
+-- Disgracelands (2001-2008) and Disgracelands Reborn (2026-) - Dave
+   O'Connor.
+
+Source files written for this project carry a header naming this copyright
+and pointing here.  New files must do the same.
+
+
+===========================================================================
+
+
+Everything below this line is the CircleMUD license, reproduced verbatim
+and unmodified, followed by the original, unmodified DikuMUD license.
+Nothing above this line modifies, supersedes or narrows either of them.
+Where the terms above and the terms below appear to differ, the terms
+below govern.
+
+===========================================================================
+
+
 /* ************************************************************************
 *  Copyright (C) 1995 by Jeremy Elson                                     *
 *  All Rights Reserved                                                    *

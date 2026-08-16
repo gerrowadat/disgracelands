@@ -83,8 +83,20 @@ either way.
 
 ## Licence
 
-The CircleMUD and DikuMUD licences apply to everything here, including the
-Go port. `LICENSE` is `reference/moderncserver/doc/license.doc` verbatim.
-See `docs/proposals/go-port-plan.md` §12 for what that requires in practice
-— briefly: non-commercial, and the credits must stay intact and reachable
-in-game.
+This repository is a derivative work of CircleMUD, itself a derivative work
+of DikuMUD, and the CircleMUD and DikuMUD licences apply to all of it —
+including the Go port, which contains none of CircleMUD's C code but
+reimplements its mechanics, file formats and world data. Copyright in the
+Disgracelands-specific material is Dave O'Connor's, and that ownership
+cannot loosen the inherited terms: **non-commercial use only**, credits
+intact and reachable in-game, and this licence shipped with any copy.
+
+`LICENSE` states that, above a marker line, and then reproduces
+`reference/moderncserver/doc/license.doc` verbatim and unmodified. Source
+files written for this project carry a header saying the same; new ones must
+too. `scripts/license-check.sh` checks all of it — the verbatim licence
+text, the untouched stock C headers, our own headers, the credit files and
+the login sequence — and runs in CI.
+
+See `docs/proposals/go-port-plan.md` §12 for the reasoning and for what
+compliance still requires of the unwritten parts of the port.

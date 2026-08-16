@@ -1,5 +1,11 @@
 #!/bin/sh
 #
+# Copyright (C) 2026 Dave O'Connor. Part of Disgracelands, a derivative work
+# of CircleMUD (Copyright (C) 1993-2001 Jeremy Elson, the Trustees of the
+# Johns Hopkins University and the CircleMUD Group), itself based on DikuMUD
+# (Copyright (C) 1990, 1991). Use of this file is governed by the CircleMUD
+# and DikuMUD licenses; see LICENSE. Non-commercial use only.
+#
 # Check that the Go loader and the C loader hold the same world.
 #
 # Builds both servers, has each dump the world it loaded as canonical JSON,
@@ -24,14 +30,15 @@ cd "$ROOT"
 # reference/moderncserver/README.md. It needs pre-C99 flags to build on a
 # modern compiler, for the reasons that file explains.
 #
-# ./configure regenerates src/Makefile and reference/moderncserver/src/util/Makefile, which are both
+# ./configure regenerates src/Makefile and src/util/Makefile, which are both
 # committed, so they are saved and put back afterwards. Running a test should
 # not leave the working tree dirty.
 CSERVER=reference/moderncserver
+MAKEFILES="$CSERVER/src/Makefile $CSERVER/src/util/Makefile"
 
 if [ ! -x "$CSERVER/bin/circle" ]; then
 	echo "==> Building the C server"
-	for mk in "$CSERVER/src/Makefile" "$CSERVER/reference/moderncserver/src/util/Makefile"; do
+	for mk in $MAKEFILES; do
 		[ -f "$mk" ] && cp "$mk" "$OUT/$(echo "$mk" | tr / _)"
 	done
 
@@ -39,7 +46,7 @@ if [ ! -x "$CSERVER/bin/circle" ]; then
 		CFLAGS="-std=gnu89 -fcommon -Wno-implicit-function-declaration -w" \
 		CC=gcc ./configure >/dev/null )
 
-	for mk in "$CSERVER/src/Makefile" "$CSERVER/reference/moderncserver/src/util/Makefile"; do
+	for mk in $MAKEFILES; do
 		saved="$OUT/$(echo "$mk" | tr / _)"
 		[ -f "$saved" ] && cp "$saved" "$mk"
 	done
