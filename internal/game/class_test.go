@@ -7,7 +7,7 @@
 package game
 
 import (
-	"math/rand/v2"
+	"github.com/gerrowadat/disgracelands/internal/rng"
 	"strings"
 	"testing"
 )
@@ -65,10 +65,10 @@ func TestCreationClassLetters(t *testing.T) {
 
 func TestRolledAbilitiesAreInRange(t *testing.T) {
 	// 4d6 drop lowest is 3..18.
-	rng := rand.New(rand.NewPCG(1, 2))
+	r := rng.NewRand(rng.NewCircle(1))
 	for _, class := range []int32{ClassMagicUser, ClassCleric, ClassThief, ClassWarrior, ClassPaladin} {
 		for i := 0; i < 200; i++ {
-			a := RollAbilities(class, rng)
+			a := RollAbilities(class, r)
 			for name, v := range map[string]int32{
 				"Str": a.Strength, "Int": a.Intelligence, "Wis": a.Wisdom,
 				"Dex": a.Dexterity, "Con": a.Constitution, "Cha": a.Charisma,
@@ -85,7 +85,7 @@ func TestRolledAbilitiesAreInRange(t *testing.T) {
 // order from roll_real_abils: the highest of the six scores goes to the
 // statistic that class is built around.
 func TestEachClassGetsItsBestRollWhereItMatters(t *testing.T) {
-	rng := rand.New(rand.NewPCG(42, 42))
+	r := rng.NewRand(rng.NewCircle(42))
 
 	best := func(a Abilities) int32 {
 		m := a.Strength
@@ -109,7 +109,7 @@ func TestEachClassGetsItsBestRollWhereItMatters(t *testing.T) {
 		{ClassPaladin, func(a Abilities) int32 { return a.Charisma }, "charisma"},
 	} {
 		for i := 0; i < 50; i++ {
-			a := RollAbilities(tc.class, rng)
+			a := RollAbilities(tc.class, r)
 			if tc.primary(a) != best(a) {
 				t.Errorf("class %d: %s is %d but the best roll was %d",
 					tc.class, tc.name, tc.primary(a), best(a))
@@ -123,10 +123,10 @@ func TestEachClassGetsItsBestRollWhereItMatters(t *testing.T) {
 // keeping: the percentile field is meaningless for every other class, which
 // is why a converted record may carry a stale value in it.
 func TestOnlyWarriorsRollExceptionalStrength(t *testing.T) {
-	rng := rand.New(rand.NewPCG(7, 7))
+	r := rng.NewRand(rng.NewCircle(7))
 	for _, class := range []int32{ClassMagicUser, ClassCleric, ClassThief, ClassPaladin} {
 		for i := 0; i < 300; i++ {
-			if a := RollAbilities(class, rng); a.StrengthPercentile != 0 {
+			if a := RollAbilities(class, r); a.StrengthPercentile != 0 {
 				t.Fatalf("class %d rolled an exceptional-strength percentile of %d",
 					class, a.StrengthPercentile)
 			}
@@ -135,7 +135,7 @@ func TestOnlyWarriorsRollExceptionalStrength(t *testing.T) {
 
 	// And a warrior only rolls one on an 18.
 	for i := 0; i < 2000; i++ {
-		a := RollAbilities(ClassWarrior, rng)
+		a := RollAbilities(ClassWarrior, r)
 		if a.Strength != 18 && a.StrengthPercentile != 0 {
 			t.Fatalf("a warrior with strength %d has a percentile of %d",
 				a.Strength, a.StrengthPercentile)

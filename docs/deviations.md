@@ -128,6 +128,20 @@ behaviour in every case is to keep going until the machine stops.
 These change no behaviour a player can observe. They are recorded because
 someone reading the two servers side by side will notice them.
 
+### The random number generator, and one thing it does not reproduce
+
+The C's generator (random.c) is ported exactly and verified against it —
+`internal/rng` matches 30,000 draws per seed and reproduces `number()`'s
+modulo bias across every range tested. `--rng=circle` selects it; `modern`
+(Go's PCG) is the default for ordinary play. See `docs/configuration.md`.
+
+One deliberate difference. `circle_srandom` takes `time(0)` unchecked
+(comm.c:406), so a seed of zero — or any multiple of *m* — leaves the
+generator returning zero for the life of the process. Reproducing that would
+mean reproducing a server whose every roll is the same number, so the
+degenerate seeds are mapped to 1. The C could only reach one at 03:14:07 UTC
+on 19 January 2038, or by being told to.
+
 ### Ability tables are indexed with a bound
 
 `advance_level` indexes `con_app[]` and `wis_app[]` with the raw score

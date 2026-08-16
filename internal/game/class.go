@@ -6,7 +6,7 @@
 
 package game
 
-import "math/rand/v2"
+import "github.com/gerrowadat/disgracelands/internal/rng"
 
 // Classes, matching structs.h:122. The numbers are stored in every player
 // record ever written, so they are the format as much as they are an enum.
@@ -115,13 +115,13 @@ func lower(b byte) byte {
 //
 // Only a warrior with an 18 strength rolls the exceptional-strength
 // percentile, which is why that field is meaningless for everyone else.
-func RollAbilities(class int32, rng *rand.Rand) Abilities {
+func RollAbilities(class int32, r *rng.Rand) Abilities {
 	roll := func() int32 {
 		var dice [4]int32
 		lowest := int32(7)
 		total := int32(0)
 		for i := range dice {
-			dice[i] = randN(rng, 6) + 1
+			dice[i] = randN(r, 6) + 1
 			total += dice[i]
 			if dice[i] < lowest {
 				lowest = dice[i]
@@ -158,7 +158,7 @@ func RollAbilities(class int32, rng *rand.Rand) Abilities {
 		a.Strength, a.Dexterity, a.Constitution = table[0], table[1], table[2]
 		a.Wisdom, a.Intelligence, a.Charisma = table[3], table[4], table[5]
 		if a.Strength == 18 {
-			a.StrengthPercentile = randN(rng, 101)
+			a.StrengthPercentile = randN(r, 101)
 		}
 	case ClassPaladin:
 		// Unreachable at creation — Paladin is remort-only — but the ordering
@@ -169,15 +169,12 @@ func RollAbilities(class int32, rng *rand.Rand) Abilities {
 	return a
 }
 
-// randN returns a random value in [0, n), as an int32.
+// randN returns a random value in [0, n).
 //
-// The conversion is safe for any n this package uses — a die has six sides
-// and a percentile has 101 values — but it is done in one named place rather
-// than at each call site, which is the same reason the player-file codec has
-// its narrowing helpers.
-func randN(rng *rand.Rand, n int32) int32 {
-	return int32(rng.IntN(int(n))) //nolint:gosec // bounded by n, which is a small constant at every call site
-}
+// The C writes this as number(0, n - 1), and the draw goes through the same
+// helper so that a run on the "circle" generator consumes the sequence in
+// exactly the order the C server would. See internal/rng.
+func randN(r *rng.Rand, n int32) int32 { return r.Number(0, n-1) }
 
 // Sexes, matching structs.h.
 const (
@@ -234,21 +231,21 @@ func StartingSkills(class int32) map[int32]int32 {
 // The C also snoop-checks and saves the character here. Both are the caller's
 // business in this port: saving from inside a game rule would mean the world
 // goroutine touching the disk. See internal/server for where it happens.
-func AdvanceLevel(rec *PlayerRecord, rng *rand.Rand) {
+func AdvanceLevel(rec *PlayerRecord, r *rng.Rand) {
 	addHit := conApplyHitPoints[abilityIndex(rec.Abilities.Constitution)]
 	var addMove int32
 
 	switch rec.Class {
 	case ClassMagicUser:
-		addHit, addMove = addHit+randRange(rng, 3, 8), randRange(rng, 0, 2)
+		addHit, addMove = addHit+randRange(r, 3, 8), randRange(r, 0, 2)
 	case ClassCleric:
-		addHit, addMove = addHit+randRange(rng, 5, 10), randRange(rng, 0, 2)
+		addHit, addMove = addHit+randRange(r, 5, 10), randRange(r, 0, 2)
 	case ClassThief:
-		addHit, addMove = addHit+randRange(rng, 7, 13), randRange(rng, 1, 3)
+		addHit, addMove = addHit+randRange(r, 7, 13), randRange(r, 1, 3)
 	case ClassWarrior:
-		addHit, addMove = addHit+randRange(rng, 10, 15), randRange(rng, 1, 3)
+		addHit, addMove = addHit+randRange(r, 10, 15), randRange(r, 1, 3)
 	case ClassPaladin:
-		addHit, addMove = addHit+randRange(rng, 10, 14), randRange(rng, 1, 3)
+		addHit, addMove = addHit+randRange(r, 10, 14), randRange(r, 1, 3)
 	}
 
 	// Every class rolls mana the same way, capped at ten. The C computes
@@ -256,7 +253,7 @@ func AdvanceLevel(rec *PlayerRecord, rng *rand.Rand) {
 	// levels this can be called with, so integer arithmetic gives the same
 	// answer.
 	level := rec.Level
-	addMana := randRange(rng, level, level*3/2)
+	addMana := randRange(r, level, level*3/2)
 	if addMana > 10 {
 		addMana = 10
 	}
@@ -305,15 +302,15 @@ func AdvanceLevel(rec *PlayerRecord, rng *rand.Rand) {
 // The C's trailing bookkeeping — the mudlog line, played time, logon time and
 // the siteok-everyone flag — is left to the caller, which is the only place
 // that knows the clock and the server's configuration.
-func Start(rec *PlayerRecord, rng *rand.Rand) {
+func Start(rec *PlayerRecord, r *rng.Rand) {
 	rec.Level = 1
 	rec.Points.Exp = 1
-	rec.Abilities = RollAbilities(rec.Class, rng)
+	rec.Abilities = RollAbilities(rec.Class, r)
 	rec.Title = Title(rec.Class, rec.Level, rec.Sex)
 	rec.Points.MaxHit = baseMaxHit
 	rec.Skills = StartingSkills(rec.Class)
 
-	AdvanceLevel(rec, rng)
+	AdvanceLevel(rec, r)
 
 	rec.Points.Hit = rec.Points.MaxHit
 	rec.Points.Mana = rec.Points.MaxMana
@@ -324,10 +321,6 @@ func Start(rec *PlayerRecord, rng *rand.Rand) {
 	rec.Conditions = StartingConditions
 }
 
-// randRange returns a value in [lo, hi], as the C's number() does.
-func randRange(rng *rand.Rand, lo, hi int32) int32 {
-	if hi <= lo {
-		return lo
-	}
-	return lo + randN(rng, hi-lo+1)
-}
+// randRange returns a value in [lo, hi]. It is number() by another name, kept
+// because the call sites read better with it.
+func randRange(r *rng.Rand, lo, hi int32) int32 { return r.Number(lo, hi) }

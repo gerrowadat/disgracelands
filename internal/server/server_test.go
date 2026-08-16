@@ -18,7 +18,6 @@ import (
 	"io"
 	"log/slog"
 	"math/big"
-	mathrand "math/rand/v2"
 	"net"
 	"os"
 	"path/filepath"
@@ -31,6 +30,7 @@ import (
 	"github.com/gerrowadat/disgracelands/internal/game"
 	"github.com/gerrowadat/disgracelands/internal/persist/player"
 	"github.com/gerrowadat/disgracelands/internal/persist/player/ascii"
+	"github.com/gerrowadat/disgracelands/internal/rng"
 	"github.com/gerrowadat/disgracelands/internal/telnet"
 )
 
@@ -108,6 +108,7 @@ func newTestServer(t *testing.T) (*Server, player.Store) {
 		Auth:    auth.Verifier{AllowLegacy: true},
 		Text:    testText(t),
 		Logger:  logger,
+		RNG:     testRNG(),
 	})
 	return srv, store
 }
@@ -574,8 +575,9 @@ func TestTooManyConnectionsFromOneAddress(t *testing.T) {
 	third.expect("Too many connections")
 }
 
-//nolint:gosec // a fixed seed, so a failing test can be reproduced
-func testRNG() *mathrand.Rand { return mathrand.New(mathrand.NewPCG(1, 2)) }
+// testRNG is the C server's own generator on a fixed seed: a failing test can
+// be reproduced, and the numbers are the ones the C would roll.
+func testRNG() *rng.Rand { return rng.NewRand(rng.NewCircle(1)) }
 
 // selfSignedCert makes a certificate for the TLS listener test.
 func selfSignedCert(t *testing.T) tls.Certificate {

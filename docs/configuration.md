@@ -114,12 +114,37 @@ Setting only one half of the cert/key pair is an error.
 | Flag | Default | Meaning |
 |---|---|---|
 | `--pulse-interval` | `100ms` | Game loop tick. The C server's `OPT_USEC` was 100ms and everything in the game is timed in multiples of it. |
-
-*(inert)* — the pulse loop lands in Phase 3.
+| `--rng` | `modern` | Which generator the game rolls on: `modern` (Go's PCG) or `circle` (the C server's own, ported exactly). |
+| `--rng-seed` | `0` | Seed for it. `0` means the clock, which is what the C server does. |
 
 Changing `--pulse-interval` changes the speed of the entire game — combat
 rounds, regeneration, zone resets, mob activity. It is a flag for testing,
 not a tuning knob.
+
+### `--rng`, and why there is a choice
+
+The C server has its own random number generator (`src/random.c`) — the
+Park-Miller minimal standard, a Lehmer generator from 1988 — seeded once from
+`time(0)` at boot. It is portable and fully deterministic: the constants are
+chosen so no intermediate value overflows a signed 32-bit integer, which is
+what let it produce the same sequence on a VAX and on everything since.
+
+That portability is worth something here. `--rng=circle` with a fixed
+`--rng-seed` makes this server roll **the same numbers the C server would**,
+draw for draw — every damage roll, every hit roll, every ability score. That
+is what the parity work compares against, and it is a far stronger check on a
+combat formula than asserting the result landed in a plausible range.
+
+`modern` is the default for ordinary play: `circle` is a generator from 1988
+with known-weak low bits. That does not matter for a damage roll, and it is
+still not something to be on by default without saying so.
+
+Neither of these has anything to do with security. Passwords and TLS use
+`crypto/rand` and always will.
+
+A non-zero `--rng-seed` makes a run reproducible, which is useful for
+reproducing a bug and a bad idea on a live server — players would learn the
+sequence.
 
 ## Behaviour
 
