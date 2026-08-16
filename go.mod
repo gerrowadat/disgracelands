@@ -5,6 +5,7 @@ go 1.25.3
 require (
 	github.com/prometheus/client_golang v1.24.1
 	github.com/prometheus/client_model v0.6.2
+	golang.org/x/crypto v0.55.0
 )
 
 require (

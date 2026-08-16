@@ -60,7 +60,7 @@ var commands = []command{
 	{
 		name:    "pfile convert",
 		summary: "Convert player data between formats (replaces bin2ascii, with no 32-bit build)",
-		phase:   2,
+		run:     cmdPfileConvert,
 	},
 	{
 		name:    "pfile verify",

@@ -14,11 +14,20 @@ import (
 func TestUnimplementedCommandsNameTheirPhase(t *testing.T) {
 	// A stub that fails silently or with "not found" would be worse than no
 	// stub at all: the point is to say where the work is.
-	err := run([]string{"pfile", "convert", "--in=x"})
+	//
+	// Every real command is now implemented, so this injects one rather than
+	// depending on which happen to be stubs — the mechanism is what matters
+	// and it will be needed again for the phases still to come.
+	commands = append(commands, command{
+		name: "future thing", summary: "Something from a later phase", phase: 9,
+	})
+	defer func() { commands = commands[:len(commands)-1] }()
+
+	err := run([]string{"future", "thing"})
 	if err == nil {
-		t.Fatal("run([pfile convert]) succeeded, want a not-implemented error")
+		t.Fatal("run([future thing]) succeeded, want a not-implemented error")
 	}
-	for _, want := range []string{"pfile convert", "Phase 2", "go-port-plan.md"} {
+	for _, want := range []string{"future thing", "Phase 9", "go-port-plan.md"} {
 		if !strings.Contains(err.Error(), want) {
 			t.Errorf("error = %q, want it to mention %q", err, want)
 		}
@@ -36,10 +45,35 @@ func TestUnknownCommandIsRejected(t *testing.T) {
 }
 
 func TestMultiWordCommandsMatchBeforeTheirPrefix(t *testing.T) {
-	// "pfile convert" must not be mistaken for an unknown "pfile" command.
-	err := run([]string{"pfile", "convert"})
-	if err == nil || !strings.Contains(err.Error(), "pfile convert") {
-		t.Errorf("run([pfile convert]) = %v, want a not-implemented error naming \"pfile convert\"", err)
+	// "pfile dump" must not be mistaken for an unknown "pfile" command.
+	// Asking for a character that does not exist proves it reached the
+	// implementation: only that can produce a not-found error.
+	//
+	// Note that listing a *missing* directory is not an error — a roster
+	// that does not exist yet is an empty one, which is the normal
+	// fresh-install state — so this asks for a name instead.
+	err := run([]string{"pfile", "dump", "--player-dir", "does/not/exist", "--name", "nobody"})
+	if err == nil {
+		t.Fatal("run([pfile dump --name=nobody]) succeeded, want a not-found error")
+	}
+	if strings.Contains(err.Error(), "unknown command") {
+		t.Errorf("\"pfile dump\" was not dispatched: %v", err)
+	}
+}
+
+func TestListingAMissingRosterIsNotAnError(t *testing.T) {
+	// A blank roster is how a fresh install starts, and the C server creates
+	// the files on demand. Reporting it as a failure would make every new
+	// deployment look broken.
+	if err := run([]string{"pfile", "dump", "--player-dir", "does/not/exist"}); err != nil {
+		t.Errorf("listing a missing roster = %v, want success", err)
+	}
+}
+
+func TestBarePfileIsUnknown(t *testing.T) {
+	err := run([]string{"pfile"})
+	if err == nil || !strings.Contains(err.Error(), "unknown command") {
+		t.Errorf("run([pfile]) = %v, want an unknown-command error", err)
 	}
 }
 

@@ -169,6 +169,9 @@ func TestValidation(t *testing.T) {
 	}{
 		{"no listeners", []string{"--listen-telnets="}, "no listeners enabled"},
 		{"unknown player format", append(minimal, "--player-format=sqlite"), "--player-format"},
+		// The binary format is a real format the tooling reads and writes, but
+		// the server cannot run on it: its password field is eleven bytes.
+		{"binary is conversion-only", append(minimal, "--player-format=binary"), "conversion format only"},
 		{"unknown world format", append(minimal, "--world-format=json"), "--world-format"},
 		{"unknown log format", append(minimal, "--log-format=xml"), "--log-format"},
 		{"bad log level", append(minimal, "--log-level=chatty"), "--log-level"},
@@ -201,7 +204,7 @@ func TestTLSListenerAcceptsACME(t *testing.T) {
 
 func TestPathDerivation(t *testing.T) {
 	cfg := load(t, append(minimal, "--lib-dir=/srv/dl"), nil)
-	if got, want := cfg.PlayerPath(), "/srv/dl"; got != want {
+	if got, want := cfg.PlayerPath(), "/srv/dl/pfiles"; got != want {
 		t.Errorf("PlayerPath() = %q, want %q", got, want)
 	}
 	if got, want := cfg.WorldPath(), "/srv/dl/world"; got != want {

@@ -17,12 +17,13 @@ import (
 
 	"github.com/gerrowadat/disgracelands/internal/game"
 	"github.com/gerrowadat/disgracelands/internal/persist/player"
+	"github.com/gerrowadat/disgracelands/internal/persist/player/ascii"
 	"github.com/gerrowadat/disgracelands/internal/persist/player/binary"
 )
 
 func pfileFlags(fs *flag.FlagSet) (dir, format *string) {
-	dir = fs.String("player-dir", "data/etc", "Directory holding the player data")
-	format = fs.String("player-format", binary.FormatName,
+	dir = fs.String("player-dir", "data/pfiles", "Directory holding the player data")
+	format = fs.String("player-format", ascii.FormatName,
 		fmt.Sprintf("Player-file format: %v", player.Formats()))
 	return
 }
