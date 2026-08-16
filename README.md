@@ -29,6 +29,8 @@ records — and `scripts/world-parity.sh` checks that in CI.
 - **Building either server**: `BUILDING.md`
 - **Running and administering the Go server**: `docs/configuration.md`,
   `docs/operations.md`
+- **Working on the Go port**: `docs/developer.md` (and `make` for the dev
+  targets it describes)
 - **The port's design and phasing**: `docs/proposals/go-port-plan.md`
 - **The C server**: `reference/moderncserver/README.md`
 - **What's left that isn't a phase**: `TODO.md`
