@@ -15,13 +15,19 @@ does, how to configure it, how to run it.
   dev targets, getting a server running locally against a tiny world or a
   throwaway data directory, poking at it by hand, and what to run before
   pushing.
+- **[deviations.md](deviations.md)** — every intentional difference from the
+  C server's behaviour, with the C line reference and the reasoning. The
+  other half of the fidelity decision: it is what keeps "fixed a bug"
+  distinguishable from "accidentally changed the game".
 
 Building from source is in the top-level **`BUILDING.md`**, which covers
 both the C tree and the Go tree.
 
-> The Go server is at Phase 0: it boots, reports itself ready, serves
-> diagnostics and shuts down cleanly, but there is no game in it yet. Both
-> documents above mark which settings are *(inert)* pending later phases.
+> The Go server is at Phase 3: it loads the world, runs listeners on telnet
+> and TLS, takes a player through the full login and creation sequence and
+> the main menu, and lets them look around and walk between rooms. There is
+> no combat, magic or economy yet — that is Phase 4. `configuration.md` and
+> `operations.md` mark which settings are *(inert)* pending later phases.
 
 ## `docs/proposals/` — work not yet done
 
@@ -30,7 +36,7 @@ Designs and plans. Future tense, and expected to change.
 - **[go-port-plan.md](proposals/go-port-plan.md)** — the design and phasing
   for reimplementing the engine in Go: 64-bit safety, pluggable player- and
   world-file formats, the concurrency model, licensing constraints, and the
-  phase-by-phase sequence. Phase 0 is built; Phases 1–7 are not.
+  phase-by-phase sequence. Phases 0–3 are built; Phases 4–7 are not.
 
 ## `docs/investigations/` — what we found out
 

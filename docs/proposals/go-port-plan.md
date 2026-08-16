@@ -819,11 +819,12 @@ that reason before the property sank in.
 fails if those checks skipped, so the layout the real data is in is verified
 on every change even though it cannot be verified locally.
 
-**Phase 3 — Server skeleton.** Pulse loop, session lifecycle, listeners,
-negotiation, the login `nanny` state machine, and enough commands to look
-around and move (`look`, `north`, `who`, `quit`). *Done when: a real player
-can log in with an archived character over TLS and walk from the Temple of
-Midgaard to New Thalos.*
+**Phase 3 — Server skeleton. ✅ Done.** Pulse loop, session lifecycle,
+listeners, negotiation, the login `nanny` state machine including the main
+menu, and enough commands to look around and move (`look`, `north`, `who`,
+`credits`, `help`, `quit`). *Done when: a real player can log in with an
+archived character over TLS and walk from the Temple of Midgaard to New
+Thalos.*
 
 Three things that are not optional in this phase, for reasons outside the
 phase itself:
@@ -842,6 +843,52 @@ Output is UTF-8 (§0). The protocol layer negotiates CHARSET and transcodes
 *outbound* for clients that ask for something else, which is a per-connection
 concern and the right place for it — as against decoding the world files on
 every read, which is what `dlctl convert` exists to make unnecessary.
+
+### What reading the C changed
+
+**Character creation is two steps, not one, and the split is load-bearing.**
+This was got wrong first and is worth stating plainly, because the wrong
+version produced characters that looked entirely plausible.
+
+`init_char` (db.c:2688) runs at the class prompt. It leaves an ordinary
+character at **level zero**, with 100 mana, 82 movement points, 100 armour,
+every ability at 25 and no hit points at all. If the roster is empty it
+instead makes that character the Implementor outright — level 34, 7,000,000
+experience, 500 hit points, every skill at 100%, no hunger or thirst.
+
+`do_start` (class.c:1802) does not run then. It runs when the player chooses
+"enter the game" from the menu, and only `if (GET_LEVEL(ch) == 0)`
+(interpreter.c:1684) — so an Implementor never runs it, which is the only
+reason they keep the statistics `init_char` gave them. It rolls the abilities,
+sets `max_hit` to 10, grants the thief's six starting skills, and calls
+`advance_level` once.
+
+Three consequences that a reduced version gets wrong:
+
+- **A level-one character has no mana of their own and 100 of it anyway.**
+  `advance_level` guards the mana gain on `level > 1`, and `do_start` never
+  touches `max_mana` — so the 100 from `init_char` is what they walk around
+  with. A port that adds a level's mana at creation is visibly wrong; so is
+  one that concludes a new character therefore has none.
+- **`MAX(1, …)` on hit points and movement.** A magic-user with a low
+  constitution can roll a negative hit-point gain, and a magic-user or cleric
+  rolls `number(0, 2)` movement. Neither may cost them a level's progress.
+- **Practices use the remort-aware `IS_<CLASS>` macros** (utils.h:505), which
+  Disgracelands rewrote to consult `remort_vector`. A warrior who remorted
+  through cleric practises at a cleric's rate. A plain `GET_CLASS(ch) ==`
+  comparison silently removes a local feature.
+
+**The main menu is part of the login sequence.** `CON_RMOTD` shows `MENU` and
+waits (interpreter.c:1632); a player is not in the world until they choose to
+be. Four of the six choices are things that can only be done from there — the
+description editor, the background story, changing a password, and deleting
+the character — so the menu is not a screen to skip past, it is where those
+features live. All six are ported.
+
+**Deviations are recorded in [docs/deviations.md](../deviations.md)**, created
+in this phase rather than in Phase 1 as this plan originally said. It has the
+Paladin decision below, the password rules, the limits the C has none of, and
+the handful of internal differences worth knowing about.
 
 **Three behaviours settled, all resolved towards the C server:**
 
@@ -923,10 +970,11 @@ WipeMud race system (`TODO.md` §2).
   saving throws — asserting no overflow and no negative-where-impossible
   across the full input range, which is where the 64-bit work either holds
   or doesn't.
-- **A deviations log** (`docs/deviations.md`, created in Phase 1): every
-  intentional difference from the C behaviour, with the C line reference,
-  what it did, what Go does, and why. Under the "fix known bugs" fidelity
-  decision this file is the deliverable that keeps "fixed a bug"
+- **A deviations log** ([`docs/deviations.md`](../deviations.md), written in
+  Phase 3 rather than Phase 1 — there was nothing to record until the server
+  ran): every intentional difference from the C behaviour, with the C line
+  reference, what it did, what Go does, and why. Under the "fix known bugs"
+  fidelity decision this file is the deliverable that keeps "fixed a bug"
   distinguishable from "accidentally changed the game". It belongs in
   `docs/` proper rather than here — it is a record of what the running
   server does, not a plan.
@@ -1051,14 +1099,18 @@ tree is the one being ported.
 Not blocking the plan, but they need answers before or during the phases
 they touch:
 
-1. **Does `data/` stay the on-disk contract**, or does the Go server get its
-   own data directory layout with a migration? Staying compatible is what
-   makes side-by-side parity testing work, so this plan assumes it stays —
-   but it does constrain things. (Phase 1.)
-2. **How faithful does OLC need to be** — a port of OasisOLC's exact menu
+1. **How faithful does OLC need to be** — a port of OasisOLC's exact menu
    trees, or a modern equivalent that produces the same files? (Phase 6.)
 
 All the others are now decided; see §0.
+
+**Settled since this list was written:** `data/` **stays the on-disk
+contract**. Both servers read the same directory. That is what the
+world-parity harness compares against and what the Phase 7 shadow run
+depends on, and it is already how every phase built so far works. The
+constraint it imposes — the layout is the C's, not one chosen fresh — is
+accepted deliberately; `dlctl convert` is where the modernisation happens,
+in place, rather than in a second directory shape to keep in sync.
 
 ---
 
@@ -1066,6 +1118,9 @@ All the others are now decided; see §0.
 
 Operator documentation for what has actually been built lives in `docs/`
 itself — `docs/configuration.md` and `docs/operations.md`.
+
+[`docs/deviations.md`](../deviations.md) records every intentional difference
+from the C server, which is the other half of the fidelity decision in §0.
 
 Background this plan draws on, all under `docs/investigations/`:
 
