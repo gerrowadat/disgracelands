@@ -278,6 +278,7 @@ func New(id uint64, conn net.Conn, transport string, logger *slog.Logger) *Sessi
 		written:   make(chan struct{}),
 		logger:    logger.With("session", id, "transport", transport, "host", host),
 		state:     StateGetName,
+		proto:     protocol{neg: telnet.NewNegotiator(policy)},
 	}
 }
 
@@ -321,7 +322,10 @@ func (s *Session) Send(format string, args ...any) {
 // SendRaw queues bytes without line-ending translation, for text that is
 // already in wire form.
 func (s *Session) SendRaw(b []byte) {
-	if s.closed.Load() {
+	// Nothing to send is the ordinary answer from the negotiator — a request
+	// already in flight owes no bytes — so callers pass its result straight
+	// in rather than testing it every time.
+	if len(b) == 0 || s.closed.Load() {
 		return
 	}
 	select {
@@ -430,6 +434,10 @@ func (s *Session) readLoop(ctx context.Context, deps Deps) error {
 		parser telnet.Parser
 		buf    = make([]byte, 4096)
 		line   []byte
+		// lastEOL is the line ending just seen, so the other half of a CR LF
+		// pair is swallowed rather than read as a second, empty line. It
+		// lives out here because a pair can be split across two reads.
+		lastEOL byte
 	)
 
 	for {
@@ -445,8 +453,26 @@ func (s *Session) readLoop(ctx context.Context, deps Deps) error {
 			}
 
 			for _, b := range data {
-				if b == '\n' {
-					text := strings.TrimRight(string(line), "\r\n")
+				// A line ends in every form a client sends one. Telnet's NVT
+				// line ending is CR LF (RFC 854), a client sending a bare
+				// carriage return sends CR NUL, and a Unix one sends a lone
+				// LF. All three are Enter and all three end the line here.
+				//
+				// CR NUL is not a curiosity: it is what telnet(1) sends for
+				// the Enter key once it is in character-at-a-time mode, which
+				// is the mode it enters as soon as this server offers
+				// SUPPRESS-GO-AHEAD. Waiting only for LF meant Enter did
+				// nothing at all in the most ordinary client there is.
+				if b == '\r' || b == '\n' {
+					// The second half of a CR LF pair — which may arrive in a
+					// later read than its CR, so the state outlives the loop.
+					if lastEOL != 0 && b != lastEOL {
+						lastEOL = 0
+						continue
+					}
+					lastEOL = b
+
+					text := string(line)
 					line = line[:0]
 					if handleErr := s.handle(ctx, deps, text); handleErr != nil {
 						return handleErr
@@ -456,6 +482,13 @@ func (s *Session) readLoop(ctx context.Context, deps Deps) error {
 					}
 					continue
 				}
+				// NUL is never data. RFC 854 sends it as the filler after a
+				// bare CR, and says to ignore it wherever it appears.
+				if b == 0 {
+					lastEOL = 0
+					continue
+				}
+				lastEOL = 0
 				if len(line) < maxLineLength {
 					line = append(line, b)
 				}

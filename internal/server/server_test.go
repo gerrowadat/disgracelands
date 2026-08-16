@@ -404,10 +404,57 @@ func TestOptionsAreOfferedOnConnect(t *testing.T) {
 	c := dialClient(t, listening(t, srv))
 	c.expect("By what name")
 
-	for _, opt := range []byte{telnet.OptSuppressGoAhead, telnet.OptCharset, telnet.OptGMCP} {
+	for _, opt := range []byte{telnet.OptCharset, telnet.OptGMCP} {
 		if !bytes.Contains(c.wire(), telnet.Negotiate(telnet.WILL, opt)) {
 			t.Errorf("%s was not offered: % x", telnet.OptionName(opt), c.wire())
 		}
+	}
+}
+
+// TestSuppressGoAheadIsAgreedButNotOffered is about what a person sees.
+//
+// Offering SGA is what tips telnet(1) out of line mode and into
+// character-at-a-time, where the terminal stops echoing sensibly and stops
+// handling backspace, and the server is expected to do both instead. It
+// doesn't, so the player gets "^M" for Enter and "^?" for backspace. The C
+// server negotiates nothing and stays in line mode. A client that actually
+// wants SGA is still answered.
+func TestSuppressGoAheadIsAgreedButNotOffered(t *testing.T) {
+	srv, _ := newTestServer(t)
+	c := dialClient(t, listening(t, srv))
+	c.expect("By what name")
+
+	if bytes.Contains(c.wire(), telnet.Negotiate(telnet.WILL, telnet.OptSuppressGoAhead)) {
+		t.Errorf("suppress-go-ahead was volunteered: % x", c.wire())
+	}
+
+	c.sendRaw(telnet.Negotiate(telnet.DO, telnet.OptSuppressGoAhead))
+	c.send("Zod")
+	c.expect("Did I get that right")
+
+	if !bytes.Contains(c.wire(), telnet.Negotiate(telnet.WILL, telnet.OptSuppressGoAhead)) {
+		t.Errorf("a client asking for suppress-go-ahead was not answered: % x", c.wire())
+	}
+}
+
+// TestARepeatedRequestIsNotAnsweredTwice is the loop RFC 1143 exists to
+// prevent: a client that re-sends DO for an option already on must not get a
+// second WILL, or two implementations doing this to each other never stop.
+func TestARepeatedRequestIsNotAnsweredTwice(t *testing.T) {
+	srv, _ := newTestServer(t)
+	c := dialClient(t, listening(t, srv))
+	c.expect("By what name")
+
+	c.sendRaw(telnet.Negotiate(telnet.DO, telnet.OptSuppressGoAhead))
+	c.send("Zod")
+	c.expect("Did I get that right")
+
+	c.sendRaw(telnet.Negotiate(telnet.DO, telnet.OptSuppressGoAhead))
+	c.send("y")
+	c.expect("Give me a password")
+
+	if n := bytes.Count(c.wire(), telnet.Negotiate(telnet.WILL, telnet.OptSuppressGoAhead)); n != 1 {
+		t.Errorf("answered a repeated DO %d times, want 1: % x", n, c.wire())
 	}
 }
 
@@ -518,6 +565,64 @@ func TestWalkingBetweenRooms(t *testing.T) {
 	first.send("east")
 	if got := first.expect("cannot go that way"); !strings.Contains(got, "cannot go that way") {
 		t.Errorf("walking into a wall did not say so:\n%s", got)
+	}
+}
+
+// TestEveryFormOfEnterEndsALine covers the line endings a client may send.
+//
+// This is a regression test with a story. The read loop waited for LF, which
+// every test here sends and no telnet(1) session does: once the server offers
+// SUPPRESS-GO-AHEAD the client goes character-at-a-time and sends CR NUL for
+// the Enter key, so a player typing their name at the prompt saw "^M" and a
+// server that never answered. The tests all passed, because they were the
+// only client that spoke LF.
+func TestEveryFormOfEnterEndsALine(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		eol  string
+	}{
+		{"CR NUL, what telnet(1) sends", "\r\x00"},
+		{"CR LF, the NVT line ending", "\r\n"},
+		{"CR alone", "\r"},
+		{"LF alone, what a Unix client sends", "\n"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			srv, _ := newTestServer(t)
+			c := dialClient(t, listening(t, srv))
+
+			c.expect("By what name")
+			c.sendRaw([]byte("Zod" + tc.eol))
+			if got := c.expect("Did I get that right"); !strings.Contains(got, "Did I get that right") {
+				t.Errorf("the name was never submitted:\n%s", got)
+			}
+
+			// And the pair must not also arrive as a second, empty line: an
+			// empty name at this prompt closes the connection.
+			c.sendRaw([]byte("y" + tc.eol))
+			if got := c.expect("Give me a password"); !strings.Contains(got, "Give me a password") {
+				t.Errorf("the confirmation was not accepted:\n%s", got)
+			}
+		})
+	}
+}
+
+// TestASplitLineEndingIsStillOneLine checks the CR and the LF arriving in
+// different reads, which is what a slow connection does and what the state
+// held across the read loop exists for.
+func TestASplitLineEndingIsStillOneLine(t *testing.T) {
+	srv, _ := newTestServer(t)
+	c := dialClient(t, listening(t, srv))
+
+	c.expect("By what name")
+	c.sendRaw([]byte("Zod\r"))
+	c.expect("Did I get that right")
+
+	// The LF of the pair, late. It must be swallowed rather than read as an
+	// empty answer to the confirmation prompt.
+	c.sendRaw([]byte("\n"))
+	c.sendRaw([]byte("y\r\n"))
+	if got := c.expect("Give me a password"); !strings.Contains(got, "Give me a password") {
+		t.Errorf("the late LF was read as a line of its own:\n%s", got)
 	}
 }
 
