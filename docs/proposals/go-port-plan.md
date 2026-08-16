@@ -294,17 +294,64 @@ read what the C server wrote, and to write it back for comparison.
 
 Two details of it are load-bearing:
 
-- **The password.** `MAX_PWD_LENGTH` is 10 and `interpreter.c:1462` does
-  `strncmp(CRYPT(arg, GET_PASSWD(ch)), GET_PASSWD(ch), MAX_PWD_LENGTH)` with
-  the *character's name* as salt — classic DES `crypt(3)`, so only the first
-  eight characters of a password ever mattered and the salt is public. Those
-  hashes must be verifiable for the existing roster to log in, then upgraded
-  in place on success. That upgrade is only possible once the record is in a
-  format that can store the result, which is §5.2's point.
+- **The password.** See §5.3.1 below — it has enough sharp edges to be worth
+  its own section.
 - **The `spare` slots** exist because `char_file_u` cannot grow without
   breaking compatibility, and the C server's own comments tell people to use
   them. Disgracelands did: the remort vector lives in one. They are carried
   through conversion rather than assumed to be junk.
+
+#### 5.3.1 The stored password is a 10-character prefix
+
+This is the single most implementation-critical detail in the format, and
+getting it wrong fails silently in the worst possible way: every character on
+the archived roster would be unable to log in, with a correct password, and
+the server would report nothing but "wrong password".
+
+The C server uses classic DES `crypt(3)`, which produces a **13-character**
+hash. `MAX_PWD_LENGTH` is 10 and the field is 11 bytes, so
+`interpreter.c:1532` stores only part of it:
+
+```c
+strncpy(GET_PASSWD(...), CRYPT(arg, GET_PC_NAME(...)), MAX_PWD_LENGTH);
+*(GET_PASSWD(...) + MAX_PWD_LENGTH) = '\0';
+```
+
+Ten characters, then an explicit NUL. (`strncpy` would not terminate a
+13-character source itself; the line after it does, so the field is properly
+terminated and there is no garbage byte to strip — worth stating because the
+obvious suspicion is wrong.)
+
+Verification then compares the same ten, `interpreter.c:1462`:
+
+```c
+strncmp(CRYPT(arg, GET_PASSWD(ch)), GET_PASSWD(ch), MAX_PWD_LENGTH)
+```
+
+**So a Go implementation must compute the full 13-character DES hash and
+compare only its first 10 characters.** Comparing all 13 rejects every
+correct password on the entire roster.
+
+Three further consequences:
+
+- **The salt is the first two characters of the character's name.** Setting
+  a password passes the name as the salt argument; checking one passes the
+  stored hash, whose first two characters are that same salt. Both are the
+  standard `crypt(3)` idiom, and both mean the salt is public and derivable
+  from the character's name alone.
+- **Only the first eight characters of a password ever mattered**, because
+  that is what DES `crypt(3)` uses. A player's twenty-character passphrase
+  was always eight characters of security.
+- **Truncating the hash to 10 characters loses roughly 3 characters of
+  digest**, which weakens it further — distinct passwords that collide in
+  the first 10 characters of their hash are interchangeable at the login
+  prompt. This is not a reason to panic about a game from 2002; it is a
+  reason not to keep these hashes a moment longer than migration requires.
+
+Conversion preserves the stored value exactly — verified, not assumed: a
+binary record's password survives binary→ascii byte for byte, and comes back
+classified as the legacy scheme. Nothing is lost in migration; what is stored
+is simply already only ten characters.
 
 ### 5.4 `ascii` — what the server runs on
 
@@ -736,7 +783,10 @@ drops without anyone noticing until a character's skills stop working.
 
 **Still outstanding:** the password work itself — DES verification for the
 existing roster, a modern scheme to upgrade to, and the rehash-on-login path
-that connects them. Nothing else blocks it now.
+that connects them. Nothing else blocks it now. **Read §5.3.1 before
+starting it**: the stored hash is a 10-character prefix of a 13-character
+one, and an implementation that compares all 13 rejects every correct
+password on the roster while reporting nothing but "wrong password".
 
 **A note on verification.** The 32-bit checks skip on a machine without
 32-bit libc headers, which is most of them. CI installs `gcc-multilib` and
