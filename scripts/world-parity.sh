@@ -1,5 +1,11 @@
 #!/bin/sh
 #
+# Copyright (C) 2026 Dave O'Connor. Part of Disgracelands, a derivative work
+# of CircleMUD (Copyright (C) 1993-2001 Jeremy Elson, the Trustees of the
+# Johns Hopkins University and the CircleMUD Group), itself based on DikuMUD
+# (Copyright (C) 1990, 1991). Use of this file is governed by the CircleMUD
+# and DikuMUD licenses; see LICENSE. Non-commercial use only.
+#
 # Check that the Go loader and the C loader hold the same world.
 #
 # Builds both servers, has each dump the world it loaded as canonical JSON,

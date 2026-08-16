@@ -12,6 +12,15 @@
 *                                                                         *
 *  Keep in step with internal/persist/world/dump.go. Where the two         *
 *  disagree, the diff will be full of noise and prove nothing.            *
+*                                                                         *
+*  Copyright (C) 2026 Dave O'Connor. Part of Disgracelands, a derivative  *
+*  work of CircleMUD, Copyright (C) 1993, 94 by the Trustees of the Johns *
+*  Hopkins University. CircleMUD is based on DikuMUD, Copyright (C) 1990, *
+*  1991.                                                                  *
+*                                                                         *
+*  All rights reserved. See doc/license.doc, and LICENSE at the           *
+*  repository root, for complete information - including the requirement  *
+*  that this work not be used commercially.                               *
 ************************************************************************ */
 
 #include "conf.h"

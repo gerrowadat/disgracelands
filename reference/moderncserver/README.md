@@ -133,10 +133,15 @@ sane posture for this tree.
 ## Licence
 
 The CircleMUD and DikuMUD licences apply to everything here and to the Go
-port derived from it. `LICENSE` at the repository root is `doc/license.doc`
-verbatim. `src/.accepted` records that the licence was accepted and is
-deliberately committed — `make all` depends on it, and without it the build
-runs `licheck`, which waits for a keypress.
+port derived from it. `LICENSE` at the repository root reproduces
+`doc/license.doc` verbatim, below a preamble stating this project's own
+copyright and that it does not loosen those terms; `doc/license.doc` itself
+stays pristine, and `scripts/license-check.sh` checks that the two still
+agree byte for byte.
+
+`src/.accepted` records that the licence was accepted and is deliberately
+committed — `make all` depends on it, and without it the build runs
+`licheck`, which waits for a keypress.
 
 See `docs/proposals/go-port-plan.md` §12 for what the licence requires in
 practice.

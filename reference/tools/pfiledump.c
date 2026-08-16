@@ -1,4 +1,12 @@
 /*
+ * Copyright (C) 2026 Dave O'Connor. Part of Disgracelands, a derivative work
+ * of CircleMUD (Copyright (C) 1993-2001 Jeremy Elson, the Trustees of the
+ * Johns Hopkins University and the CircleMUD Group), itself based on DikuMUD
+ * (Copyright (C) 1990, 1991). Use of this file is governed by the CircleMUD
+ * and DikuMUD licenses; see LICENSE. Non-commercial use only.
+ */
+
+/*
  * pfiledump.c - read and print any ascii_pfiles-format player file
  * (WipeMud's genuine post-conversion files, or ones freshly produced by
  * bin2ascii). Pure text parsing, no structs.h dependency, so this is a

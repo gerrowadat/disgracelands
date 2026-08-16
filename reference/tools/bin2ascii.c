@@ -1,4 +1,12 @@
 /*
+ * Copyright (C) 2026 Dave O'Connor. Part of Disgracelands, a derivative work
+ * of CircleMUD (Copyright (C) 1993-2001 Jeremy Elson, the Trustees of the
+ * Johns Hopkins University and the CircleMUD Group), itself based on DikuMUD
+ * (Copyright (C) 1990, 1991). Use of this file is governed by the CircleMUD
+ * and DikuMUD licenses; see LICENSE. Non-commercial use only.
+ */
+
+/*
  * bin2ascii.c - convert Disgracelands' classic binary player database
  * (a flat array of `struct char_file_u`, one record per player, as written
  * by the pre-ascii_pfiles `save_char()`/`char_to_store()` in db.c) into

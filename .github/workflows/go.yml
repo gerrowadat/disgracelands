@@ -126,6 +126,19 @@ jobs:
       - name: World parity - the Go and C loaders must agree
         run: ./scripts/world-parity.sh
 
+  # The CircleMUD and DikuMUD licenses are the terms this repository exists
+  # under at all (docs/proposals/go-port-plan.md §12), and their requirements
+  # are mechanical: keep the license verbatim, keep the headers, keep the
+  # credits. Checking them here means compliance is a build failure rather
+  # than an assurance.
+  license:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: License compliance
+        run: ./scripts/license-check.sh
+
   lint:
     runs-on: ubuntu-latest
     steps:
