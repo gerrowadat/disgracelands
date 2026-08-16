@@ -30,14 +30,15 @@ cd "$ROOT"
 # reference/moderncserver/README.md. It needs pre-C99 flags to build on a
 # modern compiler, for the reasons that file explains.
 #
-# ./configure regenerates src/Makefile and reference/moderncserver/src/util/Makefile, which are both
+# ./configure regenerates src/Makefile and src/util/Makefile, which are both
 # committed, so they are saved and put back afterwards. Running a test should
 # not leave the working tree dirty.
 CSERVER=reference/moderncserver
+MAKEFILES="$CSERVER/src/Makefile $CSERVER/src/util/Makefile"
 
 if [ ! -x "$CSERVER/bin/circle" ]; then
 	echo "==> Building the C server"
-	for mk in "$CSERVER/src/Makefile" "$CSERVER/reference/moderncserver/src/util/Makefile"; do
+	for mk in $MAKEFILES; do
 		[ -f "$mk" ] && cp "$mk" "$OUT/$(echo "$mk" | tr / _)"
 	done
 
@@ -45,7 +46,7 @@ if [ ! -x "$CSERVER/bin/circle" ]; then
 		CFLAGS="-std=gnu89 -fcommon -Wno-implicit-function-declaration -w" \
 		CC=gcc ./configure >/dev/null )
 
-	for mk in "$CSERVER/src/Makefile" "$CSERVER/reference/moderncserver/src/util/Makefile"; do
+	for mk in $MAKEFILES; do
 		saved="$OUT/$(echo "$mk" | tr / _)"
 		[ -f "$saved" ] && cp "$saved" "$mk"
 	done
