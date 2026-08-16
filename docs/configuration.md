@@ -15,10 +15,11 @@ environment variable name in brackets after each description. If the two
 ever disagree, `--help` is right and this file is stale — CI checks that
 every flag appears here, but it cannot check that the prose is accurate.
 
-> **Current state:** the server has no game in it yet. Settings marked
-> *(inert)* are accepted and validated but do not yet affect anything,
-> because the subsystem they configure has not been built. They are here
-> because the configuration surface was built first, deliberately — see
+> **Current state:** players can connect, log in and move around, but the
+> rules core is not built (Phase 4 onwards). Settings marked *(inert)* are
+> accepted and validated but do not yet affect anything, because the
+> subsystem they configure does not exist. They are here because the
+> configuration surface was built first, deliberately — see
 > `docs/proposals/go-port-plan.md` §10.
 
 ## Data locations
@@ -72,9 +73,11 @@ empty address disables a listener.
 |---|---|---|
 | `--listen-telnet` | *(disabled)* | Plaintext telnet. |
 | `--listen-telnets` | `:4443` | TLS-wrapped telnet. |
-| `--listen-ws` | *(disabled)* | WebSocket, for browser clients. |
+| `--listen-ws` | *(disabled)* | WebSocket, for browser clients. *(inert)* |
 
-*(inert)* — listeners land in Phase 3.
+The telnet listeners are live. **`--listen-ws` is inert**: the address is
+accepted, but no WebSocket listener is started, so a server configured with
+that alone exits with "no listeners could be started".
 
 **Plaintext telnet is off by default and the server warns when it is on.**
 Passwords cross the network in the clear on that listener; it exists for
@@ -92,22 +95,28 @@ set. That is preferable to starting a server nobody can reach.
 |---|---|---|
 | `--tls-cert` | *(empty)* | Certificate file. Must be set with `--tls-key`. |
 | `--tls-key` | *(empty)* | Private key file. |
-| `--tls-acme-domain` | *(empty)* | Obtain a certificate automatically via ACME (Let's Encrypt) for this domain. |
-| `--tls-acme-cache` | `data/.acme` | Where ACME caches issued certificates. Must persist across restarts. |
+| `--tls-acme-domain` | *(empty)* | Obtain a certificate automatically via ACME (Let's Encrypt) for this domain. *(inert)* |
+| `--tls-acme-cache` | `data/.acme` | Where ACME caches issued certificates. Must persist across restarts. *(inert)* |
 
 `--tls-cert`/`--tls-key` and `--tls-acme-domain` are mutually exclusive.
 Setting only one half of the cert/key pair is an error.
+
+**ACME is not implemented.** Configuring it fails at startup, saying to use
+`--tls-cert` and `--tls-key`, rather than starting a server whose
+certificate never arrives.
 
 ## Connections
 
 | Flag | Default | Meaning |
 |---|---|---|
-| `--max-players` | `300` | Maximum simultaneous players. |
+| `--max-players` | `300` | Maximum simultaneous players. *(inert)* |
 | `--max-connections-per-ip` | `8` | Maximum simultaneous connections from one address. |
 | `--login-grace-time` | `60s` | How long a connection may stay unauthenticated before being dropped. |
-| `--trust-proxy-headers` | `false` | Trust `X-Forwarded-For`. Only enable behind a proxy you control — otherwise clients can forge their apparent address. |
+| `--trust-proxy-headers` | `false` | Trust `X-Forwarded-For`. Only enable behind a proxy you control — otherwise clients can forge their apparent address. *(inert)* |
 
-*(inert)* — enforced from Phase 3.
+The per-address limit and the login grace time are enforced. `--max-players`
+is not yet, and `--trust-proxy-headers` has nothing to apply to until the
+WebSocket listener exists.
 
 ## Engine
 
@@ -115,7 +124,9 @@ Setting only one half of the cert/key pair is an error.
 |---|---|---|
 | `--pulse-interval` | `100ms` | Game loop tick. The C server's `OPT_USEC` was 100ms and everything in the game is timed in multiples of it. |
 
-*(inert)* — the pulse loop lands in Phase 3.
+The pulse loop runs, and `dlmud_pulse_duration_seconds` measures it against
+this budget. What it drives is still arriving: command dispatch and autosave
+today, combat and resets from Phase 4.
 
 Changing `--pulse-interval` changes the speed of the entire game — combat
 rounds, regeneration, zone resets, mob activity. It is a flag for testing,
@@ -128,11 +139,14 @@ These correspond one-to-one with the C server's single-letter options.
 | Flag | C equivalent | Meaning |
 |---|---|---|
 | `--mini-mud` | `-m` | Load a minimal world, for testing. |
-| `--skip-rent-check` | `-q` | Skip the rent scan on boot (faster startup). |
+| `--skip-rent-check` | `-q` | Skip the rent scan on boot (faster startup). *(inert)* |
 | `--restrict` | `-r` | Allow no new player registrations. |
-| `--no-specials` | `-s` | Suppress special procedure assignment. |
+| `--no-specials` | `-s` | Suppress special procedure assignment. *(inert)* |
 
-*(inert)* — meaningful from Phase 1 onwards.
+`--mini-mud` loads each world subdirectory's `index.mini` instead of
+`index`, and `--restrict` turns new characters away at the login prompt.
+The other two configure subsystems that do not exist yet: there is no rent
+scan and there are no special procedures until Phase 4.
 
 ## Security
 

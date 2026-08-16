@@ -28,11 +28,11 @@ Two binaries:
 - **`dlmud`** — the server. Every option can also be set from the
   environment (`--lib-dir` ↔ `DL_LIB_DIR`); precedence is flag >
   environment > default. `--help` lists the lot.
-- **`dlctl`** — offline tooling: world linting and dumping, and in a later
-  phase player-file conversion and inspection. The jobs
-  `reference/moderncserver/src/util/` and `reference/tools/` do today.
-  Subcommands that need a persistence layer report which plan phase
-  implements them.
+- **`dlctl`** — offline tooling: world linting and dumping, player-file
+  conversion and inspection, and converting a whole original data directory.
+  The jobs `reference/moderncserver/src/util/` and `reference/tools/` do
+  today. Any subcommand added before the layer it needs reports which plan
+  phase implements it rather than pretending to work.
 
 ## Checking against the C server
 
@@ -46,12 +46,16 @@ currently agree on every field of all 5,248 records. This runs in CI.
 If it reports a difference, the Go loader is what is wrong: the C server is
 the reference implementation and the one that has been running the game.
 
-## Current state: Phase 1 done, no game yet
+## Current state: Phases 0–3 done, no rules yet
 
-`dlmud` boots, reports itself ready, serves diagnostics and shuts down
-cleanly on SIGTERM. The world loader is built (Phase 1) but nothing yet uses
-it at run time: players cannot connect, because the listeners and the pulse
-loop arrive in Phase 3. See `docs/proposals/go-port-plan.md` §10.
+`dlmud` loads the world, takes connections over TLS or plaintext telnet,
+runs the login and character-creation flow, and gives a player the pulse
+loop, movement, `look`, `who`, `credits`, `help` and `quit` — plus autosave
+and a linkdead body to reconnect to. It shuts down cleanly on SIGTERM.
+
+There is no rules core yet: no combat, skills, spells or levelling, no
+shops, boards or mail, and no zone resets, so nothing is loaded into the
+rooms. That is Phase 4 onwards; see `docs/proposals/go-port-plan.md` §10.
 
 It needs at least one listener, and the TLS listener (on by default) needs a
 certificate, so the shortest thing that actually starts is:

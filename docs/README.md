@@ -15,9 +15,9 @@ does, how to configure it, how to run it.
 Building from source is in the top-level **`BUILDING.md`**, which covers
 both the C tree and the Go tree.
 
-> The Go server is at Phase 0: it boots, reports itself ready, serves
-> diagnostics and shuts down cleanly, but there is no game in it yet. Both
-> documents above mark which settings are *(inert)* pending later phases.
+> The Go server is at Phase 3: players can connect, log in, and move around
+> a world with no rules in it yet. Both documents above mark which settings
+> are *(inert)* pending later phases.
 
 ## `docs/proposals/` — work not yet done
 
@@ -26,7 +26,7 @@ Designs and plans. Future tense, and expected to change.
 - **[go-port-plan.md](proposals/go-port-plan.md)** — the design and phasing
   for reimplementing the engine in Go: 64-bit safety, pluggable player- and
   world-file formats, the concurrency model, licensing constraints, and the
-  phase-by-phase sequence. Phase 0 is built; Phases 1–7 are not.
+  phase-by-phase sequence. Phases 0–3 are built; Phases 4–7 are not.
 
 ## `docs/investigations/` — what we found out
 

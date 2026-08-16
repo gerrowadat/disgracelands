@@ -6,10 +6,13 @@
 
 // Command dlmud is the Disgracelands server.
 //
-// Phase 0 of docs/proposals/go-port-plan.md: this wires up configuration, logging,
-// metrics, health and signal handling. There is no game in it yet — it boots,
-// reports itself ready, serves diagnostics, and shuts down cleanly. Each later
-// phase fills in a layer between "ready" and "shutting down".
+// This is the boot sequence and nothing else: configuration, logging, metrics
+// and health, then the world, the player store, the engine and the listeners,
+// then wait for a signal and shut down. Everything between "ready" and
+// "shutting down" belongs to the packages it starts, and each phase of
+// docs/proposals/go-port-plan.md adds another layer in there — the rules core
+// (Phase 4 onwards) is not built yet, so a player can log in and move around a
+// world with nothing in it.
 package main
 
 import (

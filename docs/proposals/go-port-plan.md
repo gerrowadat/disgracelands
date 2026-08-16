@@ -819,11 +819,23 @@ that reason before the property sank in.
 fails if those checks skipped, so the layout the real data is in is verified
 on every change even though it cannot be verified locally.
 
-**Phase 3 — Server skeleton.** Pulse loop, session lifecycle, listeners,
-negotiation, the login `nanny` state machine, and enough commands to look
-around and move (`look`, `north`, `who`, `quit`). *Done when: a real player
-can log in with an archived character over TLS and walk from the Temple of
-Midgaard to New Thalos.*
+**Phase 3 — Server skeleton. Built, bar the WebSocket transport.** Pulse
+loop, session lifecycle, listeners, negotiation, the login `nanny` state
+machine, and enough commands to look around and move (`look`, `north`,
+`who`, `quit`). *Done when: a real player can log in with an archived
+character over TLS and walk from the Temple of Midgaard to New Thalos.*
+
+What landed: the telnet and TLS listeners, telnet negotiation with ECHO-off
+passwords, CHARSET and GMCP, login and reconnect, the full character
+creation flow, `look`/movement/`who`/`credits`/`help`/`quit`, autosave on
+the C's 60-second `PULSE_AUTOSAVE`, and linkdead bodies that linger for a
+reconnect and are reaped after two minutes.
+
+Outstanding against the phase as written: `--listen-ws` is accepted but
+starts nothing, so the greeting-on-every-transport requirement above is
+satisfied only where a transport exists, and `--max-players` is not yet
+enforced. Both are named in `docs/configuration.md` as inert rather than
+left to be discovered.
 
 Three things that are not optional in this phase, for reasons outside the
 phase itself:
