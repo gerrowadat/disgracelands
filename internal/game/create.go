@@ -6,7 +6,7 @@
 
 package game
 
-import "math/rand/v2"
+import "github.com/gerrowadat/disgracelands/internal/rng"
 
 // Character creation, ported from init_char (db.c:2688) and the local
 // additions the C makes at the class prompt (interpreter.c's CON_QCLASS).
@@ -45,7 +45,7 @@ const implementorExp int32 = 7000000
 // first says whether this is the first character on the roster: the C tests
 // `top_of_p_table == 0` and makes that character the Implementor, which is
 // how a fresh install gets an administrator.
-func InitChar(rec *PlayerRecord, rng *rand.Rand, first bool) {
+func InitChar(rec *PlayerRecord, r *rng.Rand, first bool) {
 	if first {
 		// "*** if this is our first player --- he be God ***"
 		rec.Points.Exp = implementorExp
@@ -67,11 +67,11 @@ func InitChar(rec *PlayerRecord, rng *rand.Rand, first bool) {
 	// Weight and height are rolled from the sex, which is the only thing the
 	// C uses sex for mechanically.
 	if rec.Sex == SexMale {
-		rec.Weight = randRange(rng, 120, 180)
-		rec.Height = randRange(rng, 160, 200)
+		rec.Weight = randRange(r, 120, 180)
+		rec.Height = randRange(r, 160, 200)
 	} else {
-		rec.Weight = randRange(rng, 100, 160)
-		rec.Height = randRange(rng, 150, 180)
+		rec.Weight = randRange(r, 100, 160)
+		rec.Height = randRange(r, 150, 180)
 	}
 
 	// Unconditional, and after the first-player block, so everyone gets

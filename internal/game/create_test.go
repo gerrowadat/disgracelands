@@ -7,11 +7,13 @@
 package game
 
 import (
-	"math/rand/v2"
+	"github.com/gerrowadat/disgracelands/internal/rng"
 	"testing"
 )
 
-func newRNG() *rand.Rand { return rand.New(rand.NewPCG(20, 26)) } //nolint:gosec // a test seed, not a secret
+// newRNG is the C server's own generator on a fixed seed, so a failing test
+// can be reproduced and so these roll the numbers the C would.
+func newRNG() *rng.Rand { return rng.NewRand(rng.NewCircle(20)) }
 
 // TestRemortMasksMatchTheFlagConstants ties pc_class_remort_masks to the bits
 // the IS_<CLASS> macros test. They are written as separate types — one is
@@ -37,9 +39,9 @@ func TestRemortMasksMatchTheFlagConstants(t *testing.T) {
 // got wrong once: init_char leaves an ordinary new character at level zero,
 // and do_start does not run until they choose to enter the world.
 func TestANewMortalIsNotStartedYet(t *testing.T) {
-	rng := newRNG()
+	r := newRNG()
 	rec := &PlayerRecord{Name: "Welmar", Class: ClassThief, Sex: SexFemale}
-	InitChar(rec, rng, false)
+	InitChar(rec, r, false)
 
 	if rec.Level != 0 {
 		t.Errorf("level %d after InitChar, want 0 — do_start has not run yet", rec.Level)
@@ -71,7 +73,7 @@ func TestANewMortalIsNotStartedYet(t *testing.T) {
 	}
 
 	// Now start them, as entering the world does.
-	Start(rec, rng)
+	Start(rec, r)
 	if rec.Level != 1 {
 		t.Errorf("level %d after Start, want 1", rec.Level)
 	}

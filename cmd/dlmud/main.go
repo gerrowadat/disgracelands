@@ -31,6 +31,7 @@ import (
 	"github.com/gerrowadat/disgracelands/internal/obs"
 	"github.com/gerrowadat/disgracelands/internal/persist/player"
 	"github.com/gerrowadat/disgracelands/internal/persist/world"
+	"github.com/gerrowadat/disgracelands/internal/rng"
 	"github.com/gerrowadat/disgracelands/internal/server"
 
 	// Register the formats the server can be configured to use.
@@ -164,6 +165,20 @@ func run(args []string) error {
 	})
 	go eng.Run(ctx)
 
+	// The generator the game rolls on. A seed of zero means the clock, which
+	// is what the C server does (comm.c:406); anything else makes the run
+	// reproducible, which is what comparing against the C server requires.
+	seed := cfg.RNGSeed
+	if seed == 0 {
+		seed = uint64(time.Now().UnixNano()) //nolint:gosec // a game seed, not a secret
+	}
+	source, err := rng.New(cfg.RNG, seed)
+	if err != nil {
+		return err
+	}
+	logger.Info("random number generator", "source", source.Name(),
+		"seed", seed, "reproducible", cfg.RNGSeed != 0)
+
 	srv := server.New(server.Options{
 		Engine:   eng,
 		Players:  players,
@@ -171,6 +186,7 @@ func run(args []string) error {
 		Text:     text,
 		Logger:   logger,
 		Restrict: cfg.Restrict,
+		RNG:      rng.NewRand(source),
 	})
 	go srv.RunAutosave(ctx)
 

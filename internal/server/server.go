@@ -16,13 +16,13 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"math/rand/v2"
 	"time"
 
 	"github.com/gerrowadat/disgracelands/internal/auth"
 	"github.com/gerrowadat/disgracelands/internal/engine"
 	"github.com/gerrowadat/disgracelands/internal/game"
 	"github.com/gerrowadat/disgracelands/internal/persist/player"
+	"github.com/gerrowadat/disgracelands/internal/rng"
 	"github.com/gerrowadat/disgracelands/internal/session"
 )
 
@@ -57,7 +57,7 @@ type Server struct {
 	// restrict refuses new characters, matching the C's -r.
 	restrict bool
 
-	rng *rand.Rand
+	rng *rng.Rand
 }
 
 // Options configure a Server.
@@ -68,19 +68,26 @@ type Options struct {
 	Text     *Text
 	Logger   *slog.Logger
 	Restrict bool
+	// RNG is the generator the game rolls on. A nil one gets the modern
+	// generator seeded from the clock.
+	RNG *rng.Rand
 }
 
 // New creates a Server.
 func New(opts Options) *Server {
-	return &Server{
+	s := &Server{
 		engine:   opts.Engine,
 		players:  opts.Players,
 		auth:     opts.Auth,
 		text:     opts.Text,
 		logger:   opts.Logger,
 		restrict: opts.Restrict,
-		rng:      rand.New(rand.NewPCG(rand.Uint64(), rand.Uint64())),
+		rng:      opts.RNG,
 	}
+	if s.rng == nil {
+		s.rng = rng.NewRand(rng.NewModern(uint64(time.Now().UnixNano()))) //nolint:gosec // a game seed, not a secret
+	}
+	return s
 }
 
 // Text returns the canned files.

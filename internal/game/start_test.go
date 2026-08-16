@@ -7,7 +7,7 @@
 package game
 
 import (
-	"math/rand/v2"
+	"github.com/gerrowadat/disgracelands/internal/rng"
 	"testing"
 )
 
@@ -15,10 +15,10 @@ import (
 // bug: a freshly created character prompted `0H 0M 0V` because Create built a
 // record by hand and never ran do_start.
 func TestStartGivesEveryClassSomethingToLiveOn(t *testing.T) {
-	rng := rand.New(rand.NewPCG(3, 4))
+	r := rng.NewRand(rng.NewCircle(3))
 	for _, class := range []int32{ClassMagicUser, ClassCleric, ClassThief, ClassWarrior, ClassPaladin} {
 		rec := &PlayerRecord{Name: "Test", Class: class}
-		Start(rec, rng)
+		Start(rec, r)
 
 		if rec.Level != 1 {
 			t.Errorf("class %d: level %d, want 1", class, rec.Level)
@@ -61,12 +61,12 @@ func TestFirstLevelGainsMatchTheCsRanges(t *testing.T) {
 		{ClassWarrior, "warrior", 10, 15, 1, 3},
 		{ClassPaladin, "paladin", 10, 14, 1, 3},
 	} {
-		rng := rand.New(rand.NewPCG(uint64(tc.class), 99)) //nolint:gosec // a test seed, not a secret
+		r := rng.NewRand(rng.NewCircle(uint64(tc.class)))
 		sawLowHit, sawHighHit, sawMoveFloor := false, false, false
 
 		for i := 0; i < 5000; i++ {
 			rec := &PlayerRecord{Class: tc.class}
-			Start(rec, rng)
+			Start(rec, r)
 
 			// The constitution bonus is part of the roll, so the window moves
 			// with whatever constitution came up.
@@ -107,10 +107,10 @@ func TestFirstLevelGainsMatchTheCsRanges(t *testing.T) {
 // TestImmortalsGainHolylightAndStopEating covers advance_level's tail, which
 // is the only place either is set.
 func TestImmortalsGainHolylightAndStopEating(t *testing.T) {
-	rng := rand.New(rand.NewPCG(11, 12)) //nolint:gosec // a test seed, not a secret
+	r := rng.NewRand(rng.NewCircle(11))
 
 	mortal := &PlayerRecord{Class: ClassWarrior, Level: LevelImmortal - 1, Conditions: StartingConditions}
-	AdvanceLevel(mortal, rng)
+	AdvanceLevel(mortal, r)
 	if mortal.Conditions != StartingConditions {
 		t.Errorf("a level %d character's conditions changed to %v", mortal.Level, mortal.Conditions)
 	}
@@ -119,7 +119,7 @@ func TestImmortalsGainHolylightAndStopEating(t *testing.T) {
 	}
 
 	immortal := &PlayerRecord{Class: ClassWarrior, Level: LevelImmortal, Conditions: StartingConditions}
-	AdvanceLevel(immortal, rng)
+	AdvanceLevel(immortal, r)
 	if immortal.Conditions != [3]int32{-1, -1, -1} {
 		t.Errorf("immortal conditions are %v, want all -1", immortal.Conditions)
 	}
@@ -132,14 +132,14 @@ func TestImmortalsGainHolylightAndStopEating(t *testing.T) {
 // stock CircleMUD that is easiest to lose: IS_MAGIC_USER consults the remort
 // vector, so a warrior who remorted through cleric practises like a cleric.
 func TestPracticesFollowTheRemortAwareClassTest(t *testing.T) {
-	rng := rand.New(rand.NewPCG(13, 14)) //nolint:gosec // a test seed, not a secret
+	r := rng.NewRand(rng.NewCircle(13))
 
 	// Wisdom 18 gives a bonus of 5: a caster gains MAX(2, 5) = 5, a
 	// non-caster MIN(2, MAX(1, 5)) = 2.
 	abils := Abilities{Wisdom: 18}
 
 	plain := &PlayerRecord{Class: ClassWarrior, Level: 5, Abilities: abils}
-	AdvanceLevel(plain, rng)
+	AdvanceLevel(plain, r)
 	if plain.SpellsToLearn != 2 {
 		t.Errorf("a plain warrior gained %d practices, want 2", plain.SpellsToLearn)
 	}
@@ -148,7 +148,7 @@ func TestPracticesFollowTheRemortAwareClassTest(t *testing.T) {
 		Class: ClassWarrior, Level: 5, Abilities: abils,
 		RemortVector: int32(RemortCleric),
 	}
-	AdvanceLevel(remorted, rng)
+	AdvanceLevel(remorted, r)
 	if remorted.SpellsToLearn != 5 {
 		t.Errorf("a warrior who remorted through cleric gained %d practices, want 5",
 			remorted.SpellsToLearn)
@@ -157,17 +157,17 @@ func TestPracticesFollowTheRemortAwareClassTest(t *testing.T) {
 
 // TestThievesStartWithTheirSkills and nobody else does.
 func TestThievesStartWithTheirSkills(t *testing.T) {
-	rng := rand.New(rand.NewPCG(5, 6))
+	r := rng.NewRand(rng.NewCircle(5))
 	for _, class := range []int32{ClassMagicUser, ClassCleric, ClassWarrior, ClassPaladin} {
 		rec := &PlayerRecord{Class: class}
-		Start(rec, rng)
+		Start(rec, r)
 		if len(rec.Skills) != 0 {
 			t.Errorf("class %d starts with %d skills, want none", class, len(rec.Skills))
 		}
 	}
 
 	rec := &PlayerRecord{Class: ClassThief}
-	Start(rec, rng)
+	Start(rec, r)
 	for skill, want := range map[int32]int32{131: 10, 132: 10, 133: 5, 134: 15, 135: 10, 139: 10} {
 		if got := rec.Skills[skill]; got != want {
 			t.Errorf("thief skill %d = %d, want %d", skill, got, want)
@@ -178,12 +178,12 @@ func TestThievesStartWithTheirSkills(t *testing.T) {
 // TestManaIsCappedAtTen guards advance_level's cap, which only bites at the
 // levels where number(level, level*3/2) can exceed it.
 func TestManaIsCappedAtTen(t *testing.T) {
-	rng := rand.New(rand.NewPCG(8, 9))
+	r := rng.NewRand(rng.NewCircle(8))
 	for level := int32(1); level <= 34; level++ {
 		rec := &PlayerRecord{Class: ClassMagicUser, Level: level}
 		for i := 0; i < 200; i++ {
 			before := rec.Points.MaxMana
-			AdvanceLevel(rec, rng)
+			AdvanceLevel(rec, r)
 			if gained := rec.Points.MaxMana - before; gained > 10 {
 				t.Fatalf("level %d gained %d mana, want at most 10", level, gained)
 			}
