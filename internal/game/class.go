@@ -197,3 +197,137 @@ func ParseSex(arg byte) int32 {
 	}
 	return -1
 }
+
+// StartingConditions are the hunger, thirst and drunkenness a new character
+// begins with, from do_start (class.c:1802). Order is drunk, full, thirsty.
+var StartingConditions = [3]int32{0, 24, 24}
+
+// baseMaxHit is what do_start sets before the first advance_level.
+const baseMaxHit int32 = 10
+
+// StartingSkills are the skills a class begins knowing, from do_start.
+// Only the thief has any; the numbers are the C's.
+func StartingSkills(class int32) map[int32]int32 {
+	if class != ClassThief {
+		return nil
+	}
+	// Skill numbers from spells.h: SNEAK, HIDE, STEAL, BACKSTAB, PICK_LOCK,
+	// TRACK. Named constants arrive with the skill tables in Phase 4; until
+	// then the numbers carry their names in this comment rather than being
+	// invented elsewhere.
+	return map[int32]int32{
+		132: 10, // sneak
+		133: 5,  // hide
+		134: 15, // steal
+		131: 10, // backstab
+		135: 10, // pick lock
+		139: 10, // track
+	}
+}
+
+// AdvanceLevel applies one level's worth of gains, porting advance_level
+// (class.c:1860).
+//
+// It is called for the level the character is *currently* at — do_start calls
+// it at level one — so the caller raises the level first and then calls this.
+//
+// The C also snoop-checks and saves the character here. Both are the caller's
+// business in this port: saving from inside a game rule would mean the world
+// goroutine touching the disk. See internal/server for where it happens.
+func AdvanceLevel(rec *PlayerRecord, rng *rand.Rand) {
+	addHit := conApplyHitPoints[abilityIndex(rec.Abilities.Constitution)]
+	var addMove int32
+
+	switch rec.Class {
+	case ClassMagicUser:
+		addHit, addMove = addHit+randRange(rng, 3, 8), randRange(rng, 0, 2)
+	case ClassCleric:
+		addHit, addMove = addHit+randRange(rng, 5, 10), randRange(rng, 0, 2)
+	case ClassThief:
+		addHit, addMove = addHit+randRange(rng, 7, 13), randRange(rng, 1, 3)
+	case ClassWarrior:
+		addHit, addMove = addHit+randRange(rng, 10, 15), randRange(rng, 1, 3)
+	case ClassPaladin:
+		addHit, addMove = addHit+randRange(rng, 10, 14), randRange(rng, 1, 3)
+	}
+
+	// Every class rolls mana the same way, capped at ten. The C computes
+	// (int)(1.5 * level), which truncates towards zero for the positive
+	// levels this can be called with, so integer arithmetic gives the same
+	// answer.
+	level := rec.Level
+	addMana := randRange(rng, level, level*3/2)
+	if addMana > 10 {
+		addMana = 10
+	}
+
+	// MAX(1, ...) on both: a low-constitution magic-user can roll a negative
+	// hit-point gain and a magic-user or cleric can roll zero movement, and
+	// the C refuses to let either of those cost them a level's progress.
+	rec.Points.MaxHit += max(1, addHit)
+	rec.Points.MaxMove += max(1, addMove)
+
+	// No mana at level one. This is why a new character prompts with 0M and
+	// always has: the C guards the mana gain on level > 1 while hit points
+	// and movement are gained unconditionally.
+	if rec.Level > 1 {
+		rec.Points.MaxMana += addMana
+	}
+
+	// Practices. The class test is the remort-aware IS_<CLASS> macro, not a
+	// plain comparison, so a character who remorted through cleric keeps a
+	// cleric's practice rate.
+	bonus := wisApplyPractices[abilityIndex(rec.Abilities.Wisdom)]
+	if IsMagicUser(rec) || IsCleric(rec) {
+		rec.SpellsToLearn += max(2, bonus)
+	} else {
+		rec.SpellsToLearn += min(2, max(1, bonus))
+	}
+
+	if rec.Level >= LevelImmortal {
+		// Immortals do not eat, drink or get drunk, and they see in the dark.
+		rec.Conditions = [3]int32{-1, -1, -1}
+		rec.Preferences = rec.Preferences.Set(PrefHolylight)
+	}
+}
+
+// Start initialises a character on their first entry into the world, porting
+// do_start (class.c:1802).
+//
+// This is not what runs when a character is created — InitChar is. The C
+// splits the two and calls them at different moments: init_char at the class
+// prompt, do_start only once the player has read the message of the day and
+// chosen to enter the game, and only `if (GET_LEVEL(ch) == 0)`
+// (interpreter.c:1684). The split matters, because the first character on an
+// empty roster is given level 34 by init_char and therefore never runs this
+// at all.
+//
+// The C's trailing bookkeeping — the mudlog line, played time, logon time and
+// the siteok-everyone flag — is left to the caller, which is the only place
+// that knows the clock and the server's configuration.
+func Start(rec *PlayerRecord, rng *rand.Rand) {
+	rec.Level = 1
+	rec.Points.Exp = 1
+	rec.Abilities = RollAbilities(rec.Class, rng)
+	rec.Title = Title(rec.Class, rec.Level, rec.Sex)
+	rec.Points.MaxHit = baseMaxHit
+	rec.Skills = StartingSkills(rec.Class)
+
+	AdvanceLevel(rec, rng)
+
+	rec.Points.Hit = rec.Points.MaxHit
+	rec.Points.Mana = rec.Points.MaxMana
+	rec.Points.Move = rec.Points.MaxMove
+
+	// After advance_level, not before: an immortal created at level one would
+	// otherwise have the -1s overwritten. The C has the same ordering.
+	rec.Conditions = StartingConditions
+}
+
+// randRange returns a value in [lo, hi], as the C's number() does.
+func randRange(rng *rand.Rand, lo, hi int32) int32 {
+	if hi <= lo {
+		return lo
+	}
+	return lo + randN(rng, hi-lo+1)
+}

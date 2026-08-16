@@ -23,6 +23,7 @@ import (
 type Text struct {
 	greeting string
 	motd     string
+	imotd    string
 	credits  string
 }
 
@@ -30,7 +31,19 @@ type Text struct {
 const (
 	greetingFile = "text/greetings"
 	motdFile     = "text/motd"
+	imotdFile    = "text/imotd"
 	creditsFile  = "text/credits"
+)
+
+// WelcomeMessage and StartMessage are WELC_MESSG and START_MESSG
+// (config.c:284). They are compiled-in strings in the C rather than files, so
+// they are compiled in here too, verbatim.
+const (
+	WelcomeMessage = "\r\nWelcome to the land of CircleMUD!  May your visit here be... Interesting.\r\n\r\n"
+
+	StartMessage = "Welcome.  This is your new CircleMUD character!  You can now earn gold,\r\n" +
+		"gain experience, find weapons and equipment, and much more -- while\r\n" +
+		"meeting people from around the world!\r\n"
 )
 
 // LoadText reads the canned files from a data directory.
@@ -58,8 +71,16 @@ func LoadText(dir string) (*Text, error) {
 	}
 
 	// Optional: a server with no message of the day is merely quiet.
-	if b, err := os.ReadFile(filepath.Join(dir, motdFile)); err == nil { //nolint:gosec // as above
-		t.motd = string(b)
+	for _, f := range []struct {
+		path string
+		dst  *string
+	}{
+		{motdFile, &t.motd},
+		{imotdFile, &t.imotd},
+	} {
+		if b, err := os.ReadFile(filepath.Join(dir, f.path)); err == nil { //nolint:gosec // as above
+			*f.dst = string(b)
+		}
 	}
 
 	return t, nil
@@ -70,6 +91,22 @@ func (t *Text) Greeting() string { return t.greeting }
 
 // MOTD implements session.TextFiles.
 func (t *Text) MOTD() string { return t.motd }
+
+// ImmortalMOTD implements session.TextFiles. The C shows this instead of the
+// ordinary message of the day to anyone of immortal level
+// (interpreter.c:1504); a server without one falls back to the mortal file.
+func (t *Text) ImmortalMOTD() string {
+	if t.imotd == "" {
+		return t.motd
+	}
+	return t.imotd
+}
+
+// Welcome implements session.TextFiles.
+func (t *Text) Welcome() string { return WelcomeMessage }
+
+// Start implements session.TextFiles.
+func (t *Text) Start() string { return StartMessage }
 
 // Credits implements session.TextFiles.
 func (t *Text) Credits() string { return t.credits }
