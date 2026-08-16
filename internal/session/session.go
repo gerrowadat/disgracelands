@@ -53,6 +53,21 @@ const (
 	StateQueryClass
 	// StateReadMOTD: press return, having read the message of the day.
 	StateReadMOTD
+	// StateMenu: the main menu, the C's CON_MENU. A character is not in the
+	// world until they choose to enter it.
+	StateMenu
+	// StateEnterDescription: typing the description others see on `look`,
+	// terminated by a lone '@'.
+	StateEnterDescription
+	// The three states of changing a password from the menu, matching
+	// CON_CHPWD_GETOLD, CON_CHPWD_GETNEW and CON_CHPWD_VRFY.
+	StateChangePasswordOld
+	StateChangePasswordNew
+	StateChangePasswordVerify
+	// StateDeleteVerify and StateDeleteConfirm are the two confirmations the
+	// C asks for before a character deletes itself.
+	StateDeleteVerify
+	StateDeleteConfirm
 	// StatePlaying: in the world.
 	StatePlaying
 	// StateClosed: gone.
@@ -78,6 +93,20 @@ func (s State) String() string {
 		return "query-class"
 	case StateReadMOTD:
 		return "read-motd"
+	case StateMenu:
+		return "menu"
+	case StateEnterDescription:
+		return "enter-description"
+	case StateChangePasswordOld:
+		return "change-password-old"
+	case StateChangePasswordNew:
+		return "change-password-new"
+	case StateChangePasswordVerify:
+		return "change-password-verify"
+	case StateDeleteVerify:
+		return "delete-verify"
+	case StateDeleteConfirm:
+		return "delete-confirm"
 	case StatePlaying:
 		return "playing"
 	case StateClosed:
@@ -124,6 +153,10 @@ type Session struct {
 	pendingName     string
 	pendingPassword string
 	pendingSex      int32
+
+	// editorLines buffers a multi-line entry — currently only the
+	// description — until its terminator arrives.
+	editorLines []string
 
 	// proto is the telnet state: options, charset, GMCP.
 	proto protocol
@@ -184,6 +217,11 @@ type TextFiles interface {
 	// the first time.
 	Welcome() string
 	Start() string
+	// Menu is the main menu shown after the message of the day, and again
+	// after anything reached from it finishes.
+	Menu() string
+	// Background is the story behind menu choice 3.
+	Background() string
 }
 
 // LoginHandler performs the steps that need more than the connection.
@@ -205,6 +243,18 @@ type LoginHandler interface {
 	Enter(ctx context.Context, s *Session, c *game.Character) error
 	// Leave takes them out again.
 	Leave(ctx context.Context, s *Session, c *game.Character) error
+
+	// CheckPassword verifies a password for a character already logged in.
+	// The menu asks twice — before changing a password and before deleting a
+	// character — and neither is a login, so neither goes through
+	// Authenticate.
+	CheckPassword(ctx context.Context, c *game.Character, password string) (bool, error)
+	// SetPassword replaces a character's credential and saves it.
+	SetPassword(ctx context.Context, c *game.Character, password string) error
+	// Save writes a character's record back, for the menu's editors.
+	Save(ctx context.Context, c *game.Character) error
+	// Delete removes a character permanently.
+	Delete(ctx context.Context, c *game.Character) error
 }
 
 // CommandHandler runs what a playing character types.

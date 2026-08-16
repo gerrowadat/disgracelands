@@ -7,6 +7,7 @@
 package server
 
 import (
+	"bytes"
 	"net"
 	"strings"
 	"testing"
@@ -164,6 +165,12 @@ func (c *client) sendRaw(b []byte) {
 
 func (c *client) close() { _ = c.conn.Close() }
 
+// echoRestored reports whether the bytes contain IAC WONT ECHO — the server
+// telling the client it may echo again.
+func echoRestored(b []byte) bool {
+	return bytes.Contains(b, telnet.Negotiate(telnet.WONT, telnet.OptEcho))
+}
+
 // create walks the whole creation sequence, which every test that needs a
 // character in the world has to do.
 func (c *client) create(name, password string, sex, class string) {
@@ -182,7 +189,7 @@ func (c *client) create(name, password string, sex, class string) {
 	c.send(class)
 	c.expect("PRESS RETURN")
 	c.send("")
-	c.expect("> ")
+	c.menuEnter()
 }
 
 // login takes an existing character in.
@@ -194,5 +201,13 @@ func (c *client) login(name, password string) {
 	c.send(password)
 	c.expect("PRESS RETURN")
 	c.send("")
+	c.menuEnter()
+}
+
+// menuEnter answers the main menu with "enter the game".
+func (c *client) menuEnter() {
+	c.t.Helper()
+	c.expect("Make your choice:")
+	c.send("1")
 	c.expect("> ")
 }

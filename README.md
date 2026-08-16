@@ -20,9 +20,10 @@ port catches up, that is the game.
 `docs/proposals/go-port-plan.md` are done: it loads the world, listens on
 TLS or plaintext telnet, negotiates telnet properly (hidden passwords,
 CHARSET, GMCP), logs in an archived character or creates a new one through
-the full C creation flow, and lets them look, move, `who`, `credits`, `help`
-and `quit`. Characters autosave, and a dropped link leaves the body in the
-world to reconnect to.
+the full C creation flow, and shows the main menu — description editor,
+background story, change password, delete character — before putting them
+in the world to look, move, `who`, `credits`, `help` and `quit`. Characters
+autosave, and a dropped link leaves the body in the world to reconnect to.
 
 What is missing is the game itself: no combat, skills, spells or levelling,
 no shops, boards or mail, and no zone resets — so the world is empty of
@@ -37,6 +38,8 @@ records — and `scripts/world-parity.sh` checks that in CI.
 - **Building either server**: `BUILDING.md`
 - **Running and administering the Go server**: `docs/configuration.md`,
   `docs/operations.md`
+- **Working on the Go port**: `docs/developer.md` (and `make` for the dev
+  targets it describes)
 - **The port's design and phasing**: `docs/proposals/go-port-plan.md`
 - **The C server**: `reference/moderncserver/README.md`
 - **What's left that isn't a phase**: `TODO.md`

@@ -11,13 +11,23 @@ does, how to configure it, how to run it.
   variable, what it does, and what the defaults are.
 - **[operations.md](operations.md)** — starting it, containers, graceful
   shutdown, health and readiness, metrics, logs, backups, exposure.
+- **[developer.md](developer.md)** — working on the port: the `Makefile`'s
+  dev targets, getting a server running locally against a tiny world or a
+  throwaway data directory, poking at it by hand, and what to run before
+  pushing.
+- **[deviations.md](deviations.md)** — every intentional difference from the
+  C server's behaviour, with the C line reference and the reasoning. The
+  other half of the fidelity decision: it is what keeps "fixed a bug"
+  distinguishable from "accidentally changed the game".
 
 Building from source is in the top-level **`BUILDING.md`**, which covers
 both the C tree and the Go tree.
 
-> The Go server is at Phase 3: players can connect, log in, and move around
-> a world with no rules in it yet. Both documents above mark which settings
-> are *(inert)* pending later phases.
+> The Go server is at Phase 3: it loads the world, runs listeners on telnet
+> and TLS, takes a player through the full login and creation sequence and
+> the main menu, and lets them look around and walk between rooms. There is
+> no combat, magic or economy yet — that is Phase 4. `configuration.md` and
+> `operations.md` mark which settings are *(inert)* pending later phases.
 
 ## `docs/proposals/` — work not yet done
 

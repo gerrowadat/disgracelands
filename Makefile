@@ -1,0 +1,255 @@
+# Copyright (C) 2026 Dave O'Connor. Part of Disgracelands, a derivative work
+# of CircleMUD (Copyright (C) 1993-2001 Jeremy Elson, the Trustees of the
+# Johns Hopkins University and the CircleMUD Group), itself based on DikuMUD
+# (Copyright (C) 1990, 1991). Use of this file is governed by the CircleMUD
+# and DikuMUD licenses; see LICENSE. Non-commercial use only.
+#
+# Developer conveniences for the Go tree. Nothing here is required to build
+# the server -- `go build ./...` and `go test ./...` remain the truth, and CI
+# calls the same underlying commands rather than this file. What this is for
+# is the half-dozen invocations you would otherwise keep in shell history:
+# start a server on a tiny world, start one on a throwaway data directory,
+# point one at a real one, connect to it.
+#
+# `make` on its own lists the targets. See docs/developer.md for the
+# workflows they belong to.
+#
+# The C server in reference/ has its own build and is not driven from here;
+# see reference/moderncserver/README.md.
+
+GO      ?= go
+PKG     ?= ./...
+OUT     ?= out
+
+# Where the server reads its data. `make run LIB=/srv/disgracelands/lib` runs
+# against a real directory; the default is the one in the repository.
+LIB     ?= data
+
+# Listen addresses for the dev targets. The plaintext port is the C server's
+# habitual 4000; 4443 is the TLS one; 9090 carries /metrics, /healthz, /readyz.
+HOST         ?= 127.0.0.1
+PORT         ?= 4000
+TLS_PORT     ?= 4443
+METRICS_PORT ?= 9090
+
+LOG_LEVEL ?= debug
+
+# Extra flags for any run target: `make run FLAGS="--restrict --no-specials"`.
+FLAGS ?=
+
+# The scratch directory is deleted and recreated by `make run-fresh`, so it is
+# deliberately not overridable: nothing outside out/ is ever removed.
+SCRATCH := $(OUT)/scratch-lib
+DEVCERT := $(OUT)/dev
+
+VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo devel)
+COMMIT  ?= $(shell git rev-parse HEAD 2>/dev/null || echo unknown)
+DATE    ?= $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
+
+BUILDINFO := github.com/gerrowadat/disgracelands/internal/buildinfo
+LDFLAGS   := -X $(BUILDINFO).version=$(VERSION) \
+             -X $(BUILDINFO).commit=$(COMMIT) \
+             -X $(BUILDINFO).date=$(DATE)
+
+# Plaintext telnet, no certificate, diagnostics on. The TLS listener is on by
+# default and would demand a certificate, so every dev target turns it off
+# explicitly rather than leaving you to decode the startup error.
+RUN_FLAGS = --lib-dir=$(LIB) \
+            --listen-telnet=$(HOST):$(PORT) \
+            --listen-telnets= \
+            --metrics-addr=$(HOST):$(METRICS_PORT) \
+            --log-level=$(LOG_LEVEL) \
+            $(FLAGS)
+
+.DEFAULT_GOAL := help
+
+##@ Getting started
+
+.PHONY: help
+help: ## List the targets
+	@awk 'BEGIN {FS = ":.*##"} \
+	     /^##@/ {printf "\n\033[1m%s\033[0m\n", substr($$0, 5); next} \
+	     /^[a-zA-Z0-9_-]+:.*##/ {printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2}' \
+	     $(MAKEFILE_LIST)
+	@printf '\nVariables: LIB=%s PORT=%s TLS_PORT=%s METRICS_PORT=%s LOG_LEVEL=%s FLAGS=\n\n' \
+	     '$(LIB)' '$(PORT)' '$(TLS_PORT)' '$(METRICS_PORT)' '$(LOG_LEVEL)'
+
+##@ Running a server
+
+.PHONY: run
+run: ## Run against the real data directory (LIB), plaintext telnet
+	$(GO) run ./cmd/dlmud $(RUN_FLAGS)
+
+.PHONY: run-mini
+run-mini: ## Run against the tiny world (--mini-mud): three zones, boots instantly
+	$(GO) run ./cmd/dlmud $(RUN_FLAGS) --mini-mud
+
+# A fresh directory has no roster, and the first character created on an empty
+# roster is made an Implementor (internal/game/create.go, from db.c's "if this
+# is our first player --- he be God"). That is the quickest route to a level
+# 34 character, and it is why this target exists rather than being a variant
+# of `run`: on data/ you would only get one, once.
+.PHONY: run-fresh
+run-fresh: $(SCRATCH) ## Run on a throwaway copy of the data, no players (first login is an Implementor)
+	$(GO) run ./cmd/dlmud $(RUN_FLAGS) --lib-dir=$(SCRATCH)
+
+.PHONY: run-tls
+run-tls: $(DEVCERT)/cert.pem ## Run with the TLS listener, using a self-signed dev certificate
+	$(GO) run ./cmd/dlmud \
+	  --lib-dir=$(LIB) \
+	  --listen-telnets=$(HOST):$(TLS_PORT) \
+	  --tls-cert=$(DEVCERT)/cert.pem --tls-key=$(DEVCERT)/key.pem \
+	  --metrics-addr=$(HOST):$(METRICS_PORT) \
+	  --log-level=$(LOG_LEVEL) $(FLAGS)
+
+.PHONY: connect
+connect: ## Connect to a running dev server (telnet, falls back to nc)
+	@command -v telnet >/dev/null 2>&1 && exec telnet $(HOST) $(PORT) || exec nc $(HOST) $(PORT)
+
+.PHONY: connect-tls
+connect-tls: ## Connect to the TLS listener, accepting the self-signed certificate
+	@openssl s_client -quiet -verify_return_error -CAfile $(DEVCERT)/cert.pem \
+	  -connect $(HOST):$(TLS_PORT)
+
+.PHONY: health
+health: ## Print /healthz, /readyz and the server's own metrics from a running server
+	@curl -sS -o /dev/null -w 'healthz %{http_code}\n' http://$(HOST):$(METRICS_PORT)/healthz
+	@curl -sS -o /dev/null -w 'readyz  %{http_code}\n' http://$(HOST):$(METRICS_PORT)/readyz
+	@curl -sS http://$(HOST):$(METRICS_PORT)/metrics | grep '^dlmud_' || true
+
+# cp -a then delete the player state: a fresh directory is the point, and
+# data/pfiles locally may hold real ex-players' hashes and mail, which have no
+# business being copied around. The empty directories are recreated because a
+# missing one is a first-login failure rather than an empty roster.
+$(SCRATCH):
+	@echo "==> Building a scratch data directory in $(SCRATCH) from $(LIB)"
+	@rm -rf $(SCRATCH)
+	@mkdir -p $(dir $(SCRATCH))
+	@cp -a $(LIB)/. $(SCRATCH)/
+	@rm -rf $(SCRATCH)/pfiles $(SCRATCH)/plrobjs $(SCRATCH)/plralias $(SCRATCH)/house \
+	        $(SCRATCH)/etc/players $(SCRATCH)/etc/plrmail
+	@mkdir -p $(SCRATCH)/pfiles $(SCRATCH)/plrobjs $(SCRATCH)/plralias $(SCRATCH)/house
+
+.PHONY: scratch
+scratch: $(SCRATCH) ## Rebuild the throwaway data directory used by run-fresh
+
+# A local certificate for exercising the TLS path -- which is the default
+# listener in production, and so the one worth testing before shipping. Not
+# trusted by anything, and it never leaves out/.
+$(DEVCERT)/cert.pem:
+	@command -v openssl >/dev/null 2>&1 || { echo "openssl is needed to make a dev certificate"; exit 1; }
+	@echo "==> Generating a self-signed certificate for localhost in $(DEVCERT)"
+	@mkdir -p $(DEVCERT)
+	@openssl req -x509 -newkey rsa:2048 -nodes -days 365 \
+	  -subj '/CN=localhost' \
+	  -addext 'subjectAltName=DNS:localhost,IP:127.0.0.1' \
+	  -keyout $(DEVCERT)/key.pem -out $(DEVCERT)/cert.pem 2>/dev/null
+
+.PHONY: dev-cert
+dev-cert: $(DEVCERT)/cert.pem ## Generate the self-signed localhost certificate for run-tls
+
+##@ Building and checking
+
+.PHONY: build
+build: ## Build both binaries into out/, version-stamped
+	$(GO) build -trimpath -ldflags='$(LDFLAGS)' -o $(OUT)/dlmud ./cmd/dlmud
+	$(GO) build -trimpath -ldflags='$(LDFLAGS)' -o $(OUT)/dlctl ./cmd/dlctl
+
+.PHONY: test
+test: ## go test -race (the race detector is not optional here; see the plan's §3.1)
+	$(GO) test -race -count=1 $(PKG)
+
+.PHONY: test-fast
+test-fast: ## go test without -race, for a quick inner loop
+	$(GO) test $(PKG)
+
+.PHONY: cover
+cover: ## Run the tests with coverage and open the HTML report
+	$(GO) test -coverprofile=$(OUT)/coverage.out $(PKG)
+	$(GO) tool cover -html=$(OUT)/coverage.out
+
+.PHONY: fmt
+fmt: ## gofmt -w the tree
+	gofmt -l -w .
+
+.PHONY: vet
+vet: ## go vet
+	$(GO) vet $(PKG)
+
+.PHONY: lint
+lint: ## golangci-lint, if it is installed
+	@command -v golangci-lint >/dev/null 2>&1 \
+	  || { echo "golangci-lint not installed; skipping (CI runs v2.12.2)"; exit 0; }; \
+	golangci-lint run
+
+.PHONY: tidy
+tidy: ## go mod tidy
+	$(GO) mod tidy
+
+# What CI does, minus the parts that need a C toolchain (see `make parity`) or
+# a 32-bit one. Green here is not a promise that CI is green, but red here
+# certainly means it is not.
+.PHONY: check
+check: ## Build, vet, format-check, lint, test and lint the world -- roughly what CI runs
+	@unformatted=$$(gofmt -l .); \
+	  if [ -n "$$unformatted" ]; then echo "These files need gofmt:"; echo "$$unformatted"; exit 1; fi
+	$(GO) build $(PKG)
+	$(MAKE) vet lint test world-lint license
+
+.PHONY: parity
+parity: ## Check the Go and C world loaders agree (builds the C server; slow)
+	./scripts/world-parity.sh
+
+.PHONY: license
+license: ## Check the CircleMUD/DikuMUD license obligations
+	./scripts/license-check.sh
+
+##@ Data and tooling
+
+.PHONY: world-lint
+world-lint: ## Lint the world files under LIB
+	$(GO) run ./cmd/dlctl world lint --world-dir=$(LIB)/world
+
+.PHONY: world-dump
+world-dump: ## Dump the loaded world as canonical JSON to out/world.json
+	@mkdir -p $(OUT)
+	$(GO) run ./cmd/dlctl world dump --world-dir=$(LIB)/world --out=$(OUT)/world.json
+	@echo "==> $(OUT)/world.json"
+
+# The one-off that turns an archived CircleMUD lib/ into something this server
+# will run on: player database reformatted, text transcoded to UTF-8. Convert
+# once, then `make run LIB=$(TO)`.
+.PHONY: convert
+convert: ## Convert an original data directory: make convert FROM=/path/to/lib TO=out/converted
+	@test -n "$(FROM)" && test -n "$(TO)" || { echo 'usage: make convert FROM=/path/to/lib TO=out/converted'; exit 2; }
+	$(GO) run ./cmd/dlctl convert --from=$(FROM) --to=$(TO)
+
+.PHONY: roster
+roster: ## List the characters in the player directory under LIB
+	$(GO) run ./cmd/dlctl pfile dump --player-dir=$(LIB)/pfiles
+
+.PHONY: ctl
+ctl: ## Run dlctl: make ctl ARGS="pfile dump --name=Someone"
+	$(GO) run ./cmd/dlctl $(ARGS)
+
+##@ Containers
+
+.PHONY: docker
+docker: ## Build the container image as disgracelands:dev
+	docker build -f build/Dockerfile \
+	  --build-arg VERSION=$(VERSION) --build-arg COMMIT=$(COMMIT) --build-arg DATE=$(DATE) \
+	  -t disgracelands:dev .
+
+.PHONY: compose-up
+compose-up: ## Bring up the local compose stack (telnet :4000, metrics :9090)
+	docker compose -f build/docker-compose.yml up --build
+
+.PHONY: compose-down
+compose-down: ## Stop the local compose stack
+	docker compose -f build/docker-compose.yml down
+
+##@ Housekeeping
+
+.PHONY: clean
+clean: ## Remove out/: binaries, scratch data directory, dev certificate
+	rm -rf $(OUT)

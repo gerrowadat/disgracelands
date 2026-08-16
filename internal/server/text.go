@@ -21,19 +21,38 @@ import (
 // are loaded at boot and their absence is a startup failure, not a warning —
 // a server that cannot meet the licence should not begin serving.
 type Text struct {
-	greeting string
-	motd     string
-	imotd    string
-	credits  string
+	greeting   string
+	motd       string
+	imotd      string
+	credits    string
+	background string
 }
 
 // text files, relative to the data directory.
 const (
-	greetingFile = "text/greetings"
-	motdFile     = "text/motd"
-	imotdFile    = "text/imotd"
-	creditsFile  = "text/credits"
+	greetingFile   = "text/greetings"
+	motdFile       = "text/motd"
+	imotdFile      = "text/imotd"
+	creditsFile    = "text/credits"
+	backgroundFile = "text/background"
 )
+
+// MainMenu is the C's MENU (config.c:271), verbatim.
+//
+// Two of its six choices do not work yet — the background story and the
+// description editor do, changing a password and deleting a character do, but
+// nothing here reads mail or rents. The menu is the C's and stays the C's;
+// see docs/deviations.md for what differs behind it.
+const MainMenu = "\r\n" +
+	"Welcome to CircleMUD!\r\n" +
+	"0) Exit from CircleMUD.\r\n" +
+	"1) Enter the game.\r\n" +
+	"2) Enter description.\r\n" +
+	"3) Read the background story.\r\n" +
+	"4) Change password.\r\n" +
+	"5) Delete this character.\r\n" +
+	"\r\n" +
+	"   Make your choice: "
 
 // WelcomeMessage and StartMessage are WELC_MESSG and START_MESSG
 // (config.c:284). They are compiled-in strings in the C rather than files, so
@@ -77,6 +96,7 @@ func LoadText(dir string) (*Text, error) {
 	}{
 		{motdFile, &t.motd},
 		{imotdFile, &t.imotd},
+		{backgroundFile, &t.background},
 	} {
 		if b, err := os.ReadFile(filepath.Join(dir, f.path)); err == nil { //nolint:gosec // as above
 			*f.dst = string(b)
@@ -107,6 +127,17 @@ func (t *Text) Welcome() string { return WelcomeMessage }
 
 // Start implements session.TextFiles.
 func (t *Text) Start() string { return StartMessage }
+
+// Menu implements session.TextFiles.
+func (t *Text) Menu() string { return MainMenu }
+
+// Background implements session.TextFiles: menu choice 3.
+func (t *Text) Background() string {
+	if t.background == "" {
+		return "There is no background story on file.\r\n"
+	}
+	return t.background
+}
 
 // Credits implements session.TextFiles.
 func (t *Text) Credits() string { return t.credits }

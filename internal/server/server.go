@@ -350,3 +350,72 @@ func (s *Server) RunAutosave(ctx context.Context) {
 		}
 	}
 }
+
+// CheckPassword implements session.LoginHandler.
+//
+// This is not Authenticate: the character is already logged in, and the menu
+// is asking them to prove it again before changing a password or deleting
+// themselves. A legacy credential is upgraded here too — it is still the only
+// moment the plaintext is known.
+func (s *Server) CheckPassword(ctx context.Context, c *game.Character, password string) (bool, error) {
+	if c == nil || c.Record == nil {
+		return false, nil
+	}
+
+	result, err := s.auth.Verify(c.Record.Credential, c.Record.Name, password)
+	if err != nil {
+		return false, err
+	}
+	if !result.OK {
+		return false, nil
+	}
+	if result.Upgraded != nil {
+		c.Record.Credential = *result.Upgraded
+		if err := s.players.Save(ctx, c.Record); err != nil {
+			s.logger.Error("saving an upgraded credential", "character", c.Name, "error", err)
+		}
+	}
+	return true, nil
+}
+
+// SetPassword implements session.LoginHandler.
+func (s *Server) SetPassword(ctx context.Context, c *game.Character, password string) error {
+	if c == nil || c.Record == nil {
+		return fmt.Errorf("no character to set a password for")
+	}
+	cred, err := auth.NewCredential(password)
+	if err != nil {
+		return err
+	}
+	c.Record.Credential = cred
+	return s.players.Save(ctx, c.Record)
+}
+
+// Delete implements session.LoginHandler.
+//
+// The C sets PLR_DELETED and saves, because a record in the binary format is
+// a slot in a fixed-width file and the flag is what marks the slot reusable
+// (interpreter.c:1770). The ascii format has no slots — a character is a file
+// — so the file is removed, which is the same intent expressed in the format
+// actually in use. See docs/deviations.md.
+//
+// The C's level check is kept: a greater god or implementor who self-deletes
+// is disconnected but not removed, which reads like a safety valve and is
+// worth having whether it was meant as one or not.
+func (s *Server) Delete(ctx context.Context, c *game.Character) error {
+	if c == nil || c.Record == nil {
+		return fmt.Errorf("no character to delete")
+	}
+
+	if c.Record.Level >= game.LevelGreaterGod {
+		s.logger.Warn("refusing to delete a character of greater-god level or above",
+			"character", c.Name, "level", c.Record.Level)
+		c.Record.PlayerFlags = c.Record.PlayerFlags.Clear(game.PlayerDeleted)
+		return s.players.Save(ctx, c.Record)
+	}
+
+	// Recorded on the way out as well as removed, so a restored backup of the
+	// roster does not quietly bring them back without anyone knowing why.
+	c.Record.PlayerFlags = c.Record.PlayerFlags.Set(game.PlayerDeleted)
+	return s.players.Delete(ctx, c.Record.Name)
+}

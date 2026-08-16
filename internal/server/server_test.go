@@ -57,10 +57,11 @@ func testText(t *testing.T) *Text {
 		t.Fatal(err)
 	}
 	for name, body := range map[string]string{
-		greetingFile: testGreeting,
-		creditsFile:  testCredits,
-		motdFile:     "Mortal news.\r\n",
-		imotdFile:    "Immortal news.\r\n",
+		greetingFile:   testGreeting,
+		creditsFile:    testCredits,
+		motdFile:       "Mortal news.\r\n",
+		imotdFile:      "Immortal news.\r\n",
+		backgroundFile: "BACKGROUND-FILE\r\nIt is a time of conflict.\r\n",
 	} {
 		if err := os.WriteFile(filepath.Join(dir, name), []byte(body), 0o600); err != nil {
 			t.Fatal(err)

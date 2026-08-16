@@ -822,105 +822,35 @@ fails if those checks skipped, so the layout the real data is in is verified
 on every change even though it cannot be verified locally.
 
 **Phase 3 — Server skeleton. ✅ Done.** Pulse loop, session lifecycle,
-listeners, negotiation, the login `nanny` state machine, and enough commands
-to look around and move (`look`, `north`, `who`, `quit`). *Done when: a real
-player can log in with an archived character over TLS and walk from the
-Temple of Midgaard to New Thalos.*
+listeners, negotiation, the login `nanny` state machine including the main
+menu, and enough commands to look around and move (`look`, `north`, `who`,
+`credits`, `help`, `quit`). *Done when: a real player can log in with an
+archived character over TLS and walk from the Temple of Midgaard to New
+Thalos.*
 
 **Met, and walked rather than argued.** Against a server on the real world
-files with an empty roster, over the TLS listener:
+files with an empty roster, over the TLS listener, driven by a scripted
+client:
 
 ```
     Walker, credential "WaApIYE9Szu2A" (DES crypt(3), salted "Wa")
-    logged in over telnets, room 3001 The Temple Of Midgaard
+    logged in over telnets, menu choice 1, room 3001 The Temple Of Midgaard
     s s s e e s s e e e e e e e e e e e n n n          21 moves
     room 5411 Outside The Southern Gate Of New Thalos
     "upgraded a legacy password" character=Walker
     saved: Room: 5411, Pass: argon2id:$argon2id$v=19$...
 ```
 
-Three things at once, then: a pre-2008 credential verified by the DES path
-and silently upgraded to argon2id on the way in, the walk itself, and the
+Three things at once: a pre-2008 credential verified by the DES path and
+silently upgraded to argon2id on the way in, the walk itself, and the
 position surviving the save.
 
 One qualification, since the criterion says *archived character*. The 108
 real records are local-only and never in this repo, so this character was
 created here and then given a genuine DES hash of the kind the roster holds
-— the same hash the C server's `crypt()` would have produced for that name
-and password. What it does not exercise is the archive's own bytes, which is
-Phase 2's criterion rather than this one.
-
-### What landed
-
-- **`internal/telnet`** — a real parser, because the C server's approach
-  (send `IAC WILL ECHO`, leave everything else in the input stream) means a
-  modern client offering window size has its NAWS bytes interpreted as a
-  command. On top of it: ECHO for passwords, CHARSET (RFC 2066; UTF-8 first,
-  then ISO-8859-1 for a client that cannot read it, since the archived world
-  text was Latin-1 when it was typed), and GMCP.
-- **`internal/session`** — `nanny()` as a state machine, close to the
-  original in shape and wording because the login sequence is the part
-  players remember. `make_prompt`'s `H`/`M`/`V` fields are ported with the
-  preference bits that switch them on, so a converted character gets the
-  prompt they last configured. `Char.Vitals` and `Room.Info` go out over
-  GMCP alongside the text, which is what lets a browser client be a client
-  rather than a screen-scraper (§0).
-- **`internal/server`** — both listeners funnel through one `Accept`, which
-  is where the greeting is sent; making that the only path is how §12's
-  "every transport shows the greeting" is kept true by construction rather
-  than by remembering — `TestEveryTransportSendsTheGreeting` runs each
-  listener through it and fails if one is silent.
-  Per-host connection caps and the login grace timer are enforced here.
-- **Saving and link loss** — autosave on the C's 60-second `PULSE_AUTOSAVE`,
-  writes off the world goroutine so a slow disk cannot stall the game, and a
-  dropped connection leaves the body standing to be reconnected to
-  (`CON_DISCONNECT`) with a two-minute reaper behind it. The C kept linkdead
-  bodies until an idle timeout; two minutes is long enough to reconnect and
-  short enough that nobody is left standing uncontrolled for an afternoon.
-- **Character creation, in full** — name, password, sex, class, rolled
-  stats, and `do_start` run at the moment the C runs it (`interpreter.c:1684`,
-  on entering the world) rather than at creation. That timing is not
-  cosmetic: the first character on an empty roster is made an Implementor
-  during creation, and an Implementor never runs `do_start` at all.
-
-### Four decisions worth writing down
-
-Two of them are deviations from the C under §0's fidelity rule, and are
-recorded as such:
-
-1. **Paladin is not offered at creation** — a deviation, argued below: the
-   C's menu and its parser disagree, and the port follows the menu.
-2. **A new password must be six characters, not the C's three** — a
-   deviation. Three was defensible when the hash truncated at eight anyway;
-   argon2id uses the whole string. It applies only to passwords being *set*,
-   so no existing character is affected and nobody is made to reset
-   anything.
-3. **The server offers options before the login prompt** (`WILL` suppress-GA,
-   CHARSET, GMCP), where the C offered nothing at all. Not a change to
-   anything the C did, but it is why GMCP is on before the name prompt, and
-   so why a web front end can render the login sequence itself.
-4. **A failed login says the same thing whether the name or the password was
-   wrong** — as in the C, but worth stating as a property rather than an
-   accident. The roster is a list of real people's character names, and
-   telling an anonymous connection which half it got right turns that into a
-   list of accounts to attack.
-
-### Outstanding, and named as such elsewhere
-
-- **`--listen-ws` starts nothing.** The WebSocket transport is the one part
-  of this phase not built, so the greeting requirement holds for every
-  transport that exists rather than for every transport intended. It is not
-  rescheduled into a numbered phase: it belongs with the web client in the
-  "Later" list, and the requirement travels with it.
-- **`--max-players` is not enforced**, and the per-host cap is what limits
-  connections today.
-- **Movement ignores door state.** `EX_CLOSED` is not checked, because there
-  is no `open`/`close` and no door state to check yet; a closed door is
-  walked through. It belongs with the rules core in Phase 4, and is listed
-  here so it is a known gap rather than a surprise.
-
-The two configuration gaps are marked *(inert)* in `docs/configuration.md`
-rather than left to be discovered at runtime.
+— the same hash the C's `crypt()` produces for that name and password. What
+it does not exercise is the archive's own bytes, which is Phase 2's
+criterion rather than this one.
 
 Three things that are not optional in this phase, for reasons outside the
 phase itself:
@@ -939,6 +869,52 @@ Output is UTF-8 (§0). The protocol layer negotiates CHARSET and transcodes
 *outbound* for clients that ask for something else, which is a per-connection
 concern and the right place for it — as against decoding the world files on
 every read, which is what `dlctl convert` exists to make unnecessary.
+
+### What reading the C changed
+
+**Character creation is two steps, not one, and the split is load-bearing.**
+This was got wrong first and is worth stating plainly, because the wrong
+version produced characters that looked entirely plausible.
+
+`init_char` (db.c:2688) runs at the class prompt. It leaves an ordinary
+character at **level zero**, with 100 mana, 82 movement points, 100 armour,
+every ability at 25 and no hit points at all. If the roster is empty it
+instead makes that character the Implementor outright — level 34, 7,000,000
+experience, 500 hit points, every skill at 100%, no hunger or thirst.
+
+`do_start` (class.c:1802) does not run then. It runs when the player chooses
+"enter the game" from the menu, and only `if (GET_LEVEL(ch) == 0)`
+(interpreter.c:1684) — so an Implementor never runs it, which is the only
+reason they keep the statistics `init_char` gave them. It rolls the abilities,
+sets `max_hit` to 10, grants the thief's six starting skills, and calls
+`advance_level` once.
+
+Three consequences that a reduced version gets wrong:
+
+- **A level-one character has no mana of their own and 100 of it anyway.**
+  `advance_level` guards the mana gain on `level > 1`, and `do_start` never
+  touches `max_mana` — so the 100 from `init_char` is what they walk around
+  with. A port that adds a level's mana at creation is visibly wrong; so is
+  one that concludes a new character therefore has none.
+- **`MAX(1, …)` on hit points and movement.** A magic-user with a low
+  constitution can roll a negative hit-point gain, and a magic-user or cleric
+  rolls `number(0, 2)` movement. Neither may cost them a level's progress.
+- **Practices use the remort-aware `IS_<CLASS>` macros** (utils.h:505), which
+  Disgracelands rewrote to consult `remort_vector`. A warrior who remorted
+  through cleric practises at a cleric's rate. A plain `GET_CLASS(ch) ==`
+  comparison silently removes a local feature.
+
+**The main menu is part of the login sequence.** `CON_RMOTD` shows `MENU` and
+waits (interpreter.c:1632); a player is not in the world until they choose to
+be. Four of the six choices are things that can only be done from there — the
+description editor, the background story, changing a password, and deleting
+the character — so the menu is not a screen to skip past, it is where those
+features live. All six are ported.
+
+**Deviations are recorded in [docs/deviations.md](../deviations.md)**, created
+in this phase rather than in Phase 1 as this plan originally said. It has the
+Paladin decision below, the password rules, the limits the C has none of, and
+the handful of internal differences worth knowing about.
 
 **Three behaviours settled, all resolved towards the C server:**
 
@@ -980,6 +956,26 @@ fidelity rule in §0 running into a place where the C contradicts itself, and
 the reasoning is worth keeping: reproducing the accident would let a new
 player skip the mechanic the class exists to reward.
 
+### What is not in it
+
+A phase marked done without its gaps is worse than one not marked at all.
+These are the three, and none of them is a deviation — they are simply not
+built, so they are not in `docs/deviations.md`:
+
+- **`--listen-ws` starts nothing.** The WebSocket transport is the one part
+  of this phase not built, so the greeting requirement above holds for every
+  transport that exists rather than for every transport intended. It is not
+  rescheduled into a numbered phase: it belongs with the web client in the
+  "Later" list, and the requirement travels with it.
+- **`--max-players` is not enforced.** The per-address cap and the login
+  grace period are what limit connections today.
+- **Movement ignores door state.** `EX_CLOSED` is not checked, because there
+  is no `open`/`close` and no door state to check yet, so a closed door is
+  walked through. It belongs with the rules core in Phase 4.
+
+The two configuration gaps are marked *(inert)* in `docs/configuration.md`
+rather than left to be discovered at runtime.
+
 **Phase 4 — Rules core.** Combat, magic, skills, classes including the
 remort bitmask, affects, position/regen, death and corpses, zone resets,
 mobile activity. The largest phase; the deviations log from the fidelity
@@ -1020,10 +1016,11 @@ WipeMud race system (`TODO.md` §2).
   saving throws — asserting no overflow and no negative-where-impossible
   across the full input range, which is where the 64-bit work either holds
   or doesn't.
-- **A deviations log** (`docs/deviations.md`, created in Phase 1): every
-  intentional difference from the C behaviour, with the C line reference,
-  what it did, what Go does, and why. Under the "fix known bugs" fidelity
-  decision this file is the deliverable that keeps "fixed a bug"
+- **A deviations log** ([`docs/deviations.md`](../deviations.md), written in
+  Phase 3 rather than Phase 1 — there was nothing to record until the server
+  ran): every intentional difference from the C behaviour, with the C line
+  reference, what it did, what Go does, and why. Under the "fix known bugs"
+  fidelity decision this file is the deliverable that keeps "fixed a bug"
   distinguishable from "accidentally changed the game". It belongs in
   `docs/` proper rather than here — it is a record of what the running
   server does, not a plan.
@@ -1148,14 +1145,18 @@ tree is the one being ported.
 Not blocking the plan, but they need answers before or during the phases
 they touch:
 
-1. **Does `data/` stay the on-disk contract**, or does the Go server get its
-   own data directory layout with a migration? Staying compatible is what
-   makes side-by-side parity testing work, so this plan assumes it stays —
-   but it does constrain things. (Phase 1.)
-2. **How faithful does OLC need to be** — a port of OasisOLC's exact menu
+1. **How faithful does OLC need to be** — a port of OasisOLC's exact menu
    trees, or a modern equivalent that produces the same files? (Phase 6.)
 
 All the others are now decided; see §0.
+
+**Settled since this list was written:** `data/` **stays the on-disk
+contract**. Both servers read the same directory. That is what the
+world-parity harness compares against and what the Phase 7 shadow run
+depends on, and it is already how every phase built so far works. The
+constraint it imposes — the layout is the C's, not one chosen fresh — is
+accepted deliberately; `dlctl convert` is where the modernisation happens,
+in place, rather than in a second directory shape to keep in sync.
 
 ---
 
@@ -1163,6 +1164,9 @@ All the others are now decided; see §0.
 
 Operator documentation for what has actually been built lives in `docs/`
 itself — `docs/configuration.md` and `docs/operations.md`.
+
+[`docs/deviations.md`](../deviations.md) records every intentional difference
+from the C server, which is the other half of the fidelity decision in §0.
 
 Background this plan draws on, all under `docs/investigations/`:
 

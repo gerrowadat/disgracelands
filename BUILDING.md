@@ -21,7 +21,9 @@ go run ./cmd/dlmud --help
 
 This document covers *building*. For running and administering the result,
 see `docs/operations.md`; for the full settings list,
-`docs/configuration.md`.
+`docs/configuration.md`. For working on it — a server running locally
+against a tiny world, a throwaway data directory, and the checks to run
+before pushing — see `docs/developer.md` and the `Makefile` it describes.
 
 Two binaries:
 
@@ -49,9 +51,10 @@ the reference implementation and the one that has been running the game.
 ## Current state: Phases 0–3 done, no rules yet
 
 `dlmud` loads the world, takes connections over TLS or plaintext telnet,
-runs the login and character-creation flow, and gives a player the pulse
-loop, movement, `look`, `who`, `credits`, `help` and `quit` — plus autosave
-and a linkdead body to reconnect to. It shuts down cleanly on SIGTERM.
+runs the login, character-creation and main-menu sequence, and gives a
+player the pulse loop, movement, `look`, `who`, `credits`, `help` and `quit`
+— plus autosave and a linkdead body to reconnect to. It shuts down cleanly
+on SIGTERM.
 
 There is no rules core yet: no combat, skills, spells or levelling, no
 shops, boards or mail, and no zone resets, so nothing is loaded into the

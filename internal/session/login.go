@@ -56,7 +56,21 @@ func (s *Session) handle(ctx context.Context, deps Deps, line string) error {
 	case StateQueryClass:
 		return s.handleQueryClass(ctx, deps, line)
 	case StateReadMOTD:
-		return s.handleReadMOTD(ctx, deps)
+		return s.handleReadMOTD(deps)
+	case StateMenu:
+		return s.handleMenu(ctx, deps, line)
+	case StateEnterDescription:
+		return s.handleEnterDescription(ctx, deps, line)
+	case StateChangePasswordOld:
+		return s.handleChangePasswordOld(ctx, deps, line)
+	case StateChangePasswordNew:
+		return s.handleChangePasswordNew(deps, line)
+	case StateChangePasswordVerify:
+		return s.handleChangePasswordVerify(ctx, deps, line)
+	case StateDeleteVerify:
+		return s.handleDeleteVerify(ctx, deps, line)
+	case StateDeleteConfirm:
+		return s.handleDeleteConfirm(ctx, deps, line)
 	case StatePlaying:
 		return deps.Commands.Do(ctx, s, line)
 	}
@@ -167,13 +181,8 @@ func motdFor(deps Deps, c *game.Character) string {
 
 func (s *Session) handleNewPassword(deps Deps, line string) error {
 	password := strings.TrimSpace(line)
-	if len(password) < minPasswordLength {
-		s.Send("\r\nPasswords must be at least %d characters.\r\nPassword: ", minPasswordLength)
-		return nil
-	}
-	if strings.EqualFold(password, s.pendingName) {
-		// The C server refuses this too, and it remains good advice.
-		s.Send("\r\nIllegal password.\r\nPassword: ")
+	if reason := badNewPassword(password, s.pendingName); reason != "" {
+		s.Send("\r\n%s\r\nPassword: ", reason)
 		return nil
 	}
 	s.pendingPassword = password
@@ -248,31 +257,13 @@ func (s *Session) handleQueryClass(ctx context.Context, deps Deps, line string) 
 	return nil
 }
 
-func (s *Session) handleReadMOTD(ctx context.Context, deps Deps) error {
-	// A character who has never entered the world is still at level zero:
-	// the C runs do_start at this point and not before (interpreter.c:1684),
-	// so the first character on an empty roster — who is made an Implementor
-	// during creation — correctly never runs it. Enter does the honours,
-	// since it is the side that owns the record.
-	firstTime := s.character != nil && s.character.Record != nil && s.character.Record.Level == 0
-
-	s.Send("%s", deps.Text.Welcome())
-
-	if err := deps.Login.Enter(ctx, s, s.character); err != nil {
-		s.logger.Error("entering the world", "error", err)
-		s.Send("Something went wrong putting you into the world. Try again shortly.\r\n")
-		s.Close()
-		return nil
-	}
-	s.state = StatePlaying
-	s.logger.Info("entered the world", "character", s.character.Name)
-
-	if firstTime {
-		s.Send("%s", deps.Text.Start())
-	}
-
-	// Show them where they are, which is what the C server does on entry.
-	return deps.Commands.Do(ctx, s, "look")
+// handleReadMOTD is the return pressed after the message of the day, and
+// after the background story. Either way it leads to the menu, which is what
+// the C's CON_RMOTD does.
+func (s *Session) handleReadMOTD(deps Deps) error {
+	s.state = StateMenu
+	s.Send("%s", deps.Text.Menu())
+	return nil
 }
 
 // invalidName reports why a name cannot be used, or "".
