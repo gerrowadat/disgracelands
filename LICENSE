@@ -54,6 +54,9 @@ Authorship, for the credit requirement:
    credits in their file headers.  Those credits stay, in the C sources
    and in any Go file ported from them.  See
    docs/investigations/non-stock-features.md.
+-- ascii_pfiles 2.1, the player-file format the server runs on - Alan K.
+   Miles, building on an original by Chris Jacobson.  Credited in
+   internal/persist/player/ascii, which implements it.
 -- Disgracelands (2001-2008) and Disgracelands Reborn (2026-) - Dave
    O'Connor.
 

@@ -957,9 +957,11 @@ interleaved, because the license requires itself to be distributed AS IS.
    pulled in) DG Scripts, context-sensitive help, and ascii_pfiles each
    have author credits in their headers — see the table in
    `docs/investigations/non-stock-features.md`. Per requirement 5 above,
-   those headers carry across to the corresponding Go files. No Go file
-   derives from one yet; the ascii player format (§5.3) will be the first,
-   and it must credit ascii_pfiles in its header.
+   those headers carry across to the corresponding Go files.
+   `internal/persist/player/ascii` is the first case and does: its notice
+   credits ascii_pfiles 2.1 to Alan K. Miles, after Chris Jacobson's
+   original. OasisOLC's `gen*.c` layer is the next one due, whenever the
+   online-building phase lands.
 6. Publishing the repo publicly is fine and always was; it's *charging for
    it or taking donations for it* that isn't.
 7. Every source file written for this project — Go, the C files added to
