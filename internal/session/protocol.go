@@ -25,6 +25,10 @@ import (
 type protocol struct {
 	mu sync.Mutex
 
+	// neg owns option state and does its own locking, so it sits outside the
+	// mutex above rather than under it.
+	neg *telnet.Negotiator
+
 	// echo is true while the server has told the client to stop echoing,
 	// which is how a password is hidden.
 	echo bool
@@ -38,16 +42,32 @@ type protocol struct {
 	encoder transform.Transformer
 }
 
-// offer sends the options the server is willing to speak.
+// policy is what the server will agree to negotiate.
 //
-// The C server offers nothing at all, which is why a modern client's own
-// offers end up in the command stream there. Offering first also means a
-// client that supports GMCP has it on before the login sequence starts, so a
-// web front end can render the name prompt itself.
+// Nothing is allowed on the client's side: the server asks for none of the
+// options a client can turn on for itself, and an option agreed and then
+// ignored is worse than one refused, because the client will start sending
+// for it.
+var policy = telnet.Policy{
+	Us: []byte{telnet.OptEcho, telnet.OptSuppressGoAhead, telnet.OptCharset, telnet.OptGMCP},
+}
+
+// offer sends the options the server volunteers.
+//
+// CHARSET and GMCP, and deliberately **not** SUPPRESS-GO-AHEAD. Offering SGA
+// is what puts telnet(1) into character-at-a-time mode, where the terminal
+// stops doing line editing and the server is expected to take it over — so a
+// player typing at the login prompt got a literal ^M for the Enter key and a
+// literal ^? for backspace. The C server negotiates nothing and stays in line
+// mode, which is the experience these players actually had, and a client that
+// wants SGA still gets it: the policy above agrees the moment one asks.
+//
+// The reason for offering the other two first stands. A client that supports
+// GMCP has it on before the login sequence starts, so a web front end can
+// render the name prompt itself rather than scraping it.
 func (s *Session) offer() {
-	s.SendRaw(telnet.Negotiate(telnet.WILL, telnet.OptSuppressGoAhead))
-	s.SendRaw(telnet.Negotiate(telnet.WILL, telnet.OptCharset))
-	s.SendRaw(telnet.Negotiate(telnet.WILL, telnet.OptGMCP))
+	s.SendRaw(s.proto.neg.Enable(telnet.SideUs, telnet.OptCharset))
+	s.SendRaw(s.proto.neg.Enable(telnet.SideUs, telnet.OptGMCP))
 }
 
 // handleTelnet acts on one command taken out of the input stream.
@@ -60,41 +80,34 @@ func (s *Session) handleTelnet(ev telnet.Event) {
 	}
 }
 
+// handleNegotiation answers one WILL/WONT/DO/DONT.
+//
+// The answer itself is the negotiator's business — which is where the RFC
+// 1143 state machine lives, and why a repeated offer is not answered twice —
+// and what is left here is what an agreed option *means* to the session.
 func (s *Session) handleNegotiation(ev telnet.Event) {
-	switch ev.Command {
-	case telnet.DO:
-		switch ev.Option {
-		case telnet.OptCharset:
+	reply, change := s.proto.neg.Receive(ev.Command, ev.Option)
+	s.SendRaw(reply)
+
+	if !change.Changed || change.Side != telnet.SideUs {
+		return
+	}
+
+	switch change.Option {
+	case telnet.OptCharset:
+		if change.Enabled {
 			// The client will talk about charsets, so ask which one it reads.
 			s.SendRaw(telnet.CharsetRequestBytes())
-		case telnet.OptGMCP:
-			s.proto.mu.Lock()
-			s.proto.gmcp = true
-			s.proto.mu.Unlock()
-			s.logger.Debug("gmcp enabled")
-		case telnet.OptSuppressGoAhead, telnet.OptEcho:
-			// Already offered; nothing more to do.
-		default:
-			// Refuse anything not offered, rather than leaving the client
-			// waiting for an answer that never comes.
-			s.SendRaw(telnet.Negotiate(telnet.WONT, ev.Option))
 		}
-
-	case telnet.DONT:
-		if ev.Option == telnet.OptGMCP {
-			s.proto.mu.Lock()
-			s.proto.gmcp = false
-			s.proto.mu.Unlock()
-		}
-
-	case telnet.WILL:
-		// The server asks for nothing, so anything offered is declined. This
-		// is not rudeness: an option accepted and then ignored is worse than
-		// one refused, because the client will start sending for it.
-		s.SendRaw(telnet.Negotiate(telnet.DONT, ev.Option))
-
-	case telnet.WONT:
-		// Nothing to undo, since nothing was ever requested.
+	case telnet.OptGMCP:
+		s.proto.mu.Lock()
+		s.proto.gmcp = change.Enabled
+		s.proto.mu.Unlock()
+		s.logger.Debug("gmcp", "enabled", change.Enabled)
+	case telnet.OptSuppressGoAhead:
+		// Agreed on request rather than offered; see offer(). The server
+		// sends no GA either way, so there is nothing to change.
+		s.logger.Debug("suppress-go-ahead", "enabled", change.Enabled)
 	}
 }
 
@@ -179,7 +192,9 @@ func (s *Session) EchoOff() {
 	s.proto.mu.Lock()
 	s.proto.echo = true
 	s.proto.mu.Unlock()
-	s.SendRaw(telnet.Negotiate(telnet.WILL, telnet.OptEcho))
+	// Announce rather than Enable: see Negotiator.Announce for why ECHO is
+	// the one option that does not wait to be agreed with.
+	s.SendRaw(s.proto.neg.Announce(telnet.SideUs, telnet.OptEcho, true))
 }
 
 // EchoOn undoes EchoOff. It must be called on every path away from a password
@@ -190,7 +205,7 @@ func (s *Session) EchoOn() {
 	s.proto.echo = false
 	s.proto.mu.Unlock()
 	if wasOff {
-		s.SendRaw(telnet.Negotiate(telnet.WONT, telnet.OptEcho))
+		s.SendRaw(s.proto.neg.Announce(telnet.SideUs, telnet.OptEcho, false))
 	}
 }
 

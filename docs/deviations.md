@@ -98,6 +98,18 @@ are fidelity, not deviation, and they live in the tests that assert them.
 | **Why** | Survivable in 1993 because nobody's client negotiated anything. Not survivable now: a client that offers window size has its NAWS bytes read as a command. |
 | **Where** | `internal/telnet/parser.go`, `TestNegotiationNeverReachesTheInterpreter`. |
 
+Answering is done by RFC 1143's Q method (`internal/telnet/negotiate.go`),
+which is six states per option per side rather than a reflex reply. The naive
+version — WILL answered with DO, DO answered with WILL — loops, because each
+end reads the other's answer as a fresh request.
+
+**Suppress-go-ahead is agreed on request and never volunteered**, which keeps
+`telnet(1)` in line mode as it is against the C server. Offering it tips the
+client into character-at-a-time mode, where the terminal stops echoing and
+stops handling backspace and the server is expected to do both instead: a
+player typing at the login prompt gets `^M` for Enter and `^?` for backspace.
+A client that wants SGA still gets it the moment it asks.
+
 ### GMCP
 
 Not in the C at all. Added because §0 intends a web front end, and a browser
