@@ -57,8 +57,8 @@ the port progresses.
 
 ## Not this directory
 
-- **`doc/`** (singular) is the original stock CircleMUD documentation —
-  building, coding, running, wizhelp. Upstream reference material, kept
-  as-is, not written by this project.
+- **`reference/moderncserver/doc/`** (singular) is the original stock
+  CircleMUD documentation — building, coding, running, wizhelp. Upstream
+  reference material, kept as-is, not written by this project.
 - **`reference/`** holds code-only snapshots of the two other
   Disgracelands-lineage codebases, for comparison during porting.

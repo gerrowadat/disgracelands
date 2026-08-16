@@ -14,7 +14,7 @@ import (
 
 // worldFlags declares the options shared by the world subcommands.
 func worldFlags(fs *flag.FlagSet) (dir, format *string, mini *bool) {
-	dir = fs.String("world-dir", "lib/world", "World data directory")
+	dir = fs.String("world-dir", "data/world", "World data directory")
 	format = fs.String("world-format", classic.FormatName,
 		fmt.Sprintf("World format: %v", world.Formats()))
 	mini = fs.Bool("mini-mud", false, "Use the reduced index.mini file list")
@@ -49,8 +49,8 @@ func loadWorld(ctx context.Context, dir, format string, mini bool, opts world.Op
 }
 
 // cmdWorldLint checks the world files and reports what it finds. It replaces
-// src/util/scheck and the C server's -c mode, and unlike either it can run in
-// CI without starting a server.
+// the C tree's src/util/scheck and its -c mode, and unlike either it can run
+// in CI without starting a server.
 func cmdWorldLint(args []string) error {
 	fs := flag.NewFlagSet("world lint", flag.ContinueOnError)
 	dir, format, mini := worldFlags(fs)

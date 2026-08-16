@@ -18,7 +18,7 @@ These were settled up front and the rest of the plan assumes them:
 | Question | Decision |
 |---|---|
 | **Fidelity** | Faithful core, known bugs fixed. Same game feel, same mechanics (remort bitmask, Paladin alignment, the balance tweaks in `docs/investigations/non-stock-features.md`); the `sprintf`-overlap class of bugs from `TODO.md` §3 and integer-width bugs get fixed as they're encountered, each deviation recorded. Deliberate rules changes are a separate, later conversation. |
-| **Repo layout** | Same repo, new top-level Go tree. The C tree in `src/` stays buildable and authoritative for the whole port — it is the reference implementation and the parity oracle. |
+| **Repo layout** | Same repo, new top-level Go tree. The C tree in `reference/moderncserver/src/` stays buildable and authoritative for the whole port — it is the reference implementation and the parity oracle. |
 | **Scripting** | Design the seam, defer the engine. Trigger/event interfaces get defined so DG Scripts, Lua, or anything else can drop in later; v1 ships no interpreter. The tree that was actually played has no DG Scripts (`docs/investigations/non-stock-features.md`), so nothing regresses. |
 | **Protocols** | TLS-wrapped telnet, WebSocket, and telnet option negotiation (MSSP/MCCP/GMCP/MXP). |
 
@@ -34,8 +34,9 @@ telnet entirely, delete the listener — say so and it comes out.
 
 ## 1. What is actually being ported
 
-From `wc -l`: ~44k lines of C across 60-odd `.c` files, plus `src/util/`
-and the OasisOLC `gen*.c`/`*edit.c` online-building layer. Roughly:
+From `wc -l`: ~44k lines of C across 60-odd `.c` files, plus
+`reference/moderncserver/src/util/` and the OasisOLC `gen*.c`/`*edit.c`
+online-building layer. Roughly:
 
 | Area | C files | Notes |
 |---|---|---|
@@ -46,7 +47,7 @@ and the OasisOLC `gen*.c`/`*edit.c` online-building layer. Roughly:
 | Player commands | `act.*.c` (~9k total) | Largest volume, lowest risk, highly parallelisable. |
 | Building/OLC | `oasis.c`, `gen*.c`, `*edit.c` (~6k) | Deferrable to a late phase; the world can be edited offline meanwhile. |
 | Shops, houses, boards, mail | `shop.c`, `house.c`, `boards.c`, `mail.c` | Each has its own on-disk format and needs its own persistence seam. |
-| Offline utilities | `src/util/*`, `tools/*` | Become Go subcommands of one `dlctl` binary. |
+| Offline utilities | `reference/moderncserver/src/util/*`, `reference/tools/*` | Become Go subcommands of one `dlctl` binary. |
 
 `castle.c` and the `spec_procs.c`/`spec_assign.c` special procedures are
 hand-written per-mob Go functions in a registry — this is the natural home
@@ -84,9 +85,10 @@ build/
 docs/proposals/go-port-plan.md    (this file)
 ```
 
-`src/`, `lib/`, `doc/`, `tools/`, `reference/` are untouched. `lib/` stays
-the runtime data directory both servers read — that is what makes
-side-by-side parity testing possible.
+`reference/moderncserver/src/`, `data/`, `reference/moderncserver/doc/`,
+`reference/tools/`, `reference/` are untouched. `data/` stays the runtime
+data directory both servers read — that is what makes side-by-side parity
+testing possible.
 
 Module path: `github.com/gerrowadat/disgracelands`, matching the remote.
 Go version: 1.25, which is what the tree is built and tested against;
@@ -165,7 +167,8 @@ deliberate about it.
 `structs.h:818–886`). These are 4 bytes in the 32-bit build that wrote the
 real 2001–2008 data and 8 bytes on a native 64-bit build, so a 64-bit
 `fread()` of the same file silently misreads everything past the first
-`long`. `tools/bin2ascii.c` has to be built `-m32` for exactly this reason.
+`long`. `reference/tools/bin2ascii.c` has to be built `-m32` for exactly
+this reason.
 
 **Rules for the Go port:**
 
@@ -178,7 +181,7 @@ real 2001–2008 data and 8 bytes on a native 64-bit build, so a 64-bit
    reproduced explicitly rather than inferred. Decoding is done field by
    field with `encoding/binary` against a documented offset table, not by
    casting a byte slice over a struct. The layout table is derived from
-   `tools/bin2ascii.c`, which is already proven correct against all 108
+   `reference/tools/bin2ascii.c`, which is already proven correct against all 108
    real records.
 3. **Byte order is pinned to little-endian** for the legacy format, with a
    note that the archive report (§5) already ruled out big-endian/SPARC
@@ -193,7 +196,7 @@ real 2001–2008 data and 8 bytes on a native 64-bit build, so a 64-bit
 5. **Bitvectors get a real type.** `bitvector_t` is `unsigned long`
    (`structs.h:599`) — 32 bits on the platform this was written for, 64 on
    modern Linux. Flags in the world files are letter-encoded (`a`=bit 0,
-   `b`=bit 1, …; see `lib/world/obj/0.obj`'s `9 0 ae 0` line), which is
+   `b`=bit 1, …; see `data/world/obj/0.obj`'s `9 0 ae 0` line), which is
    width-agnostic on disk. In Go use a named `uint64` type with generated
    constants, and have the legacy binary codec mask to 32 bits on write so
    a flag added past bit 31 can't silently corrupt an old-format save. Flag
@@ -260,9 +263,9 @@ refuses a migration that would lose data unless `--allow-lossy` is passed.
 
 ### 5.2 Default: `binary`
 
-Byte-compatible with the current `struct char_file_u` in `lib/etc/players`,
+Byte-compatible with the current `struct char_file_u` in `data/etc/players`,
 decoded per §4. This is the default so that a fresh checkout of the Go
-server, pointed at an existing `lib/`, boots and reads the real roster with
+server, pointed at an existing `data/`, boots and reads the real roster with
 no migration step and no flags.
 
 Two important sub-details:
@@ -287,9 +290,10 @@ Two important sub-details:
 ### 5.3 Second implementation: `ascii`
 
 ascii_pfiles 2.1 compatible, one text file per player under
-`lib/pfiles/<letter>/<name>`, plus `plr_index`. `tools/bin2ascii.c` already
-produces this layout and it round-trips against genuine WipeMud-written
-files (`docs/investigations/pfile-conversion.md`).
+`data/pfiles/<letter>/<name>`, plus `plr_index`.
+`reference/tools/bin2ascii.c` already produces this layout and it
+round-trips against genuine WipeMud-written files
+(`docs/investigations/pfile-conversion.md`).
 
 **`docs/investigations/ascii-pfile-format.md` is the specification to
 implement against** — directory layout, `plr_index`, the `tag: value`
@@ -317,15 +321,15 @@ actually an interface and not a binary-shaped hole.
 
 ### 5.4 Migration
 
-`dlctl pfile convert --from=binary --to=ascii --in=lib/etc/players --out=lib/pfiles`
-replaces `tools/bin2ascii.c`, natively 64-bit, no `-m32` required. Plus
-`dlctl pfile verify` (§4) and `dlctl pfile dump` (replaces
-`tools/pfiledump.c`).
+`dlctl pfile convert --from=binary --to=ascii --in=data/etc/players
+--out=lib/pfiles` replaces `reference/tools/bin2ascii.c`, natively 64-bit,
+no `-m32` required. Plus `dlctl pfile verify` (§4) and `dlctl pfile dump`
+(replaces `reference/tools/pfiledump.c`).
 
 ### 5.5 The rest of the player-adjacent state
 
-`lib/plrobjs` (rent/crash files, `objsave.c`), `lib/plralias`,
-`lib/house/` + `lib/etc/hcontrol`, `lib/etc/board.*`, and the mail system
+`data/plrobjs` (rent/crash files, `objsave.c`), `data/plralias`,
+`data/house/` + `data/etc/hcontrol`, `data/etc/board.*`, and the mail system
 each get the same treatment: a small interface, a default implementation
 matching today's on-disk format, in `internal/persist/`. They are smaller
 and less interesting than the playerfile but they're the reason a
@@ -364,7 +368,7 @@ read-only" instead of half-writing something.
 
 ### 6.1 Default: `classic`
 
-The format in `lib/world/` today: `zone.lst` plus `wld/`, `mob/`, `obj/`,
+The format in `data/world/` today: `zone.lst` plus `wld/`, `mob/`, `obj/`,
 `shp/`, `zon/`. Records are `#vnum`,
 `~`-terminated strings, letter-encoded bitflags, `S`/`$` terminators, with
 the mob `E`-format extension and dice notation (`5d10+550`).
@@ -373,16 +377,19 @@ This parser is the single fiddliest piece of the whole port and deserves
 real attention:
 
 - The C parser is forgiving in undocumented ways and the real world files
-  exploit that. **Write the Go parser against `lib/world/` itself, not
-  against the format documentation in `doc/building.txt`** — where they
-  disagree, the live data wins, and the disagreement gets recorded.
+  exploit that. **Write the Go parser against `data/world/` itself, not
+  against the format documentation in
+  `reference/moderncserver/doc/building.txt`** — where they disagree, the
+  live data wins, and the disagreement gets recorded.
 - Every parse must produce identical results to the C loader. The parity
   harness for this is: boot both servers, dump the loaded world to a
   canonical JSON form from each, diff. Getting a byte-identical dump out of
-  the C side means adding a small dump-and-exit path to `src/` — worth the
-  intrusion, and it's additive so it doesn't disturb the reference build.
-- `scheck` (`src/util/scheck`, the `-c` syntax-check mode) becomes
-  `dlctl world lint`, usable in CI over `lib/world/`.
+  the C side means adding a small dump-and-exit path to
+  `reference/moderncserver/src/` — worth the intrusion, and it's additive
+  so it doesn't disturb the reference build.
+- `scheck` (`reference/moderncserver/src/util/scheck`, the `-c`
+  syntax-check mode) becomes `dlctl world lint`, usable in CI over
+  `data/world/`.
 
 ### 6.2 Why this seam earns its place
 
@@ -423,7 +430,7 @@ speculative one and shouldn't drive the design.
     emitting invalid UTF-8), and **ECHO** suppression during password entry
     — the last one being a correctness fix over what a raw socket does.
 - **Connection hygiene**: per-IP connection limits, a handshake timeout, a
-  login-attempt rate limiter, and read deadlines. `lib/etc/badsites` (the
+  login-attempt rate limiter, and read deadlines. `data/etc/badsites` (the
   existing ban list) is honoured, loaded through its own small persistence
   interface. Reverse DNS of connecting hosts moves off the game goroutine
   with a timeout — in the C code it's a blocking call in the accept path.
@@ -493,12 +500,12 @@ Plus the new ones: `--player-format`, `--player-dir`, `--world-format`,
 historical 100ms), `--allow-legacy-passwords`, `--max-players`,
 `--max-connections-per-ip`.
 
-Much of `src/config.c` is compile-time game tuning (rent costs, level caps,
-OK/NOPERSON message strings, autosave behaviour). That becomes a
-**config file** — TOML or YAML, `--config`, with every value defaulting to
-today's `config.c` value so an empty file reproduces current behaviour
-exactly. Hot-reload of the safe subset on `SIGHUP` is a nice-to-have, not
-v1.
+Much of `reference/moderncserver/src/config.c` is compile-time game tuning
+(rent costs, level caps, OK/NOPERSON message strings, autosave behaviour).
+That becomes a **config file** — TOML or YAML, `--config`, with every value
+defaulting to today's `config.c` value so an empty file reproduces current
+behaviour exactly. Hot-reload of the safe subset on `SIGHUP` is a
+nice-to-have, not v1.
 
 ### 9.2 Observability
 
@@ -523,11 +530,11 @@ v1.
   Non-root user. No shell in the runtime image — which is precisely why
   `autorun`'s "restart me in a loop" model is replaced by the container
   runtime's restart policy.
-- `lib/` mounted as a volume, since it's mutable state (players, houses,
+- `data/` mounted as a volume, since it's mutable state (players, houses,
   boards, mail, and OLC-edited world files). The world *content* can
-  optionally be baked into the image via `embed.FS` and a `--world-format=embedded`
-  source for immutable deployments.
-- `docker-compose.yml` for local dev: server + a mounted `lib/` + optional
+  optionally be baked into the image via `embed.FS` and a
+  `--world-format=embedded` source for immutable deployments.
+- `docker-compose.yml` for local dev: server + a mounted `data/` + optional
   Prometheus/Grafana.
 - `SIGTERM` handling per §7 so `docker stop` saves the game rather than
   losing up to a minute of play (`PULSE_AUTOSAVE` is 60s).
@@ -539,8 +546,9 @@ v1.
 ## 10. Phasing
 
 Each phase ends with something runnable. The C server stays the live
-reference throughout; nothing is deleted from `src/` until the Go server
-has been playing for a while.
+reference throughout; nothing is deleted from
+`reference/moderncserver/src/` until the Go server has been playing for a
+while.
 
 **Phase 0 — Foundations. ✅ Done.** Go module, layout, CI (build, vet,
 `-race` tests, lint, container build). `config` package with the full
@@ -579,11 +587,11 @@ Three decisions made during the build, all revisable:
    so a dependency bought nothing. The cost is that `--flag` and `-flag` are
    equivalent and short aliases appear in `--help` alongside long forms.
 2. **No config-file layer yet.** §9.1's config file is for the game tuning
-   currently in `src/config.c` — rent costs, level caps, message strings —
-   and none of those values exist yet. The precedence chain has the slot;
-   filling it before there is anything to put in it would have meant picking
-   a format and a dependency for no benefit. Lands with the values it
-   configures.
+   currently in `reference/moderncserver/src/config.c` — rent costs, level
+   caps, message strings — and none of those values exist yet. The
+   precedence chain has the slot; filling it before there is anything to
+   put in it would have meant picking a format and a dependency for no
+   benefit. Lands with the values it configures.
 3. **`--log-level=debug` implies `AddSource`.** Small, and easy to reverse
    if it turns out to be noisy.
 
@@ -604,21 +612,22 @@ both servers, has each dump the world it loaded, and diffs the results:
 Zero differing fields across all 5,248 records. It runs in CI, so it stays
 true.
 
-The C side is `src/worlddump.c` plus a `-J <file>` option, which loads the
-world exactly as a real boot does — including `renum_world()` and
-`renum_zone_table()`, whose effects are the interesting part — then writes
-JSON and exits without opening a socket or touching player data. It is
-marked `<DoC>` like every other local change to the C tree.
+The C side is `reference/moderncserver/src/worlddump.c` plus a `-J <file>`
+option, which loads the world exactly as a real boot does — including
+`renum_world()` and `renum_zone_table()`, whose effects are the interesting
+part — then writes JSON and exits without opening a socket or touching
+player data. It is marked `<DoC>` like every other local change to the C
+tree.
 
 Three corrections to what this document previously said:
 
-- **47 zones, not 55.** The earlier figure counted files in `lib/world/zon/`,
+- **47 zones, not 55.** The earlier figure counted files in `data/world/zon/`,
   including `index` and `index.mini`. Six `.zon` files are not listed in the
   index and the C server never opens them, so 47 is what actually loads.
 - **The C server's boot log over-reports.** It prints 2988 rooms and 1200
   objects, but those come from `count_hash_records()`, which counts every
   line beginning with `#` to size a malloc — including `#` lines inside
-  descriptions. `lib/world` has seven of those in room files (ASCII-art
+  descriptions. `data/world` has seven of those in room files (ASCII-art
   signs in `wld/54.wld` and `wld/64.wld`) and one in `obj/142.obj`, so the C
   server allocates 2988 slots and fills 2981.
 - **§13.1 (Latin-1 vs UTF-8) is answered for the loader.** It treats text as
@@ -678,7 +687,7 @@ the `gen*` layer. Deferrable — offline editing plus a reboot works
 meanwhile.
 
 **Phase 7 — Cutover.** Shadow-run both servers against copies of the same
-`lib/`, compare. Then run the Go server as primary, keep the C tree as
+`data/`, compare. Then run the Go server as primary, keep the C tree as
 reference. Retire `autorun`/`automaint`/`configure`.
 
 **Later (explicitly not v1):** scripting engine behind the §8 seam,
@@ -689,7 +698,7 @@ WipeMud race system (`TODO.md` §2).
 
 ## 11. Testing and parity
 
-- **Unit tests** for every format codec, with the real `lib/` data as
+- **Unit tests** for every format codec, with the real `data/` data as
   fixtures where it isn't player data, and synthesised fixtures where it
   is. Fuzz the world parser and the binary pfile decoder — both consume
   untrusted-ish input and both are exactly the kind of code where a
@@ -720,20 +729,21 @@ WipeMud race system (`TODO.md` §2).
 It inherits the CircleMUD and DikuMUD licenses, and this constrains the
 port's design in ways worth stating up front rather than discovering late.
 
-`doc/license.doc` is the CircleMUD License (Jeremy Elson, 1994–2001,
-Johns Hopkins) plus the original DikuMUD license appended below it. There
-is no GPL or LGPL text anywhere in this tree — `grep -rniE "LGPL|GNU
-General Public|lesser general public"` across the whole checkout returns
-nothing. `src/licheck` still gates the C build on accepting it.
+`reference/moderncserver/doc/license.doc` is the CircleMUD License (Jeremy
+Elson, 1994–2001, Johns Hopkins) plus the original DikuMUD license appended
+below it. There is no GPL or LGPL text anywhere in this tree — `grep -rniE
+"LGPL|GNU General Public|lesser general public"` across the whole checkout
+returns nothing. `reference/moderncserver/src/licheck` still gates the C
+build on accepting it.
 
 The three requirements are non-commercial use, credit, and DikuMUD
 compliance. The credit terms are specific and mechanical
-(`doc/license.doc:80–105`):
+(`reference/moderncserver/doc/license.doc:80–105`):
 
-- `lib/text/credits` must be preserved verbatim — additions allowed,
+- `data/text/credits` must be preserved verbatim — additions allowed,
   removals and edits not — and displayed by the `credits` command.
 - The `CIRCLEMUD` help entry must be intact and shown in full by
-  `help circlemud` (currently `lib/text/help/info.hlp:380`).
+  `help circlemud` (currently `data/text/help/info.hlp:380`).
 - The **login sequence** must name the DikuMUD and CircleMUD creators —
   defined as everything a player sees between connecting and playing.
 - The license ships AS IS with any distribution, including derivative
@@ -741,7 +751,8 @@ compliance. The credit terms are specific and mechanical
 - Copyright/authorship notices in source files must not be removed or
   changed.
 
-And, directly on point for this project (`doc/license.doc:101–105`):
+And, directly on point for this project
+(`reference/moderncserver/doc/license.doc:101–105`):
 
 > Claims that any of the above requirements are inapplicable to a
 > particular MUD for reasons such as "our MUD is totally rewritten" or
@@ -757,27 +768,27 @@ paid hosting, no "support the server" tip jar — worth knowing before
 anyone plans how to pay for hosting under §9.
 
 **The good news:** the tree is currently compliant and there's nothing to
-fix, only something to preserve. `lib/text/greetings` already carries both
-sets of creators above the name prompt, `lib/text/credits` is the stock
+fix, only something to preserve. `data/text/greetings` already carries both
+sets of creators above the name prompt, `data/text/credits` is the stock
 text with Disgracelands' additions after it, and the `CIRCLEMUD` help
 entry is intact.
 
 **What this means concretely for the port:**
 
-1. `LICENSE` in the Go tree is `doc/license.doc`, unchanged. Any
-   `go.mod`-adjacent licensing metadata says the same.
+1. `LICENSE` in the Go tree is `reference/moderncserver/doc/license.doc`,
+   unchanged. Any `go.mod`-adjacent licensing metadata says the same.
 2. The `credits` and `help circlemud` commands are **not optional
    features** to be deferred to a late phase — they are license
    compliance, and belong in Phase 3 alongside `look` and `who`.
-3. The login sequence rendering (§7) must emit `lib/text/greetings` before
+3. The login sequence rendering (§7) must emit `data/text/greetings` before
    the name prompt on **every** transport — telnet, TLS and WebSocket
    alike. A web client that renders its own pretty splash screen and skips
    the greeting file is a license violation, not a UI choice. Worth a test
    in the parity harness.
-4. `src/licheck`'s build-time acceptance gate has no natural equivalent in
-   a `go build`, and shouldn't be reinvented as one. The requirement it
-   enforces is *distribution* of the license, which the `LICENSE` file
-   satisfies.
+4. `reference/moderncserver/src/licheck`'s build-time acceptance gate has
+   no natural equivalent in a `go build`, and shouldn't be reinvented as
+   one. The requirement it enforces is *distribution* of the license, which
+   the `LICENSE` file satisfies.
 5. Third-party add-ons carry their own terms on top: OasisOLC and (if ever
    pulled in) DG Scripts, context-sensitive help, and ascii_pfiles each
    have author credits in their headers — see the table in
@@ -803,7 +814,7 @@ they touch:
    (clean, but changes the on-disk world if OLC ever writes back), on
    output per-client via CHARSET (faithful, more complex), or neither?
    (Phase 1.)
-2. **Does `lib/` stay the on-disk contract**, or does the Go server get its
+2. **Does `data/` stay the on-disk contract**, or does the Go server get its
    own data directory layout with a migration? Staying compatible is what
    makes side-by-side parity testing work, so this plan assumes it stays —
    but it does constrain things. (Phase 1.)
@@ -840,5 +851,5 @@ And outside `docs/`:
 - `TODO.md` — what's left in the C tree; items 1, 3 and 5 are largely
   superseded by this plan, items 2 and 4 are not.
 - `BUILDING.md` — both builds, C and Go.
-- `doc/license.doc` — the CircleMUD + DikuMUD licenses the port inherits;
-  see §12.
+- `reference/moderncserver/doc/license.doc` — the CircleMUD + DikuMUD
+  licenses the port inherits; see §12.

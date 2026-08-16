@@ -132,7 +132,8 @@ CircleMUD embeds its version as a hex macro in `structs.h`:
 `#define _CIRCLEMUD 0x MMmmPP` (Major/Minor/Patchlevel).
 
 - `0x030013` = 3.0 pl19 (`welmar/oldmud/CircleMUD3`)
-- `0x030014` = 3.0 pl20 (`welmar/CircleMUD3`, `welmar/testmud`, root `CircleMUD3`, `c.tgz`)
+- `0x030014` = 3.0 pl20 (`welmar/CircleMUD3`, `welmar/testmud`, root
+  `CircleMUD3`, `c.tgz`)
 - `0x030100` = 3.1 (`welmar/WipeMud`) — the final CircleMUD release,
   per `welmar/WipeMud/release_notes.3.1.txt`, dated November 18, 2002,
   "9 years and a day" after CircleMUD 2.20.
@@ -226,9 +227,10 @@ double-checking your memory here — see the questions at the end.
 
 **That said, the binary player files are still fragile for a different
 reason.** The pre-3.1 trees (`welmar/oldmud`, `welmar/CircleMUD3`,
-`welmar/testmud`) store players as a flat file of C structs
-(`struct char_file_u`, defined in `src/structs.h:972`), written with a raw
-`fwrite()` — one fixed-size record per player, no self-describing format:
+`welmar/testmud`) store players as a flat file of C structs (`struct
+char_file_u`, defined in `reference/moderncserver/src/structs.h:972`),
+written with a raw `fwrite()` — one fixed-size record per player, no
+self-describing format:
 
 ```
 struct char_file_u {
@@ -273,7 +275,7 @@ base to get the older/richer roster into the same safe text format.
 - **World data**: `welmar/world-backups/` (1,184 nightly tarballs, Sep–Dec
   2002 range surviving) and `welmar/zones/` (164 per-zone tarballs, matching
   live zone numbers) are your best source for reconstructing the world as it
-  stood at a particular date, if the live `lib/world` in `welmar/CircleMUD3`
+  stood at a particular date, if the live `data/world` in `welmar/CircleMUD3`
   turns out to be missing or corrupted anything.
 - **Whole-tree backups**: `welmar/backups/` holds 8 dated full/src
   snapshots from Feb 2002 through Jan 2003, including one
@@ -405,13 +407,13 @@ Baseline is decided (§7): **`welmar/WipeMud` as the code, `welmar/CircleMUD3`
    `ascii_pfiles` format. Do this offline, verify a handful of characters
    by hand (e.g. `Zod`/`humbug`, who exist in both eras) before trusting
    the bulk conversion. Cross-check `welmar/CircleMUD3/lib/plralias` and
-   `lib/plrobjs` (equipment, split by name-range like the pfiles) alongside
+   `data/plrobjs` (equipment, split by name-range like the pfiles) alongside
    the player database — they need to travel together, and their format
    (name-range subdirectories) is unchanged between bpl20 and 3.1.
 4. **Restore world data** from `welmar/CircleMUD3/lib/world` (or a specific
    dated tarball from `welmar/world-backups`/`welmar/zones` if you want a
    particular remembered snapshot rather than the latest) into `WipeMud`'s
-   `lib/world` — diff `WipeMud`'s own (post-wipe) `lib/world` against it
+   `data/world` — diff `WipeMud`'s own (post-wipe) `data/world` against it
    first in case any building happened after the upgrade that you'd want to
    keep.
 5. **Fix the autorun/cron path bug** that likely killed the mud in the first
@@ -456,10 +458,10 @@ Current state, across 4 commits:
    certainly where the `welmar` account/directory name actually comes
    from, nothing SPARC-related), and served the login prompt over a raw
    socket connection.
-4. **Player-file conversion built and verified**: `Reborn/tools/bin2ascii.c`
+4. **Player-file conversion built and verified**: `Reborn/reference/tools/bin2ascii.c`
    converts the real 108-character binary database into the
    `ascii_pfiles` text format (must be built 32-bit — see below);
-   `Reborn/tools/pfiledump.c` reads ascii pfiles back. Both a genuine
+   `Reborn/reference/tools/pfiledump.c` reads ascii pfiles back. Both a genuine
    WipeMud-produced ascii pfile and a freshly-converted CircleMUD3 one
    parse cleanly; all 108 converted characters pass a clean sweep.
    Full detail in `Reborn/docs/investigations/pfile-conversion.md`.
@@ -480,7 +482,8 @@ the honest scope note): the live game binary still reads/writes the old
 binary format at runtime — the conversion above is a proven-correct
 one-shot offline migration, not yet wired into `db.c`'s actual login/save
 path. That's real, password-adjacent work spanning several files (`comm.c`,
-`interpreter.c`, `act.wizard.c`, `house.c`, `mail.c`, the `src/util/`
-tools), and was deliberately left as documented follow-up rather than
-rushed. `Reborn`'s own `db.c` has zero local `<DoC>` mods (§7), so it's one
-of the lower-risk files to eventually patch.
+`interpreter.c`, `act.wizard.c`, `house.c`, `mail.c`, the
+`reference/moderncserver/src/util/` tools), and was deliberately left as
+documented follow-up rather than rushed. `Reborn`'s own `db.c` has zero
+local `<DoC>` mods (§7), so it's one of the lower-risk files to eventually
+patch.

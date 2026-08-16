@@ -13,7 +13,7 @@ import (
 // utils.c rather than approximated, because the real world files depend on
 // details neither doc/building.txt nor the format's reputation mentions.
 //
-// Text is handled as opaque bytes. The files are not UTF-8 — lib/world/wld/
+// Text is handled as opaque bytes. The files are not UTF-8 — data/world/wld/
 // 90.wld contains 0x92, a CP1252 curly apostrophe — and transcoding at load
 // time would change the bytes a writer later emits. What encoding to present
 // to a player is a per-connection question for the protocol layer, not a

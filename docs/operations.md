@@ -162,16 +162,16 @@ Nothing consumes it yet, because there are no sessions to echo to.
 
 ## Backups
 
-Back up `lib/`. That is all the state there is.
+Back up `data/`. That is all the state there is.
 
 Of particular note, and none of it in git for good reason:
 
-- `lib/etc/players` (or `lib/pfiles/`) — the roster, including password
+- `data/etc/players` (or `data/pfiles/`) — the roster, including password
   hashes.
-- `lib/plrobjs/`, `lib/plralias/` — player inventories and aliases.
-- `lib/house/`, `lib/etc/hcontrol` — player housing and its contents.
-- `lib/etc/plrmail` — in-game mail.
-- `lib/world/` — the world itself, which changes if anyone builds in-game.
+- `data/plrobjs/`, `data/plralias/` — player inventories and aliases.
+- `data/house/`, `data/etc/hcontrol` — player housing and its contents.
+- `data/etc/plrmail` — in-game mail.
+- `data/world/` — the world itself, which changes if anyone builds in-game.
 
 The repo deliberately ships no player data; see the "Player data" section
 of the top-level `README.md`.
@@ -179,9 +179,10 @@ of the top-level `README.md`.
 ## Offline tooling
 
 `dlctl` handles the jobs that do not need a running server — the work
-`src/util/` and `tools/` do for the C tree. `dlctl` with no arguments lists
-what it can do; subcommands that are not built yet say which phase
-implements them rather than failing obscurely.
+`reference/moderncserver/src/util/` and `reference/tools/` do for the C
+tree. `dlctl` with no arguments lists what it can do; subcommands that are
+not built yet say which phase implements them rather than failing
+obscurely.
 
 ### Checking the world files
 
@@ -189,8 +190,9 @@ implements them rather than failing obscurely.
 dlctl world lint --world-dir=lib/world
 ```
 
-Replaces `src/util/scheck` and the C server's `-c` mode, and unlike either
-it runs without starting a server, so it belongs in CI.
+Replaces `reference/moderncserver/src/util/scheck` and the C server's `-c`
+mode, and unlike either it runs without starting a server, so it belongs in
+CI.
 
 Findings come in three severities:
 
@@ -208,7 +210,7 @@ The shipped world currently reports **0 errors, 20 warnings, 8 notes**. The
 warnings are worth knowing about:
 
 - Four complete zones (23, 90, 92, 147) and two further `.zon` files exist
-  in `lib/world/` but appear in no index, so nothing ever loads them. This
+  in `data/world/` but appear in no index, so nothing ever loads them. This
   is silent in the C server: a builder who adds a zone and forgets the index
   gets no error, just a world quietly missing their work.
 - Two rooms have exits locked by key objects that do not exist.
@@ -230,12 +232,12 @@ dlctl world dump --world-dir=lib/world --out=go.json
 Writes the loaded world as canonical JSON: deterministic ordering, values
 as they are *after* load-time adjustments and reference resolution, and
 absent exits explicitly null so a missing exit cannot be confused with an
-exit to nowhere. Strings are escaped byte by byte, because `lib/world` is
+exit to nowhere. Strings are escaped byte by byte, because `data/world` is
 not UTF-8 and a dump that "fixed" those bytes could hide a real difference.
 
-The C server dumps the same format with `bin/circle -J <file>`, which loads
-the world exactly as a real boot does and then exits without opening a
-socket. To compare the two:
+The C server dumps the same format with `reference/moderncserver/bin/circle
+-J <file>`, which loads the world exactly as a real boot does and then
+exits without opening a socket. To compare the two:
 
 ```sh
 scripts/world-parity.sh

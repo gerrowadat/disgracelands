@@ -7,7 +7,7 @@ import (
 
 // Text is a world string in the parity dump.
 //
-// It exists because encoding/json is lossy for this data. lib/world is not
+// It exists because encoding/json is lossy for this data. data/world is not
 // UTF-8 — wld/90.wld holds byte 0x92, a CP1252 apostrophe — and the standard
 // encoder replaces every invalid byte with U+FFFD. Two different corrupt
 // bytes would then dump identically, so a diff of two loaders could show no
@@ -36,7 +36,7 @@ func (t Text) MarshalJSON() ([]byte, error) {
 // escapeByte renders one byte as JSON. The short escapes are the ones JSON
 // defines; everything else outside printable ASCII takes the \u00XX form.
 //
-// Keep this in step with json_escape() in src/worlddump.c — the two must
+// Keep this in step with json_escape() in reference/moderncserver/src/worlddump.c — the two must
 // produce identical bytes or every string in the world reads as a difference.
 func escapeByte(c byte) string {
 	switch c {

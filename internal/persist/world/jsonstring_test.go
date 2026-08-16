@@ -38,7 +38,7 @@ func TestTextPreservesInvalidUTF8(t *testing.T) {
 	// This is the reason Text exists. encoding/json replaces every invalid
 	// UTF-8 byte with U+FFFD, so two different corrupt bytes would dump
 	// identically — and a parity diff would show no difference where a real
-	// one exists. lib/world/wld/90.wld contains 0x92.
+	// one exists. data/world/wld/90.wld contains 0x92.
 	const in = "It\x92s possible"
 
 	standard, err := json.Marshal(in)

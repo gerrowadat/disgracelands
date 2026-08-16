@@ -6,9 +6,9 @@
 // separately, so the two cannot drift apart.
 //
 // A config file layer (§9.1) will sit between environment and defaults when
-// the game-tuning values currently living in src/config.c are ported. The
-// precedence chain here already has the slot for it; there is nothing to put
-// in it yet.
+// the game-tuning values currently living in the C tree's src/config.c are
+// ported. The precedence chain here already has the slot for it; there is
+// nothing to put in it yet.
 package config
 
 import (
@@ -107,13 +107,13 @@ var (
 // telnet is implemented but off unless asked for).
 func Default() Config {
 	return Config{
-		LibDir:               "lib",
+		LibDir:               "data",
 		PlayerFormat:         "binary",
 		WorldFormat:          "classic",
 		TelnetAddr:           "",
 		TelnetsAddr:          ":4443",
 		WSAddr:               "",
-		TLSACMECacheDir:      "lib/.acme",
+		TLSACMECacheDir:      "data/.acme",
 		MaxPlayers:           300,
 		MaxConnsPerIP:        8,
 		LoginGraceTime:       60 * time.Second,

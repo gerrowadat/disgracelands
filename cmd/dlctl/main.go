@@ -1,5 +1,6 @@
 // Command dlctl is the offline tooling for Disgracelands: format conversion,
-// world linting, and the jobs the C tree spread across src/util/ and tools/.
+// world linting, and the jobs the C tree spread across its src/util/ and
+// reference/tools/.
 //
 // Phase 0 of docs/proposals/go-port-plan.md establishes the command structure. The
 // subcommands that need the persistence layers report which phase implements
@@ -42,7 +43,7 @@ var commands = []command{
 	},
 	{
 		name:    "world lint",
-		summary: "Check world files for errors (replaces src/util/scheck and dlmud -c)",
+		summary: "Check world files for errors (replaces the C tree's scheck, and dlmud -c)",
 		run:     cmdWorldLint,
 	},
 	{
@@ -52,7 +53,7 @@ var commands = []command{
 	},
 	{
 		name:    "pfile convert",
-		summary: "Convert player data between formats (replaces tools/bin2ascii.c, no 32-bit build needed)",
+		summary: "Convert player data between formats (replaces bin2ascii, with no 32-bit build)",
 		phase:   2,
 	},
 	{
@@ -62,7 +63,7 @@ var commands = []command{
 	},
 	{
 		name:    "pfile dump",
-		summary: "Print a player file in any supported format (replaces tools/pfiledump.c)",
+		summary: "Print a player file in any supported format (replaces pfiledump)",
 		phase:   2,
 	},
 }

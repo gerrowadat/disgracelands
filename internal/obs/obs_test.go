@@ -22,7 +22,7 @@ func TestNewLoggerWritesJSON(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewLogger: %v", err)
 	}
-	logger.Info("boot", "lib_dir", "lib")
+	logger.Info("boot", "lib_dir", "data")
 	if err := closer.Close(); err != nil {
 		t.Fatalf("Close: %v", err)
 	}
@@ -35,7 +35,7 @@ func TestNewLoggerWritesJSON(t *testing.T) {
 	if err := json.Unmarshal(data, &rec); err != nil {
 		t.Fatalf("log line is not JSON: %v\n%s", err, data)
 	}
-	if rec["msg"] != "boot" || rec["lib_dir"] != "lib" {
+	if rec["msg"] != "boot" || rec["lib_dir"] != "data" {
 		t.Errorf("log record = %v, want msg=boot lib_dir=lib", rec)
 	}
 }

@@ -2,7 +2,7 @@
 
 A field-by-field reference for the text player-file format used by
 `welmar/WipeMud` (in the archive) and produced by this repo's
-`tools/bin2ascii.c`. Companion to `pfile-conversion.md` (which covers
+`reference/tools/bin2ascii.c`. Companion to `pfile-conversion.md` (which covers
 the *tools and what was verified*) and `non-stock-features.md` (which
 covers `Race:`/`Rmrt:`, the two fields that are Disgracelands-specific
 extensions to this format rather than part of it upstream).
@@ -13,17 +13,17 @@ targeting stock CircleMUD 3.0 bpl17/19), archived in this project's parent
 repo at `welmar/pfiles/ascii_pfiles_2.1/`. Everything in this document is
 drawn from reading its reference implementation
 (`welmar/pfiles/ascii_pfiles_2.1/full_src/db.c`'s `load_char()` and
-`save_char()`, `sprintbits()`/`asciiflag_conv()`) and cross-checked
-against real files in `welmar/WipeMud/lib/pfiles/`. **Not currently wired
-into this repo's own `src/db.c`** — see `pfile-conversion.md` and
-`TODO.md` for that gap.
+`save_char()`, `sprintbits()`/`asciiflag_conv()`) and cross-checked against
+real files in `welmar/WipeMud/lib/pfiles/`. **Not currently wired into
+this repo's own `reference/moderncserver/src/db.c`** — see
+`pfile-conversion.md` and `TODO.md` for that gap.
 
 ---
 
 ## Layout
 
 ```
-lib/pfiles/
+data/pfiles/
   plr_index          - one line per player, see below
   a/
     ass               - one file per player, named after them, lowercase
@@ -35,7 +35,7 @@ lib/pfiles/
 - Directory: first letter of the player's name, lowercased.
 - Filename: the player's full name, lowercased, no extension.
 - (From the reference source: `PLR_PREFIX "pfiles"`, `PLR_SUFFIX ""`,
-  `SLASH "/"` — i.e. `pfiles/<c>/<name>` relative to `lib/`.)
+  `SLASH "/"` — i.e. `pfiles/<c>/<name>` relative to `data/`.)
 
 ## `plr_index`
 
@@ -195,14 +195,14 @@ Act : 128
 Pref: efghmnoqv
 ```
 
-`128` is a pure-digit string (bit 7 set) written as a plain number
-because that's what a bare `%d`/`atol()` round-trip produces either
-way; `efghmnoqv` is the letter form for a `Pref` value with bits 4, 5,
-6, 7, 12, 13, 14, 16, and 21 set. Look up what each bit actually means in
-`src/structs.h` (`PLR_*`, `AFF_*`, `PRF_*` defines) — this document
-covers the encoding, not the flag catalog.
+`128` is a pure-digit string (bit 7 set) written as a plain number because
+that's what a bare `%d`/`atol()` round-trip produces either way;
+`efghmnoqv` is the letter form for a `Pref` value with bits 4, 5, 6, 7, 12,
+13, 14, 16, and 21 set. Look up what each bit actually means in
+`reference/moderncserver/src/structs.h` (`PLR_*`, `AFF_*`, `PRF_*` defines)
+— this document covers the encoding, not the flag catalog.
 
-`tools/bin2ascii.c` (this repo's converter, working from the *older*
+`reference/tools/bin2ascii.c` (this repo's converter, working from the *older*
 binary format that never had letter-encoded flags to begin with) currently
 writes `Act`/`Aff`/`Pref` as plain decimal unconditionally, and `Rmrt` the
 same way (matching the real `Rmrt:` fields observed, which are also plain

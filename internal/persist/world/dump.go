@@ -26,7 +26,7 @@ import (
 //   - **Explicit about absence.** A nil exit is null, not omitted, so a
 //     missing exit and an exit to nowhere cannot look the same in a diff.
 //
-// Strings are emitted as-is. They are not UTF-8 in general (lib/world
+// Strings are emitted as-is. They are not UTF-8 in general (data/world
 // contains CP1252 bytes), so the JSON encoder escapes what it must and the
 // bytes survive a round trip.
 

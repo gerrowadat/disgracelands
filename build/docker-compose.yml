@@ -16,7 +16,7 @@ services:
     # Anything reachable by anyone else needs --listen-telnets and a real cert;
     # see docs/proposals/go-port-plan.md §7.
     command:
-      - --lib-dir=/lib
+      - --lib-dir=/data
       - --listen-telnet=:4000
       - --listen-telnets=
       - --metrics-addr=:9090
@@ -26,8 +26,8 @@ services:
       - "9090:9090"   # metrics, healthz, readyz
     volumes:
       # The real runtime data directory, so the container sees the same world
-      # and player files the C server does.
-      - ../lib:/lib
+      # and player files the C server in reference/ does.
+      - ../data:/data
     # docker stop sends SIGTERM, which the server handles by saving and
     # shutting down cleanly. Give it room to finish.
     stop_grace_period: 45s

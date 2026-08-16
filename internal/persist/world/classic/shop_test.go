@@ -7,7 +7,7 @@ import (
 	"github.com/gerrowadat/disgracelands/internal/game"
 )
 
-// shop 3000 from lib/world/shp/30.shp, verbatim, with the file's banner.
+// shop 3000 from data/world/shp/30.shp, verbatim, with the file's banner.
 const realShopFile = `CircleMUD v3.0 Shop File~
 #3000~
 3050

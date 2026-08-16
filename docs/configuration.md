@@ -29,7 +29,7 @@ every flag appears here, but it cannot check that the prose is accurate.
 | `--player-dir` | *(empty)* | Player-data directory. Empty means "use `--lib-dir`". |
 | `--world-dir` | *(empty)* | World-data directory. Empty means `<lib-dir>/world`. |
 
-`lib/` is **mutable state** — players, houses, boards, mail, and any world
+`data/` is **mutable state** — players, houses, boards, mail, and any world
 files edited in-game. Back it up; mount it as a volume in a container.
 
 ## Formats
@@ -43,7 +43,7 @@ files edited in-game. Back it up; mount it as a volume in a container.
 
 `binary` is the original `struct char_file_u` flat file the C server writes
 today; `ascii` is the ascii_pfiles 2.1 one-text-file-per-player format. The
-defaults are chosen so that pointing the Go server at an existing `lib/`
+defaults are chosen so that pointing the Go server at an existing `data/`
 needs no migration and no flags. See
 `docs/investigations/ascii-pfile-format.md` for what the ascii format
 actually contains, and `docs/proposals/go-port-plan.md` §5 for why this is
@@ -81,7 +81,7 @@ set. That is preferable to starting a server nobody can reach.
 | `--tls-cert` | *(empty)* | Certificate file. Must be set with `--tls-key`. |
 | `--tls-key` | *(empty)* | Private key file. |
 | `--tls-acme-domain` | *(empty)* | Obtain a certificate automatically via ACME (Let's Encrypt) for this domain. |
-| `--tls-acme-cache` | `lib/.acme` | Where ACME caches issued certificates. Must persist across restarts. |
+| `--tls-acme-cache` | `data/.acme` | Where ACME caches issued certificates. Must persist across restarts. |
 
 `--tls-cert`/`--tls-key` and `--tls-acme-domain` are mutually exclusive.
 Setting only one half of the cert/key pair is an error.
@@ -190,8 +190,8 @@ There isn't one yet. The precedence chain has a slot for it between
 environment and defaults.
 
 It will arrive with the values that justify it: the game tuning currently
-compiled into `src/config.c` — rent costs, level caps, the OK/NOPERSON
-message strings, autosave behaviour. Those are the settings that genuinely
-want a file rather than fifty flags, and none of them exist in the Go tree
-yet. Choosing a file format before there is anything to put in it would
-have been guessing.
+compiled into `reference/moderncserver/src/config.c` — rent costs, level
+caps, the OK/NOPERSON message strings, autosave behaviour. Those are the
+settings that genuinely want a file rather than fifty flags, and none of
+them exist in the Go tree yet. Choosing a file format before there is
+anything to put in it would have been guessing.

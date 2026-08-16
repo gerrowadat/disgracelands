@@ -36,9 +36,9 @@ tree that was actually played continuously for years:
   timestamped **Mon Aug 27 17:48:16 IST 2001** — almost certainly the same
   event or close to it, which would put the start of this era at **August
   2001**.
-- The binary player database `lib/etc/players` (108 characters, decoded
+- The binary player database `data/etc/players` (108 characters, decoded
   in the archive report §5) has birth/last-login timestamps running from
-  **March 2006 to April 2008**. `lib/etc/players.beforewipe` (1.9MB, much
+  **March 2006 to April 2008**. `data/etc/players.beforewipe` (1.9MB, much
   larger) represents an *even earlier* population that existed before a
   wipe that happened at some point within this same bpl20 era — i.e.
   there were at least two "generations" of characters on this one tree,

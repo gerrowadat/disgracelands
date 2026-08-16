@@ -13,14 +13,14 @@ import (
 // realWorldDir is the actual Disgracelands world, which ships in this repo.
 // Parsing it is the test that matters: hand-written fixtures only prove the
 // parser handles what its author thought of.
-const realWorldDir = "../../../../lib/world"
+const realWorldDir = "../../../../data/world"
 
 // Record counts the C server agrees with.
 //
 // The C server's boot log reports different numbers — 2988 rooms and 1200
 // objects — but those come from count_hash_records(), which counts every line
 // beginning with '#' in order to size a malloc, including '#' lines inside
-// descriptions. lib/world contains seven such lines in room files (ASCII-art
+// descriptions. data/world contains seven such lines in room files (ASCII-art
 // signs in wld/54.wld and wld/64.wld) and one in an object file
 // (obj/142.obj), so the C server allocates 2988 slots and fills 2981, and
 // allocates 1200 and fills 1199. Both figures below therefore match what the
@@ -78,7 +78,7 @@ func TestRealWorldHasNoErrors(t *testing.T) {
 }
 
 func TestRealWorldOnlyIndexedFilesAreLoaded(t *testing.T) {
-	// Six zone files and four each of wld/mob/obj sit in lib/world without
+	// Six zone files and four each of wld/mob/obj sit in data/world without
 	// being listed in any index, so the C server never opens them. Loading
 	// them would silently add content the real game does not have.
 	_, warnings := loadRealWorld(t)
@@ -90,7 +90,7 @@ func TestRealWorldOnlyIndexedFilesAreLoaded(t *testing.T) {
 		}
 	}
 	if !found {
-		t.Error("no finding about unindexed world files; lib/world has several")
+		t.Error("no finding about unindexed world files; data/world has several")
 	}
 
 	w, _ := loadRealWorld(t)
@@ -146,7 +146,7 @@ func TestRealWorldEveryRoomBelongsToAZone(t *testing.T) {
 }
 
 func TestRealWorldNonUTF8BytesSurvive(t *testing.T) {
-	// lib/world is not UTF-8 — wld/90.wld holds byte 0x92, a CP1252 curly
+	// data/world is not UTF-8 — wld/90.wld holds byte 0x92, a CP1252 curly
 	// apostrophe. That file is unindexed, but the parser must not be
 	// transcoding or validating anything regardless, or a future edit that
 	// puts such a byte in a live file would silently corrupt it.

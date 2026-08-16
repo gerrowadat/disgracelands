@@ -1,7 +1,7 @@
 // Package classic reads the CircleMUD flat-file world format: the "#vnum",
-// tilde-terminated, letter-flagged files under lib/world.
+// tilde-terminated, letter-flagged files under data/world.
 //
-// It is written against the real files in lib/world rather than against
+// It is written against the real files in data/world rather than against
 // doc/building.txt, on the principle that where the documentation and the
 // data disagree the data wins — the C parser is forgiving in ways the
 // documentation does not mention and the real world exploits. Every such

@@ -14,39 +14,44 @@
 set -eu
 
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
-WORLD_DIR=${1:-lib/world}
+WORLD_DIR=${1:-data/world}
 OUT=$(mktemp -d)
 trap 'rm -rf "$OUT"' EXIT
 
 cd "$ROOT"
 
-# The C tree needs pre-C99 flags to build on a modern compiler; BUILDING.md
-# explains why.
+# The C server lives in reference/, which is the only place C code lives; see
+# reference/moderncserver/README.md. It needs pre-C99 flags to build on a
+# modern compiler, for the reasons that file explains.
 #
-# ./configure regenerates src/Makefile and src/util/Makefile, which are both
+# ./configure regenerates src/Makefile and reference/moderncserver/src/util/Makefile, which are both
 # committed, so they are saved and put back afterwards. Running a test should
 # not leave the working tree dirty.
-if [ ! -x bin/circle ]; then
+CSERVER=reference/moderncserver
+
+if [ ! -x "$CSERVER/bin/circle" ]; then
 	echo "==> Building the C server"
-	for mk in src/Makefile src/util/Makefile; do
+	for mk in "$CSERVER/src/Makefile" "$CSERVER/reference/moderncserver/src/util/Makefile"; do
 		[ -f "$mk" ] && cp "$mk" "$OUT/$(echo "$mk" | tr / _)"
 	done
 
-	CFLAGS="-std=gnu89 -fcommon -Wno-implicit-function-declaration -w" \
-		CC=gcc ./configure >/dev/null
+	( cd "$CSERVER" && \
+		CFLAGS="-std=gnu89 -fcommon -Wno-implicit-function-declaration -w" \
+		CC=gcc ./configure >/dev/null )
 
-	for mk in src/Makefile src/util/Makefile; do
+	for mk in "$CSERVER/src/Makefile" "$CSERVER/reference/moderncserver/src/util/Makefile"; do
 		saved="$OUT/$(echo "$mk" | tr / _)"
 		[ -f "$saved" ] && cp "$saved" "$mk"
 	done
 
-	make -C src >/dev/null
+	make -C "$CSERVER/src" >/dev/null
 fi
 
 echo "==> Dumping the world from the C server"
 # -J loads the world exactly as a real boot does, including the renumbering
-# passes, then writes JSON and exits without opening a socket.
-./bin/circle -J "$OUT/c.json" -d "$(dirname "$WORLD_DIR")" >/dev/null 2>&1
+# passes, then writes JSON and exits without opening a socket. -d is given as
+# an absolute path because the C server chdir()s into it.
+"$CSERVER/bin/circle" -J "$OUT/c.json" -d "$ROOT/$(dirname "$WORLD_DIR")" >/dev/null 2>&1
 
 echo "==> Dumping the world from the Go server"
 # --parity omits the two mob fields the C server does not retain after

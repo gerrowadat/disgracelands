@@ -50,12 +50,12 @@ COPY --from=build /src/LICENSE /LICENSE
 
 COPY --from=build /out/dlmud /out/dlctl /usr/local/bin/
 
-# lib/ is mutable state - players, houses, boards, mail, and OLC-edited world
-# files - so it is a volume rather than image content.
-VOLUME ["/lib"]
+# data/ is mutable state - players, houses, boards, mail, and world files
+# edited in-game - so it is a volume rather than image content.
+VOLUME ["/data"]
 
 USER nonroot:nonroot
 EXPOSE 4443 8080
 
 ENTRYPOINT ["/usr/local/bin/dlmud"]
-CMD ["--lib-dir=/lib"]
+CMD ["--lib-dir=/data"]

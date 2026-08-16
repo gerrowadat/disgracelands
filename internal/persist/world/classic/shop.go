@@ -16,7 +16,7 @@ import (
 // The format also has two variants. A file containing the string "v3.0"
 // anywhere before its first record switches the loader into a mode where the
 // produce, trade and room lists are terminated by -1; without it the lists
-// are fixed-length (5, 5 and 1). Every shop file in lib/world carries the
+// are fixed-length (5, 5 and 1). Every shop file in data/world carries the
 // banner, but the old form still has to work, because the flag is set by
 // content rather than by filename.
 
@@ -271,7 +271,7 @@ func (l *loader) readTradeList(r *reader, what string, newFormat bool) ([]game.S
 		typ, ok := scanInt(rest)
 		if !ok {
 			// An item-type *name* rather than a number. The C loader matches
-			// these against item_types[]; nothing in lib/world uses the form,
+			// these against item_types[]; nothing in data/world uses the form,
 			// so recognising it is deferred to the phase that owns the item
 			// type table rather than guessed at here.
 			l.warnf("%s: trade list entry %q is a type name rather than a number, which is not supported yet",

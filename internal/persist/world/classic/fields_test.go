@@ -66,7 +66,7 @@ func TestScanIntsStopsAtTheFirstFailure(t *testing.T) {
 }
 
 func TestScanIntsIgnoresExtraFields(t *testing.T) {
-	// "M 0 1 1 1 \t(Puff)" is a real line from lib/world/zon/0.zon.
+	// "M 0 1 1 1 \t(Puff)" is a real line from data/world/zon/0.zon.
 	out := make([]int32, 4)
 	if got := scanInts("0 1 1 1 \t(Puff)", out); got != 4 {
 		t.Errorf("scanInts = %d, want 4", got)

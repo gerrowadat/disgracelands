@@ -5,71 +5,63 @@ Reviving Disgracelands, a CircleMUD-based MUD played (mostly via
 society) from roughly 2001 to 2008. This repo is the revived codebase,
 seeded from the archive of the original server.
 
-It is **not** a stock CircleMUD checkout: this is CircleMUD 3.0 patchlevel
-20 plus the OasisOLC and DG Scripts add-ons plus years of Disgracelands'
-own local modifications (marked `<DoC>`/`</DoC>` in the source), pulled
-out of the tree that was actually live the longest — see
-`docs/investigations/circlemud-archive-report.md` for how that was
-determined, and why it isn't the more "final"-looking but short-lived
-CircleMUD 3.1 upgrade attempt the original project also has lying around.
+The project is a **Go port** of that server. The root of this repository is
+that port; the original C server lives in `reference/moderncserver/`, where
+it stays buildable, runnable, and authoritative until the port can do
+everything it does.
 
-## Status / where to start
+## Status
 
-It compiles and boots on modern Linux and serves the real Disgracelands
-login banner with the original world loaded. It does **not** yet have any
-player data, and the live game still reads/writes an old binary save
-format that hasn't been wired up to anything portable — see `TODO.md` for
-what's actually left.
+**The C server works.** It compiles and boots on modern Linux and serves the
+real Disgracelands login banner with the original world loaded. Until the Go
+port catches up, that is the game.
 
-- **Building it** (both trees): `BUILDING.md`
-- **What's left to do**: `TODO.md`
-- **All documentation, with a map of what's where**: `docs/README.md`
+**The Go port has no game in it yet.** It boots, loads the world, reports
+itself ready, serves diagnostics and shuts down cleanly — Phases 0 and 1 of
+`docs/proposals/go-port-plan.md`. Players cannot connect: the listeners and
+the pulse loop arrive in Phase 3, and player data in Phase 2.
 
-The short version of that map:
+The two servers load the world identically — every field of all 5,248
+records — and `scripts/world-parity.sh` checks that in CI.
 
-- **Running the Go server**: `docs/configuration.md` and
+## Where to start
+
+- **Building either server**: `BUILDING.md`
+- **Running and administering the Go server**: `docs/configuration.md`,
   `docs/operations.md`
-- **The Go port's design and phasing**: `docs/proposals/go-port-plan.md`
-- **How Disgracelands got here, and what's custom about it**:
-  `docs/investigations/` — the archive investigation, the timeline, the
-  non-stock feature inventory, and the player-file format work
+- **The port's design and phasing**: `docs/proposals/go-port-plan.md`
+- **The C server**: `reference/moderncserver/README.md`
+- **What's left that isn't a phase**: `TODO.md`
+- **All documentation, with a map**: `docs/README.md`
 
 ## Repo structure
 
+The rule: the root is the Go port. C code lives only under `reference/`.
+
 ```
-src/            The game itself (C source + Makefiles). Start here for code.
-cnf/            autoconf input (configure.in, acconfig.h) - see BUILDING.md
-configure       Generated from cnf/ - run this before `make`
-cmd/            Go port: the dlmud server and dlctl tooling binaries.
-internal/       Go port: everything else. In progress, no game in it yet -
-                see docs/proposals/go-port-plan.md. The C tree above stays the
-                working game and the reference implementation throughout.
-build/          Dockerfile and compose file for the Go server.
-lib/            Runtime game data: world files, help text, boards, etc.
-                No player data ships here - see "Player data" below.
-bin/            Build output (compiled binaries). Not committed - gitignored.
-log/            Runtime logs. Not committed - gitignored, kept as empty dir.
-doc/            Original stock CircleMUD documentation (building, coding,
-                running, wizhelp, etc.) - upstream reference material,
-                distinct from this project's own docs/ below.
+cmd/            The dlmud server and dlctl tooling binaries.
+internal/       Everything else in the Go port.
+build/          Dockerfile and compose file.
+scripts/        Development scripts, notably world-parity.sh.
 docs/           This project's own documentation. The root is operator
                 docs for the Go server; docs/proposals/ is work not yet
                 done; docs/investigations/ is archaeology on the original
                 codebase. See docs/README.md.
-tools/          Modern tooling written for this revival (e.g. the binary
-                player-database-to-ascii_pfiles converter) - distinct
-                from src/util/ (the original CircleMUD-era utilities) and
-                reference/ below. See tools/README.md.
-reference/      Code-only snapshots of the two other Disgracelands-lineage
-                codebases (the pre-upgrade CircleMUD3 baseline itself, and
-                the abandoned CircleMUD 3.1 "WipeMud" upgrade attempt) -
-                kept for comparison/porting work without needing the full
-                original archive. See reference/README.md.
-autorun*, automaint, macrun.pl, vms_autorun.com
-                Original CircleMUD/Disgracelands operational scripts for
-                keeping the server running across restarts, on various
-                platforms. Not audited or relied on yet - see TODO.md.
-FAQ, ChangeLog  Upstream CircleMUD project documents, kept as-is.
+
+data/           Runtime game data: world files, help text, boards, socials.
+                Read by both servers, so it belongs to neither. No player
+                data ships here - see "Player data" below.
+
+reference/      Everything that is not the Go port.
+  moderncserver/  The C server: the game as it actually is, and the
+                  reference implementation the port is written against.
+                  Buildable and runnable. See its README.md.
+  tools/          C helper programs written for this revival (the binary
+                  player-database-to-ascii_pfiles converter and a dumper).
+                  Superseded by dlctl subcommands in Phase 2.
+  CircleMUD3-src/ Code-only snapshot of the pre-upgrade baseline.
+  WipeMud-src/    Code-only snapshot of the abandoned CircleMUD 3.1
+                  upgrade attempt. See reference/README.md.
 ```
 
 ## Player data
@@ -78,12 +70,21 @@ No player accounts, passwords, mail, or house/object saves are committed
 here, deliberately, and never have been — see `.gitignore` and the first
 commit's message for the reasoning (this was real ex-players' data:
 password hashes, private in-game mail, connection hosts). A checkout with
-no `lib/etc/players` is the *normal* fresh-install state, not a broken
+no `data/etc/players` is the *normal* fresh-install state, not a broken
 one: CircleMUD auto-creates it on boot, and whoever registers the first
 character is automatically promoted to Implementor (top wizard) — that's
-original stock CircleMUD behavior (`src/db.c`, "if this is our first
-player --- he be God"), not something added for this revival.
+original stock CircleMUD behavior (`reference/moderncserver/src/db.c`, "if
+this is our first player --- he be God"), not something added for this
+revival.
 
 If you have access to the original archive and want the real 2001–2008
 roster back for local testing, see `TODO.md` for how — it stays off git
 either way.
+
+## Licence
+
+The CircleMUD and DikuMUD licences apply to everything here, including the
+Go port. `LICENSE` is `reference/moderncserver/doc/license.doc` verbatim.
+See `docs/proposals/go-port-plan.md` §12 for what that requires in practice
+— briefly: non-commercial, and the credits must stay intact and reachable
+in-game.

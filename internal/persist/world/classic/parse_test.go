@@ -12,7 +12,7 @@ import (
 func newTestLoader() *loader { return &loader{dir: "testdata"} }
 
 func TestParseRoom(t *testing.T) {
-	// Room 0 of the real world, verbatim from lib/world/wld/0.wld.
+	// Room 0 of the real world, verbatim from data/world/wld/0.wld.
 	const input = `The Void~
    You don't think that you are not floating in nothing.  You can see
 a strange portal located above you.
@@ -123,7 +123,7 @@ S
 }
 
 func TestParseMobileSimple(t *testing.T) {
-	// Mob 1 of the real world, verbatim from lib/world/mob/0.mob.
+	// Mob 1 of the real world, verbatim from data/world/mob/0.mob.
 	const input = `Puff dragon fractal~
 Puff~
 Puff the Fractal Dragon is here, contemplating a higher reality.
@@ -206,7 +206,7 @@ Confused.
 }
 
 func TestParseObject(t *testing.T) {
-	// Object 1 from lib/world/obj/0.obj, followed by the next record's
+	// Object 1 from data/world/obj/0.obj, followed by the next record's
 	// header, which is how an object record actually ends.
 	const input = `wings~
 a pair of wings~
@@ -301,7 +301,7 @@ A thing.~
 }
 
 func TestParseZone(t *testing.T) {
-	// Zone 0, verbatim from lib/world/zon/0.zon, trailing comment included:
+	// Zone 0, verbatim from data/world/zon/0.zon, trailing comment included:
 	// the C loader's sscanf ignores it and so must this one.
 	const input = `#0
 Limbo - Internal~
