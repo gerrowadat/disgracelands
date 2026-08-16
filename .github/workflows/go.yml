@@ -26,6 +26,20 @@ jobs:
           go mod tidy
           git diff --exit-code go.mod go.sum
 
+      # The player-file codec checks itself against C programs compiled for
+      # both data models. The 32-bit one is the layout the archived player
+      # database is actually in, and without multilib those checks skip -
+      # which would mean the format that matters is never verified anywhere.
+      - name: Install 32-bit toolchain
+        run: sudo apt-get update && sudo apt-get install -y gcc-multilib
+
+      # The C tree's configure generates conf.h, which the layout and fixture
+      # programs include.
+      - name: Configure the C tree
+        run: |
+          cd reference/moderncserver
+          CFLAGS="-std=gnu89 -fcommon -w" CC=gcc ./configure >/dev/null
+
       - name: Build
         run: go build ./...
 
@@ -46,6 +60,19 @@ jobs:
       # argument for that design rests on nothing else touching world state.
       - name: Test
         run: go test -race -count=1 ./...
+
+      # A skipped test is not a passing test. The 32-bit checks are the ones
+      # that verify the format the real data is in, so fail if they did not
+      # actually run here.
+      - name: The 32-bit codec checks must not have skipped
+        run: |
+          go test -count=1 -v ./internal/persist/player/... > out.txt 2>&1 || { cat out.txt; exit 1; }
+          if grep -q -- "--- SKIP.*ilp32" out.txt; then
+            echo "the ilp32 checks skipped; they must run in CI:"
+            grep -A2 -- "--- SKIP" out.txt
+            exit 1
+          fi
+          grep -c -- "--- PASS.*ilp32" out.txt
 
       - name: Phase 0 acceptance - dlmud --help lists the full option set
         run: |

@@ -58,13 +58,13 @@ var commands = []command{
 	},
 	{
 		name:    "pfile verify",
-		summary: "Cross-check a converted player file against the binary original, field by field",
-		phase:   2,
+		summary: "Check a player database decodes, and report what is in it",
+		run:     cmdPfileVerify,
 	},
 	{
 		name:    "pfile dump",
-		summary: "Print a player file in any supported format (replaces pfiledump)",
-		phase:   2,
+		summary: "List a roster, or print one character (replaces pfiledump)",
+		run:     cmdPfileDump,
 	},
 }
 

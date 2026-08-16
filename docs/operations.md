@@ -223,6 +223,24 @@ The notes are all the drink-container weight adjustment, which is normal
 CircleMUD behaviour rather than a problem — the loader raises a container's
 weight when it is lighter than the liquid it holds.
 
+### Inspecting player data
+
+```sh
+dlctl pfile verify --player-dir=data/etc     # is this file what you think?
+dlctl pfile dump   --player-dir=data/etc     # list the roster
+dlctl pfile dump   --player-dir=data/etc --name=zod
+```
+
+`verify` is the one to run before trusting a migration. It reports the record
+size, how many characters are present, and how many are still on legacy
+passwords — and it recognises a database written by a *64-bit* rebuild of the
+C server, which would otherwise be read as 32-bit and silently misreport
+every field past the first `long`.
+
+Password hashes are never printed, by either command. They are real people's
+credentials, they are DES with a public salt, and a terminal scrollback or a
+CI log is not where they should end up.
+
 ### Comparing against the C server
 
 ```sh

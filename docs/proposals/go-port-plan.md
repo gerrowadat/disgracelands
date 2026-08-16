@@ -660,12 +660,62 @@ recording, and the espec key/value lines, which `interpret_espec()` folds
 into ordinary fields and discards. The Go loader keeps both because they are
 useful; comparing them could only ever produce noise.
 
-**Phase 2 — Player loading.** `persist/player` interface, `binary`
-implementation (§4/§5.2), `ascii` implementation, `dlctl pfile
+**Phase 2 — Player loading. 🟡 In progress.** `persist/player` interface,
+`binary` implementation (§4/§5.2), `ascii` implementation, `dlctl pfile
 convert|verify|dump`. Password verification and rehash-on-login logic,
-unit-tested against known vectors. *Done when: all 108 archived records
-round-trip binary→canonical→binary byte-identically, and binary→ascii
+unit-tested against known vectors.
+
+**The stated criterion was wrong and is corrected here.** It said "all 108
+archived records round-trip binary→canonical→binary byte-identically". That
+is impossible, and not because of any defect in a reader: `save_char()`
+fwrites an *uninitialised stack local* (`db.c:2204`) after filling it field
+by field with `strcpy`, so every record contains bytes that are stack
+residue rather than data — the padding between fields, and everything after
+the terminating NUL of each fixed-width string. Two saves of the same
+character produce different files. No reader can reconstruct those bytes and
+nothing is lost by not reconstructing them.
+
+*Done when: every archived record survives decode→encode with every
+**significant** byte unchanged (`significantBytes()` defines which those
+are), decode→encode→decode is identical as a record, and binary→ascii
 matches `bin2ascii` output.*
+
+**Built so far:**
+
+- **The layout engine.** The file format *is* the C struct's memory layout,
+  so the offsets are computed from a declaration of the struct plus a data
+  model — how wide `long`, `time_t` and pointers are — rather than written
+  out as constants. The difference between the 32-bit format the archived
+  data is in and the 64-bit format a modern rebuild produces is three
+  integers, which is §4 reduced to one place.
+- **Checked against a compiler, not asserted.** `reference/tools/
+  pfilelayout.c` prints the offsets gcc actually chose, and a test requires
+  the engine to reproduce them field for field.
+- **Checked against real data that cannot be committed.**
+  `reference/tools/pfilegen.c` writes records using the same struct, with
+  every field a documented function of the record index, so the decoder is
+  verified against C's own idea of the layout. It memsets each record to
+  0xAB first, so a reader that accidentally depended on padding being zero
+  would fail.
+- **The 32-bit record is 1288 bytes**, and 108 of those is 139,104 bytes —
+  which is the 139KB `docs/investigations/circlemud-archive-report.md`
+  independently recorded for the real file. That is the only check on the
+  32-bit layout available without the archive, and it holds.
+- `player.Store` + registry, the `binary` store (atomic saves, 0600, in-place
+  updates because positions are referenced elsewhere), and `dlctl pfile
+  dump|verify`.
+
+**Still outstanding:** the `ascii` format, `dlctl pfile convert`, and the
+password work — DES verification for the existing roster plus a modern
+scheme to upgrade to. The binary format cannot store a modern hash at all
+(its password field is eleven bytes), so moving off it is a *prerequisite*
+for better password hashing rather than an independent improvement, which
+was not obvious before building this.
+
+**A note on verification.** The 32-bit checks skip on a machine without
+32-bit libc headers, which is most of them. CI installs `gcc-multilib` and
+fails if those checks skipped, so the layout the real data is in is verified
+on every change even though it cannot be verified locally.
 
 **Phase 3 — Server skeleton.** Pulse loop, session lifecycle, listeners,
 negotiation, the login `nanny` state machine, and enough commands to look
