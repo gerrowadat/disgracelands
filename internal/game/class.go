@@ -121,7 +121,7 @@ func RollAbilities(class int32, rng *rand.Rand) Abilities {
 		lowest := int32(7)
 		total := int32(0)
 		for i := range dice {
-			dice[i] = int32(rng.IntN(6)) + 1
+			dice[i] = randN(rng, 6) + 1
 			total += dice[i]
 			if dice[i] < lowest {
 				lowest = dice[i]
@@ -158,7 +158,7 @@ func RollAbilities(class int32, rng *rand.Rand) Abilities {
 		a.Strength, a.Dexterity, a.Constitution = table[0], table[1], table[2]
 		a.Wisdom, a.Intelligence, a.Charisma = table[3], table[4], table[5]
 		if a.Strength == 18 {
-			a.StrengthPercentile = int32(rng.IntN(101))
+			a.StrengthPercentile = randN(rng, 101)
 		}
 	case ClassPaladin:
 		// Unreachable at creation — Paladin is remort-only — but the ordering
@@ -167,6 +167,16 @@ func RollAbilities(class int32, rng *rand.Rand) Abilities {
 		a.Constitution, a.Dexterity, a.Intelligence = table[3], table[4], table[5]
 	}
 	return a
+}
+
+// randN returns a random value in [0, n), as an int32.
+//
+// The conversion is safe for any n this package uses — a die has six sides
+// and a percentile has 101 values — but it is done in one named place rather
+// than at each call site, which is the same reason the player-file codec has
+// its narrowing helpers.
+func randN(rng *rand.Rand, n int32) int32 {
+	return int32(rng.IntN(int(n))) //nolint:gosec // bounded by n, which is a small constant at every call site
 }
 
 // Sexes, matching structs.h.
