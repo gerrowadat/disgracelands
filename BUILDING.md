@@ -21,7 +21,9 @@ go run ./cmd/dlmud --help
 
 This document covers *building*. For running and administering the result,
 see `docs/operations.md`; for the full settings list,
-`docs/configuration.md`.
+`docs/configuration.md`. For working on it — a server running locally
+against a tiny world, a throwaway data directory, and the checks to run
+before pushing — see `docs/developer.md` and the `Makefile` it describes.
 
 Two binaries:
 

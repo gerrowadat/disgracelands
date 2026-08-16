@@ -11,6 +11,10 @@ does, how to configure it, how to run it.
   variable, what it does, and what the defaults are.
 - **[operations.md](operations.md)** — starting it, containers, graceful
   shutdown, health and readiness, metrics, logs, backups, exposure.
+- **[developer.md](developer.md)** — working on the port: the `Makefile`'s
+  dev targets, getting a server running locally against a tiny world or a
+  throwaway data directory, poking at it by hand, and what to run before
+  pushing.
 
 Building from source is in the top-level **`BUILDING.md`**, which covers
 both the C tree and the Go tree.
