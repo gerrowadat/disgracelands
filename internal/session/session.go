@@ -14,7 +14,6 @@
 package session
 
 import (
-	"bufio"
 	"context"
 	"errors"
 	"fmt"
@@ -27,6 +26,7 @@ import (
 	"time"
 
 	"github.com/gerrowadat/disgracelands/internal/game"
+	"github.com/gerrowadat/disgracelands/internal/telnet"
 )
 
 // State is where a connection has got to.
@@ -94,6 +94,18 @@ func (s State) String() string {
 // dropped connection.
 const outputQueue = 256
 
+// outgoing is one queued write.
+//
+// raw marks bytes that are already in wire form — telnet negotiation, GMCP —
+// which must not be charset-converted or IAC-escaped on the way out. Escaping
+// them would turn IAC WILL ECHO into a literal 0xFF followed by two bytes of
+// junk data, which is precisely what happened when this was one flat queue of
+// byte slices.
+type outgoing struct {
+	data []byte
+	raw  bool
+}
+
 // Session is one player's connection.
 type Session struct {
 	id   uint64
@@ -102,7 +114,7 @@ type Session struct {
 	transport string
 	host      string
 
-	out    chan []byte
+	out    chan outgoing
 	logger *slog.Logger
 
 	state     State
@@ -113,9 +125,22 @@ type Session struct {
 	pendingPassword string
 	pendingSex      int32
 
+	// proto is the telnet state: options, charset, GMCP.
+	proto protocol
+
 	closed atomic.Bool
 	quit   atomic.Bool
 	closer sync.Once
+	// done is closed when the session ends. The output channel deliberately
+	// is not: Send runs on whichever goroutine is talking to this player —
+	// the world's, a shutdown watcher's, a timer's — and closing a channel
+	// out from under a concurrent send is a panic, not a race that resolves
+	// itself. Signalling on a separate channel lets the writer stop without
+	// the senders having to synchronise with it.
+	done chan struct{}
+	// written is closed by the write loop when it has finished draining, so
+	// the backstop close below cannot cut the last line off mid-flight.
+	written chan struct{}
 }
 
 // MarkQuit records that the player left deliberately rather than losing
@@ -198,7 +223,9 @@ func New(id uint64, conn net.Conn, transport string, logger *slog.Logger) *Sessi
 		conn:      conn,
 		transport: transport,
 		host:      host,
-		out:       make(chan []byte, outputQueue),
+		out:       make(chan outgoing, outputQueue),
+		done:      make(chan struct{}),
+		written:   make(chan struct{}),
 		logger:    logger.With("session", id, "transport", transport, "host", host),
 		state:     StateGetName,
 	}
@@ -233,7 +260,8 @@ func (s *Session) Send(format string, args ...any) {
 		text = fmt.Sprintf(format, args...)
 	}
 	select {
-	case s.out <- []byte(normalise(text)):
+	case s.out <- outgoing{data: []byte(normalise(text))}:
+	case <-s.done:
 	default:
 		s.logger.Warn("output queue full; dropping the connection")
 		s.Close()
@@ -247,7 +275,8 @@ func (s *Session) SendRaw(b []byte) {
 		return
 	}
 	select {
-	case s.out <- b:
+	case s.out <- outgoing{data: b, raw: true}:
+	case <-s.done:
 	default:
 		s.logger.Warn("output queue full; dropping the connection")
 		s.Close()
@@ -279,8 +308,12 @@ func normalise(s string) string {
 func (s *Session) Close() {
 	s.closer.Do(func() {
 		s.closed.Store(true)
-		close(s.out)
-		_ = s.conn.Close()
+		close(s.done)
+		// Unblock the reader without closing the socket: the writer still has
+		// to get the last line out. "Goodbye, friend.. Come back soon!" is
+		// sent and then the session is closed in the same breath, so closing
+		// the connection here would lose it.
+		_ = s.conn.SetReadDeadline(time.Now())
 	})
 }
 
@@ -294,6 +327,11 @@ func (s *Session) Serve(ctx context.Context, deps Deps) {
 	defer s.Close()
 
 	go s.writeLoop(ctx)
+
+	// Offer the options before anything else is sent, so a client that speaks
+	// GMCP has it on for the login sequence itself rather than from the first
+	// prompt after it.
+	s.offer()
 
 	// The licence requires the login sequence to name the DikuMUD and
 	// CircleMUD creators, and this is the login sequence. Every transport
@@ -314,40 +352,89 @@ func (s *Session) Serve(ctx context.Context, deps Deps) {
 			s.logger.Error("removing the character from the world", "error", err)
 		}
 	}
+	// Give the writer a moment to finish before the backstop close. Without
+	// this, a session that ends by saying something — "Wrong password.", or
+	// the goodbye — races the socket being shut under it, and the player sees
+	// the connection drop with no explanation.
+	select {
+	case <-s.written:
+	case <-time.After(2 * time.Second):
+	}
+	_ = s.conn.Close()
 	s.logger.Info("disconnected")
 }
 
-// readLoop reads lines and dispatches them.
-func (s *Session) readLoop(ctx context.Context, deps Deps) error {
-	sc := bufio.NewScanner(s.conn)
-	// A line longer than this is not something a person typed.
-	sc.Buffer(make([]byte, 0, 4096), 64*1024)
+// maxLineLength bounds one line of input.
+//
+// A line longer than this is not something a person typed, and a client that
+// never sends a newline would otherwise grow this buffer without limit.
+const maxLineLength = 64 * 1024
 
-	for sc.Scan() {
+// readLoop reads lines and dispatches them.
+//
+// Input passes through the telnet parser first, so negotiation never reaches
+// the interpreter as text — which it does in the C, where a client offering
+// window size has its NAWS bytes read as a command.
+func (s *Session) readLoop(ctx context.Context, deps Deps) error {
+	var (
+		parser telnet.Parser
+		buf    = make([]byte, 4096)
+		line   []byte
+	)
+
+	for {
 		if err := ctx.Err(); err != nil {
 			return err
 		}
-		line := strings.TrimRight(sc.Text(), "\r\n")
+		n, err := s.conn.Read(buf)
+		if n > 0 {
+			data := parser.Feed(nil, buf[:n])
 
-		if err := s.handle(ctx, deps, line); err != nil {
+			for _, ev := range parser.Events() {
+				s.handleTelnet(ev)
+			}
+
+			for _, b := range data {
+				if b == '\n' {
+					text := strings.TrimRight(string(line), "\r\n")
+					line = line[:0]
+					if handleErr := s.handle(ctx, deps, text); handleErr != nil {
+						return handleErr
+					}
+					if s.state == StateClosed || s.closed.Load() {
+						return nil
+					}
+					continue
+				}
+				if len(line) < maxLineLength {
+					line = append(line, b)
+				}
+			}
+		}
+		if err != nil {
 			return err
 		}
-		if s.state == StateClosed || s.closed.Load() {
-			return nil
-		}
 	}
-	return sc.Err()
 }
 
 // writeLoop drains queued output to the connection.
 func (s *Session) writeLoop(ctx context.Context) {
+	defer close(s.written)
 	for {
 		select {
 		case <-ctx.Done():
 			return
-		case b, ok := <-s.out:
-			if !ok {
-				return
+		case <-s.done:
+			// Drain whatever is already queued, so a goodbye written just
+			// before the close still reaches the player, and only then hang
+			// up.
+			s.flush()
+			_ = s.conn.Close()
+			return
+		case msg := <-s.out:
+			b := msg.data
+			if !msg.raw {
+				b = s.encodeOutbound(b)
 			}
 			// A write that stalls forever holds a goroutine and a socket; a
 			// deadline turns that into a disconnect.
@@ -376,4 +463,27 @@ type CreateRequest struct {
 	Password string
 	Sex      int32
 	Class    int32
+}
+
+// flush writes whatever is already queued and gives up on the rest.
+//
+// It is what makes "Goodbye, friend.. Come back soon!" arrive: the command
+// that sends it closes the session immediately afterwards, so without a drain
+// the message would still be sitting in the queue.
+func (s *Session) flush() {
+	for {
+		select {
+		case msg := <-s.out:
+			b := msg.data
+			if !msg.raw {
+				b = s.encodeOutbound(b)
+			}
+			_ = s.conn.SetWriteDeadline(time.Now().Add(time.Second))
+			if _, err := s.conn.Write(b); err != nil {
+				return
+			}
+		default:
+			return
+		}
+	}
 }

@@ -88,6 +88,7 @@ func (s *Session) handleGetName(ctx context.Context, deps Deps, line string) err
 	s.pendingName = name
 	if exists {
 		s.state = StatePassword
+		s.EchoOff()
 		s.Send("Password: ")
 		return nil
 	}
@@ -100,6 +101,7 @@ func (s *Session) handleConfirmName(deps Deps, line string) error {
 	switch strings.ToLower(strings.TrimSpace(line)) {
 	case "y", "yes":
 		s.state = StateNewPassword
+		s.EchoOff()
 		s.Send("New character.\r\nGive me a password for %s: ", s.pendingName)
 	case "n", "no":
 		s.pendingName = ""
@@ -113,6 +115,10 @@ func (s *Session) handleConfirmName(deps Deps, line string) error {
 
 func (s *Session) handlePassword(ctx context.Context, deps Deps, line string) error {
 	password := strings.TrimSpace(line)
+	// Whatever happens next, they are done typing a password, and a player
+	// left with echo off is a player typing blind.
+	s.EchoOn()
+	s.Send("\r\n")
 
 	character, err := deps.Login.Authenticate(ctx, s.pendingName, password)
 	if err != nil {
@@ -162,17 +168,17 @@ func motdFor(deps Deps, c *game.Character) string {
 func (s *Session) handleNewPassword(deps Deps, line string) error {
 	password := strings.TrimSpace(line)
 	if len(password) < minPasswordLength {
-		s.Send("Passwords must be at least %d characters.\r\nPassword: ", minPasswordLength)
+		s.Send("\r\nPasswords must be at least %d characters.\r\nPassword: ", minPasswordLength)
 		return nil
 	}
 	if strings.EqualFold(password, s.pendingName) {
 		// The C server refuses this too, and it remains good advice.
-		s.Send("Illegal password.\r\nPassword: ")
+		s.Send("\r\nIllegal password.\r\nPassword: ")
 		return nil
 	}
 	s.pendingPassword = password
 	s.state = StateConfirmPassword
-	s.Send("Please retype password: ")
+	s.Send("\r\nPlease retype password: ")
 	return nil
 }
 
@@ -180,9 +186,10 @@ func (s *Session) handleConfirmPassword(deps Deps, line string) error {
 	if strings.TrimSpace(line) != s.pendingPassword {
 		s.pendingPassword = ""
 		s.state = StateNewPassword
-		s.Send("Passwords don't match.\r\nGive me a password for %s: ", s.pendingName)
+		s.Send("\r\nPasswords don't match.\r\nGive me a password for %s: ", s.pendingName)
 		return nil
 	}
+	s.EchoOn()
 	// The C asks sex next, then class. Same order, same wording.
 	s.state = StateQuerySex
 	s.Send("\r\nWhat is your sex (M/F)? ")

@@ -116,6 +116,21 @@ type Limits struct {
 
 // serve runs one session.
 func (s *Server) serve(ctx context.Context, sess *session.Session, limits Limits) {
+	// Shutting down must actually shut down. A session sits blocked in
+	// conn.Read, which no amount of context cancellation interrupts on its
+	// own, so the connection is closed for it — otherwise Accept's wg.Wait
+	// below waits for players to hang up of their own accord.
+	done := make(chan struct{})
+	defer close(done)
+	go func() {
+		select {
+		case <-ctx.Done():
+			sess.Send("\r\nThe server is shutting down. Come back soon!\r\n")
+			sess.Close()
+		case <-done:
+		}
+	}()
+
 	// A connection that sits at the name prompt forever costs a goroutine, a
 	// socket and a slot in the per-host count. The C server has an idle
 	// timeout for this; a deadline is the same idea, applied earlier.
@@ -125,6 +140,7 @@ func (s *Server) serve(ctx context.Context, sess *session.Session, limits Limits
 			defer timer.Stop()
 			select {
 			case <-ctx.Done():
+			case <-done:
 			case <-timer.C:
 				if sess.State() != session.StatePlaying && !sess.Closed() {
 					sess.Send("\r\nYou took too long to log in.\r\n")

@@ -104,6 +104,9 @@ func (d *Dispatcher) Do(ctx context.Context, s *Session, line string) error {
 			s.Send("Something went wrong doing that.\r\n")
 		}
 		if !s.Closed() {
+			// The same numbers as the prompt, out of band, so a client does
+			// not have to parse them back out of it.
+			s.SendVitals(s.Character())
 			s.Send("%s", prompt(s))
 		}
 	})
@@ -131,14 +134,35 @@ func split(line string) (word, arg string) {
 	return word, strings.TrimSpace(arg)
 }
 
-// prompt is what a player sees when the server is waiting for them.
+// prompt is what a player sees when the server is waiting for them, ported
+// from make_prompt (comm.c:1043).
+//
+// Each part is shown only if the matching preference is set. A new character
+// gets all three, because the local block at the class prompt turns them on;
+// a converted one gets whatever they had turned on when they last played,
+// which is the point of keeping the preference bits faithful.
 func prompt(s *Session) string {
 	c := s.Character()
 	if c == nil || c.Record == nil {
 		return "> "
 	}
-	return fmt.Sprintf("%dH %dM %dV > ",
-		c.Record.Points.Hit, c.Record.Points.Mana, c.Record.Points.Move)
+	rec := c.Record
+
+	var b strings.Builder
+	if rec.InvisLevel > 0 {
+		fmt.Fprintf(&b, "i%d ", rec.InvisLevel)
+	}
+	if rec.Preferences.Has(game.PrefDisplayHP) {
+		fmt.Fprintf(&b, "%dH ", rec.Points.Hit)
+	}
+	if rec.Preferences.Has(game.PrefDisplayMana) {
+		fmt.Fprintf(&b, "%dM ", rec.Points.Mana)
+	}
+	if rec.Preferences.Has(game.PrefDisplayMove) {
+		fmt.Fprintf(&b, "%dV ", rec.Points.Move)
+	}
+	b.WriteString("> ")
+	return b.String()
 }
 
 func doLook(c *Context) error {
@@ -147,6 +171,8 @@ func doLook(c *Context) error {
 		c.Send("You are nowhere at all. That should not be possible.\r\n")
 		return nil
 	}
+
+	sendRoomInfo(c.Session, room)
 
 	c.Send("%s\r\n", room.Name)
 	if room.Description != "" {
@@ -167,13 +193,35 @@ func doLook(c *Context) error {
 }
 
 func exitList(room *game.RoomDef) string {
+	return strings.Join(exitNames(room, 1), " ")
+}
+
+// exitNames lists the room's exits, truncated to width characters each. One
+// character is what the `[ Exits: ]` line shows; GMCP wants the whole word.
+func exitNames(room *game.RoomDef, width int) []string {
 	var out []string
 	for dir, e := range room.Exits {
-		if e != nil && e.ToRoom != game.NoRoom {
-			out = append(out, game.Direction(dir).String()[:1])
+		if e == nil || e.ToRoom == game.NoRoom {
+			continue
 		}
+		name := game.Direction(dir).String()
+		if width > 0 && width < len(name) {
+			name = name[:width]
+		}
+		out = append(out, name)
 	}
-	return strings.Join(out, " ")
+	return out
+}
+
+// sendRoomInfo publishes the room out of band, so a web client can draw a map
+// instead of parsing the description.
+func sendRoomInfo(s *Session, room *game.RoomDef) {
+	s.SendGMCP("Room.Info", RoomInfo{
+		Vnum:  int32(room.Vnum),
+		Name:  room.Name,
+		Desc:  room.Description,
+		Exits: exitNames(room, 0),
+	})
 }
 
 // move returns the command for one direction.
