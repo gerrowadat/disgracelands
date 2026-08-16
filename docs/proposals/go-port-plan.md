@@ -5,9 +5,11 @@ pluggable player- and world-file formats, and packaged as a normal modern
 service (flags, env vars, structured logs, containers) rather than a
 2002-era autoconf tree driven by `autorun`.
 
-This is a design/sequencing document. **Phase 0 (§10) is built**; everything
-from Phase 1 on is still a plan. See `BUILDING.md` for how to build and run
-what exists.
+This is a design/sequencing document. **Phases 0–3 (§10) are built** — the
+server takes logins and players can move around — and everything from Phase
+4 on, the rules core included, is still a plan. Each built phase carries a
+retrospective in §10 saying what actually landed and where it diverged from
+what was planned. See `BUILDING.md` for how to build and run what exists.
 
 ---
 
@@ -819,23 +821,106 @@ that reason before the property sank in.
 fails if those checks skipped, so the layout the real data is in is verified
 on every change even though it cannot be verified locally.
 
-**Phase 3 — Server skeleton. Built, bar the WebSocket transport.** Pulse
-loop, session lifecycle, listeners, negotiation, the login `nanny` state
-machine, and enough commands to look around and move (`look`, `north`,
-`who`, `quit`). *Done when: a real player can log in with an archived
-character over TLS and walk from the Temple of Midgaard to New Thalos.*
+**Phase 3 — Server skeleton. ✅ Done.** Pulse loop, session lifecycle,
+listeners, negotiation, the login `nanny` state machine, and enough commands
+to look around and move (`look`, `north`, `who`, `quit`). *Done when: a real
+player can log in with an archived character over TLS and walk from the
+Temple of Midgaard to New Thalos.*
 
-What landed: the telnet and TLS listeners, telnet negotiation with ECHO-off
-passwords, CHARSET and GMCP, login and reconnect, the full character
-creation flow, `look`/movement/`who`/`credits`/`help`/`quit`, autosave on
-the C's 60-second `PULSE_AUTOSAVE`, and linkdead bodies that linger for a
-reconnect and are reaped after two minutes.
+**Met, and walked rather than argued.** Against a server on the real world
+files with an empty roster, over the TLS listener:
 
-Outstanding against the phase as written: `--listen-ws` is accepted but
-starts nothing, so the greeting-on-every-transport requirement above is
-satisfied only where a transport exists, and `--max-players` is not yet
-enforced. Both are named in `docs/configuration.md` as inert rather than
-left to be discovered.
+```
+    Walker, credential "WaApIYE9Szu2A" (DES crypt(3), salted "Wa")
+    logged in over telnets, room 3001 The Temple Of Midgaard
+    s s s e e s s e e e e e e e e e e e n n n          21 moves
+    room 5411 Outside The Southern Gate Of New Thalos
+    "upgraded a legacy password" character=Walker
+    saved: Room: 5411, Pass: argon2id:$argon2id$v=19$...
+```
+
+Three things at once, then: a pre-2008 credential verified by the DES path
+and silently upgraded to argon2id on the way in, the walk itself, and the
+position surviving the save.
+
+One qualification, since the criterion says *archived character*. The 108
+real records are local-only and never in this repo, so this character was
+created here and then given a genuine DES hash of the kind the roster holds
+— the same hash the C server's `crypt()` would have produced for that name
+and password. What it does not exercise is the archive's own bytes, which is
+Phase 2's criterion rather than this one.
+
+### What landed
+
+- **`internal/telnet`** — a real parser, because the C server's approach
+  (send `IAC WILL ECHO`, leave everything else in the input stream) means a
+  modern client offering window size has its NAWS bytes interpreted as a
+  command. On top of it: ECHO for passwords, CHARSET (RFC 2066; UTF-8 first,
+  then ISO-8859-1 for a client that cannot read it, since the archived world
+  text was Latin-1 when it was typed), and GMCP.
+- **`internal/session`** — `nanny()` as a state machine, close to the
+  original in shape and wording because the login sequence is the part
+  players remember. `make_prompt`'s `H`/`M`/`V` fields are ported with the
+  preference bits that switch them on, so a converted character gets the
+  prompt they last configured. `Char.Vitals` and `Room.Info` go out over
+  GMCP alongside the text, which is what lets a browser client be a client
+  rather than a screen-scraper (§0).
+- **`internal/server`** — both listeners funnel through one `Accept`, which
+  is where the greeting is sent; making that the only path is how §12's
+  "every transport shows the greeting" is kept true by construction rather
+  than by remembering — `TestEveryTransportSendsTheGreeting` runs each
+  listener through it and fails if one is silent.
+  Per-host connection caps and the login grace timer are enforced here.
+- **Saving and link loss** — autosave on the C's 60-second `PULSE_AUTOSAVE`,
+  writes off the world goroutine so a slow disk cannot stall the game, and a
+  dropped connection leaves the body standing to be reconnected to
+  (`CON_DISCONNECT`) with a two-minute reaper behind it. The C kept linkdead
+  bodies until an idle timeout; two minutes is long enough to reconnect and
+  short enough that nobody is left standing uncontrolled for an afternoon.
+- **Character creation, in full** — name, password, sex, class, rolled
+  stats, and `do_start` run at the moment the C runs it (`interpreter.c:1684`,
+  on entering the world) rather than at creation. That timing is not
+  cosmetic: the first character on an empty roster is made an Implementor
+  during creation, and an Implementor never runs `do_start` at all.
+
+### Four decisions worth writing down
+
+Two of them are deviations from the C under §0's fidelity rule, and are
+recorded as such:
+
+1. **Paladin is not offered at creation** — a deviation, argued below: the
+   C's menu and its parser disagree, and the port follows the menu.
+2. **A new password must be six characters, not the C's three** — a
+   deviation. Three was defensible when the hash truncated at eight anyway;
+   argon2id uses the whole string. It applies only to passwords being *set*,
+   so no existing character is affected and nobody is made to reset
+   anything.
+3. **The server offers options before the login prompt** (`WILL` suppress-GA,
+   CHARSET, GMCP), where the C offered nothing at all. Not a change to
+   anything the C did, but it is why GMCP is on before the name prompt, and
+   so why a web front end can render the login sequence itself.
+4. **A failed login says the same thing whether the name or the password was
+   wrong** — as in the C, but worth stating as a property rather than an
+   accident. The roster is a list of real people's character names, and
+   telling an anonymous connection which half it got right turns that into a
+   list of accounts to attack.
+
+### Outstanding, and named as such elsewhere
+
+- **`--listen-ws` starts nothing.** The WebSocket transport is the one part
+  of this phase not built, so the greeting requirement holds for every
+  transport that exists rather than for every transport intended. It is not
+  rescheduled into a numbered phase: it belongs with the web client in the
+  "Later" list, and the requirement travels with it.
+- **`--max-players` is not enforced**, and the per-host cap is what limits
+  connections today.
+- **Movement ignores door state.** `EX_CLOSED` is not checked, because there
+  is no `open`/`close` and no door state to check yet; a closed door is
+  walked through. It belongs with the rules core in Phase 4, and is listed
+  here so it is a known gap rather than a surprise.
+
+The two configuration gaps are marked *(inert)* in `docs/configuration.md`
+rather than left to be discovered at runtime.
 
 Three things that are not optional in this phase, for reasons outside the
 phase itself:
