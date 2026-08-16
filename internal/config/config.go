@@ -25,6 +25,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/gerrowadat/disgracelands/internal/rng"
 )
 
 // EnvPrefix prefixes every environment variable this package reads.
@@ -60,6 +62,14 @@ type Config struct {
 
 	// Engine.
 	PulseInterval time.Duration
+
+	// RNG names the generator the game rolls on: "modern" (Go's PCG) or
+	// "circle" (the C server's own, ported exactly). See internal/rng.
+	RNG string
+	// RNGSeed seeds it. Zero means seed from the clock, which is what the C
+	// does; anything else makes a run reproducible, which is what the parity
+	// harness needs.
+	RNGSeed uint64
 
 	// Behaviour carried over from the C server's single-letter options.
 	MiniMUD       bool
@@ -134,6 +144,7 @@ func Default() Config {
 		MaxConnsPerIP:        8,
 		LoginGraceTime:       60 * time.Second,
 		PulseInterval:        100 * time.Millisecond,
+		RNG:                  rng.Modern,
 		AllowLegacyPasswords: true,
 		LogFile:              "-",
 		LogFormat:            "text",
@@ -208,6 +219,18 @@ func Load(args []string, lookupEnv func(string) (string, bool), out io.Writer) (
 			},
 			func(fs *flag.FlagSet) { fs.IntVar(target, name, *target, usage) })
 	}
+	unsigned := func(name, usage string, target *uint64) {
+		bind(name, usage,
+			func(v string) error {
+				n, err := strconv.ParseUint(v, 10, 64)
+				if err != nil {
+					return fmt.Errorf("not a non-negative integer: %q", v)
+				}
+				*target = n
+				return nil
+			},
+			func(fs *flag.FlagSet) { fs.Uint64Var(target, name, *target, usage) })
+	}
 	duration := func(name, usage string, target *time.Duration) {
 		bind(name, usage,
 			func(v string) error {
@@ -248,6 +271,10 @@ func Load(args []string, lookupEnv func(string) (string, bool), out io.Writer) (
 	duration("login-grace-time", "Time a connection may stay unauthenticated", &cfg.LoginGraceTime)
 
 	duration("pulse-interval", "Game loop pulse interval (C server used 100ms)", &cfg.PulseInterval)
+
+	str("rng", "Random number generator the game rolls on: "+strings.Join(rng.Names, ", ")+
+		" (circle is the C server's own, for behaviour identical to it)", &cfg.RNG)
+	unsigned("rng-seed", "Seed for the generator (0 = from the clock, as the C server does)", &cfg.RNGSeed)
 
 	boolean("mini-mud", "Load a minimal world for testing (C: -m)", &cfg.MiniMUD)
 	boolean("skip-rent-check", "Skip the rent scan on boot (C: -q)", &cfg.SkipRentCheck)
@@ -369,6 +396,9 @@ func (c *Config) Validate() error {
 	}
 	if c.PulseInterval <= 0 {
 		return fmt.Errorf("--pulse-interval: must be positive, got %s", c.PulseInterval)
+	}
+	if _, err := rng.New(c.RNG, 1); err != nil {
+		return fmt.Errorf("--rng: %w", err)
 	}
 	if c.MaxPlayers <= 0 {
 		return fmt.Errorf("--max-players: must be positive, got %d", c.MaxPlayers)
