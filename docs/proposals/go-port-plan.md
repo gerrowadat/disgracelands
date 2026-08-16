@@ -860,10 +860,28 @@ with a character who has just been made
 of Phase 4 forward. The alternative was a creation flow that differs from the
 C's, which the fidelity decision in §0 rules out.
 
-One question falls out of it that is game design rather than porting, and
-wants an answer before the code is written: **is Paladin selectable at
-creation, or only reachable by remort?** The C tree is the authority and
-should be read before guessing.
+**Paladin is reachable only by remort, not by creation** — and reading the C
+to confirm that turned up a discrepancy the port has to make a decision
+about.
+
+`class_menu` (`class.c:93`) offers four classes: Cleric, Thief, Warrior,
+Magic-user. Paladin is not among them, which matches the rule. But
+`parse_class()` (`class.c:117`) accepts `'p'` and returns `CLASS_PALADIN`,
+and creation uses that same function — so a player who typed the unadvertised
+`p` at the creation prompt would have become a Paladin, bypassing remort
+entirely. The parser is shared with `set class` in `act.wizard.c`, which is
+presumably why the case is there at all.
+
+So the C server's *intent* and its *behaviour* disagree, and "be faithful to
+the C" does not settle it. The port follows the intent: **the creation prompt
+accepts only the four listed classes, and `p` is rejected there**. Paladin
+remains reachable by remort and by an implementor's `set class`, which is
+where `parse_class` accepting it is correct.
+
+This is a deviation and is recorded as one. It is the first case of the
+fidelity rule in §0 running into a place where the C contradicts itself, and
+the reasoning is worth keeping: reproducing the accident would let a new
+player skip the mechanic the class exists to reward.
 
 **Phase 4 — Rules core.** Combat, magic, skills, classes including the
 remort bitmask, affects, position/regen, death and corpses, zone resets,
