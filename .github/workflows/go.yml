@@ -61,9 +61,11 @@ jobs:
       - name: Test
         run: go test -race -count=1 ./...
 
-      # A skipped test is not a passing test. The 32-bit checks are the ones
-      # that verify the format the real data is in, so fail if they did not
-      # actually run here.
+      # A skipped test is not a passing test. These two verify the things
+      # that cannot be verified by reading the code - the layout the real
+      # player data is in, and a hand-written implementation of a cipher -
+      # and both skip silently where their toolchain is missing. CI is where
+      # they have to actually run.
       - name: The 32-bit codec checks must not have skipped
         run: |
           go test -count=1 -v ./internal/persist/player/... > out.txt 2>&1 || { cat out.txt; exit 1; }
@@ -73,6 +75,20 @@ jobs:
             exit 1
           fi
           grep -c -- "--- PASS.*ilp32" out.txt
+
+      # The DES implementation is hand-written, so the comparison against the
+      # system libcrypt is the only thing standing between it and "probably
+      # right". If this runner's libcrypt has traditional DES disabled the
+      # test skips by design - correct locally, useless here.
+      - name: The libcrypt comparison must not have skipped
+        run: |
+          go test -count=1 -v ./internal/auth/... > crypt.txt 2>&1 || { cat crypt.txt; exit 1; }
+          if grep -q -- "--- SKIP.*TestAgainstSystemCrypt" crypt.txt; then
+            echo "the libcrypt comparison skipped; it must run in CI:"
+            grep -B2 -A4 -- "--- SKIP" crypt.txt
+            exit 1
+          fi
+          grep -- "matched the system libcrypt" crypt.txt
 
       - name: Phase 0 acceptance - dlmud --help lists the full option set
         run: |
