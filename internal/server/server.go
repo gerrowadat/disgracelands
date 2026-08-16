@@ -241,6 +241,13 @@ func (s *Server) Enter(ctx context.Context, sess *session.Session, c *game.Chara
 		}
 	}
 	c.Client = sess
+	// The C stores POS_STANDING for everyone on load and lets update_pos
+	// sort out anyone who should not be — which it will, on the next tick,
+	// for a character who logged out while dying.
+	c.Position = game.PosStanding
+	if c.Record != nil {
+		c.Position = game.UpdatePosition(c.Record, c.Position)
+	}
 
 	return s.engine.DoSync(ctx, func(w *game.Live) {
 		if w.Room(room) == nil {

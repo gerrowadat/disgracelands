@@ -62,6 +62,16 @@ type Character struct {
 	Record *PlayerRecord
 	// Room is where they are.
 	Room RoomVnum
+	// Position is what they are doing: standing, fighting, sleeping, dying.
+	// It lives here rather than in the record because it is not saved — the
+	// C stores POS_STANDING for everyone on load and lets update_pos sort it
+	// out.
+	Position Position
+	// NPC marks a mobile. The C tests MOB_ISNPC on the same flags field as
+	// everything else; here it is a field of its own, because a player and a
+	// mobile differ in enough places that a bit hidden in a flag word is a
+	// trap.
+	NPC bool
 	// Client is whoever is controlling this character, or nil for one that
 	// nobody is — a mobile, or a player whose connection has dropped but
 	// whose body is still standing there.
@@ -78,6 +88,9 @@ type Client interface {
 	// world goroutine, which everyone else is waiting on.
 	Send(format string, args ...any)
 }
+
+// IsNPC reports whether this is a mobile, porting IS_NPC.
+func (c *Character) IsNPC() bool { return c != nil && c.NPC }
 
 // Tell sends to a character's client, if it has one.
 func (c *Character) Tell(format string, args ...any) {

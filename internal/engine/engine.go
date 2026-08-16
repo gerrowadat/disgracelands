@@ -40,6 +40,7 @@ type Engine struct {
 
 	interval time.Duration
 	metrics  *obs.Metrics
+	periodic []Periodic
 
 	// pulse counts elapsed ticks. Everything periodic is scheduled against
 	// it, the way the C server's PULSE_* constants are.
@@ -57,6 +58,26 @@ type Options struct {
 	// goroutine is not keeping up, which is a condition to notice rather
 	// than to absorb silently.
 	QueueDepth int
+
+	// Periodic is work to run on a schedule, in pulses. Everything the C
+	// hangs off its PULSE_* constants goes here, and each entry runs on the
+	// world goroutine like any other task.
+	Periodic []Periodic
+}
+
+// Periodic is work the game loop runs every so often.
+//
+// The C schedules everything this way — heartbeat() counts pulses and calls
+// point_update, mobile_activity, perform_violence and zone_update when the
+// count divides evenly (comm.c). Naming the entries rather than writing a
+// chain of modulo tests means a slow one can be reported by name.
+type Periodic struct {
+	// Name identifies it in logs and metrics.
+	Name string
+	// Every is how many pulses apart it runs. Zero or less never runs.
+	Every uint64
+	// Run does the work, on the world goroutine.
+	Run func(w *game.Live)
 }
 
 // New creates an Engine.
@@ -76,8 +97,14 @@ func New(opts Options) *Engine {
 		logger:   opts.Logger,
 		interval: opts.Interval,
 		metrics:  opts.Metrics,
+		periodic: opts.Periodic,
 	}
 }
+
+// SetPeriodic replaces the scheduled work. It must be called before Run: the
+// schedule is read from the game loop's goroutine and changing it under a
+// running loop would be a data race.
+func (e *Engine) SetPeriodic(p []Periodic) { e.periodic = p }
 
 // ErrBusy is returned when the world goroutine is too far behind to accept
 // more work.
@@ -161,6 +188,21 @@ func (e *Engine) tick() {
 		default:
 		}
 		break
+	}
+
+	// Then the periodic work, on the same goroutine and with the same panic
+	// containment as anything else.
+	pulse := e.pulse.Load()
+	for _, p := range e.periodic {
+		if p.Every == 0 || pulse%p.Every != 0 {
+			continue
+		}
+		began := time.Now()
+		e.runTask(p.Run)
+		if took := time.Since(began); took > e.interval {
+			e.logger.Warn("periodic work overran a pulse",
+				"name", p.Name, "took", took, "budget", e.interval)
+		}
 	}
 
 	if e.metrics != nil {
