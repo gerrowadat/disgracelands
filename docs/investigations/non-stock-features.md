@@ -93,6 +93,60 @@ their class outright. This touches a lot of the codebase:
   vector on creation (`interpreter.c`), so the system has a sane baseline
   from character #1.
 
+#### How a remort was actually performed
+
+The code says what `remort_vector` *is*. What it did not say, until this
+turned up, is that granting one was a manual procedure an implementor typed
+out by hand — and the crib sheet for it survives, on the immortal message
+board in `data/etc/board.immort`:
+
+```
+Wed Mar 15 (Zod)        :: remorting folks
+
+set player class whatever
+set player lessons 0
+advance player 1
+various commmands -
+set player maxmana 100
+set player maxmove 100
+(hp's should be okay)
+set player prime-stat-from-previous-class 18
+```
+
+One message, posted by Zod at level 34. It is the only thing on that board.
+
+What it tells us, beyond the sequence itself:
+
+- **There was no single `remort` command that did all of this.** The
+  `remort` command in `act.wizard.c` sets the bitmask; everything a
+  remorted character needs *besides* the bitmask — class, lessons,
+  level, the point pools, the new class's prime stat — was set by hand,
+  one `set` at a time, in this order. A port that wires the bitmask up
+  and stops has reproduced the command but not the mechanic.
+- **The character is dropped to level 1 and levelled again.** `advance
+  player 1` is the whole of the reset; the remort is a fresh climb with
+  the previous class's skills retained through the bitmask.
+- **Mana and movement are pinned to 100, and hit points are left alone**
+  — "(hp's should be okay)" says the class-change path preserved them
+  well enough that Zod did not bother, which is a statement about what
+  `advance_level` does across a class change.
+- **The prime stat of the *previous* class is set to 18.** Not the new
+  one. `set player prime-stat-from-previous-class 18` is shorthand for
+  "whichever stat the class they are leaving primed", written as a
+  placeholder because the actual stat depends on where they came from.
+
+The heading has no year: `Board_write_message` (`boards.c:219`) formats it
+as `"%6.10s %-12s :: %s"` over `asctime`, which truncates to ten characters
+before the year is reached. `Wed Mar 15` falls in 2000 or 2006; given the
+server's life, 2006.
+
+The file itself is a struct dump — an `int` count, then a
+`struct board_msginfo` per message followed by its heading and body — and it
+parses only against the **32-bit** layout, consuming the file exactly. That
+is the same data-model dependency the player file has
+(`docs/investigations/pfile-conversion.md`), for the same reason: the struct
+contains a `char *heading`, and a live pointer was written straight to disk.
+
 ### The Paladin class and its alignment mechanic
 
 Stock CircleMUD ships 4 classes (Magic User, Cleric, Thief, Warrior).
