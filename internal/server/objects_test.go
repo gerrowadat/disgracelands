@@ -234,11 +234,21 @@ func TestCarryLimits(t *testing.T) {
 // which is twenty years of muscle memory.
 func TestMovementAbbreviationsStillWin(t *testing.T) {
 	for word, want := range map[string]string{
+		// The six directions, which is the muscle memory that matters most.
 		"n": "north", "e": "east", "s": "south", "w": "west",
 		"u": "up", "d": "down",
+
 		"g": "get", "i": "inventory", "eq": "equipment",
-		"wea": "wear", "wie": "wield", "r": "remove",
+		"wea": "wear", "wie": "wield",
 		"l": "look", "k": "kill", "q": "quit",
+		"f": "flee", "sc": "score", "ex": "exits",
+
+		// `rest` before `remove` is the C's own order (interpreter.c:426 and
+		// :437), so `res` and `rem` are the unambiguous forms. Bare `r`
+		// belongs to `reply` in the C and will move when that lands, which is
+		// why it is not asserted here.
+		"res": "rest", "rem": "remove",
+		"st": "stand", "si": "sit", "sl": "sleep", "wak": "wake",
 	} {
 		cmd := session.Lookup(word)
 		if cmd == nil {

@@ -114,6 +114,44 @@ func (c *client) expectCount(want string, n int) string {
 	}
 }
 
+// expectAny reads until any one of the given strings appears.
+func (c *client) expectAny(wants ...string) string {
+	c.t.Helper()
+
+	// Count what is already there, so a call waits for a *new*
+	// occurrence rather than matching the previous one.
+	before := map[string]int{}
+	for _, want := range wants {
+		before[want] = strings.Count(c.text.String(), want)
+	}
+	grew := func() bool {
+		for _, want := range wants {
+			if strings.Count(c.text.String(), want) > before[want] {
+				return true
+			}
+		}
+		return false
+	}
+
+	_ = c.conn.SetReadDeadline(time.Now().Add(5 * time.Second))
+	buf := make([]byte, 4096)
+	for {
+		n, err := c.conn.Read(buf)
+		if n > 0 {
+			c.raw = append(c.raw, buf[:n]...)
+			c.text.Write(c.parser.Feed(nil, buf[:n]))
+			c.parser.Events()
+		}
+		if grew() {
+			return c.text.String()
+		}
+		if err != nil {
+			c.t.Fatalf("waiting for one of %v, the transcript was:\n%s\n(%v)",
+				wants, c.text.String(), err)
+		}
+	}
+}
+
 // seen reports whether the transcript already contains s.
 func (c *client) seen(s string) bool { return strings.Contains(c.text.String(), s) }
 

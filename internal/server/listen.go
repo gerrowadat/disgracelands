@@ -159,6 +159,7 @@ func (s *Server) serve(ctx context.Context, sess *session.Session, limits Limits
 				return s.engine.DoSync(ctx, f)
 			},
 			Text: s.text,
+			RNG:  s.rng,
 		},
 	})
 }

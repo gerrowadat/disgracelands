@@ -9,9 +9,11 @@ package session
 import (
 	"context"
 	"fmt"
+	"runtime/debug"
 	"strings"
 
 	"github.com/gerrowadat/disgracelands/internal/game"
+	"github.com/gerrowadat/disgracelands/internal/rng"
 )
 
 // Command is one thing a player can type.
@@ -32,6 +34,9 @@ type Context struct {
 	Character *game.Character
 	World     *game.Live
 	Text      TextFiles
+	// RNG is the game's generator, for commands that roll — fleeing picks a
+	// random direction.
+	RNG *rng.Rand
 	// Arg is everything after the command word, trimmed.
 	Arg string
 }
@@ -62,6 +67,16 @@ func init() {
 
 		{Name: "look", Help: "Look at the room around you.", Run: doLook},
 		{Name: "kill", Help: "Attack someone.", Run: doKill},
+		{Name: "flee", Help: "Run away from a fight.", Run: doFlee},
+
+		{Name: "stand", Help: "Get to your feet.", Run: doStand},
+		{Name: "sit", Help: "Sit down.", Run: doSit},
+		{Name: "rest", Help: "Rest, to recover faster.", Run: doRest},
+		{Name: "sleep", Help: "Sleep, to recover faster still.", Run: doSleep},
+		{Name: "wake", Help: "Wake up, or wake somebody else.", Run: doWake},
+
+		{Name: "score", Help: "Show your own statistics.", Run: doScore},
+		{Name: "exits", Help: "List the ways out.", Run: doExits},
 
 		{Name: "get", Help: "Pick something up.", Run: doGet},
 		{Name: "drop", Help: "Put something down.", Run: doDrop},
@@ -85,6 +100,8 @@ type Dispatcher struct {
 	Run func(ctx context.Context, f func(*game.Live)) error
 	// Text supplies the canned files.
 	Text TextFiles
+	// RNG is the game's generator.
+	RNG *rng.Rand
 }
 
 // Do implements CommandHandler.
@@ -106,12 +123,28 @@ func (d *Dispatcher) Do(ctx context.Context, s *Session, line string) error {
 	return d.Run(ctx, func(w *game.Live) {
 		c := &Context{
 			Ctx: ctx, Session: s, Character: s.Character(),
-			World: w, Text: d.Text, Arg: arg,
+			World: w, Text: d.Text, RNG: d.RNG, Arg: arg,
 		}
-		if err := cmd.Run(c); err != nil {
-			s.logger.Error("command failed", "command", cmd.Name, "error", err)
-			s.Send("Something went wrong doing that.\r\n")
-		}
+
+		// A command that panics must not leave the player staring at a dead
+		// terminal. The engine contains the panic and logs it, but it does so
+		// by abandoning the rest of this function — including the prompt — so
+		// the player sees nothing at all and cannot tell the difference
+		// between a broken command and a hung server. Recovering here means
+		// they get told, and get their prompt back.
+		func() {
+			defer func() {
+				if r := recover(); r != nil {
+					s.logger.Error("command panicked",
+						"command", cmd.Name, "panic", r, "stack", string(debug.Stack()))
+					s.Send("Something went wrong doing that.\r\n")
+				}
+			}()
+			if err := cmd.Run(c); err != nil {
+				s.logger.Error("command failed", "command", cmd.Name, "error", err)
+				s.Send("Something went wrong doing that.\r\n")
+			}
+		}()
 		if !s.Closed() {
 			// The same numbers as the prompt, out of band, so a client does
 			// not have to parse them back out of it.
