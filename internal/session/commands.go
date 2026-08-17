@@ -209,6 +209,12 @@ func doLook(c *Context) error {
 		if other == c.Character {
 			continue
 		}
+		// A mobile has a long description written for exactly this line; a
+		// player does not, so they get the generic one.
+		if other.MobDef != nil && other.MobDef.LongDesc != "" {
+			c.Send("%s", ensureNewline(other.MobDef.LongDesc))
+			continue
+		}
 		c.Send("%s is standing here.\r\n", other.Name)
 	}
 	return nil

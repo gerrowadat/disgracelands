@@ -58,6 +58,11 @@ type Server struct {
 	restrict bool
 
 	rng *rng.Rand
+
+	// Zone ageing state. Touched only from the world goroutine, which is
+	// where every periodic runs.
+	zones     map[int]*zoneState
+	zoneTicks int32
 }
 
 // Options configure a Server.
