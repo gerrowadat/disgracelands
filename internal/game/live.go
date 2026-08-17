@@ -38,6 +38,10 @@ type Live struct {
 	roomObjects map[RoomVnum][]*Object
 
 	nextObjectID uint64
+
+	// fighting is everyone currently in combat — the C's combat_list.
+	fighting     map[*Character]bool
+	nextFightSeq uint64
 }
 
 // ObjectDef returns an object prototype, or nil.
@@ -96,6 +100,11 @@ type Character struct {
 	Carrying []*Object
 	// Equipment is what they are wearing, indexed by WearPosition.
 	Equipment [NumWears]*Object
+	// Fighting is who they are attacking, or nil.
+	Fighting *Character
+	// fightSeq orders the combat round. Assigned when a fight starts, so a
+	// round happens in the order people joined it rather than in map order.
+	fightSeq uint64
 	// Client is whoever is controlling this character, or nil for one that
 	// nobody is — a mobile, or a player whose connection has dropped but
 	// whose body is still standing there.
@@ -178,6 +187,21 @@ func (l *Live) Remove(c *Character) {
 // Occupants returns who is in a room. The slice is the live one; callers must
 // not retain or reorder it.
 func (l *Live) Occupants(room RoomVnum) []*Character { return l.occupants[room] }
+
+// FindInRoom finds a character in a room by a typed word, matching a prefix
+// of their name as the C's get_char_room_vis does.
+func (l *Live) FindInRoom(room RoomVnum, word string) *Character {
+	word = strings.ToLower(strings.TrimSpace(word))
+	if word == "" {
+		return nil
+	}
+	for _, c := range l.occupants[room] {
+		if strings.HasPrefix(strings.ToLower(c.Name), word) {
+			return c
+		}
+	}
+	return nil
+}
 
 // Find returns a character by name, case-insensitively.
 func (l *Live) Find(name string) *Character { return l.byName[strings.ToLower(name)] }

@@ -61,6 +61,7 @@ func init() {
 		{Name: "down", Help: "Move down.", Run: move(game.Down)},
 
 		{Name: "look", Help: "Look at the room around you.", Run: doLook},
+		{Name: "kill", Help: "Attack someone.", Run: doKill},
 		{Name: "who", Help: "List who is playing.", Run: doWho},
 		{Name: "credits", Help: "Show the CircleMUD and DikuMUD credits.", Run: doCredits},
 		{Name: "help", Help: "Show this list, or help on a topic.", Run: doHelp},
@@ -258,6 +259,48 @@ func announce(w *game.Live, room game.RoomVnum, except *game.Character, format s
 			c.Tell(format, args...)
 		}
 	}
+}
+
+// doKill starts a fight, porting do_kill (act.offensive.c) as far as this
+// phase goes: the immortal's instant-slay branch and the charmed-follower
+// check arrive with the rest of act.offensive.
+func doKill(c *Context) error {
+	if c.Arg == "" {
+		c.Send("Kill who?\r\n")
+		return nil
+	}
+
+	victim := c.World.FindInRoom(c.Character.Room, c.Arg)
+	if victim == nil {
+		c.Send("They aren't here.\r\n")
+		return nil
+	}
+	if victim == c.Character {
+		c.Send("Your mother would be so sad... :(\r\n")
+		return nil
+	}
+
+	room := c.World.Room(c.Character.Room)
+	if room != nil && room.Flags.Has(game.RoomPeaceful) {
+		c.Send("This room just has such a peaceful, easy feeling...\r\n")
+		return nil
+	}
+
+	if c.Character.Fighting != nil {
+		c.Send("You are already fighting %s.\r\n", c.Character.Fighting.Name)
+		return nil
+	}
+
+	c.Send("You attack %s!\r\n", victim.Name)
+	victim.Tell("%s attacks you!\r\n", c.Character.Name)
+	for _, other := range c.World.Occupants(c.Character.Room) {
+		if other != c.Character && other != victim {
+			other.Tell("%s attacks %s!\r\n", c.Character.Name, victim.Name)
+		}
+	}
+
+	c.World.SetFighting(c.Character, victim)
+	return nil
 }
 
 func doWho(c *Context) error {
