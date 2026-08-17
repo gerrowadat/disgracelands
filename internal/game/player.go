@@ -84,6 +84,11 @@ type PlayerRecord struct {
 	// condition does not apply, which is how immortals are stored.
 	Conditions [3]int32
 
+	// DamageDice and DamageSize are a mobile's bare-hand attack, from the
+	// mobile file. Meaningless for a player, who does number(0, 2).
+	DamageDice int32
+	DamageSize int32
+
 	// WimpLevel is the hit-point threshold below which they flee.
 	WimpLevel int32
 	// FreezeLevel is the level of the god who froze them, or 0.
