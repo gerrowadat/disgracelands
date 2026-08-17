@@ -89,40 +89,88 @@ func (s *Server) pointUpdate(w *game.Live) {
 			rec.Points.Mana = min(rec.Points.Mana+game.ManaGain(rec, ctx, now), rec.Points.MaxMana)
 			rec.Points.Move = min(rec.Points.Move+game.MoveGain(rec, ctx, now), rec.Points.MaxMove)
 
-			// The C does two points of poison damage here, and a character
-			// can die of it. Damage arrives with combat; until then poison
-			// only slows regeneration, which is recorded rather than hidden.
+			// Poison does two points a tick and a character can die of it,
+			// which is why this is here and not with the rest of combat.
+			if rec.AffectFlags.Has(game.AffectPoison) {
+				s.suffer(w, c, 2)
+				if c.Position == game.PosDead {
+					continue
+				}
+			}
+
 			if c.Position <= game.PosStunned {
 				c.Position = game.UpdatePosition(rec, c.Position)
 			}
 
 		case c.Position == game.PosIncapacitated:
-			s.bleed(w, c, 1)
+			s.suffer(w, c, 1)
 
 		case c.Position == game.PosMortallyWounded:
-			s.bleed(w, c, 2)
+			s.suffer(w, c, 2)
 		}
+	}
+
+	// Then the objects, as point_update does: corpses count down and the
+	// ones that reach zero rot away, spilling what was in them.
+	for _, decayed := range w.DecayObjects() {
+		s.announceDecay(w, decayed)
 	}
 }
 
-// bleed takes hit points from a character who is dying and cannot stop it,
-// which is what point_update's calls to damage(ch, ch, n, TYPE_SUFFERING) do.
-//
-// Death itself is not here: it needs corpses, which need objects. Until then
-// a character who bleeds to death stops at dead and stays there, which is
-// visible and wrong in a way that a silent approximation would not be.
-func (s *Server) bleed(w *game.Live, c *game.Character, amount int32) {
-	rec := c.Record
-	rec.Points.Hit -= amount
-	c.Position = game.UpdatePosition(rec, c.Position)
+// suffer takes hit points from a character with nothing attacking them —
+// bleeding out, or poison — which is what point_update's calls to
+// damage(ch, ch, n, TYPE_SUFFERING) do.
+func (s *Server) suffer(w *game.Live, c *game.Character, amount int32) {
+	c.Record.Points.Hit -= amount
+	c.Position = game.UpdatePosition(c.Record, c.Position)
 
 	if c.Position == game.PosDead {
-		s.logger.Info("a character bled out", "character", c.Name, "room", c.Room)
-		c.Tell("You are dead!  Sorry...\r\n")
-		for _, other := range w.Occupants(c.Room) {
-			if other != c {
-				other.Tell("%s is dead!  R.I.P.\r\n", c.Name)
-			}
+		s.die(w, c)
+	}
+}
+
+// die leaves a body and puts the character back on their feet somewhere else,
+// porting die() and raw_kill() (fight.c) as far as this phase goes.
+//
+// Experience loss on death and the loss of the killer's alignment are combat's
+// business and arrive with it.
+func (s *Server) die(w *game.Live, c *game.Character) {
+	s.logger.Info("a character died", "character", c.Name, "room", c.Room)
+
+	c.Tell("You are dead!  Sorry...\r\n")
+	for _, other := range w.Occupants(c.Room) {
+		if other != c {
+			other.Tell("%s is dead!  R.I.P.\r\n", c.Name)
+		}
+	}
+
+	w.MakeCorpse(c)
+
+	if c.IsNPC() {
+		w.Remove(c)
+		return
+	}
+
+	// A dead player wakes up at the temple with one hit point, which is the
+	// C's arrangement: raw_kill leaves them at POS_STANDING and the death
+	// trap handling sends them to their load room.
+	c.Record.Points.Hit = 1
+	c.Position = game.PosStanding
+	if err := w.Enter(c, MortalStartRoom); err != nil {
+		s.logger.Error("moving a dead character to the temple", "character", c.Name, "error", err)
+	}
+}
+
+// announceDecay says the corpse rotted, in whichever place it was.
+func (s *Server) announceDecay(w *game.Live, d game.DecayResult) {
+	const message = "A quivering horde of maggots consumes %s.\r\n"
+
+	switch {
+	case d.CarriedBy != nil:
+		d.CarriedBy.Tell("%s decays in your hands.\r\n", d.Corpse.Name())
+	case d.Room != game.NoRoom:
+		for _, c := range w.Occupants(d.Room) {
+			c.Tell(message, d.Corpse.Name())
 		}
 	}
 }

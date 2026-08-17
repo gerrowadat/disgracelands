@@ -42,6 +42,10 @@ type (
 // it are unlinked.
 const NoRoom RoomVnum = -1
 
+// NoObject is the same sentinel for an object that has no prototype — a
+// corpse, or a pile of coins built at runtime.
+const NoObject ObjVnum = -1
+
 // NothingRnum marks an unresolved real number, matching the C NOTHING.
 const NothingRnum RoomRnum = -1
 
