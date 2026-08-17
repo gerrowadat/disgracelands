@@ -38,10 +38,10 @@ make connect      # in another terminal
 ```
 
 `run-mini` passes `--mini-mud`, which switches every world subdirectory from
-`index` to `index.mini`: 85 rooms, 56 mobiles, 103 objects, 3 zones instead
-of 2,981 / 944 / 1,199 / 47. It is the right default for testing anything
+`index` to `index.mini`: 69 rooms, 51 mobiles, 59 objects, 3 zones instead
+of 1,878 / 569 / 679 / 30. It is the right default for testing anything
 that is not about the world itself — it loads in milliseconds, and a bug in
-zone resets is much easier to see in three zones than in forty-seven.
+zone resets is much easier to see in three zones than in thirty.
 
 The other run targets:
 

@@ -57,7 +57,7 @@ tarballs (`welmar/zones/`) if a different point-in-time snapshot is wanted.
 
 Not investigated beyond "it loads and boots" — though it now also loads
 identically in both servers, and `dlctl world lint` reports what is wrong
-with it (0 errors, 20 warnings), which is more than was known before.
+with it (0 errors, 11 warnings), which is more than was known before.
 
 ### 4. Hosting and exposure
 

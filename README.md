@@ -12,9 +12,15 @@ everything it does.
 
 ## Status
 
-**The C server works.** It compiles and boots on modern Linux and serves the
-real Disgracelands login banner with the original world loaded. Until the Go
-port catches up, that is the game.
+**The C server works.** It compiles and boots on modern Linux and serves a
+playable game. Until the Go port catches up, that is the game.
+
+**The data in this repo is stock.** `data/` is CircleMUD 3.0 bpl20's `lib/`,
+unmodified — Midgaard, not Disgracelands. The world, help text and boards the
+game actually ran on are in the private archive and are not committed here;
+point `--lib-dir` at a converted copy to run the real thing (`dlctl convert`,
+see `docs/operations.md`). Everything in `docs/investigations/` describes that
+archive rather than what ships.
 
 **The Go port takes connections, and has no rules in it yet.** Phases 0–3 of
 `docs/proposals/go-port-plan.md` are done: it loads the world, listens on
@@ -30,7 +36,7 @@ no shops, boards or mail, and no zone resets — so the world is empty of
 mobiles and objects and you are walking through the scenery. That is
 Phase 4 onwards.
 
-The two servers load the world identically — every field of all 5,248
+The two servers load the world identically — every field of all 3,202
 records — and `scripts/world-parity.sh` checks that in CI.
 
 ## Where to start
@@ -59,9 +65,10 @@ docs/           This project's own documentation. The root is operator
                 done; docs/investigations/ is archaeology on the original
                 codebase. See docs/README.md.
 
-data/           Runtime game data: world files, help text, boards, socials.
-                Read by both servers, so it belongs to neither. No player
-                data ships here - see "Player data" below.
+data/           Runtime game data: stock CircleMUD 3.0 bpl20 lib/, world
+                files, help text and socials. Read by both servers, so it
+                belongs to neither. Neither the real Disgracelands data nor
+                any player data ships here - see "Player data" below.
 
 reference/      Everything that is not the Go port.
   moderncserver/  The C server: the game as it actually is, and the

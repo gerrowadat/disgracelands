@@ -212,7 +212,7 @@ found, so it works directly as a CI step.
 you find out a directory still needs converting. The server works in UTF-8;
 see `dlctl convert` above.
 
-The shipped world currently reports **0 errors, 20 warnings, 8 notes**. The
+The shipped world currently reports **0 errors, 11 warnings, 12 notes**. The
 warnings are worth knowing about:
 
 - Four complete zones (23, 90, 92, 147) and two further `.zon` files exist
@@ -329,7 +329,7 @@ scripts/world-parity.sh
 It builds both servers if needed, dumps from each, and diffs:
 
 ```
-    2981 rooms, 944 mobiles, 1199 objects, 47 zones, 77 shops
+    1878 rooms, 569 mobiles, 679 objects, 30 zones, 46 shops
     identical
 ```
 

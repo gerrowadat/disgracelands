@@ -43,7 +43,7 @@ scripts/world-parity.sh
 ```
 
 Builds both servers, has each dump the world it loaded, and diffs them. They
-currently agree on every field of all 5,248 records. This runs in CI.
+currently agree on every field of all 3,202 records. This runs in CI.
 
 If it reports a difference, the Go loader is what is wrong: the C server is
 the reference implementation and the one that has been running the game.
@@ -84,7 +84,13 @@ volume, since it is mutable state.
 
 ## Where the game data lives
 
-`data/` at the repository root: world files, help text, boards, socials, and
-— locally, never committed — player data. Both servers read it. The C server
+`data/` at the repository root: world files, help text, socials, and —
+locally, never committed — player data. Both servers read it. The C server
 reaches it through a `lib` symlink, because its compiled-in default is `lib`
 (`config.c`'s `DFLT_DIR`).
+
+What ships there is **stock CircleMUD 3.0 bpl20's `lib/`**, unmodified. It is
+enough to build, boot, test and compare both servers, which is what the tree
+needs it for. The Disgracelands world and text are archive material and are
+not in this repo; `dlctl convert` turns a copy of the archive into a directory
+either server runs on, and `--lib-dir` points at it.
