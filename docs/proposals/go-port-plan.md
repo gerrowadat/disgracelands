@@ -688,6 +688,12 @@ both servers, has each dump the world it loaded, and diffs the results:
 Zero differing fields across all 5,248 records. It runs in CI, so it stays
 true.
 
+**Those numbers are of the Disgracelands world**, which was what `data/` held
+when this was written. The repo now ships stock CircleMUD 3.0 bpl20's `lib/`
+instead, so the harness reports 1878 rooms, 569 mobiles, 679 objects, 30 zones
+and 46 shops — 3,202 records, still identical. The criterion is the agreement,
+not the count.
+
 The C side is `reference/moderncserver/src/worlddump.c` plus a `-J <file>`
 option, which loads the world exactly as a real boot does — including
 `renum_world()` and `renum_zone_table()`, whose effects are the interesting

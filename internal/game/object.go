@@ -6,6 +6,8 @@
 
 package game
 
+import "strings"
+
 // Object instances, and where they can be.
 //
 // ObjDef is a prototype loaded from the world files; Object is one that
@@ -45,6 +47,39 @@ const (
 	ItemBoat       int32 = 22
 	ItemFountain   int32 = 23
 )
+
+// ItemTypeNames is constants.c's item_types[], indexed by type number. Index
+// 0 is "UNDEFINED", which is why the table starts there rather than at
+// ItemLight.
+//
+// It is a table rather than a switch because the shop file format matches
+// against it *by index*: a shop's trade list may name a type instead of
+// numbering it, and the number it means is its position here.
+var ItemTypeNames = []string{
+	"UNDEFINED", "LIGHT", "SCROLL", "WAND", "STAFF", "WEAPON", "FIRE WEAPON",
+	"MISSILE", "TREASURE", "ARMOR", "POTION", "WORN", "OTHER", "TRASH",
+	"TRAP", "CONTAINER", "NOTE", "LIQ CONTAINER", "KEY", "FOOD", "MONEY",
+	"PEN", "BOAT", "FOUNTAIN",
+}
+
+// ItemTypeByName resolves a type name to its number, the way shop.c's
+// read_type_list does: the first table entry that is a case-insensitive
+// prefix of s wins, and the rest of s is returned for the caller to use as
+// the entry's keyword.
+//
+// Prefix matching is the C's behaviour rather than a convenience: it is what
+// lets a shop file write "WEAPON sword" and have the parser take "WEAPON" as
+// the type and "sword" as a keyword, and it means "LIQ CONTAINER" is matched
+// before anything shorter that shares its start would be.
+func ItemTypeByName(s string) (typ int32, rest string, ok bool) {
+	for i, name := range ItemTypeNames {
+		if len(s) < len(name) || !strings.EqualFold(s[:len(name)], name) {
+			continue
+		}
+		return int32(i), strings.TrimSpace(s[len(name):]), true //nolint:gosec // a table index
+	}
+	return 0, s, false
+}
 
 // Wear flags, from structs.h:352. ItemWearTake is the odd one out: it is not
 // a place to wear something, it is whether the object can be picked up at

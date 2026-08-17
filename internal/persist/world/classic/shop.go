@@ -274,22 +274,32 @@ func (l *loader) readTradeList(r *reader, what string, newFormat bool) ([]game.S
 		}
 
 		rest := strings.TrimSpace(line)
-		typ, ok := scanInt(rest)
-		if !ok {
-			// An item-type *name* rather than a number. The C loader matches
-			// these against item_types[]; nothing in data/world uses the form,
-			// so recognising it is deferred to the phase that owns the item
-			// type table rather than guessed at here.
-			l.warnf("%s: trade list entry %q is a type name rather than a number, which is not supported yet",
-				r.where(what), rest)
-			continue
+
+		// An entry may name its type instead of numbering it — "WEAPON",
+		// "LIQ CONTAINER" — and the number it means is that name's index in
+		// item_types[]. The C tries the names first and only then falls back
+		// to sscanf, which matters for the terminator: "-1" is excluded from
+		// name matching there, and here by being unparseable as a name.
+		var (
+			typ     int32
+			keyword string
+		)
+		if t, after, named := game.ItemTypeByName(rest); named {
+			typ, keyword = t, after
+		} else {
+			v, ok := scanInt(rest)
+			if !ok {
+				l.warnf("%s: trade list entry %q is neither a number nor an item type",
+					r.where(what), rest)
+				continue
+			}
+			typ = v
+			// Anything after the number is a keyword restricting the entry.
+			keyword = strings.TrimSpace(strings.TrimLeft(rest, "+-0123456789"))
 		}
 		if typ < 0 {
 			return out, nil
 		}
-
-		// Anything after the number is a keyword restricting the entry.
-		keyword := strings.TrimSpace(strings.TrimLeft(rest, "+-0123456789"))
 		if len(out) >= maxShopObj {
 			l.warnf("%s: trade list has more than %d entries; the rest are dropped", r.where(what), maxShopObj)
 			continue
