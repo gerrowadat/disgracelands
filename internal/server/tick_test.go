@@ -171,8 +171,9 @@ func TestADyingCharacterBleeds(t *testing.T) {
 	}
 }
 
-// TestBleedingOutReachesDead, and says so to the room.
-func TestBleedingOutReachesDead(t *testing.T) {
+// TestBleedingOutLeavesABody. Death is not just a position: the character
+// drops everything they had into a corpse and wakes up at the temple.
+func TestBleedingOutLeavesABody(t *testing.T) {
 	srv, _ := newTestServer(t)
 
 	rec := &game.PlayerRecord{
@@ -181,23 +182,110 @@ func TestBleedingOutReachesDead(t *testing.T) {
 		Conditions: [3]int32{0, 24, 24},
 		Points:     game.Points{Hit: -10, MaxHit: 100},
 	}
-	dying, dyingClient := place(t, srv, rec, MortalStartRoom)
+	dying, dyingClient := place(t, srv, rec, ImmortStartRoom)
 	dying.Position = game.PosMortallyWounded
 
 	watcher := &game.PlayerRecord{Name: "Zod", Class: game.ClassWarrior, Level: 34}
-	_, watcherClient := place(t, srv, watcher, MortalStartRoom)
+	_, watcherClient := place(t, srv, watcher, ImmortStartRoom)
 
 	tick(t, srv)
 
-	if dying.Position != game.PosDead {
-		t.Errorf("position is %s at %d hit points, want dead",
-			dying.Position, rec.Points.Hit)
-	}
 	if !dyingClient.said("You are dead!") {
 		t.Error("the dying character was not told")
 	}
 	if !watcherClient.said("Welmar is dead!") {
 		t.Error("the room was not told")
+	}
+
+	// A body was left where they fell, and they woke up at the temple.
+	var corpse *game.Object
+	if err := srv.engine.DoSync(context.Background(), func(w *game.Live) {
+		for _, o := range w.RoomObjects(ImmortStartRoom) {
+			if game.IsCorpse(o) {
+				corpse = o
+			}
+		}
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if corpse == nil {
+		t.Fatal("no corpse was left in the room they died in")
+	}
+	if corpse.ShortDesc != "the corpse of Welmar" {
+		t.Errorf("the corpse is %q", corpse.ShortDesc)
+	}
+
+	if dying.Room != MortalStartRoom {
+		t.Errorf("the dead character is in room %d, want the temple", dying.Room)
+	}
+	if dying.Position != game.PosStanding {
+		t.Errorf("position is %s, want standing again", dying.Position)
+	}
+	if rec.Points.Hit != 1 {
+		t.Errorf("hit points are %d, want 1", rec.Points.Hit)
+	}
+}
+
+// TestPoisonDoesDamageOnTheTick, which is why a poisoned character has to do
+// something about it rather than wait.
+func TestPoisonDoesDamageOnTheTick(t *testing.T) {
+	srv, _ := newTestServer(t)
+
+	rec := &game.PlayerRecord{
+		Name: "Welmar", Class: game.ClassWarrior, Level: 10,
+		Birth:       time.Now(),
+		Conditions:  [3]int32{0, 24, 24},
+		AffectFlags: game.AffectPoison,
+		Points:      game.Points{Hit: 50, MaxHit: 50, Move: 50, MaxMove: 50},
+	}
+	place(t, srv, rec, MortalStartRoom)
+
+	tick(t, srv)
+
+	// At full health there is nothing to regenerate, so the two points of
+	// poison are the whole of the change.
+	if rec.Points.Hit != 48 {
+		t.Errorf("hit points are %d, want 48 after two points of poison", rec.Points.Hit)
+	}
+}
+
+// TestACorpseRotsOnTheTick, and the room is told.
+func TestACorpseRotsOnTheTick(t *testing.T) {
+	srv, _ := newTestServer(t)
+
+	rec := &game.PlayerRecord{
+		Name: "Welmar", Class: game.ClassWarrior, Level: 10,
+		Birth:      time.Now(),
+		Conditions: [3]int32{0, 24, 24},
+		Points:     game.Points{Hit: -20, MaxHit: 100},
+	}
+	dying, _ := place(t, srv, rec, MortalStartRoom)
+	dying.Position = game.PosMortallyWounded
+
+	watcher := &game.PlayerRecord{
+		Name: "Zod", Class: game.ClassWarrior, Level: game.LevelImplementor,
+		Birth: time.Now(), Conditions: [3]int32{-1, -1, -1},
+		Points: game.Points{Hit: 500, MaxHit: 500},
+	}
+	_, watcherClient := place(t, srv, watcher, MortalStartRoom)
+
+	// Kill them, then wait out the corpse timer.
+	for i := int32(0); i <= game.PlayerCorpseTime; i++ {
+		tick(t, srv)
+	}
+
+	if !watcherClient.said("maggots") {
+		t.Error("the room was not told the corpse rotted")
+	}
+
+	if err := srv.engine.DoSync(context.Background(), func(w *game.Live) {
+		for _, o := range w.RoomObjects(MortalStartRoom) {
+			if game.IsCorpse(o) {
+				t.Error("the corpse is still there after its timer ran out")
+			}
+		}
+	}); err != nil {
+		t.Fatal(err)
 	}
 }
 

@@ -177,10 +177,13 @@ vet: ## go vet
 	$(GO) vet $(PKG)
 
 .PHONY: lint
-lint: ## golangci-lint, if it is installed
-	@command -v golangci-lint >/dev/null 2>&1 \
-	  || { echo "golangci-lint not installed; skipping (CI runs v2.12.2)"; exit 0; }; \
-	golangci-lint run
+lint: ## golangci-lint, fetching the version CI uses if it is not installed
+	@if command -v golangci-lint >/dev/null 2>&1; then \
+	  golangci-lint run; \
+	else \
+	  echo "golangci-lint not on PATH; running $(GOLANGCI_VERSION) via go run"; \
+	  $(GO) run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(GOLANGCI_VERSION) run; \
+	fi
 
 .PHONY: tidy
 tidy: ## go mod tidy
@@ -190,6 +193,11 @@ tidy: ## go mod tidy
 # a 32-bit one. Green here is not a promise that CI is green, but red here
 # certainly means it is not.
 .PHONY: check
+# The version CI pins. `make lint` fetches it rather than skipping: a lint
+# that silently does not run looks exactly like a lint that passed, which is
+# how a clean `make check` and a red CI happen at the same time.
+GOLANGCI_VERSION ?= v2.12.2
+
 check: ## Build, vet, format-check, lint, test and lint the world -- roughly what CI runs
 	@unformatted=$$(gofmt -l .); \
 	  if [ -n "$$unformatted" ]; then echo "These files need gofmt:"; echo "$$unformatted"; exit 1; fi

@@ -27,18 +27,38 @@ type Live struct {
 	rooms     map[RoomVnum]*RoomDef
 	occupants map[RoomVnum][]*Character
 	byName    map[string]*Character
+
+	// objectDefs indexes the prototypes by vnum, so instantiating something
+	// does not walk the list.
+	objectDefs map[ObjVnum]*ObjDef
+	// objects is every object that exists, by id. The C calls this
+	// object_list and walks it every tick to decay corpses.
+	objects map[uint64]*Object
+	// roomObjects is what is lying on the floor of each room.
+	roomObjects map[RoomVnum][]*Object
+
+	nextObjectID uint64
 }
+
+// ObjectDef returns an object prototype, or nil.
+func (l *Live) ObjectDef(v ObjVnum) *ObjDef { return l.objectDefs[v] }
 
 // NewLive indexes a loaded world for play.
 func NewLive(defs *World) *Live {
 	l := &Live{
-		defs:      defs,
-		rooms:     make(map[RoomVnum]*RoomDef, len(defs.Rooms)),
-		occupants: make(map[RoomVnum][]*Character),
-		byName:    make(map[string]*Character),
+		defs:        defs,
+		rooms:       make(map[RoomVnum]*RoomDef, len(defs.Rooms)),
+		occupants:   make(map[RoomVnum][]*Character),
+		byName:      make(map[string]*Character),
+		objectDefs:  make(map[ObjVnum]*ObjDef, len(defs.Objects)),
+		objects:     make(map[uint64]*Object),
+		roomObjects: make(map[RoomVnum][]*Object),
 	}
 	for _, r := range defs.Rooms {
 		l.rooms[r.Vnum] = r
+	}
+	for _, o := range defs.Objects {
+		l.objectDefs[o.Vnum] = o
 	}
 	return l
 }
@@ -72,6 +92,10 @@ type Character struct {
 	// mobile differ in enough places that a bit hidden in a flag word is a
 	// trap.
 	NPC bool
+	// Carrying is their inventory, in the order things were picked up.
+	Carrying []*Object
+	// Equipment is what they are wearing, indexed by WearPosition.
+	Equipment [NumWears]*Object
 	// Client is whoever is controlling this character, or nil for one that
 	// nobody is — a mobile, or a player whose connection has dropped but
 	// whose body is still standing there.
