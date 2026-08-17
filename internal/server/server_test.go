@@ -74,14 +74,49 @@ func testText(t *testing.T) *Text {
 	return text
 }
 
+// Object prototypes the tests instantiate.
+const (
+	testSwordVnum    game.ObjVnum = 100
+	testRingVnum     game.ObjVnum = 101
+	testFountainVnum game.ObjVnum = 102
+)
+
 // testWorld is the two start rooms, joined so a character can walk between
-// them.
+// them, plus a few objects to pick up.
 func testWorld() *game.Live {
 	temple := &game.RoomDef{Vnum: MortalStartRoom, Name: "The Temple Of Midgaard", Description: "A temple.\r\n"}
 	board := &game.RoomDef{Vnum: ImmortStartRoom, Name: "The Immortal Board Room", Description: "A board room.\r\n"}
 	temple.Exits[game.North] = &game.ExitDef{ToRoom: ImmortStartRoom}
 	board.Exits[game.South] = &game.ExitDef{ToRoom: MortalStartRoom}
-	return game.NewLive(&game.World{Rooms: []*game.RoomDef{temple, board}})
+
+	objects := []*game.ObjDef{
+		{
+			Vnum: testSwordVnum, Keywords: "sword long", ShortDesc: "a long sword",
+			Description: "A long sword is lying here.",
+			Type:        game.ItemWeapon,
+			WearFlags:   game.ItemWearTake | game.ItemWearWield,
+			Weight:      10,
+			Values:      [game.NumObjValues]int32{0, 2, 6, 3},
+		},
+		{
+			Vnum: testRingVnum, Keywords: "ring gold", ShortDesc: "a gold ring",
+			Description: "A gold ring is lying here.",
+			Type:        game.ItemArmor,
+			WearFlags:   game.ItemWearTake | game.ItemWearFinger,
+			Weight:      1,
+		},
+		{
+			Vnum: testFountainVnum, Keywords: "fountain", ShortDesc: "a fountain",
+			Description: "A fountain bubbles here.",
+			Type:        game.ItemFountain,
+			Weight:      500,
+		},
+	}
+
+	return game.NewLive(&game.World{
+		Rooms:   []*game.RoomDef{temple, board},
+		Objects: objects,
+	})
 }
 
 // newTestServer builds a server on a temporary player directory and starts
