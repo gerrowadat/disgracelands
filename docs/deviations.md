@@ -67,6 +67,24 @@ are fidelity, not deviation, and they live in the tests that assert them.
 | **Why** | Nothing is gained by the early free, and the failure mode is silent data loss on a dropped connection. |
 | **Where** | `internal/session/menu.go`. |
 
+### Attacking an immortal doubles the damage
+
+| | |
+|---|---|
+| **C** | `damage()` (fight.c) has, under a comment reading *"You can't damage an immortal!"*, the line `dam = dam*2;`. |
+| **Go** | The same. |
+| **Why** | This is **not** a deviation — it is reproduced — but it is here because it looks like one and somebody will eventually "fix" it. Stock CircleMUD sets `dam = 0` there; this tree doubles it and the original comment was left in place when the line was changed. Whether that was deliberate or a typo, it is what players fought against for seven years, and the fidelity rule says the C wins. |
+| **Where** | `ApplyDamage` in `internal/game/fight.go`, asserted in `TestAttackingAnImmortalDoublesTheDamage`. |
+
+### The wounded-victim damage multiplier is not what its comment says
+
+| | |
+|---|---|
+| **C** | `hit()` computes `dam *= 1 + (POS_FIGHTING - GET_POS(victim)) / 3` beside a comment listing 1.33x for a sitting victim, 1.66x resting, 2.00x sleeping, 2.33x stunned, 2.66x incapacitated, 3.00x mortally wounded. |
+| **Go** | The same arithmetic, so the real multipliers are 1, 1, 2, 2, 2 and 3. |
+| **Why** | Integer division. The comment has been wrong since 1993 and the code is what players experienced. Reproduced, and asserted against the C so nobody implements the comment by mistake. |
+| **Where** | `Attack` in `internal/game/fight.go`, `TestThePositionMultiplierIsIntegerDivision`. |
+
 ### Names are refused with a reason
 
 | | |
