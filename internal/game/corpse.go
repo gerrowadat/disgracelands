@@ -89,8 +89,8 @@ func (l *Live) MakeMoney(amount int32) *Object {
 	money.WearFlags = ItemWearTake
 	money.Values[0] = amount
 
-	switch {
-	case amount == 1:
+	switch amount {
+	case 1:
 		money.Keywords = "coin gold"
 		money.ShortDesc = "a gold coin"
 		money.Description = "One miserable gold coin is lying here."
