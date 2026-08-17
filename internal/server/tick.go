@@ -32,6 +32,7 @@ const (
 func (s *Server) Periodic() []engine.Periodic {
 	return []engine.Periodic{
 		{Name: "violence", Every: pulseViolence, Run: s.performViolence},
+		{Name: "mobile-activity", Every: pulseMobile, Run: s.mobileActivity},
 		{Name: "zone-update", Every: pulseZone, Run: s.zoneUpdate},
 		{Name: "point-update", Every: pulseTick, Run: s.pointUpdate},
 	}
