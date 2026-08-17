@@ -1,0 +1,378 @@
+// Copyright (C) 2026 Dave O'Connor. Part of Disgracelands, a derivative work
+// of CircleMUD (Copyright (C) 1993-2001 Jeremy Elson, the Trustees of the
+// Johns Hopkins University and the CircleMUD Group), itself based on DikuMUD
+// (Copyright (C) 1990, 1991). Use of this file is governed by the CircleMUD
+// and DikuMUD licenses; see LICENSE. Non-commercial use only.
+
+package game
+
+import (
+	"fmt"
+
+	"github.com/gerrowadat/disgracelands/internal/rng"
+)
+
+// Zone resets, ported from reset_zone and zone_update (db.c).
+//
+// This is what puts anything in the world. Rooms come from the world files
+// and never change; every mobile and every object a player ever sees is
+// created by a zone's reset list and re-created when the zone resets again.
+//
+// The list is a small stack machine with one register. `M` reads a mobile and
+// remembers it; `G` and `E` give and equip onto *that* mobile. `if_flag` makes
+// a command conditional on the previous one having succeeded, which is how
+// "put a sword in the guard's hand, but only if the guard was actually
+// created" is expressed.
+
+// Reset command opcodes.
+const (
+	ResetIgnore   byte = '*'
+	ResetMobile   byte = 'M'
+	ResetObject   byte = 'O'
+	ResetGive     byte = 'G'
+	ResetEquip    byte = 'E'
+	ResetPutInObj byte = 'P'
+	ResetDoor     byte = 'D'
+	ResetRemove   byte = 'R'
+	ResetStop     byte = 'S'
+)
+
+// Door states, the values of a 'D' command's third argument.
+const (
+	DoorOpen   int32 = 0
+	DoorClosed int32 = 1
+	DoorLocked int32 = 2
+)
+
+// Exit flags, from structs.h.
+const (
+	ExitIsDoor    Flags = 1 << 0
+	ExitClosed    Flags = 1 << 1
+	ExitLocked    Flags = 1 << 2
+	ExitPickproof Flags = 1 << 3
+)
+
+// ResetReport is what one zone reset did, for logs and tests.
+type ResetReport struct {
+	Zone     ZoneVnum
+	Mobiles  int
+	Objects  int
+	Problems []string
+}
+
+// ResetZone runs a zone's command list, porting reset_zone.
+//
+// The population caps are the point of most of it: a command creates its
+// mobile or object only while fewer than `Arg2` of them exist in the whole
+// world. That is how a zone can be reset every fifteen minutes without the
+// world filling up with swords.
+func (l *Live) ResetZone(zone *ZoneDef, r *rng.Rand) ResetReport {
+	report := ResetReport{Zone: zone.Vnum}
+
+	// The one register: the mobile the last `M` created. `G` and `E` load
+	// onto it, and both are errors if there has not been one.
+	var mob *Character
+	lastSucceeded := false
+
+	for i := range zone.Commands {
+		cmd := &zone.Commands[i]
+
+		if cmd.Command == ResetStop {
+			break
+		}
+		// A conditional command whose predecessor failed is skipped without
+		// changing lastSucceeded, so a run of them all skip together.
+		if cmd.IfFlag != 0 && !lastSucceeded {
+			continue
+		}
+
+		switch cmd.Command {
+		case ResetIgnore:
+			lastSucceeded = false
+
+		case ResetMobile:
+			if l.mobileCount(MobVnum(cmd.Arg1)) >= cmd.Arg2 {
+				lastSucceeded = false
+				break
+			}
+			created := l.SpawnMobile(MobVnum(cmd.Arg1), RoomVnum(cmd.Arg3), r)
+			if created == nil {
+				report.problem(cmd, "no such mobile")
+				lastSucceeded = false
+				break
+			}
+			mob = created
+			report.Mobiles++
+			lastSucceeded = true
+
+		case ResetObject:
+			if l.objectCount(ObjVnum(cmd.Arg1)) >= cmd.Arg2 {
+				lastSucceeded = false
+				break
+			}
+			obj := l.NewObject(ObjVnum(cmd.Arg1))
+			if obj == nil {
+				report.problem(cmd, "no such object")
+				lastSucceeded = false
+				break
+			}
+			// A third argument of NOWHERE means the object is created and
+			// left nowhere, which the C does deliberately — it exists to be
+			// counted against the population cap.
+			if RoomVnum(cmd.Arg3) != NoRoom {
+				l.ObjectToRoom(obj, RoomVnum(cmd.Arg3))
+			} else {
+				l.track(obj)
+			}
+			report.Objects++
+			lastSucceeded = true
+
+		case ResetGive:
+			if mob == nil {
+				report.problem(cmd, "give to a mobile that does not exist")
+				cmd.Command = ResetIgnore
+				break
+			}
+			if l.objectCount(ObjVnum(cmd.Arg1)) >= cmd.Arg2 {
+				lastSucceeded = false
+				break
+			}
+			obj := l.NewObject(ObjVnum(cmd.Arg1))
+			if obj == nil {
+				report.problem(cmd, "no such object")
+				lastSucceeded = false
+				break
+			}
+			l.ObjectToChar(obj, mob)
+			report.Objects++
+			lastSucceeded = true
+
+		case ResetEquip:
+			if mob == nil {
+				report.problem(cmd, "equip a mobile that does not exist")
+				cmd.Command = ResetIgnore
+				break
+			}
+			if l.objectCount(ObjVnum(cmd.Arg1)) >= cmd.Arg2 {
+				lastSucceeded = false
+				break
+			}
+			pos := WearPosition(cmd.Arg3)
+			if pos < 0 || pos >= NumWears {
+				report.problem(cmd, "invalid equipment position")
+				lastSucceeded = false
+				break
+			}
+			obj := l.NewObject(ObjVnum(cmd.Arg1))
+			if obj == nil {
+				report.problem(cmd, "no such object")
+				lastSucceeded = false
+				break
+			}
+			if !l.Equip(obj, mob, pos) {
+				// The slot was already filled by an earlier command. The C
+				// logs a SYSERR and drops the object on the floor; putting it
+				// in the mobile's inventory loses nothing and keeps the
+				// object where the builder meant it to be.
+				l.ObjectToChar(obj, mob)
+			}
+			report.Objects++
+			lastSucceeded = true
+
+		case ResetPutInObj:
+			if l.objectCount(ObjVnum(cmd.Arg1)) >= cmd.Arg2 {
+				lastSucceeded = false
+				break
+			}
+			container := l.findObjectByVnum(ObjVnum(cmd.Arg3))
+			if container == nil {
+				report.problem(cmd, "target object not found, command disabled")
+				cmd.Command = ResetIgnore
+				break
+			}
+			obj := l.NewObject(ObjVnum(cmd.Arg1))
+			if obj == nil {
+				report.problem(cmd, "no such object")
+				lastSucceeded = false
+				break
+			}
+			l.ObjectToObject(obj, container)
+			report.Objects++
+			lastSucceeded = true
+
+		case ResetRemove:
+			if obj := l.findObjectInRoom(RoomVnum(cmd.Arg1), ObjVnum(cmd.Arg2)); obj != nil {
+				l.ExtractObject(obj)
+			}
+			lastSucceeded = true
+
+		case ResetDoor:
+			// Bounds-checked before the conversion, not after: Direction is a
+			// narrow type and a zone file is data from disk.
+			room := l.Room(RoomVnum(cmd.Arg1))
+			if room == nil || cmd.Arg2 < 0 || cmd.Arg2 >= NumDirections {
+				report.problem(cmd, "door does not exist, command disabled")
+				cmd.Command = ResetIgnore
+				break
+			}
+			dir := Direction(cmd.Arg2)
+			if room.Exits[dir] == nil {
+				report.problem(cmd, "door does not exist, command disabled")
+				cmd.Command = ResetIgnore
+				break
+			}
+			exit := room.Exits[dir]
+			switch cmd.Arg3 {
+			case DoorOpen:
+				exit.State = exit.State.Clear(ExitClosed | ExitLocked)
+			case DoorClosed:
+				exit.State = exit.State.Set(ExitClosed).Clear(ExitLocked)
+			case DoorLocked:
+				exit.State = exit.State.Set(ExitClosed | ExitLocked)
+			}
+			lastSucceeded = true
+		}
+	}
+
+	return report
+}
+
+func (r *ResetReport) problem(cmd *ResetCommand, why string) {
+	r.Problems = append(r.Problems,
+		fmt.Sprintf("line %d: %c %d %d %d: %s", cmd.Line, cmd.Command, cmd.Arg1, cmd.Arg2, cmd.Arg3, why))
+}
+
+// SpawnMobile instantiates a mobile prototype into a room, porting
+// read_mobile plus char_to_room.
+func (l *Live) SpawnMobile(vnum MobVnum, room RoomVnum, r *rng.Rand) *Character {
+	def := l.mobileDefs[vnum]
+	if def == nil || l.Room(room) == nil {
+		return nil
+	}
+
+	rec := &PlayerRecord{
+		Name:        def.ShortDesc,
+		Description: def.Description,
+		Level:       def.Level,
+		Alignment:   def.Alignment,
+		Sex:         def.Sex,
+		AffectFlags: def.AffectionFlags,
+		DamageDice:  def.DamageDice.Number,
+		DamageSize:  def.DamageDice.Size,
+	}
+
+	// The C converts these at load time; the loader here keeps the file
+	// values so a writer can reproduce the file, which means the conversion
+	// happens now instead.
+	rec.Points.HitRoll = 20 - def.Thac0
+	rec.Points.Armor = def.ArmorClass * 10
+	rec.Points.DamRoll = def.DamageDice.Bonus
+
+	hit := def.HitDice.Bonus
+	if def.HitDice.Number > 0 && def.HitDice.Size > 0 {
+		hit += r.Dice(def.HitDice.Number, def.HitDice.Size)
+	}
+	rec.Points.MaxHit, rec.Points.Hit = hit, hit
+	rec.Points.MaxMana, rec.Points.Mana = 100, 100
+	rec.Points.MaxMove, rec.Points.Move = 100, 100
+	rec.Points.Gold = def.Gold
+	rec.Points.Exp = def.Exp
+
+	// Every ability is 11 for a mobile unless an espec says otherwise, which
+	// is what read_mobile does.
+	rec.Abilities = Abilities{
+		Strength: 11, Intelligence: 11, Wisdom: 11,
+		Dexterity: 11, Constitution: 11, Charisma: 11,
+	}
+
+	c := &Character{
+		// Name is what appears in a sentence; Keywords is what a player
+		// types. The C keeps these as short_descr and name respectively, and
+		// conflating them is how you end up with "puff dragon fractal hits
+		// you".
+		Name:     def.ShortDesc,
+		Keywords: def.Keywords,
+		Record:   rec,
+		NPC:      true,
+		Position: Position(def.Position),
+		MobDef:   def,
+	}
+
+	if err := l.Enter(c, room); err != nil {
+		return nil
+	}
+	l.mobiles[c] = true
+	return c
+}
+
+// mobileCount is how many of a prototype exist, which is what the population
+// caps are measured against.
+func (l *Live) mobileCount(vnum MobVnum) int32 {
+	var n int32
+	for c := range l.mobiles {
+		if c.MobDef != nil && c.MobDef.Vnum == vnum {
+			n++
+		}
+	}
+	return n
+}
+
+func (l *Live) objectCount(vnum ObjVnum) int32 {
+	var n int32
+	for _, o := range l.objects {
+		if o.Vnum() == vnum {
+			n++
+		}
+	}
+	return n
+}
+
+func (l *Live) findObjectByVnum(vnum ObjVnum) *Object {
+	for _, o := range l.objects {
+		if o.Vnum() == vnum {
+			return o
+		}
+	}
+	return nil
+}
+
+func (l *Live) findObjectInRoom(room RoomVnum, vnum ObjVnum) *Object {
+	for _, o := range l.roomObjects[room] {
+		if o.Vnum() == vnum {
+			return o
+		}
+	}
+	return nil
+}
+
+// Mobiles returns every mobile in the world.
+func (l *Live) Mobiles() []*Character {
+	out := make([]*Character, 0, len(l.mobiles))
+	for c := range l.mobiles {
+		out = append(out, c)
+	}
+	return out
+}
+
+// RemoveMobile takes a dead mobile out of the world.
+func (l *Live) RemoveMobile(c *Character) {
+	delete(l.mobiles, c)
+	l.Remove(c)
+}
+
+// Zones returns the zone definitions, in file order.
+func (l *Live) Zones() []*ZoneDef { return l.defs.Zones }
+
+// ZoneIsEmpty reports whether a zone has no players in it, which is what
+// reset mode 1 waits for.
+func (l *Live) ZoneIsEmpty(zone *ZoneDef) bool {
+	for _, c := range l.Players() {
+		if c.IsNPC() {
+			continue
+		}
+		if c.Room >= zone.Bottom && c.Room <= zone.Top {
+			return false
+		}
+	}
+	return true
+}

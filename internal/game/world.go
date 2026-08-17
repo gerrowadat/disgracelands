@@ -38,6 +38,25 @@ type ExitDef struct {
 	Key ObjVnum
 	// ToRoom is the destination vnum, or NoRoom.
 	ToRoom RoomVnum
+
+	// State is the runtime door state — the C's exit_info. It lives on the
+	// definition because the C's world[] *is* the live world and a door
+	// closed by a player stays closed until a zone reset opens it. Derived
+	// from DoorFlag at load; changed thereafter by play and by 'D' reset
+	// commands.
+	State Flags
+}
+
+// DoorState returns the initial exit_info for a raw DoorFlag, porting the
+// mapping the C loader does at load time: 1 is a door, 2 a pickproof one.
+func DoorState(doorFlag int32) Flags {
+	switch doorFlag {
+	case 1:
+		return ExitIsDoor
+	case 2:
+		return ExitIsDoor | ExitPickproof
+	}
+	return 0
 }
 
 // IsDoor reports whether this exit has a door.

@@ -32,6 +32,7 @@ const (
 func (s *Server) Periodic() []engine.Periodic {
 	return []engine.Periodic{
 		{Name: "violence", Every: pulseViolence, Run: s.performViolence},
+		{Name: "zone-update", Every: pulseZone, Run: s.zoneUpdate},
 		{Name: "point-update", Every: pulseTick, Run: s.pointUpdate},
 	}
 }
@@ -149,7 +150,9 @@ func (s *Server) die(w *game.Live, c *game.Character) {
 	w.StopFighting(c)
 
 	if c.IsNPC() {
-		w.Remove(c)
+		// Out of the mobile list as well as the room, so the zone's
+		// population cap frees up and the next reset can replace it.
+		w.RemoveMobile(c)
 		return
 	}
 

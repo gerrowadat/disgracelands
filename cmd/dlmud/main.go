@@ -193,6 +193,13 @@ func run(args []string) error {
 	// The engine's periodic work belongs to the server, which is the side
 	// that can reach both the world and the player store. Started only now
 	// that the server exists to supply it.
+	// Populate the world before anyone can connect: without a reset it is
+	// 2,981 rooms and nothing else. Called directly rather than through the
+	// engine because the engine is not running yet — DoSync would wait for a
+	// goroutine that has not been started, which is a deadlock and was one.
+	// Nothing else can touch the world at this point, so this is safe.
+	srv.BootReset(live)
+
 	eng.SetPeriodic(srv.Periodic())
 	go eng.Run(ctx)
 

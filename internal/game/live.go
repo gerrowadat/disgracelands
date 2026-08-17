@@ -42,6 +42,12 @@ type Live struct {
 	// fighting is everyone currently in combat — the C's combat_list.
 	fighting     map[*Character]bool
 	nextFightSeq uint64
+
+	// mobileDefs indexes the mobile prototypes by vnum.
+	mobileDefs map[MobVnum]*MobDef
+	// mobiles is every mobile instance in the world, which is what the zone
+	// population caps are counted against.
+	mobiles map[*Character]bool
 }
 
 // ObjectDef returns an object prototype, or nil.
@@ -55,14 +61,27 @@ func NewLive(defs *World) *Live {
 		occupants:   make(map[RoomVnum][]*Character),
 		byName:      make(map[string]*Character),
 		objectDefs:  make(map[ObjVnum]*ObjDef, len(defs.Objects)),
+		mobileDefs:  make(map[MobVnum]*MobDef, len(defs.Mobiles)),
+		mobiles:     make(map[*Character]bool),
 		objects:     make(map[uint64]*Object),
 		roomObjects: make(map[RoomVnum][]*Object),
 	}
 	for _, r := range defs.Rooms {
 		l.rooms[r.Vnum] = r
+		// The C maps DoorFlag to exit_info at load; the loader here keeps the
+		// raw value so a writer can round-trip it, so the mapping happens as
+		// the world goes live instead.
+		for _, e := range r.Exits {
+			if e != nil {
+				e.State = DoorState(e.DoorFlag)
+			}
+		}
 	}
 	for _, o := range defs.Objects {
 		l.objectDefs[o.Vnum] = o
+	}
+	for _, m := range defs.Mobiles {
+		l.mobileDefs[m.Vnum] = m
 	}
 	return l
 }
@@ -100,6 +119,11 @@ type Character struct {
 	Carrying []*Object
 	// Equipment is what they are wearing, indexed by WearPosition.
 	Equipment [NumWears]*Object
+	// Keywords are what a player types to refer to a mobile. Empty for a
+	// player, who is referred to by name.
+	Keywords string
+	// MobDef is the prototype a mobile was made from, or nil for a player.
+	MobDef *MobDef
 	// Fighting is who they are attacking, or nil.
 	Fighting *Character
 	// fightSeq orders the combat round. Assigned when a fight starts, so a
@@ -197,6 +221,11 @@ func (l *Live) FindInRoom(room RoomVnum, word string) *Character {
 	}
 	for _, c := range l.occupants[room] {
 		if strings.HasPrefix(strings.ToLower(c.Name), word) {
+			return c
+		}
+		// A mobile is named by any of its keywords, as isname() does — which
+		// is why `kill dragon` finds "the fractal dragon Puff".
+		if c.Keywords != "" && matchesKeywords(c.Keywords, word) {
 			return c
 		}
 	}
