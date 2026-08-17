@@ -19,6 +19,11 @@ does, how to configure it, how to run it.
   C server's behaviour, with the C line reference and the reasoning. The
   other half of the fidelity decision: it is what keeps "fixed a bug"
   distinguishable from "accidentally changed the game".
+- **[weirdnumbers.md](weirdnumbers.md)** — the catalogue of places where
+  CircleMUD's arithmetic does not do what it appears to. Truncation nobody
+  intended, comments describing numbers the code never produced, and the
+  reasons several of them are reproduced rather than corrected. Read before
+  porting anything with a division in it.
 
 Building from source is in the top-level **`BUILDING.md`**, which covers
 both the C tree and the Go tree.
