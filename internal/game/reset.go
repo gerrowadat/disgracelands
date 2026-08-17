@@ -345,6 +345,14 @@ func (l *Live) findObjectInRoom(room RoomVnum, vnum ObjVnum) *Object {
 	return nil
 }
 
+// Track registers a mobile that was created outside a zone reset — an
+// implementor's `load`, or a test.
+func (l *Live) Track(c *Character) {
+	if c != nil && c.IsNPC() {
+		l.mobiles[c] = true
+	}
+}
+
 // Mobiles returns every mobile in the world.
 func (l *Live) Mobiles() []*Character {
 	out := make([]*Character, 0, len(l.mobiles))
