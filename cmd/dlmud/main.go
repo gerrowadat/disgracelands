@@ -166,7 +166,6 @@ func run(args []string) error {
 		World: live, Interval: cfg.PulseInterval,
 		Logger: logger, Metrics: metrics,
 	})
-	go eng.Run(ctx)
 
 	// The generator the game rolls on. A seed of zero means the clock, which
 	// is what the C server does (comm.c:406); anything else makes the run
@@ -191,6 +190,12 @@ func run(args []string) error {
 		Restrict: cfg.Restrict,
 		RNG:      rng.NewRand(source),
 	})
+	// The engine's periodic work belongs to the server, which is the side
+	// that can reach both the world and the player store. Started only now
+	// that the server exists to supply it.
+	eng.SetPeriodic(srv.Periodic())
+	go eng.Run(ctx)
+
 	go srv.RunAutosave(ctx)
 
 	limits := server.Limits{

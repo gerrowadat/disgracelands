@@ -66,3 +66,62 @@ const (
 	// PrefClearScreen is OasisOLC's.
 	PrefClearScreen Flags = 1 << 22
 )
+
+// The ROOM_* bits, from structs.h:75.
+//
+// The last three are local additions, and the first of them is the reason
+// this list is here at all: ROOM_GOOD_REGEN doubles every kind of
+// regeneration, which is not something a port can afford to leave out.
+const (
+	RoomDark       Flags = 1 << 0
+	RoomDeathTrap  Flags = 1 << 1
+	RoomNoMob      Flags = 1 << 2
+	RoomIndoors    Flags = 1 << 3
+	RoomPeaceful   Flags = 1 << 4
+	RoomSoundproof Flags = 1 << 5
+	RoomNoTrack    Flags = 1 << 6
+	RoomNoMagic    Flags = 1 << 7
+	RoomTunnel     Flags = 1 << 8
+	RoomPrivate    Flags = 1 << 9
+	RoomGodRoom    Flags = 1 << 10
+	RoomHouse      Flags = 1 << 11
+	RoomHouseCrash Flags = 1 << 12
+	RoomAtrium     Flags = 1 << 13
+	RoomOLC        Flags = 1 << 14
+	RoomBFSMark    Flags = 1 << 15
+
+	// Local additions (structs.h:92).
+	RoomGoodRegen Flags = 1 << 16
+	RoomCanQuit   Flags = 1 << 17
+	RoomPKill     Flags = 1 << 18
+)
+
+// The AFF_* bits, from structs.h:247.
+//
+// AFF_HOLY_SHIELD and AFF_SILENCE are local additions; the comment beside
+// the first of them in the C still says "Room for future expansion", which is
+// what the slot was before somebody used it.
+const (
+	AffectBlind       Flags = 1 << 0
+	AffectInvisible   Flags = 1 << 1
+	AffectDetectAlign Flags = 1 << 2
+	AffectDetectInvis Flags = 1 << 3
+	AffectDetectMagic Flags = 1 << 4
+	AffectSenseLife   Flags = 1 << 5
+	AffectWaterwalk   Flags = 1 << 6
+	AffectSanctuary   Flags = 1 << 7
+	AffectGroup       Flags = 1 << 8
+	AffectCurse       Flags = 1 << 9
+	AffectInfravision Flags = 1 << 10
+	AffectPoison      Flags = 1 << 11
+	AffectProtectEvil Flags = 1 << 12
+	AffectProtectGood Flags = 1 << 13
+	AffectSleep       Flags = 1 << 14
+	AffectNoTrack     Flags = 1 << 15
+	AffectUnused16    Flags = 1 << 16
+	AffectHolyShield  Flags = 1 << 17
+	AffectSneak       Flags = 1 << 18
+	AffectHide        Flags = 1 << 19
+	AffectSilence     Flags = 1 << 20
+	AffectCharm       Flags = 1 << 21
+)

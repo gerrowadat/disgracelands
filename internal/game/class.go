@@ -232,7 +232,7 @@ func StartingSkills(class int32) map[int32]int32 {
 // business in this port: saving from inside a game rule would mean the world
 // goroutine touching the disk. See internal/server for where it happens.
 func AdvanceLevel(rec *PlayerRecord, r *rng.Rand) {
-	addHit := conApplyHitPoints[abilityIndex(rec.Abilities.Constitution)]
+	addHit := HitPointBonus(rec.Abilities.Constitution)
 	var addMove int32
 
 	switch rec.Class {
@@ -274,7 +274,7 @@ func AdvanceLevel(rec *PlayerRecord, r *rng.Rand) {
 	// Practices. The class test is the remort-aware IS_<CLASS> macro, not a
 	// plain comparison, so a character who remorted through cleric keeps a
 	// cleric's practice rate.
-	bonus := wisApplyPractices[abilityIndex(rec.Abilities.Wisdom)]
+	bonus := Practices(rec.Abilities.Wisdom)
 	if IsMagicUser(rec) || IsCleric(rec) {
 		rec.SpellsToLearn += max(2, bonus)
 	} else {
