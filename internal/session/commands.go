@@ -62,6 +62,14 @@ func init() {
 
 		{Name: "look", Help: "Look at the room around you.", Run: doLook},
 		{Name: "kill", Help: "Attack someone.", Run: doKill},
+
+		{Name: "get", Help: "Pick something up.", Run: doGet},
+		{Name: "drop", Help: "Put something down.", Run: doDrop},
+		{Name: "inventory", Help: "List what you are carrying.", Run: doInventory},
+		{Name: "equipment", Help: "List what you are wearing.", Run: doEquipment},
+		{Name: "wear", Help: "Put something on.", Run: doWear},
+		{Name: "wield", Help: "Take a weapon in hand.", Run: doWield},
+		{Name: "remove", Help: "Take something off.", Run: doRemove},
 		{Name: "who", Help: "List who is playing.", Run: doWho},
 		{Name: "credits", Help: "Show the CircleMUD and DikuMUD credits.", Run: doCredits},
 		{Name: "help", Help: "Show this list, or help on a topic.", Run: doHelp},
@@ -112,6 +120,11 @@ func (d *Dispatcher) Do(ctx context.Context, s *Session, line string) error {
 		}
 	})
 }
+
+// Lookup finds the first command the word is a prefix of, which is what the C
+// interpreter does — so the order of the table is player-visible muscle
+// memory and worth asserting from outside this package.
+func Lookup(word string) *Command { return lookup(word) }
 
 // lookup finds the first command the word is a prefix of, which is what the C
 // interpreter does.
@@ -182,6 +195,14 @@ func doLook(c *Context) error {
 
 	if exits := exitList(room); exits != "" {
 		c.Send("[ Exits: %s ]\r\n", exits)
+	}
+
+	for _, obj := range c.World.RoomObjects(room.Vnum) {
+		if obj.Description != "" {
+			c.Send("%s\r\n", obj.Description)
+			continue
+		}
+		c.Send("%s is lying here.\r\n", capitaliseFirst(obj.Name()))
 	}
 
 	for _, other := range c.World.Occupants(room.Vnum) {
