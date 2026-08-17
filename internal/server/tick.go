@@ -31,6 +31,7 @@ const (
 // Periodic returns the scheduled work for the engine.
 func (s *Server) Periodic() []engine.Periodic {
 	return []engine.Periodic{
+		{Name: "violence", Every: pulseViolence, Run: s.performViolence},
 		{Name: "point-update", Every: pulseTick, Run: s.pointUpdate},
 	}
 }
@@ -145,6 +146,7 @@ func (s *Server) die(w *game.Live, c *game.Character) {
 	}
 
 	w.MakeCorpse(c)
+	w.StopFighting(c)
 
 	if c.IsNPC() {
 		w.Remove(c)
