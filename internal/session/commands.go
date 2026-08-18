@@ -77,6 +77,9 @@ func init() {
 		{Name: "flee", Help: "Run away from a fight.", Run: doFlee},
 
 		{Name: "stand", Help: "Get to your feet.", Run: doStand},
+		// sip before sit is the C's order (interpreter.c:467 and :468), so
+		// `si` takes a drink and sitting down needs the whole word.
+		{Name: "sip", Help: "Take a small drink.", Run: doSip},
 		{Name: "sit", Help: "Sit down.", Run: doSit},
 		{Name: "rest", Help: "Rest, to recover faster.", Run: doRest},
 		{Name: "sleep", Help: "Sleep, to recover faster still.", Run: doSleep},
@@ -96,7 +99,11 @@ func init() {
 		{Name: "pick", Help: "Pick a lock.", Run: doPick},
 
 		{Name: "get", Help: "Pick something up.", Run: doGet},
+		// drink before drop, which is the C's order (interpreter.c:279 and
+		// :280) — so `dr` is drink and only `dro` is drop.
+		{Name: "drink", Help: "Drink from something.", Run: doDrink},
 		{Name: "drop", Help: "Put something down.", Run: doDrop},
+		{Name: "eat", Help: "Eat something.", Run: doEat},
 		{Name: "inventory", Help: "List what you are carrying.", Run: doInventory},
 		{Name: "equipment", Help: "List what you are wearing.", Run: doEquipment},
 		{Name: "wear", Help: "Put something on.", Run: doWear},
@@ -110,6 +117,8 @@ func init() {
 		{Name: "consider", Help: "Size somebody up.", Run: doConsider},
 		{Name: "time", Help: "Ask what time it is.", Run: doTime},
 		{Name: "weather", Help: "Ask what the weather is doing.", Run: doWeather},
+		{Name: "pour", Help: "Empty a container.", Run: doPour},
+		{Name: "taste", Help: "Take a small bite.", Run: doTaste},
 		{Name: "who", Help: "List who is playing.", Run: doWho},
 		{Name: "credits", Help: "Show the CircleMUD and DikuMUD credits.", Run: doCredits},
 		{Name: "help", Help: "Show this list, or help on a topic.", Run: doHelp},
