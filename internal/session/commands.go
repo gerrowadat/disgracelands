@@ -88,6 +88,11 @@ func init() {
 		{Name: "rescue", Help: "Take somebody else's fight onto yourself.", Run: doRescue},
 		{Name: "wake", Help: "Wake up, or wake somebody else.", Run: doWake},
 
+		// Before `pick`, `pour` and `practice`, which is the C's order
+		// (interpreter.c:396, :401, :408 and :411) and therefore what a bare
+		// `p` means: put.
+		{Name: "put", Help: "Put something into a container.", Run: doPut},
+
 		{Name: "practice", Help: "Practise a spell or skill, or list what you know.", Run: doPractice},
 		{Name: "score", Help: "Show your own statistics.", Run: doScore},
 		{Name: "exits", Help: "List the ways out.", Run: doExits},
@@ -99,6 +104,9 @@ func init() {
 		{Name: "pick", Help: "Pick a lock.", Run: doPick},
 
 		{Name: "get", Help: "Pick something up.", Run: doGet},
+		// After get, as in the C (interpreter.c:307 and :310), so `g` is get
+		// and giving needs `gi`.
+		{Name: "give", Help: "Give something to somebody.", Run: doGive},
 		// drink before drop, which is the C's order (interpreter.c:279 and
 		// :280) — so `dr` is drink and only `dro` is drop.
 		{Name: "drink", Help: "Drink from something.", Run: doDrink},

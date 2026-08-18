@@ -43,15 +43,15 @@ func TestOpeningAndClosingADoorMovesBothSides(t *testing.T) {
 	near, far := makeDoor(t, srv, game.ExitClosed, game.NoObject)
 
 	c.send("open gate")
-	c.expect("Ok.")
+	c.expect("Okay.")
 	if near.State.Has(game.ExitClosed) || far.State.Has(game.ExitClosed) {
 		t.Error("opening the gate left one side closed")
 	}
 
 	c.send("close gate")
-	// The second "Ok." — expect returns at once on the first, which is the
+	// The second "Okay." — expect returns at once on the first, which is the
 	// one the open command already produced.
-	c.expectCount("Ok.", 2)
+	c.expectCount("Okay.", 2)
 	if !near.State.Has(game.ExitClosed) || !far.State.Has(game.ExitClosed) {
 		t.Error("closing the gate left one side open")
 	}
@@ -68,13 +68,13 @@ func TestTheRoomBeyondIsTold(t *testing.T) {
 	makeDoor(t, srv, game.ExitClosed, testKeyVnum)
 
 	c.send("open gate")
-	c.expect("Ok.")
+	c.expect("Okay.")
 	if !watcherClient.said("The gate is opened from the other side.") {
 		t.Error("the room beyond was not told the gate opened")
 	}
 
 	c.send("close gate")
-	c.expectCount("Ok.", 2)
+	c.expectCount("Okay.", 2)
 	if !watcherClient.said("The gate is closed from the other side.") {
 		t.Error("the room beyond was not told the gate closed")
 	}
@@ -233,7 +233,7 @@ func TestAClosedDoorStopsAPlayer(t *testing.T) {
 	c.expect("The gate seems to be closed.")
 
 	c.send("open gate")
-	c.expect("Ok.")
+	c.expect("Okay.")
 	c.send("south")
 	c.expect("The Temple Of Midgaard")
 }
@@ -257,7 +257,7 @@ func TestANamelessDoorIsJustADoor(t *testing.T) {
 
 	// And it can still be opened by direction.
 	c.send("open south")
-	c.expect("Ok.")
+	c.expect("Okay.")
 }
 
 // TestOperatingSomethingThatIsNotADoor.
@@ -302,7 +302,7 @@ func TestAOneWayDoorHasOneSide(t *testing.T) {
 	}
 
 	c.send("open gate")
-	c.expect("Ok.")
+	c.expect("Okay.")
 
 	if !far.State.Has(game.ExitClosed) {
 		t.Error("opening one side of a one-way pair opened the other")

@@ -18,49 +18,8 @@ import (
 // to use $p as a shield" for a shield, "You grab $p" for something held.
 // Players know these by heart.
 
-func doGet(c *Context) error {
-	if c.Arg == "" {
-		c.Send("Get what?\r\n")
-		return nil
-	}
-
-	obj := findObject(c.World.RoomObjects(c.Character.Room), c.Arg)
-	if obj == nil {
-		c.Send("You don't see %s %s here.\r\n", article(c.Arg), c.Arg)
-		return nil
-	}
-	if !obj.Takeable() {
-		c.Send("%s: you can't take that!\r\n", capitaliseFirst(obj.Name()))
-		return nil
-	}
-	if reason := c.cannotCarry(obj); reason != "" {
-		c.Send("%s", reason)
-		return nil
-	}
-
-	c.World.ObjectToChar(obj, c.Character)
-	c.Send("You get %s.\r\n", obj.Name())
-	c.announce("%s gets %s.\r\n", c.Character.Name, obj.Name())
-	return nil
-}
-
-func doDrop(c *Context) error {
-	if c.Arg == "" {
-		c.Send("Drop what?\r\n")
-		return nil
-	}
-
-	obj := findObject(c.Character.Carrying, c.Arg)
-	if obj == nil {
-		c.Send("You don't seem to have %s %s.\r\n", article(c.Arg), c.Arg)
-		return nil
-	}
-
-	c.World.ObjectToRoom(obj, c.Character.Room)
-	c.Send("You drop %s.\r\n", obj.Name())
-	c.announce("%s drops %s.\r\n", c.Character.Name, obj.Name())
-	return nil
-}
+// get, drop, put and give live in carrying.go, which is the other half of
+// act.item.c.
 
 func doInventory(c *Context) error {
 	c.Send("You are carrying:\r\n")
@@ -174,29 +133,6 @@ func (c *Context) wearAt(obj *game.Object, pos game.WearPosition) error {
 	c.Send(wearMessages[pos][1]+"\r\n", obj.Name())
 	c.announce(wearMessages[pos][0]+"\r\n", c.Character.Name, obj.Name())
 	return nil
-}
-
-// cannotCarry reports why a character may not pick something up, or "".
-func (c *Context) cannotCarry(obj *game.Object) string {
-	rec := c.Character.Record
-	if rec == nil {
-		return ""
-	}
-
-	// CAN_CARRY_N: 5 + dex/2 + level/2 (utils.h:346). The C writes the
-	// halvings as `>> 1`, which is the same for the non-negative values this
-	// sees; see docs/weirdnumbers.md.
-	limit := 5 + rec.Abilities.Dexterity/2 + rec.Level/2
-	if int64(len(c.Character.Carrying)) >= int64(limit) {
-		return "You can't carry that many items.\r\n"
-	}
-
-	// CAN_CARRY_W: the strength table's carry weight.
-	weight := game.Strength(rec.Abilities.Strength, rec.Abilities.StrengthPercentile).CarryWeight
-	if c.Character.CarriedWeight()+obj.TotalWeight() > weight {
-		return "You can't carry that much weight.\r\n"
-	}
-	return ""
 }
 
 // announce tells the rest of the room.

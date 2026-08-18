@@ -254,3 +254,14 @@ Listed here so they are not mistaken for deliberate differences.
   or handles **rent** yet — the C's menu choice 1 calls `Crash_load` and
   reports lost items. Phase 5.
 - `look` does not yet show a character's description to anyone else. Phase 5.
+- **`N.thing` targeting is not implemented.** `get_number` splits a leading
+  `2.` off any argument and makes the search take the *second* match, in every
+  command that uses `generic_find`. `get 2 sword` (a count) works; `get
+  2.sword` (the second sword) currently reads the whole word as a keyword and
+  finds nothing. It belongs with the rest of `generic_find` rather than in any
+  one command.
+- **`junk` and `donate`** are the other two subcommands of `do_drop` and are
+  not ported. Both need somewhere to put things — the donation room, and the
+  gods' reward for junking — and neither exists yet.
+- **`fill` and `pour <x> into <y>`** are the other two subcommands of
+  `do_pour`; only emptying a container onto the ground is ported.

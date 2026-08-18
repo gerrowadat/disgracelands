@@ -80,6 +80,8 @@ const (
 	testRingVnum     game.ObjVnum = 101
 	testFountainVnum game.ObjVnum = 102
 	testKeyVnum      game.ObjVnum = 103
+	testBagVnum      game.ObjVnum = 104
+	testChestVnum    game.ObjVnum = 105
 )
 
 // testWorld is the two start rooms, joined so a character can walk between
@@ -112,6 +114,29 @@ func testWorld() *game.Live {
 			Type:        game.ItemKey,
 			WearFlags:   game.ItemWearTake,
 			Weight:      1,
+		},
+		{
+			// An open bag: capacity 100, no lock, and light enough that the
+			// capacity is what runs out rather than the carrying weight.
+			Vnum: testBagVnum, Keywords: "bag", ShortDesc: "a bag",
+			Description: "A bag is lying here.",
+			Type:        game.ItemContainer,
+			WearFlags:   game.ItemWearTake,
+			Weight:      2,
+			Values:      [game.NumObjValues]int32{100, 0, 0, 0},
+		},
+		{
+			// A closeable chest, closed and locked, opened by the small key.
+			Vnum: testChestVnum, Keywords: "chest", ShortDesc: "a wooden chest",
+			Description: "A wooden chest sits here.",
+			Type:        game.ItemContainer,
+			Weight:      50,
+			Values: [game.NumObjValues]int32{
+				200,
+				int32(game.ContCloseable | game.ContClosed | game.ContLocked),
+				int32(testKeyVnum),
+				0,
+			},
 		},
 		{
 			Vnum: testFountainVnum, Keywords: "fountain", ShortDesc: "a fountain",

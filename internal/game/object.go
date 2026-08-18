@@ -81,6 +81,36 @@ func ItemTypeByName(s string) (typ int32, rest string, ok bool) {
 	return 0, s, false
 }
 
+// Extra flags, from structs.h:368 — what an object *is*, as opposed to where
+// it can be worn.
+//
+// ItemNoDrop is the one with teeth: it is the curse flag, and it makes an
+// object refuse to leave your hands. ItemNoLocate is not stock CircleMUD at
+// all — it is a Disgracelands local mod, marked in the C by a `/*humbug*/`
+// comment on either side of it, and it hides an object from `locate object`.
+const (
+	ItemGlow          Flags = 1 << 0
+	ItemHum           Flags = 1 << 1
+	ItemNoRent        Flags = 1 << 2
+	ItemNoDonate      Flags = 1 << 3
+	ItemNoInvis       Flags = 1 << 4
+	ItemInvisible     Flags = 1 << 5
+	ItemMagic         Flags = 1 << 6
+	ItemNoDrop        Flags = 1 << 7
+	ItemBless         Flags = 1 << 8
+	ItemAntiGood      Flags = 1 << 9
+	ItemAntiEvil      Flags = 1 << 10
+	ItemAntiNeutral   Flags = 1 << 11
+	ItemAntiMagicUser Flags = 1 << 12
+	ItemAntiCleric    Flags = 1 << 13
+	ItemAntiThief     Flags = 1 << 14
+	ItemAntiWarrior   Flags = 1 << 15
+	ItemNoSell        Flags = 1 << 16
+	// ItemNoLocate is local: structs.h:388, between the two /*humbug*/
+	// markers.
+	ItemNoLocate Flags = 1 << 17
+)
+
 // Wear flags, from structs.h:352. ItemWearTake is the odd one out: it is not
 // a place to wear something, it is whether the object can be picked up at
 // all.

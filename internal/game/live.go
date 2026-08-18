@@ -183,6 +183,53 @@ func (c *Character) Level() int32 {
 	return c.Record.Level
 }
 
+// Sex is the character's sex, defaulting to neuter for anything without a
+// record — which is what the C's pronoun macros assume of an unset field.
+func (c *Character) Sex() int32 {
+	if c == nil || c.Record == nil {
+		return SexNeutral
+	}
+	return c.Record.Sex
+}
+
+// Subject, Possessive and Objective are the C's HSSH, HSHR and HMHR
+// (utils.h:416), which is how act() fills in $E, $S and $M.
+//
+// There are exactly three sexes in the data file and the macros are written as
+// nested ternaries against them, so anything that is not male or female is
+// "it" — including every object-shaped mobile in the game, which is the point.
+func (c *Character) Subject() string {
+	switch c.Sex() {
+	case SexMale:
+		return "he"
+	case SexFemale:
+		return "she"
+	}
+	return "it"
+}
+
+// Possessive is HSHR: his, her, its.
+func (c *Character) Possessive() string {
+	switch c.Sex() {
+	case SexMale:
+		return "his"
+	case SexFemale:
+		return "her"
+	}
+	return "its"
+}
+
+// Objective is HMHR: him, her, it.
+func (c *Character) Objective() string {
+	switch c.Sex() {
+	case SexMale:
+		return "him"
+	case SexFemale:
+		return "her"
+	}
+	return "it"
+}
+
 // Title is what follows their name in the who-list.
 func (c *Character) Title() string {
 	if c.Record == nil {
