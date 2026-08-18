@@ -1,0 +1,259 @@
+// Copyright (C) 2026 Dave O'Connor. Part of Disgracelands, a derivative work
+// of CircleMUD (Copyright (C) 1993-2001 Jeremy Elson, the Trustees of the
+// Johns Hopkins University and the CircleMUD Group), itself based on DikuMUD
+// (Copyright (C) 1990, 1991). Use of this file is governed by the CircleMUD
+// and DikuMUD licenses; see LICENSE. Non-commercial use only.
+
+package session
+
+import (
+	"github.com/gerrowadat/disgracelands/internal/game"
+)
+
+// doCast, porting do_cast (spell_parser.c).
+//
+// The order of the checks is the C's throughout, because each one has its own
+// message and a player learns which refusal means what. Silence first, then
+// the paladin's standing, then the spell name, then whether they know it,
+// then the target, then the mana, and only then the roll.
+func doCast(c *Context) error {
+	rec := c.Character.Record
+	if c.Character.IsNPC() || rec == nil {
+		return nil
+	}
+
+	if rec.AffectFlags.Has(game.AffectSilence) {
+		c.Send("You try, but the words simply fail you.\r\n")
+		return nil
+	}
+
+	// The paladin's standing. This can change the character — being cast out
+	// is permanent — so it runs before anything else could refuse the spell
+	// for a lesser reason.
+	if verdict := game.JudgePaladin(rec); !verdict.Allowed || verdict.Message != "" {
+		if verdict.Message != "" {
+			c.Send("%s", verdict.Message)
+		}
+		if verdict.Broadcast != "" {
+			c.broadcast("%s\r\n", verdict.Broadcast)
+		}
+		if !verdict.Allowed {
+			return nil
+		}
+	}
+
+	spellName, targetName, parseErr := game.ParseCastArgument(c.Arg)
+	if parseErr != "" {
+		c.Send("%s", parseErr)
+		return nil
+	}
+
+	number, ok := game.SpellNumberByName(spellName)
+	if !ok || number < 1 || number > game.MaxSpells {
+		c.Send("Cast what?!?\r\n")
+		return nil
+	}
+	info, ok := game.Spell(number)
+	if !ok {
+		c.Send("Cast what?!?\r\n")
+		return nil
+	}
+
+	// Any class they have ever been, not just the one they are — the local
+	// remort rule. See game.KnowsSpell.
+	if !game.KnowsSpell(rec, info) {
+		c.Send("You do not know that spell!\r\n")
+		return nil
+	}
+	if rec.Skills[number] == 0 {
+		c.Send("You are unfamiliar with that spell.\r\n")
+		return nil
+	}
+
+	victim, object, found := c.findSpellTarget(info, targetName)
+	if !found {
+		if targetName != "" {
+			c.Send("Cannot find the target of your spell!\r\n")
+		} else {
+			c.Send("%s", game.TargetQuestion(info))
+		}
+		return nil
+	}
+	if victim == c.Character && info.Violent {
+		c.Send("You shouldn't cast that on yourself -- could be bad for your health!\r\n")
+		return nil
+	}
+
+	mana := game.ManaCost(info, rec.Level)
+	if mana > 0 && rec.Points.Mana < mana && rec.Level < game.LevelImmortal {
+		c.Send("You haven't the energy to cast that spell!\r\n")
+		return nil
+	}
+
+	// "You throws the dice and you takes your chances.. 101% is total
+	// failure", says the C. A skill of 100 still fails one time in 102.
+	if c.RNG.Number(0, 101) > rec.Skills[number] {
+		c.Send("You lost your concentration!\r\n")
+		if mana > 0 {
+			// Half the mana is spent anyway, which is what makes a low skill
+			// expensive rather than merely useless.
+			rec.Points.Mana = max(0, min(rec.Points.MaxMana, rec.Points.Mana-mana/2))
+		}
+		// A botched violent spell provokes the mobile it was aimed at.
+		if info.Violent && victim != nil && victim.IsNPC() {
+			c.World.SetFighting(victim, c.Character)
+		}
+		return nil
+	}
+
+	if c.castSpell(info, number, victim, object) && mana > 0 {
+		rec.Points.Mana = max(0, min(rec.Points.MaxMana, rec.Points.Mana-mana))
+	}
+	return nil
+}
+
+// findSpellTarget resolves what the spell is aimed at, porting the target
+// block of do_cast.
+//
+// The order the C tries things in is the order here: a named target is looked
+// for in the room, then the world, then the caster's inventory, then their
+// equipment, then the room's floor. With no name given it falls back to the
+// current fight and finally to the caster themselves — but only for a spell
+// that is not violent, which is why `cast 'armor'` works and `cast 'harm'`
+// asks who.
+func (c *Context) findSpellTarget(info game.SpellInfo, name string) (*game.Character, *game.Object, bool) {
+	if info.Targets.Has(game.TargetIgnore) {
+		return nil, nil, true
+	}
+
+	if name != "" {
+		if info.Targets.Has(game.TargetCharRoom) {
+			if victim := c.World.FindInRoom(c.Character.Room, name); victim != nil {
+				return victim, nil, true
+			}
+		}
+		if info.Targets.Has(game.TargetCharWorld) {
+			if victim := c.World.Find(name); victim != nil {
+				return victim, nil, true
+			}
+		}
+		if info.Targets.Has(game.TargetObjInv) {
+			if obj := findObject(c.Character.Carrying, name); obj != nil {
+				return nil, obj, true
+			}
+		}
+		if info.Targets.Has(game.TargetObjEquip) {
+			for _, obj := range c.Character.Equipment {
+				if obj != nil && obj.Matches(name) {
+					return nil, obj, true
+				}
+			}
+		}
+		if info.Targets.Has(game.TargetObjRoom) {
+			if obj := findObject(c.World.RoomObjects(c.Character.Room), name); obj != nil {
+				return nil, obj, true
+			}
+		}
+		return nil, nil, false
+	}
+
+	if info.Targets.Has(game.TargetFightSelf) && c.Character.Fighting != nil {
+		return c.Character, nil, true
+	}
+	if info.Targets.Has(game.TargetFightVict) && c.Character.Fighting != nil {
+		return c.Character.Fighting, nil, true
+	}
+	if info.Targets.Has(game.TargetCharRoom) && !info.Violent {
+		return c.Character, nil, true
+	}
+	return nil, nil, false
+}
+
+// broadcast tells the whole game, which is what send_to_all_color does.
+func (c *Context) broadcast(format string, args ...any) {
+	for _, other := range c.World.Players() {
+		other.Tell(format, args...)
+	}
+}
+
+// castSpell runs the spell's routines, porting call_magic.
+//
+// Two of the ten routines are implemented: damage and points. A spell whose
+// routines are all unimplemented says so rather than silently doing nothing
+// and charging for it — a player who cannot tell "this spell has no effect"
+// from "this spell is not written yet" cannot report a bug.
+func (c *Context) castSpell(info game.SpellInfo, number int32, victim *game.Character, object *game.Object) bool {
+	rec := c.Character.Record
+	level := rec.Level
+
+	var did bool
+
+	if info.Routines.Has(game.MagDamage) && victim != nil {
+		did = true
+		c.spellDamage(info, number, victim, level)
+	}
+
+	if info.Routines.Has(game.MagPoints) && victim != nil {
+		did = true
+		healing := game.SpellHealing(number, victim.Record, level, c.RNG)
+		if victim.Record != nil {
+			victim.Record.Points.Hit = min(
+				victim.Record.Points.MaxHit,
+				victim.Record.Points.Hit+healing.Amount)
+			victim.Position = game.UpdatePosition(victim.Record, victim.Position)
+		}
+		if healing.Message != "" {
+			victim.Tell("%s", healing.Message)
+		}
+	}
+
+	if !did {
+		// Named so the player knows the spell exists and this server has not
+		// finished it, rather than wondering whether they missed.
+		c.Send("Nothing seems to happen. (%s is not implemented yet.)\r\n", info.Name)
+		return false
+	}
+
+	_ = object
+	return true
+}
+
+// spellDamage applies a damage spell, including the two dispels that can turn
+// on the caster.
+func (c *Context) spellDamage(info game.SpellInfo, number int32, victim *game.Character, level int32) {
+	rec := c.Character.Record
+
+	target := victim
+	var damage int32
+
+	switch number {
+	case game.SpellDispelEvil, game.SpellDispelGood:
+		result := game.Dispel(number, rec, victim.Record, c.RNG)
+		if result.Protected {
+			c.Send("The gods protect %s.\r\n", victim.Name)
+			return
+		}
+		if result.Backfired {
+			target = c.Character
+		}
+		damage = result.Damage
+	default:
+		damage = game.SpellDamage(number, rec, victim.Record, level, c.RNG)
+	}
+
+	if target.Record == nil {
+		return
+	}
+
+	target.Record.Points.Hit -= damage
+	c.Send("You blast %s with %s. [%d]\r\n", target.Name, info.Name, damage)
+	target.Tell("%s blasts you with %s. [%d]\r\n", c.Character.Name, info.Name, damage)
+
+	target.Position = game.UpdatePosition(target.Record, target.Position)
+
+	// A violent spell starts a fight, as damage() does.
+	if info.Violent && target != c.Character && target.Fighting == nil &&
+		target.Position > game.PosStunned {
+		c.World.SetFighting(target, c.Character)
+	}
+}

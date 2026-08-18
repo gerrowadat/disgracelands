@@ -67,6 +67,7 @@ func init() {
 
 		{Name: "look", Help: "Look at the room around you.", Run: doLook},
 		{Name: "kill", Help: "Attack someone.", Run: doKill},
+		{Name: "cast", Help: "Cast a spell: cast 'magic missile' <target>.", Run: doCast},
 		{Name: "flee", Help: "Run away from a fight.", Run: doFlee},
 
 		{Name: "stand", Help: "Get to your feet.", Run: doStand},
