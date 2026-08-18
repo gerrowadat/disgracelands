@@ -247,6 +247,16 @@ func (l *Live) Enter(c *Character, room RoomVnum) error {
 	c.Room = room
 	l.occupants[room] = append(l.occupants[room], c)
 	l.byName[strings.ToLower(c.Name)] = c
+
+	// Entering the world is where a record and a body meet, so it is where
+	// the record learns where its equipment is and what it is. Nothing is
+	// recomputed here: the C does not total affects on entering a room
+	// either, and doing it would rebuild a character from real values that a
+	// caller may not have filled in yet.
+	c.bindEquipment()
+	if c.Record != nil {
+		c.Record.Mobile = c.NPC
+	}
 	return nil
 }
 

@@ -169,15 +169,40 @@ func TestAccumulatingModifiers(t *testing.T) {
 	}
 }
 
-// TestAbilitiesAreClampedAtTwentyFive, which is what stops repeated strength
-// spells running away.
-func TestAbilitiesAreClampedAtTwentyFive(t *testing.T) {
+// TestAbilitiesAreClamped, which is what stops repeated strength spells
+// running away.
+//
+// A player's ceiling is 18, not 25, and the overflow above it goes into the
+// strength percentile rather than being thrown away — so twenty castings of
+// strength leave a character at 18/100 rather than at 58. A mobile's ceiling
+// is 25 and has no percentile at all.
+func TestAbilitiesAreClamped(t *testing.T) {
 	rec := affectedCharacter()
 	for i := 0; i < 20; i++ {
 		AddAffect(rec, Affect{Type: SpellStrength, Location: ApplyStr, Modifier: 2, Duration: 14})
 	}
+	if rec.Abilities.Strength != 18 || rec.Abilities.StrengthPercentile != 100 {
+		t.Errorf("strength is %d/%d, want 18/100",
+			rec.Abilities.Strength, rec.Abilities.StrengthPercentile)
+	}
+
+	// Intelligence has no percentile, so it simply stops at 18.
+	rec = affectedCharacter()
+	for i := 0; i < 20; i++ {
+		AddAffect(rec, Affect{Type: SpellArmor, Location: ApplyInt, Modifier: 2, Duration: 14})
+	}
+	if rec.Abilities.Intelligence != 18 {
+		t.Errorf("intelligence is %d, want 18", rec.Abilities.Intelligence)
+	}
+
+	// A mobile stops at 25.
+	rec = affectedCharacter()
+	rec.Mobile = true
+	for i := 0; i < 20; i++ {
+		AddAffect(rec, Affect{Type: SpellStrength, Location: ApplyStr, Modifier: 2, Duration: 14})
+	}
 	if rec.Abilities.Strength != 25 {
-		t.Errorf("strength is %d, want it clamped to 25", rec.Abilities.Strength)
+		t.Errorf("a mobile's strength is %d, want 25", rec.Abilities.Strength)
 	}
 }
 

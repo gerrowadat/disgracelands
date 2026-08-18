@@ -77,6 +77,21 @@ type PlayerRecord struct {
 	// them — a mobile's from its prototype, a player's usually none.
 	BaseAffectFlags Flags
 
+	// Worn points at the equipment of the character this record belongs to,
+	// and is nil for a record that is not in the world. Not saved.
+	//
+	// affect_total reads a character's equipment, and every path that
+	// recomputes — a spell landing, an affect wearing off, a shield going
+	// on — has to see the same equipment or the totals disagree. The C gets
+	// this for free because it works from the character; here the record
+	// needs a way back.
+	Worn *[NumWears]*Object
+	// Mobile marks a mobile's record. The C tests IS_NPC, which is a bit in
+	// the same flags field as everything else; here the distinction is
+	// explicit because the two are clamped differently — see
+	// RecomputeAffects.
+	Mobile bool
+
 	Alignment int32
 	// IDNum is the character's permanent identity, referenced by mail,
 	// houses and follower lists.
