@@ -76,6 +76,7 @@ func init() {
 		{Name: "sleep", Help: "Sleep, to recover faster still.", Run: doSleep},
 		{Name: "wake", Help: "Wake up, or wake somebody else.", Run: doWake},
 
+		{Name: "practice", Help: "Practise a spell or skill, or list what you know.", Run: doPractice},
 		{Name: "score", Help: "Show your own statistics.", Run: doScore},
 		{Name: "exits", Help: "List the ways out.", Run: doExits},
 

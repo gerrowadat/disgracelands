@@ -85,6 +85,21 @@ are fidelity, not deviation, and they live in the tests that assert them.
 | **Why** | Integer division. The comment has been wrong since 1993 and the code is what players experienced. Reproduced, and asserted against the C so nobody implements the comment by mistake. |
 | **Where** | `Attack` in `internal/game/fight.go`, `TestThePositionMultiplierIsIntegerDivision`. |
 
+### `practice` is a command, not a guildmaster
+
+| | |
+|---|---|
+| **C** | `practice` is a special procedure on guildmaster mobiles (`SPECIAL(guild)`, spec_procs.c). You must be standing in your own guild, in front of the right mobile, and the guild guards keep the wrong classes out. |
+| **Go** | An ordinary command that works anywhere. |
+| **Why** | Special procedures need the scripting seam (plan §8), which does not exist yet. Without practice a character cannot raise a skill, and without a skill `do_cast` refuses every spell at zero per cent — so no character could cast anything at all. A command that works everywhere is a deviation; a game where nobody can learn a spell is not a game. **This moves back to the guildmasters when specprocs arrive**, and is listed here so it is not forgotten. |
+| **Where** | `internal/session/practice.go`. |
+
+### `practice` and its own listing disagree about remorting
+
+Not a deviation — reproduced — but startling enough to note. `list_skills` was rewritten locally to walk the remort vector, so it shows every spell any of your classes knows. `SPECIAL(guild)` was not, and still checks `spell_info[n].min_level[GET_CLASS(ch)]`.
+
+So a remorted character can **see** a spell in their practice list and be told *"You do not know of that spell"* when they try to practise it. Both halves are the C's, and both are here.
+
 ### Names are refused with a reason
 
 | | |
