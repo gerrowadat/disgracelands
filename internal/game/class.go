@@ -202,6 +202,17 @@ var StartingConditions = [3]int32{0, 24, 24}
 // baseMaxHit is what do_start sets before the first advance_level.
 const baseMaxHit int32 = 10
 
+// Skill numbers, from spells.h. Only the ones something already reads are
+// named; the full table arrives with the spell system.
+const (
+	SkillBackstab int32 = 131
+	SkillSneak    int32 = 132
+	SkillHide     int32 = 133
+	SkillSteal    int32 = 134
+	SkillPickLock int32 = 135
+	SkillTrack    int32 = 139
+)
+
 // StartingSkills are the skills a class begins knowing, from do_start.
 // Only the thief has any; the numbers are the C's.
 func StartingSkills(class int32) map[int32]int32 {
@@ -213,12 +224,12 @@ func StartingSkills(class int32) map[int32]int32 {
 	// then the numbers carry their names in this comment rather than being
 	// invented elsewhere.
 	return map[int32]int32{
-		132: 10, // sneak
-		133: 5,  // hide
-		134: 15, // steal
-		131: 10, // backstab
-		135: 10, // pick lock
-		139: 10, // track
+		SkillSneak:    10,
+		SkillHide:     5,
+		SkillSteal:    15,
+		SkillBackstab: 10,
+		SkillPickLock: 10,
+		SkillTrack:    10,
 	}
 }
 

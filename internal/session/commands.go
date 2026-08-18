@@ -78,6 +78,12 @@ func init() {
 		{Name: "score", Help: "Show your own statistics.", Run: doScore},
 		{Name: "exits", Help: "List the ways out.", Run: doExits},
 
+		{Name: "open", Help: "Open a door.", Run: doOpen},
+		{Name: "close", Help: "Close a door.", Run: doClose},
+		{Name: "lock", Help: "Lock a door.", Run: doLock},
+		{Name: "unlock", Help: "Unlock a door.", Run: doUnlock},
+		{Name: "pick", Help: "Pick a lock.", Run: doPick},
+
 		{Name: "get", Help: "Pick something up.", Run: doGet},
 		{Name: "drop", Help: "Put something down.", Run: doDrop},
 		{Name: "inventory", Help: "List what you are carrying.", Run: doInventory},
@@ -291,6 +297,17 @@ func move(dir game.Direction) func(*Context) error {
 		exit := c.World.Exit(c.Character.Room, dir)
 		if exit == nil || exit.ToRoom == game.NoRoom {
 			c.Send("Alas, you cannot go that way...\r\n")
+			return nil
+		}
+		// A closed door stops a player, as it already stopped a mobile. The
+		// C names the door if it has a keyword, which is how a player knows
+		// what to open.
+		if exit.State.Has(game.ExitClosed) {
+			if name := doorName(exit); name != "door" {
+				c.Send("The %s seems to be closed.\r\n", name)
+			} else {
+				c.Send("It seems to be closed.\r\n")
+			}
 			return nil
 		}
 		if c.World.Room(exit.ToRoom) == nil {
