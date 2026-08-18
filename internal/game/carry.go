@@ -230,6 +230,9 @@ func removeObject(list []*Object, o *Object) []*Object {
 	return list
 }
 
+// MatchesAnyKeyword is matchesKeywords for callers outside this package.
+func MatchesAnyKeyword(keywords, word string) bool { return matchesKeywords(keywords, word) }
+
 // matchesKeywords reports whether word names something with these keywords,
 // porting isname() (handler.c).
 //

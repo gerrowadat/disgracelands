@@ -79,6 +79,7 @@ const (
 	testSwordVnum    game.ObjVnum = 100
 	testRingVnum     game.ObjVnum = 101
 	testFountainVnum game.ObjVnum = 102
+	testKeyVnum      game.ObjVnum = 103
 )
 
 // testWorld is the two start rooms, joined so a character can walk between
@@ -103,6 +104,13 @@ func testWorld() *game.Live {
 			Description: "A gold ring is lying here.",
 			Type:        game.ItemArmor,
 			WearFlags:   game.ItemWearTake | game.ItemWearFinger,
+			Weight:      1,
+		},
+		{
+			Vnum: testKeyVnum, Keywords: "key small", ShortDesc: "a small key",
+			Description: "A small key is lying here.",
+			Type:        game.ItemKey,
+			WearFlags:   game.ItemWearTake,
 			Weight:      1,
 		},
 		{

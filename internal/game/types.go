@@ -16,6 +16,8 @@
 // for values that exist purely in memory.
 package game
 
+import "strings"
+
 // Virtual numbers are the identifiers builders use and the world files
 // contain. They are stable across reboots and are what a `goto 3001` refers
 // to.
@@ -75,6 +77,32 @@ func (d Direction) String() string {
 
 // Valid reports whether d is a real direction.
 func (d Direction) Valid() bool { return d >= 0 && int(d) < NumDirections }
+
+// reverseDirections is rev_dir (constants.c:734): north is south's opposite,
+// up is down's, and so on.
+var reverseDirections = [NumDirections]Direction{2, 3, 0, 1, 5, 4}
+
+// Reverse returns the direction back the way you came.
+func (d Direction) Reverse() Direction {
+	if !d.Valid() {
+		return d
+	}
+	return reverseDirections[d]
+}
+
+// ParseDirection reads a direction name or any prefix of one.
+func ParseDirection(word string) (Direction, bool) {
+	word = strings.ToLower(strings.TrimSpace(word))
+	if word == "" {
+		return 0, false
+	}
+	for d := Direction(0); d < NumDirections; d++ {
+		if strings.HasPrefix(d.String(), word) {
+			return d, true
+		}
+	}
+	return 0, false
+}
 
 // DirectionFromInt converts a scanned number to a Direction, reporting
 // whether it is in range. Direction is an int8, so converting an arbitrary
