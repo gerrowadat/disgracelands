@@ -248,6 +248,11 @@ func TestMovementAbbreviationsStillWin(t *testing.T) {
 		// belongs to `reply` in the C and will move when that lands, which is
 		// why it is not asserted here.
 		"res": "rest", "rem": "remove",
+		// The C's order among these: backstab before bash (interpreter.c:235
+		// and :238), kill before kick (:351 and :352), rest before rescue
+		// (:426 and :441).
+		"ba": "backstab", "bas": "bash", "ki": "kill",
+		"kic": "kick", "resc": "rescue",
 		"st": "stand", "si": "sit", "sl": "sleep", "wak": "wake",
 	} {
 		cmd := session.Lookup(word)

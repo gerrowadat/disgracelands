@@ -8,11 +8,13 @@ package server
 
 import (
 	"bytes"
+	"context"
 	"net"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/gerrowadat/disgracelands/internal/game"
 	"github.com/gerrowadat/disgracelands/internal/telnet"
 )
 
@@ -248,4 +250,18 @@ func (c *client) menuEnter() {
 	c.expect("Make your choice:")
 	c.send("1")
 	c.expect("> ")
+}
+
+// inWorld runs a function on the world goroutine.
+//
+// Every test that inspects a character's hit points, position, fight or wait
+// state must go through this. Those fields are written by the violence pulse,
+// the mobile-activity pulse and the mud-hour tick, all of which run on the
+// world goroutine — reading them from the test goroutine is a data race, and
+// the detector finds it intermittently rather than reliably, which is worse.
+func inWorld(t *testing.T, srv *Server, f func(w *game.Live)) {
+	t.Helper()
+	if err := srv.engine.DoSync(context.Background(), f); err != nil {
+		t.Fatalf("running on the world goroutine: %v", err)
+	}
 }
