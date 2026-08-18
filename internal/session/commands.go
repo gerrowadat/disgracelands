@@ -102,6 +102,14 @@ func init() {
 		{Name: "wear", Help: "Put something on.", Run: doWear},
 		{Name: "wield", Help: "Take a weapon in hand.", Run: doWield},
 		{Name: "remove", Help: "Take something off.", Run: doRemove},
+
+		// After `exits`, `close` and `wear`, which is the C's order — so `ex`
+		// is exits, `co` is close and `wea` is wear, and only the longer
+		// forms reach these.
+		{Name: "examine", Help: "Look closely at something.", Run: doExamine},
+		{Name: "consider", Help: "Size somebody up.", Run: doConsider},
+		{Name: "time", Help: "Ask what time it is.", Run: doTime},
+		{Name: "weather", Help: "Ask what the weather is doing.", Run: doWeather},
 		{Name: "who", Help: "List who is playing.", Run: doWho},
 		{Name: "credits", Help: "Show the CircleMUD and DikuMUD credits.", Run: doCredits},
 		{Name: "help", Help: "Show this list, or help on a topic.", Run: doHelp},
@@ -245,6 +253,15 @@ func prompt(s *Session) string {
 }
 
 func doLook(c *Context) error {
+	// `look <something>` describes one thing; bare `look` describes the room.
+	if arg := strings.TrimSpace(c.Arg); arg != "" {
+		// `look in <container>` and `look at <thing>` are both the C's, and
+		// both mean "describe that".
+		arg = strings.TrimPrefix(arg, "at ")
+		arg = strings.TrimPrefix(arg, "in ")
+		return c.lookAtTarget(arg)
+	}
+
 	room := c.World.Room(c.Character.Room)
 	if room == nil {
 		c.Send("You are nowhere at all. That should not be possible.\r\n")

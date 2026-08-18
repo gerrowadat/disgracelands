@@ -253,6 +253,12 @@ func TestMovementAbbreviationsStillWin(t *testing.T) {
 		// (:426 and :441).
 		"ba": "backstab", "bas": "bash", "ki": "kill",
 		"kic": "kick", "resc": "rescue",
+		// exits before examine (interpreter.c:290 and :291) and wear before
+		// weather (:538 and :539), so the short forms stay with the older
+		// commands. `co` reaches consider because "close" is spelled with an
+		// l — `cl` is the one that opens doors.
+		"exa": "examine", "co": "consider", "cl": "close",
+		"weat": "weather", "ti": "time",
 		"st": "stand", "si": "sit", "sl": "sleep", "wak": "wake",
 	} {
 		cmd := session.Lookup(word)

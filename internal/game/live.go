@@ -44,12 +44,19 @@ type Live struct {
 	fighting     map[*Character]bool
 	nextFightSeq uint64
 
+	// booted is when the world came up. Mud time is measured from it, as the
+	// C measures from the boot time it writes to lib/etc/time.
+	booted time.Time
+
 	// mobileDefs indexes the mobile prototypes by vnum.
 	mobileDefs map[MobVnum]*MobDef
 	// mobiles is every mobile instance in the world, which is what the zone
 	// population caps are counted against.
 	mobiles map[*Character]bool
 }
+
+// MudTime is the current moment on the mud calendar.
+func (l *Live) MudTime() MudTime { return TimePassed(time.Since(l.booted)) }
 
 // ObjectDef returns an object prototype, or nil.
 func (l *Live) ObjectDef(v ObjVnum) *ObjDef { return l.objectDefs[v] }
@@ -64,6 +71,7 @@ func NewLive(defs *World) *Live {
 		objectDefs:  make(map[ObjVnum]*ObjDef, len(defs.Objects)),
 		mobileDefs:  make(map[MobVnum]*MobDef, len(defs.Mobiles)),
 		mobiles:     make(map[*Character]bool),
+		booted:      time.Now(),
 		objects:     make(map[uint64]*Object),
 		roomObjects: make(map[RoomVnum][]*Object),
 	}
