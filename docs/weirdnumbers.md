@@ -399,6 +399,57 @@ wrong on their own.
 *Reproduced*, and reported by `dlctl world lint` as a note rather than a
 warning, since it is intended.
 
+### A container's capacity includes the container
+
+A container's weight field is maintained cumulatively: `obj_to_obj` walks up
+the chain adding the new object's weight to every container above it, so
+`GET_OBJ_WEIGHT(bag)` is the bag *plus* everything in it. `perform_put` then
+tests
+
+```c
+if (GET_OBJ_WEIGHT(cont) + GET_OBJ_WEIGHT(obj) > GET_OBJ_VAL(cont, 0))
+```
+
+— so the bag's own weight is charged against the bag's own capacity. A bag
+declared as weighing 5 with a capacity of 100 holds 95, and a heavy chest
+holds far less than its number says. Builders compensated by inflating the
+capacity, which means correcting the arithmetic would silently make every
+container in the world bigger.
+
+*Reproduced.* `Object.TotalWeight` is recursive rather than cumulative, which
+gives the same answer without the C's habit of leaving a container's weight
+wrong after a botched `obj_from_obj`.
+
+### Which checks apply depends on where the object was
+
+`perform_get_from_container` reads:
+
+```c
+if (mode == FIND_OBJ_INV || can_take_obj(ch, obj)) {
+```
+
+`mode` is where the *container* was found. Take something out of a bag on the
+floor and you are checked against the take flag, the item count and your
+carrying weight; take the same thing out of the same bag while holding it and
+only the item count is checked. So a no-take object can be carried anywhere in
+a bag, and a bag can hold more weight than its owner could ever lift — which
+is the arithmetic being consistent, since the weight was already theirs, and
+also how you carry an anvil.
+
+*Reproduced*, including the asymmetry.
+
+### A pile of coins never says how many
+
+`create_money` names a pile from `money_desc`'s fourteen-entry table, so 100
+coins and 200 are both "a small pile of gold coins". The count is revealed
+only by picking it up, when `get_check_money` destroys the object and prints
+"There were 150 coins." The thresholds are 1, 10, 20, 75, 200, 1000, 5000,
+10000, 20000, 75000, 150000, 250000, 500000, 1000000, and then a phrase for
+anything larger — which exists because somebody found out you could carry more
+than a million.
+
+*Verified* against the table in `handler.c`, both sides of every boundary.
+
 ---
 
 ## What to do about all this

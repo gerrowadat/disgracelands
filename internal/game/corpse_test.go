@@ -225,9 +225,14 @@ func TestMakeMoney(t *testing.T) {
 		t.Errorf("one coin on the floor is %q", one.Description)
 	}
 
+	// A pile is described, never counted: 250 coins and 900 are both "a pile
+	// of gold coins" until somebody picks them up.
 	many := l.MakeMoney(250)
-	if many.ShortDesc != "250 gold coins" {
+	if many.ShortDesc != "a pile of gold coins" {
 		t.Errorf("250 coins is %q", many.ShortDesc)
+	}
+	if many.Description != "A pile of gold coins is lying here." {
+		t.Errorf("250 coins on the floor is %q", many.Description)
 	}
 	if many.Values[0] != 250 {
 		t.Errorf("the pile holds %d, want 250", many.Values[0])

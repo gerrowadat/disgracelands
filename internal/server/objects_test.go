@@ -224,8 +224,10 @@ func TestCarryLimits(t *testing.T) {
 	}
 	c.expectCount("You get a long sword.", 34)
 
+	// The refusal names the object, because the C phrases it with act()'s $p:
+	// "A long sword: you can't carry that many items."
 	c.send("get sword")
-	c.expect("You can't carry that many items.")
+	c.expect("A long sword: you can't carry that many items.")
 }
 
 // TestMovementAbbreviationsStillWin. The command table matches the first
@@ -239,6 +241,10 @@ func TestMovementAbbreviationsStillWin(t *testing.T) {
 		"u": "up", "d": "down",
 
 		"g": "get", "i": "inventory", "eq": "equipment",
+		// get before give (interpreter.c:307 and :310), and put before pick,
+		// pour and practice (:396, :401, :408, :411) — so `g` is get and a
+		// bare `p` is put.
+		"gi": "give", "p": "put", "pu": "put",
 		"wea": "wear", "wie": "wield",
 		"l": "look", "k": "kill", "q": "quit",
 		"f": "flee", "sc": "score", "ex": "exits",

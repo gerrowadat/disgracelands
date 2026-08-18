@@ -53,12 +53,21 @@ func doUnlock(c *Context) error { return c.door(doorUnlock) }
 func doPick(c *Context) error   { return c.door(doorPick) }
 
 // door performs one of the five actions, porting do_gen_door.
+//
+// The C looks for an object before it looks for a door, so a container in the
+// room beats a door with the same keyword — and everything below is written
+// once for both, which is why closing a chest and closing a gate refuse in
+// exactly the same words.
 func (c *Context) door(action doorAction) error {
 	verb := doorVerbs[action]
 
 	if c.Arg == "" {
 		c.Send("%s what?\r\n", capitaliseFirst(verb))
 		return nil
+	}
+
+	if cont, _ := c.findContainer(firstWord(c.Arg)); cont != nil {
+		return c.containerDoor(cont, action)
 	}
 
 	dir, exit := c.findDoor(c.Arg)
@@ -108,6 +117,86 @@ func (c *Context) door(action doorAction) error {
 	return nil
 }
 
+// containerDoor is the same five actions applied to a container, which the C
+// reaches through the same function by way of the DOOR_IS_* macros.
+//
+// A container that is not closeable "can't be opened" rather than "isn't a
+// container", because the macro that decides answers one question for both:
+// DOOR_IS_OPENABLE is the container type *and* the closeable flag.
+func (c *Context) containerDoor(cont *game.Object, action doorAction) error {
+	verb := doorVerbs[action]
+
+	if !cont.IsContainer() || !cont.ContainerFlags().Has(game.ContCloseable) {
+		c.Send("You can't %s that!\r\n", verb)
+		return nil
+	}
+
+	needs := doorNeeds[action]
+	switch {
+	case needs.open && cont.ContainerClosed():
+		c.Send("But it's already closed!\r\n")
+		return nil
+	case needs.closed && !cont.ContainerClosed():
+		c.Send("But it's currently open!\r\n")
+		return nil
+	case needs.locked && !cont.ContainerLocked():
+		c.Send("Oh.. it wasn't locked, after all..\r\n")
+		return nil
+	case needs.unlocked && cont.ContainerLocked():
+		c.Send("It seems to be locked.\r\n")
+		return nil
+	}
+
+	if action == doorLock || action == doorUnlock {
+		if !c.hasKey(cont.ContainerKey()) && c.Character.Level() < game.LevelGod {
+			c.Send("You don't seem to have the proper key.\r\n")
+			return nil
+		}
+	}
+	if action == doorPick && !c.canPickContainer(cont) {
+		return nil
+	}
+
+	switch action {
+	case doorOpen:
+		cont.ClearContainerFlag(game.ContClosed)
+	case doorClose:
+		cont.SetContainerFlag(game.ContClosed)
+	case doorLock:
+		cont.SetContainerFlag(game.ContLocked)
+	case doorUnlock, doorPick:
+		cont.ClearContainerFlag(game.ContLocked)
+	}
+
+	switch action {
+	case doorPick:
+		c.Send("The lock quickly yields to your skills.\r\n")
+		c.announce("%s skillfully picks the lock on %s.\r\n", c.Character.Name, cont.Name())
+	case doorLock, doorUnlock:
+		c.Send("*Click*\r\n")
+		c.announce("%s %ss %s.\r\n", c.Character.Name, verb, cont.Name())
+	default:
+		c.Send("Okay.\r\n")
+		c.announce("%s %ss %s.\r\n", c.Character.Name, verb, cont.Name())
+	}
+	return nil
+}
+
+// canPickContainer is ok_pick against a container's lock.
+func (c *Context) canPickContainer(cont *game.Object) bool {
+	switch {
+	case cont.ContainerKey() == game.NoObject:
+		c.Send("Odd - you can't seem to find a keyhole.\r\n")
+	case cont.ContainerFlags().Has(game.ContPickproof):
+		c.Send("It resists your attempts to pick it.\r\n")
+	case c.RNG.Number(1, 101) > c.skill(game.SkillPickLock):
+		c.Send("You failed to pick the lock.\r\n")
+	default:
+		return true
+	}
+	return false
+}
+
 // applyDoor changes the door's state on both sides and says so.
 func (c *Context) applyDoor(dir game.Direction, exit *game.ExitDef, action doorAction) {
 	set := func(e *game.ExitDef) {
@@ -140,7 +229,8 @@ func (c *Context) applyDoor(dir game.Direction, exit *game.ExitDef, action doorA
 		c.Send("*Click*\r\n")
 		c.announce("%s %ss the %s.\r\n", c.Character.Name, doorVerbs[action], name)
 	default:
-		c.Send("Ok.\r\n")
+		// config.c:99: OK is "Okay.", not "Ok.".
+		c.Send("Okay.\r\n")
 		c.announce("%s %ss the %s.\r\n", c.Character.Name, doorVerbs[action], name)
 	}
 

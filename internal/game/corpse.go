@@ -18,10 +18,9 @@ const (
 	PlayerCorpseTime int32 = 10
 )
 
-// ItemNoDonate is ITEM_NODONATE (structs.h:373). Corpses carry it so that
-// nobody can drop one into the donation room and have it teleport somewhere
-// public with the contents still in it.
-const ItemNoDonate Flags = 1 << 3
+// Corpses carry ItemNoDonate (object.go) so that nobody can drop one into the
+// donation room and have it teleport somewhere public with the contents still
+// in it.
 
 // corpseIdentifier is what make_corpse puts in value 3 to mark a container as
 // a corpse. Value 0 is the capacity, deliberately zero: you cannot put things
@@ -30,7 +29,7 @@ const corpseIdentifier = 1
 
 // IsCorpse reports whether an object is one, porting IS_CORPSE.
 func IsCorpse(o *Object) bool {
-	return o != nil && o.Type == ItemContainer && o.Values[3] == corpseIdentifier
+	return o != nil && o.Type == ItemContainer && o.Values[containerCorpseValue] == corpseIdentifier
 }
 
 // MakeCorpse kills a character into a container, porting make_corpse.
@@ -49,8 +48,8 @@ func (l *Live) MakeCorpse(c *Character) *Object {
 	corpse.Type = ItemContainer
 	corpse.WearFlags = ItemWearTake
 	corpse.ExtraFlags = ItemNoDonate
-	corpse.Values[0] = 0 // capacity: nothing more goes in
-	corpse.Values[3] = corpseIdentifier
+	corpse.Values[containerCapacity] = 0 // capacity: nothing more goes in
+	corpse.Values[containerCorpseValue] = corpseIdentifier
 
 	corpse.Weight = c.CarriedWeight()
 	if c.Record != nil {
@@ -95,9 +94,12 @@ func (l *Live) MakeMoney(amount int32) *Object {
 		money.ShortDesc = "a gold coin"
 		money.Description = "One miserable gold coin is lying here."
 	default:
+		// The C never says how many coins a pile is: it names it from
+		// money_desc's table, so a hundred coins and a hundred and ninety
+		// both look like "a small pile of gold coins" until you pick them up.
 		money.Keywords = "coins gold"
-		money.ShortDesc = fmt.Sprintf("%d gold coins", amount)
-		money.Description = fmt.Sprintf("%d gold coins are lying here.", amount)
+		money.ShortDesc = MoneyDescription(amount)
+		money.Description = capitaliseFirst(MoneyDescription(amount)) + " is lying here."
 	}
 	return money
 }
