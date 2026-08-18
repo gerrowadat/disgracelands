@@ -259,7 +259,15 @@ func TestMovementAbbreviationsStillWin(t *testing.T) {
 		// l — `cl` is the one that opens doors.
 		"exa": "examine", "co": "consider", "cl": "close",
 		"weat": "weather", "ti": "time",
-		"st": "stand", "si": "sit", "sl": "sleep", "wak": "wake",
+		// drink before drop (interpreter.c:279 and :280). `ea` stays with
+		// east (:217, well before eat at :283), so eating needs the whole
+		// word.
+		"dr": "drink", "dro": "drop", "ea": "east", "eat": "eat",
+		// sip before sit (interpreter.c:467 and :468), so `si` sips and
+		// sitting down needs the whole word. `ta` belongs to `take` in the C
+		// and is not asserted until that exists.
+		"po": "pour", "si": "sip", "tas": "taste",
+		"st": "stand", "sit": "sit", "sl": "sleep", "wak": "wake",
 	} {
 		cmd := session.Lookup(word)
 		if cmd == nil {
