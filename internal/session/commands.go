@@ -117,6 +117,10 @@ func init() {
 		{Name: "wear", Help: "Put something on.", Run: doWear},
 		{Name: "wield", Help: "Take a weapon in hand.", Run: doWield},
 		{Name: "remove", Help: "Take something off.", Run: doRemove},
+		// `grab` and `hold` are one command in the C (interpreter.c:317 and
+		// :334). `gr` will belong to `group` when that lands (:316), which
+		// must go in ahead of this.
+		{Name: "grab", Help: "Take something in your hands.", Run: doGrab},
 
 		// After `exits`, `close` and `wear`, which is the C's order — so `ex`
 		// is exits, `co` is close and `wea` is wear, and only the longer
@@ -130,6 +134,10 @@ func init() {
 		{Name: "who", Help: "List who is playing.", Run: doWho},
 		{Name: "credits", Help: "Show the CircleMUD and DikuMUD credits.", Run: doCredits},
 		{Name: "help", Help: "Show this list, or help on a topic.", Run: doHelp},
+		// The other spelling of `grab`, and it goes after `help` because the
+		// C has it there (interpreter.c:328 and :334) — so `h` is help and
+		// holding something needs `ho`.
+		{Name: "hold", Help: "Take something in your hands.", Run: doGrab},
 		{Name: "quit", Help: "Leave the game.", Run: doQuit},
 	}
 }

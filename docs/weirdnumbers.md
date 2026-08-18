@@ -379,6 +379,56 @@ at all, and `nanny` refuses passwords longer than ten as though they would.
 
 *Deviation*: no maximum here, and a six-character minimum instead of three.
 
+### A player's abilities are clamped to 18, and an immortal's decay
+
+`affect_total` ends with
+
+```c
+i = (IS_NPC(ch) ? 25 : 18);
+GET_DEX(ch) = MAX(0, MIN(GET_DEX(ch), i));
+```
+
+— so a **player's** ceiling is 18 and a **mobile's** is 25. `init_char` gives
+an implementor 25 in everything, and the first time anything totals their
+affects — a spell landing, a shield going on — five of the six drop to 18 and
+never come back, because the real values are clamped along with the rest.
+
+Strength is the exception, and the exception is the interesting part: anything
+above 18 is *converted* rather than discarded, ten percentile points per
+point, capped at 100. Twenty castings of strength leave a character at 18/100
+rather than at 58.
+
+*Reproduced*, including the decay. `PlayerRecord.Mobile` carries the `IS_NPC`
+distinction, because the two ceilings are the only place a record needs to
+know.
+
+### Armour class and applies are two different mechanisms
+
+An `ITEM_ARMOR`'s value 0 is subtracted from the wearer's armour class by
+`equip_char` and added back by `unequip_char` — a lasting change to the
+character. The `A` lines on the same object are applies, and `affect_total`
+recomputes those from scratch. Nothing marks the difference in the file
+format; it is the object's *type* that decides which mechanism value 0 goes
+through.
+
+The multiplier on the armour half belongs to the slot, not the object:
+
+```c
+case WEAR_BODY: factor = 3; break;   /* 30% */
+case WEAR_HEAD: factor = 2; break;   /* 20% */
+case WEAR_LEGS: factor = 2; break;   /* 20% */
+default:        factor = 1; break;   /* all others 10% */
+```
+
+The comments say percentages because they were, before the whole armour-class
+scale was multiplied by ten and the divide-by-ten moved into
+`compute_armor_class`'s caller.
+
+*Reproduced.* The recompute is from stored real values rather than the C's
+subtract-then-add pass, which is the one place this port deliberately does not
+reproduce the *method* — the C's version drifts if anything changes between
+the two passes.
+
 ### Carry capacity uses shifts
 
 ```c

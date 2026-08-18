@@ -82,6 +82,8 @@ const (
 	testKeyVnum      game.ObjVnum = 103
 	testBagVnum      game.ObjVnum = 104
 	testChestVnum    game.ObjVnum = 105
+	testPlateVnum    game.ObjVnum = 106
+	testTorchVnum    game.ObjVnum = 107
 )
 
 // testWorld is the two start rooms, joined so a character can walk between
@@ -137,6 +139,26 @@ func testWorld() *game.Live {
 				int32(testKeyVnum),
 				0,
 			},
+		},
+		{
+			// Armour with an apply on it, so that wearing it changes two
+			// different things by two different mechanisms.
+			Vnum: testPlateVnum, Keywords: "plate mail", ShortDesc: "a suit of plate mail",
+			Description: "A suit of plate mail is lying here.",
+			Type:        game.ItemArmor,
+			WearFlags:   game.ItemWearTake | game.ItemWearBody,
+			Weight:      100,
+			Values:      [game.NumObjValues]int32{5},
+			Affects:     []game.ObjAffect{{Location: game.ApplyHitRoll, Modifier: 2}},
+		},
+		{
+			Vnum: testTorchVnum, Keywords: "torch", ShortDesc: "a torch",
+			Description: "A torch is lying here.",
+			Type:        game.ItemLight,
+			WearFlags:   game.ItemWearTake,
+			Weight:      2,
+			// Value 2 is how many hours of light are left.
+			Values: [game.NumObjValues]int32{0, 0, 24},
 		},
 		{
 			Vnum: testFountainVnum, Keywords: "fountain", ShortDesc: "a fountain",

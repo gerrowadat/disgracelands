@@ -187,6 +187,32 @@ mean reproducing a server whose every roll is the same number, so the
 degenerate seeds are mapped to 1. The C could only reach one at 03:14:07 UTC
 on 19 January 2038, or by being told to.
 
+### Affects are recomputed from stored real values, not subtracted and re-added
+
+`affect_total` (handler.c:209) walks the equipment and the affect list twice:
+once with `add = FALSE`, which *subtracts* every modifier, and once with
+`add = TRUE`, which adds them back. There is no record of the unaffected
+figures anywhere — the character's current numbers are the only copy, and the
+first pass is what recovers the base.
+
+That is correct only as long as nothing changes between the two passes, and
+things do: an affect expiring inside the same tick, an object whose applies
+were edited by an immortal, a spell that modifies the character it is being
+totalled for. Every such case leaves the character permanently a few points
+richer or poorer, and the C has no way to notice.
+
+Here the real values are stored (`RealArmor`, `RealHitRoll`, `RealAbilities`
+and the rest) and the totals are rebuilt from them. The result is identical
+whenever the C's version is correct, and correct where the C's is not. This is
+the only place the port deliberately reproduces the *outcome* of a C routine
+rather than its method, and it is here because the alternative is a class of
+bug that cannot be tested for.
+
+The one thing that still works the C's way is armour class from `ITEM_ARMOR`,
+because there it is not a recompute at all: `equip_char` changes the
+character's own figure and `unequip_char` changes it back. See
+`docs/weirdnumbers.md`.
+
 ### Three skill numbers were wrong, and are now right
 
 Not a deviation — a bug in this port, recorded because the shape of it is
