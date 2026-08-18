@@ -115,6 +115,8 @@ func InitChar(rec *PlayerRecord, r *rng.Rand, first bool) {
 	rec.Conditions = [3]int32{cond, cond, cond}
 
 	rec.LoadRoom = NoRoom
+
+	SnapshotReal(rec)
 }
 
 // classRemortMasks is pc_class_remort_masks (class.c:82): the bit each class

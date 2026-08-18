@@ -84,6 +84,13 @@ func (s *Server) pointUpdate(w *game.Live) {
 			}
 		}
 
+		// Affects age on the same tick, porting affect_update (limits.c).
+		for _, expired := range game.AgeAffects(rec) {
+			if expired.Message != "" {
+				c.Tell("%s\r\n", expired.Message)
+			}
+		}
+
 		ctx := regenContext{character: c, room: w.Room(c.Room)}
 
 		switch {
