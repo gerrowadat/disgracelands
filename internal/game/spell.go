@@ -968,3 +968,79 @@ var spellTable = map[int32]SpellInfo{
 		Routines:    0,
 	},
 }
+
+// Practice parameters, from prac_params (class.c:176). Indexed by class:
+// what counts as learned, the most and least a session teaches, and whether
+// the class calls them spells or skills.
+var practiceParams = map[int32]struct {
+	Learned int32
+	Max     int32
+	Min     int32
+	Noun    string
+}{
+	ClassMagicUser: {95, 100, 25, "spell"},
+	ClassCleric:    {95, 100, 25, "spell"},
+	ClassThief:     {85, 12, 0, "skill"},
+	ClassWarrior:   {80, 12, 0, "skill"},
+	ClassPaladin:   {90, 100, 25, "spell"},
+}
+
+// LearnedLevel is the percentage at which a class stops being able to
+// practise something. A thief tops out at 85 and a warrior at 80 — they
+// never become as sure of a skill as a mage does of a spell.
+func LearnedLevel(class int32) int32 {
+	if p, ok := practiceParams[class]; ok {
+		return p.Learned
+	}
+	return practiceParams[ClassWarrior].Learned
+}
+
+// PracticeNoun is "spell" or "skill", whichever the class calls them.
+func PracticeNoun(class int32) string {
+	if p, ok := practiceParams[class]; ok {
+		return p.Noun
+	}
+	return "skill"
+}
+
+// PracticeGain is how much one session teaches, porting the expression in
+// SPECIAL(guild).
+//
+// Intelligence drives it through int_app[].learn, bounded by the class's
+// minimum and maximum. A thief's maximum of 12 is the reason a thief
+// practises so many more times than a mage.
+func PracticeGain(rec *PlayerRecord) int32 {
+	p, ok := practiceParams[rec.Class]
+	if !ok {
+		p = practiceParams[ClassWarrior]
+	}
+	return min(p.Max, max(p.Min, LearnPercent(rec.Abilities.Intelligence)))
+}
+
+// HowGood describes a percentage the way the C does, porting how_good
+// (spec_procs.c).
+func HowGood(percent int32) string {
+	switch {
+	case percent < 0:
+		// The C's " error)" has an unbalanced bracket. Reproduced: a player
+		// who ever saw it would remember it.
+		return " error)"
+	case percent == 0:
+		return " (not learned)"
+	case percent <= 10:
+		return " (awful)"
+	case percent <= 20:
+		return " (bad)"
+	case percent <= 40:
+		return " (poor)"
+	case percent <= 55:
+		return " (average)"
+	case percent <= 70:
+		return " (fair)"
+	case percent <= 80:
+		return " (good)"
+	case percent <= 85:
+		return " (very good)"
+	}
+	return " (superb)"
+}

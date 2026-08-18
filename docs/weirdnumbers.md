@@ -328,6 +328,34 @@ routines. A skill is therefore a spell with no cost, no target and nothing to
 do — the table is a table of *things you can practise*, and the spells just
 happen to be the ones with behaviour attached.
 
+## Saving throws
+
+### Lower is better, and a bonus is negative
+
+The table value is a target the roll must come in under, so a level-1 mage
+needs 70 and a level-30 one needs 28. The character's own bonuses are added to
+that target, which means **a negative bonus is an improvement**. The C's
+comment apologises for it:
+
+> *"Negative apply_saving_throw[] values make saving throws better! Then, so do
+> negative modifiers. Though people may be used to the reverse of that."*
+
+### A perfect saving throw is not automatic
+
+```c
+if (MAX(1, save) < number(0, 99))
+```
+
+The floor of 1 means a target of zero — or of minus a thousand — still has to
+beat a roll, and `number(0, 99)` can return 0. So there is always about a one
+in a hundred chance of failing, however good the character.
+
+### Mobiles save as warriors
+
+`mag_savingthrow` starts `class_sav = CLASS_WARRIOR` and only overrides it for
+players, so a mobile's own class never affects its saves. The C's comment on
+this is *"NPCs use warrior tables according to some book"*.
+
 ## Storage and limits
 
 ### Flags are `unsigned long`, and the letter encoding breaks at bit 31

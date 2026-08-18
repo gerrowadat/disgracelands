@@ -237,8 +237,10 @@ func (c *Context) spellAffect(number int32, victim *game.Character) {
 	rec := c.Character.Record
 
 	// One saving throw per casting, rolled here so every spell that consults
-	// it sees the same answer.
-	saved := c.RNG.Number(1, 100) > 50
+	// it sees the same answer. Spell is the save type for everything
+	// mag_affects casts; the other four belong to breath weapons and the
+	// like.
+	saved := game.MakesSavingThrow(victim.Record, victim.IsNPC(), game.SaveSpell, 0, c.RNG)
 
 	result := game.AffectsOfSpell(number, rec, victim.Record,
 		victim.IsNPC(), victim.MobFlags(), rec.Level, saved, c.RNG)
