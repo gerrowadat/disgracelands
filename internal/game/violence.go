@@ -9,6 +9,7 @@ package game
 import (
 	"fmt"
 	"sort"
+	"time"
 )
 
 // Who is fighting whom, and what a kill is worth.
@@ -127,4 +128,67 @@ func ExperienceForKill(killer, victim *PlayerRecord, killerIsNPC, victimIsNPC bo
 		return 0, message
 	}
 	return exp, message
+}
+
+// Wait sets a character's lag, porting WAIT_STATE.
+//
+// The unit is combat rounds — PULSE_VIOLENCE — because that is what every
+// call site in the C counts in: `WAIT_STATE(ch, PULSE_VIOLENCE * 3)`.
+func (c *Character) Wait(rounds int32, roundLength time.Duration) {
+	if c == nil || rounds <= 0 {
+		return
+	}
+	until := time.Now().Add(time.Duration(rounds) * roundLength)
+	if until.After(c.BusyUntil) {
+		c.BusyUntil = until
+	}
+}
+
+// WaitRemaining is how long until they may act again.
+func (c *Character) WaitRemaining() time.Duration {
+	if c == nil {
+		return 0
+	}
+	return time.Until(c.BusyUntil)
+}
+
+// Weapon attack types, from spells.h. A weapon's fourth value is its type,
+// stored as an offset from TYPE_HIT — so a piercing weapon carries 11.
+const (
+	AttackHit      int32 = 0
+	AttackSting    int32 = 1
+	AttackWhip     int32 = 2
+	AttackSlash    int32 = 3
+	AttackBite     int32 = 4
+	AttackBludgeon int32 = 5
+	AttackCrush    int32 = 6
+	AttackPound    int32 = 7
+	AttackClaw     int32 = 8
+	AttackMaul     int32 = 9
+	AttackThrash   int32 = 10
+	AttackPierce   int32 = 11
+	AttackBlast    int32 = 12
+	AttackPunch    int32 = 13
+	AttackStab     int32 = 14
+)
+
+// BackstabMultiplier is backstab_mult (class.c), and the reason a thief is
+// worth having. It runs 2 through 6 across the mortal levels and then jumps
+// to 20 for an immortal — not 7, not a continuation of the curve.
+func BackstabMultiplier(level int32) int32 {
+	switch {
+	case level <= 0:
+		return 1
+	case level <= 7:
+		return 2
+	case level <= 13:
+		return 3
+	case level <= 20:
+		return 4
+	case level <= 28:
+		return 5
+	case level < LevelImmortal:
+		return 6
+	}
+	return 20
 }

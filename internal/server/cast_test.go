@@ -21,17 +21,20 @@ func TestCastingADamageSpell(t *testing.T) {
 	c.create("Zod", "swordfish", "m", "m")
 
 	dog := spawnDog(t, srv, ImmortStartRoom)
-	before := dog.Record.Points.Hit
+	var before int32
+	inWorld(t, srv, func(w *game.Live) { before = dog.Record.Points.Hit })
 
 	c.send("cast 'magic missile' dog")
 	c.expect("You blast a large dog with magic missile.")
 
-	if dog.Record.Points.Hit >= before {
-		t.Errorf("the dog is on %d hit points, was %d", dog.Record.Points.Hit, before)
-	}
-	if dog.Fighting == nil {
-		t.Error("a violent spell did not start a fight")
-	}
+	inWorld(t, srv, func(w *game.Live) {
+		if dog.Record.Points.Hit >= before {
+			t.Errorf("the dog is on %d hit points, was %d", dog.Record.Points.Hit, before)
+		}
+		if dog.Fighting == nil {
+			t.Error("a violent spell did not start a fight")
+		}
+	})
 }
 
 // TestCastingCostsMana, and a caster without enough is refused.
@@ -63,20 +66,20 @@ func TestCastingCostsMana(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	before := caster.Record.Points.Mana
+	var before int32
+	inWorld(t, srv, func(w *game.Live) { before = caster.Record.Points.Mana })
+
 	c.send("cast 'magic missile' dog")
 	c.expectAny("You blast", "lost your concentration")
 
-	if caster.Record.Points.Mana >= before {
-		t.Errorf("mana is %d, was %d — casting cost nothing", caster.Record.Points.Mana, before)
-	}
-
-	// Drained, they are refused.
-	if err := srv.engine.DoSync(context.Background(), func(w *game.Live) {
+	inWorld(t, srv, func(w *game.Live) {
+		if caster.Record.Points.Mana >= before {
+			t.Errorf("mana is %d, was %d — casting cost nothing",
+				caster.Record.Points.Mana, before)
+		}
+		// Drained, they are refused.
 		caster.Record.Points.Mana = 0
-	}); err != nil {
-		t.Fatal(err)
-	}
+	})
 	c.send("cast 'magic missile' dog")
 	c.expect("You haven't the energy to cast that spell!")
 }

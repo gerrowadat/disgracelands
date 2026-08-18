@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"time"
 )
 
 // Live is the running world: the loaded prototypes plus who is standing
@@ -124,6 +125,16 @@ type Character struct {
 	Keywords string
 	// MobDef is the prototype a mobile was made from, or nil for a player.
 	MobDef *MobDef
+	// BusyUntil is when they may act again — the C's WAIT_STATE, which sets
+	// ch->wait and stops game_loop reading that descriptor's input until it
+	// runs down. Skills set it: kicking costs three combat rounds of lag,
+	// bashing two.
+	//
+	// The C defers the queued command rather than refusing it, and so does
+	// this: the dispatcher waits rather than sending "you are still
+	// recovering", because a player who types `kick` twice expects two kicks,
+	// slowly.
+	BusyUntil time.Time
 	// Fighting is who they are attacking, or nil.
 	Fighting *Character
 	// fightSeq orders the combat round. Assigned when a fight starts, so a

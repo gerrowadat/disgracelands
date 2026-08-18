@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"runtime/debug"
 	"strings"
+	"time"
 
 	"github.com/gerrowadat/disgracelands/internal/game"
 	"github.com/gerrowadat/disgracelands/internal/rng"
@@ -67,6 +68,11 @@ func init() {
 
 		{Name: "look", Help: "Look at the room around you.", Run: doLook},
 		{Name: "kill", Help: "Attack someone.", Run: doKill},
+		{Name: "kick", Help: "Kick someone.", Run: doKick},
+		// backstab before bash, which is the C's order (interpreter.c:235 and
+		// :238) and therefore what `ba` means.
+		{Name: "backstab", Help: "Stab someone who is not looking.", Run: doBackstab},
+		{Name: "bash", Help: "Knock someone over.", Run: doBash},
 		{Name: "cast", Help: "Cast a spell: cast 'magic missile' <target>.", Run: doCast},
 		{Name: "flee", Help: "Run away from a fight.", Run: doFlee},
 
@@ -74,6 +80,9 @@ func init() {
 		{Name: "sit", Help: "Sit down.", Run: doSit},
 		{Name: "rest", Help: "Rest, to recover faster.", Run: doRest},
 		{Name: "sleep", Help: "Sleep, to recover faster still.", Run: doSleep},
+		// After rest, as in the C (interpreter.c:426 and :441), so `res` is
+		// still rest and only `resc` reaches rescue.
+		{Name: "rescue", Help: "Take somebody else's fight onto yourself.", Run: doRescue},
 		{Name: "wake", Help: "Wake up, or wake somebody else.", Run: doWake},
 
 		{Name: "practice", Help: "Practise a spell or skill, or list what you know.", Run: doPractice},
@@ -124,6 +133,21 @@ func (d *Dispatcher) Do(ctx context.Context, s *Session, line string) error {
 	if cmd == nil {
 		s.Send("Huh?!?\r\n%s", prompt(s))
 		return nil
+	}
+
+	// A character with a wait state does not act yet. The C stops reading
+	// that descriptor's input until the wait runs down, so the command is
+	// *delayed* rather than refused — a player who types `kick` twice gets
+	// two kicks, slowly. Sleeping here has the same effect, since this
+	// goroutine is the one reading their input.
+	if c := s.Character(); c != nil {
+		if remaining := c.WaitRemaining(); remaining > 0 {
+			select {
+			case <-time.After(remaining):
+			case <-ctx.Done():
+				return ctx.Err()
+			}
+		}
 	}
 
 	// The command itself runs on the world goroutine; everything it touches
