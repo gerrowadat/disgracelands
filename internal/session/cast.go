@@ -207,6 +207,20 @@ func (c *Context) castSpell(info game.SpellInfo, number int32, victim *game.Char
 		}
 	}
 
+	if info.Routines.Has(game.MagAffects) && victim != nil && victim.Record != nil {
+		did = true
+		c.spellAffect(number, victim)
+	}
+
+	if info.Routines.Has(game.MagUnaffects) && victim != nil && victim.Record != nil {
+		did = true
+		if game.RemoveAffectsOf(victim.Record, number) {
+			victim.Tell("You feel better.\r\n")
+		} else {
+			c.Send("%s", game.NoEffect)
+		}
+	}
+
 	if !did {
 		// Named so the player knows the spell exists and this server has not
 		// finished it, rather than wondering whether they missed.
@@ -216,6 +230,52 @@ func (c *Context) castSpell(info game.SpellInfo, number int32, victim *game.Char
 
 	_ = object
 	return true
+}
+
+// spellAffect applies an affect spell, porting the tail of mag_affects.
+func (c *Context) spellAffect(number int32, victim *game.Character) {
+	rec := c.Character.Record
+
+	// One saving throw per casting, rolled here so every spell that consults
+	// it sees the same answer.
+	saved := c.RNG.Number(1, 100) > 50
+
+	result := game.AffectsOfSpell(number, rec, victim.Record,
+		victim.IsNPC(), victim.MobFlags(), rec.Level, saved, c.RNG)
+
+	if result.Refused {
+		if result.RefusalToCaster != "" {
+			c.Send("%s", result.RefusalToCaster)
+		}
+		return
+	}
+	if !game.CanAffect(result, victim.Record, victim.IsNPC(), number) {
+		c.Send("%s", game.NoEffect)
+		return
+	}
+
+	game.ApplyAffectSpell(result, victim.Record)
+
+	if result.SleepsVictim && victim.Position > game.PosSleeping {
+		victim.Tell("You feel very sleepy...  Zzzz......\r\n")
+		for _, other := range c.World.Occupants(victim.Room) {
+			if other != victim {
+				other.Tell("%s goes to sleep.\r\n", victim.Name)
+			}
+		}
+		victim.Position = game.PosSleeping
+	}
+
+	if result.ToVictim != "" {
+		victim.Tell("%s\r\n", result.ToVictim)
+	}
+	if result.ToRoom != "" {
+		for _, other := range c.World.Occupants(victim.Room) {
+			if other != victim {
+				other.Tell(result.ToRoom+"\r\n", victim.Name)
+			}
+		}
+	}
 }
 
 // spellDamage applies a damage spell, including the two dispels that can turn

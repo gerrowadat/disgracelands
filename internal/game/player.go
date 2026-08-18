@@ -54,8 +54,28 @@ type PlayerRecord struct {
 	Weight int32
 	Height int32
 
-	Abilities Abilities
-	Points    Points
+	// Abilities are what the character currently has; RealAbilities what they
+	// rolled. The C keeps the same pair as aff_abils and real_abils, and the
+	// distinction is load-bearing: affect_total recomputes the first from the
+	// second every time an affect is added or removed, which is the only way
+	// to get the arithmetic right when they can come and go in any order.
+	Abilities     Abilities
+	RealAbilities Abilities
+
+	Points Points
+
+	// The unaffected values the same reset restores from. An affect adds to
+	// the live figure in Points; these are what it adds to.
+	RealArmor        int32
+	RealHitRoll      int32
+	RealDamRoll      int32
+	RealMaxHit       int32
+	RealMaxMana      int32
+	RealMaxMove      int32
+	RealSavingThrows [5]int32
+	// BaseAffectFlags are the flags a character has without any spell on
+	// them — a mobile's from its prototype, a player's usually none.
+	BaseAffectFlags Flags
 
 	Alignment int32
 	// IDNum is the character's permanent identity, referenced by mail,

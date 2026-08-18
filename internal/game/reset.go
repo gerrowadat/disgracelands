@@ -285,6 +285,11 @@ func (l *Live) SpawnMobile(vnum MobVnum, room RoomVnum, r *rng.Rand) *Character 
 		Dexterity: 11, Constitution: 11, Charisma: 11,
 	}
 
+	// A mobile's prototype flags are its unaffected state, so a spell that
+	// wears off leaves it as its file describes rather than as nothing.
+	SnapshotReal(rec)
+	RecomputeAffects(rec)
+
 	c := &Character{
 		// Name is what appears in a sentence; Keywords is what a player
 		// types. The C keeps these as short_descr and name respectively, and

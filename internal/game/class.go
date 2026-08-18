@@ -336,6 +336,10 @@ func Start(rec *PlayerRecord, r *rng.Rand) {
 	rec.Points.Mana = rec.Points.MaxMana
 	rec.Points.Move = rec.Points.MaxMove
 
+	// Everything set above is what this character has without any spell on
+	// them, which is what an affect adds to.
+	SnapshotReal(rec)
+
 	// After advance_level, not before: an immortal created at level one would
 	// otherwise have the -1s overwritten. The C has the same ordering.
 	rec.Conditions = StartingConditions
