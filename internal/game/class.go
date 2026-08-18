@@ -202,15 +202,24 @@ var StartingConditions = [3]int32{0, 24, 24}
 // baseMaxHit is what do_start sets before the first advance_level.
 const baseMaxHit int32 = 10
 
-// Skill numbers, from spells.h. Only the ones something already reads are
-// named; the full table arrives with the spell system.
+// Skill numbers, from spells.h:103.
+//
+// These are stored in every player record, so they are the file format and
+// not an enum. An earlier version of this file had three of them wrong —
+// sneak, steal and track were taken from a comment rather than from
+// spells.h, which put them on top of bash, kick and steal respectively. Read
+// the header, not the comment.
 const (
 	SkillBackstab int32 = 131
-	SkillSneak    int32 = 132
+	SkillBash     int32 = 132
 	SkillHide     int32 = 133
-	SkillSteal    int32 = 134
+	SkillKick     int32 = 134
 	SkillPickLock int32 = 135
-	SkillTrack    int32 = 139
+	// 136 is undefined in the C, and left so here.
+	SkillRescue int32 = 137
+	SkillSneak  int32 = 138
+	SkillSteal  int32 = 139
+	SkillTrack  int32 = 140
 )
 
 // StartingSkills are the skills a class begins knowing, from do_start.

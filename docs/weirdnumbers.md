@@ -296,6 +296,38 @@ returning zero forever, and is mapped to 1 here.
 
 ---
 
+## Spells
+
+### Mana cost is computed from the mage's and cleric's levels, whoever is casting
+
+```c
+return MAX(SINFO.mana_max - (SINFO.mana_change *
+        (GET_LEVEL(ch) - MIN(SINFO.min_level[0], SINFO.min_level[1]))),
+       SINFO.mana_min);
+```
+
+`min_level[0]` and `min_level[1]` are the magic-user's and cleric's learning
+levels, indexed by literal number. The caster's own class never enters into
+it — so a paladin's costs are worked out from what a mage and a cleric would
+have paid, and a spell no caster class learns is priced off `LVL_IMMORT`.
+
+Whether that is a shortcut or an oversight is unknowable now. It is
+reproduced.
+
+### A class absent from the level list is barred, not merely unlisted
+
+`spello()` fills every class's slot with `LVL_IMMORT` before
+`init_spell_levels()` lowers the ones it names. So "this class has no entry"
+and "this class cannot cast it below immortal level" are the same statement,
+and a port that defaults a missing entry to 1 hands every spell to everybody.
+
+### Skills live in the spell table with every number zero
+
+`skillo(skill, name)` is `spello()` with zeros for mana, position, targets and
+routines. A skill is therefore a spell with no cost, no target and nothing to
+do — the table is a table of *things you can practise*, and the spells just
+happen to be the ones with behaviour attached.
+
 ## Storage and limits
 
 ### Flags are `unsigned long`, and the letter encoding breaks at bit 31

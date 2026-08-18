@@ -168,7 +168,16 @@ func TestThievesStartWithTheirSkills(t *testing.T) {
 
 	rec := &PlayerRecord{Class: ClassThief}
 	Start(rec, r)
-	for skill, want := range map[int32]int32{131: 10, 132: 10, 133: 5, 134: 15, 135: 10, 139: 10} {
+	// Named rather than numbered, deliberately: writing the numbers out here
+	// is what let three of them be wrong in both the code and the test.
+	for skill, want := range map[int32]int32{
+		SkillBackstab: 10,
+		SkillSneak:    10,
+		SkillHide:     5,
+		SkillSteal:    15,
+		SkillPickLock: 10,
+		SkillTrack:    10,
+	} {
 		if got := rec.Skills[skill]; got != want {
 			t.Errorf("thief skill %d = %d, want %d", skill, got, want)
 		}

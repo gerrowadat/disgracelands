@@ -172,6 +172,22 @@ mean reproducing a server whose every roll is the same number, so the
 degenerate seeds are mapped to 1. The C could only reach one at 03:14:07 UTC
 on 19 January 2038, or by being told to.
 
+### Three skill numbers were wrong, and are now right
+
+Not a deviation — a bug in this port, recorded because the shape of it is
+worth remembering. `do_start` names six skills by symbolic constant, and this
+port took their numbers from the comment beside them rather than from
+`spells.h`. Three were wrong: sneak, steal and track were being written into
+bash's, kick's and steal's slots.
+
+Nothing caught it, because a skill number is just an integer and every value
+looked plausible. `TestSpellNumbersMatchTheHeader` now re-parses `spells.h`
+and compares, and `StartingSkills` uses named constants so the numbers appear
+in exactly one place.
+
+No saved character is affected: no player has ever practised on this server.
+Had one, the damage would have been silent and permanent.
+
 ### Ability tables are indexed with a bound
 
 `advance_level` indexes `con_app[]` and `wis_app[]` with the raw score
