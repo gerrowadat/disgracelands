@@ -91,7 +91,7 @@ are fidelity, not deviation, and they live in the tests that assert them.
 |---|---|
 | **C** | `practice` is a special procedure on guildmaster mobiles (`SPECIAL(guild)`, spec_procs.c). You must be standing in your own guild, in front of the right mobile, and the guild guards keep the wrong classes out. |
 | **Go** | An ordinary command that works anywhere. |
-| **Why** | Special procedures need the scripting seam (plan §8), which does not exist yet. Without practice a character cannot raise a skill, and without a skill `do_cast` refuses every spell at zero per cent — so no character could cast anything at all. A command that works everywhere is a deviation; a game where nobody can learn a spell is not a game. **This moves back to the guildmasters when specprocs arrive**, and is listed here so it is not forgotten. |
+| **Why** | Special procedures need the seam in plan §8, which does not exist yet. Without practice a character cannot raise a skill, and without a skill `do_cast` refuses every spell at zero per cent — so no character could cast anything at all. A command that works everywhere is a deviation; a game where nobody can learn a spell is not a game. **This moves back to the guildmasters in Phase 5a**, and is listed here so it is not forgotten. |
 | **Where** | `internal/session/practice.go`. |
 
 ### `practice` and its own listing disagree about remorting
@@ -176,8 +176,9 @@ someone reading the two servers side by side will notice them.
 ### The random number generator, and one thing it does not reproduce
 
 The C's generator (random.c) is ported exactly and verified against it —
-`internal/rng` matches 30,000 draws per seed and reproduces `number()`'s
-modulo bias across every range tested. `--rng=circle` selects it; `modern`
+`internal/rng` matches the C draw for draw — 5,000 values from each of six
+seeds, 30,000 in all — and reproduces `number()`'s modulo bias across every
+range tested. `--rng=circle` selects it; `modern`
 (Go's PCG) is the default for ordinary play. See `docs/configuration.md`.
 
 One deliberate difference. `circle_srandom` takes `time(0)` unchecked
@@ -278,8 +279,11 @@ Listed here so they are not mistaken for deliberate differences.
   the Phase 7 shadow run depend on.
 - The main menu's six choices all work, but nothing behind them reads **mail**
   or handles **rent** yet — the C's menu choice 1 calls `Crash_load` and
-  reports lost items. Phase 5.
-- `look` does not yet show a character's description to anyone else. Phase 5.
+  reports lost items. Phase 5e.
+- **Nothing reads the visibility flags.** Invisibility, hiding, sneaking and
+  infravision are all set correctly by the spells and skills that grant them,
+  and no `CAN_SEE` equivalent consults them yet, so a hidden character is
+  still listed in the room. Phase 5.
 - **`N.thing` targeting is not implemented.** `get_number` splits a leading
   `2.` off any argument and makes the search take the *second* match, in every
   command that uses `generic_find`. `get 2 sword` (a count) works; `get
@@ -294,8 +298,8 @@ Listed here so they are not mistaken for deliberate differences.
   reaches `fart` in the C, so nothing here can reproduce what `f` means until
   they land.
 - **Specprocs.** No `spec_procs.c` equivalent, so guildmasters, shopkeepers,
-  the postmaster and the rest are inert. The Phase 6 scripting seam is where
-  this belongs.
+  the postmaster and the rest are inert. Phase 5a, built on the plan's §8
+  `Trigger` interface.
 - **`steal` and `track`**, the two thief skills not ported: `steal` needs the
   killer/thief flag machinery and shopkeeper protection, and `track` needs the
   breadth-first search the C keeps in `graph.c`.
