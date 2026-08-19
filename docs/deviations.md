@@ -85,20 +85,32 @@ are fidelity, not deviation, and they live in the tests that assert them.
 | **Why** | Integer division. The comment has been wrong since 1993 and the code is what players experienced. Reproduced, and asserted against the C so nobody implements the comment by mistake. |
 | **Where** | `Attack` in `internal/game/fight.go`, `TestThePositionMultiplierIsIntegerDivision`. |
 
-### `practice` is a command, not a guildmaster
+### `practice` was a command and is a guildmaster again
 
-| | |
-|---|---|
-| **C** | `practice` is a special procedure on guildmaster mobiles (`SPECIAL(guild)`, spec_procs.c). You must be standing in your own guild, in front of the right mobile, and the guild guards keep the wrong classes out. |
-| **Go** | An ordinary command that works anywhere. |
-| **Why** | Special procedures need the seam in plan §8, which does not exist yet. Without practice a character cannot raise a skill, and without a skill `do_cast` refuses every spell at zero per cent — so no character could cast anything at all. A command that works everywhere is a deviation; a game where nobody can learn a spell is not a game. **This moves back to the guildmasters in Phase 5a**, and is listed here so it is not forgotten. |
-| **Where** | `internal/session/practice.go`. |
+**Resolved in Phase 5a.** For Phases 3 and 4 `practice` taught anywhere,
+because special procedures did not exist and a character with no way to raise
+a skill has no way to cast anything at all. The seam now exists, and the
+teaching went back to `SPECIAL(guild)` where the C keeps it: the command lists
+what you know and otherwise says *"You can only practice skills in your
+guild."*
+
+Kept rather than deleted because the shape is worth having on record — a
+deviation taken deliberately, with a note of what would end it, and then
+ended.
 
 ### `practice` and its own listing disagree about remorting
 
-Not a deviation — reproduced — but startling enough to note. `list_skills` was rewritten locally to walk the remort vector, so it shows every spell any of your classes knows. `SPECIAL(guild)` was not, and still checks `spell_info[n].min_level[GET_CLASS(ch)]`.
+Not a deviation — reproduced — but startling enough to note. `list_skills` was
+rewritten locally to walk the remort vector, so it shows every spell any of
+your classes knows. `SPECIAL(guild)` was not, and still checks
+`spell_info[n].min_level[GET_CLASS(ch)]`.
 
-So a remorted character can **see** a spell in their practice list and be told *"You do not know of that spell"* when they try to practise it. Both halves are the C's, and both are here.
+So a remorted character can **see** a spell in their practice list and be told
+*"You do not know of that spell"* when they try to practise it. Both halves are
+the C's, and both are here.
+
+The guild *guard* did get the rewrite the guildmaster did not, so a remorted
+character can walk into a guild whose master will then refuse to teach them.
 
 ### Names are refused with a reason
 
@@ -297,9 +309,14 @@ Listed here so they are not mistaken for deliberate differences.
   it. Their absence is visible in the command table's *order*: a mortal's `f`
   reaches `fart` in the C, so nothing here can reproduce what `f` means until
   they land.
-- **Specprocs.** No `spec_procs.c` equivalent, so guildmasters, shopkeepers,
-  the postmaster and the rest are inert. Phase 5a, built on the plan's §8
-  `Trigger` interface.
+- **Most special procedures.** The seam exists and ten of the C's specials are
+  on it — guildmasters, guild guards, Puff, fidos, janitors, cityguards,
+  snakes, mobile mages, thieves and the dump. Shopkeepers, the postmaster,
+  bankers, pet shops, receptionists and the boards are not, because each needs
+  a subsystem that is not built; the local ones (`talkera`, `marblesa`,
+  `remmob`, `cerberus`, `teleporter` and the rest) are attached to vnums that
+  exist only in the archived world. `assign_kings_castle` is a zone-sized
+  script of its own and is untouched.
 - **`steal` and `track`**, the two thief skills not ported: `steal` needs the
   killer/thief flag machinery and shopkeeper protection, and `track` needs the
   breadth-first search the C keeps in `graph.c`.

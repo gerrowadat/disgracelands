@@ -182,13 +182,14 @@ func run(args []string) error {
 		"seed", seed, "reproducible", cfg.RNGSeed != 0)
 
 	srv := server.New(server.Options{
-		Engine:   eng,
-		Players:  players,
-		Auth:     auth.Verifier{AllowLegacy: cfg.AllowLegacyPasswords},
-		Text:     text,
-		Logger:   logger,
-		Restrict: cfg.Restrict,
-		RNG:      rng.NewRand(source),
+		Engine:     eng,
+		Players:    players,
+		Auth:       auth.Verifier{AllowLegacy: cfg.AllowLegacyPasswords},
+		Text:       text,
+		Logger:     logger,
+		Restrict:   cfg.Restrict,
+		NoSpecials: cfg.NoSpecials,
+		RNG:        rng.NewRand(source),
 	})
 	// The engine's periodic work belongs to the server, which is the side
 	// that can reach both the world and the player store. Started only now

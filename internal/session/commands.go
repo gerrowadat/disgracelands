@@ -60,7 +60,18 @@ type Violence interface {
 }
 
 // Send writes to the player who typed the command.
-func (c *Context) Send(format string, args ...any) { c.Session.Send(format, args...) }
+//
+// A Context with no session belongs to something the world is doing on its
+// own — a mobile's special procedure casting a spell — and its output goes to
+// the character's client, which for a mobile is nobody. That is what
+// send_to_char does there too.
+func (c *Context) Send(format string, args ...any) {
+	if c.Session == nil {
+		c.Character.Tell(format, args...)
+		return
+	}
+	c.Session.Send(format, args...)
+}
 
 // Commands is the command table.
 //
@@ -193,6 +204,8 @@ type Dispatcher struct {
 	RNG *rng.Rand
 	// Violence resolves damage on behalf of the commands that cause it.
 	Violence Violence
+	// NoSpecials suppresses special procedures, which is the C's `-s`.
+	NoSpecials bool
 }
 
 // Do implements CommandHandler.
@@ -227,6 +240,10 @@ func (d *Dispatcher) Do(ctx context.Context, s *Session, line string) error {
 	// The command itself runs on the world goroutine; everything it touches
 	// is world state.
 	return d.Run(ctx, func(w *game.Live) {
+		// Typing anything at all stops you hiding, which is the first line of
+		// command_interpreter and catches people out constantly.
+		s.Character().SetHidden(false)
+
 		c := &Context{
 			Ctx: ctx, Session: s, Character: s.Character(),
 			World: w, Text: d.Text, RNG: d.RNG, Violence: d.Violence, Arg: arg,
@@ -246,9 +263,14 @@ func (d *Dispatcher) Do(ctx context.Context, s *Session, line string) error {
 					s.Send("Something went wrong doing that.\r\n")
 				}
 			}()
-			if err := cmd.Run(c); err != nil {
-				s.logger.Error("command failed", "command", cmd.Name, "error", err)
-				s.Send("Something went wrong doing that.\r\n")
+			// A special procedure in reach gets first refusal, as
+			// command_interpreter gives one before running the command
+			// itself. One that handles the command stops it running.
+			if d.NoSpecials || !c.runSpecials(cmd.Name, arg) {
+				if err := cmd.Run(c); err != nil {
+					s.logger.Error("command failed", "command", cmd.Name, "error", err)
+					s.Send("Something went wrong doing that.\r\n")
+				}
 			}
 		}()
 		if !s.Closed() {

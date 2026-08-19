@@ -158,9 +158,10 @@ func (s *Server) serve(ctx context.Context, sess *session.Session, limits Limits
 			Run: func(ctx context.Context, f func(*game.Live)) error {
 				return s.engine.DoSync(ctx, f)
 			},
-			Text:     s.text,
-			RNG:      s.rng,
-			Violence: s,
+			Text:       s.text,
+			RNG:        s.rng,
+			Violence:   s,
+			NoSpecials: s.noSpecials,
 		},
 	})
 }

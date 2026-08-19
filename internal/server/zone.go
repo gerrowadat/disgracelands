@@ -8,6 +8,7 @@ package server
 
 import (
 	"github.com/gerrowadat/disgracelands/internal/game"
+	"github.com/gerrowadat/disgracelands/internal/session"
 )
 
 // Zone ageing, ported from zone_update (db.c).
@@ -45,6 +46,18 @@ type zoneState struct {
 // Without this the world is 2,981 rooms and nothing else: every mobile and
 // every object a player ever sees is created here or by a later reset.
 func (s *Server) BootReset(w *game.Live) {
+	// Special procedures are attached before the reset, because the reset is
+	// what instantiates the mobiles that carry them. `-s` skips it, which is
+	// what the C's no_specials does.
+	if s.noSpecials {
+		s.logger.Info("special procedures disabled")
+	} else {
+		attached, missing := w.AssignSpecials()
+		s.logger.Info("special procedures assigned",
+			"attached", attached, "missing_vnums", missing,
+			"implemented", len(session.SpecialNames()))
+	}
+
 	var mobiles, objects, problems int
 
 	for _, zone := range w.Zones() {

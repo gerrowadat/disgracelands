@@ -86,13 +86,26 @@ const (
 	testTorchVnum    game.ObjVnum = 107
 )
 
+// Mobile prototypes the tests instantiate.
+const (
+	testDogVnum         game.MobVnum = 999
+	testGuildmasterVnum game.MobVnum = 998
+)
+
+// MageGuildRoom is guild_info's first row: the magic-user guild, whose door
+// is south. The test world carries it so the guild guard has somewhere real
+// to stand.
+const MageGuildRoom game.RoomVnum = 3017
+
 // testWorld is the two start rooms, joined so a character can walk between
-// them, plus a few objects to pick up.
+// them, plus the mage guild, a few objects to pick up and two mobiles.
 func testWorld() *game.Live {
 	temple := &game.RoomDef{Vnum: MortalStartRoom, Name: "The Temple Of Midgaard", Description: "A temple.\r\n"}
 	board := &game.RoomDef{Vnum: ImmortStartRoom, Name: "The Immortal Board Room", Description: "A board room.\r\n"}
+	guild := &game.RoomDef{Vnum: MageGuildRoom, Name: "The Mage Guild", Description: "A guild.\r\n"}
 	temple.Exits[game.North] = &game.ExitDef{ToRoom: ImmortStartRoom}
 	board.Exits[game.South] = &game.ExitDef{ToRoom: MortalStartRoom}
+	guild.Exits[game.South] = &game.ExitDef{ToRoom: MortalStartRoom}
 
 	objects := []*game.ObjDef{
 		{
@@ -168,9 +181,29 @@ func testWorld() *game.Live {
 		},
 	}
 
+	mobiles := []*game.MobDef{
+		{
+			Vnum: testDogVnum, Keywords: "dog", ShortDesc: "a large dog",
+			LongDesc:        "A large dog is here.\r\n",
+			Level:           5,
+			HitDice:         game.Dice{Number: 1, Size: 1, Bonus: 100},
+			Position:        int32(game.PosStanding),
+			DefaultPosition: int32(game.PosStanding),
+		},
+		{
+			Vnum: testGuildmasterVnum, Keywords: "guildmaster",
+			ShortDesc: "the guildmaster", LongDesc: "The guildmaster stands here.\r\n",
+			Level:           30,
+			HitDice:         game.Dice{Number: 1, Size: 1, Bonus: 500},
+			Position:        int32(game.PosStanding),
+			DefaultPosition: int32(game.PosStanding),
+		},
+	}
+
 	return game.NewLive(&game.World{
-		Rooms:   []*game.RoomDef{temple, board},
+		Rooms:   []*game.RoomDef{temple, board, guild},
 		Objects: objects,
+		Mobiles: mobiles,
 	})
 }
 

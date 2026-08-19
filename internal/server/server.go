@@ -55,6 +55,8 @@ type Server struct {
 
 	// restrict refuses new characters, matching the C's -r.
 	restrict bool
+	// noSpecials suppresses special procedures, matching the C's -s.
+	noSpecials bool
 
 	rng *rng.Rand
 
@@ -72,6 +74,8 @@ type Options struct {
 	Text     *Text
 	Logger   *slog.Logger
 	Restrict bool
+	// NoSpecials suppresses special procedures (C: -s).
+	NoSpecials bool
 	// RNG is the generator the game rolls on. A nil one gets the modern
 	// generator seeded from the clock.
 	RNG *rng.Rand
@@ -80,13 +84,14 @@ type Options struct {
 // New creates a Server.
 func New(opts Options) *Server {
 	s := &Server{
-		engine:   opts.Engine,
-		players:  opts.Players,
-		auth:     opts.Auth,
-		text:     opts.Text,
-		logger:   opts.Logger,
-		restrict: opts.Restrict,
-		rng:      opts.RNG,
+		engine:     opts.Engine,
+		players:    opts.Players,
+		auth:       opts.Auth,
+		text:       opts.Text,
+		logger:     opts.Logger,
+		restrict:   opts.Restrict,
+		noSpecials: opts.NoSpecials,
+		rng:        opts.RNG,
 	}
 	if s.rng == nil {
 		s.rng = rng.NewRand(rng.NewModern(uint64(time.Now().UnixNano()))) //nolint:gosec // a game seed, not a secret
