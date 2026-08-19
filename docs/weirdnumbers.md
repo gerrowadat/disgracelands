@@ -612,6 +612,40 @@ at all, and `nanny` refuses passwords longer than ten as though they would.
 sees but is the kind of hand-optimisation that stops being equivalent the
 moment something goes negative.
 
+### Rent is prorated by a float and then truncated
+
+```c
+num_of_days = (float) (time(0) - rent.time) / SECS_PER_REAL_DAY;
+cost = rent.net_cost_per_diem * num_of_days;
+```
+
+`cost` is an `int`, so the product is truncated toward zero rather than
+rounded. A stay of 29 hours at 10 a day costs 12; a stay of six hours costs
+nothing at all. The `float` — not `double` — is the C's, and at the sizes
+involved it makes no difference, but it is what the archive says.
+
+*Source*: `objsave.c:469`.
+
+### Crash_load's return value is documented and then ignored
+
+```c
+/*
+ * Return values:
+ *  0 - successful load, keep char in rent room.
+ *  1 - load failure or load of crash items -- put char in temple.
+ *  2 - rented equipment lost (no $)
+ */
+```
+
+The caller acts on `2` and nothing else (`interpreter.c:1690`). The room comes
+from `GET_LOADROOM`, which is cleared to `NOWHERE` six lines later unless
+`PLR_LOADROOM` is set — so a player wakes up in the temple whether they rented
+or crashed, and the 0-versus-1 distinction the comment describes has no effect
+at all. The port keeps the distinction available (`RentCode.KeepsLoadRoom`) and
+likewise does not use it.
+
+*Source*: `objsave.c:428`, `interpreter.c:1676`.
+
 ---
 
 ## What to do about all this

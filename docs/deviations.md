@@ -315,17 +315,29 @@ Listed here so they are not mistaken for deliberate differences.
 - **`steal` and `track`**, the two thief skills not ported: `steal` needs the
   killer/thief flag machinery and shopkeeper protection, and `track` needs the
   breadth-first search the C keeps in `graph.c`.
-- **Rent and the object save files are read and written but not yet wired
-  in.** The format is ported — `internal/persist/player/binary/objfile.go`
-  reads and writes `plrobjs/A-E/name.objs` in the ILP32 layout the archived
-  files are in — but nothing calls it: logging out still does not save what
-  you were carrying, logging in still does not give it back, and there is no
-  receptionist to rent at. The main menu's choice 1 reports what a player
-  lost to rent, and so reports nothing.
+- **There is no receptionist to rent at.** The rent files themselves are
+  wired in — quitting writes one, logging in reads it, unpaid arrears cost you
+  the lot — but `gen_receptionist`, `offer` and `rent` are not ported, so the
+  only rent code this port ever *writes* is `RENT_CRASH` and the only way to
+  pay is not to have to. Renting proper arrives with the shop specprocs.
 
-  Worth knowing when it does get wired in: **renting empties your bags and
-  strips your body.** `USE_AUTOEQ` is 0 in this tree (`structs.h:30`), so
-  `struct obj_file_elem` has no `location` member. `Crash_save` still walks
-  containers and still computes a location for every item, and the file has
-  nowhere to record it — so everything comes back loose in inventory. That is
-  the C's behaviour, not a limitation of the port.
+  Worth knowing: **renting empties your bags and strips your body.**
+  `USE_AUTOEQ` is 0 in this tree (`structs.h:30`), so `struct obj_file_elem`
+  has no `location` member. `Crash_save` still walks containers and still
+  computes a location for every item, and the file has nowhere to record it —
+  so everything comes back loose in inventory. Sixty lines of `Crash_load`'s
+  `cont_row` machinery are dead code in this build. That is the C's behaviour,
+  not a limitation of the port, and there is a test asserting it so that
+  nobody "fixes" it.
+
+- **A dropped link crash-saves.** The C leaves a linkdead body standing and
+  only writes its objects when the idle timeout forces a rent
+  (`Crash_idlesave`). This port crash-saves on any disconnect, quit or not.
+  Until the idle timeout lands, the alternative is that a link loss costs
+  somebody everything they were carrying, which is a worse answer than a free
+  save.
+
+- **Shutdown saves everybody's objects, not only those who picked something
+  up.** `Crash_save_all` writes for characters with `PLR_CRASH` set, a bit
+  raised by `obj_to_char`. That is an optimisation for a machine that counted
+  disk writes; a few hundred small files cannot miss anybody.

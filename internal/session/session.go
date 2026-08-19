@@ -249,8 +249,10 @@ type LoginHandler interface {
 	// standing rather than removing it, so a dropped connection can be
 	// resumed; this is how the login sequence finds it again.
 	Reconnect(ctx context.Context, name string) *game.Character
-	// Enter puts an authenticated character into the world.
-	Enter(ctx context.Context, s *Session, c *game.Character) error
+	// Enter puts an authenticated character into the world, and reports what
+	// happened to the things they left with. The C's CON_MENU has one line
+	// that depends on it (interpreter.c:1690).
+	Enter(ctx context.Context, s *Session, c *game.Character) (EnterResult, error)
 	// Leave takes them out again.
 	Leave(ctx context.Context, s *Session, c *game.Character) error
 

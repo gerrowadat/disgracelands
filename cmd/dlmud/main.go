@@ -33,6 +33,7 @@ import (
 	"github.com/gerrowadat/disgracelands/internal/game"
 	"github.com/gerrowadat/disgracelands/internal/obs"
 	"github.com/gerrowadat/disgracelands/internal/persist/player"
+	"github.com/gerrowadat/disgracelands/internal/persist/player/binary"
 	"github.com/gerrowadat/disgracelands/internal/persist/world"
 	"github.com/gerrowadat/disgracelands/internal/rng"
 	"github.com/gerrowadat/disgracelands/internal/server"
@@ -155,6 +156,15 @@ func run(args []string) error {
 	}
 	defer func() { _ = players.Close() }()
 
+	// The rent files are not pluggable the way the roster is. The C has one
+	// format for them and the ascii roster is this port's own addition, so
+	// there is nothing to choose between: `plrobjs/` is read and written in
+	// the layout the archived files are in, whatever the roster is kept as.
+	objects, err := binary.NewObjectStore(player.Config{Dir: cfg.PlayerPath()})
+	if err != nil {
+		return err
+	}
+
 	// The greeting and the credits are licence obligations; LoadText refuses
 	// to return if either is missing, which is deliberate.
 	text, err := server.LoadText(cfg.LibDir)
@@ -184,6 +194,7 @@ func run(args []string) error {
 	srv := server.New(server.Options{
 		Engine:     eng,
 		Players:    players,
+		Objects:    objects,
 		Auth:       auth.Verifier{AllowLegacy: cfg.AllowLegacyPasswords},
 		Text:       text,
 		Logger:     logger,
@@ -256,6 +267,11 @@ func run(args []string) error {
 	defer cancel()
 
 	health.SetReady(false)
+
+	// Crash_save_all, as the C does on its way down (comm.c:428). Before the
+	// diagnostics go, because it needs the world goroutine still turning.
+	srv.SaveEverything(shutdownCtx)
+
 	if err := diag.Shutdown(shutdownCtx); err != nil {
 		logger.Error("diagnostics shutdown failed", "error", err)
 	}

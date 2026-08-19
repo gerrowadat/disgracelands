@@ -30,6 +30,7 @@ import (
 	"github.com/gerrowadat/disgracelands/internal/game"
 	"github.com/gerrowadat/disgracelands/internal/persist/player"
 	"github.com/gerrowadat/disgracelands/internal/persist/player/ascii"
+	"github.com/gerrowadat/disgracelands/internal/persist/player/binary"
 	"github.com/gerrowadat/disgracelands/internal/rng"
 	"github.com/gerrowadat/disgracelands/internal/session"
 	"github.com/gerrowadat/disgracelands/internal/telnet"
@@ -300,6 +301,14 @@ func newTestServer(t *testing.T) (*Server, player.Store) {
 	}
 	t.Cleanup(func() { _ = store.Close() })
 
+	// The rent files live beside the roster, as they do in a real data
+	// directory. Every test server gets one, so `quit` and logging back in
+	// exercise the same path the real server takes.
+	objects, err := binary.NewObjectStore(player.Config{Dir: filepath.Join(t.TempDir(), "plrobjs-lib")})
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	eng := engine.New(engine.Options{World: testWorld(), Logger: logger})
 
@@ -311,6 +320,7 @@ func newTestServer(t *testing.T) (*Server, player.Store) {
 	srv := New(Options{
 		Engine:  eng,
 		Players: store,
+		Objects: objects,
 		Auth:    auth.Verifier{AllowLegacy: true},
 		Text:    text,
 		Logger:  logger,

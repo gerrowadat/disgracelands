@@ -49,6 +49,11 @@ const linkdeadTimeout = 2 * time.Minute
 type Server struct {
 	engine  *engine.Engine
 	players player.Store
+	// objects holds the rent files. Separate from players because it is a
+	// separate format with a separate failure mode: a roster that will not
+	// load stops the server, and a rent file that will not load costs one
+	// player their backpack. Nil disables rent entirely.
+	objects player.ObjectStore
 	auth    auth.Verifier
 	text    *Text
 	logger  *slog.Logger
@@ -70,6 +75,7 @@ type Server struct {
 type Options struct {
 	Engine   *engine.Engine
 	Players  player.Store
+	Objects  player.ObjectStore
 	Auth     auth.Verifier
 	Text     *Text
 	Logger   *slog.Logger
@@ -86,6 +92,7 @@ func New(opts Options) *Server {
 	s := &Server{
 		engine:     opts.Engine,
 		players:    opts.Players,
+		objects:    opts.Objects,
 		auth:       opts.Auth,
 		text:       opts.Text,
 		logger:     opts.Logger,
@@ -221,7 +228,8 @@ func (s *Server) Reconnect(ctx context.Context, name string) *game.Character {
 }
 
 // Enter implements session.LoginHandler: puts a character into the world.
-func (s *Server) Enter(ctx context.Context, sess *session.Session, c *game.Character) error {
+func (s *Server) Enter(ctx context.Context, sess *session.Session, c *game.Character) (session.EnterResult, error) {
+	var result session.EnterResult
 	room := MortalStartRoom
 	if c.Record != nil {
 		if c.Record.Level >= game.LevelImmortal {
@@ -258,7 +266,7 @@ func (s *Server) Enter(ctx context.Context, sess *session.Session, c *game.Chara
 		c.Position = game.UpdatePosition(c.Record, c.Position)
 	}
 
-	return s.engine.DoSync(ctx, func(w *game.Live) {
+	if err := s.engine.DoSync(ctx, func(w *game.Live) {
 		if w.Room(room) == nil {
 			// A character whose saved room has been deleted from the world
 			// still has to get in somewhere.
@@ -275,7 +283,30 @@ func (s *Server) Enter(ctx context.Context, sess *session.Session, c *game.Chara
 				other.Tell("%s has entered the game.\r\n", c.Name)
 			}
 		}
-	})
+	}); err != nil {
+		return result, err
+	}
+
+	// Crash_load, after the character is in a room: the C's comment says
+	// "We have to place the character in a room before equipping them or
+	// equip_char() will gripe about the person in NOWHERE"
+	// (interpreter.c:1648).
+	lost, err := s.loadObjects(ctx, c)
+	if err != nil {
+		return result, err
+	}
+	result.RentLost = lost
+
+	// Clear the load room unless it is meant to persist (interpreter.c:1676).
+	//
+	// Without this everybody comes back exactly where they logged out, which
+	// is not how the game worked: you woke up in the temple unless a god had
+	// set PLR_LOADROOM on you. The port had been keeping it for everyone.
+	if c.Record != nil && !c.Record.PlayerFlags.Has(game.PlayerLoadRoom) {
+		c.Record.LoadRoom = game.NoRoom
+	}
+
+	return result, nil
 }
 
 // Leave implements session.LoginHandler.
@@ -288,6 +319,14 @@ func (s *Server) Leave(ctx context.Context, sess *session.Session, c *game.Chara
 
 	if err := s.Save(ctx, c); err != nil {
 		s.logger.Error("saving on disconnect", "character", c.Name, "error", err)
+	}
+	// Crash_crashsave, as do_quit does (act.other.c:201). Free, and it brings
+	// them back in the temple — renting at an inn is what buys anything else.
+	// Done for a dropped link too: the C waits for the idle timeout to force
+	// a rent, and until that lands this is what stops a link loss costing
+	// somebody everything they were carrying.
+	if err := s.crashSave(ctx, c); err != nil {
+		s.logger.Error("crash-saving on disconnect", "character", c.Name, "error", err)
 	}
 
 	return s.engine.DoSync(ctx, func(w *game.Live) {
