@@ -63,6 +63,9 @@ func (s *Server) hit(w *game.Live, attacker, victim *game.Character) {
 	if attacker.Record == nil || victim.Record == nil {
 		return
 	}
+	if s.refusedByPeace(w, attacker, victim) {
+		return
+	}
 
 	af, vf := combatant{attacker}, combatant{victim}
 	swing := game.Attack(attacker.Record, victim.Record, af, vf, s.rng)
@@ -76,13 +79,68 @@ func (s *Server) hit(w *game.Live, attacker, victim *game.Character) {
 	}
 
 	dam := game.ApplyDamage(swing.Damage, victim.Record, vf)
-	victim.Record.Points.Hit -= dam
 
 	attacker.Tell("You hit %s. [%d]\r\n", victim.Name, dam)
 	victim.Tell("%s hits you. [%d]\r\n", attacker.Name, dam)
 	s.toRoomExcept(w, attacker, "%s hits %s.\r\n", attacker.Name, victim.Name, victim)
 
-	s.startFighting(w, attacker, victim)
+	s.applyDamage(w, attacker, victim, dam)
+}
+
+// Damage implements session.Violence: everything damage() does apart from the
+// messages, which the command that caused it prints in its own words.
+//
+// It exists because until now every command that could hurt somebody applied
+// the damage itself — a kick, a bash, a spell — and none of them handled what
+// happens when the hit points run out. A kick could kill a mobile and leave it
+// standing there dead, with no corpse and no experience for anybody. There is
+// one path now, and this is it.
+//
+// The returned figure is the damage actually taken, after sanctuary and the
+// rest, because that is the number the caller prints in its `[n]`.
+func (s *Server) Damage(w *game.Live, attacker, victim *game.Character, amount int32) int32 {
+	if victim == nil || victim.Record == nil || s.refusedByPeace(w, attacker, victim) {
+		return 0
+	}
+	dam := game.ApplyDamage(amount, victim.Record, combatant{victim})
+	s.applyDamage(w, attacker, victim, dam)
+	return dam
+}
+
+// refusedByPeace is damage()'s peaceful-room check. It lives here rather than
+// in each command because the C puts it here: every route to hurting somebody
+// passes through damage(), so one check covers all of them.
+//
+// Note whose room is tested — the *attacker's*. They are always in the same
+// room in practice, but a spell cast from outside one would be stopped by the
+// caster's peace rather than the victim's.
+func (s *Server) refusedByPeace(w *game.Live, attacker, victim *game.Character) bool {
+	if attacker == nil || attacker == victim {
+		return false
+	}
+	room := w.Room(attacker.Room)
+	if room == nil || !room.Flags.Has(game.RoomPeaceful) {
+		return false
+	}
+	attacker.Tell("This room just has such a peaceful, easy feeling...\r\n")
+	return true
+}
+
+// applyDamage is the tail of damage(): take the hit points off, start the
+// fight, work out what position that leaves them in, and deal with the body.
+func (s *Server) applyDamage(w *game.Live, attacker, victim *game.Character, dam int32) {
+	victim.Record.Points.Hit -= dam
+
+	if attacker != nil {
+		s.startFighting(w, attacker, victim)
+	}
+
+	// Attacking a pet ends the arrangement: "If you attack a pet, it hates
+	// your guts", says the C, and stop_follower's charmed branch is where
+	// "You realize that $N is a jerk!" comes from.
+	if attacker != nil && victim.Master == attacker {
+		s.stopFollowing(w, victim)
+	}
 
 	victim.Position = game.UpdatePosition(victim.Record, victim.Position)
 	s.announcePosition(w, victim)
@@ -93,9 +151,36 @@ func (s *Server) hit(w *game.Live, attacker, victim *game.Character) {
 	}
 
 	if victim.Position == game.PosDead {
-		s.award(attacker, victim)
+		if attacker != nil {
+			s.award(attacker, victim)
+		}
 		s.kill(w, victim)
 	}
+}
+
+// Swing implements session.Violence: one attack, right now, rather than
+// waiting for the round. `hit` and `assist` both do this.
+func (s *Server) Swing(w *game.Live, attacker, victim *game.Character) {
+	s.hit(w, attacker, victim)
+}
+
+// stopFollowing detaches a follower and says so, which the server needs
+// because a blow can end the arrangement. The wording is stop_follower's, and
+// the charmed version of it is the one anybody remembers.
+func (s *Server) stopFollowing(w *game.Live, follower *game.Character) {
+	leader := follower.Master
+	if leader == nil {
+		return
+	}
+
+	if follower.Charmed() {
+		follower.Tell("You realize that %s is a jerk!\r\n", leader.Name)
+		leader.Tell("%s hates your guts!\r\n", follower.Name)
+	} else {
+		follower.Tell("You stop following %s.\r\n", leader.Name)
+		leader.Tell("%s stops following you.\r\n", follower.Name)
+	}
+	w.StopFollowing(follower)
 }
 
 // startFighting puts both parties into the fight if they are not already,
@@ -153,13 +238,7 @@ func (s *Server) award(killer, victim *game.Character) {
 	killer.Tell("%s", message)
 
 	if exp != 0 {
-		if out := game.GainExperience(killer.Record, exp, s.rng); out.Capped {
-			killer.Tell("You can only understand so much...\r\n")
-		} else if out.Levels == 1 {
-			killer.Tell("You rise a level!\r\n")
-		} else if out.Levels > 1 {
-			killer.Tell("You rise %d levels!\r\n", out.Levels)
-		}
+		s.announceGain(killer, game.GainExperience(killer.Record, exp, s.rng))
 	}
 }
 
@@ -191,13 +270,23 @@ func (s *Server) awardGroup(killer, victim *game.Character) {
 			continue
 		}
 
-		if out := game.GainExperience(member.Record, cut, s.rng); out.Capped {
-			member.Tell("You can only understand so much...\r\n")
-		} else if out.Levels == 1 {
-			member.Tell("You rise a level!\r\n")
-		} else if out.Levels > 1 {
-			member.Tell("You rise %d levels!\r\n", out.Levels)
-		}
+		s.announceGain(member, game.GainExperience(member.Record, cut, s.rng))
+	}
+}
+
+// announceGain says what an award did. The cap and the levelling are
+// independent — the C sends both, and a kill big enough to be capped is
+// exactly the kind that levels somebody, so folding them into one branch
+// swallowed "You rise a level!" precisely when it mattered.
+func (s *Server) announceGain(who *game.Character, out game.ExpGain) {
+	if out.Capped {
+		who.Tell("You can only understand so much...\r\n")
+	}
+	switch {
+	case out.Levels == 1:
+		who.Tell("You rise a level!\r\n")
+	case out.Levels > 1:
+		who.Tell("You rise %d levels!\r\n", out.Levels)
 	}
 }
 

@@ -982,10 +982,84 @@ built, so they are not in `docs/deviations.md`:
 The two configuration gaps are marked *(inert)* in `docs/configuration.md`
 rather than left to be discovered at runtime.
 
-**Phase 4 — Rules core.** Combat, magic, skills, classes including the
-remort bitmask, affects, position/regen, death and corpses, zone resets,
+**Phase 4 — Rules core. ✅ Done.** Combat, magic, skills, classes including
+the remort bitmask, affects, position/regen, death and corpses, zone resets,
 mobile activity. The largest phase; the deviations log from the fidelity
-decision starts filling up here. *Done when: a character can level.*
+decision filled up here. *Done when: a character can level.*
+
+**Met.** `TestACharacterCanLevel` walks the whole path end to end: a mortal
+kills something, is paid for it, crosses the boundary and rises, with
+`advance_level` running and the title changing with it. Everything in the
+phase stands behind that one test — the swing has to land, the death has to
+be noticed, the kill has to be worth something, the tables have to say what
+the next level costs.
+
+### What reading the C changed, again
+
+The pattern from Phase 3 repeated, and harder: **the C is not what it looks
+like, and the difference is never in the obvious place.**
+
+`docs/weirdnumbers.md` was written during this phase and is the single most
+useful document in the repository. Twenty-odd entries, each one a place where
+the arithmetic does not do what it appears to — `compute_thaco` truncating
+after each subtraction rather than at the end, `graf`'s 60–79 band dividing by
+20 where every other band divides by 10, a container's own weight counting
+against its own capacity, a player's abilities being clamped to **18** rather
+than 25 so an immortal's rolled 25s decay the first time anything totals them.
+
+The rule that came out of it: **anything with a division, a cast, or a comment
+describing numbers gets an oracle rather than a reading.** `reference/tools/`
+holds the original function bodies with the `char_data` dereferences
+substituted and nothing else changed, and the Go tests compare against them
+across the whole input space where that is affordable. Verified this way so
+far: 30,000 RNG draws per seed, 36,288 regeneration values, 1,512,000 to-hit
+values, 1,125 saving throws, every ability table, the title tables, the
+experience tables and `money_desc`.
+
+**Two structural decisions worth keeping.**
+
+*Affects are recomputed from stored real values*, not subtracted and re-added
+as `affect_total` does. The C has nowhere to keep the unaffected figures and
+recovers them by walking the list twice — correct only while nothing changes
+between the passes, and things do. This is the one place the port reproduces a
+routine's *outcome* rather than its method, and it is recorded in
+`docs/deviations.md` with the reasoning.
+
+*There is one damage path.* Every command that can hurt somebody — a swing, a
+kick, a bash, a spell, poison, a god's `kill` — goes through `damage()`. Until
+late in the phase each applied its own damage and none of them handled what
+happens when the hit points run out, so a kick could kill a mobile and leave
+it standing there dead with no corpse and nobody paid. The `session.Violence`
+seam exists for that: the command says what it did, and one place decides what
+it meant.
+
+### What is not in it
+
+- **Specprocs.** No `spec_procs.c` equivalent, so guildmasters, shopkeepers,
+  the postmaster and the rest are inert. `practice` is a command here rather
+  than something a guildmaster does, which is recorded in
+  `docs/deviations.md`. The Phase 6 scripting seam (§8) is where this belongs.
+- **`steal` and `track`.** The two thief skills not ported. `steal` needs the
+  killer/thief flag machinery and shopkeeper protection; `track` needs the
+  breadth-first search the C keeps in `graph.c`, which is a file of its own.
+  `hide`, `sneak`, `backstab`, `bash`, `kick`, `rescue` and `pick lock` are
+  all here.
+- **Scrolls, wands, staves and potions.** `do_use`, `do_quaff` and `do_recite`
+  are the way into `call_magic` for everything above `MAX_SPELLS` — `identify`
+  included, which is why that spell cannot be cast. They are `act.item.c`
+  commands and go with Phase 5.
+- **`junk` and `donate`**, the other two subcommands of `do_drop`, both of
+  which need rooms that do not exist yet.
+- **Socials**, which are Phase 5 and whose absence is visible in the command
+  table's *order*: a mortal's `f` reaches `fart` in the C, so nothing here can
+  reproduce what `f` means until they land.
+- **`N.thing` targeting.** `get_number` splits a leading `2.` off any argument
+  in every command that uses `generic_find`. It belongs with the rest of
+  `generic_find` rather than in any one command.
+
+All of these are in `docs/deviations.md` under "gaps still to fill" rather
+than as deviations, because they are not decisions — they are simply not
+built.
 
 **Phase 5 — The rest of the game.** All remaining `act.*` commands,
 shops, houses, boards, mail, aliases, socials, object save/rent.

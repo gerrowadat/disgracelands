@@ -38,8 +38,25 @@ type Context struct {
 	// RNG is the game's generator, for commands that roll — fleeing picks a
 	// random direction.
 	RNG *rng.Rand
+	// Violence resolves damage, so that every command which can kill somebody
+	// goes through the same code as the combat round.
+	Violence Violence
 	// Arg is everything after the command word, trimmed.
 	Arg string
+}
+
+// Violence is how a command hurts somebody.
+//
+// The rules for what follows a blow — the corpse, the experience, the
+// alignment, whether the victim is now dead — belong with the combat round
+// rather than with each command that can cause one. A command says what it did
+// and hands over the damage; this decides what that means.
+type Violence interface {
+	// Damage applies damage and everything that follows from it, returning
+	// what was actually taken after sanctuary and the rest.
+	Damage(w *game.Live, attacker, victim *game.Character, amount int32) int32
+	// Swing is one weapon attack, taken now rather than on the next round.
+	Swing(w *game.Live, attacker, victim *game.Character)
 }
 
 // Send writes to the player who typed the command.
@@ -73,6 +90,10 @@ func init() {
 		// :238) and therefore what `ba` means.
 		{Name: "backstab", Help: "Stab someone who is not looking.", Run: doBackstab},
 		{Name: "bash", Help: "Knock someone over.", Run: doBash},
+		// The C has assist at interpreter.c:229, before ask — so `as` is
+		// assist. Nothing ported shares its prefix.
+		{Name: "assist", Help: "Join a fight on somebody's side.", Run: doAssist},
+		{Name: "murder", Help: "Attack another player.", Run: doMurder},
 		{Name: "cast", Help: "Cast a spell: cast 'magic missile' <target>.", Run: doCast},
 		{Name: "flee", Help: "Run away from a fight.", Run: doFlee},
 		// `fill` is at interpreter.c:296, ahead of flee — but a mortal's `f`
@@ -92,6 +113,9 @@ func init() {
 		{Name: "sit", Help: "Sit down.", Run: doSit},
 		{Name: "rest", Help: "Rest, to recover faster.", Run: doRest},
 		{Name: "sleep", Help: "Sleep, to recover faster still.", Run: doSleep},
+		// After sleep, as in the C (interpreter.c:466 and :479), so `sl` is
+		// sleep and sneaking needs `sn`.
+		{Name: "sneak", Help: "Try to move without being heard.", Run: doSneak},
 		// After rest, as in the C (interpreter.c:426 and :441), so `res` is
 		// still rest and only `resc` reaches rescue.
 		{Name: "rescue", Help: "Take somebody else's fight onto yourself.", Run: doRescue},
@@ -143,9 +167,11 @@ func init() {
 		{Name: "who", Help: "List who is playing.", Run: doWho},
 		{Name: "credits", Help: "Show the CircleMUD and DikuMUD credits.", Run: doCredits},
 		{Name: "help", Help: "Show this list, or help on a topic.", Run: doHelp},
-		// The other spelling of `grab`, and it goes after `help` because the
-		// C has it there (interpreter.c:328 and :334) — so `h` is help and
-		// holding something needs `ho`.
+		// `hide`, `hit` and `hold` sit after help because the C has them
+		// there (interpreter.c:328, :332, :333 and :334) — so `h` is help,
+		// `hi` is hide, and hitting somebody needs `hit`.
+		{Name: "hide", Help: "Try to hide yourself.", Run: doHide},
+		{Name: "hit", Help: "Attack somebody, starting now.", Run: doHit},
 		{Name: "hold", Help: "Take something in your hands.", Run: doGrab},
 		{Name: "quit", Help: "Leave the game.", Run: doQuit},
 		// Nowhere near the others: the C has it among the u's, after unlock
@@ -165,6 +191,8 @@ type Dispatcher struct {
 	Text TextFiles
 	// RNG is the game's generator.
 	RNG *rng.Rand
+	// Violence resolves damage on behalf of the commands that cause it.
+	Violence Violence
 }
 
 // Do implements CommandHandler.
@@ -201,7 +229,7 @@ func (d *Dispatcher) Do(ctx context.Context, s *Session, line string) error {
 	return d.Run(ctx, func(w *game.Live) {
 		c := &Context{
 			Ctx: ctx, Session: s, Character: s.Character(),
-			World: w, Text: d.Text, RNG: d.RNG, Arg: arg,
+			World: w, Text: d.Text, RNG: d.RNG, Violence: d.Violence, Arg: arg,
 		}
 
 		// A command that panics must not leave the player staring at a dead
@@ -452,47 +480,7 @@ func announce(w *game.Live, room game.RoomVnum, except *game.Character, format s
 	}
 }
 
-// doKill starts a fight, porting do_kill (act.offensive.c) as far as this
-// phase goes: the immortal's instant-slay branch and the charmed-follower
-// check arrive with the rest of act.offensive.
-func doKill(c *Context) error {
-	if c.Arg == "" {
-		c.Send("Kill who?\r\n")
-		return nil
-	}
-
-	victim := c.World.FindInRoom(c.Character.Room, c.Arg)
-	if victim == nil {
-		c.Send("They aren't here.\r\n")
-		return nil
-	}
-	if victim == c.Character {
-		c.Send("Your mother would be so sad... :(\r\n")
-		return nil
-	}
-
-	room := c.World.Room(c.Character.Room)
-	if room != nil && room.Flags.Has(game.RoomPeaceful) {
-		c.Send("This room just has such a peaceful, easy feeling...\r\n")
-		return nil
-	}
-
-	if c.Character.Fighting != nil {
-		c.Send("You are already fighting %s.\r\n", c.Character.Fighting.Name)
-		return nil
-	}
-
-	c.Send("You attack %s!\r\n", victim.Name)
-	victim.Tell("%s attacks you!\r\n", c.Character.Name)
-	for _, other := range c.World.Occupants(c.Character.Room) {
-		if other != c.Character && other != victim {
-			other.Tell("%s attacks %s!\r\n", c.Character.Name, victim.Name)
-		}
-	}
-
-	c.World.SetFighting(c.Character, victim)
-	return nil
-}
+// `hit`, `murder`, `kill` and `assist` live in offensive.go.
 
 func doWho(c *Context) error {
 	players := c.World.Players()

@@ -371,15 +371,12 @@ func (c *Context) spellDamage(info game.SpellInfo, number int32, victim *game.Ch
 		return
 	}
 
-	target.Record.Points.Hit -= damage
-	c.Send("You blast %s with %s. [%d]\r\n", target.Name, info.Name, damage)
-	target.Tell("%s blasts you with %s. [%d]\r\n", c.Character.Name, info.Name, damage)
+	// Through the same path as a swing: a spell that kills leaves a corpse and
+	// pays out. damage() starts the fight whatever the spell's violent flag
+	// says — the flag decides whether it may be cast at all in a peaceful
+	// room, not whether being blasted is provocation.
+	dealt := c.Violence.Damage(c.World, c.Character, target, damage)
 
-	target.Position = game.UpdatePosition(target.Record, target.Position)
-
-	// A violent spell starts a fight, as damage() does.
-	if info.Violent && target != c.Character && target.Fighting == nil &&
-		target.Position > game.PosStunned {
-		c.World.SetFighting(target, c.Character)
-	}
+	c.Send("You blast %s with %s. [%d]\r\n", target.Name, info.Name, dealt)
+	target.Tell("%s blasts you with %s. [%d]\r\n", c.Character.Name, info.Name, dealt)
 }
