@@ -81,6 +81,9 @@ func init() {
 		// Socials are not ported, so no ordering here reproduces that. Flee
 		// keeps `f` until they are.
 		{Name: "fill", Help: "Fill a container from a fountain.", Run: doFill},
+		// After fill (interpreter.c:296 and :300), so `fo` is follow and `fi`
+		// is fill.
+		{Name: "follow", Help: "Follow somebody, or `follow self` to stop.", Run: doFollow},
 
 		{Name: "stand", Help: "Get to your feet.", Run: doStand},
 		// sip before sit is the C's order (interpreter.c:467 and :468), so
@@ -123,9 +126,9 @@ func init() {
 		{Name: "wear", Help: "Put something on.", Run: doWear},
 		{Name: "wield", Help: "Take a weapon in hand.", Run: doWield},
 		{Name: "remove", Help: "Take something off.", Run: doRemove},
-		// `grab` and `hold` are one command in the C (interpreter.c:317 and
-		// :334). `gr` will belong to `group` when that lands (:316), which
-		// must go in ahead of this.
+		// group before grab, which is the C's order (interpreter.c:316 and
+		// :317) and therefore what `gr` means.
+		{Name: "group", Help: "List your group, or enrol somebody in it.", Run: doGroup},
 		{Name: "grab", Help: "Take something in your hands.", Run: doGrab},
 
 		// After `exits`, `close` and `wear`, which is the C's order — so `ex`
@@ -145,6 +148,10 @@ func init() {
 		// holding something needs `ho`.
 		{Name: "hold", Help: "Take something in your hands.", Run: doGrab},
 		{Name: "quit", Help: "Leave the game.", Run: doQuit},
+		// Nowhere near the others: the C has it among the u's, after unlock
+		// (interpreter.c:522 and :523), so `un` is unlock and ungrouping
+		// needs `ung`.
+		{Name: "ungroup", Help: "Disband your group, or expel somebody.", Run: doUngroup},
 	}
 }
 
@@ -379,38 +386,60 @@ func sendRoomInfo(s *Session, room *game.RoomDef) {
 // move returns the command for one direction.
 func move(dir game.Direction) func(*Context) error {
 	return func(c *Context) error {
-		exit := c.World.Exit(c.Character.Room, dir)
-		if exit == nil || exit.ToRoom == game.NoRoom {
-			c.Send("Alas, you cannot go that way...\r\n")
-			return nil
-		}
-		// A closed door stops a player, as it already stopped a mobile. The
-		// C names the door if it has a keyword, which is how a player knows
-		// what to open.
-		if exit.State.Has(game.ExitClosed) {
-			if name := doorName(exit); name != "door" {
-				c.Send("The %s seems to be closed.\r\n", name)
-			} else {
-				c.Send("It seems to be closed.\r\n")
-			}
-			return nil
-		}
-		if c.World.Room(exit.ToRoom) == nil {
-			// The loader reports these as warnings rather than refusing to
-			// start, so a player can still walk into one.
-			c.Send("The way is blocked by something you cannot describe.\r\n")
-			return nil
-		}
-
-		leaving := c.Character.Room
-		if err := c.World.Enter(c.Character, exit.ToRoom); err != nil {
-			return err
-		}
-		announce(c.World, leaving, c.Character, "%s leaves %s.\r\n", c.Character.Name, dir)
-		announce(c.World, exit.ToRoom, c.Character, "%s has arrived.\r\n", c.Character.Name)
-
-		return doLook(c)
+		c.moveCharacter(c.Character, dir)
+		return nil
 	}
+}
+
+// moveCharacter walks one character one step, porting perform_move and
+// do_simple_move.
+//
+// It takes the character rather than working on the session's own, because
+// the last thing it does is move everybody who was following them — and each
+// of those has to see the room they arrive in, told to them rather than to
+// whoever gave the order. The recursion is the C's, and it terminates because
+// following in loops is refused when the link is made.
+func (c *Context) moveCharacter(who *game.Character, dir game.Direction) bool {
+	exit := c.World.Exit(who.Room, dir)
+	if exit == nil || exit.ToRoom == game.NoRoom {
+		who.Tell("Alas, you cannot go that way...\r\n")
+		return false
+	}
+	// A closed door stops a player, as it already stopped a mobile. The C
+	// names the door if it has a keyword, which is how a player knows what to
+	// open.
+	if exit.State.Has(game.ExitClosed) {
+		if name := doorName(exit); name != "door" {
+			who.Tell("The %s seems to be closed.\r\n", name)
+		} else {
+			who.Tell("It seems to be closed.\r\n")
+		}
+		return false
+	}
+	if c.World.Room(exit.ToRoom) == nil {
+		// The loader reports these as warnings rather than refusing to start,
+		// so a player can still walk into one.
+		who.Tell("The way is blocked by something you cannot describe.\r\n")
+		return false
+	}
+
+	leaving := who.Room
+	if err := c.World.Enter(who, exit.ToRoom); err != nil {
+		who.Tell("The way is blocked by something you cannot describe.\r\n")
+		return false
+	}
+	announce(c.World, leaving, who, "%s leaves %s.\r\n", who.Name, dir)
+	announce(c.World, exit.ToRoom, who, "%s has arrived.\r\n", who.Name)
+
+	if room := c.World.Room(exit.ToRoom); room != nil {
+		if who == c.Character {
+			sendRoomInfo(c.Session, room)
+		}
+		who.Tell("%s", roomDescription(c.World, room, who))
+	}
+
+	c.moveFollowers(who, leaving, dir)
+	return true
 }
 
 // announce tells everyone in a room something, except the character it is

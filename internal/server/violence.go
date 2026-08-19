@@ -136,9 +136,15 @@ func (s *Server) announcePosition(w *game.Live, victim *game.Character) {
 	}
 }
 
-// award gives the killer their experience, porting solo_gain.
+// award gives the killer their experience, porting solo_gain — or, if they
+// are in a group, group_gain.
 func (s *Server) award(killer, victim *game.Character) {
 	if killer == victim || killer.Record == nil || victim.Record == nil {
+		return
+	}
+
+	if killer.Grouped() {
+		s.awardGroup(killer, victim)
 		return
 	}
 
@@ -153,6 +159,44 @@ func (s *Server) award(killer, victim *game.Character) {
 			killer.Tell("You rise a level!\r\n")
 		} else if out.Levels > 1 {
 			killer.Tell("You rise %d levels!\r\n", out.Levels)
+		}
+	}
+}
+
+// awardGroup splits the kill among everybody grouped with the killer who is
+// in the room with them, porting group_gain.
+//
+// Everyone present shares, whether or not they hit anything — a member asleep
+// in the corner gets the same cut as the one who did the killing. That is the
+// C's rule and it is what makes a group worth being in.
+func (s *Server) awardGroup(killer, victim *game.Character) {
+	members := killer.GroupMembers(killer.Room)
+	if len(members) == 0 {
+		return
+	}
+
+	share := game.GroupShare(victim.Record, victim.IsNPC(), int32(len(members))) //nolint:gosec // a room's worth
+	for _, member := range members {
+		if member.Record == nil {
+			continue
+		}
+
+		// A player killing a player earns nothing, and the message says so.
+		cut := share
+		if !member.IsNPC() && !victim.IsNPC() {
+			cut = 0
+		}
+		member.Tell("%s", game.GroupShareMessage(member.Record, cut))
+		if cut == 0 {
+			continue
+		}
+
+		if out := game.GainExperience(member.Record, cut, s.rng); out.Capped {
+			member.Tell("You can only understand so much...\r\n")
+		} else if out.Levels == 1 {
+			member.Tell("You rise a level!\r\n")
+		} else if out.Levels > 1 {
+			member.Tell("You rise %d levels!\r\n", out.Levels)
 		}
 	}
 }
