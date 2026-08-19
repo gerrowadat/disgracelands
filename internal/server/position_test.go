@@ -172,7 +172,13 @@ func TestFleeingCostsExperience(t *testing.T) {
 	})
 	fleeUntilItWorks(t, c)
 
-	lost := before - runner.Record.Points.Exp
+	// Read on the world goroutine: the combat pulse writes this field, and
+	// reading it from the test goroutine is a genuine race that the detector
+	// catches about one run in ten.
+	var after int32
+	inWorld(t, srv, func(_ *game.Live) { after = runner.Record.Points.Exp })
+
+	lost := before - after
 	if want := missing * 10; lost != want {
 		t.Errorf("fleeing cost %d experience, want %d (%d missing hit points at level 10)",
 			lost, want, missing)
@@ -210,12 +216,13 @@ func TestFleeingAnotherPlayerCostsNothing(t *testing.T) {
 	c.send("murder grimm")
 	c.expectAny("You hit Grimm", "You miss Grimm")
 
-	before := runner.Record.Points.Exp
+	var before, after int32
+	inWorld(t, srv, func(_ *game.Live) { before = runner.Record.Points.Exp })
 	fleeUntilItWorks(t, c)
+	inWorld(t, srv, func(_ *game.Live) { after = runner.Record.Points.Exp })
 
-	if runner.Record.Points.Exp != before {
-		t.Errorf("fleeing another player cost %d experience",
-			before-runner.Record.Points.Exp)
+	if after != before {
+		t.Errorf("fleeing another player cost %d experience", before-after)
 	}
 }
 

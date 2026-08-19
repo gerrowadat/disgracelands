@@ -239,7 +239,7 @@ func TestHittingYourOwnPetEndsTheArrangement(t *testing.T) {
 	c.settle()
 	inWorld(t, srv, func(w *game.Live) {
 		if dog.Master != w.Find("Zod") {
-			t.Fatal("the dog was not charmed into following")
+			t.Error("the dog was not charmed into following")
 		}
 	})
 

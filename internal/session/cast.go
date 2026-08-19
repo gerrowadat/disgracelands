@@ -106,7 +106,7 @@ func doCast(c *Context) error {
 		return nil
 	}
 
-	if c.castSpell(info, number, victim, object) && mana > 0 {
+	if c.castSpell(info, number, victim, object, game.SaveSpell) && mana > 0 {
 		rec.Points.Mana = max(0, min(rec.Points.MaxMana, rec.Points.Mana-mana))
 	}
 	return nil
@@ -190,7 +190,7 @@ func (c *Context) broadcast(format string, args ...any) {
 // anything says so rather than silently doing nothing and charging for it — a
 // player who cannot tell "this spell has no effect" from "this spell is not
 // written yet" cannot report a bug.
-func (c *Context) castSpell(info game.SpellInfo, number int32, victim *game.Character, object *game.Object) bool {
+func (c *Context) castSpell(info game.SpellInfo, number int32, victim *game.Character, object *game.Object, save game.SaveType) bool {
 	rec := c.Character.Record
 	level := rec.Level
 
@@ -225,7 +225,7 @@ func (c *Context) castSpell(info game.SpellInfo, number int32, victim *game.Char
 
 	if info.Routines.Has(game.MagAffects) && victim != nil && victim.Record != nil {
 		did = true
-		c.spellAffect(number, victim)
+		c.spellAffect(number, victim, save)
 	}
 
 	if info.Routines.Has(game.MagUnaffects) && victim != nil && victim.Record != nil {
@@ -297,14 +297,16 @@ func (c *Context) applyPoints(number int32, victim *game.Character, level int32)
 }
 
 // spellAffect applies an affect spell, porting the tail of mag_affects.
-func (c *Context) spellAffect(number int32, victim *game.Character) {
+func (c *Context) spellAffect(number int32, victim *game.Character, save game.SaveType) {
 	rec := c.Character.Record
 
 	// One saving throw per casting, rolled here so every spell that consults
-	// it sees the same answer. Spell is the save type for everything
-	// mag_affects casts; the other four belong to breath weapons and the
-	// like.
-	saved := game.MakesSavingThrow(victim.Record, victim.IsNPC(), game.SaveSpell, 0, c.RNG)
+	// it sees the same answer. Which of the five it is depends on where the
+	// magic came from: a spell cast by a person is SAVING_SPELL, and anything
+	// out of a wand, staff, scroll or potion is SAVING_ROD — which is the
+	// column with the *better* numbers, so a scroll is easier to resist than
+	// the same spell cast at you.
+	saved := game.MakesSavingThrow(victim.Record, victim.IsNPC(), save, 0, c.RNG)
 
 	result := game.AffectsOfSpell(number, rec, victim.Record,
 		victim.IsNPC(), victim.MobFlags(), rec.Level, saved, c.RNG)

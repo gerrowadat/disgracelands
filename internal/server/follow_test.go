@@ -329,7 +329,7 @@ func TestCharmingAMobile(t *testing.T) {
 	inWorld(t, srv, func(w *game.Live) {
 		zod := w.Find("Zod")
 		if dog.Master != zod {
-			t.Fatal("the dog is not following the caster")
+			t.Error("the dog is not following the caster")
 		}
 		if !dog.Charmed() {
 			t.Error("the dog is not charmed")

@@ -285,7 +285,7 @@ func TestGroupSayReachesTheGroupAnywhere(t *testing.T) {
 		member.SetGrouped(true)
 		// Somewhere else: a group-say does not care where they are.
 		if err := w.Enter(member, MortalStartRoom); err != nil {
-			t.Fatal(err)
+			t.Error(err)
 		}
 	})
 

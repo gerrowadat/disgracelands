@@ -302,9 +302,6 @@ Listed here so they are not mistaken for deliberate differences.
   2.sword` (the second sword) currently reads the whole word as a keyword and
   finds nothing. It belongs with the rest of `generic_find` rather than in any
   one command.
-- **`junk` and `donate`** are the other two subcommands of `do_drop` and are
-  not ported. Both need somewhere to put things — the donation room, and the
-  gods' reward for junking — and neither exists yet.
 - **`alias`.** The per-character command aliases, saved alongside the
   character. `alias.c` and the `plralias/` directory.
 - **Most special procedures.** The seam exists and ten of the C's specials are
@@ -318,6 +315,7 @@ Listed here so they are not mistaken for deliberate differences.
 - **`steal` and `track`**, the two thief skills not ported: `steal` needs the
   killer/thief flag machinery and shopkeeper protection, and `track` needs the
   breadth-first search the C keeps in `graph.c`.
-- **Scrolls, wands, staves and potions.** `do_use`, `do_quaff` and `do_recite`
-  are the way into `call_magic` for everything above `MAX_SPELLS`, `identify`
-  included.
+- **Rent and the object save files.** `Crash_load`/`Crash_save` and the
+  `plrobjs/` directory: what you were carrying when you logged out. The main
+  menu's choice 1 reports what a player lost to it, and reports nothing
+  today.

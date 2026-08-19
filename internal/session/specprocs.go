@@ -394,5 +394,5 @@ func (sc *SpecialCall) cast(number int32, victim *game.Character, obj *game.Obje
 		World: sc.World, Character: sc.Actor,
 		RNG: sc.RNG, Violence: sc.Violence,
 	}
-	ctx.castSpell(info, number, victim, obj)
+	ctx.castSpell(info, number, victim, obj, game.SaveSpell)
 }

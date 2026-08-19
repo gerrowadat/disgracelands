@@ -17,20 +17,26 @@ import (
 func withSpec(t *testing.T, srv *Server, vnum game.MobVnum, spec string, room game.RoomVnum) *game.Character {
 	t.Helper()
 
+	// Errors are collected rather than fatal: t.Fatal inside this closure
+	// would Goexit the world goroutine. See inWorld.
 	var mob *game.Character
+	var problem string
 	inWorld(t, srv, func(w *game.Live) {
 		def := w.MobileDef(vnum)
 		if def == nil {
-			t.Fatalf("no mobile prototype %d in the test world", vnum)
+			problem = "no mobile prototype in the test world"
+			return
 		}
 		def.Spec = spec
 		def.ActionFlags = def.ActionFlags.Set(game.MobSpec)
 
-		mob = w.SpawnMobile(vnum, room, srv.rng)
-		if mob == nil {
-			t.Fatalf("could not spawn mobile %d", vnum)
+		if mob = w.SpawnMobile(vnum, room, srv.rng); mob == nil {
+			problem = "could not spawn it"
 		}
 	})
+	if problem != "" {
+		t.Fatalf("mobile %d: %s", vnum, problem)
+	}
 	return mob
 }
 
@@ -149,7 +155,7 @@ func TestAFidoEatsCorpsesAndLeavesTheContents(t *testing.T) {
 			Record: &game.PlayerRecord{Name: "Welmar", Points: game.Points{MaxHit: 10}},
 		}
 		if err := w.Enter(victim, ImmortStartRoom); err != nil {
-			t.Fatal(err)
+			t.Error(err)
 		}
 		sword = w.NewObject(testSwordVnum)
 		w.ObjectToChar(sword, victim)
@@ -247,7 +253,7 @@ func TestGuildGuardsBlockTheWrongClass(t *testing.T) {
 		zod.Record.Class = game.ClassWarrior
 		zod.Record.RemortVector = 0
 		if err := w.Enter(zod, MageGuildRoom); err != nil {
-			t.Fatal(err)
+			t.Error(err)
 		}
 	})
 

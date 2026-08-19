@@ -278,6 +278,12 @@ func (c *client) menuEnter() {
 func inWorld(t *testing.T, srv *Server, f func(w *game.Live)) {
 	t.Helper()
 
+	// **Never call t.Fatal, t.Skip or t.FailNow inside this closure.** They
+	// call runtime.Goexit, and doing that here kills the *world* goroutine:
+	// every later DoSync blocks forever and the test binary hangs until its
+	// timeout, with no indication of which test did it. Use t.Error and
+	// return, or read the value out and assert on it afterwards.
+	//
 	// The panic is caught here rather than by the engine. The engine's own
 	// recover is there to keep one bad command from taking the world down,
 	// and it would swallow a nil dereference in a test assertion — which

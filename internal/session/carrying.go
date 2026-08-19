@@ -236,17 +236,72 @@ func (c *Context) checkMoney(obj *game.Object) {
 	c.Send("There were %d coins.\r\n", value)
 }
 
-// doDrop puts things on the floor, porting do_drop.
-//
-// The C's do_drop is also `junk` and `donate` by way of a subcommand, and both
-// of those need places to put things that do not exist yet; this is the drop
-// case only.
-func doDrop(c *Context) error {
+// dropMode is do_drop's subcommand: where the thing goes.
+type dropMode int
+
+const (
+	// dropOnFloor is `drop`.
+	dropOnFloor dropMode = iota
+	// dropAsJunk is `junk`: destroyed, and the gods pay you a little for it.
+	dropAsJunk
+	// dropAsDonation is `donate`: sent to the donation room, where anybody
+	// can take it.
+	dropAsDonation
+)
+
+// donationRoom is donation_room_1 (config.c:184).
+const donationRoom game.RoomVnum = 3063
+
+// verb is what the mode calls itself in every message it prints.
+func (m dropMode) verb() string {
+	switch m {
+	case dropAsJunk:
+		return "junk"
+	case dropAsDonation:
+		return "donate"
+	}
+	return "drop"
+}
+
+// vanish is the C's VANISH macro: junking and donating add a puff of smoke to
+// the end of the message, and dropping does not.
+func (m dropMode) vanish() string {
+	if m == dropOnFloor {
+		return ""
+	}
+	return "  It vanishes in a puff of smoke!"
+}
+
+func doDrop(c *Context) error   { return c.drop(dropOnFloor) }
+func doJunk(c *Context) error   { return c.drop(dropAsJunk) }
+func doDonate(c *Context) error { return c.drop(dropAsDonation) }
+
+// drop puts things somewhere, porting do_drop.
+func (c *Context) drop(mode dropMode) error {
 	arg, rest := oneArgument(c.Arg)
+
+	// Donating is a lottery: one time in three the donation room is a
+	// rubbish bin instead, and the C's comment shows two more rooms that were
+	// commented out at some point, leaving a one-in-three chance of the thing
+	// simply being destroyed.
+	if mode == dropAsDonation && c.RNG.Number(0, 2) == 0 {
+		mode = dropAsJunk
+	}
+
+	// The gods' reward for junking, accumulated across everything junked by
+	// one command.
+	var reward int32
+	defer func() {
+		if reward != 0 && c.Character.Record != nil {
+			c.Send("You have been rewarded by the gods!\r\n")
+			c.announce("%s has been rewarded by the gods!\r\n", c.Character.Name)
+			c.Character.Record.Points.Gold += reward
+		}
+	}()
 
 	switch {
 	case arg == "":
-		c.Send("What do you want to drop?\r\n")
+		c.Send("What do you want to %s?\r\n", mode.verb())
 
 	case isNumber(arg):
 		multi := atoi(arg)
@@ -257,7 +312,7 @@ func doDrop(c *Context) error {
 		case multi <= 0:
 			c.Send("Yeah, that makes sense.\r\n")
 		case word == "":
-			c.Send("What do you want to drop %d of?\r\n", multi)
+			c.Send("What do you want to %s %d of?\r\n", mode.verb(), multi)
 		default:
 			matches := matchingObjects(c.Character.Carrying, word, multi)
 			if len(matches) == 0 {
@@ -265,46 +320,85 @@ func doDrop(c *Context) error {
 				return nil
 			}
 			for _, obj := range matches {
-				c.dropObject(obj)
+				reward += c.dropObject(obj, mode)
 			}
 		}
 
 	default:
-		mode, word := findAllDots(arg)
+		dots, word := findAllDots(arg)
+
+		// You cannot junk or donate everything you own in one word. The C
+		// sends you somewhere to do it by hand.
+		if dots == findAll && mode != dropOnFloor {
+			if mode == dropAsJunk {
+				c.Send("Go to the dump if you want to junk EVERYTHING!\r\n")
+			} else {
+				c.Send("Go do the donation room if you want to donate EVERYTHING!\r\n")
+			}
+			return nil
+		}
+
 		switch {
-		case mode == findAll && len(c.Character.Carrying) == 0:
+		case dots == findAll && len(c.Character.Carrying) == 0:
 			c.Send("You don't seem to be carrying anything.\r\n")
-		case mode == findAllDot && word == "":
-			c.Send("What do you want to drop all of?\r\n")
-		case mode == findIndiv:
+		case dots == findAllDot && word == "":
+			c.Send("What do you want to %s all of?\r\n", mode.verb())
+		case dots == findIndiv:
 			obj := findObject(c.Character.Carrying, word)
 			if obj == nil {
 				c.Send("You don't seem to have %s %s.\r\n", article(word), word)
 				return nil
 			}
-			c.dropObject(obj)
+			reward += c.dropObject(obj, mode)
 		default:
-			matched := everything(c.Character.Carrying, mode, word)
-			if len(matched) == 0 && mode == findAllDot {
+			matched := everything(c.Character.Carrying, dots, word)
+			if len(matched) == 0 && dots == findAllDot {
 				c.Send("You don't seem to have any %ss.\r\n", word)
 			}
 			for _, obj := range matched {
-				c.dropObject(obj)
+				reward += c.dropObject(obj, mode)
 			}
 		}
 	}
 	return nil
 }
 
-// dropObject drops one thing, porting perform_drop's SCMD_DROP case.
-func (c *Context) dropObject(obj *game.Object) {
+// dropObject drops one thing, porting perform_drop. It returns what junking
+// it was worth, which is nothing for the other two modes.
+func (c *Context) dropObject(obj *game.Object, mode dropMode) int32 {
 	if obj.ExtraFlags.Has(game.ItemNoDrop) {
-		c.Send("You can't drop %s, it must be CURSED!\r\n", obj.Name())
-		return
+		c.Send("You can't %s %s, it must be CURSED!\r\n", mode.verb(), obj.Name())
+		return 0
 	}
-	c.Send("You drop %s.\r\n", obj.Name())
-	c.announce("%s drops %s.\r\n", c.Character.Name, obj.Name())
+
+	c.Send("You %s %s.%s\r\n", mode.verb(), obj.Name(), mode.vanish())
+	c.announce("%s %ss %s.%s\r\n", c.Character.Name, mode.verb(), obj.Name(), mode.vanish())
+
+	// An object flagged NO_DONATE is junked instead of donated, which is how
+	// a corpse cannot be posted to the donation room with the contents still
+	// in it.
+	if mode == dropAsDonation && obj.ExtraFlags.Has(game.ItemNoDonate) {
+		mode = dropAsJunk
+	}
+
+	switch mode {
+	case dropAsDonation:
+		c.World.ObjectToRoom(obj, donationRoom)
+		for _, other := range c.World.Occupants(donationRoom) {
+			other.Tell("%s suddenly appears in a puff a smoke!\r\n", game.Capitalise(obj.Name()))
+		}
+		return 0
+
+	case dropAsJunk:
+		// A coin per sixteen of value, never less than one and never more
+		// than two hundred.
+		value := max(1, min(200, obj.Cost/16))
+		c.World.ExtractObject(obj)
+		return value
+	}
+
 	c.World.ObjectToRoom(obj, c.Character.Room)
+	return 0
 }
 
 // dropGold drops coins, porting perform_drop_gold.

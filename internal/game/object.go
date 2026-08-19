@@ -243,6 +243,16 @@ func (o *Object) FitsAt(pos WearPosition) bool {
 	return o.WearFlags.Has(needs)
 }
 
+// ActionDescription is the object's `action_description`: what the room is
+// told when it is used. A wand with one says that instead of "$n points $p at
+// $N", which is how a builder gives an item its own voice.
+func (o *Object) ActionDescription() string {
+	if o == nil || o.Def == nil {
+		return ""
+	}
+	return o.Def.ActionDesc
+}
+
 // MinLevel is the level needed to use the object. Local: the C tests
 // GET_OBJ_LEVEL in do_wear and perform_wear between `<DoC>` markers, and
 // stock CircleMUD does not.

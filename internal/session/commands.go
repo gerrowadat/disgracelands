@@ -279,6 +279,11 @@ func init() {
 		{Name: "where", Help: "Who is in your zone, and where.", Run: doWhere, CLine: 542},
 		{Name: "wimpy", Help: "Flee automatically below a hit-point level.", Run: doWimpy, CLine: 548},
 		{Name: "wizlist", Help: "List the gods.", Run: cannedText("wizlist", TextFiles.WizList), CLine: 554},
+		{Name: "donate", Help: "Send something to the donation room.", Run: doDonate, CLine: 278},
+		{Name: "junk", Help: "Destroy something for a small reward.", Run: doJunk, CLine: 349},
+		{Name: "quaff", Help: "Drink a potion.", Run: doQuaff, CLine: 418},
+		{Name: "recite", Help: "Read a scroll aloud.", Run: doRecite, CLine: 435},
+		{Name: "use", Help: "Use a wand or a staff you are holding.", Run: doUse, CLine: 527},
 	}
 	Commands = sortedByCLine(staticCommands)
 }

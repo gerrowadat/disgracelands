@@ -137,7 +137,7 @@ func (c *Context) spellGroup(number int32, level int32) {
 		case game.SpellGroupHeal:
 			c.applyPoints(game.SpellHeal, member, level)
 		case game.SpellGroupArmor:
-			c.spellAffect(game.SpellArmor, member)
+			c.spellAffect(game.SpellArmor, member, game.SaveSpell)
 		case game.SpellGroupRecall:
 			if !member.IsNPC() {
 				c.moveTo(member, game.MortalStartRoom,

@@ -117,6 +117,10 @@ const (
 	testChestVnum    game.ObjVnum = 105
 	testPlateVnum    game.ObjVnum = 106
 	testTorchVnum    game.ObjVnum = 107
+	testScrollVnum   game.ObjVnum = 108
+	testWandVnum     game.ObjVnum = 109
+	testPotionVnum   game.ObjVnum = 110
+	testStaffVnum    game.ObjVnum = 111
 )
 
 // Mobile prototypes the tests instantiate.
@@ -136,6 +140,8 @@ func testWorld() *game.Live {
 	temple := &game.RoomDef{Vnum: MortalStartRoom, Name: "The Temple Of Midgaard", Description: "A temple.\r\n"}
 	board := &game.RoomDef{Vnum: ImmortStartRoom, Name: "The Immortal Board Room", Description: "A board room.\r\n"}
 	guild := &game.RoomDef{Vnum: MageGuildRoom, Name: "The Mage Guild", Description: "A guild.\r\n"}
+	// The donation room, so that `donate` has somewhere to send things.
+	donation := &game.RoomDef{Vnum: 3063, Name: "The Donation Room", Description: "A donation room.\r\n"}
 	temple.Exits[game.North] = &game.ExitDef{ToRoom: ImmortStartRoom}
 	board.Exits[game.South] = &game.ExitDef{ToRoom: MortalStartRoom}
 	guild.Exits[game.South] = &game.ExitDef{ToRoom: MortalStartRoom}
@@ -207,6 +213,41 @@ func testWorld() *game.Live {
 			Values: [game.NumObjValues]int32{0, 0, 24},
 		},
 		{
+			// A scroll of armor and bless: values 1..3 are the spells and
+			// value 0 the level it casts at.
+			Vnum: testScrollVnum, Keywords: "scroll", ShortDesc: "a scroll of protection",
+			Description: "A scroll is lying here.",
+			Type:        game.ItemScroll,
+			WearFlags:   game.ItemWearTake | game.ItemWearHold,
+			Weight:      1,
+			Values:      [game.NumObjValues]int32{20, game.SpellArmor, game.SpellBless, 0},
+		},
+		{
+			Vnum: testWandVnum, Keywords: "wand", ShortDesc: "a wand of missiles",
+			Description: "A wand is lying here.",
+			Type:        game.ItemWand,
+			WearFlags:   game.ItemWearTake | game.ItemWearHold,
+			Weight:      2,
+			// Level 20, three charges, three left, magic missile.
+			Values: [game.NumObjValues]int32{20, 3, 3, game.SpellMagicMissile},
+		},
+		{
+			Vnum: testPotionVnum, Keywords: "potion", ShortDesc: "a potion of healing",
+			Description: "A potion is lying here.",
+			Type:        game.ItemPotion,
+			WearFlags:   game.ItemWearTake | game.ItemWearHold,
+			Weight:      1,
+			Values:      [game.NumObjValues]int32{20, game.SpellCureLight, 0, 0},
+		},
+		{
+			Vnum: testStaffVnum, Keywords: "staff", ShortDesc: "a staff of sleep",
+			Description: "A staff is lying here.",
+			Type:        game.ItemStaff,
+			WearFlags:   game.ItemWearTake | game.ItemWearHold,
+			Weight:      5,
+			Values:      [game.NumObjValues]int32{20, 5, 5, game.SpellMagicMissile},
+		},
+		{
 			Vnum: testFountainVnum, Keywords: "fountain", ShortDesc: "a fountain",
 			Description: "A fountain bubbles here.",
 			Type:        game.ItemFountain,
@@ -241,7 +282,7 @@ func testWorld() *game.Live {
 	}
 
 	return game.NewLive(&game.World{
-		Rooms:   []*game.RoomDef{temple, board, guild},
+		Rooms:   []*game.RoomDef{temple, board, guild, donation},
 		Objects: objects,
 		Mobiles: mobiles,
 		Zones:   zones,
