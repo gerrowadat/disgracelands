@@ -154,6 +154,14 @@ func (c *Context) findSpellTarget(info game.SpellInfo, name string) (*game.Chara
 				return nil, obj, true
 			}
 		}
+		if info.Targets.Has(game.TargetObjWorld) {
+			// Anywhere at all, which only locate object asks for — and which
+			// is why locate object can only search by the first keyword of
+			// whatever the search happened to land on first.
+			if obj := findObject(c.World.Objects(), name); obj != nil {
+				return nil, obj, true
+			}
+		}
 		return nil, nil, false
 	}
 
@@ -178,13 +186,31 @@ func (c *Context) broadcast(format string, args ...any) {
 
 // castSpell runs the spell's routines, porting call_magic.
 //
-// Two of the ten routines are implemented: damage and points. A spell whose
-// routines are all unimplemented says so rather than silently doing nothing
-// and charging for it — a player who cannot tell "this spell has no effect"
-// from "this spell is not written yet" cannot report a bug.
+// Eight of the ten routines are implemented. Groups and summons are not, and
+// both wait on the follower system. A spell whose routines are all
+// unimplemented says so rather than silently doing nothing and charging for
+// it — a player who cannot tell "this spell has no effect" from "this spell
+// is not written yet" cannot report a bug.
 func (c *Context) castSpell(info game.SpellInfo, number int32, victim *game.Character, object *game.Object) bool {
 	rec := c.Character.Record
 	level := rec.Level
+
+	// The two room checks at the top of call_magic. A no-magic room stops
+	// everything; a peaceful one stops anything violent, which includes every
+	// damage spell whether or not it is flagged violent.
+	if room := c.World.Room(c.Character.Room); room != nil {
+		if room.Flags.Has(game.RoomNoMagic) {
+			c.Send("Your magic fizzles out and dies.\r\n")
+			c.announce("%s's magic fizzles out and dies.\r\n", c.Character.Name)
+			return false
+		}
+		if room.Flags.Has(game.RoomPeaceful) &&
+			(info.Violent || info.Routines.Has(game.MagDamage)) {
+			c.Send("A flash of white light fills the room, dispelling your violent magic!\r\n")
+			c.announce("White light from no particular source suddenly fills the room, then vanishes.\r\n")
+			return false
+		}
+	}
 
 	var did bool
 
@@ -221,14 +247,38 @@ func (c *Context) castSpell(info game.SpellInfo, number int32, victim *game.Char
 		}
 	}
 
+	if info.Routines.Has(game.MagAlterObjs) && object != nil {
+		did = true
+		c.spellAlterObject(number, object)
+	}
+
+	if info.Routines.Has(game.MagAreas) {
+		did = true
+		c.spellArea(info, number, level)
+	}
+
+	// MAG_MASSES is in the C's switch and its switch is empty: no spell in
+	// stock CircleMUD is a mass spell. Counted as done so that a spell
+	// flagged with it and nothing else does not claim to be unimplemented.
+	if info.Routines.Has(game.MagMasses) {
+		did = true
+	}
+
+	if info.Routines.Has(game.MagCreations) {
+		did = true
+		c.spellCreation(number)
+	}
+
+	if info.Routines.Has(game.MagManual) && c.castManual(number, victim, object, level) {
+		did = true
+	}
+
 	if !did {
 		// Named so the player knows the spell exists and this server has not
 		// finished it, rather than wondering whether they missed.
 		c.Send("Nothing seems to happen. (%s is not implemented yet.)\r\n", info.Name)
 		return false
 	}
-
-	_ = object
 	return true
 }
 

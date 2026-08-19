@@ -181,9 +181,11 @@ func (c *Context) drink(sip bool) error {
 	}
 
 	amount = min(amount, vessel.Values[1])
-	vessel.Values[1] -= amount
 
-	// The vessel gets lighter, but never below nothing.
+	// The vessel gets lighter, but never below nothing. The C changes the
+	// weight here and the contents at the very end, after the poison; the
+	// order does not matter but the emptying does — the last mouthful takes
+	// the liquid's keyword off the container's name with it.
 	vessel.Weight = max(0, vessel.Weight-amount)
 
 	// The table is per four units, which is why every term divides by four.
@@ -212,37 +214,160 @@ func (c *Context) drink(sip bool) error {
 			Bits:     game.AffectPoison,
 		}, false, false)
 	}
+
+	vessel.Values[1] -= amount
+	if vessel.Values[1] == 0 {
+		// The last of it. The liquid's keyword comes off the container's
+		// name, so an empty bottle stops answering to `water`, and it stops
+		// being poisoned along with it.
+		game.NameFromDrinkCon(vessel)
+		vessel.Values[2] = 0
+		vessel.Values[3] = 0
+	}
 	return nil
 }
 
-// doPour, porting do_pour: empty a container onto the ground.
-func doPour(c *Context) error {
-	arg := strings.TrimSpace(c.Arg)
-	if arg == "" {
-		c.Send("What do you want to pour out?\r\n")
+func doPour(c *Context) error { return c.pour(false) }
+func doFill(c *Context) error { return c.pour(true) }
+
+// pour, porting do_pour. One function and two subcommands: `pour <thing>
+// out`, `pour <thing> into <thing>`, and `fill <thing> from <fountain>`.
+//
+// The arithmetic in the second half is the interesting part. It fills the
+// destination to its capacity outright, subtracts that much from the source,
+// and then — if the source has gone *negative*, which is how it finds out
+// there was not enough — adds the shortfall back to both. It arrives at the
+// right answer by overshooting and correcting.
+func (c *Context) pour(filling bool) error {
+	arg1, arg2, _ := twoArguments(c.Arg)
+
+	var from, to *game.Object
+
+	if !filling {
+		if arg1 == "" {
+			c.Send("From what do you want to pour?\r\n")
+			return nil
+		}
+		if from = findObject(c.Character.Carrying, arg1); from == nil {
+			c.Send("You can't find it!\r\n")
+			return nil
+		}
+		if from.Type != game.ItemDrinkCon {
+			c.Send("You can't pour from that!\r\n")
+			return nil
+		}
+	} else {
+		if arg1 == "" {
+			c.Send("What do you want to fill?  And what are you filling it from?\r\n")
+			return nil
+		}
+		if to = findObject(c.Character.Carrying, arg1); to == nil {
+			c.Send("You can't find it!\r\n")
+			return nil
+		}
+		if to.Type != game.ItemDrinkCon {
+			c.Send("You can't fill %s!\r\n", to.Name())
+			return nil
+		}
+		if arg2 == "" {
+			c.Send("What do you want to fill %s from?\r\n", to.Name())
+			return nil
+		}
+		// Filling is from something standing in the room, and only from a
+		// fountain: you cannot fill a waterskin from a bottle.
+		if from = findObject(c.World.RoomObjects(c.Character.Room), arg2); from == nil {
+			c.Send("There doesn't seem to be %s %s here.\r\n", article(arg2), arg2)
+			return nil
+		}
+		if from.Type != game.ItemFountain {
+			c.Send("You can't fill something from %s.\r\n", from.Name())
+			return nil
+		}
+	}
+
+	if from.Values[1] == 0 {
+		// The C's "The $p is empty." reads oddly because $p is already "a
+		// bottle"; it comes out as "The a bottle is empty."
+		c.Send("The %s is empty.\r\n", from.Name())
 		return nil
 	}
 
-	vessel := findObject(c.Character.Carrying, arg)
-	if vessel == nil {
-		c.Send("You can't find it!\r\n")
-		return nil
+	if !filling {
+		switch arg2 {
+		case "":
+			c.Send("Where do you want it?  Out or in what?\r\n")
+			return nil
+		case "out":
+			c.Send("You empty %s.\r\n", from.Name())
+			c.announce("%s empties %s.\r\n", c.Character.Name, from.Name())
+			emptyDrinkContainer(from)
+			return nil
+		}
+		if to = findObject(c.Character.Carrying, arg2); to == nil {
+			c.Send("You can't find it!\r\n")
+			return nil
+		}
+		if to.Type != game.ItemDrinkCon && to.Type != game.ItemFountain {
+			c.Send("You can't pour anything into that.\r\n")
+			return nil
+		}
 	}
-	if vessel.Type != game.ItemDrinkCon {
-		c.Send("You can't pour from that!\r\n")
+
+	switch {
+	case to == from:
+		c.Send("A most unproductive effort.\r\n")
 		return nil
-	}
-	if vessel.Values[1] <= 0 {
-		c.Send("It's empty.\r\n")
+	case to.Values[1] != 0 && to.Values[2] != from.Values[2]:
+		c.Send("There is already another liquid in it!\r\n")
+		return nil
+	case to.Values[1] >= to.Values[0]:
+		c.Send("There is no room for more.\r\n")
 		return nil
 	}
 
-	c.Send("You empty the %s from %s.\r\n", game.DrinkName(vessel.Values[2]), vessel.Name())
-	c.announce("%s empties %s.\r\n", c.Character.Name, vessel.Name())
+	if filling {
+		c.Send("You gently fill %s from %s.\r\n", to.Name(), from.Name())
+		c.announce("%s gently fills %s from %s.\r\n", c.Character.Name, to.Name(), from.Name())
+	} else {
+		// The C names the destination with the word the player typed rather
+		// than with the object's own name, and forgets the newline. Both
+		// reproduced; see docs/weirdnumbers.md.
+		c.Send("You pour the %s into the %s.", game.DrinkName(from.Values[2]), arg2)
+	}
 
-	vessel.Weight = max(0, vessel.Weight-vessel.Values[1])
-	vessel.Values[1] = 0
-	vessel.Values[2] = 0
-	vessel.Values[3] = 0
+	if to.Values[1] == 0 {
+		game.NameToDrinkCon(to, from.Values[2])
+	}
+	to.Values[2] = from.Values[2]
+
+	// Fill it to the brim, then find out whether there was that much.
+	amount := to.Values[0] - to.Values[1]
+	from.Values[1] -= amount
+	to.Values[1] = to.Values[0]
+
+	if from.Values[1] < 0 {
+		to.Values[1] += from.Values[1]
+		amount += from.Values[1]
+		emptyDrinkContainer(from)
+	}
+
+	// "Then the poison boogie", says the C: poison travels with the liquid
+	// and never dilutes.
+	if from.Values[3] != 0 {
+		to.Values[3] = 1
+	}
+
+	from.Weight = max(0, from.Weight-amount)
+	to.Weight += amount
 	return nil
+}
+
+// emptyDrinkContainer empties a vessel and takes the liquid's keyword back
+// off its name, which is the pair the C repeats in four places.
+func emptyDrinkContainer(o *game.Object) {
+	o.Weight = max(0, o.Weight-o.Values[1])
+	game.NameFromDrinkCon(o)
+	o.Values[1] = 0
+	o.Values[2] = 0
+	o.Values[3] = 0
 }

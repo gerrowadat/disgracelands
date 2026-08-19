@@ -45,6 +45,9 @@ func giveDrink(t *testing.T, srv *Server, who string, liquid, units int32) *game
 		vessel.Values[0] = units
 		vessel.Values[1] = units
 		vessel.Values[2] = liquid
+		// A full container carries the liquid's keyword, as the loader and
+		// every pour give it: `drink beer` has to find the bottle.
+		game.NameToDrinkCon(vessel, liquid)
 		w.ObjectToChar(vessel, w.Find(who))
 	})
 	return vessel
@@ -291,17 +294,26 @@ func TestPouringEmptiesAContainer(t *testing.T) {
 
 	vessel := giveDrink(t, srv, "Zod", 1, 12) // beer
 
+	// The C wants somewhere to put it: `pour bottle` on its own asks.
 	c.send("pour bottle")
-	c.expect("You empty the beer from a bottle.")
+	c.expect("Where do you want it?  Out or in what?")
+
+	c.send("pour bottle out")
+	c.expect("You empty a bottle.")
 
 	inWorld(t, srv, func(w *game.Live) {
 		if vessel.Values[1] != 0 {
 			t.Errorf("the bottle still holds %d units", vessel.Values[1])
 		}
+		// Emptying takes the liquid's keyword off the name, so it no longer
+		// answers to `beer`.
+		if vessel.Matches("beer") {
+			t.Errorf("the empty bottle still answers to beer: %q", vessel.Keywords)
+		}
 	})
 
-	c.send("pour bottle")
-	c.expect("It's empty.")
+	c.send("pour bottle out")
+	c.expect("The a bottle is empty.")
 }
 
 // TestDrinkTablesMatchTheC, spot-checked against constants.c's drink_aff.

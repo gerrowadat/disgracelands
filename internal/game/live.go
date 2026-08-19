@@ -98,6 +98,16 @@ func NewLive(defs *World) *Live {
 // Room returns a room prototype, or nil.
 func (l *Live) Room(v RoomVnum) *RoomDef { return l.rooms[v] }
 
+// RoomAt returns the i'th room in load order, which is the C's *rnum* — the
+// index `number(0, top_of_world)` picks from when teleport chooses somewhere
+// at random. Nil if i is out of range.
+func (l *Live) RoomAt(i int) *RoomDef {
+	if l.defs == nil || i < 0 || i >= len(l.defs.Rooms) {
+		return nil
+	}
+	return l.defs.Rooms[i]
+}
+
 // RoomCount is how many rooms the world has.
 func (l *Live) RoomCount() int { return len(l.rooms) }
 

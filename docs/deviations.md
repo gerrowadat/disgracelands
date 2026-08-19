@@ -289,5 +289,9 @@ Listed here so they are not mistaken for deliberate differences.
 - **`junk` and `donate`** are the other two subcommands of `do_drop` and are
   not ported. Both need somewhere to put things — the donation room, and the
   gods' reward for junking — and neither exists yet.
-- **`fill` and `pour <x> into <y>`** are the other two subcommands of
-  `do_pour`; only emptying a container onto the ground is ported.
+- **Groups, summons and charm.** `mag_groups`, `mag_summons` and
+  `spell_charm` all need the follower system — `ch->master`, `ch->followers`
+  and `add_follower` — which is not built. Every other spell routine is.
+- **Scrolls, wands, staves and potions.** `do_use`, `do_quaff` and `do_recite`
+  are the way into `call_magic` for everything above `MAX_SPELLS`, `identify`
+  included.

@@ -116,6 +116,22 @@ func (c *client) expectCount(want string, n int) string {
 	}
 }
 
+// settle waits for everything sent so far to have been processed, by sending
+// a command that always prints something and waiting for one *more* copy of
+// it than the transcript already holds.
+//
+// It exists for commands that print nothing at all — a spell that fails
+// silently, which is most of mag_alter_objs — where waiting for the prompt
+// would match one that arrived before the command was even sent.
+func (c *client) settle() {
+	c.t.Helper()
+
+	const marker = "o'clock"
+	n := strings.Count(c.text.String(), marker)
+	c.send("time")
+	c.expectCount(marker, n+1)
+}
+
 // expectAny reads until any one of the given strings appears.
 func (c *client) expectAny(wants ...string) string {
 	c.t.Helper()
@@ -261,7 +277,19 @@ func (c *client) menuEnter() {
 // the detector finds it intermittently rather than reliably, which is worse.
 func inWorld(t *testing.T, srv *Server, f func(w *game.Live)) {
 	t.Helper()
-	if err := srv.engine.DoSync(context.Background(), f); err != nil {
+
+	// The panic is caught here rather than by the engine. The engine's own
+	// recover is there to keep one bad command from taking the world down,
+	// and it would swallow a nil dereference in a test assertion — which
+	// looks exactly like the test passing.
+	var panicked any
+	if err := srv.engine.DoSync(context.Background(), func(w *game.Live) {
+		defer func() { panicked = recover() }()
+		f(w)
+	}); err != nil {
 		t.Fatalf("running on the world goroutine: %v", err)
+	}
+	if panicked != nil {
+		t.Fatalf("the world closure panicked: %v", panicked)
 	}
 }

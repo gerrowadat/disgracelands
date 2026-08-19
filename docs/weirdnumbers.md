@@ -488,6 +488,41 @@ also how you carry an anvil.
 
 *Reproduced*, including the asymmetry.
 
+### `identify` is spell 201, and cannot be cast
+
+`do_cast` refuses any spell number above `MAX_SPELLS` (130), and
+`SPELL_IDENTIFY` is 201 — up among the NPC spells. So `cast 'identify'`
+answers *"Cast what?!?"* in the C, and the spell is reachable only from a
+scroll, potion, wand or staff, which route through `call_magic` directly.
+Several other useful things live up there too.
+
+*Reproduced.* The report is tested directly until `use`, `quaff` and `recite`
+exist.
+
+### Enchant weapon's bonus is a boolean used as a number
+
+```c
+obj->affected[0].modifier = 1 + (level >= 18);
+obj->affected[1].modifier = 1 + (level >= 20);
+```
+
+`(level >= 18)` is a C comparison, so the bonus is +1 below the threshold and
++2 at or above it, with nothing in between and no further growth however high
+the caster goes. Damroll crosses over two levels later than hitroll, for no
+reason the code gives.
+
+### Pouring one container into another overshoots and corrects
+
+`do_pour` fills the destination to its capacity outright, subtracts that much
+from the source, and then checks whether the source has gone **negative** —
+which is how it finds out there was not enough — and adds the shortfall back
+to both. It arrives at the right answer by overshooting.
+
+The same function also prints `"You pour the %s into the %s."` with **no
+newline**, and names the destination with the word the player typed rather
+than the object's own name. Both reproduced: the prompt runs on, exactly as it
+did in 2001.
+
 ### A pile of coins never says how many
 
 `create_money` names a pile from `money_desc`'s fourteen-entry table, so 100

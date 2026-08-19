@@ -129,6 +129,16 @@ func (m *MobDef) HitRoll() int32 { return 20 - m.Thac0 }
 // stores as ten times the file value.
 func (m *MobDef) ArmorClassScaled() int32 { return 10 * m.ArmorClass }
 
+// Start rooms, from config.c:171. Compile-time constants in the C, and they
+// belong in the config file that the plan's §9.1 describes; until that exists
+// they live here with their provenance attached. Word of recall sends people
+// to the mortal one.
+const (
+	MortalStartRoom RoomVnum = 3001
+	ImmortStartRoom RoomVnum = 1204
+	FrozenStartRoom RoomVnum = 1202
+)
+
 // NumObjValues is the number of value slots an object carries. The C
 // NUM_OBJ_VAL_POSITIONS is 4 and the file format writes exactly four.
 const NumObjValues = 4

@@ -75,6 +75,12 @@ func init() {
 		{Name: "bash", Help: "Knock someone over.", Run: doBash},
 		{Name: "cast", Help: "Cast a spell: cast 'magic missile' <target>.", Run: doCast},
 		{Name: "flee", Help: "Run away from a fight.", Run: doFlee},
+		// `fill` is at interpreter.c:296, ahead of flee — but a mortal's `f`
+		// reaches neither in the C: the lookup skips commands above their
+		// level, so `force` (:294) is passed over and `fart` (:295) wins.
+		// Socials are not ported, so no ordering here reproduces that. Flee
+		// keeps `f` until they are.
+		{Name: "fill", Help: "Fill a container from a fountain.", Run: doFill},
 
 		{Name: "stand", Help: "Get to your feet.", Run: doStand},
 		// sip before sit is the C's order (interpreter.c:467 and :468), so
@@ -294,37 +300,48 @@ func doLook(c *Context) error {
 	}
 
 	sendRoomInfo(c.Session, room)
+	c.Send("%s", roomDescription(c.World, room, c.Character))
+	return nil
+}
 
-	c.Send("%s\r\n", room.Name)
+// roomDescription is look_at_room's text: the name, the description, the way
+// out, what is lying about and who is here.
+//
+// It takes the viewer so it can leave them out of the list of people, and it
+// returns a string rather than sending, because a spell can move somebody
+// else into a room and has to show it to them rather than to the caster.
+func roomDescription(w *game.Live, room *game.RoomDef, viewer *game.Character) string {
+	var b strings.Builder
+
+	fmt.Fprintf(&b, "%s\r\n", room.Name)
 	if room.Description != "" {
-		c.Send("%s", ensureNewline(room.Description))
+		b.WriteString(ensureNewline(room.Description))
 	}
-
 	if exits := exitList(room); exits != "" {
-		c.Send("[ Exits: %s ]\r\n", exits)
+		fmt.Fprintf(&b, "[ Exits: %s ]\r\n", exits)
 	}
 
-	for _, obj := range c.World.RoomObjects(room.Vnum) {
+	for _, obj := range w.RoomObjects(room.Vnum) {
 		if obj.Description != "" {
-			c.Send("%s\r\n", obj.Description)
+			fmt.Fprintf(&b, "%s\r\n", obj.Description)
 			continue
 		}
-		c.Send("%s is lying here.\r\n", capitaliseFirst(obj.Name()))
+		fmt.Fprintf(&b, "%s is lying here.\r\n", capitaliseFirst(obj.Name()))
 	}
 
-	for _, other := range c.World.Occupants(room.Vnum) {
-		if other == c.Character {
+	for _, other := range w.Occupants(room.Vnum) {
+		if other == viewer {
 			continue
 		}
 		// A mobile has a long description written for exactly this line; a
 		// player does not, so they get the generic one.
 		if other.MobDef != nil && other.MobDef.LongDesc != "" {
-			c.Send("%s", ensureNewline(other.MobDef.LongDesc))
+			b.WriteString(ensureNewline(other.MobDef.LongDesc))
 			continue
 		}
-		c.Send("%s is standing here.\r\n", other.Name)
+		fmt.Fprintf(&b, "%s is standing here.\r\n", other.Name)
 	}
-	return nil
+	return b.String()
 }
 
 func exitList(room *game.RoomDef) string {

@@ -26,12 +26,11 @@ import (
 	"github.com/gerrowadat/disgracelands/internal/session"
 )
 
-// Start rooms, from config.c:171. These are compile-time constants in the C
-// and belong in the config file that §9.1 describes; until that exists they
-// live here with their provenance attached.
+// Start rooms. The numbers live in the game package, where word of recall can
+// also reach them; these are here because most of the server refers to them.
 const (
-	MortalStartRoom game.RoomVnum = 3001
-	ImmortStartRoom game.RoomVnum = 1204
+	MortalStartRoom = game.MortalStartRoom
+	ImmortStartRoom = game.ImmortStartRoom
 )
 
 // autosaveInterval matches the C's PULSE_AUTOSAVE.

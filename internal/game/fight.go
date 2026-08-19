@@ -87,7 +87,10 @@ func ComputeTHAC0(rec *PlayerRecord, f Fighter) int32 {
 // (fight.c). Lower is better, and -100 is the floor.
 func ComputeArmorClass(rec *PlayerRecord, f Fighter) int32 {
 	ac := rec.Points.Armor
-	if f.Position().Awake() {
+	// A nil fighter is somebody being read about rather than fought —
+	// `identify` — and the dexterity bonus applies, because the C computes it
+	// from a character who is by definition awake enough to be looked at.
+	if f == nil || f.Position().Awake() {
 		ac += Dexterity(rec.Abilities.Dexterity).Defensive * 10
 	}
 	return max(-100, ac)

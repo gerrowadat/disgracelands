@@ -6,6 +6,8 @@
 
 package game
 
+import "strings"
+
 // The sixteen drinks and what each does to you, from constants.c:424 and
 // :473.
 //
@@ -13,6 +15,28 @@ package game
 // they are per four units drunk, which is why every use divides by four.
 // Salt water and blood have *negative* thirst values: drinking them makes you
 // thirstier, which is the joke and also a real hazard on a long walk.
+
+// The sixteen liquids, from structs.h:426. Only two are named anywhere in the
+// code — water, which create water makes, and slime, which it makes instead
+// when it goes wrong.
+const (
+	LiquidWater      int32 = 0
+	LiquidBeer       int32 = 1
+	LiquidWine       int32 = 2
+	LiquidAle        int32 = 3
+	LiquidDarkAle    int32 = 4
+	LiquidWhisky     int32 = 5
+	LiquidLemonade   int32 = 6
+	LiquidFirebrt    int32 = 7
+	LiquidLocalSpec  int32 = 8
+	LiquidSlime      int32 = 9
+	LiquidMilk       int32 = 10
+	LiquidTea        int32 = 11
+	LiquidCoffee     int32 = 12
+	LiquidBlood      int32 = 13
+	LiquidSaltWater  int32 = 14
+	LiquidClearWater int32 = 15
+)
 
 // drinkNames are drinks[] (constants.c:424).
 var drinkNames = [16]string{
@@ -53,6 +77,65 @@ var drinkEffects = [16][3]int32{
 	{0, 2, -1}, // blood
 	{0, 1, -2}, // salt water
 	{0, 0, 13}, // clear water
+}
+
+// drinkKeywords are drinknames[] (constants.c:443): the *keyword* form, which
+// is a different table from the display names above and shorter than it looks.
+//
+// Dark ale is keyed as "ale", slime mold juice as "juice", salt water as
+// "salt", and clear water as "water" — the same word as plain water. A
+// container gets the keyword of whatever is in it appended to its name, which
+// is how `drink water` finds a canteen, and it is taken off again when the
+// liquid changes.
+var drinkKeywords = [16]string{
+	"water", "beer", "wine", "ale", "ale", "whisky", "lemonade",
+	"firebreather", "local", "juice", "milk", "tea", "coffee",
+	"blood", "salt", "water",
+}
+
+// DrinkKeyword returns the keyword a liquid contributes to its container's
+// name.
+func DrinkKeyword(liquid int32) string {
+	if liquid < 0 || int(liquid) >= len(drinkKeywords) {
+		return ""
+	}
+	return drinkKeywords[liquid]
+}
+
+// NameFromDrinkCon takes the current liquid's keyword off a container,
+// porting name_from_drinkcon.
+//
+// It removes every keyword that *starts with* the liquid's name, which is the
+// C's `strn_cmp` over the keyword length — so emptying a bottle of "ale" also
+// strips a keyword like "alembic" if some builder gave it one. Reproduced.
+func NameFromDrinkCon(o *Object) {
+	if o == nil || (o.Type != ItemDrinkCon && o.Type != ItemFountain) {
+		return
+	}
+	liquid := DrinkKeyword(o.Values[2])
+	if liquid == "" {
+		return
+	}
+
+	kept := make([]string, 0, 8)
+	for _, word := range strings.Fields(o.Keywords) {
+		if strings.HasPrefix(strings.ToLower(word), liquid) {
+			continue
+		}
+		kept = append(kept, word)
+	}
+	o.Keywords = strings.Join(kept, " ")
+}
+
+// NameToDrinkCon appends a liquid's keyword to a container, porting
+// name_to_drinkcon.
+func NameToDrinkCon(o *Object, liquid int32) {
+	if o == nil || (o.Type != ItemDrinkCon && o.Type != ItemFountain) {
+		return
+	}
+	if word := DrinkKeyword(liquid); word != "" {
+		o.Keywords = strings.TrimSpace(o.Keywords + " " + word)
+	}
 }
 
 // DrinkName returns a liquid's name.
