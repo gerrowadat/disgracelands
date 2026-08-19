@@ -21,6 +21,11 @@ import "time"
 // Every numeric field has an explicit width, and times are time.Time rather
 // than an integer of some era's choosing — see
 // docs/proposals/go-port-plan.md §4.
+// MaxTitleLength is MAX_TITLE_LENGTH (structs.h:536), which the C's own
+// comment marks *DO*NOT*CHANGE*: it is the width of the field in char_file_u,
+// so the binary format the archive is in depends on it.
+const MaxTitleLength = 80
+
 type PlayerRecord struct {
 	// Name is the character's name as they typed it, with its original case.
 	Name string

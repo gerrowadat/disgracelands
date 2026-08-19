@@ -222,6 +222,16 @@ type TextFiles interface {
 	Menu() string
 	// Background is the story behind menu choice 3.
 	Background() string
+	// The rest of the canned files, each behind its own command
+	// (do_gen_ps). A missing one is empty rather than an error: the C ships
+	// placeholders for most of them and a server with no news is quiet
+	// rather than broken.
+	News() string
+	Info() string
+	Policies() string
+	Handbook() string
+	WizList() string
+	ImmList() string
 }
 
 // LoginHandler performs the steps that need more than the connection.
