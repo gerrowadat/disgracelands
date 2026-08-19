@@ -145,6 +145,10 @@ const (
 	FrozenStartRoom RoomVnum = 1202
 )
 
+// CircleMUDVersion is circlemud_version (constants.c:17), which this tree
+// never changed: it still names the base it was patched from.
+const CircleMUDVersion = "CircleMUD, version 3.00 beta patchlevel 19"
+
 // NumObjValues is the number of value slots an object carries. The C
 // NUM_OBJ_VAL_POSITIONS is 4 and the file format writes exactly four.
 const NumObjValues = 4

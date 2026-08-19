@@ -28,6 +28,12 @@ type Text struct {
 	imotd      string
 	credits    string
 	background string
+	news       string
+	info       string
+	policies   string
+	handbook   string
+	wizlist    string
+	immlist    string
 	// socials are the entries from misc/socials. They are commands rather
 	// than text, but this is the thing that reads the data directory.
 	socials []game.Social
@@ -49,6 +55,12 @@ const (
 	imotdFile      = "text/imotd"
 	creditsFile    = "text/credits"
 	backgroundFile = "text/background"
+	newsFile       = "text/news"
+	infoFile       = "text/info"
+	policiesFile   = "text/policies"
+	handbookFile   = "text/handbook"
+	wizlistFile    = "text/wizlist"
+	immlistFile    = "text/immlist"
 	// socialsFile is not text/ — the C's SOCMESS_FILE is lib/misc/socials.
 	socialsFile = "misc/socials"
 )
@@ -113,6 +125,12 @@ func LoadText(dir string) (*Text, error) {
 		{motdFile, &t.motd},
 		{imotdFile, &t.imotd},
 		{backgroundFile, &t.background},
+		{newsFile, &t.news},
+		{infoFile, &t.info},
+		{policiesFile, &t.policies},
+		{handbookFile, &t.handbook},
+		{wizlistFile, &t.wizlist},
+		{immlistFile, &t.immlist},
 	} {
 		if b, err := os.ReadFile(filepath.Join(dir, f.path)); err == nil { //nolint:gosec // as above
 			*f.dst = string(b)
@@ -169,3 +187,22 @@ func (t *Text) Background() string {
 
 // Credits implements session.TextFiles.
 func (t *Text) Credits() string { return t.credits }
+
+// News, Info, Policies, Handbook, WizList and ImmList are the rest of the
+// canned files, each shown by one command.
+func (t *Text) News() string { return t.news }
+
+// Info is the `info` command's text.
+func (t *Text) Info() string { return t.info }
+
+// Policies is the `policy` command's text.
+func (t *Text) Policies() string { return t.policies }
+
+// Handbook is the immortals' handbook.
+func (t *Text) Handbook() string { return t.handbook }
+
+// WizList is the list of gods.
+func (t *Text) WizList() string { return t.wizlist }
+
+// ImmList is the shorter list the `immlist` command shows.
+func (t *Text) ImmList() string { return t.immlist }

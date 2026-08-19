@@ -64,6 +64,21 @@ var toggles = map[string]toggle{
 		on:   "You will no longer have your communication repeated.\r\n",
 		off:  "You will now have your communication repeated.\r\n",
 	},
+	"brief": {
+		flag: game.PrefBrief,
+		on:   "Brief mode on.\r\n",
+		off:  "Brief mode off.\r\n",
+	},
+	"compact": {
+		flag: game.PrefCompact,
+		on:   "Compact mode on.\r\n",
+		off:  "Compact mode off.\r\n",
+	},
+	"autoexit": {
+		flag: game.PrefAutoExit,
+		on:   "Autoexits enabled.\r\n",
+		off:  "Autoexits disabled.\r\n",
+	},
 	"quest": {
 		flag: game.PrefQuest,
 		on:   "Okay, you are part of the Quest!\r\n",

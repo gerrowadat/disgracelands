@@ -230,6 +230,27 @@ rather than at 58.
 distinction, because the two ceilings are the only place a record needs to
 know.
 
+### Splitting gold mints a coin
+
+`do_split` charges the splitter for the shares it hands out and then gives
+them the remainder they never gave away:
+
+```c
+GET_GOLD(ch) -= share * (num - 1);
+...
+if (rest) {
+  ...
+  GET_GOLD(ch) += rest;
+}
+```
+
+Ten coins split three ways is three each and one over. The two others gain
+three apiece, the splitter loses six — and then gains one. A hundred coins in
+the world before, a hundred and one after.
+
+*Reproduced.* It is small, it is a hundred per cent reliable, and somebody
+with a patient friend and an afternoon could have made real money out of it.
+
 ### Group experience rounds up, so a group mints experience
 
 ```c

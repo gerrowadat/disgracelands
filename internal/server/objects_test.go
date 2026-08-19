@@ -250,7 +250,7 @@ func TestMovementAbbreviationsStillWin(t *testing.T) {
 		// `si` is sigh rather than sip, `cl` is clap rather than close, and
 		// `f` is fart — which is what a mortal has typed since 1993.
 		"f": "fart", "sm": "smile", "wa": "wake", "wav": "wave", "nod": "nod",
-		"ti": "tickle", "po": "point", "si": "sigh", "cl": "clap",
+		"ti": "title", "tic": "tickle", "po": "point", "si": "sigh", "cl": "clap",
 
 		"g": "get", "i": "inventory", "eq": "equipment",
 		// get before give (interpreter.c:307 and :310), and put before pick,
@@ -277,7 +277,7 @@ func TestMovementAbbreviationsStillWin(t *testing.T) {
 		// command the interpreter special-cases so that "'hi" works with no
 		// space.
 		"say": "say", "'": "'", "t": "tell", "sh": "shout",
-		"go": "gossip", "gr": "group", "gra": "grab", "gs": "gsay",
+		"go": "gold", "gos": "gossip", "gr": "group", "gra": "grab", "gs": "gsay",
 		"as": "assist", "ask": "ask",
 		// who (:540) comes before whisper (:543), so `wh` is who.
 		"wh": "who", "whi": "whisper",

@@ -58,6 +58,10 @@ type Context struct {
 	// Violence resolves damage, so that every command which can kill somebody
 	// goes through the same code as the combat round.
 	Violence Violence
+	// Save writes a character's record back. It returns at once and does the
+	// writing elsewhere: this runs on the world goroutine, and a rule that
+	// waits for a disk stops the game for everybody.
+	Save func(*game.Character)
 	// Arg is everything after the command word, trimmed.
 	Arg string
 	// Social is the social being run, for the commands that are one.
@@ -244,6 +248,37 @@ func init() {
 		// (interpreter.c:522 and :523), so `un` is unlock and ungrouping
 		// needs `ung`.
 		{Name: "ungroup", Help: "Disband your group, or expel somebody.", Run: doUngroup, CLine: 523},
+
+		{Name: "autoexit", Help: "Show the exits after every move.", Run: toggleCommand("autoexit"), CLine: 232},
+		{Name: "brief", Help: "Skip room descriptions you have seen.", Run: toggleCommand("brief"), CLine: 244},
+		{Name: "clear", Help: "Clear the screen.", Run: doClearScreen, CLine: 254},
+		{Name: "cls", Help: "Clear the screen.", Run: doClearScreen, CLine: 256},
+		{Name: "commands", Help: "List the commands you can use.", Run: doCommands(false), CLine: 261},
+		{Name: "compact", Help: "Drop the blank line before each prompt.", Run: toggleCommand("compact"), CLine: 262},
+		{Name: "diagnose", Help: "See how hurt somebody is.", Run: doDiagnose, CLine: 276},
+		{Name: "display", Help: "Choose what the prompt shows.", Run: doDisplay, CLine: 277},
+		{Name: "gold", Help: "Count your money.", Run: doGold, CLine: 314},
+		{Name: "handbook", Help: "The immortals' handbook.", Run: cannedText("handbook", TextFiles.Handbook), CLine: 329},
+		{Name: "imotd", Help: "The immortals' message of the day.", Run: cannedText("immortal message of the day", TextFiles.ImmortalMOTD), CLine: 343},
+		{Name: "immlist", Help: "List the immortals.", Run: cannedText("immortal list", TextFiles.ImmList), CLine: 344},
+		{Name: "info", Help: "General information about the game.", Run: cannedText("information", TextFiles.Info), CLine: 345},
+		{Name: "levels", Help: "Show the experience table for your class.", Run: doLevels, CLine: 359},
+		{Name: "motd", Help: "The message of the day.", Run: cannedText("message of the day", TextFiles.MOTD), CLine: 367},
+		{Name: "news", Help: "Recent news.", Run: cannedText("news", TextFiles.News), CLine: 374},
+		{Name: "policy", Help: "The rules.", Run: cannedText("policy", TextFiles.Policies), CLine: 404},
+		{Name: "prompt", Help: "Choose what the prompt shows.", Run: doDisplay, CLine: 410},
+		{Name: "report", Help: "Tell your group how you are doing.", Run: doReport, CLine: 439},
+		{Name: "save", Help: "Save your character.", Run: doSave, CLine: 451},
+		{Name: "socials", Help: "List the socials you can use.", Run: doCommands(true), CLine: 485},
+		{Name: "split", Help: "Share gold with your group.", Run: doSplit, CLine: 486},
+		{Name: "title", Help: "Set the title that follows your name.", Run: doTitle, CLine: 512},
+		{Name: "toggle", Help: "Show every one of your settings.", Run: doToggle, CLine: 515},
+		{Name: "version", Help: "Which server this is.", Run: doVersion, CLine: 531},
+		{Name: "visible", Help: "Stop being invisible.", Run: doVisible, CLine: 532},
+		{Name: "whoami", Help: "Say who you are.", Run: doWhoAmI, CLine: 541},
+		{Name: "where", Help: "Who is in your zone, and where.", Run: doWhere, CLine: 542},
+		{Name: "wimpy", Help: "Flee automatically below a hit-point level.", Run: doWimpy, CLine: 548},
+		{Name: "wizlist", Help: "List the gods.", Run: cannedText("wizlist", TextFiles.WizList), CLine: 554},
 	}
 	Commands = sortedByCLine(staticCommands)
 }
@@ -324,6 +359,8 @@ type Dispatcher struct {
 	Violence Violence
 	// NoSpecials suppresses special procedures, which is the C's `-s`.
 	NoSpecials bool
+	// Save writes a character's record back, off the world goroutine.
+	Save func(*game.Character)
 }
 
 // Do implements CommandHandler.
@@ -365,7 +402,7 @@ func (d *Dispatcher) Do(ctx context.Context, s *Session, line string) error {
 		c := &Context{
 			Ctx: ctx, Session: s, Character: s.Character(),
 			World: w, Text: d.Text, RNG: d.RNG, Violence: d.Violence, Arg: arg,
-			Social: cmd.Social,
+			Social: cmd.Social, Save: d.Save,
 		}
 
 		// A command that panics must not leave the player staring at a dead
