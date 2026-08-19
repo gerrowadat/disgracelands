@@ -200,10 +200,18 @@ func testWorld() *game.Live {
 		},
 	}
 
+	// Two zones, so that anything which cares about zone boundaries — a
+	// shout, a reset — has one to cross. The numbers are Midgaard's own.
+	zones := []*game.ZoneDef{
+		{Vnum: 12, Name: "The Immortal Zone", Bottom: 1200, Top: 1299, ResetMode: 0},
+		{Vnum: 30, Name: "Midgaard", Bottom: 3000, Top: 3099, ResetMode: 0},
+	}
+
 	return game.NewLive(&game.World{
 		Rooms:   []*game.RoomDef{temple, board, guild},
 		Objects: objects,
 		Mobiles: mobiles,
+		Zones:   zones,
 	})
 }
 

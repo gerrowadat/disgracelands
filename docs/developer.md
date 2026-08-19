@@ -198,7 +198,12 @@ Four things CI does that `make check` does not:
   If it reports a difference, the Go loader is what is wrong.
 - **The 32-bit codec checks** in `internal/persist/player`, which skip
   silently without `gcc-multilib`. They verify the layout the archived player
-  database is actually in.
+  database is actually in — and CI installs that toolchain **only for a change
+  that could affect them**: the `binary` package itself, the two C programs it
+  compiles, the headers those include, or the workflow. Everything else skips
+  the install, which is otherwise the slowest thing in the job by a wide
+  margin. A push to `main` always runs them, because a decision made from a
+  diff is only as good as the diff.
 - **The libcrypt comparison** in `internal/auth`, which skips unless the
   system libcrypt still does traditional DES. It is the only thing standing
   between a hand-written DES and "probably right".

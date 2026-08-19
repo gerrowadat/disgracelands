@@ -14,7 +14,11 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
+      # Full history, so the step below can diff against the base of the pull
+      # request rather than guessing.
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-go@v7
         with:
@@ -26,16 +30,53 @@ jobs:
           go mod tidy
           git diff --exit-code go.mod go.sum
 
+      # Installing gcc-multilib takes longer than everything else in this job
+      # put together, and on a bad day apt stalls outright. It exists for one
+      # package's tests - the ILP32 player-file layout - so it is installed
+      # only for a change that could affect them.
+      #
+      # The paths below are everything those tests read: the package itself,
+      # the two C programs they compile, and the headers those include. A
+      # change to the struct they describe changes the layout, which is the
+      # whole thing being verified.
+      #
+      # Anything that is not a pull request runs them regardless. main is the
+      # branch that has to be verified in full, and a decision made from a
+      # diff is only as good as the diff.
+      - name: Decide whether the 32-bit checks are in scope
+        id: ilp32
+        run: |
+          run_them() {
+            echo "needed=true" >> "$GITHUB_OUTPUT"
+            echo "32-bit checks: running ($1)"
+            exit 0
+          }
+
+          [ "${{ github.event_name }}" = "pull_request" ] || run_them "not a pull request"
+
+          base='${{ github.event.pull_request.base.sha }}'
+          git cat-file -e "$base^{commit}" 2>/dev/null || run_them "base commit unavailable"
+
+          changed=$(git diff --name-only "$base"...HEAD)
+          echo "$changed" | grep -qE '^(internal/persist/player/binary/|reference/tools/pfile(layout|gen)\.c$|reference/moderncserver/src/(structs\.h|sysdep\.h|conf\.h\.in)$|\.github/workflows/go\.yml$)' \
+            && run_them "the change touches the ILP32 layout or its inputs"
+
+          echo "needed=false" >> "$GITHUB_OUTPUT"
+          echo "32-bit checks: skipping (nothing in this change can affect the ILP32 layout)"
+
       # The player-file codec checks itself against C programs compiled for
       # both data models. The 32-bit one is the layout the archived player
       # database is actually in, and without multilib those checks skip -
       # which would mean the format that matters is never verified anywhere.
       - name: Install 32-bit toolchain
+        if: steps.ilp32.outputs.needed == 'true'
+        timeout-minutes: 5
         run: sudo apt-get update && sudo apt-get install -y gcc-multilib
 
       # The C tree's configure generates conf.h, which the layout and fixture
       # programs include.
       - name: Configure the C tree
+        if: steps.ilp32.outputs.needed == 'true'
         run: |
           cd reference/moderncserver
           CFLAGS="-std=gnu89 -fcommon -w" CC=gcc ./configure >/dev/null
@@ -67,6 +108,7 @@ jobs:
       # and both skip silently where their toolchain is missing. CI is where
       # they have to actually run.
       - name: The 32-bit codec checks must not have skipped
+        if: steps.ilp32.outputs.needed == 'true'
         run: |
           go test -count=1 -v ./internal/persist/player/... > out.txt 2>&1 || { cat out.txt; exit 1; }
           if grep -q -- "--- SKIP.*ilp32" out.txt; then

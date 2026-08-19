@@ -246,14 +246,27 @@ func TestMovementAbbreviationsStillWin(t *testing.T) {
 		// bare `p` is put.
 		"gi": "give", "p": "put", "pu": "put",
 		"wea": "wear", "wie": "wield",
-		"l": "look", "k": "kill", "q": "quit",
-		"f": "flee", "sc": "score", "ex": "exits",
+		"l": "look", "k": "kill",
+		// `q` is quaff in the C (interpreter.c:418) and quaff is not ported,
+		// so it currently lands on quest (:420). Only `qui` is stable.
+		"qui": "quit",
+		"f":   "flee", "sc": "score", "ex": "exits",
 
 		// `rest` before `remove` is the C's own order (interpreter.c:426 and
 		// :437), so `res` and `rem` are the unambiguous forms. Bare `r`
 		// belongs to `reply` in the C and will move when that lands, which is
 		// why it is not asserted here.
-		"res": "rest", "rem": "remove",
+		// reply is :425 and rest :426, so `r` is reply and resting needs
+		// `res`.
+		"r": "reply", "res": "rest", "rem": "remove",
+		// The communication commands, whose prefixes are the most worn-in of
+		// the lot: `'` is say, `t` is tell, `sh` is shout, `go` is gossip.
+		// The `'` entry *is* named "'", as it is in the C: a one-character
+		// command the interpreter special-cases so that "'hi" works with no
+		// space.
+		"say": "say", "'": "'", "t": "tell", "sh": "shout",
+		"go": "gossip", "gr": "group", "gra": "grab", "gs": "gsay",
+		"as": "assist", "ask": "ask", "wh": "whisper",
 		// The C's order among these: backstab before bash (interpreter.c:235
 		// and :238), kill before kick (:351 and :352), rest before rescue
 		// (:426 and :441).

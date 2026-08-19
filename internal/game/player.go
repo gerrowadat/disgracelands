@@ -93,6 +93,12 @@ type PlayerRecord struct {
 	Mobile bool
 
 	Alignment int32
+	// LastTell is the IDNum of whoever last told them something, which is
+	// what `reply` answers. Remembered by identity rather than by pointer, so
+	// it survives that person logging out and back in. Not saved: the C keeps
+	// it on char_special_data, which is runtime state.
+	LastTell int64
+
 	// IDNum is the character's permanent identity, referenced by mail,
 	// houses and follower lists.
 	IDNum int64
