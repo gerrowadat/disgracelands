@@ -61,6 +61,9 @@ func (l *Live) MudTime() MudTime { return TimePassed(time.Since(l.booted)) }
 // ObjectDef returns an object prototype, or nil.
 func (l *Live) ObjectDef(v ObjVnum) *ObjDef { return l.objectDefs[v] }
 
+// MobileDef returns a mobile prototype, or nil.
+func (l *Live) MobileDef(v MobVnum) *MobDef { return l.mobileDefs[v] }
+
 // NewLive indexes a loaded world for play.
 func NewLive(defs *World) *Live {
 	l := &Live{

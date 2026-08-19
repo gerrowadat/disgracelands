@@ -20,6 +20,9 @@ type RoomDef struct {
 	Exits [NumDirections]*ExitDef
 
 	ExtraDescs []ExtraDesc
+	// Spec is the name of the special procedure attached to this room, or
+	// "". Set at boot from the assignment table, not read from the file.
+	Spec string
 }
 
 // ExitDef is one direction out of a room.
@@ -108,6 +111,9 @@ type MobDef struct {
 	// They are kept raw here: interpreting them needs the ability tables,
 	// which belong to a later phase.
 	Especs []Espec
+	// Spec is the name of the special procedure attached to this prototype,
+	// or "". Set at boot from the assignment table.
+	Spec string
 }
 
 // MobIsNPC is the action flag the loader sets on every mobile, whether or not
@@ -174,6 +180,9 @@ type ObjDef struct {
 
 	Affects    []ObjAffect
 	ExtraDescs []ExtraDesc
+	// Spec is the name of the special procedure attached to this prototype,
+	// or "". Set at boot from the assignment table.
+	Spec string
 }
 
 // ObjAffect is one `A` line: an apply location and its modifier.

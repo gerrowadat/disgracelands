@@ -1076,9 +1076,15 @@ rest divide into the slices below. They are listed in dependency order rather
 than in order of importance: the first slice unblocks three of the others,
 and after that the work is genuinely parallel.
 
+The seam itself turned out to be smaller than the thing it unblocks. A special
+is a function that gets first refusal on a command, or a tick with no command
+at all — two entry points, one registry and a table. What made it worth doing
+first is that four other slices are written *against* it rather than beside
+it.
+
 | Slice | What is in it | C files |
 |---|---|---|
-| **5a. Special procedures** | The §8 `Trigger` seam, and the C's built-in specials implemented against it. **First, because shops, banks, guilds, the postmaster and the mail all hang off it** — a shopkeeper is a `SPECIAL()` on a mobile, not a command. Also brings `practice` back to the guildmasters, where `docs/deviations.md` says it belongs. | `spec_procs.c`, `castle.c`, `spec_assign.c` |
+| **5a. Special procedures ✅** | The seam, the 205-row assignment table, and ten of the C's specials: guild, guild_guard, puff, fido, janitor, cityguard, snake, magic_user, thief, dump. `practice` is a guildmaster's again. What is left needs other subsystems — shopkeepers need shops, the postmaster needs mail, bankers need banking — or belongs to the archived world. `assign_kings_castle` is a zone-sized script and is untouched. | `spec_procs.c`, `castle.c`, `spec_assign.c` |
 | **5b. Communication** | `say`, `tell`, `reply`, `whisper`, `ask`, `shout`, `holler`, `gossip`, `grats`, `auction`, `gsay`, `qsay`, `emote`, `write`. The channel toggles come with them. | `act.comm.c` |
 | **5c. Socials and aliases** | `do_action` and the social table, plus `alias`. Small, and it settles a dozen command-table prefixes that are placeholders today — a mortal's `f` is `fart` in the C, and nothing here can reproduce that until the socials land. | `act.social.c`, `alias.c` |
 | **5d. Information and preferences** | `commands`, `diagnose`, `gold`, `levels`, `users`, `where`, `whoami`, `wizlist`, `immlist`, the canned-text commands (`motd`, `news`, `info`, `policy`, `handbook`, `version`, `uptime`), the `PRF_*` toggles, `display`/`prompt`, `color`, `title`, `wimpy`, `save`, `report`, `split`, `toggle`. | `act.informative.c`, `act.other.c` |

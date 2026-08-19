@@ -10,7 +10,11 @@ package game
 // player flags are: a partial list invites inventing a value for the next one
 // needed, and an invented one is a different mobile.
 const (
-	// MobSpec: the mobile has a special procedure. Those arrive with the
+	// MobSpec: the mobile has a special procedure. The flag is in the mob
+	// file and the *function* comes from spec_assign.c's table — a mobile
+	// needs both, and one without the other is a SYSERR in the C.
+	//
+	// Old comment, kept because it dates the port: "Those arrive with the
 	// scripting seam (plan §8); the flag is read so a mobile carrying it can
 	// be told apart from one that is not.
 	MobSpec Flags = 1 << 0
