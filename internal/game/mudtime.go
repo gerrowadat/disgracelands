@@ -91,6 +91,22 @@ func TimePassed(elapsed time.Duration) MudTime {
 	return t
 }
 
+// AgeOf is a character's age broken down the way age() (utils.c:366) returns
+// it: years, months, days and hours on the mud calendar, with seventeen years
+// added because every player starts at seventeen.
+//
+// `score` shows only the year, but `identify` shows all four, which is the
+// only place in the game you can find out what hour of what day somebody was
+// rolled up.
+func AgeOf(rec *PlayerRecord, now time.Time) MudTime {
+	if rec == nil || rec.Birth.IsZero() {
+		return MudTime{Year: startingAge}
+	}
+	age := TimePassed(now.Sub(rec.Birth))
+	age.Year += startingAge
+	return age
+}
+
 // Weekday returns the day's name. Computed from the month and day rather than
 // counted, so it never drifts.
 func (t MudTime) Weekday() string {

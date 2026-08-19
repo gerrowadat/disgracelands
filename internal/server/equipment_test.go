@@ -21,9 +21,7 @@ func TestWornArmourShowsInTheScore(t *testing.T) {
 	c.create("Zod", "swordfish", "m", "w")
 
 	var before int32
-	inWorld(t, srv, func(w *game.Live) {
-		before = game.ComputeArmorClass(w.Find("Zod").Record, nil)
-	})
+	inWorld(t, srv, func(w *game.Live) { before = w.Find("Zod").Record.Points.Armor })
 
 	// Armour worth 5, on the body, is worth three times that.
 	drop(t, srv, testPlateVnum, ImmortStartRoom)
@@ -34,12 +32,18 @@ func TestWornArmourShowsInTheScore(t *testing.T) {
 
 	inWorld(t, srv, func(w *game.Live) {
 		rec := w.Find("Zod").Record
-		if got := game.ComputeArmorClass(rec, nil); got != before-15 {
-			t.Errorf("armour class is %d, want %d", got, before-15)
+		if rec.Points.Armor != before-15 {
+			t.Errorf("armour is %d, want %d", rec.Points.Armor, before-15)
 		}
-		// The applies arrived too.
+		// The applies arrived too, by the other mechanism entirely.
 		if rec.Points.HitRoll != 2 {
 			t.Errorf("hitroll is %d, want the plate's +2", rec.Points.HitRoll)
+		}
+		// And the wart: an implementor is rolled with 25s, and the first
+		// recompute — this one — clamps them to 18. See
+		// docs/weirdnumbers.md.
+		if rec.Abilities.Dexterity != 18 {
+			t.Errorf("dexterity is %d, want it clamped to 18", rec.Abilities.Dexterity)
 		}
 	})
 
@@ -48,8 +52,8 @@ func TestWornArmourShowsInTheScore(t *testing.T) {
 
 	inWorld(t, srv, func(w *game.Live) {
 		rec := w.Find("Zod").Record
-		if got := game.ComputeArmorClass(rec, nil); got != before {
-			t.Errorf("armour class is %d after taking it off, want %d", got, before)
+		if rec.Points.Armor != before {
+			t.Errorf("armour is %d after taking it off, want %d", rec.Points.Armor, before)
 		}
 		if rec.Points.HitRoll != 0 {
 			t.Errorf("hitroll is %d after taking it off, want 0", rec.Points.HitRoll)

@@ -73,6 +73,20 @@ func AddAffect(rec *PlayerRecord, a Affect) {
 	RecomputeAffects(rec)
 }
 
+// RemoveAllAffects strips every affect off a character, porting the local
+// spell_dispel_magic (spells.c:85, between `<DoC>` markers).
+//
+// No saving throw, no exceptions, and it does not care who cast what: the
+// C walks the whole list calling affect_remove. Cast on yourself it takes
+// your own blessings with it.
+func RemoveAllAffects(rec *PlayerRecord) {
+	if rec == nil || len(rec.Affects) == 0 {
+		return
+	}
+	rec.Affects = nil
+	RecomputeAffects(rec)
+}
+
 // RemoveAffectsOf takes off every affect a spell put on, porting
 // affect_from_char.
 func RemoveAffectsOf(rec *PlayerRecord, spell int32) bool {
