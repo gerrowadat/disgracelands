@@ -305,10 +305,8 @@ Listed here so they are not mistaken for deliberate differences.
 - **`junk` and `donate`** are the other two subcommands of `do_drop` and are
   not ported. Both need somewhere to put things — the donation room, and the
   gods' reward for junking — and neither exists yet.
-- **Socials.** `do_action` and the several hundred table entries that drive
-  it. Their absence is visible in the command table's *order*: a mortal's `f`
-  reaches `fart` in the C, so nothing here can reproduce what `f` means until
-  they land.
+- **`alias`.** The per-character command aliases, saved alongside the
+  character. `alias.c` and the `plralias/` directory.
 - **Most special procedures.** The seam exists and ten of the C's specials are
   on it — guildmasters, guild guards, Puff, fidos, janitors, cityguards,
   snakes, mobile mages, thieves and the dump. Shopkeepers, the postmaster,

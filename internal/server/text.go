@@ -11,6 +11,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/gerrowadat/disgracelands/internal/game"
 )
 
 // Text holds the server's canned files.
@@ -26,6 +28,18 @@ type Text struct {
 	imotd      string
 	credits    string
 	background string
+	// socials are the entries from misc/socials. They are commands rather
+	// than text, but this is the thing that reads the data directory.
+	socials []game.Social
+}
+
+// Socials returns the loaded socials, for the boot step that puts them into
+// the command table.
+func (t *Text) Socials() []game.Social {
+	if t == nil {
+		return nil
+	}
+	return t.socials
 }
 
 // text files, relative to the data directory.
@@ -35,6 +49,8 @@ const (
 	imotdFile      = "text/imotd"
 	creditsFile    = "text/credits"
 	backgroundFile = "text/background"
+	// socialsFile is not text/ — the C's SOCMESS_FILE is lib/misc/socials.
+	socialsFile = "misc/socials"
 )
 
 // MainMenu is the C's MENU (config.c:271), verbatim.
@@ -100,6 +116,18 @@ func LoadText(dir string) (*Text, error) {
 	} {
 		if b, err := os.ReadFile(filepath.Join(dir, f.path)); err == nil { //nolint:gosec // as above
 			*f.dst = string(b)
+		}
+	}
+
+	// The socials are optional in the same way the message of the day is: a
+	// server without them is a poorer game and still a game. The C exits the
+	// process on a missing socials file, which is a stronger reaction than
+	// this port takes to anything that is not a licence obligation.
+	if f, err := os.Open(filepath.Join(dir, socialsFile)); err == nil { //nolint:gosec // operator-configured data directory
+		t.socials, err = game.ParseSocials(f)
+		_ = f.Close()
+		if err != nil {
+			return nil, fmt.Errorf("reading %s: %w", socialsFile, err)
 		}
 	}
 
