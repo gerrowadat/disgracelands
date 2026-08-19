@@ -12,6 +12,7 @@ import (
 	"runtime/debug"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/gerrowadat/disgracelands/internal/game"
 	"github.com/gerrowadat/disgracelands/internal/rng"
@@ -104,6 +105,10 @@ func init() {
 		// The C has assist at interpreter.c:229, before ask — so `as` is
 		// assist. Nothing ported shares its prefix.
 		{Name: "assist", Help: "Join a fight on somebody's side.", Run: doAssist},
+		// ask and auction are :230 and :231, straight after assist — so `as`
+		// is assist and asking somebody needs `ask`.
+		{Name: "ask", Help: "Ask somebody something quietly.", Run: doAsk},
+		{Name: "auction", Help: "Announce something for sale, game-wide.", Run: doAuction},
 		{Name: "murder", Help: "Attack another player.", Run: doMurder},
 		{Name: "cast", Help: "Cast a spell: cast 'magic missile' <target>.", Run: doCast},
 		{Name: "flee", Help: "Run away from a fight.", Run: doFlee},
@@ -122,6 +127,10 @@ func init() {
 		// `si` takes a drink and sitting down needs the whole word.
 		{Name: "sip", Help: "Take a small drink.", Run: doSip},
 		{Name: "sit", Help: "Sit down.", Run: doSit},
+		// reply is :425, immediately before rest — so `r` is reply, which is
+		// twenty years of muscle memory for anybody who has ever been told
+		// something.
+		{Name: "reply", Help: "Answer whoever last told you something.", Run: doReply},
 		{Name: "rest", Help: "Rest, to recover faster.", Run: doRest},
 		{Name: "sleep", Help: "Sleep, to recover faster still.", Run: doSleep},
 		// After sleep, as in the C (interpreter.c:466 and :479), so `sl` is
@@ -135,10 +144,21 @@ func init() {
 		// Before `pick`, `pour` and `practice`, which is the C's order
 		// (interpreter.c:396, :401, :408 and :411) and therefore what a bare
 		// `p` means: put.
+		{Name: "noauction", Help: "Stop hearing the auction channel.", Run: toggleCommand("noauction")},
+		{Name: "nogossip", Help: "Stop hearing the gossip channel.", Run: toggleCommand("nogossip")},
+		{Name: "nograts", Help: "Stop hearing congratulations.", Run: toggleCommand("nograts")},
+		{Name: "norepeat", Help: "Stop having your own words repeated back.", Run: toggleCommand("norepeat")},
+		{Name: "noshout", Help: "Stop hearing shouts.", Run: toggleCommand("noshout")},
+		{Name: "nosummon", Help: "Refuse to be summoned by other players.", Run: toggleCommand("nosummon")},
+		{Name: "notell", Help: "Stop hearing tells.", Run: toggleCommand("notell")},
+
 		{Name: "put", Help: "Put something into a container.", Run: doPut},
 
 		{Name: "practice", Help: "Practise a spell or skill, or list what you know.", Run: doPractice},
+		{Name: "say", Help: "Talk to the room.", Run: doSay},
+		{Name: "'", Help: "Talk to the room; the short form of say.", Run: doSay},
 		{Name: "score", Help: "Show your own statistics.", Run: doScore},
+		{Name: "shout", Help: "Shout to everybody in your zone.", Run: doShout},
 		{Name: "exits", Help: "List the ways out.", Run: doExits},
 
 		{Name: "open", Help: "Open a door.", Run: doOpen},
@@ -161,20 +181,30 @@ func init() {
 		{Name: "wear", Help: "Put something on.", Run: doWear},
 		{Name: "wield", Help: "Take a weapon in hand.", Run: doWield},
 		{Name: "remove", Help: "Take something off.", Run: doRemove},
-		// group before grab, which is the C's order (interpreter.c:316 and
-		// :317) and therefore what `gr` means.
+		// gossip (:315) comes before group (:316), which comes before grab
+		// (:317) — so `go` is gossip, `gr` is group, and grabbing needs
+		// `gra`.
+		{Name: "gossip", Help: "Chat to everybody playing.", Run: doGossip},
 		{Name: "group", Help: "List your group, or enrol somebody in it.", Run: doGroup},
 		{Name: "grab", Help: "Take something in your hands.", Run: doGrab},
+		{Name: "grats", Help: "Congratulate somebody, game-wide.", Run: doGrats},
+		// gsay and gtell are the same command (:325 and :326).
+		{Name: "gsay", Help: "Talk to your group.", Run: doGroupSay},
+		{Name: "gtell", Help: "Talk to your group.", Run: doGroupSay},
 
 		// After `exits`, `close` and `wear`, which is the C's order — so `ex`
 		// is exits, `co` is close and `wea` is wear, and only the longer
 		// forms reach these.
 		{Name: "examine", Help: "Look closely at something.", Run: doExamine},
 		{Name: "consider", Help: "Size somebody up.", Run: doConsider},
+		// tell is the first of the t's in the C (interpreter.c:501, ahead of
+		// take, taste and time), so `t` is tell.
+		{Name: "tell", Help: "Tell one person something, wherever they are.", Run: doTell},
 		{Name: "time", Help: "Ask what time it is.", Run: doTime},
 		{Name: "weather", Help: "Ask what the weather is doing.", Run: doWeather},
 		{Name: "pour", Help: "Empty a container.", Run: doPour},
 		{Name: "taste", Help: "Take a small bite.", Run: doTaste},
+		{Name: "whisper", Help: "Whisper to somebody in the room.", Run: doWhisper},
 		{Name: "who", Help: "List who is playing.", Run: doWho},
 		{Name: "credits", Help: "Show the CircleMUD and DikuMUD credits.", Run: doCredits},
 		{Name: "help", Help: "Show this list, or help on a topic.", Run: doHelp},
@@ -184,7 +214,10 @@ func init() {
 		{Name: "hide", Help: "Try to hide yourself.", Run: doHide},
 		{Name: "hit", Help: "Attack somebody, starting now.", Run: doHit},
 		{Name: "hold", Help: "Take something in your hands.", Run: doGrab},
+		{Name: "holler", Help: "Shout across the whole game, at a cost.", Run: doHoller},
+		{Name: "quest", Help: "Join or leave the quest channel.", Run: toggleCommand("quest")},
 		{Name: "quit", Help: "Leave the game.", Run: doQuit},
+		{Name: "qsay", Help: "Talk to everybody on the quest.", Run: doQuestSay},
 		// Nowhere near the others: the C has it among the u's, after unlock
 		// (interpreter.c:522 and :523), so `un` is unlock and ungrouping
 		// needs `ung`.
@@ -300,10 +333,19 @@ func lookup(word string) *Command {
 }
 
 // split separates the command word from its argument.
+//
+// A line starting with a non-letter is a one-character command with
+// everything after it as the argument, which is what makes `'hi` and
+// `;godnet test` work with no space. The C's comment credits Eric Green and
+// Stefan Wasilewski with the patch and says it was "requested by many
+// people".
 func split(line string) (word, arg string) {
 	line = strings.TrimSpace(line)
 	if line == "" {
 		return "", ""
+	}
+	if r := rune(line[0]); !unicode.IsLetter(r) {
+		return line[:1], strings.TrimSpace(line[1:])
 	}
 	word, arg, _ = strings.Cut(line, " ")
 	return word, strings.TrimSpace(arg)

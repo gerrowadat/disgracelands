@@ -389,3 +389,17 @@ func (l *Live) ZoneIsEmpty(zone *ZoneDef) bool {
 	}
 	return true
 }
+
+// ZoneOf returns the zone a room belongs to, or nil.
+//
+// The C stores the zone number on the room at load time; here it is a lookup
+// over the zones' vnum ranges, which is the same answer — `world[i].zone` is
+// set by exactly that comparison in db.c.
+func (l *Live) ZoneOf(room RoomVnum) *ZoneDef {
+	for _, zone := range l.defs.Zones {
+		if room >= zone.Bottom && room <= zone.Top {
+			return zone
+		}
+	}
+	return nil
+}

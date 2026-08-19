@@ -169,3 +169,33 @@ func DrinkAmount(liquid, thirst int32, r interface{ Number(int32, int32) int32 }
 	}
 	return r.Number(3, 10)
 }
+
+// Slur is the local drunk-speech mangling in do_say (act.comm.c:52), which
+// this tree added and stock CircleMUD has nothing like.
+//
+// Every `s` becomes `sh`, and one time in three the sentence ends
+// "...*hic*.". The C builds it into a 256-byte buffer and stops at 240
+// characters, so a long enough sentence is cut off mid-word and never gets
+// its hiccup — reproduced, because a drunk player's sentence being truncated
+// at 240 characters is what happened.
+func Slur(said string, r interface{ Number(int32, int32) int32 }) string {
+	const limit = 240
+
+	var b strings.Builder
+	for _, ch := range said {
+		if b.Len() >= limit {
+			break
+		}
+		if ch == 's' {
+			b.WriteString("sh")
+			continue
+		}
+		b.WriteRune(ch)
+	}
+
+	out := b.String()
+	if r.Number(0, 2) == 0 {
+		out += "...*hic*."
+	}
+	return out
+}

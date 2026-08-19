@@ -395,6 +395,19 @@ obj->affected[1].modifier = 1 + (level >= 20);
 the caster goes. Damroll crosses over two levels later than hitroll, for no
 reason the code gives.
 
+### Drunk speech is a local mod, and it truncates at 240 characters
+
+`do_say` (act.comm.c:52) is rewritten in this tree: above a drunkenness of
+five, every `s` becomes `sh` and one time in three the sentence ends
+"...*hic*.". It builds the slurred version into a 256-byte buffer and stops
+copying at 240 characters, so a long enough sentence is cut off mid-word —
+and never gets its hiccup, because the hiccup is appended after the loop.
+
+*Reproduced*, including the truncation. Note also that the doubling makes the
+output longer than the input, so it is the *slurred* length that hits the
+limit: a sentence of two hundred characters with a lot of esses in it will be
+cut where the same sentence without them would not.
+
 ### Charm's duration is charisma divided by intelligence
 
 ```c
