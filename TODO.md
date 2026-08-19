@@ -2,8 +2,8 @@
 
 The project is a Go port of the Disgracelands server. What to do next is
 mostly "the next phase", and that lives in
-`docs/proposals/go-port-plan.md` §10 — currently **Phase 4, the rules
-core**, with Phases 0–3 done.
+`docs/proposals/go-port-plan.md` §10 — currently **Phase 5, the rest of the
+game**, with Phases 0–4 done and Phase 5 mapped into slices there.
 
 This file is for the things that are not phases: work on the C server in
 `reference/moderncserver/`, and decisions that are still open.

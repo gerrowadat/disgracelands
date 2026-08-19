@@ -114,6 +114,13 @@ at all unless they cross a multiple of ten.
 
 ---
 
+### Backstab multiplies by 20 for immortals
+
+`backstab_mult` returns 2 through 6 across the mortal levels and then **20**
+for anyone at or above `LVL_IMMORT`. Not 7, not a continuation of the curve.
+
+---
+
 ## Character progression
 
 ### No mana at level one
@@ -200,10 +207,47 @@ SYSERR — makes every "have I earned this?" comparison succeed.
 
 *Deviation*: an out-of-range level is unreachable here rather than free.
 
-### Backstab multiplies by 20 for immortals
+### A player's abilities are clamped to 18, and an immortal's decay
 
-`backstab_mult` returns 2 through 6 across the mortal levels and then **20**
-for anyone at or above `LVL_IMMORT`. Not 7, not a continuation of the curve.
+`affect_total` ends with
+
+```c
+i = (IS_NPC(ch) ? 25 : 18);
+GET_DEX(ch) = MAX(0, MIN(GET_DEX(ch), i));
+```
+
+— so a **player's** ceiling is 18 and a **mobile's** is 25. `init_char` gives
+an implementor 25 in everything, and the first time anything totals their
+affects — a spell landing, a shield going on — five of the six drop to 18 and
+never come back, because the real values are clamped along with the rest.
+
+Strength is the exception, and the exception is the interesting part: anything
+above 18 is *converted* rather than discarded, ten percentile points per
+point, capped at 100. Twenty castings of strength leave a character at 18/100
+rather than at 58.
+
+*Reproduced*, including the decay. `PlayerRecord.Mobile` carries the `IS_NPC`
+distinction, because the two ceilings are the only place a record needs to
+know.
+
+### Group experience rounds up, so a group mints experience
+
+```c
+tot_gain = (GET_EXP(victim) / 3) + tot_members - 1;
+base     = MAX(1, tot_gain / tot_members);
+```
+
+`+ tot_members - 1` is the standard trick for making integer division round
+up, so three people splitting ten points get **four each** — twelve points out
+of a ten point kill. A group earns strictly more in total than a soloist
+would, which is the incentive to group and looks accidental until you notice
+it is not.
+
+What is *missing* is more interesting: `group_gain` has no level-difference
+bonus at all, where `solo_gain` gives up to double for killing something eight
+levels above you. Killing something far above your level is worth more alone.
+
+*Verified* against the arithmetic at every group size from one to twenty.
 
 ---
 
@@ -328,6 +372,45 @@ routines. A skill is therefore a spell with no cost, no target and nothing to
 do — the table is a table of *things you can practise*, and the spells just
 happen to be the ones with behaviour attached.
 
+### `identify` is spell 201, and cannot be cast
+
+`do_cast` refuses any spell number above `MAX_SPELLS` (130), and
+`SPELL_IDENTIFY` is 201 — up among the NPC spells. So `cast 'identify'`
+answers *"Cast what?!?"* in the C, and the spell is reachable only from a
+scroll, potion, wand or staff, which route through `call_magic` directly.
+Several other useful things live up there too.
+
+*Reproduced.* The report is tested directly until `use`, `quaff` and `recite`
+exist.
+
+### Enchant weapon's bonus is a boolean used as a number
+
+```c
+obj->affected[0].modifier = 1 + (level >= 18);
+obj->affected[1].modifier = 1 + (level >= 20);
+```
+
+`(level >= 18)` is a C comparison, so the bonus is +1 below the threshold and
++2 at or above it, with nothing in between and no further growth however high
+the caster goes. Damroll crosses over two levels later than hitroll, for no
+reason the code gives.
+
+### Charm's duration is charisma divided by intelligence
+
+```c
+af.duration = 24 * 2;
+if (GET_CHA(ch))    af.duration *= GET_CHA(ch);
+if (GET_INT(victim)) af.duration /= GET_INT(victim);
+```
+
+Forty-eight hours, multiplied by the caster's charisma and divided by the
+victim's intelligence — so a charismatic mage charming something stupid holds
+it for weeks of mud time, and the only guard against dividing by zero is the
+`if`. An 18-charisma caster charming an 11-intelligence mobile gets 78 mud
+hours; the same caster charming another 18 gets 48.
+
+---
+
 ## Saving throws
 
 ### Lower is better, and a bonus is negative
@@ -356,51 +439,9 @@ in a hundred chance of failing, however good the character.
 players, so a mobile's own class never affects its saves. The C's comment on
 this is *"NPCs use warrior tables according to some book"*.
 
-## Storage and limits
+---
 
-### Flags are `unsigned long`, and the letter encoding breaks at bit 31
-
-`asciiflag_conv` computes `1 << (26 + (c - 'A'))` into an `int`. Bit 31 is the
-sign bit and anything above it is undefined behaviour, so `'F'` is the last
-letter the C server handles and everything from `'G'` on is broken *there*.
-Data using those bits cannot round-trip to the C server whatever a port does.
-
-Separately, `bitvector_t` is `unsigned long` — 32 bits on the platform this
-was written for, 64 on modern Linux. The width silently changed under the
-codebase somewhere around 1998 and nothing noticed because nothing used the
-high bits.
-
-### Passwords are compared over ten characters and hashed over eight
-
-`MAX_PWD_LENGTH` is 10, which is the width of the field in `char_file_u`.
-Traditional DES `crypt(3)` truncates the password to **eight** characters
-before hashing. So the ninth and tenth characters of a password affect nothing
-at all, and `nanny` refuses passwords longer than ten as though they would.
-
-*Deviation*: no maximum here, and a six-character minimum instead of three.
-
-### A player's abilities are clamped to 18, and an immortal's decay
-
-`affect_total` ends with
-
-```c
-i = (IS_NPC(ch) ? 25 : 18);
-GET_DEX(ch) = MAX(0, MIN(GET_DEX(ch), i));
-```
-
-— so a **player's** ceiling is 18 and a **mobile's** is 25. `init_char` gives
-an implementor 25 in everything, and the first time anything totals their
-affects — a spell landing, a shield going on — five of the six drop to 18 and
-never come back, because the real values are clamped along with the rest.
-
-Strength is the exception, and the exception is the interesting part: anything
-above 18 is *converted* rather than discarded, ten percentile points per
-point, capped at 100. Twenty castings of strength leave a character at 18/100
-rather than at 58.
-
-*Reproduced*, including the decay. `PlayerRecord.Mobile` carries the `IS_NPC`
-distinction, because the two ceilings are the only place a record needs to
-know.
+## Objects, containers and equipment
 
 ### Armour class and applies are two different mechanisms
 
@@ -428,16 +469,6 @@ scale was multiplied by ten and the divide-by-ten moved into
 subtract-then-add pass, which is the one place this port deliberately does not
 reproduce the *method* — the C's version drifts if anything changes between
 the two passes.
-
-### Carry capacity uses shifts
-
-```c
-#define CAN_CARRY_N(ch) (5 + (GET_DEX(ch) >> 1) + (GET_LEVEL(ch) >> 1))
-```
-
-`>> 1` rather than `/ 2`, which is the same for the non-negative values this
-sees but is the kind of hand-optimisation that stops being equivalent the
-moment something goes negative.
 
 ### A drink container's weight is not its weight
 
@@ -488,29 +519,6 @@ also how you carry an anvil.
 
 *Reproduced*, including the asymmetry.
 
-### `identify` is spell 201, and cannot be cast
-
-`do_cast` refuses any spell number above `MAX_SPELLS` (130), and
-`SPELL_IDENTIFY` is 201 — up among the NPC spells. So `cast 'identify'`
-answers *"Cast what?!?"* in the C, and the spell is reachable only from a
-scroll, potion, wand or staff, which route through `call_magic` directly.
-Several other useful things live up there too.
-
-*Reproduced.* The report is tested directly until `use`, `quaff` and `recite`
-exist.
-
-### Enchant weapon's bonus is a boolean used as a number
-
-```c
-obj->affected[0].modifier = 1 + (level >= 18);
-obj->affected[1].modifier = 1 + (level >= 20);
-```
-
-`(level >= 18)` is a C comparison, so the bonus is +1 below the threshold and
-+2 at or above it, with nothing in between and no further growth however high
-the caster goes. Damroll crosses over two levels later than hitroll, for no
-reason the code gives.
-
 ### Pouring one container into another overshoots and corrects
 
 `do_pour` fills the destination to its capacity outright, subtracts that much
@@ -523,39 +531,6 @@ newline**, and names the destination with the word the player typed rather
 than the object's own name. Both reproduced: the prompt runs on, exactly as it
 did in 2001.
 
-### Group experience rounds up, so a group mints experience
-
-```c
-tot_gain = (GET_EXP(victim) / 3) + tot_members - 1;
-base     = MAX(1, tot_gain / tot_members);
-```
-
-`+ tot_members - 1` is the standard trick for making integer division round
-up, so three people splitting ten points get **four each** — twelve points out
-of a ten point kill. A group earns strictly more in total than a soloist
-would, which is the incentive to group and looks accidental until you notice
-it is not.
-
-What is *missing* is more interesting: `group_gain` has no level-difference
-bonus at all, where `solo_gain` gives up to double for killing something eight
-levels above you. Killing something far above your level is worth more alone.
-
-*Verified* against the arithmetic at every group size from one to twenty.
-
-### Charm's duration is charisma divided by intelligence
-
-```c
-af.duration = 24 * 2;
-if (GET_CHA(ch))    af.duration *= GET_CHA(ch);
-if (GET_INT(victim)) af.duration /= GET_INT(victim);
-```
-
-Forty-eight hours, multiplied by the caster's charisma and divided by the
-victim's intelligence — so a charismatic mage charming something stupid holds
-it for weeks of mud time, and the only guard against dividing by zero is the
-`if`. An 18-charisma caster charming an 11-intelligence mobile gets 78 mud
-hours; the same caster charming another 18 gets 48.
-
 ### A pile of coins never says how many
 
 `create_money` names a pile from `money_desc`'s fourteen-entry table, so 100
@@ -567,6 +542,41 @@ anything larger — which exists because somebody found out you could carry more
 than a million.
 
 *Verified* against the table in `handler.c`, both sides of every boundary.
+
+---
+
+## Storage and limits
+
+### Flags are `unsigned long`, and the letter encoding breaks at bit 31
+
+`asciiflag_conv` computes `1 << (26 + (c - 'A'))` into an `int`. Bit 31 is the
+sign bit and anything above it is undefined behaviour, so `'F'` is the last
+letter the C server handles and everything from `'G'` on is broken *there*.
+Data using those bits cannot round-trip to the C server whatever a port does.
+
+Separately, `bitvector_t` is `unsigned long` — 32 bits on the platform this
+was written for, 64 on modern Linux. The width silently changed under the
+codebase somewhere around 1998 and nothing noticed because nothing used the
+high bits.
+
+### Passwords are compared over ten characters and hashed over eight
+
+`MAX_PWD_LENGTH` is 10, which is the width of the field in `char_file_u`.
+Traditional DES `crypt(3)` truncates the password to **eight** characters
+before hashing. So the ninth and tenth characters of a password affect nothing
+at all, and `nanny` refuses passwords longer than ten as though they would.
+
+*Deviation*: no maximum here, and a six-character minimum instead of three.
+
+### Carry capacity uses shifts
+
+```c
+#define CAN_CARRY_N(ch) (5 + (GET_DEX(ch) >> 1) + (GET_LEVEL(ch) >> 1))
+```
+
+`>> 1` rather than `/ 2`, which is the same for the non-negative values this
+sees but is the kind of hand-optimisation that stops being equivalent the
+moment something goes negative.
 
 ---
 

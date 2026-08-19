@@ -15,11 +15,11 @@ environment variable name in brackets after each description. If the two
 ever disagree, `--help` is right and this file is stale — CI checks that
 every flag appears here, but it cannot check that the prose is accurate.
 
-> **Current state:** players can connect, log in and move around, but the
-> rules core is not built (Phase 4 onwards). Settings marked *(inert)* are
-> accepted and validated but do not yet affect anything, because the
-> subsystem they configure does not exist. They are here because the
-> configuration surface was built first, deliberately — see
+> **Current state:** the rules core is built (Phase 4). What is not built is
+> the economy, communication, mail and special procedures — Phase 5. Settings
+> marked *(inert)* are accepted and validated but do not yet affect anything,
+> because the subsystem they configure does not exist. They are here because
+> the configuration surface was built first, deliberately — see
 > `docs/proposals/go-port-plan.md` §10.
 
 ## Data locations
@@ -127,8 +127,9 @@ WebSocket listener exists.
 | `--rng-seed` | `0` | Seed for it. `0` means the clock, which is what the C server does. |
 
 The pulse loop runs, and `dlmud_pulse_duration_seconds` measures it against
-this budget. What it drives is still arriving: command dispatch and autosave
-today, combat and resets from Phase 4.
+this budget. It drives command dispatch, autosave, combat rounds, mobile
+activity, zone resets, regeneration and the mud clock — everything in the
+game is a multiple of it.
 
 Changing `--pulse-interval` changes the speed of the entire game — combat
 rounds, regeneration, zone resets, mob activity. It is a flag for testing,
@@ -172,8 +173,8 @@ These correspond one-to-one with the C server's single-letter options.
 
 `--mini-mud` loads each world subdirectory's `index.mini` instead of
 `index`, and `--restrict` turns new characters away at the login prompt.
-The other two configure subsystems that do not exist yet: there is no rent
-scan and there are no special procedures until Phase 4.
+The other two configure subsystems that do not exist yet: rent arrives in
+Phase 5e and special procedures in Phase 5a.
 
 ## Security
 

@@ -5,10 +5,11 @@ How to run `dlmud`, what it exposes while running, and what to watch.
 For the full settings list see `docs/configuration.md`. For building from
 source see `BUILDING.md`.
 
-> **Current state:** players can connect, log in, and walk around; the rules
-> core — combat, skills, shops, zone resets — is Phase 4 onwards, so the
-> world is unpopulated. Everything below about process management, health
-> checking, logging and player data is real and works. See
+> **Current state:** the world resets, mobiles act, and characters fight,
+> cast, level and die — Phase 4 is done. The economy, communication, mail and
+> special procedures are Phase 5, so shopkeepers and guildmasters stand there
+> inert. Everything below about process management, health checking, logging
+> and player data is real and works. See
 > `docs/proposals/go-port-plan.md` §10 for what arrives when.
 
 ## Starting it
@@ -159,8 +160,8 @@ a `wizvis` attribute holding the minimum level that should see them
 in-game.
 
 Nothing consumes it yet. There are sessions to echo to now, but the
-immortal side — who is watching, and at what level — arrives with the
-commands that use it.
+immortal side — who is watching, and at what level — arrives with
+`act.wizard.c`, which is Phase 5i.
 
 ## Backups
 

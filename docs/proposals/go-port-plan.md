@@ -493,18 +493,21 @@ speculative one and shouldn't drive the design.
     `gorilla/websocket`, carrying the same line protocol so a browser
     client is just another descriptor. Behind the same TLS config, or
     plaintext behind a reverse proxy with `--trust-proxy-headers`.
-- **Telnet negotiation** as a proper state machine in
-  `internal/net/negotiation`, not `comm.c`'s inline byte-stuffing:
-  - **MSSP** — server status for MUD listing sites.
+- **Telnet negotiation** as a proper state machine — built, in
+  `internal/telnet` — rather than `comm.c`'s inline byte-stuffing. ECHO,
+  CHARSET, GMCP, NAWS, TTYPE and suppress-go-ahead are implemented and
+  answered by RFC 1143's Q method; MSSP, MCCP2/3 and MXP are not:
+  - **MSSP** — server status for MUD listing sites. *(not built)*
   - **MCCP2/MCCP3** — zlib stream compression, which is also a
-    denial-of-service surface, so it gets an output-size cap.
+    denial-of-service surface, so it gets an output-size cap. *(not built)*
   - **GMCP** — out-of-band JSON. This is what a modern client or web
     frontend uses for prompts, room data, and vitals without screen-
     scraping, and it's the main reason to bother with negotiation at all.
-  - **MXP**, **NAWS** (window size, for the pager), **TTYPE**, **CHARSET**
-    (the world files are Latin-1 era; declare and transcode rather than
-    emitting invalid UTF-8), and **ECHO** suppression during password entry
-    — the last one being a correctness fix over what a raw socket does.
+  - **MXP** *(not built)*, **NAWS** (window size, for the pager), **TTYPE**,
+    **CHARSET** (the world files are Latin-1 era; declare and transcode
+    rather than emitting invalid UTF-8), and **ECHO** suppression during
+    password entry — the last one being a correctness fix over what a raw
+    socket does.
 - **Connection hygiene**: per-IP connection limits, a handshake timeout, a
   login-attempt rate limiter, and read deadlines. `data/etc/badsites` (the
   existing ban list) is honoured, loaded through its own small persistence
@@ -1012,8 +1015,8 @@ describing numbers gets an oracle rather than a reading.** `reference/tools/`
 holds the original function bodies with the `char_data` dereferences
 substituted and nothing else changed, and the Go tests compare against them
 across the whole input space where that is affordable. Verified this way so
-far: 30,000 RNG draws per seed, 36,288 regeneration values, 1,512,000 to-hit
-values, 1,125 saving throws, every ability table, the title tables, the
+far: 30,000 RNG draws across six seeds, 36,288 regeneration values, 1,512,000
+to-hit values, 1,125 saving throws, every ability table, the title tables, the
 experience tables and `money_desc`.
 
 **Two structural decisions worth keeping.**
@@ -1038,7 +1041,9 @@ it meant.
 - **Specprocs.** No `spec_procs.c` equivalent, so guildmasters, shopkeepers,
   the postmaster and the rest are inert. `practice` is a command here rather
   than something a guildmaster does, which is recorded in
-  `docs/deviations.md`. The Phase 6 scripting seam (§8) is where this belongs.
+  `docs/deviations.md`. They are the first slice of Phase 5, built on §8's
+  `Trigger` interface — not deferred with the scripting interpreter, because
+  the economy and the mail depend on them.
 - **`steal` and `track`.** The two thief skills not ported. `steal` needs the
   killer/thief flag machinery and shopkeeper protection; `track` needs the
   breadth-first search the C keeps in `graph.c`, which is a file of its own.
@@ -1061,21 +1066,47 @@ All of these are in `docs/deviations.md` under "gaps still to fill" rather
 than as deviations, because they are not decisions — they are simply not
 built.
 
-**Phase 5 — The rest of the game.** All remaining `act.*` commands,
-shops, houses, boards, mail, aliases, socials, object save/rent.
-Parallelisable across many small independent pieces.
+**Phase 5 — The rest of the game.** Everything else a player could type in
+2008. *Done when: an archived character can do everything they did then,
+except build.*
+
+The C's command table holds 316 entries. Sixty are implemented. Of the 256
+left, 106 are socials — one function and a data file between them — and the
+rest divide into the slices below. They are listed in dependency order rather
+than in order of importance: the first slice unblocks three of the others,
+and after that the work is genuinely parallel.
+
+| Slice | What is in it | C files |
+|---|---|---|
+| **5a. Special procedures** | The §8 `Trigger` seam, and the C's built-in specials implemented against it. **First, because shops, banks, guilds, the postmaster and the mail all hang off it** — a shopkeeper is a `SPECIAL()` on a mobile, not a command. Also brings `practice` back to the guildmasters, where `docs/deviations.md` says it belongs. | `spec_procs.c`, `castle.c`, `spec_assign.c` |
+| **5b. Communication** | `say`, `tell`, `reply`, `whisper`, `ask`, `shout`, `holler`, `gossip`, `grats`, `auction`, `gsay`, `qsay`, `emote`, `write`. The channel toggles come with them. | `act.comm.c` |
+| **5c. Socials and aliases** | `do_action` and the social table, plus `alias`. Small, and it settles a dozen command-table prefixes that are placeholders today — a mortal's `f` is `fart` in the C, and nothing here can reproduce that until the socials land. | `act.social.c`, `alias.c` |
+| **5d. Information and preferences** | `commands`, `diagnose`, `gold`, `levels`, `users`, `where`, `whoami`, `wizlist`, `immlist`, the canned-text commands (`motd`, `news`, `info`, `policy`, `handbook`, `version`, `uptime`), the `PRF_*` toggles, `display`/`prompt`, `color`, `title`, `wimpy`, `save`, `report`, `split`, `toggle`. | `act.informative.c`, `act.other.c` |
+| **5e. Objects carried across a reboot** | `Crash_load`/`Crash_save` — rent, the object save files, and the menu's choice 1 telling a player what they lost. Then `junk`, `donate`, `use`, `quaff`, `recite`, and with them everything above `MAX_SPELLS` including `identify`. | `objsave.c`, `act.item.c` |
+| **5f. The economy** | Shops (`buy`, `sell`, `list`, `value`, `offer`), banking (`balance`, `deposit`, `withdraw`), `receive`. Needs 5a. | `shop.c` |
+| **5g. Boards, mail and houses** | The board system, `mail`, `house`. Mail needs the postmaster, so it needs 5a. | `boards.c`, `mail.c`, `house.c` |
+| **5h. The last of the rules** | `steal` and `track` — the two thief skills left, and the only two that need machinery of their own: the killer/thief flags for one and `graph.c`'s breadth-first search for the other. Plus `order`, `enter`, `leave`, `remort` (an implementor command in this tree) and `reroll`. | `act.offensive.c`, `act.movement.c`, `act.other.c`, `graph.c` |
+| **5i. Immortal commands** | The whole of `act.wizard.c`: `goto`, `at`, `transfer`, `load`, `purge`, `stat`, `set`, `show`, `snoop`, `switch`, `force`, `restore`, `advance`, `freeze`, `ban`, `wiznet`, `shutdown`, and thirty more. Large, self-contained, and needed before the Phase 7 cutover — a server nobody can administer cannot go live. | `act.wizard.c` |
+
+Two things that are not in any slice and should be, once there is somewhere
+to put them: **`N.thing` targeting** (`get_number`, which every command using
+`generic_find` inherits) belongs with the first slice that touches
+`generic_find`, and the **`CAN_SEE` visibility rules** — invisibility,
+hiding, sneaking and infravision all set flags today that nothing reads yet.
 
 **Phase 6 — Building tools.** OasisOLC equivalent, `Sink` writeback,
 the `gen*` layer. Deferrable — offline editing plus a reboot works
-meanwhile.
+meanwhile. `dlctl world lint` and the world-parity harness are what make
+that deferral safe.
 
 **Phase 7 — Cutover.** Shadow-run both servers against copies of the same
 `data/`, compare. Then run the Go server as primary, keep the C tree as
 reference. Retire `autorun`/`automaint`/`configure`.
 
-**Later (explicitly not v1):** scripting engine behind the §8 seam,
-copyover/hot-reboot, web client, additional persistence backends, the
-WipeMud race system (`TODO.md` §2).
+**Later (explicitly not v1):** a scripting *interpreter* behind the §8 seam —
+the seam itself is Phase 5a and the built-in specials are its first
+consumers — copyover/hot-reboot, the web client, additional persistence
+backends, the WipeMud race system (`TODO.md` §2).
 
 ---
 
@@ -1085,17 +1116,36 @@ WipeMud race system (`TODO.md` §2).
   fixtures where it isn't player data, and synthesised fixtures where it
   is. Fuzz the world parser and the binary pfile decoder — both consume
   untrusted-ish input and both are exactly the kind of code where a
-  malformed length field becomes a panic.
-- **Golden-file tests** for command output. Player-visible text should
-  match the C server's byte for byte; that is the cheapest possible
-  regression net for a faithful port and it catches an enormous number of
-  subtle mistakes.
+  malformed length field becomes a panic. *Built.*
+- **C oracles for anything numeric.** Not in the original plan, and the
+  single technique that has caught the most real mistakes: `reference/tools/`
+  holds original C function bodies with the `char_data` dereferences
+  substituted and nothing else changed, compiled by the Go tests and compared
+  across the input space. Where a table is transcribed rather than computed,
+  the test re-parses the C source instead. See `docs/weirdnumbers.md` for why
+  reading the arithmetic across is not good enough. *Built, and the rule now
+  is that anything with a division, a cast or a comment describing numbers
+  gets one.*
+- **Session tests against a real socket.** Each command is exercised through
+  the whole stack — telnet parser, login, dispatcher, world goroutine — by a
+  test client that dials the listener. Slower than calling the function, and
+  it is how the port's worst bugs were found: output escaped where it should
+  not have been, a panicking command leaving a player with no prompt, a
+  recover in the engine swallowing a test's own assertion. *Built,
+  `internal/server/*_test.go`.*
+- **Golden-file tests** for command output, matching the C server's text byte
+  for byte. *Not built.* The session tests assert the strings inline instead,
+  which is the same idea with worse ergonomics and no diff.
 - **A scripted-session harness**: a list of commands in, expected transcript
-  out, run against both servers. This is the parity oracle for phases 3–5.
+  out, run against **both** servers. *Not built*, and it is the missing piece
+  — everything above compares the Go against a reading of the C or against an
+  oracle built by hand. This is what Phase 7's shadow run needs, and building
+  it earlier would have caught the message-wording mistakes sooner.
 - **Property tests** on the numeric core — combat damage, experience,
   saving throws — asserting no overflow and no negative-where-impossible
   across the full input range, which is where the 64-bit work either holds
-  or doesn't.
+  or doesn't. *Partly: the oracle sweeps cover the ranges, but as equality
+  against the C rather than as properties.*
 - **A deviations log** ([`docs/deviations.md`](../deviations.md), written in
   Phase 3 rather than Phase 1 — there was nothing to record until the server
   ran): every intentional difference from the C behaviour, with the C line
