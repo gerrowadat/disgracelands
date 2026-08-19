@@ -311,3 +311,86 @@ func TestQuestChannel(t *testing.T) {
 	c.send("qsay hello")
 	c.expect("You quest-say, 'hello'")
 }
+
+// TestSocialsWork end to end: the file's messages, resolved for the actor,
+// the victim and a bystander.
+func TestSocialsWork(t *testing.T) {
+	srv, _ := newTestServer(t)
+	c := dialClient(t, listening(t, srv))
+	c.create("Zod", "swordfish", "m", "w")
+
+	victim, victimClient := place(t, srv, fighterRecord("Bob", 10, 100), ImmortStartRoom)
+	victim.Record.Sex = game.SexMale
+	_, bystander := place(t, srv, fighterRecord("Cid", 10, 100), ImmortStartRoom)
+
+	// With no argument.
+	c.send("smile")
+	c.expect("You smile happily.")
+	if !bystander.said("Zod smiles happily.") {
+		t.Error("the room did not see the smile")
+	}
+
+	// Aimed at somebody.
+	c.send("smile bob")
+	c.expect("You smile at him.")
+	if !victimClient.said("Zod smiles at you.") {
+		t.Error("Bob was not smiled at")
+	}
+	if !bystander.said("Zod beams a smile at Bob.") {
+		t.Error("the room did not see it")
+	}
+
+	// Aimed at yourself.
+	c.send("smile zod")
+	c.expect("You smile at yourself.")
+	if !bystander.said("Zod smiles at himself.") {
+		t.Error("the room did not see the self-smile")
+	}
+
+	// Aimed at nobody.
+	c.send("smile nobody")
+	c.expect("There's no one by that name around.")
+}
+
+// TestASocialThatTakesNoTarget ignores its argument, as do_action does when
+// the file gives it no char_found.
+func TestASocialThatTakesNoTarget(t *testing.T) {
+	srv, _ := newTestServer(t)
+	c := dialClient(t, listening(t, srv))
+	c.create("Zod", "swordfish", "m", "w")
+
+	place(t, srv, fighterRecord("Bob", 10, 100), ImmortStartRoom)
+
+	c.send("applaud bob")
+	c.expect("Clap, clap, clap.")
+}
+
+// TestASocialWontReachSomebodyLyingDown. Every social carries a minimum
+// position for its victim, and below it there is one message for all of them.
+func TestASocialWontReachSomebodyLyingDown(t *testing.T) {
+	srv, _ := newTestServer(t)
+	c := dialClient(t, listening(t, srv))
+	c.create("Zod", "swordfish", "m", "w")
+
+	victim, _ := place(t, srv, fighterRecord("Bob", 10, 100), ImmortStartRoom)
+	inWorld(t, srv, func(_ *game.Live) { victim.Position = game.PosSleeping })
+
+	// accuse wants its victim at least resting.
+	c.send("accuse bob")
+	c.expect("Bob is not in a proper position for that.")
+}
+
+// TestASocialWithNothingInTheFile. `hop` is in the C's command table and not
+// in the socials file, so it is a command that knows it cannot do anything —
+// which is not the same as a word the game has never heard of.
+func TestASocialWithNothingInTheFile(t *testing.T) {
+	srv, _ := newTestServer(t)
+	c := dialClient(t, listening(t, srv))
+	c.create("Zod", "swordfish", "m", "w")
+
+	c.send("hop")
+	c.expect("That action is not supported.")
+
+	c.send("frobnicate")
+	c.expect("Huh?!?")
+}

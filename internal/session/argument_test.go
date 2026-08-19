@@ -7,6 +7,8 @@
 package session
 
 import (
+	"os"
+	"regexp"
 	"strings"
 	"testing"
 )
@@ -80,5 +82,96 @@ func TestFindAllDots(t *testing.T) {
 			t.Errorf("findAllDots(%q) = (%v, %q), want (%v, %q)",
 				word, mode, rest, want.mode, want.rest)
 		}
+	}
+}
+
+// TestTheCommandTableIsInTheCsOrder.
+//
+// The table is sorted by the line each command sits on in `interpreter.c`,
+// because the interpreter matches the first entry a typed word is a prefix
+// of — so the order decides what every abbreviation means. This asserts the
+// sort actually happened and that nothing was given a line number by
+// guesswork.
+func TestTheCommandTableIsInTheCsOrder(t *testing.T) {
+	if len(Commands) == 0 {
+		t.Fatal("the command table is empty")
+	}
+
+	prev := 0
+	seen := map[string]bool{}
+	for _, cmd := range Commands {
+		if cmd.CLine <= 0 {
+			t.Errorf("%q has no interpreter.c line", cmd.Name)
+			continue
+		}
+		if cmd.CLine < prev {
+			t.Errorf("%q is at line %d, after a command at %d", cmd.Name, cmd.CLine, prev)
+		}
+		if seen[cmd.Name] {
+			t.Errorf("%q appears twice in the table", cmd.Name)
+		}
+		seen[cmd.Name] = true
+		prev = cmd.CLine
+	}
+}
+
+// TestEveryCommandsLineIsTheOneTheCHasIt.
+func TestEveryCommandsLineIsTheOneTheCHasIt(t *testing.T) {
+	src, err := os.ReadFile("../../reference/moderncserver/src/interpreter.c")
+	if err != nil {
+		t.Fatalf("reading interpreter.c: %v", err)
+	}
+
+	// The first line each name appears on, which is what the port's numbers
+	// are supposed to be.
+	want := map[string]int{}
+	entry := regexp.MustCompile(`^\s*\{ "([^"]+)"\s*,`)
+	for i, line := range strings.Split(string(src), "\n") {
+		m := entry.FindStringSubmatch(line)
+		if m == nil || m[1] == "RESERVED" {
+			continue
+		}
+		if _, dup := want[m[1]]; !dup {
+			want[m[1]] = i + 1
+		}
+	}
+
+	for _, cmd := range Commands {
+		line, ok := want[cmd.Name]
+		if !ok {
+			t.Errorf("%q is not in the C's command table at all", cmd.Name)
+			continue
+		}
+		if cmd.CLine != line {
+			t.Errorf("%q says line %d, the C has it at %d", cmd.Name, cmd.CLine, line)
+		}
+	}
+}
+
+// TestEverySocialHasATablePosition, checked against the C rather than
+// against the file the numbers were generated from.
+func TestEverySocialHasATablePosition(t *testing.T) {
+	src, err := os.ReadFile("../../reference/moderncserver/src/interpreter.c")
+	if err != nil {
+		t.Fatalf("reading interpreter.c: %v", err)
+	}
+
+	entry := regexp.MustCompile(`^\s*\{ "([^"]+)"\s*,\s*[A-Z_]+\s*,\s*do_action\b`)
+	found := 0
+	for i, line := range strings.Split(string(src), "\n") {
+		m := entry.FindStringSubmatch(line)
+		if m == nil {
+			continue
+		}
+		found++
+		if got, ok := socialLines[m[1]]; !ok {
+			t.Errorf("social %q is in the C's table and not in socialLines", m[1])
+		} else if got != i+1 {
+			t.Errorf("social %q is at line %d, socialLines says %d", m[1], i+1, got)
+		}
+	}
+
+	if found != len(socialLines) {
+		t.Errorf("the C has %d socials, socialLines has %d", found, len(socialLines))
 	}
 }

@@ -46,6 +46,17 @@ type zoneState struct {
 // Without this the world is 2,981 rooms and nothing else: every mobile and
 // every object a player ever sees is created here or by a later reset.
 func (s *Server) BootReset(w *game.Live) {
+	// The socials are commands, so they have to be in the table before
+	// anybody can type one. The C boots them in boot_db alongside the world.
+	if socials := s.text.Socials(); len(socials) > 0 {
+		added, unknown := session.RegisterSocials(socials)
+		s.logger.Info("socials loaded", "count", added, "commands", len(session.Commands))
+		for _, name := range unknown {
+			// The C's "SYSERR: Unknown social '%s' in social file."
+			s.logger.Warn("social has no command table entry", "social", name)
+		}
+	}
+
 	// Special procedures are attached before the reset, because the reset is
 	// what instantiates the mobiles that carry them. `-s` skips it, which is
 	// what the C's no_specials does.

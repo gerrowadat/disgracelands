@@ -10,7 +10,9 @@ import (
 	"context"
 	"fmt"
 	"runtime/debug"
+	"sort"
 	"strings"
+	"sync"
 	"time"
 	"unicode"
 
@@ -27,6 +29,20 @@ type Command struct {
 	// Run does the thing. It runs on the world goroutine, so it may touch
 	// the world freely and must not block.
 	Run func(cmd *Context) error
+	// CLine is this command's line in `interpreter.c`, and it is what the
+	// table is *sorted by*.
+	//
+	// The interpreter matches the first entry a typed word is a prefix of, so
+	// the order of the table decides what every abbreviation means — twenty
+	// years of muscle memory, resting on a list somebody wrote by hand in
+	// 1993. Ordering by the C's own line number makes that derived rather
+	// than maintained, and it is the only way the socials can be interleaved
+	// in their right places: they are a third of the C's table and they are
+	// loaded from a file at boot.
+	CLine int
+	// Social is the social this command runs, for the entries built from
+	// `data/misc/socials` rather than written here.
+	Social *game.Social
 }
 
 // Context is what a command is given.
@@ -44,6 +60,8 @@ type Context struct {
 	Violence Violence
 	// Arg is everything after the command word, trimmed.
 	Arg string
+	// Social is the social being run, for the commands that are one.
+	Social *game.Social
 }
 
 // Violence is how a command hurts somebody.
@@ -86,143 +104,210 @@ func (c *Context) Send(format string, args ...any) {
 // literal would be an initialisation cycle.
 var Commands []Command
 
-func init() {
-	Commands = []Command{
-		{Name: "north", Help: "Move north.", Run: move(game.North)},
-		{Name: "east", Help: "Move east.", Run: move(game.East)},
-		{Name: "south", Help: "Move south.", Run: move(game.South)},
-		{Name: "west", Help: "Move west.", Run: move(game.West)},
-		{Name: "up", Help: "Move up.", Run: move(game.Up)},
-		{Name: "down", Help: "Move down.", Run: move(game.Down)},
+// staticCommands are the ones written in Go. The socials are added to them at
+// boot by RegisterSocials, and the whole lot is then sorted by CLine.
+var staticCommands []Command
 
-		{Name: "look", Help: "Look at the room around you.", Run: doLook},
-		{Name: "kill", Help: "Attack someone.", Run: doKill},
-		{Name: "kick", Help: "Kick someone.", Run: doKick},
+func init() {
+	staticCommands = []Command{
+		{Name: "north", Help: "Move north.", Run: move(game.North), CLine: 216},
+		{Name: "east", Help: "Move east.", Run: move(game.East), CLine: 217},
+		{Name: "south", Help: "Move south.", Run: move(game.South), CLine: 218},
+		{Name: "west", Help: "Move west.", Run: move(game.West), CLine: 219},
+		{Name: "up", Help: "Move up.", Run: move(game.Up), CLine: 220},
+		{Name: "down", Help: "Move down.", Run: move(game.Down), CLine: 221},
+
+		{Name: "look", Help: "Look at the room around you.", Run: doLook, CLine: 355},
+		{Name: "kill", Help: "Attack someone.", Run: doKill, CLine: 351},
+		{Name: "kick", Help: "Kick someone.", Run: doKick, CLine: 352},
 		// backstab before bash, which is the C's order (interpreter.c:235 and
 		// :238) and therefore what `ba` means.
-		{Name: "backstab", Help: "Stab someone who is not looking.", Run: doBackstab},
-		{Name: "bash", Help: "Knock someone over.", Run: doBash},
+		{Name: "backstab", Help: "Stab someone who is not looking.", Run: doBackstab, CLine: 235},
+		{Name: "bash", Help: "Knock someone over.", Run: doBash, CLine: 238},
 		// The C has assist at interpreter.c:229, before ask — so `as` is
 		// assist. Nothing ported shares its prefix.
-		{Name: "assist", Help: "Join a fight on somebody's side.", Run: doAssist},
+		{Name: "assist", Help: "Join a fight on somebody's side.", Run: doAssist, CLine: 229},
 		// ask and auction are :230 and :231, straight after assist — so `as`
 		// is assist and asking somebody needs `ask`.
-		{Name: "ask", Help: "Ask somebody something quietly.", Run: doAsk},
-		{Name: "auction", Help: "Announce something for sale, game-wide.", Run: doAuction},
-		{Name: "murder", Help: "Attack another player.", Run: doMurder},
-		{Name: "cast", Help: "Cast a spell: cast 'magic missile' <target>.", Run: doCast},
-		{Name: "flee", Help: "Run away from a fight.", Run: doFlee},
+		{Name: "ask", Help: "Ask somebody something quietly.", Run: doAsk, CLine: 230},
+		{Name: "auction", Help: "Announce something for sale, game-wide.", Run: doAuction, CLine: 231},
+		{Name: "murder", Help: "Attack another player.", Run: doMurder, CLine: 372},
+		{Name: "cast", Help: "Cast a spell: cast 'magic missile' <target>.", Run: doCast, CLine: 249},
+		{Name: "flee", Help: "Run away from a fight.", Run: doFlee, CLine: 297},
 		// `fill` is at interpreter.c:296, ahead of flee — but a mortal's `f`
 		// reaches neither in the C: the lookup skips commands above their
 		// level, so `force` (:294) is passed over and `fart` (:295) wins.
 		// Socials are not ported, so no ordering here reproduces that. Flee
 		// keeps `f` until they are.
-		{Name: "fill", Help: "Fill a container from a fountain.", Run: doFill},
+		{Name: "fill", Help: "Fill a container from a fountain.", Run: doFill, CLine: 296},
 		// After fill (interpreter.c:296 and :300), so `fo` is follow and `fi`
 		// is fill.
-		{Name: "follow", Help: "Follow somebody, or `follow self` to stop.", Run: doFollow},
+		{Name: "follow", Help: "Follow somebody, or `follow self` to stop.", Run: doFollow, CLine: 300},
 
-		{Name: "stand", Help: "Get to your feet.", Run: doStand},
+		{Name: "stand", Help: "Get to your feet.", Run: doStand, CLine: 490},
 		// sip before sit is the C's order (interpreter.c:467 and :468), so
 		// `si` takes a drink and sitting down needs the whole word.
-		{Name: "sip", Help: "Take a small drink.", Run: doSip},
-		{Name: "sit", Help: "Sit down.", Run: doSit},
+		{Name: "sip", Help: "Take a small drink.", Run: doSip, CLine: 467},
+		{Name: "sit", Help: "Sit down.", Run: doSit, CLine: 468},
 		// reply is :425, immediately before rest — so `r` is reply, which is
 		// twenty years of muscle memory for anybody who has ever been told
 		// something.
-		{Name: "reply", Help: "Answer whoever last told you something.", Run: doReply},
-		{Name: "rest", Help: "Rest, to recover faster.", Run: doRest},
-		{Name: "sleep", Help: "Sleep, to recover faster still.", Run: doSleep},
+		{Name: "reply", Help: "Answer whoever last told you something.", Run: doReply, CLine: 425},
+		{Name: "rest", Help: "Rest, to recover faster.", Run: doRest, CLine: 426},
+		{Name: "sleep", Help: "Sleep, to recover faster still.", Run: doSleep, CLine: 470},
 		// After sleep, as in the C (interpreter.c:466 and :479), so `sl` is
 		// sleep and sneaking needs `sn`.
-		{Name: "sneak", Help: "Try to move without being heard.", Run: doSneak},
+		{Name: "sneak", Help: "Try to move without being heard.", Run: doSneak, CLine: 479},
 		// After rest, as in the C (interpreter.c:426 and :441), so `res` is
 		// still rest and only `resc` reaches rescue.
-		{Name: "rescue", Help: "Take somebody else's fight onto yourself.", Run: doRescue},
-		{Name: "wake", Help: "Wake up, or wake somebody else.", Run: doWake},
+		{Name: "rescue", Help: "Take somebody else's fight onto yourself.", Run: doRescue, CLine: 441},
+		{Name: "wake", Help: "Wake up, or wake somebody else.", Run: doWake, CLine: 536},
 
 		// Before `pick`, `pour` and `practice`, which is the C's order
 		// (interpreter.c:396, :401, :408 and :411) and therefore what a bare
 		// `p` means: put.
-		{Name: "noauction", Help: "Stop hearing the auction channel.", Run: toggleCommand("noauction")},
-		{Name: "nogossip", Help: "Stop hearing the gossip channel.", Run: toggleCommand("nogossip")},
-		{Name: "nograts", Help: "Stop hearing congratulations.", Run: toggleCommand("nograts")},
-		{Name: "norepeat", Help: "Stop having your own words repeated back.", Run: toggleCommand("norepeat")},
-		{Name: "noshout", Help: "Stop hearing shouts.", Run: toggleCommand("noshout")},
-		{Name: "nosummon", Help: "Refuse to be summoned by other players.", Run: toggleCommand("nosummon")},
-		{Name: "notell", Help: "Stop hearing tells.", Run: toggleCommand("notell")},
+		{Name: "noauction", Help: "Stop hearing the auction channel.", Run: toggleCommand("noauction"), CLine: 377},
+		{Name: "nogossip", Help: "Stop hearing the gossip channel.", Run: toggleCommand("nogossip"), CLine: 378},
+		{Name: "nograts", Help: "Stop hearing congratulations.", Run: toggleCommand("nograts"), CLine: 379},
+		{Name: "norepeat", Help: "Stop having your own words repeated back.", Run: toggleCommand("norepeat"), CLine: 381},
+		{Name: "noshout", Help: "Stop hearing shouts.", Run: toggleCommand("noshout"), CLine: 382},
+		{Name: "nosummon", Help: "Refuse to be summoned by other players.", Run: toggleCommand("nosummon"), CLine: 383},
+		{Name: "notell", Help: "Stop hearing tells.", Run: toggleCommand("notell"), CLine: 384},
 
-		{Name: "put", Help: "Put something into a container.", Run: doPut},
+		{Name: "put", Help: "Put something into a container.", Run: doPut, CLine: 396},
 
-		{Name: "practice", Help: "Practise a spell or skill, or list what you know.", Run: doPractice},
-		{Name: "say", Help: "Talk to the room.", Run: doSay},
-		{Name: "'", Help: "Talk to the room; the short form of say.", Run: doSay},
-		{Name: "score", Help: "Show your own statistics.", Run: doScore},
-		{Name: "shout", Help: "Shout to everybody in your zone.", Run: doShout},
-		{Name: "exits", Help: "List the ways out.", Run: doExits},
+		{Name: "practice", Help: "Practise a spell or skill, or list what you know.", Run: doPractice, CLine: 411},
+		{Name: "say", Help: "Talk to the room.", Run: doSay, CLine: 449},
+		{Name: "'", Help: "Talk to the room; the short form of say.", Run: doSay, CLine: 450},
+		{Name: "score", Help: "Show your own statistics.", Run: doScore, CLine: 452},
+		{Name: "shout", Help: "Shout to everybody in your zone.", Run: doShout, CLine: 458},
+		{Name: "exits", Help: "List the ways out.", Run: doExits, CLine: 290},
 
-		{Name: "open", Help: "Open a door.", Run: doOpen},
-		{Name: "close", Help: "Close a door.", Run: doClose},
-		{Name: "lock", Help: "Lock a door.", Run: doLock},
-		{Name: "unlock", Help: "Unlock a door.", Run: doUnlock},
-		{Name: "pick", Help: "Pick a lock.", Run: doPick},
+		{Name: "open", Help: "Open a door.", Run: doOpen, CLine: 392},
+		{Name: "close", Help: "Close a door.", Run: doClose, CLine: 255},
+		{Name: "lock", Help: "Lock a door.", Run: doLock, CLine: 362},
+		{Name: "unlock", Help: "Unlock a door.", Run: doUnlock, CLine: 522},
+		{Name: "pick", Help: "Pick a lock.", Run: doPick, CLine: 401},
 
-		{Name: "get", Help: "Pick something up.", Run: doGet},
+		{Name: "get", Help: "Pick something up.", Run: doGet, CLine: 307},
 		// After get, as in the C (interpreter.c:307 and :310), so `g` is get
 		// and giving needs `gi`.
-		{Name: "give", Help: "Give something to somebody.", Run: doGive},
+		{Name: "give", Help: "Give something to somebody.", Run: doGive, CLine: 310},
 		// drink before drop, which is the C's order (interpreter.c:279 and
 		// :280) — so `dr` is drink and only `dro` is drop.
-		{Name: "drink", Help: "Drink from something.", Run: doDrink},
-		{Name: "drop", Help: "Put something down.", Run: doDrop},
-		{Name: "eat", Help: "Eat something.", Run: doEat},
-		{Name: "inventory", Help: "List what you are carrying.", Run: doInventory},
-		{Name: "equipment", Help: "List what you are wearing.", Run: doEquipment},
-		{Name: "wear", Help: "Put something on.", Run: doWear},
-		{Name: "wield", Help: "Take a weapon in hand.", Run: doWield},
-		{Name: "remove", Help: "Take something off.", Run: doRemove},
+		{Name: "drink", Help: "Drink from something.", Run: doDrink, CLine: 279},
+		{Name: "drop", Help: "Put something down.", Run: doDrop, CLine: 280},
+		{Name: "eat", Help: "Eat something.", Run: doEat, CLine: 283},
+		{Name: "inventory", Help: "List what you are carrying.", Run: doInventory, CLine: 341},
+		{Name: "equipment", Help: "List what you are wearing.", Run: doEquipment, CLine: 289},
+		{Name: "wear", Help: "Put something on.", Run: doWear, CLine: 538},
+		{Name: "wield", Help: "Take a weapon in hand.", Run: doWield, CLine: 546},
+		{Name: "remove", Help: "Take something off.", Run: doRemove, CLine: 437},
 		// gossip (:315) comes before group (:316), which comes before grab
 		// (:317) — so `go` is gossip, `gr` is group, and grabbing needs
 		// `gra`.
-		{Name: "gossip", Help: "Chat to everybody playing.", Run: doGossip},
-		{Name: "group", Help: "List your group, or enrol somebody in it.", Run: doGroup},
-		{Name: "grab", Help: "Take something in your hands.", Run: doGrab},
-		{Name: "grats", Help: "Congratulate somebody, game-wide.", Run: doGrats},
+		{Name: "gossip", Help: "Chat to everybody playing.", Run: doGossip, CLine: 315},
+		{Name: "group", Help: "List your group, or enrol somebody in it.", Run: doGroup, CLine: 316},
+		{Name: "grab", Help: "Take something in your hands.", Run: doGrab, CLine: 317},
+		{Name: "grats", Help: "Congratulate somebody, game-wide.", Run: doGrats, CLine: 318},
 		// gsay and gtell are the same command (:325 and :326).
-		{Name: "gsay", Help: "Talk to your group.", Run: doGroupSay},
-		{Name: "gtell", Help: "Talk to your group.", Run: doGroupSay},
+		{Name: "gsay", Help: "Talk to your group.", Run: doGroupSay, CLine: 325},
+		{Name: "gtell", Help: "Talk to your group.", Run: doGroupSay, CLine: 326},
 
 		// After `exits`, `close` and `wear`, which is the C's order — so `ex`
 		// is exits, `co` is close and `wea` is wear, and only the longer
 		// forms reach these.
-		{Name: "examine", Help: "Look closely at something.", Run: doExamine},
-		{Name: "consider", Help: "Size somebody up.", Run: doConsider},
+		{Name: "examine", Help: "Look closely at something.", Run: doExamine, CLine: 291},
+		{Name: "consider", Help: "Size somebody up.", Run: doConsider, CLine: 257},
 		// tell is the first of the t's in the C (interpreter.c:501, ahead of
 		// take, taste and time), so `t` is tell.
-		{Name: "tell", Help: "Tell one person something, wherever they are.", Run: doTell},
-		{Name: "time", Help: "Ask what time it is.", Run: doTime},
-		{Name: "weather", Help: "Ask what the weather is doing.", Run: doWeather},
-		{Name: "pour", Help: "Empty a container.", Run: doPour},
-		{Name: "taste", Help: "Take a small bite.", Run: doTaste},
-		{Name: "whisper", Help: "Whisper to somebody in the room.", Run: doWhisper},
-		{Name: "who", Help: "List who is playing.", Run: doWho},
-		{Name: "credits", Help: "Show the CircleMUD and DikuMUD credits.", Run: doCredits},
-		{Name: "help", Help: "Show this list, or help on a topic.", Run: doHelp},
+		{Name: "tell", Help: "Tell one person something, wherever they are.", Run: doTell, CLine: 501},
+		{Name: "time", Help: "Ask what time it is.", Run: doTime, CLine: 514},
+		{Name: "weather", Help: "Ask what the weather is doing.", Run: doWeather, CLine: 539},
+		{Name: "pour", Help: "Empty a container.", Run: doPour, CLine: 408},
+		{Name: "taste", Help: "Take a small bite.", Run: doTaste, CLine: 506},
+		{Name: "whisper", Help: "Whisper to somebody in the room.", Run: doWhisper, CLine: 543},
+		{Name: "who", Help: "List who is playing.", Run: doWho, CLine: 540},
+		{Name: "credits", Help: "Show the CircleMUD and DikuMUD credits.", Run: doCredits, CLine: 264},
+		{Name: "help", Help: "Show this list, or help on a topic.", Run: doHelp, CLine: 328},
 		// `hide`, `hit` and `hold` sit after help because the C has them
 		// there (interpreter.c:328, :332, :333 and :334) — so `h` is help,
 		// `hi` is hide, and hitting somebody needs `hit`.
-		{Name: "hide", Help: "Try to hide yourself.", Run: doHide},
-		{Name: "hit", Help: "Attack somebody, starting now.", Run: doHit},
-		{Name: "hold", Help: "Take something in your hands.", Run: doGrab},
-		{Name: "holler", Help: "Shout across the whole game, at a cost.", Run: doHoller},
-		{Name: "quest", Help: "Join or leave the quest channel.", Run: toggleCommand("quest")},
-		{Name: "quit", Help: "Leave the game.", Run: doQuit},
-		{Name: "qsay", Help: "Talk to everybody on the quest.", Run: doQuestSay},
+		{Name: "hide", Help: "Try to hide yourself.", Run: doHide, CLine: 332},
+		{Name: "hit", Help: "Attack somebody, starting now.", Run: doHit, CLine: 333},
+		{Name: "hold", Help: "Take something in your hands.", Run: doGrab, CLine: 334},
+		{Name: "holler", Help: "Shout across the whole game, at a cost.", Run: doHoller, CLine: 335},
+		{Name: "quest", Help: "Join or leave the quest channel.", Run: toggleCommand("quest"), CLine: 420},
+		{Name: "quit", Help: "Leave the game.", Run: doQuit, CLine: 422},
+		{Name: "qsay", Help: "Talk to everybody on the quest.", Run: doQuestSay, CLine: 423},
 		// Nowhere near the others: the C has it among the u's, after unlock
 		// (interpreter.c:522 and :523), so `un` is unlock and ungrouping
 		// needs `ung`.
-		{Name: "ungroup", Help: "Disband your group, or expel somebody.", Run: doUngroup},
+		{Name: "ungroup", Help: "Disband your group, or expel somebody.", Run: doUngroup, CLine: 523},
 	}
+	Commands = sortedByCLine(staticCommands)
+}
+
+// RegisterSocials rebuilds the command table with the socials in it, in the
+// positions `interpreter.c` gives them.
+//
+// A social whose name is not in the C's table is dropped with a note, which is
+// what the C does too — it logs "Unknown social '%s' in social file" and
+// re-uses the slot. Called once at boot, before anything can type anything.
+func RegisterSocials(socials []game.Social) (added int, unknown []string) {
+	out := append([]Command(nil), staticCommands...)
+
+	have := make(map[string]bool, len(socials))
+	for i := range socials {
+		s := socials[i]
+		line, ok := socialLines[s.Name]
+		if !ok {
+			unknown = append(unknown, s.Name)
+			continue
+		}
+		have[s.Name] = true
+		out = append(out, Command{
+			Name:   s.Name,
+			Help:   "(social)",
+			Run:    doAction,
+			CLine:  line,
+			Social: &socials[i],
+		})
+		added++
+	}
+
+	// A social in the C's table with no entry in the file is still a command
+	// there — `hop` is one — and it answers "That action is not supported."
+	// Leaving it out would answer "Huh?!?", which is a different thing: one
+	// says the game knows the word, the other says it does not.
+	for name, line := range socialLines {
+		if have[name] {
+			continue
+		}
+		out = append(out, Command{
+			Name:  name,
+			Help:  "(social, with nothing in the socials file)",
+			Run:   doAction,
+			CLine: line,
+		})
+	}
+
+	// The table is a package global and is written exactly once. Only tests
+	// build more than one server in a process, and a second one writing this
+	// while the first still has a goroutine reading it is a data race for no
+	// gain — the socials file is the same file either way.
+	socialsOnce.Do(func() { Commands = sortedByCLine(out) })
+	return added, unknown
+}
+
+var socialsOnce sync.Once
+
+// sortedByCLine puts the table in the C's order. Stable, so two entries that
+// somehow share a line keep the order they were written in.
+func sortedByCLine(in []Command) []Command {
+	out := append([]Command(nil), in...)
+	sort.SliceStable(out, func(i, j int) bool { return out[i].CLine < out[j].CLine })
+	return out
 }
 
 // Dispatcher runs commands against the world.
@@ -280,6 +365,7 @@ func (d *Dispatcher) Do(ctx context.Context, s *Session, line string) error {
 		c := &Context{
 			Ctx: ctx, Session: s, Character: s.Character(),
 			World: w, Text: d.Text, RNG: d.RNG, Violence: d.Violence, Arg: arg,
+			Social: cmd.Social,
 		}
 
 		// A command that panics must not leave the player staring at a dead

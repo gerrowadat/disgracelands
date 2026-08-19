@@ -31,6 +31,7 @@ import (
 	"github.com/gerrowadat/disgracelands/internal/persist/player"
 	"github.com/gerrowadat/disgracelands/internal/persist/player/ascii"
 	"github.com/gerrowadat/disgracelands/internal/rng"
+	"github.com/gerrowadat/disgracelands/internal/session"
 	"github.com/gerrowadat/disgracelands/internal/telnet"
 )
 
@@ -67,11 +68,43 @@ func testText(t *testing.T) *Text {
 			t.Fatal(err)
 		}
 	}
+	// The real socials file, because the socials are a third of the command
+	// table and the tests that care about abbreviations need the whole of it.
+	if err := os.MkdirAll(filepath.Join(dir, "misc"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	socials, err := os.ReadFile(filepath.Join(repoRoot(t), "data", socialsFile))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, socialsFile), socials, 0o600); err != nil {
+		t.Fatal(err)
+	}
+
 	text, err := LoadText(dir)
 	if err != nil {
 		t.Fatal(err)
 	}
 	return text
+}
+
+// repoRoot walks up to the directory holding go.mod.
+func repoRoot(t *testing.T) string {
+	t.Helper()
+	dir, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for {
+		if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
+			return dir
+		}
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			t.Fatal("no go.mod above the working directory")
+		}
+		dir = parent
+	}
 }
 
 // Object prototypes the tests instantiate.
@@ -233,14 +266,22 @@ func newTestServer(t *testing.T) (*Server, player.Store) {
 	t.Cleanup(cancel)
 	go eng.Run(ctx)
 
+	text := testText(t)
 	srv := New(Options{
 		Engine:  eng,
 		Players: store,
 		Auth:    auth.Verifier{AllowLegacy: true},
-		Text:    testText(t),
+		Text:    text,
 		Logger:  logger,
 		RNG:     testRNG(),
 	})
+
+	// BootReset is not called here — the test world's zones have no reset
+	// commands and every test that wants something in the world puts it there
+	// itself. The socials are the one part of boot that the command table
+	// needs, so they are registered on their own.
+	session.RegisterSocials(text.Socials())
+
 	return srv, store
 }
 
