@@ -157,6 +157,14 @@ func (s *Server) die(w *game.Live, c *game.Character) {
 	w.MakeCorpse(c)
 	w.StopFighting(c)
 
+	// Dying dissolves every following relationship they were part of, porting
+	// die_follower. Without it a leader's follower list keeps a pointer to
+	// somebody who is no longer in the world, and the next step they take
+	// tries to drag a corpse along.
+	for _, orphan := range w.DieFollower(c) {
+		orphan.Tell("You stop following %s.\r\n", c.Name)
+	}
+
 	if c.IsNPC() {
 		// Out of the mobile list as well as the room, so the zone's
 		// population cap frees up and the next reset can replace it.

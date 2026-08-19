@@ -120,6 +120,217 @@ func (c *Context) medusaLooksAt(victim *game.Character) bool {
 	return true
 }
 
+// spellGroup casts on everybody grouped with the caster who is in the room,
+// porting mag_groups and perform_mag_groups.
+//
+// Only three spells are group spells, and each is a redirection to an
+// ordinary one: group heal is heal, group armor is armor, group recall is
+// word of recall. The caster is done *last* — which matters, because a group
+// spell can move everybody out of the room.
+func (c *Context) spellGroup(number int32, level int32) {
+	if !c.Character.Grouped() {
+		return
+	}
+
+	for _, member := range c.Character.GroupMembers(c.Character.Room) {
+		switch number {
+		case game.SpellGroupHeal:
+			c.applyPoints(game.SpellHeal, member, level)
+		case game.SpellGroupArmor:
+			c.spellAffect(game.SpellArmor, member)
+		case game.SpellGroupRecall:
+			if !member.IsNPC() {
+				c.moveTo(member, game.MortalStartRoom,
+					"%s disappears.\r\n", "%s appears in the middle of the room.\r\n")
+			}
+		}
+	}
+}
+
+// summonable are the two mobiles mag_summons can make (magic.c:790). The
+// other six numbers in that block are for creatures the C says do not exist.
+const (
+	mobClone  game.MobVnum = 10
+	mobZombie game.MobVnum = 11
+)
+
+// summonFailMessages are mag_summon_fail_msgs (magic.c:781). The failure is
+// picked at random from entries 2 to 6, so a botched clone blames the
+// elements or simply says "Gosh durnit!".
+var summonFailMessages = [...]string{
+	"\r\n",
+	"There are no such creatures.\r\n",
+	"Uh oh...\r\n",
+	"Oh dear.\r\n",
+	"Gosh durnit!\r\n",
+	"The elements resist!\r\n",
+	"You failed.\r\n",
+	"There is no corpse!\r\n",
+}
+
+// spellSummon conjures something, porting mag_summons.
+//
+// Two of the spells work: clone, which fails half the time, and animate dead,
+// which needs a corpse and fails one time in ten. The summoned creature is
+// charmed rather than merely following, so it fights for you and cannot
+// choose to leave.
+func (c *Context) spellSummon(number int32, obj *game.Object, level int32) {
+	var vnum game.MobVnum
+	var failure int32
+	var corpse *game.Object
+
+	switch number {
+	case game.SpellClone:
+		vnum, failure = mobClone, 50
+	case game.SpellAnimateDead:
+		if obj == nil || !game.IsCorpse(obj) {
+			c.Send("%s", summonFailMessages[7])
+			return
+		}
+		corpse = obj
+		vnum, failure = mobZombie, 10
+	default:
+		return
+	}
+
+	// A charmed caster cannot have followers of their own.
+	if c.Character.Charmed() {
+		c.Send("You are too giddy to have any followers!\r\n")
+		return
+	}
+	if c.RNG.Number(0, 101) < failure {
+		c.Send("%s", summonFailMessages[c.RNG.Number(2, 6)])
+		return
+	}
+
+	mob := c.World.SpawnMobile(vnum, c.Character.Room, c.RNG)
+	if mob == nil {
+		c.Send("You don't quite remember how to make that creature.\r\n")
+		return
+	}
+
+	// A clone wears the caster's name, and the C is careful to copy it rather
+	// than point at the prototype's.
+	if number == game.SpellClone {
+		mob.Name = c.Character.Name
+		mob.Keywords = c.Character.Name
+	}
+	if mob.Record != nil {
+		mob.Record.BaseAffectFlags = mob.Record.BaseAffectFlags.Set(game.AffectCharm)
+		game.RecomputeAffects(mob.Record)
+	}
+
+	if number == game.SpellClone {
+		c.announce("%s magically divides!\r\n", c.Character.Name)
+	} else {
+		c.announce("%s animates a corpse!\r\n", c.Character.Name)
+	}
+	c.addFollower(mob, c.Character)
+
+	// The corpse's contents go to the zombie, which is how the dead keep
+	// their equipment for one more owner.
+	if corpse != nil {
+		for _, inside := range append([]*game.Object(nil), corpse.Contents...) {
+			c.World.ObjectToChar(inside, mob)
+		}
+		c.World.ExtractObject(corpse)
+	}
+}
+
+// spellCharm, porting spell_charm.
+//
+// The order of the refusals is the C's and each has its own message, so a
+// player learns which is which. The duration arithmetic at the end is the
+// interesting part: twenty-four hours doubled, multiplied by the caster's
+// charisma and divided by the victim's intelligence — so a charismatic mage
+// charming something stupid holds it for a very long time, and the guards
+// against a zero divisor are the two `if`s rather than any clamping.
+func (c *Context) spellCharm(victim *game.Character, level int32) {
+	rec := c.Character.Record
+	if victim == nil || rec == nil || victim.Record == nil {
+		return
+	}
+
+	switch {
+	case victim == c.Character:
+		c.Send("You like yourself even better!\r\n")
+	case !victim.IsNPC() && !victim.Record.Preferences.Has(game.PrefSummonable):
+		c.Send("You fail because SUMMON protection is on!\r\n")
+	case victim.Record.AffectFlags.Has(game.AffectSanctuary):
+		c.Send("Your victim is protected by sanctuary!\r\n")
+	case victim.HasMobFlag(game.MobNoCharm):
+		c.Send("Your victim resists!\r\n")
+	case c.Character.Charmed():
+		c.Send("You can't have any followers of your own!\r\n")
+	case victim.Charmed() || level < victim.Level():
+		c.Send("You fail.\r\n")
+	case !pkAllowed && !victim.IsNPC():
+		c.Send("You fail - shouldn't be doing it anyway.\r\n")
+	case game.CircleFollow(victim, c.Character):
+		c.Send("Sorry, following in circles can not be allowed.\r\n")
+	case game.MakesSavingThrow(victim.Record, victim.IsNPC(), game.SaveParalyse, 0, c.RNG):
+		c.Send("Your victim resists!\r\n")
+	default:
+		if victim.Master != nil {
+			c.stopFollowing(victim)
+		}
+		c.addFollower(victim, c.Character)
+
+		duration := int32(24 * 2)
+		if rec.Abilities.Charisma != 0 {
+			duration *= rec.Abilities.Charisma
+		}
+		if victim.Record.Abilities.Intelligence != 0 {
+			duration /= victim.Record.Abilities.Intelligence
+		}
+		game.AddAffect(victim.Record, game.Affect{
+			Type:     game.SpellCharm,
+			Duration: duration,
+			Bits:     game.AffectCharm,
+		})
+
+		victim.Tell("Isn't %s just such a nice fellow?\r\n", c.Character.Name)
+	}
+}
+
+// spellSummonPerson drags somebody to the caster, porting spell_summon.
+//
+// The local rule is the flat refusal to summon mobiles at all — the C carries
+// it between `<DoC>` markers — which turns the spell from a way of moving
+// monsters around into a way of moving players.
+func (c *Context) spellSummonPerson(victim *game.Character, level int32) {
+	if victim == nil {
+		return
+	}
+
+	switch {
+	case victim.Level() > min(game.LevelImmortal-1, level+3):
+		c.Send("You failed.\r\n")
+		return
+	case victim.IsNPC():
+		c.Send("Only players may be summoned.\r\n")
+		return
+	}
+
+	if !pkAllowed && victim.Record != nil && !victim.Record.Preferences.Has(game.PrefSummonable) {
+		room := c.World.Room(c.Character.Room)
+		name := "somewhere"
+		if room != nil {
+			name = room.Name
+		}
+		victim.Tell("%s just tried to summon you to: %s.\r\n"+
+			"%s failed because you have summon protection on.\r\n"+
+			"Type NOSUMMON to allow other players to summon you.\r\n",
+			c.Character.Name, name, capitaliseFirst(c.Character.Subject()))
+		c.Send("You failed because %s has summon protection on.\r\n", victim.Name)
+		return
+	}
+
+	c.moveTo(victim, c.Character.Room,
+		"%s disappears suddenly.\r\n", "%s arrives suddenly.\r\n")
+	victim.Tell("%s has summoned you!\r\n", c.Character.Name)
+}
+
 // castManual runs the spells that have a function of their own, porting the
 // MANUAL_SPELL switch at the end of call_magic.
 //
@@ -160,6 +371,14 @@ func (c *Context) castManual(number int32, victim *game.Character, obj *game.Obj
 
 	case game.SpellLocateObject:
 		c.locateObject(obj, level)
+		return true
+
+	case game.SpellCharm:
+		c.spellCharm(victim, level)
+		return true
+
+	case game.SpellSummon:
+		c.spellSummonPerson(victim, level)
 		return true
 
 	case game.SpellDispelMagic:

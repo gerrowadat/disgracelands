@@ -155,6 +155,12 @@ type Character struct {
 	BusyUntil time.Time
 	// Fighting is who they are attacking, or nil.
 	Fighting *Character
+
+	// Master is who they are following, and Followers is who follows them.
+	// Runtime only: the C keeps both on char_data and neither is saved, so a
+	// group does not survive a reboot. See follow.go.
+	Master    *Character
+	Followers []*Character
 	// fightSeq orders the combat round. Assigned when a fight starts, so a
 	// round happens in the order people joined it rather than in map order.
 	fightSeq uint64
@@ -290,6 +296,11 @@ func (l *Live) Leave(c *Character) {
 
 // Remove takes a character out of the world entirely.
 func (l *Live) Remove(c *Character) {
+	// Every following relationship goes with them, as extract_char's call to
+	// die_follower does. A leader's follower list must never point at
+	// somebody who has left the world.
+	l.DieFollower(c)
+
 	l.Leave(c)
 	delete(l.byName, strings.ToLower(c.Name))
 }
@@ -320,6 +331,31 @@ func (l *Live) FindInRoom(room RoomVnum, word string) *Character {
 
 // Find returns a character by name, case-insensitively.
 func (l *Live) Find(name string) *Character { return l.byName[strings.ToLower(name)] }
+
+// FindAnywhere returns the first character anywhere in the world a typed word
+// names, porting get_char_world_vis.
+//
+// Rooms are walked in map order, so which of two identically named mobiles it
+// finds is not defined — the C walks its character list in creation order and
+// is equally arbitrary about it. Only the spells flagged TAR_CHAR_WORLD reach
+// this: summon, and the two dispels.
+func (l *Live) FindAnywhere(word string) *Character {
+	word = strings.ToLower(strings.TrimSpace(word))
+	if word == "" {
+		return nil
+	}
+	// An exact name first, which is the common case and is not subject to
+	// map order.
+	if c := l.byName[word]; c != nil {
+		return c
+	}
+	for room := range l.occupants {
+		if c := l.FindInRoom(room, word); c != nil {
+			return c
+		}
+	}
+	return nil
+}
 
 // Players returns everyone in the world, sorted by level descending then name
 // — the order the who-list wants.

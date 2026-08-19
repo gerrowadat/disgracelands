@@ -133,7 +133,7 @@ func (c *Context) findSpellTarget(info game.SpellInfo, name string) (*game.Chara
 			}
 		}
 		if info.Targets.Has(game.TargetCharWorld) {
-			if victim := c.World.Find(name); victim != nil {
+			if victim := c.World.FindAnywhere(name); victim != nil {
 				return victim, nil, true
 			}
 		}
@@ -186,11 +186,10 @@ func (c *Context) broadcast(format string, args ...any) {
 
 // castSpell runs the spell's routines, porting call_magic.
 //
-// Eight of the ten routines are implemented. Groups and summons are not, and
-// both wait on the follower system. A spell whose routines are all
-// unimplemented says so rather than silently doing nothing and charging for
-// it — a player who cannot tell "this spell has no effect" from "this spell
-// is not written yet" cannot report a bug.
+// All ten routines are implemented. A spell whose routines all decline to do
+// anything says so rather than silently doing nothing and charging for it — a
+// player who cannot tell "this spell has no effect" from "this spell is not
+// written yet" cannot report a bug.
 func (c *Context) castSpell(info game.SpellInfo, number int32, victim *game.Character, object *game.Object) bool {
 	rec := c.Character.Record
 	level := rec.Level
@@ -221,16 +220,7 @@ func (c *Context) castSpell(info game.SpellInfo, number int32, victim *game.Char
 
 	if info.Routines.Has(game.MagPoints) && victim != nil {
 		did = true
-		healing := game.SpellHealing(number, victim.Record, level, c.RNG)
-		if victim.Record != nil {
-			victim.Record.Points.Hit = min(
-				victim.Record.Points.MaxHit,
-				victim.Record.Points.Hit+healing.Amount)
-			victim.Position = game.UpdatePosition(victim.Record, victim.Position)
-		}
-		if healing.Message != "" {
-			victim.Tell("%s", healing.Message)
-		}
+		c.applyPoints(number, victim, level)
 	}
 
 	if info.Routines.Has(game.MagAffects) && victim != nil && victim.Record != nil {
@@ -257,6 +247,16 @@ func (c *Context) castSpell(info game.SpellInfo, number int32, victim *game.Char
 		c.spellArea(info, number, level)
 	}
 
+	if info.Routines.Has(game.MagGroups) {
+		did = true
+		c.spellGroup(number, level)
+	}
+
+	if info.Routines.Has(game.MagSummons) {
+		did = true
+		c.spellSummon(number, object, level)
+	}
+
 	// MAG_MASSES is in the C's switch and its switch is empty: no spell in
 	// stock CircleMUD is a mass spell. Counted as done so that a spell
 	// flagged with it and nothing else does not claim to be unimplemented.
@@ -280,6 +280,20 @@ func (c *Context) castSpell(info game.SpellInfo, number int32, victim *game.Char
 		return false
 	}
 	return true
+}
+
+// applyPoints heals or drains, porting mag_points.
+func (c *Context) applyPoints(number int32, victim *game.Character, level int32) {
+	healing := game.SpellHealing(number, victim.Record, level, c.RNG)
+	if victim.Record != nil {
+		victim.Record.Points.Hit = min(
+			victim.Record.Points.MaxHit,
+			victim.Record.Points.Hit+healing.Amount)
+		victim.Position = game.UpdatePosition(victim.Record, victim.Position)
+	}
+	if healing.Message != "" {
+		victim.Tell("%s", healing.Message)
+	}
 }
 
 // spellAffect applies an affect spell, porting the tail of mag_affects.

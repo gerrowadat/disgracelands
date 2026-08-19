@@ -289,9 +289,10 @@ Listed here so they are not mistaken for deliberate differences.
 - **`junk` and `donate`** are the other two subcommands of `do_drop` and are
   not ported. Both need somewhere to put things — the donation room, and the
   gods' reward for junking — and neither exists yet.
-- **Groups, summons and charm.** `mag_groups`, `mag_summons` and
-  `spell_charm` all need the follower system — `ch->master`, `ch->followers`
-  and `add_follower` — which is not built. Every other spell routine is.
+- **Socials.** `do_action` and the several hundred table entries that drive
+  it. Their absence is visible in the command table's *order*: a mortal's `f`
+  reaches `fart` in the C, so nothing here can reproduce what `f` means until
+  they land.
 - **Scrolls, wands, staves and potions.** `do_use`, `do_quaff` and `do_recite`
   are the way into `call_magic` for everything above `MAX_SPELLS`, `identify`
   included.

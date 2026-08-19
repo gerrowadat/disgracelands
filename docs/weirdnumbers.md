@@ -523,6 +523,39 @@ newline**, and names the destination with the word the player typed rather
 than the object's own name. Both reproduced: the prompt runs on, exactly as it
 did in 2001.
 
+### Group experience rounds up, so a group mints experience
+
+```c
+tot_gain = (GET_EXP(victim) / 3) + tot_members - 1;
+base     = MAX(1, tot_gain / tot_members);
+```
+
+`+ tot_members - 1` is the standard trick for making integer division round
+up, so three people splitting ten points get **four each** — twelve points out
+of a ten point kill. A group earns strictly more in total than a soloist
+would, which is the incentive to group and looks accidental until you notice
+it is not.
+
+What is *missing* is more interesting: `group_gain` has no level-difference
+bonus at all, where `solo_gain` gives up to double for killing something eight
+levels above you. Killing something far above your level is worth more alone.
+
+*Verified* against the arithmetic at every group size from one to twenty.
+
+### Charm's duration is charisma divided by intelligence
+
+```c
+af.duration = 24 * 2;
+if (GET_CHA(ch))    af.duration *= GET_CHA(ch);
+if (GET_INT(victim)) af.duration /= GET_INT(victim);
+```
+
+Forty-eight hours, multiplied by the caster's charisma and divided by the
+victim's intelligence — so a charismatic mage charming something stupid holds
+it for weeks of mud time, and the only guard against dividing by zero is the
+`if`. An 18-charisma caster charming an 11-intelligence mobile gets 78 mud
+hours; the same caster charming another 18 gets 48.
+
 ### A pile of coins never says how many
 
 `create_money` names a pile from `money_desc`'s fourteen-entry table, so 100
