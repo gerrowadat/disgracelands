@@ -293,6 +293,12 @@ Listed here so they are not mistaken for deliberate differences.
   it. Their absence is visible in the command table's *order*: a mortal's `f`
   reaches `fart` in the C, so nothing here can reproduce what `f` means until
   they land.
+- **Specprocs.** No `spec_procs.c` equivalent, so guildmasters, shopkeepers,
+  the postmaster and the rest are inert. The Phase 6 scripting seam is where
+  this belongs.
+- **`steal` and `track`**, the two thief skills not ported: `steal` needs the
+  killer/thief flag machinery and shopkeeper protection, and `track` needs the
+  breadth-first search the C keeps in `graph.c`.
 - **Scrolls, wands, staves and potions.** `do_use`, `do_quaff` and `do_recite`
   are the way into `call_magic` for everything above `MAX_SPELLS`, `identify`
   included.

@@ -198,3 +198,23 @@ func NumFollowersCharmed(c *Character) int {
 	}
 	return total
 }
+
+// Hidden reports whether a character is hiding.
+func (c *Character) Hidden() bool {
+	return c != nil && c.Record != nil && c.Record.AffectFlags.Has(AffectHide)
+}
+
+// SetHidden sets or clears AFF_HIDE, which is a bare flag rather than an
+// affect: hiding lasts until something breaks it rather than running out.
+func (c *Character) SetHidden(hidden bool) {
+	if c == nil || c.Record == nil {
+		return
+	}
+	if hidden {
+		c.Record.BaseAffectFlags = c.Record.BaseAffectFlags.Set(AffectHide)
+		c.Record.AffectFlags = c.Record.AffectFlags.Set(AffectHide)
+		return
+	}
+	c.Record.BaseAffectFlags = c.Record.BaseAffectFlags.Clear(AffectHide)
+	c.Record.AffectFlags = c.Record.AffectFlags.Clear(AffectHide)
+}
