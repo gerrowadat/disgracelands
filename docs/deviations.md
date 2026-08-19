@@ -315,7 +315,17 @@ Listed here so they are not mistaken for deliberate differences.
 - **`steal` and `track`**, the two thief skills not ported: `steal` needs the
   killer/thief flag machinery and shopkeeper protection, and `track` needs the
   breadth-first search the C keeps in `graph.c`.
-- **Rent and the object save files.** `Crash_load`/`Crash_save` and the
-  `plrobjs/` directory: what you were carrying when you logged out. The main
-  menu's choice 1 reports what a player lost to it, and reports nothing
-  today.
+- **Rent and the object save files are read and written but not yet wired
+  in.** The format is ported — `internal/persist/player/binary/objfile.go`
+  reads and writes `plrobjs/A-E/name.objs` in the ILP32 layout the archived
+  files are in — but nothing calls it: logging out still does not save what
+  you were carrying, logging in still does not give it back, and there is no
+  receptionist to rent at. The main menu's choice 1 reports what a player
+  lost to rent, and so reports nothing.
+
+  Worth knowing when it does get wired in: **renting empties your bags and
+  strips your body.** `USE_AUTOEQ` is 0 in this tree (`structs.h:30`), so
+  `struct obj_file_elem` has no `location` member. `Crash_save` still walks
+  containers and still computes a location for every item, and the file has
+  nowhere to record it — so everything comes back loose in inventory. That is
+  the C's behaviour, not a limitation of the port.

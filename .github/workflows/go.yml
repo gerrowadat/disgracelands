@@ -58,7 +58,7 @@ jobs:
           git cat-file -e "$base^{commit}" 2>/dev/null || run_them "base commit unavailable"
 
           changed=$(git diff --name-only "$base"...HEAD)
-          echo "$changed" | grep -qE '^(internal/persist/player/binary/|reference/tools/pfile(layout|gen)\.c$|reference/moderncserver/src/(structs\.h|sysdep\.h|conf\.h\.in)$|\.github/workflows/go\.yml$)' \
+          echo "$changed" | grep -qE '^(internal/persist/player/binary/|reference/tools/(pfile|objfile)(layout|gen)\.c$|reference/moderncserver/src/(structs\.h|sysdep\.h|conf\.h\.in)$|\.github/workflows/go\.yml$)' \
             && run_them "the change touches the ILP32 layout or its inputs"
 
           echo "needed=false" >> "$GITHUB_OUTPUT"
