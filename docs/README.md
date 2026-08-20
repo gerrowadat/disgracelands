@@ -49,6 +49,12 @@ tense and still expected to change.
   phase-by-phase sequence. Phases 0–4 are built and marked done with what
   each one did and did not contain; Phase 5 is mapped into slices; 6 and 7
   are not started.
+- **[data-format.md](proposals/data-format.md)** — a single native format
+  for everything in `data/`: the world, players, boards, mail, houses and
+  the game tuning still compiled into `config.c`. Replaces the eight
+  unrelated formats a CircleMUD `lib/` carries, and is a superset of all of
+  them. YAML over a JSON data model, one file per zone, one file per
+  player, vnums unchanged. Nothing here is built.
 
 ## `docs/investigations/` — what we found out
 
