@@ -42,6 +42,12 @@ Designs and plans. Future tense, and expected to change.
   for reimplementing the engine in Go: 64-bit safety, pluggable player- and
   world-file formats, the concurrency model, licensing constraints, and the
   phase-by-phase sequence. Phases 0–3 are built; Phases 4–7 are not.
+- **[data-format.md](proposals/data-format.md)** — a single native format
+  for everything in `data/`: the world, players, boards, mail, houses and
+  the game tuning still compiled into `config.c`. Replaces the eight
+  unrelated formats a CircleMUD `lib/` carries, and is a superset of all of
+  them. YAML over a JSON data model, one file per zone, one file per
+  player, vnums unchanged. Nothing here is built.
 
 ## `docs/investigations/` — what we found out
 
