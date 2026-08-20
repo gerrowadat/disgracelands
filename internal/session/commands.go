@@ -67,6 +67,8 @@ type Context struct {
 	Rent RentSaver
 	// SaveBoard writes a bulletin board back to disk.
 	SaveBoard BoardSaver
+	// Mail is the mud mail system, for the postmaster.
+	Mail MailSystem
 	// Arg is everything after the command word, trimmed.
 	Arg string
 	// Social is the social being run, for the commands that are one.
@@ -210,6 +212,12 @@ func init() {
 		{Name: "withdraw", Help: "Take money out of the bank.", Run: doNotHere, CLine: 550},
 		{Name: "offer", Help: "Ask an innkeeper what a stay would cost.", Run: doNotHere, CLine: 391},
 		{Name: "rent", Help: "Store your belongings and leave the game.", Run: doNotHere, CLine: 438},
+
+		// The post office (interpreter.c:251, :368, :436). `check` is only
+		// ever a postmaster's; the other two likewise.
+		{Name: "check", Help: "Ask a postmaster whether you have mail.", Run: doNotHere, CLine: 251},
+		{Name: "mail", Help: "Send mail to another player.", Run: doNotHere, CLine: 368},
+		{Name: "receive", Help: "Collect your mail from a postmaster.", Run: doNotHere, CLine: 436},
 		{Name: "say", Help: "Talk to the room.", Run: doSay, CLine: 449},
 		{Name: "'", Help: "Talk to the room; the short form of say.", Run: doSay, CLine: 450},
 		{Name: "score", Help: "Show your own statistics.", Run: doScore, CLine: 452},
@@ -413,6 +421,8 @@ type Dispatcher struct {
 	Rent RentSaver
 	// SaveBoard writes a bulletin board back to disk.
 	SaveBoard BoardSaver
+	// Mail is the mud mail system, for the postmaster.
+	Mail MailSystem
 }
 
 // Do implements CommandHandler.
@@ -454,7 +464,7 @@ func (d *Dispatcher) Do(ctx context.Context, s *Session, line string) error {
 		c := &Context{
 			Ctx: ctx, Session: s, Character: s.Character(),
 			World: w, Text: d.Text, RNG: d.RNG, Violence: d.Violence, Arg: arg,
-			Social: cmd.Social, Save: d.Save, Rent: d.Rent, SaveBoard: d.SaveBoard,
+			Social: cmd.Social, Save: d.Save, Rent: d.Rent, SaveBoard: d.SaveBoard, Mail: d.Mail,
 		}
 
 		// A command that panics must not leave the player staring at a dead

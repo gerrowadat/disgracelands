@@ -328,9 +328,23 @@ Listed here so they are not mistaken for deliberate differences.
   on a world goroutine. The only visible difference is when a bad board file
   is reported.
 
-- **Mail and houses are not ported.** `mail.c` and `house.c` are the rest of
-  Phase 5g. `receive` is in the command table as `do_not_here` and there is
-  no postmaster to take it.
+- **Houses are not ported.** `house.c` — `house`, `hcontrol`, the house
+  control file, and the per-room object saves — is what is left of Phase 5g.
+
+- **The mail file is held in memory and rewritten whole.** The C seeks around
+  it block by block, which is right for 1993 and wrong for a server with one
+  goroutine owning the world: `receive` would put a seek and two reads on
+  that goroutine. The on-disk format is unchanged, so the C could still read
+  it.
+
+- **An emptied mail file is removed.** The C never shrinks its file; once it
+  has grown to a high-water mark it stays there, full of blocks marked
+  deleted. Removing it when nothing is left is the same thing to a reader and
+  leaves no litter.
+
+- **Mail is delivered in ascending block order.** See the weirdnumbers entry:
+  the C's order depends on whether the server has been restarted since the
+  message was sent.
 
 - **The rent settings are constants, not options.** `free_rent`,
   `min_rent_cost` and `max_obj_save` are compiled in at the values

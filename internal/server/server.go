@@ -22,6 +22,7 @@ import (
 	"github.com/gerrowadat/disgracelands/internal/engine"
 	"github.com/gerrowadat/disgracelands/internal/game"
 	"github.com/gerrowadat/disgracelands/internal/persist/boards"
+	"github.com/gerrowadat/disgracelands/internal/persist/mail"
 	"github.com/gerrowadat/disgracelands/internal/persist/player"
 	"github.com/gerrowadat/disgracelands/internal/rng"
 	"github.com/gerrowadat/disgracelands/internal/session"
@@ -58,6 +59,9 @@ type Server struct {
 	// boards holds the bulletin board files. Nil disables boards, which is
 	// what a test world without them gets.
 	boards *boards.Store
+	// mail is the mud mail file. Nil disables the mail system, which is what
+	// the C's `no_mail` global does when the file goes wrong.
+	mail   *mail.Store
 	auth   auth.Verifier
 	text   *Text
 	logger *slog.Logger
@@ -81,6 +85,7 @@ type Options struct {
 	Players  player.Store
 	Objects  player.ObjectStore
 	Boards   *boards.Store
+	Mail     *mail.Store
 	Auth     auth.Verifier
 	Text     *Text
 	Logger   *slog.Logger
@@ -99,6 +104,7 @@ func New(opts Options) *Server {
 		players:    opts.Players,
 		objects:    opts.Objects,
 		boards:     opts.Boards,
+		mail:       opts.Mail,
 		auth:       opts.Auth,
 		text:       opts.Text,
 		logger:     opts.Logger,
@@ -184,9 +190,23 @@ func (s *Server) Create(ctx context.Context, req session.CreateRequest) (*game.C
 		return nil, err
 	}
 
+	// A unique id, which is `player_table[i].id = GET_IDNUM(ch) = ++top_idnum`
+	// in init_char (db.c:2746). The C keeps the high-water mark in a global
+	// seeded from the roster at boot; this asks the roster directly, which is
+	// the same answer and does not need the global.
+	//
+	// It had been left at zero, which is how it was found: mail addressed by
+	// id went to whoever the listing happened to name first, and `reply`
+	// would have had the same problem.
+	idnum, err := s.nextIDNum(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	now := time.Now().UTC()
 	rec := &game.PlayerRecord{
 		Name:       req.Name,
+		IDNum:      idnum,
 		Sex:        req.Sex,
 		Class:      req.Class,
 		Birth:      now,
@@ -210,6 +230,25 @@ func (s *Server) Create(ctx context.Context, req session.CreateRequest) (*game.C
 		return nil, err
 	}
 	return &game.Character{Name: rec.Name, Record: rec}, nil
+}
+
+// nextIDNum returns one more than the highest id on the roster, porting
+// `++top_idnum`.
+//
+// The C computes the high-water mark once at boot (db.c:611) and increments a
+// global thereafter. Walking the roster costs one listing per character
+// created, which happens once per player ever.
+func (s *Server) nextIDNum(ctx context.Context) (int64, error) {
+	var top int64
+	for entry, err := range s.players.List(ctx) {
+		if err != nil {
+			return 0, err
+		}
+		if entry.IDNum > top {
+			top = entry.IDNum
+		}
+	}
+	return top + 1, nil
 }
 
 func (s *Server) isRosterEmpty(ctx context.Context) (bool, error) {

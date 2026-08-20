@@ -34,6 +34,7 @@ import (
 	"github.com/gerrowadat/disgracelands/internal/game"
 	"github.com/gerrowadat/disgracelands/internal/obs"
 	"github.com/gerrowadat/disgracelands/internal/persist/boards"
+	"github.com/gerrowadat/disgracelands/internal/persist/mail"
 	"github.com/gerrowadat/disgracelands/internal/persist/player"
 	"github.com/gerrowadat/disgracelands/internal/persist/player/binary"
 	"github.com/gerrowadat/disgracelands/internal/persist/world"
@@ -173,6 +174,12 @@ func run(args []string) error {
 		return err
 	}
 
+	// The mud mail file, likewise.
+	mailStore, err := mail.New(filepath.Join(cfg.LibDir, "etc", "plrmail"), false)
+	if err != nil {
+		return err
+	}
+
 	// The greeting and the credits are licence obligations; LoadText refuses
 	// to return if either is missing, which is deliberate.
 	text, err := server.LoadText(cfg.LibDir)
@@ -204,6 +211,7 @@ func run(args []string) error {
 		Players:    players,
 		Objects:    objects,
 		Boards:     boardStore,
+		Mail:       mailStore,
 		Auth:       auth.Verifier{AllowLegacy: cfg.AllowLegacyPasswords},
 		Text:       text,
 		Logger:     logger,

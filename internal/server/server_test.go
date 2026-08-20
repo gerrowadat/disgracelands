@@ -29,6 +29,7 @@ import (
 	"github.com/gerrowadat/disgracelands/internal/engine"
 	"github.com/gerrowadat/disgracelands/internal/game"
 	"github.com/gerrowadat/disgracelands/internal/persist/boards"
+	"github.com/gerrowadat/disgracelands/internal/persist/mail"
 	"github.com/gerrowadat/disgracelands/internal/persist/player"
 	"github.com/gerrowadat/disgracelands/internal/persist/player/ascii"
 	"github.com/gerrowadat/disgracelands/internal/persist/player/binary"
@@ -394,6 +395,11 @@ func newTestServer(t *testing.T) (*Server, player.Store) {
 		t.Fatal(err)
 	}
 
+	mailStore, err := mail.New(filepath.Join(t.TempDir(), "plrmail"), false)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	eng := engine.New(engine.Options{World: testWorld(), Logger: logger})
 
@@ -407,6 +413,7 @@ func newTestServer(t *testing.T) (*Server, player.Store) {
 		Players: store,
 		Objects: objects,
 		Boards:  boardStore,
+		Mail:    mailStore,
 		Auth:    auth.Verifier{AllowLegacy: true},
 		Text:    text,
 		Logger:  logger,

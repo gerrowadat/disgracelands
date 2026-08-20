@@ -715,6 +715,58 @@ poster's level out of the pointer's second half.
 
 *Source*: `boards.h:19`, `boards.c:416`.
 
+### A mail block is 100 bytes on every machine and means something different on each
+
+```c
+#define HEADER_BLOCK_DATASIZE \
+  (BLOCK_SIZE - sizeof(long) - sizeof(struct header_data_type) - sizeof(char))
+```
+
+100 - 4 - 16 - 1 = **79** characters of message in a header block on the i386
+build the archive came from. On a 64-bit rebuild it is 100 - 8 - 32 - 1 =
+**59**. Both still produce hundred-byte blocks, so a file written by one and
+read by the other lines up perfectly, the block chain resolves, every message
+comes back the right length — and the text has twenty characters of the wrong
+thing every hundred. There is no magic number, no length field and no
+checksum anywhere in the format to catch it.
+
+*Verified*: `reference/tools/maillayout.c` against
+`internal/persist/mail`, built `-m32`.
+
+*Source*: `mail.h:71`.
+
+### Which piece of mail you get next depends on how long the server has been up
+
+`index_mail` pushes each new message onto the *front* of a per-player list
+(`mail.c:233`) and `read_delete` walks to the *end* of that list and takes
+from there (`mail.c:436`) — so within one run, mail is delivered oldest
+first. But `scan_file` rebuilds that same list at boot by reading the file
+from the start and prepending each header it finds, so after a reboot the
+tail of the list is the *lowest-numbered block* rather than the oldest
+message.
+
+Those agree only while the file is growing. The mail file reuses freed
+blocks, so once anybody has collected their post, a new message can land in a
+low-numbered block and jump the queue — but only after a reboot. The port
+delivers in ascending block order always, which is what the C does after
+every restart; the alternative is delivery order that depends on uptime.
+
+*Source*: `mail.c:213`, `mail.c:247`, `mail.c:436`.
+
+### The mail header shouts in lower case
+
+```
+  To: recipient
+From: sender
+```
+
+`get_name_by_id` returns a pointer into the C's player table, and `boot_db`
+lowercases every name as it builds that table (`db.c:607`). So the names in a
+mail header are always lower case, whatever the character actually calls
+themselves. Nobody fixed it in seven years.
+
+*Source*: `db.c:607`, `mail.c:461`.
+
 ---
 
 ## What to do about all this

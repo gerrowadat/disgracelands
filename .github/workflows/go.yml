@@ -59,7 +59,7 @@ jobs:
           git cat-file -e "$base^{commit}" 2>/dev/null || run_them "base commit unavailable"
 
           changed=$(git diff --name-only "$base"...HEAD)
-          echo "$changed" | grep -qE '^(internal/persist/player/binary/|reference/tools/(pfile(layout|gen)|objfile(layout|gen)|shopprice|boardlayout)\.c$|internal/game/shopstate\.go$|internal/persist/boards/|reference/moderncserver/src/(structs\.h|sysdep\.h|conf\.h\.in)$|\.github/workflows/go\.yml$)' \
+          echo "$changed" | grep -qE '^(internal/persist/player/binary/|reference/tools/(pfile(layout|gen)|objfile(layout|gen)|shopprice|boardlayout|maillayout)\.c$|internal/game/shopstate\.go$|internal/persist/(boards|mail)/|reference/moderncserver/src/(structs\.h|sysdep\.h|conf\.h\.in)$|\.github/workflows/go\.yml$)' \
             && run_them "the change touches the 32-bit layout or price checks, or their inputs"
 
           echo "needed=false" >> "$GITHUB_OUTPUT"
@@ -132,6 +132,21 @@ jobs:
             exit 1
           fi
           grep -- "struct members against the 32-bit C" boards.txt
+
+      # And the mail blocks. This one gives nothing away when it is wrong:
+      # the block size is 100 under every data model, so a file written by
+      # the wrong build lines up perfectly and every message comes out with
+      # its middle shuffled.
+      - name: The 32-bit mail layout check must not have skipped
+        if: steps.ilp32.outputs.needed == 'true'
+        run: |
+          go test -count=1 -v ./internal/persist/mail/ > mail.txt 2>&1 || { cat mail.txt; exit 1; }
+          if grep -q -- "--- SKIP" mail.txt; then
+            echo "the 32-bit mail layout check skipped; it must run in CI:"
+            grep -A2 -- "--- SKIP" mail.txt
+            exit 1
+          fi
+          grep -- "mail block values against the 32-bit C" mail.txt
 
       # Same argument for the shop prices. This one is not a layout, it is an
       # arithmetic width: buy_price truncates a float product, and the answer

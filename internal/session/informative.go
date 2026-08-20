@@ -97,6 +97,18 @@ func (c *Context) lookAtTarget(arg string) error {
 		return c.lookAtCharacter(victim)
 	}
 	if obj := c.findVisibleObject(name); obj != nil {
+		// A note shows what is written on it and nothing else, which is the
+		// whole of how mail is read (act.informative.c:117). Before the
+		// description, because a note lying on the floor is still read rather
+		// than described.
+		if obj.Type == game.ItemNote {
+			if text := obj.ActionDescription(); text != "" {
+				c.Send("There is something written on it:\r\n\r\n%s", ensureNewline(text))
+			} else {
+				c.Send("It's blank.\r\n")
+			}
+			return nil
+		}
 		if obj.Description != "" && obj.Location == game.InRoom {
 			c.Send("%s\r\n", obj.Description)
 		} else {

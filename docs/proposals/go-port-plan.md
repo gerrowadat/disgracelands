@@ -1093,7 +1093,8 @@ it.
 | **5f-i. Shops ✅** | `shop_keeper` and the four commands it intercepts: `buy`, `sell`, `list`, `value`. The keyword-expression evaluator, the prices, the keeper's bank, and the grouped inventory `list` counts. | `shop.c` |
 | **5f-ii. Banking and the inn ✅** | `balance`, `deposit`, `withdraw`, `offer`, `rent` — the `bank`, `receptionist` and `cryogenicist` specials. Finishes 5e. `receive` waits for the postmaster in 5g. | `spec_procs.c`, `objsave.c` |
 | **5g-i. Bulletin boards ✅** | `gen_board` and the four commands it intercepts, the board files, and the line editor that `write` and mail both need. | `boards.c` |
-| **5g-ii. Mail and houses** | `mail`, the postmaster, `receive`; `house`, `hcontrol` and the house control file. | `mail.c`, `house.c` |
+| **5g-ii. Mail ✅** | `mail`, `check`, `receive`, the postmaster, and the block-allocated mail file. | `mail.c` |
+| **5g-iii. Houses** | `house`, `hcontrol`, the house control file, and the per-room object saves. | `house.c` |
 | **5h. The last of the rules** | `steal` and `track` — the two thief skills left, and the only two that need machinery of their own: the killer/thief flags for one and `graph.c`'s breadth-first search for the other. Plus `order`, `enter`, `leave`, `remort` (an implementor command in this tree) and `reroll`. | `act.offensive.c`, `act.movement.c`, `act.other.c`, `graph.c` |
 | **5i. Immortal commands** | The whole of `act.wizard.c`: `goto`, `at`, `transfer`, `load`, `purge`, `stat`, `set`, `show`, `snoop`, `switch`, `force`, `restore`, `advance`, `freeze`, `ban`, `wiznet`, `shutdown`, and thirty more. Large, self-contained, and needed before the Phase 7 cutover — a server nobody can administer cannot go live. | `act.wizard.c` |
 

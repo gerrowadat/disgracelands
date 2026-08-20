@@ -61,6 +61,8 @@ type SpecialCall struct {
 	Rent RentSaver
 	// SaveBoard writes a bulletin board back to disk.
 	SaveBoard BoardSaver
+	// Mail is the mud mail system, for the postmaster.
+	Mail MailSystem
 }
 
 // Is reports whether the command being run is this one, porting CMD_IS.
@@ -110,6 +112,7 @@ func init() {
 		"receptionist": specReceptionist,
 		"cryogenicist": specCryogenicist,
 		"gen_board":    specGenBoard,
+		"postmaster":   specPostmaster,
 	}
 }
 
@@ -139,7 +142,7 @@ func (c *Context) runSpecials(command, arg string) bool {
 			World: c.World, Session: c.Session, Actor: c.Character,
 			Command: command, Arg: arg,
 			RNG: c.RNG, Violence: c.Violence, Rent: c.Rent,
-			SaveBoard: c.SaveBoard,
+			SaveBoard: c.SaveBoard, Mail: c.Mail,
 		}
 		set(sc)
 		return fn(sc)

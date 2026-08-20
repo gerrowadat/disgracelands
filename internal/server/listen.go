@@ -164,6 +164,7 @@ func (s *Server) serve(ctx context.Context, sess *session.Session, limits Limits
 			NoSpecials: s.noSpecials,
 			Rent:       s.RentCharacter,
 			SaveBoard:  s.SaveBoard,
+			Mail:       mailOrNil(s),
 			Save: func(c *game.Character) {
 				// Off the world goroutine, which is where the command that
 				// asked for it is running.
