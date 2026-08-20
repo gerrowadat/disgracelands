@@ -328,8 +328,19 @@ Listed here so they are not mistaken for deliberate differences.
   on a world goroutine. The only visible difference is when a bad board file
   is reported.
 
-- **Houses are not ported.** `house.c` — `house`, `hcontrol`, the house
-  control file, and the per-room object saves — is what is left of Phase 5g.
+- **Removing a house guest does not read past the end of the list.** The C's
+  loop is `for (; j < num_of_guests; j++) guests[j] = guests[j+1];`
+  (`house.c:551`), which touches `guests[num_of_guests]` — and with a full
+  list of ten that is `guests[10]`, one past the array and therefore the
+  first bytes of `last_payment`. The value is overwritten immediately by the
+  decrement so it never mattered, but it is a genuine out-of-bounds read and
+  there is nothing to be gained by reproducing it.
+
+- **A renting character is not crash-saved on the way out.** Their things are
+  already in the rent file and they are carrying nothing, so the crash-save
+  the disconnect path would otherwise do writes an empty file over it. The C
+  never had to think about this because `extract_char` does not crash-save;
+  this port's disconnect handling does.
 
 - **The mail file is held in memory and rewritten whole.** The C seeks around
   it block by block, which is right for 1993 and wrong for a server with one

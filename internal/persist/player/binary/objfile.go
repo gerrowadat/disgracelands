@@ -411,3 +411,37 @@ func (s *ObjectStore) MarkCrashed(_ context.Context, name string, at time.Time) 
 	}
 	return nil
 }
+
+// --- bare object sequences --------------------------------------------
+//
+// A house file is a sequence of `obj_file_elem` records with no header at all
+// (house.c:126). Same record, same layout, no rent_info in front — so the
+// codec is shared rather than written twice.
+
+// EncodeStoredObjects writes objects as a bare sequence of records, with no
+// header.
+func EncodeStoredObjects(objs []player.StoredObject) ([]byte, error) {
+	c := newObjCodec(ilp32)
+	b, err := c.encode(&player.RentFile{Objects: objs})
+	if err != nil {
+		return nil, err
+	}
+	return b[c.header.Size:], nil
+}
+
+// DecodeStoredObjects reads a bare sequence of records.
+//
+// A trailing partial record is ignored, which is what the C's
+// fread-until-feof loop does with one.
+func DecodeStoredObjects(b []byte) ([]player.StoredObject, error) {
+	c := newObjCodec(ilp32)
+	// decode wants a header in front, and there is none. Prepending an empty
+	// one is cheaper and less error-prone than a second decode path.
+	with := make([]byte, c.header.Size, c.header.Size+len(b))
+	with = append(with, b...)
+	f, err := c.decode(with)
+	if err != nil {
+		return nil, err
+	}
+	return f.Objects, nil
+}

@@ -78,6 +78,9 @@ func (s *Server) BootReset(w *game.Live) {
 	// reset is what puts the board objects into their rooms and the load only
 	// needs the prototypes.
 	s.loadBoards(w)
+	// House_boot, likewise before the reset: it flags rooms and puts objects
+	// into them, and the reset would otherwise clear the room first.
+	s.loadHouses(w)
 
 	var mobiles, objects, problems int
 

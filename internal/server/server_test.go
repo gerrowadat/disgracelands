@@ -29,6 +29,7 @@ import (
 	"github.com/gerrowadat/disgracelands/internal/engine"
 	"github.com/gerrowadat/disgracelands/internal/game"
 	"github.com/gerrowadat/disgracelands/internal/persist/boards"
+	"github.com/gerrowadat/disgracelands/internal/persist/houses"
 	"github.com/gerrowadat/disgracelands/internal/persist/mail"
 	"github.com/gerrowadat/disgracelands/internal/persist/player"
 	"github.com/gerrowadat/disgracelands/internal/persist/player/ascii"
@@ -140,6 +141,9 @@ const (
 	ShopRoom     game.RoomVnum = 3018
 	// BoardRoom holds a bulletin board.
 	BoardRoom game.RoomVnum = 3019
+	// HouseRoom and AtriumRoom are a house and the room its door opens into.
+	HouseRoom  game.RoomVnum = 3020
+	AtriumRoom game.RoomVnum = 3021
 )
 
 // MageGuildRoom is guild_info's first row: the magic-user guild, whose door
@@ -357,8 +361,21 @@ func testWorld() *game.Live {
 		Vnum: BoardRoom, Name: "The Notice Board", Description: "A room with a board.\r\n",
 	}
 
+	// A house and its atrium, joined both ways: hcontrol insists the door be
+	// two-way, and that is the only structural rule housing has.
+	houseRoom := &game.RoomDef{
+		Vnum: HouseRoom, Name: "A Small House", Description: "A house.\r\n",
+	}
+	atriumRoom := &game.RoomDef{
+		Vnum: AtriumRoom, Name: "An Atrium", Description: "An atrium.\r\n",
+	}
+	houseRoom.Exits[game.North] = &game.ExitDef{ToRoom: AtriumRoom}
+	atriumRoom.Exits[game.South] = &game.ExitDef{ToRoom: HouseRoom}
+
 	live := game.NewLive(&game.World{
-		Rooms:   []*game.RoomDef{temple, board, guild, donation, shopRoom, boardRoom},
+		Rooms: []*game.RoomDef{
+			temple, board, guild, donation, shopRoom, boardRoom, houseRoom, atriumRoom,
+		},
 		Objects: objects,
 		Mobiles: mobiles,
 		Zones:   zones,
@@ -400,6 +417,13 @@ func newTestServer(t *testing.T) (*Server, player.Store) {
 		t.Fatal(err)
 	}
 
+	houseDir := t.TempDir()
+	houseStore, err := houses.New(
+		filepath.Join(houseDir, "hcontrol"), filepath.Join(houseDir, "house"), false)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	eng := engine.New(engine.Options{World: testWorld(), Logger: logger})
 
@@ -414,6 +438,7 @@ func newTestServer(t *testing.T) (*Server, player.Store) {
 		Objects: objects,
 		Boards:  boardStore,
 		Mail:    mailStore,
+		Houses:  houseStore,
 		Auth:    auth.Verifier{AllowLegacy: true},
 		Text:    text,
 		Logger:  logger,
@@ -423,6 +448,9 @@ func newTestServer(t *testing.T) (*Server, player.Store) {
 	// init_boards, which the real boot does inside BootReset. The test world
 	// skips that, so the boards are loaded here.
 	if err := eng.DoSync(ctx, srv.loadBoards); err != nil {
+		t.Fatal(err)
+	}
+	if err := eng.DoSync(ctx, srv.loadHouses); err != nil {
 		t.Fatal(err)
 	}
 

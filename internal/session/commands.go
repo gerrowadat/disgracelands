@@ -69,6 +69,8 @@ type Context struct {
 	SaveBoard BoardSaver
 	// Mail is the mud mail system, for the postmaster.
 	Mail MailSystem
+	// Houses is the player housing system.
+	Houses HouseKeeper
 	// Arg is everything after the command word, trimmed.
 	Arg string
 	// Social is the social being run, for the commands that are one.
@@ -218,6 +220,11 @@ func init() {
 		{Name: "check", Help: "Ask a postmaster whether you have mail.", Run: doNotHere, CLine: 251},
 		{Name: "mail", Help: "Send mail to another player.", Run: doNotHere, CLine: 368},
 		{Name: "receive", Help: "Collect your mail from a postmaster.", Run: doNotHere, CLine: 436},
+
+		// Housing (interpreter.c:330, :338). `hcontrol` is POS_DEAD and
+		// LVL_GRGOD in the C's table; `house` is any mortal in their own.
+		{Name: "hcontrol", Help: "Build, destroy and list houses.", Run: doHcontrol, CLine: 330},
+		{Name: "house", Help: "Let somebody into your house, or list who is.", Run: doHouse, CLine: 338},
 		{Name: "say", Help: "Talk to the room.", Run: doSay, CLine: 449},
 		{Name: "'", Help: "Talk to the room; the short form of say.", Run: doSay, CLine: 450},
 		{Name: "score", Help: "Show your own statistics.", Run: doScore, CLine: 452},
@@ -423,6 +430,8 @@ type Dispatcher struct {
 	SaveBoard BoardSaver
 	// Mail is the mud mail system, for the postmaster.
 	Mail MailSystem
+	// Houses is the player housing system.
+	Houses HouseKeeper
 }
 
 // Do implements CommandHandler.
@@ -464,7 +473,7 @@ func (d *Dispatcher) Do(ctx context.Context, s *Session, line string) error {
 		c := &Context{
 			Ctx: ctx, Session: s, Character: s.Character(),
 			World: w, Text: d.Text, RNG: d.RNG, Violence: d.Violence, Arg: arg,
-			Social: cmd.Social, Save: d.Save, Rent: d.Rent, SaveBoard: d.SaveBoard, Mail: d.Mail,
+			Social: cmd.Social, Save: d.Save, Rent: d.Rent, SaveBoard: d.SaveBoard, Mail: d.Mail, Houses: d.Houses,
 		}
 
 		// A command that panics must not leave the player staring at a dead
@@ -698,6 +707,18 @@ func (c *Context) moveCharacter(who *game.Character, dir game.Direction) bool {
 		// so a player can still walk into one.
 		who.Tell("The way is blocked by something you cannot describe.\r\n")
 		return false
+	}
+
+	// House_can_enter (act.movement.c:133). Note it is guarded by the room
+	// you are *leaving* being an atrium, not by the room you are entering
+	// being a house — so a house reachable any other way than through its
+	// atrium is not guarded at all. That is why hcontrol insists the door be
+	// two-way: it is the only door.
+	if from := c.World.Room(who.Room); from != nil && from.Flags.Has(game.RoomAtrium) {
+		if !c.World.HouseCanEnter(who, exit.ToRoom) {
+			who.Tell("That's private property -- no trespassing!\r\n")
+			return false
+		}
 	}
 
 	leaving := who.Room

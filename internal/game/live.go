@@ -46,6 +46,8 @@ type Live struct {
 	// in file-scope arrays in boards.c and loads them lazily, the first time
 	// anybody looks at one.
 	boards []*Board
+	// houses is the player housing control records, loaded once at boot.
+	houses []*House
 
 	nextObjectID uint64
 

@@ -174,6 +174,7 @@ type Session struct {
 
 	closed atomic.Bool
 	quit   atomic.Bool
+	rented atomic.Bool
 	closer sync.Once
 	// done is closed when the session ends. The output channel deliberately
 	// is not: Send runs on whichever goroutine is talking to this player —
@@ -192,6 +193,18 @@ type Session struct {
 // from the world, a dropped connection leaves the character standing so it
 // can be reconnected to.
 func (s *Session) MarkQuit() { s.quit.Store(true) }
+
+// MarkRented records that this session ended by renting, so the disconnect
+// handling knows the objects have already been dealt with.
+//
+// Without it the teardown crash-saves a character whose things have just been
+// stored and extracted — which writes an empty file over the rent file, or
+// deletes it, depending on which write lands last. The C has the same shape
+// and no such problem, because extract_char does not crash-save.
+func (s *Session) MarkRented() { s.rented.Store(true) }
+
+// Rented reports whether the session ended at an inn.
+func (s *Session) Rented() bool { return s.rented.Load() }
 
 // Quit reports whether the player left deliberately.
 func (s *Session) Quit() bool { return s.quit.Load() }

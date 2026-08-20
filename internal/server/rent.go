@@ -219,6 +219,7 @@ func (s *Server) SaveEverything(ctx context.Context) {
 		}
 	}
 	s.crashSaveAll(ctx)
+	s.SaveChangedHouses(ctx)
 }
 
 // RentCharacter is Crash_rentsave / Crash_cryosave (objsave.c:868, :914) plus
@@ -276,10 +277,15 @@ func (s *Server) RentCharacter(w *game.Live, c *game.Character, mode session.Ren
 	// MarkQuit as well, so that if the teardown does get there it agrees.
 	leaver, _ := c.Client.(interface {
 		MarkQuit()
+		MarkRented()
 		Close()
 	})
 	if leaver != nil {
 		leaver.MarkQuit()
+		// And that the objects are already dealt with, so the disconnect
+		// handling does not crash-save an empty character over the rent file
+		// that was just written.
+		leaver.MarkRented()
 	}
 	w.Remove(c)
 	go func() {

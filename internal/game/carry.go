@@ -32,6 +32,10 @@ func (l *Live) detach(o *Object) {
 		if len(l.roomObjects[o.Room]) == 0 {
 			delete(l.roomObjects, o.Room)
 		}
+		// obj_from_room dirties a house too (handler.c:711): picking
+		// something up out of one changes what has to be saved just as much
+		// as dropping something in it.
+		l.MarkHouseChanged(o.Room)
 
 	case CarriedBy:
 		if o.Holder != nil {
@@ -72,6 +76,12 @@ func (l *Live) ObjectToRoom(o *Object, room RoomVnum) {
 	}
 	l.roomObjects[room] = append(l.roomObjects[room], o)
 	l.track(o)
+
+	// obj_to_room sets ROOM_HOUSE_CRASH on a house (handler.c:692), and
+	// obj_from_room does the same (handler.c:711). That dirty bit is what
+	// makes House_save_all cheap: a hundred houses do not get a hundred file
+	// rewrites a minute just because somebody walked through one.
+	l.MarkHouseChanged(room)
 }
 
 // ObjectToChar puts an object into somebody's inventory, porting

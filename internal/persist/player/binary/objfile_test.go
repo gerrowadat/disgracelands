@@ -267,3 +267,39 @@ func TestAReadOnlyStoreRefusesToWrite(t *testing.T) {
 		t.Error("a read-only store wrote a rent file")
 	}
 }
+
+// A house file is the same record with no header in front.
+func TestABareObjectSequenceRoundTrips(t *testing.T) {
+	want := sampleRentFile().Objects
+
+	b, err := EncodeStoredObjects(want)
+	if err != nil {
+		t.Fatalf("encoding: %v", err)
+	}
+	if len(b) != len(want)*newObjCodec(ilp32).elem.Size {
+		t.Errorf("encoded to %d bytes, want %d records with no header",
+			len(b), len(want))
+	}
+
+	got, err := DecodeStoredObjects(b)
+	if err != nil {
+		t.Fatalf("decoding: %v", err)
+	}
+	if len(got) != len(want) {
+		t.Fatalf("read %d objects, want %d", len(got), len(want))
+	}
+	for i := range want {
+		if got[i].Vnum != want[i].Vnum || got[i].Values != want[i].Values {
+			t.Errorf("object %d round-tripped as %+v, want %+v", i, got[i], want[i])
+		}
+	}
+
+	// A trailing partial record is ignored, as the C's read loop does.
+	short, err := DecodeStoredObjects(b[:len(b)-3])
+	if err != nil {
+		t.Fatalf("decoding a truncated sequence: %v", err)
+	}
+	if len(short) != len(want)-1 {
+		t.Errorf("a truncated sequence read %d objects, want %d", len(short), len(want)-1)
+	}
+}

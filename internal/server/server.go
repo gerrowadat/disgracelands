@@ -22,6 +22,7 @@ import (
 	"github.com/gerrowadat/disgracelands/internal/engine"
 	"github.com/gerrowadat/disgracelands/internal/game"
 	"github.com/gerrowadat/disgracelands/internal/persist/boards"
+	"github.com/gerrowadat/disgracelands/internal/persist/houses"
 	"github.com/gerrowadat/disgracelands/internal/persist/mail"
 	"github.com/gerrowadat/disgracelands/internal/persist/player"
 	"github.com/gerrowadat/disgracelands/internal/rng"
@@ -61,7 +62,9 @@ type Server struct {
 	boards *boards.Store
 	// mail is the mud mail file. Nil disables the mail system, which is what
 	// the C's `no_mail` global does when the file goes wrong.
-	mail   *mail.Store
+	mail *mail.Store
+	// houses is the player housing files. Nil disables housing.
+	houses *houses.Store
 	auth   auth.Verifier
 	text   *Text
 	logger *slog.Logger
@@ -86,6 +89,7 @@ type Options struct {
 	Objects  player.ObjectStore
 	Boards   *boards.Store
 	Mail     *mail.Store
+	Houses   *houses.Store
 	Auth     auth.Verifier
 	Text     *Text
 	Logger   *slog.Logger
@@ -105,6 +109,7 @@ func New(opts Options) *Server {
 		objects:    opts.Objects,
 		boards:     opts.Boards,
 		mail:       opts.Mail,
+		houses:     opts.Houses,
 		auth:       opts.Auth,
 		text:       opts.Text,
 		logger:     opts.Logger,
@@ -370,9 +375,20 @@ func (s *Server) Leave(ctx context.Context, sess *session.Session, c *game.Chara
 	// Done for a dropped link too: the C waits for the idle timeout to force
 	// a rent, and until that lands this is what stops a link loss costing
 	// somebody everything they were carrying.
-	if err := s.crashSave(ctx, c); err != nil {
-		s.logger.Error("crash-saving on disconnect", "character", c.Name, "error", err)
+	//
+	// Not for somebody who has just rented: their things are already in the
+	// rent file and they are carrying nothing, so a crash-save here would
+	// write an empty file over it. The C's extract_char does not crash-save
+	// and so never had to think about it.
+	if !sess.Rented() {
+		if err := s.crashSave(ctx, c); err != nil {
+			s.logger.Error("crash-saving on disconnect", "character", c.Name, "error", err)
+		}
 	}
+	// House_crashsave for the room they left from, as do_quit does
+	// (act.other.c:203): anything dropped in a house before quitting is
+	// theirs to find again.
+	s.SaveChangedHouses(ctx)
 
 	return s.engine.DoSync(ctx, func(w *game.Live) {
 		if c.Client == sess {

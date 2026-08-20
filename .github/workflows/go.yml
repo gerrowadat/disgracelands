@@ -59,7 +59,7 @@ jobs:
           git cat-file -e "$base^{commit}" 2>/dev/null || run_them "base commit unavailable"
 
           changed=$(git diff --name-only "$base"...HEAD)
-          echo "$changed" | grep -qE '^(internal/persist/player/binary/|reference/tools/(pfile(layout|gen)|objfile(layout|gen)|shopprice|boardlayout|maillayout)\.c$|internal/game/shopstate\.go$|internal/persist/(boards|mail)/|reference/moderncserver/src/(structs\.h|sysdep\.h|conf\.h\.in)$|\.github/workflows/go\.yml$)' \
+          echo "$changed" | grep -qE '^(internal/persist/player/binary/|reference/tools/(pfile(layout|gen)|objfile(layout|gen)|shopprice|boardlayout|maillayout|houselayout)\.c$|internal/game/shopstate\.go$|internal/persist/(boards|mail|houses)/|reference/moderncserver/src/(structs\.h|sysdep\.h|conf\.h\.in)$|\.github/workflows/go\.yml$)' \
             && run_them "the change touches the 32-bit layout or price checks, or their inputs"
 
           echo "needed=false" >> "$GITHUB_OUTPUT"
@@ -147,6 +147,19 @@ jobs:
             exit 1
           fi
           grep -- "mail block values against the 32-bit C" mail.txt
+
+      # And the house control record, which has a padding hole in the middle
+      # of it that the C never writes.
+      - name: The 32-bit house layout check must not have skipped
+        if: steps.ilp32.outputs.needed == 'true'
+        run: |
+          go test -count=1 -v ./internal/persist/houses/ > houses.txt 2>&1 || { cat houses.txt; exit 1; }
+          if grep -q -- "--- SKIP" houses.txt; then
+            echo "the 32-bit house layout check skipped; it must run in CI:"
+            grep -A2 -- "--- SKIP" houses.txt
+            exit 1
+          fi
+          grep -- "struct members against the 32-bit C" houses.txt
 
       # Same argument for the shop prices. This one is not a layout, it is an
       # arithmetic width: buy_price truncates a float product, and the answer

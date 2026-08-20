@@ -34,6 +34,7 @@ import (
 	"github.com/gerrowadat/disgracelands/internal/game"
 	"github.com/gerrowadat/disgracelands/internal/obs"
 	"github.com/gerrowadat/disgracelands/internal/persist/boards"
+	"github.com/gerrowadat/disgracelands/internal/persist/houses"
 	"github.com/gerrowadat/disgracelands/internal/persist/mail"
 	"github.com/gerrowadat/disgracelands/internal/persist/player"
 	"github.com/gerrowadat/disgracelands/internal/persist/player/binary"
@@ -180,6 +181,14 @@ func run(args []string) error {
 		return err
 	}
 
+	// The house control file and the per-house object files.
+	houseStore, err := houses.New(
+		filepath.Join(cfg.LibDir, "etc", "hcontrol"),
+		filepath.Join(cfg.LibDir, "house"), false)
+	if err != nil {
+		return err
+	}
+
 	// The greeting and the credits are licence obligations; LoadText refuses
 	// to return if either is missing, which is deliberate.
 	text, err := server.LoadText(cfg.LibDir)
@@ -212,6 +221,7 @@ func run(args []string) error {
 		Objects:    objects,
 		Boards:     boardStore,
 		Mail:       mailStore,
+		Houses:     houseStore,
 		Auth:       auth.Verifier{AllowLegacy: cfg.AllowLegacyPasswords},
 		Text:       text,
 		Logger:     logger,
