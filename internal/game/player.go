@@ -21,6 +21,11 @@ import "time"
 // Every numeric field has an explicit width, and times are time.Time rather
 // than an integer of some era's choosing — see
 // docs/proposals/go-port-plan.md §4.
+// MaxTitleLength is MAX_TITLE_LENGTH (structs.h:536), which the C's own
+// comment marks *DO*NOT*CHANGE*: it is the width of the field in char_file_u,
+// so the binary format the archive is in depends on it.
+const MaxTitleLength = 80
+
 type PlayerRecord struct {
 	// Name is the character's name as they typed it, with its original case.
 	Name string
@@ -77,7 +82,28 @@ type PlayerRecord struct {
 	// them — a mobile's from its prototype, a player's usually none.
 	BaseAffectFlags Flags
 
+	// Worn points at the equipment of the character this record belongs to,
+	// and is nil for a record that is not in the world. Not saved.
+	//
+	// affect_total reads a character's equipment, and every path that
+	// recomputes — a spell landing, an affect wearing off, a shield going
+	// on — has to see the same equipment or the totals disagree. The C gets
+	// this for free because it works from the character; here the record
+	// needs a way back.
+	Worn *[NumWears]*Object
+	// Mobile marks a mobile's record. The C tests IS_NPC, which is a bit in
+	// the same flags field as everything else; here the distinction is
+	// explicit because the two are clamped differently — see
+	// RecomputeAffects.
+	Mobile bool
+
 	Alignment int32
+	// LastTell is the IDNum of whoever last told them something, which is
+	// what `reply` answers. Remembered by identity rather than by pointer, so
+	// it survives that person logging out and back in. Not saved: the C keeps
+	// it on char_special_data, which is runtime state.
+	LastTell int64
+
 	// IDNum is the character's permanent identity, referenced by mail,
 	// houses and follower lists.
 	IDNum int64

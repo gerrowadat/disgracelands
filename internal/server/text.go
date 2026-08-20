@@ -11,6 +11,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/gerrowadat/disgracelands/internal/game"
 )
 
 // Text holds the server's canned files.
@@ -26,6 +28,24 @@ type Text struct {
 	imotd      string
 	credits    string
 	background string
+	news       string
+	info       string
+	policies   string
+	handbook   string
+	wizlist    string
+	immlist    string
+	// socials are the entries from misc/socials. They are commands rather
+	// than text, but this is the thing that reads the data directory.
+	socials []game.Social
+}
+
+// Socials returns the loaded socials, for the boot step that puts them into
+// the command table.
+func (t *Text) Socials() []game.Social {
+	if t == nil {
+		return nil
+	}
+	return t.socials
 }
 
 // text files, relative to the data directory.
@@ -35,6 +55,14 @@ const (
 	imotdFile      = "text/imotd"
 	creditsFile    = "text/credits"
 	backgroundFile = "text/background"
+	newsFile       = "text/news"
+	infoFile       = "text/info"
+	policiesFile   = "text/policies"
+	handbookFile   = "text/handbook"
+	wizlistFile    = "text/wizlist"
+	immlistFile    = "text/immlist"
+	// socialsFile is not text/ — the C's SOCMESS_FILE is lib/misc/socials.
+	socialsFile = "misc/socials"
 )
 
 // MainMenu is the C's MENU (config.c:271), verbatim.
@@ -97,9 +125,27 @@ func LoadText(dir string) (*Text, error) {
 		{motdFile, &t.motd},
 		{imotdFile, &t.imotd},
 		{backgroundFile, &t.background},
+		{newsFile, &t.news},
+		{infoFile, &t.info},
+		{policiesFile, &t.policies},
+		{handbookFile, &t.handbook},
+		{wizlistFile, &t.wizlist},
+		{immlistFile, &t.immlist},
 	} {
 		if b, err := os.ReadFile(filepath.Join(dir, f.path)); err == nil { //nolint:gosec // as above
 			*f.dst = string(b)
+		}
+	}
+
+	// The socials are optional in the same way the message of the day is: a
+	// server without them is a poorer game and still a game. The C exits the
+	// process on a missing socials file, which is a stronger reaction than
+	// this port takes to anything that is not a licence obligation.
+	if f, err := os.Open(filepath.Join(dir, socialsFile)); err == nil { //nolint:gosec // operator-configured data directory
+		t.socials, err = game.ParseSocials(f)
+		_ = f.Close()
+		if err != nil {
+			return nil, fmt.Errorf("reading %s: %w", socialsFile, err)
 		}
 	}
 
@@ -141,3 +187,22 @@ func (t *Text) Background() string {
 
 // Credits implements session.TextFiles.
 func (t *Text) Credits() string { return t.credits }
+
+// News, Info, Policies, Handbook, WizList and ImmList are the rest of the
+// canned files, each shown by one command.
+func (t *Text) News() string { return t.news }
+
+// Info is the `info` command's text.
+func (t *Text) Info() string { return t.info }
+
+// Policies is the `policy` command's text.
+func (t *Text) Policies() string { return t.policies }
+
+// Handbook is the immortals' handbook.
+func (t *Text) Handbook() string { return t.handbook }
+
+// WizList is the list of gods.
+func (t *Text) WizList() string { return t.wizlist }
+
+// ImmList is the shorter list the `immlist` command shows.
+func (t *Text) ImmList() string { return t.immlist }

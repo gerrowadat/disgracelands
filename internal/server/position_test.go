@@ -57,8 +57,10 @@ func TestYouCannotRestWhileFighting(t *testing.T) {
 	c.create("Zod", "swordfish", "m", "w")
 	spawnDog(t, srv, ImmortStartRoom)
 
-	c.send("kill dog")
-	c.expect("You attack a large dog!")
+	// `hit`, not `kill`: for an implementor `kill` is the instant slay, and
+	// these tests want a fight rather than a corpse.
+	c.send("hit dog")
+	c.expectAny("You hit a large dog", "You miss a large dog")
 
 	for _, tc := range []struct{ command, expect string }{
 		{"sit", "Sit down while fighting? Are you MAD?"},
@@ -99,8 +101,10 @@ func TestFleeingLeavesTheRoomAndTheFight(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	c.send("kill dog")
-	c.expect("You attack a large dog!")
+	// `hit`, not `kill`: for an implementor `kill` is the instant slay, and
+	// these tests want a fight rather than a corpse.
+	c.send("hit dog")
+	c.expectAny("You hit a large dog", "You miss a large dog")
 
 	fleeUntilItWorks(t, c)
 
@@ -153,16 +157,31 @@ func TestFleeingCostsExperience(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	c.send("kill dog")
-	c.expect("You attack a large dog!")
+	// `hit`, not `kill`: for an implementor `kill` is the instant slay, and
+	// these tests want a fight rather than a corpse.
+	c.send("hit dog")
+	c.expectAny("You hit a large dog", "You miss a large dog")
 
-	before := runner.Record.Points.Exp
+	// The cost is the opponent's *missing* hit points times their level, read
+	// at the moment of fleeing — `hit` has already landed one blow of its
+	// own, so it is not the 60 the dog was set up with.
+	var before, missing int32
+	inWorld(t, srv, func(_ *game.Live) {
+		before = runner.Record.Points.Exp
+		missing = dog.Record.Points.MaxHit - dog.Record.Points.Hit
+	})
 	fleeUntilItWorks(t, c)
 
-	lost := before - runner.Record.Points.Exp
-	// 60 missing hit points times level 10 is 600, under the loss cap.
-	if lost != 600 {
-		t.Errorf("fleeing cost %d experience, want 600", lost)
+	// Read on the world goroutine: the combat pulse writes this field, and
+	// reading it from the test goroutine is a genuine race that the detector
+	// catches about one run in ten.
+	var after int32
+	inWorld(t, srv, func(_ *game.Live) { after = runner.Record.Points.Exp })
+
+	lost := before - after
+	if want := missing * 10; lost != want {
+		t.Errorf("fleeing cost %d experience, want %d (%d missing hit points at level 10)",
+			lost, want, missing)
 	}
 }
 
@@ -193,15 +212,17 @@ func TestFleeingAnotherPlayerCostsNothing(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	c.send("kill grimm")
-	c.expect("You attack Grimm!")
+	// Another player, so it has to be `murder` — `hit` refuses.
+	c.send("murder grimm")
+	c.expectAny("You hit Grimm", "You miss Grimm")
 
-	before := runner.Record.Points.Exp
+	var before, after int32
+	inWorld(t, srv, func(_ *game.Live) { before = runner.Record.Points.Exp })
 	fleeUntilItWorks(t, c)
+	inWorld(t, srv, func(_ *game.Live) { after = runner.Record.Points.Exp })
 
-	if runner.Record.Points.Exp != before {
-		t.Errorf("fleeing another player cost %d experience",
-			before-runner.Record.Points.Exp)
+	if after != before {
+		t.Errorf("fleeing another player cost %d experience", before-after)
 	}
 }
 

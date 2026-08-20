@@ -13,32 +13,36 @@ import (
 	"github.com/gerrowadat/disgracelands/internal/game"
 )
 
-// practice, ported from SPECIAL(guild) and list_skills (spec_procs.c).
+// practice, ported from do_practice (act.other.c), SPECIAL(guild) and
+// list_skills (spec_procs.c).
 //
-// **This is a command here and a guildmaster's special procedure in the C.**
-// Special procedures need the scripting seam (plan §8), and until that exists
-// a character has no way to raise a skill at all — which means no way to cast
-// anything, since do_cast refuses a spell at zero per cent. A command that
-// works everywhere is a deviation; a game where nobody can learn a spell is
-// not a game. Recorded in docs/deviations.md, and it moves back to the
-// guildmasters when specprocs arrive.
+// The command itself only lists what you know. The *teaching* is the
+// guildmaster's, in `specGuild` — which is where it was until this port put
+// it here for want of special procedures, and where it is again.
 
 func doPractice(c *Context) error {
-	rec := c.Character.Record
-	if c.Character.IsNPC() || rec == nil {
+	if c.Character.IsNPC() || c.Character.Record == nil {
 		return nil
 	}
-
-	if strings.TrimSpace(c.Arg) == "" {
-		return c.listSkills()
+	// A guildmaster in the room would have taken this command before it got
+	// here. Reaching do_practice at all means there is nobody to teach you.
+	if strings.TrimSpace(c.Arg) != "" {
+		c.Send("You can only practice skills in your guild.\r\n")
+		return nil
 	}
+	return c.listSkills()
+}
+
+// practise raises one skill, porting the body of SPECIAL(guild).
+func (c *Context) practise(arg string) error {
+	rec := c.Character.Record
 
 	if rec.SpellsToLearn <= 0 {
 		c.Send("You do not seem to be able to practice now.\r\n")
 		return nil
 	}
 
-	number, ok := game.SpellNumberByName(c.Arg)
+	number, ok := game.SpellNumberByName(arg)
 	if !ok {
 		c.Send("You do not know of that %s.\r\n", game.PracticeNoun(rec.Class))
 		return nil

@@ -212,10 +212,15 @@ func place(fields []field, m dataModel, base int, prefix string, index map[strin
 	return out, alignUp(offset-base, maxAlign), maxAlign
 }
 
-// computeLayout places the whole record under a data model.
-func computeLayout(m dataModel) *layout {
+// computeLayout places the whole player record under a data model.
+func computeLayout(m dataModel) *layout { return computeLayoutOf(charFileU, m) }
+
+// computeLayoutOf places any declared struct under a data model. The player
+// record is the big one, but the rent files (objfile.go) are raw struct dumps
+// by exactly the same mechanism and get their offsets from here too.
+func computeLayoutOf(decl []field, m dataModel) *layout {
 	index := map[string]placed{}
-	fields, size, align := place(charFileU, m, 0, "", index)
+	fields, size, align := place(decl, m, 0, "", index)
 	return &layout{Model: m, Size: size, Align: align, Fields: fields, byName: index}
 }
 

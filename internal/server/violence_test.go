@@ -23,17 +23,23 @@ func round(t *testing.T, srv *Server) {
 }
 
 // fighterRecord is a character built to win or lose predictably.
+//
+// The real values are snapshotted, as they are for any character the game
+// itself builds: without them the first recompute — a spell landing, a shield
+// going on — would rebuild the character from zeroes.
 func fighterRecord(name string, level, hit int32) *game.PlayerRecord {
-	return &game.PlayerRecord{
+	rec := &game.PlayerRecord{
 		Name: name, Class: game.ClassWarrior, Level: level,
 		Birth:      time.Now(),
 		Conditions: [3]int32{0, 24, 24},
 		Abilities: game.Abilities{
-			Strength: 18, Intelligence: 25, Wisdom: 25,
+			Strength: 18, Intelligence: 18, Wisdom: 18,
 			Dexterity: 12, Constitution: 12, Charisma: 12,
 		},
 		Points: game.Points{Hit: hit, MaxHit: hit, Armor: 100},
 	}
+	game.SnapshotReal(rec)
+	return rec
 }
 
 // TestAFightRunsOnTheViolencePulse, and both sides swing.

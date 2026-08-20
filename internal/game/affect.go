@@ -73,6 +73,20 @@ func AddAffect(rec *PlayerRecord, a Affect) {
 	RecomputeAffects(rec)
 }
 
+// RemoveAllAffects strips every affect off a character, porting the local
+// spell_dispel_magic (spells.c:85, between `<DoC>` markers).
+//
+// No saving throw, no exceptions, and it does not care who cast what: the
+// C walks the whole list calling affect_remove. Cast on yourself it takes
+// your own blessings with it.
+func RemoveAllAffects(rec *PlayerRecord) {
+	if rec == nil || len(rec.Affects) == 0 {
+		return
+	}
+	rec.Affects = nil
+	RecomputeAffects(rec)
+}
+
 // RemoveAffectsOf takes off every affect a spell put on, porting
 // affect_from_char.
 func RemoveAffectsOf(rec *PlayerRecord, spell int32) bool {
@@ -124,11 +138,19 @@ func JoinAffect(rec *PlayerRecord, a Affect, accumDuration, accumModifier bool) 
 }
 
 // RecomputeAffects rebuilds a character's current abilities and modifiers
-// from their real ones plus every affect, porting affect_total.
+// from their real ones plus everything worn and every affect, porting
+// affect_total.
 //
-// Equipment is not in here yet — the C removes and reapplies worn objects'
-// affects around the same reset, and object affects arrive with the rest of
-// the equipment rules.
+// The C does this by walking the equipment and the affect list *twice* —
+// once subtracting every modifier and once adding it back — because it has
+// nowhere to keep the unaffected figures. That works only as long as nothing
+// changes between the two passes, which is why a shield swapped while
+// blessed used to drift. Here the real values are kept and the totals are
+// rebuilt from them, which cannot drift.
+//
+// Equipment comes from rec.Worn, which points at the character's own array.
+// A record with no character behind it — one being loaded, or a test — has
+// nil there and is totalled without equipment.
 func RecomputeAffects(rec *PlayerRecord) {
 	// Start from what they rolled.
 	rec.Abilities = rec.RealAbilities
@@ -143,6 +165,20 @@ func RecomputeAffects(rec *PlayerRecord) {
 
 	flags := rec.BaseAffectFlags
 
+	// Equipment first, then spells — the order the C applies them in, and it
+	// matters only because of the clamping below.
+	if rec.Worn != nil {
+		for _, obj := range rec.Worn {
+			if obj == nil {
+				continue
+			}
+			flags = flags.Set(obj.PermAffect)
+			for _, a := range obj.Affects {
+				applyModifier(rec, a.Location, a.Modifier)
+			}
+		}
+	}
+
 	for _, a := range rec.Affects {
 		flags = flags.Set(a.Bits)
 		applyModifier(rec, a.Location, a.Modifier)
@@ -150,17 +186,34 @@ func RecomputeAffects(rec *PlayerRecord) {
 
 	rec.AffectFlags = flags
 
-	// The C clamps abilities to 25 after totalling, since several affects
-	// stack and nothing else stops them.
-	clamp := func(v *int32) {
-		*v = max(0, min(25, *v))
+	// The ceiling is 25 for a mobile and *18* for a player, which is the
+	// wart: an immortal rolled with 25s across the board loses them the first
+	// time anything recomputes. Strength is the exception — anything above 18
+	// is converted into the percentile rather than thrown away. See
+	// docs/weirdnumbers.md.
+	ceiling := int32(18)
+	if rec.Mobile {
+		ceiling = 25
 	}
-	clamp(&rec.Abilities.Strength)
+	clamp := func(v *int32) {
+		*v = max(0, min(ceiling, *v))
+	}
 	clamp(&rec.Abilities.Intelligence)
 	clamp(&rec.Abilities.Wisdom)
 	clamp(&rec.Abilities.Dexterity)
 	clamp(&rec.Abilities.Constitution)
 	clamp(&rec.Abilities.Charisma)
+
+	rec.Abilities.Strength = max(0, rec.Abilities.Strength)
+	if rec.Mobile {
+		rec.Abilities.Strength = min(ceiling, rec.Abilities.Strength)
+		return
+	}
+	if rec.Abilities.Strength > 18 {
+		rec.Abilities.StrengthPercentile = min(100,
+			rec.Abilities.StrengthPercentile+(rec.Abilities.Strength-18)*10)
+		rec.Abilities.Strength = 18
+	}
 }
 
 // applyModifier adds one affect's modifier to whatever it names, porting the

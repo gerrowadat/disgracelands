@@ -114,6 +114,13 @@ at all unless they cross a multiple of ten.
 
 ---
 
+### Backstab multiplies by 20 for immortals
+
+`backstab_mult` returns 2 through 6 across the mortal levels and then **20**
+for anyone at or above `LVL_IMMORT`. Not 7, not a continuation of the curve.
+
+---
+
 ## Character progression
 
 ### No mana at level one
@@ -200,10 +207,68 @@ SYSERR — makes every "have I earned this?" comparison succeed.
 
 *Deviation*: an out-of-range level is unreachable here rather than free.
 
-### Backstab multiplies by 20 for immortals
+### A player's abilities are clamped to 18, and an immortal's decay
 
-`backstab_mult` returns 2 through 6 across the mortal levels and then **20**
-for anyone at or above `LVL_IMMORT`. Not 7, not a continuation of the curve.
+`affect_total` ends with
+
+```c
+i = (IS_NPC(ch) ? 25 : 18);
+GET_DEX(ch) = MAX(0, MIN(GET_DEX(ch), i));
+```
+
+— so a **player's** ceiling is 18 and a **mobile's** is 25. `init_char` gives
+an implementor 25 in everything, and the first time anything totals their
+affects — a spell landing, a shield going on — five of the six drop to 18 and
+never come back, because the real values are clamped along with the rest.
+
+Strength is the exception, and the exception is the interesting part: anything
+above 18 is *converted* rather than discarded, ten percentile points per
+point, capped at 100. Twenty castings of strength leave a character at 18/100
+rather than at 58.
+
+*Reproduced*, including the decay. `PlayerRecord.Mobile` carries the `IS_NPC`
+distinction, because the two ceilings are the only place a record needs to
+know.
+
+### Splitting gold mints a coin
+
+`do_split` charges the splitter for the shares it hands out and then gives
+them the remainder they never gave away:
+
+```c
+GET_GOLD(ch) -= share * (num - 1);
+...
+if (rest) {
+  ...
+  GET_GOLD(ch) += rest;
+}
+```
+
+Ten coins split three ways is three each and one over. The two others gain
+three apiece, the splitter loses six — and then gains one. A hundred coins in
+the world before, a hundred and one after.
+
+*Reproduced.* It is small, it is a hundred per cent reliable, and somebody
+with a patient friend and an afternoon could have made real money out of it.
+
+### Group experience rounds up, so a group mints experience
+
+```c
+tot_gain = (GET_EXP(victim) / 3) + tot_members - 1;
+base     = MAX(1, tot_gain / tot_members);
+```
+
+`+ tot_members - 1` is the standard trick for making integer division round
+up, so three people splitting ten points get **four each** — twelve points out
+of a ten point kill. A group earns strictly more in total than a soloist
+would, which is the incentive to group and looks accidental until you notice
+it is not.
+
+What is *missing* is more interesting: `group_gain` has no level-difference
+bonus at all, where `solo_gain` gives up to double for killing something eight
+levels above you. Killing something far above your level is worth more alone.
+
+*Verified* against the arithmetic at every group size from one to twenty.
 
 ---
 
@@ -328,6 +393,58 @@ routines. A skill is therefore a spell with no cost, no target and nothing to
 do — the table is a table of *things you can practise*, and the spells just
 happen to be the ones with behaviour attached.
 
+### `identify` is spell 201, and cannot be cast
+
+`do_cast` refuses any spell number above `MAX_SPELLS` (130), and
+`SPELL_IDENTIFY` is 201 — up among the NPC spells. So `cast 'identify'`
+answers *"Cast what?!?"* in the C, and the spell is reachable only from a
+scroll, potion, wand or staff, which route through `call_magic` directly.
+Several other useful things live up there too.
+
+*Reproduced.* The report is tested directly until `use`, `quaff` and `recite`
+exist.
+
+### Enchant weapon's bonus is a boolean used as a number
+
+```c
+obj->affected[0].modifier = 1 + (level >= 18);
+obj->affected[1].modifier = 1 + (level >= 20);
+```
+
+`(level >= 18)` is a C comparison, so the bonus is +1 below the threshold and
++2 at or above it, with nothing in between and no further growth however high
+the caster goes. Damroll crosses over two levels later than hitroll, for no
+reason the code gives.
+
+### Drunk speech is a local mod, and it truncates at 240 characters
+
+`do_say` (act.comm.c:52) is rewritten in this tree: above a drunkenness of
+five, every `s` becomes `sh` and one time in three the sentence ends
+"...*hic*.". It builds the slurred version into a 256-byte buffer and stops
+copying at 240 characters, so a long enough sentence is cut off mid-word —
+and never gets its hiccup, because the hiccup is appended after the loop.
+
+*Reproduced*, including the truncation. Note also that the doubling makes the
+output longer than the input, so it is the *slurred* length that hits the
+limit: a sentence of two hundred characters with a lot of esses in it will be
+cut where the same sentence without them would not.
+
+### Charm's duration is charisma divided by intelligence
+
+```c
+af.duration = 24 * 2;
+if (GET_CHA(ch))    af.duration *= GET_CHA(ch);
+if (GET_INT(victim)) af.duration /= GET_INT(victim);
+```
+
+Forty-eight hours, multiplied by the caster's charisma and divided by the
+victim's intelligence — so a charismatic mage charming something stupid holds
+it for weeks of mud time, and the only guard against dividing by zero is the
+`if`. An 18-charisma caster charming an 11-intelligence mobile gets 78 mud
+hours; the same caster charming another 18 gets 48.
+
+---
+
 ## Saving throws
 
 ### Lower is better, and a bonus is negative
@@ -356,38 +473,36 @@ in a hundred chance of failing, however good the character.
 players, so a mobile's own class never affects its saves. The C's comment on
 this is *"NPCs use warrior tables according to some book"*.
 
-## Storage and limits
+---
 
-### Flags are `unsigned long`, and the letter encoding breaks at bit 31
+## Objects, containers and equipment
 
-`asciiflag_conv` computes `1 << (26 + (c - 'A'))` into an `int`. Bit 31 is the
-sign bit and anything above it is undefined behaviour, so `'F'` is the last
-letter the C server handles and everything from `'G'` on is broken *there*.
-Data using those bits cannot round-trip to the C server whatever a port does.
+### Armour class and applies are two different mechanisms
 
-Separately, `bitvector_t` is `unsigned long` — 32 bits on the platform this
-was written for, 64 on modern Linux. The width silently changed under the
-codebase somewhere around 1998 and nothing noticed because nothing used the
-high bits.
+An `ITEM_ARMOR`'s value 0 is subtracted from the wearer's armour class by
+`equip_char` and added back by `unequip_char` — a lasting change to the
+character. The `A` lines on the same object are applies, and `affect_total`
+recomputes those from scratch. Nothing marks the difference in the file
+format; it is the object's *type* that decides which mechanism value 0 goes
+through.
 
-### Passwords are compared over ten characters and hashed over eight
-
-`MAX_PWD_LENGTH` is 10, which is the width of the field in `char_file_u`.
-Traditional DES `crypt(3)` truncates the password to **eight** characters
-before hashing. So the ninth and tenth characters of a password affect nothing
-at all, and `nanny` refuses passwords longer than ten as though they would.
-
-*Deviation*: no maximum here, and a six-character minimum instead of three.
-
-### Carry capacity uses shifts
+The multiplier on the armour half belongs to the slot, not the object:
 
 ```c
-#define CAN_CARRY_N(ch) (5 + (GET_DEX(ch) >> 1) + (GET_LEVEL(ch) >> 1))
+case WEAR_BODY: factor = 3; break;   /* 30% */
+case WEAR_HEAD: factor = 2; break;   /* 20% */
+case WEAR_LEGS: factor = 2; break;   /* 20% */
+default:        factor = 1; break;   /* all others 10% */
 ```
 
-`>> 1` rather than `/ 2`, which is the same for the non-negative values this
-sees but is the kind of hand-optimisation that stops being equivalent the
-moment something goes negative.
+The comments say percentages because they were, before the whole armour-class
+scale was multiplied by ten and the divide-by-ten moved into
+`compute_armor_class`'s caller.
+
+*Reproduced.* The recompute is from stored real values rather than the C's
+subtract-then-add pass, which is the one place this port deliberately does not
+reproduce the *method* — the C's version drifts if anything changes between
+the two passes.
 
 ### A drink container's weight is not its weight
 
@@ -438,6 +553,18 @@ also how you carry an anvil.
 
 *Reproduced*, including the asymmetry.
 
+### Pouring one container into another overshoots and corrects
+
+`do_pour` fills the destination to its capacity outright, subtracts that much
+from the source, and then checks whether the source has gone **negative** —
+which is how it finds out there was not enough — and adds the shortfall back
+to both. It arrives at the right answer by overshooting.
+
+The same function also prints `"You pour the %s into the %s."` with **no
+newline**, and names the destination with the word the player typed rather
+than the object's own name. Both reproduced: the prompt runs on, exactly as it
+did in 2001.
+
 ### A pile of coins never says how many
 
 `create_money` names a pile from `money_desc`'s fourteen-entry table, so 100
@@ -449,6 +576,196 @@ anything larger — which exists because somebody found out you could carry more
 than a million.
 
 *Verified* against the table in `handler.c`, both sides of every boundary.
+
+---
+
+## Storage and limits
+
+### Flags are `unsigned long`, and the letter encoding breaks at bit 31
+
+`asciiflag_conv` computes `1 << (26 + (c - 'A'))` into an `int`. Bit 31 is the
+sign bit and anything above it is undefined behaviour, so `'F'` is the last
+letter the C server handles and everything from `'G'` on is broken *there*.
+Data using those bits cannot round-trip to the C server whatever a port does.
+
+Separately, `bitvector_t` is `unsigned long` — 32 bits on the platform this
+was written for, 64 on modern Linux. The width silently changed under the
+codebase somewhere around 1998 and nothing noticed because nothing used the
+high bits.
+
+### Passwords are compared over ten characters and hashed over eight
+
+`MAX_PWD_LENGTH` is 10, which is the width of the field in `char_file_u`.
+Traditional DES `crypt(3)` truncates the password to **eight** characters
+before hashing. So the ninth and tenth characters of a password affect nothing
+at all, and `nanny` refuses passwords longer than ten as though they would.
+
+*Deviation*: no maximum here, and a six-character minimum instead of three.
+
+### Carry capacity uses shifts
+
+```c
+#define CAN_CARRY_N(ch) (5 + (GET_DEX(ch) >> 1) + (GET_LEVEL(ch) >> 1))
+```
+
+`>> 1` rather than `/ 2`, which is the same for the non-negative values this
+sees but is the kind of hand-optimisation that stops being equivalent the
+moment something goes negative.
+
+### Rent is prorated by a float and then truncated
+
+```c
+num_of_days = (float) (time(0) - rent.time) / SECS_PER_REAL_DAY;
+cost = rent.net_cost_per_diem * num_of_days;
+```
+
+`cost` is an `int`, so the product is truncated toward zero rather than
+rounded. A stay of 29 hours at 10 a day costs 12; a stay of six hours costs
+nothing at all. The `float` — not `double` — is the C's, and at the sizes
+involved it makes no difference, but it is what the archive says.
+
+*Source*: `objsave.c:469`.
+
+### Crash_load's return value is documented and then ignored
+
+```c
+/*
+ * Return values:
+ *  0 - successful load, keep char in rent room.
+ *  1 - load failure or load of crash items -- put char in temple.
+ *  2 - rented equipment lost (no $)
+ */
+```
+
+The caller acts on `2` and nothing else (`interpreter.c:1690`).
+
+The *behaviour* the other two describe is real, but it is achieved somewhere
+else entirely: `gen_receptionist` sets `GET_LOADROOM(ch)` to the inn just
+before it removes you (`objsave.c:1143`), and the entry sequence reads it,
+uses it, and then clears it back to `NOWHERE` unless `PLR_LOADROOM` is set
+(`interpreter.c:1676`). So renting brings you back to the inn exactly once,
+quitting leaves you in the temple, and `Crash_load`'s 0-versus-1 has nothing
+to do with it. The port keeps `RentCode.KeepsLoadRoom` available for the same
+reason the C keeps the return value: it documents the intent.
+
+Worth knowing because the natural way to write the Go — set the load room on
+every save, so people come back where they were — is a different game, and
+this port had it that way until the receptionist was written and the
+contradiction showed up.
+
+*Source*: `objsave.c:428`, `objsave.c:1143`, `interpreter.c:1676`.
+
+### Shop prices depend on the width of a multiplication
+
+```c
+int buy_price(struct obj_data *obj, int shop_nr)
+{
+  return (GET_OBJ_COST(obj) * SHOP_BUYPROFIT(shop_nr));
+}
+```
+
+An `int` times a `float`, truncated back to an `int`. 1.15 stored as a
+float32 is exactly 1.1499999761581420898437500 — a hair *under* 1.15 — so a
+hundred-coin item at a 1.15 markup is 114.99999761581420898, and what happens
+next depends on where the product is kept:
+
+| evaluated as | product | price |
+| --- | --- | --- |
+| `float` (SSE, `FLT_EVAL_METHOD` 0) | rounds to exactly 115.0 | **115** |
+| x87 80-bit (`FLT_EVAL_METHOD` 2) | stays 114.999997… | **114** |
+
+The archived server was a 32-bit i386 build, so the second column is what
+players actually paid, and the port multiplies at `float64` to match. The
+sell prices go the other way for the same reason: 0.15 as a float32 is a hair
+*over* 0.15, so a hundred-coin item is still valued at 15.
+
+Two lines of C, no division, no cast that looks suspicious, and the answer
+depends on the machine. This one is the argument for the whole oracle
+approach in one function.
+
+*Verified*: `reference/tools/shopprice.c` against `BuyPrice`/`SellPrice`,
+12,006 price pairs, built `-m32 -mfpmath=387`. CI installs the toolchain for
+any change that can reach it.
+
+### A board post's date has a weekday and no year
+
+```c
+sprintf(buf, "%6.10s %-12s :: %s", tmstr, buf2, arg);
+```
+
+`tmstr` is `asctime`'s output — "Thu Aug 20 01:23:45 2026". The `.10`
+precision truncates it to the first ten characters, "Thu Aug 20", and the `6`
+width does nothing at all because what is left is longer than six. So every
+message on every board is dated by weekday and month-day, the year is thrown
+away, and one of the two numbers in the format is dead.
+
+*Source*: `boards.c:219`.
+
+### A live pointer is written into every board file
+
+`struct board_msginfo` has a `char *heading` as its second member, and
+`Board_save_board` fwrites the whole struct. The address is meaningless the
+moment the process exits and `Board_load_board` reads it and ignores it — but
+its *width* decides where the three fields after it sit. Four bytes on the
+i386 build the archive came from; eight on any 64-bit rebuild, which reads the
+poster's level out of the pointer's second half.
+
+*Verified*: `reference/tools/boardlayout.c` against the offsets in
+`internal/persist/boards`, built `-m32`.
+
+*Source*: `boards.h:19`, `boards.c:416`.
+
+### A mail block is 100 bytes on every machine and means something different on each
+
+```c
+#define HEADER_BLOCK_DATASIZE \
+  (BLOCK_SIZE - sizeof(long) - sizeof(struct header_data_type) - sizeof(char))
+```
+
+100 - 4 - 16 - 1 = **79** characters of message in a header block on the i386
+build the archive came from. On a 64-bit rebuild it is 100 - 8 - 32 - 1 =
+**59**. Both still produce hundred-byte blocks, so a file written by one and
+read by the other lines up perfectly, the block chain resolves, every message
+comes back the right length — and the text has twenty characters of the wrong
+thing every hundred. There is no magic number, no length field and no
+checksum anywhere in the format to catch it.
+
+*Verified*: `reference/tools/maillayout.c` against
+`internal/persist/mail`, built `-m32`.
+
+*Source*: `mail.h:71`.
+
+### Which piece of mail you get next depends on how long the server has been up
+
+`index_mail` pushes each new message onto the *front* of a per-player list
+(`mail.c:233`) and `read_delete` walks to the *end* of that list and takes
+from there (`mail.c:436`) — so within one run, mail is delivered oldest
+first. But `scan_file` rebuilds that same list at boot by reading the file
+from the start and prepending each header it finds, so after a reboot the
+tail of the list is the *lowest-numbered block* rather than the oldest
+message.
+
+Those agree only while the file is growing. The mail file reuses freed
+blocks, so once anybody has collected their post, a new message can land in a
+low-numbered block and jump the queue — but only after a reboot. The port
+delivers in ascending block order always, which is what the C does after
+every restart; the alternative is delivery order that depends on uptime.
+
+*Source*: `mail.c:213`, `mail.c:247`, `mail.c:436`.
+
+### The mail header shouts in lower case
+
+```
+  To: recipient
+From: sender
+```
+
+`get_name_by_id` returns a pointer into the C's player table, and `boot_db`
+lowercases every name as it builds that table (`db.c:607`). So the names in a
+mail header are always lower case, whatever the character actually calls
+themselves. Nobody fixed it in seven years.
+
+*Source*: `db.c:607`, `mail.c:461`.
 
 ---
 

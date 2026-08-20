@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 	"time"
 
@@ -32,7 +33,11 @@ import (
 	"github.com/gerrowadat/disgracelands/internal/engine"
 	"github.com/gerrowadat/disgracelands/internal/game"
 	"github.com/gerrowadat/disgracelands/internal/obs"
+	"github.com/gerrowadat/disgracelands/internal/persist/boards"
+	"github.com/gerrowadat/disgracelands/internal/persist/houses"
+	"github.com/gerrowadat/disgracelands/internal/persist/mail"
 	"github.com/gerrowadat/disgracelands/internal/persist/player"
+	"github.com/gerrowadat/disgracelands/internal/persist/player/binary"
 	"github.com/gerrowadat/disgracelands/internal/persist/world"
 	"github.com/gerrowadat/disgracelands/internal/rng"
 	"github.com/gerrowadat/disgracelands/internal/server"
@@ -155,6 +160,35 @@ func run(args []string) error {
 	}
 	defer func() { _ = players.Close() }()
 
+	// The rent files are not pluggable the way the roster is. The C has one
+	// format for them and the ascii roster is this port's own addition, so
+	// there is nothing to choose between: `plrobjs/` is read and written in
+	// the layout the archived files are in, whatever the roster is kept as.
+	objects, err := binary.NewObjectStore(player.Config{Dir: cfg.PlayerPath()})
+	if err != nil {
+		return err
+	}
+
+	// The bulletin boards, beside the player data in the etc directory.
+	boardStore, err := boards.New(filepath.Join(cfg.LibDir, "etc"), false)
+	if err != nil {
+		return err
+	}
+
+	// The mud mail file, likewise.
+	mailStore, err := mail.New(filepath.Join(cfg.LibDir, "etc", "plrmail"), false)
+	if err != nil {
+		return err
+	}
+
+	// The house control file and the per-house object files.
+	houseStore, err := houses.New(
+		filepath.Join(cfg.LibDir, "etc", "hcontrol"),
+		filepath.Join(cfg.LibDir, "house"), false)
+	if err != nil {
+		return err
+	}
+
 	// The greeting and the credits are licence obligations; LoadText refuses
 	// to return if either is missing, which is deliberate.
 	text, err := server.LoadText(cfg.LibDir)
@@ -182,13 +216,18 @@ func run(args []string) error {
 		"seed", seed, "reproducible", cfg.RNGSeed != 0)
 
 	srv := server.New(server.Options{
-		Engine:   eng,
-		Players:  players,
-		Auth:     auth.Verifier{AllowLegacy: cfg.AllowLegacyPasswords},
-		Text:     text,
-		Logger:   logger,
-		Restrict: cfg.Restrict,
-		RNG:      rng.NewRand(source),
+		Engine:     eng,
+		Players:    players,
+		Objects:    objects,
+		Boards:     boardStore,
+		Mail:       mailStore,
+		Houses:     houseStore,
+		Auth:       auth.Verifier{AllowLegacy: cfg.AllowLegacyPasswords},
+		Text:       text,
+		Logger:     logger,
+		Restrict:   cfg.Restrict,
+		NoSpecials: cfg.NoSpecials,
+		RNG:        rng.NewRand(source),
 	})
 	// The engine's periodic work belongs to the server, which is the side
 	// that can reach both the world and the player store. Started only now
@@ -255,6 +294,11 @@ func run(args []string) error {
 	defer cancel()
 
 	health.SetReady(false)
+
+	// Crash_save_all, as the C does on its way down (comm.c:428). Before the
+	// diagnostics go, because it needs the world goroutine still turning.
+	srv.SaveEverything(shutdownCtx)
+
 	if err := diag.Shutdown(shutdownCtx); err != nil {
 		logger.Error("diagnostics shutdown failed", "error", err)
 	}

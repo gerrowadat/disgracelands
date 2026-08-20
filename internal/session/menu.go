@@ -86,6 +86,13 @@ func (s *Session) handleMenu(ctx context.Context, deps Deps, line string) error 
 	return nil
 }
 
+// EnterResult is what entering the world turned up, beyond success.
+type EnterResult struct {
+	// RentLost is true when the character could not pay the rent they owed
+	// and their things were destroyed rather than returned.
+	RentLost bool
+}
+
 // enterWorld is menu choice 1: the part of the C's CON_MENU that puts a
 // character into a room.
 func (s *Session) enterWorld(ctx context.Context, deps Deps) error {
@@ -98,7 +105,8 @@ func (s *Session) enterWorld(ctx context.Context, deps Deps) error {
 
 	s.Send("%s", deps.Text.Welcome())
 
-	if err := deps.Login.Enter(ctx, s, s.character); err != nil {
+	result, err := deps.Login.Enter(ctx, s, s.character)
+	if err != nil {
 		s.logger.Error("entering the world", "error", err)
 		s.Send("Something went wrong putting you into the world. Try again shortly.\r\n")
 		s.Close()
@@ -112,7 +120,17 @@ func (s *Session) enterWorld(ctx context.Context, deps Deps) error {
 	}
 
 	// Show them where they are, which is what the C server does on entry.
-	return deps.Commands.Do(ctx, s, "look")
+	if err := deps.Commands.Do(ctx, s, "look"); err != nil {
+		return err
+	}
+
+	// Last, after the room — the order the C sends it in, and the \007 is
+	// the C's too: this is the one message in the game that rings the bell.
+	if result.RentLost {
+		s.Send("\r\n\007You could not afford your rent!\r\n" +
+			"Your possesions have been donated to the Salvation Army!\r\n")
+	}
+	return nil
 }
 
 // handleEnterDescription collects lines until the terminator.
@@ -293,4 +311,45 @@ func ensureTrailingNewline(s string) string {
 		return s
 	}
 	return s + "\r\n"
+}
+
+// The general line editor, porting string_write (modify.c).
+//
+// Collect lines until a lone '@', then hand the text to whoever asked for it.
+// The C passes a pointer to the string being filled and a magic number saying
+// what to do when it is done; a closure says the same thing without the
+// magic.
+
+// beginEditor puts the session into the line editor.
+func (s *Session) beginEditor(maxLength int, done func(text string)) {
+	s.editorLines = nil
+	s.editorMax = maxLength
+	s.editorDone = done
+	s.state = StateEditing
+}
+
+// handleEditing collects one line of an edited text.
+func (s *Session) handleEditing(line string) error {
+	if strings.TrimSpace(line) != descriptionTerminator {
+		s.editorLines = append(s.editorLines, line)
+		return nil
+	}
+
+	text := strings.Join(s.editorLines, "\r\n")
+	if text != "" {
+		text += "\r\n"
+	}
+	if s.editorMax > 0 && len(text) > s.editorMax {
+		text = text[:s.editorMax]
+		s.Send("Your message was truncated to %d characters.\r\n", s.editorMax)
+	}
+
+	done := s.editorDone
+	s.editorLines, s.editorDone, s.editorMax = nil, nil, 0
+	s.state = StatePlaying
+	if done != nil {
+		done(text)
+	}
+	s.Send("%s", prompt(s))
+	return nil
 }

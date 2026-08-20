@@ -85,20 +85,32 @@ are fidelity, not deviation, and they live in the tests that assert them.
 | **Why** | Integer division. The comment has been wrong since 1993 and the code is what players experienced. Reproduced, and asserted against the C so nobody implements the comment by mistake. |
 | **Where** | `Attack` in `internal/game/fight.go`, `TestThePositionMultiplierIsIntegerDivision`. |
 
-### `practice` is a command, not a guildmaster
+### `practice` was a command and is a guildmaster again
 
-| | |
-|---|---|
-| **C** | `practice` is a special procedure on guildmaster mobiles (`SPECIAL(guild)`, spec_procs.c). You must be standing in your own guild, in front of the right mobile, and the guild guards keep the wrong classes out. |
-| **Go** | An ordinary command that works anywhere. |
-| **Why** | Special procedures need the scripting seam (plan §8), which does not exist yet. Without practice a character cannot raise a skill, and without a skill `do_cast` refuses every spell at zero per cent — so no character could cast anything at all. A command that works everywhere is a deviation; a game where nobody can learn a spell is not a game. **This moves back to the guildmasters when specprocs arrive**, and is listed here so it is not forgotten. |
-| **Where** | `internal/session/practice.go`. |
+**Resolved in Phase 5a.** For Phases 3 and 4 `practice` taught anywhere,
+because special procedures did not exist and a character with no way to raise
+a skill has no way to cast anything at all. The seam now exists, and the
+teaching went back to `SPECIAL(guild)` where the C keeps it: the command lists
+what you know and otherwise says *"You can only practice skills in your
+guild."*
+
+Kept rather than deleted because the shape is worth having on record — a
+deviation taken deliberately, with a note of what would end it, and then
+ended.
 
 ### `practice` and its own listing disagree about remorting
 
-Not a deviation — reproduced — but startling enough to note. `list_skills` was rewritten locally to walk the remort vector, so it shows every spell any of your classes knows. `SPECIAL(guild)` was not, and still checks `spell_info[n].min_level[GET_CLASS(ch)]`.
+Not a deviation — reproduced — but startling enough to note. `list_skills` was
+rewritten locally to walk the remort vector, so it shows every spell any of
+your classes knows. `SPECIAL(guild)` was not, and still checks
+`spell_info[n].min_level[GET_CLASS(ch)]`.
 
-So a remorted character can **see** a spell in their practice list and be told *"You do not know of that spell"* when they try to practise it. Both halves are the C's, and both are here.
+So a remorted character can **see** a spell in their practice list and be told
+*"You do not know of that spell"* when they try to practise it. Both halves are
+the C's, and both are here.
+
+The guild *guard* did get the rewrite the guildmaster did not, so a remorted
+character can walk into a guild whose master will then refuse to teach them.
 
 ### Names are refused with a reason
 
@@ -176,8 +188,9 @@ someone reading the two servers side by side will notice them.
 ### The random number generator, and one thing it does not reproduce
 
 The C's generator (random.c) is ported exactly and verified against it —
-`internal/rng` matches 30,000 draws per seed and reproduces `number()`'s
-modulo bias across every range tested. `--rng=circle` selects it; `modern`
+`internal/rng` matches the C draw for draw — 5,000 values from each of six
+seeds, 30,000 in all — and reproduces `number()`'s modulo bias across every
+range tested. `--rng=circle` selects it; `modern`
 (Go's PCG) is the default for ordinary play. See `docs/configuration.md`.
 
 One deliberate difference. `circle_srandom` takes `time(0)` unchecked
@@ -186,6 +199,32 @@ generator returning zero for the life of the process. Reproducing that would
 mean reproducing a server whose every roll is the same number, so the
 degenerate seeds are mapped to 1. The C could only reach one at 03:14:07 UTC
 on 19 January 2038, or by being told to.
+
+### Affects are recomputed from stored real values, not subtracted and re-added
+
+`affect_total` (handler.c:209) walks the equipment and the affect list twice:
+once with `add = FALSE`, which *subtracts* every modifier, and once with
+`add = TRUE`, which adds them back. There is no record of the unaffected
+figures anywhere — the character's current numbers are the only copy, and the
+first pass is what recovers the base.
+
+That is correct only as long as nothing changes between the two passes, and
+things do: an affect expiring inside the same tick, an object whose applies
+were edited by an immortal, a spell that modifies the character it is being
+totalled for. Every such case leaves the character permanently a few points
+richer or poorer, and the C has no way to notice.
+
+Here the real values are stored (`RealArmor`, `RealHitRoll`, `RealAbilities`
+and the rest) and the totals are rebuilt from them. The result is identical
+whenever the C's version is correct, and correct where the C's is not. This is
+the only place the port deliberately reproduces the *outcome* of a C routine
+rather than its method, and it is here because the alternative is a class of
+bug that cannot be tested for.
+
+The one thing that still works the C's way is armour class from `ITEM_ARMOR`,
+because there it is not a recompute at all: `equip_char` changes the
+character's own figure and `unequip_char` changes it back. See
+`docs/weirdnumbers.md`.
 
 ### Three skill numbers were wrong, and are now right
 
@@ -252,16 +291,106 @@ Listed here so they are not mistaken for deliberate differences.
   the Phase 7 shadow run depend on.
 - The main menu's six choices all work, but nothing behind them reads **mail**
   or handles **rent** yet — the C's menu choice 1 calls `Crash_load` and
-  reports lost items. Phase 5.
-- `look` does not yet show a character's description to anyone else. Phase 5.
+  reports lost items. Phase 5e.
+- **Nothing reads the visibility flags.** Invisibility, hiding, sneaking and
+  infravision are all set correctly by the spells and skills that grant them,
+  and no `CAN_SEE` equivalent consults them yet, so a hidden character is
+  still listed in the room. Phase 5.
 - **`N.thing` targeting is not implemented.** `get_number` splits a leading
   `2.` off any argument and makes the search take the *second* match, in every
   command that uses `generic_find`. `get 2 sword` (a count) works; `get
   2.sword` (the second sword) currently reads the whole word as a keyword and
   finds nothing. It belongs with the rest of `generic_find` rather than in any
   one command.
-- **`junk` and `donate`** are the other two subcommands of `do_drop` and are
-  not ported. Both need somewhere to put things — the donation room, and the
-  gods' reward for junking — and neither exists yet.
-- **`fill` and `pour <x> into <y>`** are the other two subcommands of
-  `do_pour`; only emptying a container onto the ground is ported.
+- **`alias`.** The per-character command aliases, saved alongside the
+  character. `alias.c` and the `plralias/` directory.
+- **Most special procedures.** The seam exists and ten of the C's specials are
+  on it — guildmasters, guild guards, Puff, fidos, janitors, cityguards,
+  snakes, mobile mages, thieves and the dump. Shopkeepers, the postmaster,
+  bankers, pet shops, receptionists and the boards are not, because each needs
+  a subsystem that is not built; the local ones (`talkera`, `marblesa`,
+  `remmob`, `cerberus`, `teleporter` and the rest) are attached to vnums that
+  exist only in the archived world. `assign_kings_castle` is a zone-sized
+  script of its own and is untouched.
+- **`steal` and `track`**, the two thief skills not ported: `steal` needs the
+  killer/thief flag machinery and shopkeeper protection, and `track` needs the
+  breadth-first search the C keeps in `graph.c`.
+- **A corrupt board file is reported, not deleted.** `Board_load_board` logs
+  "Board file %d corrupt.  Resetting." and calls `Board_reset_board`, which
+  `remove()`s it (boards.c:470). Deleting the only copy of everything anybody
+  ever posted because one length field looked wrong is not a behaviour worth
+  reproducing: the board starts empty, the file stays where it is, and the
+  error goes in the log.
+
+- **The boards are loaded at boot, not lazily.** The C loads them the first
+  time anybody looks at one, from inside the special procedure, behind a
+  `static int loaded` (boards.c:150). That is fine with globals and not fine
+  on a world goroutine. The only visible difference is when a bad board file
+  is reported.
+
+- **Removing a house guest does not read past the end of the list.** The C's
+  loop is `for (; j < num_of_guests; j++) guests[j] = guests[j+1];`
+  (`house.c:551`), which touches `guests[num_of_guests]` — and with a full
+  list of ten that is `guests[10]`, one past the array and therefore the
+  first bytes of `last_payment`. The value is overwritten immediately by the
+  decrement so it never mattered, but it is a genuine out-of-bounds read and
+  there is nothing to be gained by reproducing it.
+
+- **A renting character is not crash-saved on the way out.** Their things are
+  already in the rent file and they are carrying nothing, so the crash-save
+  the disconnect path would otherwise do writes an empty file over it. The C
+  never had to think about this because `extract_char` does not crash-save;
+  this port's disconnect handling does.
+
+- **The mail file is held in memory and rewritten whole.** The C seeks around
+  it block by block, which is right for 1993 and wrong for a server with one
+  goroutine owning the world: `receive` would put a seek and two reads on
+  that goroutine. The on-disk format is unchanged, so the C could still read
+  it.
+
+- **An emptied mail file is removed.** The C never shrinks its file; once it
+  has grown to a high-water mark it stays there, full of blocks marked
+  deleted. Removing it when nothing is left is the same thing to a reader and
+  leaves no litter.
+
+- **Mail is delivered in ascending block order.** See the weirdnumbers entry:
+  the C's order depends on whether the server has been restarted since the
+  message was sent.
+
+- **The rent settings are constants, not options.** `free_rent`,
+  `min_rent_cost` and `max_obj_save` are compiled in at the values
+  `config.c` had. Making them configurable would be a feature; the archive's
+  values are what the game was.
+
+  The one that matters: **`free_rent` is YES**, so nobody on this server ever
+  paid rent. The receptionist says "Rent is free here.  Just quit, and your
+  objects will be saved!" and stops. Every price in `Crash_offer_rent` is
+  dead code on these settings — and ported anyway, because the setting is one
+  line and the path has to be right if it is ever turned off.
+
+- **There is no receptionist to rent at.** The rent files themselves are
+  wired in — quitting writes one, logging in reads it, unpaid arrears cost you
+  the lot — but `gen_receptionist`, `offer` and `rent` are not ported, so the
+  only rent code this port ever *writes* is `RENT_CRASH` and the only way to
+  pay is not to have to. Renting proper arrives with the shop specprocs.
+
+  Worth knowing: **renting empties your bags and strips your body.**
+  `USE_AUTOEQ` is 0 in this tree (`structs.h:30`), so `struct obj_file_elem`
+  has no `location` member. `Crash_save` still walks containers and still
+  computes a location for every item, and the file has nowhere to record it —
+  so everything comes back loose in inventory. Sixty lines of `Crash_load`'s
+  `cont_row` machinery are dead code in this build. That is the C's behaviour,
+  not a limitation of the port, and there is a test asserting it so that
+  nobody "fixes" it.
+
+- **A dropped link crash-saves.** The C leaves a linkdead body standing and
+  only writes its objects when the idle timeout forces a rent
+  (`Crash_idlesave`). This port crash-saves on any disconnect, quit or not.
+  Until the idle timeout lands, the alternative is that a link loss costs
+  somebody everything they were carrying, which is a worse answer than a free
+  save.
+
+- **Shutdown saves everybody's objects, not only those who picked something
+  up.** `Crash_save_all` writes for characters with `PLR_CRASH` set, a bit
+  raised by `obj_to_char`. That is an optimisation for a machine that counted
+  disk writes; a few hundred small files cannot miss anybody.

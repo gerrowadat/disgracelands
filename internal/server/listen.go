@@ -158,8 +158,23 @@ func (s *Server) serve(ctx context.Context, sess *session.Session, limits Limits
 			Run: func(ctx context.Context, f func(*game.Live)) error {
 				return s.engine.DoSync(ctx, f)
 			},
-			Text: s.text,
-			RNG:  s.rng,
+			Text:       s.text,
+			RNG:        s.rng,
+			Violence:   s,
+			NoSpecials: s.noSpecials,
+			Rent:       s.RentCharacter,
+			SaveBoard:  s.SaveBoard,
+			Mail:       mailOrNil(s),
+			Houses:     housesOrNilIface(s),
+			Save: func(c *game.Character) {
+				// Off the world goroutine, which is where the command that
+				// asked for it is running.
+				go func() {
+					if err := s.Save(context.Background(), c); err != nil {
+						s.logger.Error("saving on request", "character", c.Name, "error", err)
+					}
+				}()
+			},
 		},
 	})
 }

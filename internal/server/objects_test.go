@@ -235,10 +235,22 @@ func TestCarryLimits(t *testing.T) {
 // `wield` could quietly steal `g`, `d`, `w` and `e` from the directions —
 // which is twenty years of muscle memory.
 func TestMovementAbbreviationsStillWin(t *testing.T) {
+	// A server, so the socials are in the table: they are a third of it, and
+	// several of these prefixes are only right with them there.
+	newTestServer(t)
+
 	for word, want := range map[string]string{
 		// The six directions, which is the muscle memory that matters most.
 		"n": "north", "e": "east", "s": "south", "w": "west",
 		"u": "up", "d": "down",
+
+		// With the socials in the table, a dozen prefixes belong to them.
+		// Several of the entries below were placeholders until this landed:
+		// `ti` is tickle rather than time, `po` is point rather than pour,
+		// `si` is sigh rather than sip, `cl` is clap rather than close, and
+		// `f` is fart — which is what a mortal has typed since 1993.
+		"f": "fart", "sm": "smile", "wa": "wake", "wav": "wave", "nod": "nod",
+		"ti": "title", "tic": "tickle", "po": "point", "si": "sigh", "cl": "clap",
 
 		"g": "get", "i": "inventory", "eq": "equipment",
 		// get before give (interpreter.c:307 and :310), and put before pick,
@@ -246,14 +258,29 @@ func TestMovementAbbreviationsStillWin(t *testing.T) {
 		// bare `p` is put.
 		"gi": "give", "p": "put", "pu": "put",
 		"wea": "wear", "wie": "wield",
-		"l": "look", "k": "kill", "q": "quit",
-		"f": "flee", "sc": "score", "ex": "exits",
+		"l": "look", "k": "kill",
+		// `q` is quaff in the C (interpreter.c:418) and quaff is not ported,
+		// so it currently lands on quest (:420). Only `qui` is stable.
+		"qui": "quit",
+		"sc":  "score", "ex": "exits",
 
 		// `rest` before `remove` is the C's own order (interpreter.c:426 and
 		// :437), so `res` and `rem` are the unambiguous forms. Bare `r`
 		// belongs to `reply` in the C and will move when that lands, which is
 		// why it is not asserted here.
-		"res": "rest", "rem": "remove",
+		// reply is :425 and rest :426, so `r` is reply and resting needs
+		// `res`.
+		"r": "reply", "res": "rest", "rem": "remove",
+		// The communication commands, whose prefixes are the most worn-in of
+		// the lot: `'` is say, `t` is tell, `sh` is shout, `go` is gossip.
+		// The `'` entry *is* named "'", as it is in the C: a one-character
+		// command the interpreter special-cases so that "'hi" works with no
+		// space.
+		"say": "say", "'": "'", "t": "tell", "sh": "shout",
+		"go": "gold", "gos": "gossip", "gr": "group", "gra": "grab", "gs": "gsay",
+		"as": "assist", "ask": "ask",
+		// who (:540) comes before whisper (:543), so `wh` is who.
+		"wh": "who", "whi": "whisper",
 		// The C's order among these: backstab before bash (interpreter.c:235
 		// and :238), kill before kick (:351 and :352), rest before rescue
 		// (:426 and :441).
@@ -263,8 +290,8 @@ func TestMovementAbbreviationsStillWin(t *testing.T) {
 		// weather (:538 and :539), so the short forms stay with the older
 		// commands. `co` reaches consider because "close" is spelled with an
 		// l — `cl` is the one that opens doors.
-		"exa": "examine", "co": "consider", "cl": "close",
-		"weat": "weather", "ti": "time",
+		"exa": "examine", "co": "consider", "clo": "close",
+		"weat": "weather", "tim": "time",
 		// drink before drop (interpreter.c:279 and :280). `ea` stays with
 		// east (:217, well before eat at :283), so eating needs the whole
 		// word.
@@ -272,7 +299,7 @@ func TestMovementAbbreviationsStillWin(t *testing.T) {
 		// sip before sit (interpreter.c:467 and :468), so `si` sips and
 		// sitting down needs the whole word. `ta` belongs to `take` in the C
 		// and is not asserted until that exists.
-		"po": "pour", "si": "sip", "tas": "taste",
+		"pou": "pour", "sip": "sip", "tas": "taste",
 		"st": "stand", "sit": "sit", "sl": "sleep", "wak": "wake",
 	} {
 		cmd := session.Lookup(word)

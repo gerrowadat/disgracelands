@@ -28,9 +28,14 @@ import (
 	"github.com/gerrowadat/disgracelands/internal/auth"
 	"github.com/gerrowadat/disgracelands/internal/engine"
 	"github.com/gerrowadat/disgracelands/internal/game"
+	"github.com/gerrowadat/disgracelands/internal/persist/boards"
+	"github.com/gerrowadat/disgracelands/internal/persist/houses"
+	"github.com/gerrowadat/disgracelands/internal/persist/mail"
 	"github.com/gerrowadat/disgracelands/internal/persist/player"
 	"github.com/gerrowadat/disgracelands/internal/persist/player/ascii"
+	"github.com/gerrowadat/disgracelands/internal/persist/player/binary"
 	"github.com/gerrowadat/disgracelands/internal/rng"
+	"github.com/gerrowadat/disgracelands/internal/session"
 	"github.com/gerrowadat/disgracelands/internal/telnet"
 )
 
@@ -67,11 +72,43 @@ func testText(t *testing.T) *Text {
 			t.Fatal(err)
 		}
 	}
+	// The real socials file, because the socials are a third of the command
+	// table and the tests that care about abbreviations need the whole of it.
+	if err := os.MkdirAll(filepath.Join(dir, "misc"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	socials, err := os.ReadFile(filepath.Join(repoRoot(t), "data", socialsFile))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, socialsFile), socials, 0o600); err != nil {
+		t.Fatal(err)
+	}
+
 	text, err := LoadText(dir)
 	if err != nil {
 		t.Fatal(err)
 	}
 	return text
+}
+
+// repoRoot walks up to the directory holding go.mod.
+func repoRoot(t *testing.T) string {
+	t.Helper()
+	dir, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for {
+		if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
+			return dir
+		}
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			t.Fatal("no go.mod above the working directory")
+		}
+		dir = parent
+	}
 }
 
 // Object prototypes the tests instantiate.
@@ -82,15 +119,49 @@ const (
 	testKeyVnum      game.ObjVnum = 103
 	testBagVnum      game.ObjVnum = 104
 	testChestVnum    game.ObjVnum = 105
+	testPlateVnum    game.ObjVnum = 106
+	testTorchVnum    game.ObjVnum = 107
+	testScrollVnum   game.ObjVnum = 108
+	testWandVnum     game.ObjVnum = 109
+	testPotionVnum   game.ObjVnum = 110
+	testStaffVnum    game.ObjVnum = 111
 )
 
+// Mobile prototypes the tests instantiate.
+const (
+	testDogVnum         game.MobVnum = 999
+	testGuildmasterVnum game.MobVnum = 998
+	testShopkeeperVnum  game.MobVnum = 997
+)
+
+// testShopVnum and the shop's room. The shop buys and sells weapons and
+// wands, produces the sword, and is open all day.
+const (
+	testShopVnum game.ShopVnum = 9001
+	ShopRoom     game.RoomVnum = 3018
+	// BoardRoom holds a bulletin board.
+	BoardRoom game.RoomVnum = 3019
+	// HouseRoom and AtriumRoom are a house and the room its door opens into.
+	HouseRoom  game.RoomVnum = 3020
+	AtriumRoom game.RoomVnum = 3021
+)
+
+// MageGuildRoom is guild_info's first row: the magic-user guild, whose door
+// is south. The test world carries it so the guild guard has somewhere real
+// to stand.
+const MageGuildRoom game.RoomVnum = 3017
+
 // testWorld is the two start rooms, joined so a character can walk between
-// them, plus a few objects to pick up.
+// them, plus the mage guild, a few objects to pick up and two mobiles.
 func testWorld() *game.Live {
 	temple := &game.RoomDef{Vnum: MortalStartRoom, Name: "The Temple Of Midgaard", Description: "A temple.\r\n"}
 	board := &game.RoomDef{Vnum: ImmortStartRoom, Name: "The Immortal Board Room", Description: "A board room.\r\n"}
+	guild := &game.RoomDef{Vnum: MageGuildRoom, Name: "The Mage Guild", Description: "A guild.\r\n"}
+	// The donation room, so that `donate` has somewhere to send things.
+	donation := &game.RoomDef{Vnum: 3063, Name: "The Donation Room", Description: "A donation room.\r\n"}
 	temple.Exits[game.North] = &game.ExitDef{ToRoom: ImmortStartRoom}
 	board.Exits[game.South] = &game.ExitDef{ToRoom: MortalStartRoom}
+	guild.Exits[game.South] = &game.ExitDef{ToRoom: MortalStartRoom}
 
 	objects := []*game.ObjDef{
 		{
@@ -99,7 +170,11 @@ func testWorld() *game.Live {
 			Type:        game.ItemWeapon,
 			WearFlags:   game.ItemWearTake | game.ItemWearWield,
 			Weight:      10,
-			Values:      [game.NumObjValues]int32{0, 2, 6, 3},
+			// A price, so the shop tests have something to charge for. 100 at
+			// the shop's 1.15 markup is 114, which is the number
+			// docs/weirdnumbers.md is about.
+			Cost:   100,
+			Values: [game.NumObjValues]int32{0, 2, 6, 3},
 		},
 		{
 			Vnum: testRingVnum, Keywords: "ring gold", ShortDesc: "a gold ring",
@@ -107,6 +182,7 @@ func testWorld() *game.Live {
 			Type:        game.ItemArmor,
 			WearFlags:   game.ItemWearTake | game.ItemWearFinger,
 			Weight:      1,
+			Cost:        50,
 		},
 		{
 			Vnum: testKeyVnum, Keywords: "key small", ShortDesc: "a small key",
@@ -139,6 +215,62 @@ func testWorld() *game.Live {
 			},
 		},
 		{
+			// Armour with an apply on it, so that wearing it changes two
+			// different things by two different mechanisms.
+			Vnum: testPlateVnum, Keywords: "plate mail", ShortDesc: "a suit of plate mail",
+			Description: "A suit of plate mail is lying here.",
+			Type:        game.ItemArmor,
+			WearFlags:   game.ItemWearTake | game.ItemWearBody,
+			Weight:      100,
+			Values:      [game.NumObjValues]int32{5},
+			Affects:     []game.ObjAffect{{Location: game.ApplyHitRoll, Modifier: 2}},
+		},
+		{
+			Vnum: testTorchVnum, Keywords: "torch", ShortDesc: "a torch",
+			Description: "A torch is lying here.",
+			Type:        game.ItemLight,
+			WearFlags:   game.ItemWearTake,
+			Weight:      2,
+			// Value 2 is how many hours of light are left.
+			Values: [game.NumObjValues]int32{0, 0, 24},
+		},
+		{
+			// A scroll of armor and bless: values 1..3 are the spells and
+			// value 0 the level it casts at.
+			Vnum: testScrollVnum, Keywords: "scroll", ShortDesc: "a scroll of protection",
+			Description: "A scroll is lying here.",
+			Type:        game.ItemScroll,
+			WearFlags:   game.ItemWearTake | game.ItemWearHold,
+			Weight:      1,
+			Values:      [game.NumObjValues]int32{20, game.SpellArmor, game.SpellBless, 0},
+		},
+		{
+			Vnum: testWandVnum, Keywords: "wand", ShortDesc: "a wand of missiles",
+			Description: "A wand is lying here.",
+			Type:        game.ItemWand,
+			WearFlags:   game.ItemWearTake | game.ItemWearHold,
+			Weight:      2,
+			Cost:        200,
+			// Level 20, three charges, three left, magic missile.
+			Values: [game.NumObjValues]int32{20, 3, 3, game.SpellMagicMissile},
+		},
+		{
+			Vnum: testPotionVnum, Keywords: "potion", ShortDesc: "a potion of healing",
+			Description: "A potion is lying here.",
+			Type:        game.ItemPotion,
+			WearFlags:   game.ItemWearTake | game.ItemWearHold,
+			Weight:      1,
+			Values:      [game.NumObjValues]int32{20, game.SpellCureLight, 0, 0},
+		},
+		{
+			Vnum: testStaffVnum, Keywords: "staff", ShortDesc: "a staff of sleep",
+			Description: "A staff is lying here.",
+			Type:        game.ItemStaff,
+			WearFlags:   game.ItemWearTake | game.ItemWearHold,
+			Weight:      5,
+			Values:      [game.NumObjValues]int32{20, 5, 5, game.SpellMagicMissile},
+		},
+		{
 			Vnum: testFountainVnum, Keywords: "fountain", ShortDesc: "a fountain",
 			Description: "A fountain bubbles here.",
 			Type:        game.ItemFountain,
@@ -146,10 +278,113 @@ func testWorld() *game.Live {
 		},
 	}
 
-	return game.NewLive(&game.World{
-		Rooms:   []*game.RoomDef{temple, board},
-		Objects: objects,
+	mobiles := []*game.MobDef{
+		{
+			Vnum: testDogVnum, Keywords: "dog", ShortDesc: "a large dog",
+			LongDesc:        "A large dog is here.\r\n",
+			Level:           5,
+			HitDice:         game.Dice{Number: 1, Size: 1, Bonus: 100},
+			Position:        int32(game.PosStanding),
+			DefaultPosition: int32(game.PosStanding),
+		},
+		{
+			Vnum: testGuildmasterVnum, Keywords: "guildmaster",
+			ShortDesc: "the guildmaster", LongDesc: "The guildmaster stands here.\r\n",
+			Level:           30,
+			HitDice:         game.Dice{Number: 1, Size: 1, Bonus: 500},
+			Position:        int32(game.PosStanding),
+			DefaultPosition: int32(game.PosStanding),
+		},
+	}
+
+	mobiles = append(mobiles, &game.MobDef{
+		Vnum: testShopkeeperVnum, Keywords: "shopkeeper keeper",
+		ShortDesc: "the shopkeeper", LongDesc: "The shopkeeper stands here.\r\n",
+		Level:           30,
+		HitDice:         game.Dice{Number: 1, Size: 1, Bonus: 500},
+		Position:        int32(game.PosStanding),
+		DefaultPosition: int32(game.PosStanding),
+		Gold:            10_000,
 	})
+
+	// The mortal bulletin board, so gen_board has an object to be attached
+	// to. Vnum 3099 is board_info[0]'s.
+	objects = append(objects, &game.ObjDef{
+		Vnum: game.Boards[0].Vnum, Keywords: "board bulletin",
+		ShortDesc:   "a bulletin board",
+		Description: "A bulletin board is fastened to the wall here.",
+		Type:        game.ItemOther,
+		Spec:        "gen_board",
+	})
+
+	// One shop. It produces the sword, so the supply is endless and `list`
+	// shows "Unlimited"; it buys weapons and wands, which is enough to
+	// exercise trade_with's three refusals.
+	shops := []*game.ShopDef{{
+		Vnum:      testShopVnum,
+		Keeper:    testShopkeeperVnum,
+		Producing: []game.ObjVnum{testSwordVnum},
+		// 1.15 and 0.15 are the multipliers the real Midgaard magic shop
+		// uses, and the ones whose truncation is checked against the C.
+		ProfitBuy:  1.15,
+		ProfitSell: 0.15,
+		BuyTypes: []game.ShopBuyType{
+			{Type: game.ItemWeapon},
+			{Type: game.ItemWand},
+		},
+		Messages: [game.NumShopMessages]string{
+			game.MsgNoSuchItem1:  "%s Sorry, I haven't got exactly that item.",
+			game.MsgNoSuchItem2:  "%s You don't seem to have that.",
+			game.MsgDoNotBuy:     "%s I don't buy such items.",
+			game.MsgMissingCash1: "%s That is too expensive for me!",
+			game.MsgMissingCash2: "%s You can't afford it!",
+			game.MsgBuy:          "%s That'll be %d coins, please.",
+			game.MsgSell:         "%s You'll get %d coins for it!",
+		},
+		Rooms:  []game.RoomVnum{ShopRoom},
+		Open1:  0,
+		Close1: 28, // open all day: the MUD day is 24 hours
+	}}
+
+	// Two zones, so that anything which cares about zone boundaries — a
+	// shout, a reset — has one to cross. The numbers are Midgaard's own.
+	zones := []*game.ZoneDef{
+		{Vnum: 12, Name: "The Immortal Zone", Bottom: 1200, Top: 1299, ResetMode: 0},
+		{Vnum: 30, Name: "Midgaard", Bottom: 3000, Top: 3099, ResetMode: 0},
+	}
+
+	shopRoom := &game.RoomDef{
+		Vnum: ShopRoom, Name: "A Small Shop", Description: "A shop.\r\n",
+	}
+
+	boardRoom := &game.RoomDef{
+		Vnum: BoardRoom, Name: "The Notice Board", Description: "A room with a board.\r\n",
+	}
+
+	// A house and its atrium, joined both ways: hcontrol insists the door be
+	// two-way, and that is the only structural rule housing has.
+	houseRoom := &game.RoomDef{
+		Vnum: HouseRoom, Name: "A Small House", Description: "A house.\r\n",
+	}
+	atriumRoom := &game.RoomDef{
+		Vnum: AtriumRoom, Name: "An Atrium", Description: "An atrium.\r\n",
+	}
+	houseRoom.Exits[game.North] = &game.ExitDef{ToRoom: AtriumRoom}
+	atriumRoom.Exits[game.South] = &game.ExitDef{ToRoom: HouseRoom}
+
+	live := game.NewLive(&game.World{
+		Rooms: []*game.RoomDef{
+			temple, board, guild, donation, shopRoom, boardRoom, houseRoom, atriumRoom,
+		},
+		Objects: objects,
+		Mobiles: mobiles,
+		Zones:   zones,
+		Shops:   shops,
+	})
+	// assign_the_shopkeepers, which the real boot runs after AssignSpecials.
+	// Done here because the test world skips BootReset.
+	live.AssignShopkeepers()
+	return live
 }
 
 // newTestServer builds a server on a temporary player directory and starts
@@ -163,6 +398,32 @@ func newTestServer(t *testing.T) (*Server, player.Store) {
 	}
 	t.Cleanup(func() { _ = store.Close() })
 
+	// The rent files live beside the roster, as they do in a real data
+	// directory. Every test server gets one, so `quit` and logging back in
+	// exercise the same path the real server takes.
+	objects, err := binary.NewObjectStore(player.Config{Dir: filepath.Join(t.TempDir(), "plrobjs-lib")})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Board files, in their own throwaway directory.
+	boardStore, err := boards.New(filepath.Join(t.TempDir(), "etc"), false)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	mailStore, err := mail.New(filepath.Join(t.TempDir(), "plrmail"), false)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	houseDir := t.TempDir()
+	houseStore, err := houses.New(
+		filepath.Join(houseDir, "hcontrol"), filepath.Join(houseDir, "house"), false)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	eng := engine.New(engine.Options{World: testWorld(), Logger: logger})
 
@@ -170,14 +431,35 @@ func newTestServer(t *testing.T) (*Server, player.Store) {
 	t.Cleanup(cancel)
 	go eng.Run(ctx)
 
+	text := testText(t)
 	srv := New(Options{
 		Engine:  eng,
 		Players: store,
+		Objects: objects,
+		Boards:  boardStore,
+		Mail:    mailStore,
+		Houses:  houseStore,
 		Auth:    auth.Verifier{AllowLegacy: true},
-		Text:    testText(t),
+		Text:    text,
 		Logger:  logger,
 		RNG:     testRNG(),
 	})
+
+	// init_boards, which the real boot does inside BootReset. The test world
+	// skips that, so the boards are loaded here.
+	if err := eng.DoSync(ctx, srv.loadBoards); err != nil {
+		t.Fatal(err)
+	}
+	if err := eng.DoSync(ctx, srv.loadHouses); err != nil {
+		t.Fatal(err)
+	}
+
+	// BootReset is not called here — the test world's zones have no reset
+	// commands and every test that wants something in the world puts it there
+	// itself. The socials are the one part of boot that the command table
+	// needs, so they are registered on their own.
+	session.RegisterSocials(text.Socials())
+
 	return srv, store
 }
 

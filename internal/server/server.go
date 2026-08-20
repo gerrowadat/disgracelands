@@ -21,17 +21,19 @@ import (
 	"github.com/gerrowadat/disgracelands/internal/auth"
 	"github.com/gerrowadat/disgracelands/internal/engine"
 	"github.com/gerrowadat/disgracelands/internal/game"
+	"github.com/gerrowadat/disgracelands/internal/persist/boards"
+	"github.com/gerrowadat/disgracelands/internal/persist/houses"
+	"github.com/gerrowadat/disgracelands/internal/persist/mail"
 	"github.com/gerrowadat/disgracelands/internal/persist/player"
 	"github.com/gerrowadat/disgracelands/internal/rng"
 	"github.com/gerrowadat/disgracelands/internal/session"
 )
 
-// Start rooms, from config.c:171. These are compile-time constants in the C
-// and belong in the config file that §9.1 describes; until that exists they
-// live here with their provenance attached.
+// Start rooms. The numbers live in the game package, where word of recall can
+// also reach them; these are here because most of the server refers to them.
 const (
-	MortalStartRoom game.RoomVnum = 3001
-	ImmortStartRoom game.RoomVnum = 1204
+	MortalStartRoom = game.MortalStartRoom
+	ImmortStartRoom = game.ImmortStartRoom
 )
 
 // autosaveInterval matches the C's PULSE_AUTOSAVE.
@@ -50,12 +52,27 @@ const linkdeadTimeout = 2 * time.Minute
 type Server struct {
 	engine  *engine.Engine
 	players player.Store
-	auth    auth.Verifier
-	text    *Text
-	logger  *slog.Logger
+	// objects holds the rent files. Separate from players because it is a
+	// separate format with a separate failure mode: a roster that will not
+	// load stops the server, and a rent file that will not load costs one
+	// player their backpack. Nil disables rent entirely.
+	objects player.ObjectStore
+	// boards holds the bulletin board files. Nil disables boards, which is
+	// what a test world without them gets.
+	boards *boards.Store
+	// mail is the mud mail file. Nil disables the mail system, which is what
+	// the C's `no_mail` global does when the file goes wrong.
+	mail *mail.Store
+	// houses is the player housing files. Nil disables housing.
+	houses *houses.Store
+	auth   auth.Verifier
+	text   *Text
+	logger *slog.Logger
 
 	// restrict refuses new characters, matching the C's -r.
 	restrict bool
+	// noSpecials suppresses special procedures, matching the C's -s.
+	noSpecials bool
 
 	rng *rng.Rand
 
@@ -69,10 +86,16 @@ type Server struct {
 type Options struct {
 	Engine   *engine.Engine
 	Players  player.Store
+	Objects  player.ObjectStore
+	Boards   *boards.Store
+	Mail     *mail.Store
+	Houses   *houses.Store
 	Auth     auth.Verifier
 	Text     *Text
 	Logger   *slog.Logger
 	Restrict bool
+	// NoSpecials suppresses special procedures (C: -s).
+	NoSpecials bool
 	// RNG is the generator the game rolls on. A nil one gets the modern
 	// generator seeded from the clock.
 	RNG *rng.Rand
@@ -81,13 +104,18 @@ type Options struct {
 // New creates a Server.
 func New(opts Options) *Server {
 	s := &Server{
-		engine:   opts.Engine,
-		players:  opts.Players,
-		auth:     opts.Auth,
-		text:     opts.Text,
-		logger:   opts.Logger,
-		restrict: opts.Restrict,
-		rng:      opts.RNG,
+		engine:     opts.Engine,
+		players:    opts.Players,
+		objects:    opts.Objects,
+		boards:     opts.Boards,
+		mail:       opts.Mail,
+		houses:     opts.Houses,
+		auth:       opts.Auth,
+		text:       opts.Text,
+		logger:     opts.Logger,
+		restrict:   opts.Restrict,
+		noSpecials: opts.NoSpecials,
+		rng:        opts.RNG,
 	}
 	if s.rng == nil {
 		s.rng = rng.NewRand(rng.NewModern(uint64(time.Now().UnixNano()))) //nolint:gosec // a game seed, not a secret
@@ -167,9 +195,23 @@ func (s *Server) Create(ctx context.Context, req session.CreateRequest) (*game.C
 		return nil, err
 	}
 
+	// A unique id, which is `player_table[i].id = GET_IDNUM(ch) = ++top_idnum`
+	// in init_char (db.c:2746). The C keeps the high-water mark in a global
+	// seeded from the roster at boot; this asks the roster directly, which is
+	// the same answer and does not need the global.
+	//
+	// It had been left at zero, which is how it was found: mail addressed by
+	// id went to whoever the listing happened to name first, and `reply`
+	// would have had the same problem.
+	idnum, err := s.nextIDNum(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	now := time.Now().UTC()
 	rec := &game.PlayerRecord{
 		Name:       req.Name,
+		IDNum:      idnum,
 		Sex:        req.Sex,
 		Class:      req.Class,
 		Birth:      now,
@@ -195,6 +237,25 @@ func (s *Server) Create(ctx context.Context, req session.CreateRequest) (*game.C
 	return &game.Character{Name: rec.Name, Record: rec}, nil
 }
 
+// nextIDNum returns one more than the highest id on the roster, porting
+// `++top_idnum`.
+//
+// The C computes the high-water mark once at boot (db.c:611) and increments a
+// global thereafter. Walking the roster costs one listing per character
+// created, which happens once per player ever.
+func (s *Server) nextIDNum(ctx context.Context) (int64, error) {
+	var top int64
+	for entry, err := range s.players.List(ctx) {
+		if err != nil {
+			return 0, err
+		}
+		if entry.IDNum > top {
+			top = entry.IDNum
+		}
+	}
+	return top + 1, nil
+}
+
 func (s *Server) isRosterEmpty(ctx context.Context) (bool, error) {
 	for _, err := range s.players.List(ctx) {
 		if err != nil {
@@ -217,7 +278,8 @@ func (s *Server) Reconnect(ctx context.Context, name string) *game.Character {
 }
 
 // Enter implements session.LoginHandler: puts a character into the world.
-func (s *Server) Enter(ctx context.Context, sess *session.Session, c *game.Character) error {
+func (s *Server) Enter(ctx context.Context, sess *session.Session, c *game.Character) (session.EnterResult, error) {
+	var result session.EnterResult
 	room := MortalStartRoom
 	if c.Record != nil {
 		if c.Record.Level >= game.LevelImmortal {
@@ -254,7 +316,7 @@ func (s *Server) Enter(ctx context.Context, sess *session.Session, c *game.Chara
 		c.Position = game.UpdatePosition(c.Record, c.Position)
 	}
 
-	return s.engine.DoSync(ctx, func(w *game.Live) {
+	if err := s.engine.DoSync(ctx, func(w *game.Live) {
 		if w.Room(room) == nil {
 			// A character whose saved room has been deleted from the world
 			// still has to get in somewhere.
@@ -271,7 +333,30 @@ func (s *Server) Enter(ctx context.Context, sess *session.Session, c *game.Chara
 				other.Tell("%s has entered the game.\r\n", c.Name)
 			}
 		}
-	})
+	}); err != nil {
+		return result, err
+	}
+
+	// Crash_load, after the character is in a room: the C's comment says
+	// "We have to place the character in a room before equipping them or
+	// equip_char() will gripe about the person in NOWHERE"
+	// (interpreter.c:1648).
+	lost, err := s.loadObjects(ctx, c)
+	if err != nil {
+		return result, err
+	}
+	result.RentLost = lost
+
+	// Clear the load room unless it is meant to persist (interpreter.c:1676).
+	//
+	// Without this everybody comes back exactly where they logged out, which
+	// is not how the game worked: you woke up in the temple unless a god had
+	// set PLR_LOADROOM on you. The port had been keeping it for everyone.
+	if c.Record != nil && !c.Record.PlayerFlags.Has(game.PlayerLoadRoom) {
+		c.Record.LoadRoom = game.NoRoom
+	}
+
+	return result, nil
 }
 
 // Leave implements session.LoginHandler.
@@ -285,6 +370,25 @@ func (s *Server) Leave(ctx context.Context, sess *session.Session, c *game.Chara
 	if err := s.Save(ctx, c); err != nil {
 		s.logger.Error("saving on disconnect", "character", c.Name, "error", err)
 	}
+	// Crash_crashsave, as do_quit does (act.other.c:201). Free, and it brings
+	// them back in the temple — renting at an inn is what buys anything else.
+	// Done for a dropped link too: the C waits for the idle timeout to force
+	// a rent, and until that lands this is what stops a link loss costing
+	// somebody everything they were carrying.
+	//
+	// Not for somebody who has just rented: their things are already in the
+	// rent file and they are carrying nothing, so a crash-save here would
+	// write an empty file over it. The C's extract_char does not crash-save
+	// and so never had to think about it.
+	if !sess.Rented() {
+		if err := s.crashSave(ctx, c); err != nil {
+			s.logger.Error("crash-saving on disconnect", "character", c.Name, "error", err)
+		}
+	}
+	// House_crashsave for the room they left from, as do_quit does
+	// (act.other.c:203): anything dropped in a house before quitting is
+	// theirs to find again.
+	s.SaveChangedHouses(ctx)
 
 	return s.engine.DoSync(ctx, func(w *game.Live) {
 		if c.Client == sess {
@@ -314,11 +418,15 @@ func (s *Server) Save(ctx context.Context, c *game.Character) error {
 		return nil
 	}
 	var snapshot game.PlayerRecord
-	if err := s.engine.DoSync(ctx, func(w *game.Live) {
+	if err := s.engine.DoSync(ctx, func(_ *game.Live) {
 		snapshot = *c.Record
-		if w.Room(c.Room) != nil {
-			snapshot.LoadRoom = c.Room
-		}
+		// LoadRoom is *not* set from the current room. save_char writes
+		// whatever is on the record and nothing else touches it: the
+		// receptionist sets it when you rent (objsave.c:1143), and the entry
+		// sequence clears it again once it has been used
+		// (interpreter.c:1676). Writing the current room here — which this
+		// did — made every save a persistent load room and quietly undid
+		// both.
 	}); err != nil {
 		return err
 	}

@@ -154,7 +154,7 @@ Useful `FLAGS` when reproducing something specific:
 | Flag | Why |
 |---|---|
 | `--restrict` | No new players — the `-r` of old runbooks. |
-| `--no-specials` | Suppress special procedures, to isolate whether one is at fault. |
+| `--no-specials` | Suppress special procedures. Inert until Phase 5a builds them. |
 | `--pulse-interval=1s` | Slows the game loop to human speed; makes pulse-driven behaviour observable. |
 | `--log-format=json` | What production logs look like. |
 | `--debug-addr=127.0.0.1:6060` | pprof. Never anywhere but loopback. |
@@ -198,7 +198,12 @@ Four things CI does that `make check` does not:
   If it reports a difference, the Go loader is what is wrong.
 - **The 32-bit codec checks** in `internal/persist/player`, which skip
   silently without `gcc-multilib`. They verify the layout the archived player
-  database is actually in.
+  database is actually in — and CI installs that toolchain **only for a change
+  that could affect them**: the `binary` package itself, the two C programs it
+  compiles, the headers those include, or the workflow. Everything else skips
+  the install, which is otherwise the slowest thing in the job by a wide
+  margin. A push to `main` always runs them, because a decision made from a
+  diff is only as good as the diff.
 - **The libcrypt comparison** in `internal/auth`, which skips unless the
   system libcrypt still does traditional DES. It is the only thing standing
   between a hand-written DES and "probably right".
@@ -208,6 +213,51 @@ Four things CI does that `make check` does not:
 single game goroutine (`docs/proposals/go-port-plan.md` §3.1), and the whole
 safety argument for that design rests on nothing else touching world state —
 which only the race detector can actually check.
+
+## Porting a command
+
+Nearly all the remaining work is "port one more command", and it has a shape.
+
+1. **Read the C first, all of it.** Not the function you think you need — the
+   one it calls, and the macros in that. `docs/weirdnumbers.md` exists because
+   the arithmetic is regularly not what it appears to be, and half its entries
+   were found by reading one level deeper than seemed necessary.
+2. **Put the rules in `internal/game`** and the words in `internal/session`.
+   The test for whether something is a rule: could a mobile do it without
+   anybody being connected? Damage, affects and carrying capacity are rules;
+   "You get $p." is not.
+3. **Check the command table position.** `internal/session/commands.go` is
+   ordered to match `interpreter.c`, because the interpreter matches the first
+   entry a typed word is a prefix of and that ordering is twenty years of
+   muscle memory. Every entry that is not in the obvious place has a comment
+   saying which C line put it there, and
+   `TestMovementAbbreviationsStillWin` asserts the ones that matter.
+4. **Anything that can hurt somebody goes through `session.Violence`**, not
+   through its own arithmetic. That interface exists because commands used to
+   subtract hit points themselves and none of them noticed when the hit points
+   ran out — a kick could kill a mobile and leave it standing there with no
+   corpse and nobody paid.
+5. **Reproduce the messages exactly**, including the ones that read oddly.
+   "You start to use $p as a shield", the missing newline after "You pour the
+   %s into the %s.", the typo in "incapacitated an will slowly die". Players
+   read those for seven years.
+
+### Testing against the C rather than against your reading of it
+
+The rule that has held: **anything with a division, a cast, or a comment
+describing numbers gets an oracle rather than a reading.**
+
+`reference/tools/*.c` holds original C function bodies with the `char_data`
+dereferences substituted and nothing else changed. The Go tests compile them
+and compare across the whole input space where that is affordable — 30,000 RNG
+draws, 1,512,000 to-hit values, 36,288 regeneration values, every saving
+throw. Where a table is
+transcribed rather than computed, the test re-parses the C source and compares
+entry by entry, so a typo in a table is a failing test rather than a subtly
+wrong game.
+
+This is not belt and braces. Every oracle written so far has caught at least
+one thing, and the mistakes it catches all look right.
 
 ## Conventions worth knowing
 
@@ -255,9 +305,13 @@ internal/config/    every setting, declared once
 internal/persist/   world and player formats, one package per format
 internal/game/      the game model and the rules ported from the C server
 internal/engine/    the pulse loop
-internal/server/    listeners, connections, the login flow
-internal/session/   per-connection state and command dispatch
+internal/server/    listeners, connections, the login flow, combat, ticks
+internal/session/   per-connection state and the commands themselves
 internal/telnet/    telnet negotiation, CHARSET, GMCP
+internal/auth/      password verification; auth/descrypt is the DES port
+internal/rng/       the two generators behind --rng
+internal/obs/       metrics, health and readiness
+internal/buildinfo/ version stamping
 data/               runtime data: world, text, and (never committed) players
 reference/          the C server and other lineage codebases, for comparison
 docs/proposals/go-port-plan.md   the design and the phase order

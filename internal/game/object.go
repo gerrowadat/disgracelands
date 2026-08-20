@@ -214,7 +214,7 @@ var wearFlagFor = [NumWears]Flags{
 	WearHold:        ItemWearHold,
 }
 
-// CanWearAt reports whether an object may go in a slot.
+// CanWearAt reports whether a prototype may go in a slot.
 func CanWearAt(def *ObjDef, pos WearPosition) bool {
 	if def == nil || pos < 0 || pos >= NumWears {
 		return false
@@ -223,6 +223,51 @@ func CanWearAt(def *ObjDef, pos WearPosition) bool {
 		return def.Type == ItemLight
 	}
 	return def.WearFlags.Has(wearFlagFor[pos])
+}
+
+// FitsAt reports whether an object may go in a slot, porting perform_wear's
+// wear_bitvectors[] check.
+//
+// The light and hold slots ask only for ITEM_WEAR_TAKE, which is the C's
+// comment explaining itself: "you can hold any object, not just an object
+// with a HOLD bit". The commands that reach those slots do their own
+// checking, which is why `hold` still refuses a sword.
+func (o *Object) FitsAt(pos WearPosition) bool {
+	if o == nil || pos < 0 || pos >= NumWears {
+		return false
+	}
+	needs := wearFlagFor[pos]
+	if pos == WearLight || pos == WearHold {
+		needs = ItemWearTake
+	}
+	return o.WearFlags.Has(needs)
+}
+
+// ActionDescription is the object's `action_description`: what the room is
+// told when it is used. A wand with one says that instead of "$n points $p at
+// $N", which is how a builder gives an item its own voice — and what a note
+// holds once somebody has written on it.
+func (o *Object) ActionDescription() string {
+	if o == nil {
+		return ""
+	}
+	if o.ActionDesc != "" {
+		return o.ActionDesc
+	}
+	if o.Def == nil {
+		return ""
+	}
+	return o.Def.ActionDesc
+}
+
+// MinLevel is the level needed to use the object. Local: the C tests
+// GET_OBJ_LEVEL in do_wear and perform_wear between `<DoC>` markers, and
+// stock CircleMUD does not.
+func (o *Object) MinLevel() int32 {
+	if o == nil || o.Def == nil {
+		return 0
+	}
+	return o.Def.MinLevel
 }
 
 // Location says where an object is. Exactly one of these is true at a time,
@@ -259,6 +304,10 @@ type Object struct {
 	Keywords    string
 	ShortDesc   string
 	Description string
+	// ActionDesc is what the room is told when the object is used, and it is
+	// per-object rather than per-prototype because `write` puts your words on
+	// *this* note and not on every note of its kind.
+	ActionDesc string
 
 	Type       int32
 	ExtraFlags Flags
@@ -266,6 +315,15 @@ type Object struct {
 	Values     [NumObjValues]int32
 	Weight     int32
 	Cost       int32
+
+	// Affects are the object's `A` lines: what wearing it changes. Copied
+	// from the prototype so that one object can be enchanted without every
+	// other of its kind changing with it.
+	Affects []ObjAffect
+	// PermAffect are the AFF_* bits wearing it confers — sanctuary from a
+	// cloak, infravision from a helm. The C calls this
+	// obj->obj_flags.bitvector and reads it with GET_OBJ_AFFECT.
+	PermAffect Flags
 
 	// Timer counts down for objects that decay. A corpse is the only thing
 	// that uses it in the stock game.
@@ -300,6 +358,8 @@ func NewObject(id uint64, def *ObjDef) *Object {
 		o.Values = def.Values
 		o.Weight = def.Weight
 		o.Cost = def.Cost
+		o.Affects = append([]ObjAffect(nil), def.Affects...)
+		o.PermAffect = Flags(uint32(def.PermAffect)) //nolint:gosec // a bitfield, read as written
 	}
 	return o
 }

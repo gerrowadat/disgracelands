@@ -14,7 +14,11 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
+      # Full history, so the step below can diff against the base of the pull
+      # request rather than guessing.
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-go@v7
         with:
@@ -26,16 +30,54 @@ jobs:
           go mod tidy
           git diff --exit-code go.mod go.sum
 
+      # Installing gcc-multilib takes longer than everything else in this job
+      # put together, and on a bad day apt stalls outright. It exists for two
+      # sets of tests - the ILP32 player-file layout, and the shop prices,
+      # which come out differently on the x87 because of its excess precision
+      # - so it is installed only for a change that could affect them.
+      #
+      # The paths below are everything those tests read: the packages
+      # themselves, the C programs they compile, and the headers those
+      # include. A change to any of them changes an answer that can only be
+      # verified against a 32-bit build.
+      #
+      # Anything that is not a pull request runs them regardless. main is the
+      # branch that has to be verified in full, and a decision made from a
+      # diff is only as good as the diff.
+      - name: Decide whether the 32-bit checks are in scope
+        id: ilp32
+        run: |
+          run_them() {
+            echo "needed=true" >> "$GITHUB_OUTPUT"
+            echo "32-bit checks: running ($1)"
+            exit 0
+          }
+
+          [ "${{ github.event_name }}" = "pull_request" ] || run_them "not a pull request"
+
+          base='${{ github.event.pull_request.base.sha }}'
+          git cat-file -e "$base^{commit}" 2>/dev/null || run_them "base commit unavailable"
+
+          changed=$(git diff --name-only "$base"...HEAD)
+          echo "$changed" | grep -qE '^(internal/persist/player/binary/|reference/tools/(pfile(layout|gen)|objfile(layout|gen)|shopprice|boardlayout|maillayout|houselayout)\.c$|internal/game/shopstate\.go$|internal/persist/(boards|mail|houses)/|reference/moderncserver/src/(structs\.h|sysdep\.h|conf\.h\.in)$|\.github/workflows/go\.yml$)' \
+            && run_them "the change touches the 32-bit layout or price checks, or their inputs"
+
+          echo "needed=false" >> "$GITHUB_OUTPUT"
+          echo "32-bit checks: skipping (nothing in this change can affect the ILP32 layout or the shop prices)"
+
       # The player-file codec checks itself against C programs compiled for
       # both data models. The 32-bit one is the layout the archived player
       # database is actually in, and without multilib those checks skip -
       # which would mean the format that matters is never verified anywhere.
       - name: Install 32-bit toolchain
+        if: steps.ilp32.outputs.needed == 'true'
+        timeout-minutes: 5
         run: sudo apt-get update && sudo apt-get install -y gcc-multilib
 
       # The C tree's configure generates conf.h, which the layout and fixture
       # programs include.
       - name: Configure the C tree
+        if: steps.ilp32.outputs.needed == 'true'
         run: |
           cd reference/moderncserver
           CFLAGS="-std=gnu89 -fcommon -w" CC=gcc ./configure >/dev/null
@@ -67,6 +109,7 @@ jobs:
       # and both skip silently where their toolchain is missing. CI is where
       # they have to actually run.
       - name: The 32-bit codec checks must not have skipped
+        if: steps.ilp32.outputs.needed == 'true'
         run: |
           go test -count=1 -v ./internal/persist/player/... > out.txt 2>&1 || { cat out.txt; exit 1; }
           if grep -q -- "--- SKIP.*ilp32" out.txt; then
@@ -75,6 +118,63 @@ jobs:
             exit 1
           fi
           grep -c -- "--- PASS.*ilp32" out.txt
+
+      # And the board files, which have a live `char *` written into the
+      # middle of them. Its width moves every field after it, so a 64-bit
+      # build reads the poster's level out of half a pointer.
+      - name: The 32-bit board layout check must not have skipped
+        if: steps.ilp32.outputs.needed == 'true'
+        run: |
+          go test -count=1 -v ./internal/persist/boards/ > boards.txt 2>&1 || { cat boards.txt; exit 1; }
+          if grep -q -- "--- SKIP" boards.txt; then
+            echo "the 32-bit board layout check skipped; it must run in CI:"
+            grep -A2 -- "--- SKIP" boards.txt
+            exit 1
+          fi
+          grep -- "struct members against the 32-bit C" boards.txt
+
+      # And the mail blocks. This one gives nothing away when it is wrong:
+      # the block size is 100 under every data model, so a file written by
+      # the wrong build lines up perfectly and every message comes out with
+      # its middle shuffled.
+      - name: The 32-bit mail layout check must not have skipped
+        if: steps.ilp32.outputs.needed == 'true'
+        run: |
+          go test -count=1 -v ./internal/persist/mail/ > mail.txt 2>&1 || { cat mail.txt; exit 1; }
+          if grep -q -- "--- SKIP" mail.txt; then
+            echo "the 32-bit mail layout check skipped; it must run in CI:"
+            grep -A2 -- "--- SKIP" mail.txt
+            exit 1
+          fi
+          grep -- "mail block values against the 32-bit C" mail.txt
+
+      # And the house control record, which has a padding hole in the middle
+      # of it that the C never writes.
+      - name: The 32-bit house layout check must not have skipped
+        if: steps.ilp32.outputs.needed == 'true'
+        run: |
+          go test -count=1 -v ./internal/persist/houses/ > houses.txt 2>&1 || { cat houses.txt; exit 1; }
+          if grep -q -- "--- SKIP" houses.txt; then
+            echo "the 32-bit house layout check skipped; it must run in CI:"
+            grep -A2 -- "--- SKIP" houses.txt
+            exit 1
+          fi
+          grep -- "struct members against the 32-bit C" houses.txt
+
+      # Same argument for the shop prices. This one is not a layout, it is an
+      # arithmetic width: buy_price truncates a float product, and the answer
+      # differs between an SSE build and the x87 build the archive came from.
+      # A silent skip here means the port charges 115 where players paid 114.
+      - name: The 32-bit shop price check must not have skipped
+        if: steps.ilp32.outputs.needed == 'true'
+        run: |
+          go test -count=1 -v -run TestShopPricesMatchA32BitBuildOfTheC ./internal/game/ > shop.txt 2>&1 || { cat shop.txt; exit 1; }
+          if grep -q -- "--- SKIP" shop.txt; then
+            echo "the 32-bit shop price check skipped; it must run in CI:"
+            grep -A2 -- "--- SKIP" shop.txt
+            exit 1
+          fi
+          grep -- "price pairs against the 32-bit C" shop.txt
 
       # The DES implementation is hand-written, so the comparison against the
       # system libcrypt is the only thing standing between it and "probably

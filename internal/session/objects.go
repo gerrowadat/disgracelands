@@ -53,21 +53,90 @@ func doEquipment(c *Context) error {
 
 // doWear puts something on, porting do_wear.
 //
-// With no position named it finds the first slot the object fits, which is
-// what makes `wear all` work in the C and what a player expects from `wear
-// ring`.
+// `wear <thing>` finds the slot; `wear <thing> <place>` names it; `wear all`
+// puts on everything wearable. The level check here is local to this tree —
+// the C carries it between `<DoC>` markers — and it is worded differently
+// from the one inside perform_wear, so which message you get depends on
+// whether you named the object or said `all`.
 func doWear(c *Context) error {
-	if c.Arg == "" {
+	arg1, arg2, _ := twoArguments(c.Arg)
+	if arg1 == "" {
 		c.Send("Wear what?\r\n")
 		return nil
 	}
 
-	obj := findObject(c.Character.Carrying, c.Arg)
-	if obj == nil {
-		c.Send("You don't seem to have %s %s.\r\n", article(c.Arg), c.Arg)
+	mode, arg1 := findAllDots(arg1)
+	if arg2 != "" && mode != findIndiv {
+		c.Send("You can't specify the same body location for more than one item!\r\n")
 		return nil
 	}
-	return c.wearAt(obj, findWearPosition(c.Character, obj))
+
+	switch mode {
+	case findAll:
+		var worn bool
+		for _, obj := range everything(c.Character.Carrying, mode, arg1) {
+			if pos := findWearPosition(obj); pos >= 0 {
+				worn = true
+				if err := c.wearAt(obj, pos); err != nil {
+					return err
+				}
+			}
+		}
+		if !worn {
+			c.Send("You don't seem to have anything wearable.\r\n")
+		}
+		return nil
+
+	case findAllDot:
+		if arg1 == "" {
+			c.Send("Wear all of what?\r\n")
+			return nil
+		}
+		matched := everything(c.Character.Carrying, mode, arg1)
+		if len(matched) == 0 {
+			c.Send("You don't seem to have any %ss.\r\n", arg1)
+			return nil
+		}
+		for _, obj := range matched {
+			pos := findWearPosition(obj)
+			if pos < 0 {
+				c.Send("You can't wear %s.\r\n", obj.Name())
+				continue
+			}
+			if err := c.wearAt(obj, pos); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+
+	obj := findObject(c.Character.Carrying, arg1)
+	if obj == nil {
+		c.Send("You don't seem to have %s %s.\r\n", article(arg1), arg1)
+		return nil
+	}
+	if c.Character.Level() < obj.MinLevel() {
+		c.Send("You are not experienced enough to use that.\r\n")
+		return nil
+	}
+
+	// A named place is looked up in its own list, and a place that is not a
+	// body part is complained about rather than ignored.
+	if arg2 != "" {
+		pos, ok := wearPositionNamed(arg2)
+		if !ok {
+			c.Send("'%s'?  What part of your body is THAT?\r\n", arg2)
+			return nil
+		}
+		return c.wearAt(obj, pos)
+	}
+
+	pos := findWearPosition(obj)
+	if pos < 0 {
+		c.Send("You can't wear %s.\r\n", obj.Name())
+		return nil
+	}
+	return c.wearAt(obj, pos)
 }
 
 // doWield is `wear` restricted to the weapon hand, and says so differently
@@ -88,6 +157,31 @@ func doWield(c *Context) error {
 		return nil
 	}
 	return c.wearAt(obj, game.WearWield)
+}
+
+// doGrab takes something in hand, porting do_grab.
+//
+// A light goes in the light slot rather than the hold slot, which is how a
+// torch lights the room while a wand does not.
+func doGrab(c *Context) error {
+	if c.Arg == "" {
+		c.Send("Hold what?\r\n")
+		return nil
+	}
+
+	obj := findObject(c.Character.Carrying, c.Arg)
+	if obj == nil {
+		c.Send("You don't seem to have %s %s.\r\n", article(c.Arg), c.Arg)
+		return nil
+	}
+	if obj.Type == game.ItemLight {
+		return c.wearAt(obj, game.WearLight)
+	}
+	if !obj.WearFlags.Has(game.ItemWearHold) {
+		c.Send("You can't hold that.\r\n")
+		return nil
+	}
+	return c.wearAt(obj, game.WearHold)
 }
 
 // doRemove takes something off, porting do_remove.
@@ -114,24 +208,54 @@ func doRemove(c *Context) error {
 	return nil
 }
 
-// wearAt puts an object in a slot and says so, porting perform_wear and
-// wear_message.
+// wearAt puts an object in a slot and says so, porting perform_wear,
+// wear_message and the equipping half of equip_char.
 func (c *Context) wearAt(obj *game.Object, pos game.WearPosition) error {
 	if pos < 0 {
 		c.Send("You can't wear %s.\r\n", obj.Name())
+		return nil
+	}
+	if !obj.FitsAt(pos) {
+		c.Send("You can't wear %s there.\r\n", obj.Name())
+		return nil
+	}
+
+	// The right hand, the first neck slot and the right wrist step aside for
+	// the left one rather than refusing. Only these three, and only by one.
+	switch pos {
+	case game.WearFingerRight, game.WearNeck1, game.WearWristRight:
+		if c.Character.Equipment[pos] != nil {
+			pos++
+		}
+	}
+
+	if c.Character.Level() < obj.MinLevel() {
+		c.Send("You aren't experienced enough to use %s.\r\n", obj.Name())
 		return nil
 	}
 	if c.Character.Equipment[pos] != nil {
 		c.Send("%s", alreadyWearing[pos])
 		return nil
 	}
-	if !c.World.Equip(obj, c.Character, pos) {
-		c.Send("You can't seem to put %s on.\r\n", obj.Name())
+
+	// The message comes before the object moves, which is the C's order and
+	// is why a zapping object announces itself as worn and then bites.
+	c.Send(wearMessages[pos][1]+"\r\n", obj.Name())
+	c.announce(wearMessages[pos][0]+"\r\n", c.Character.Name, obj.Name())
+
+	// Alignment and class. An anti-good sword lets a paladin put it on and
+	// then throws it back at them.
+	if game.Zaps(c.Character.Record, obj) {
+		c.Send("You are zapped by %s and instantly let go of it.\r\n", obj.Name())
+		c.announce("%s is zapped by %s and instantly lets go of it.\r\n",
+			c.Character.Name, obj.Name())
+		c.World.ObjectToChar(obj, c.Character)
 		return nil
 	}
 
-	c.Send(wearMessages[pos][1]+"\r\n", obj.Name())
-	c.announce(wearMessages[pos][0]+"\r\n", c.Character.Name, obj.Name())
+	if !c.World.Equip(obj, c.Character, pos) {
+		c.Send("You can't seem to put %s on.\r\n", obj.Name())
+	}
 	return nil
 }
 
@@ -154,27 +278,70 @@ func findObject(list []*game.Object, word string) *game.Object {
 	return nil
 }
 
-// findWearPosition finds the first free slot an object fits, in the C's
-// order — so a second ring goes on the left hand and a second necklace in the
-// second neck slot.
-func findWearPosition(c *game.Character, obj *game.Object) game.WearPosition {
-	var fits game.WearPosition = -1
-
-	for pos := game.WearPosition(0); pos < game.NumWears; pos++ {
-		if !game.CanWearAt(obj.Def, pos) {
-			continue
-		}
-		if c.Equipment[pos] == nil {
-			return pos
-		}
-		// Remember that it fits somewhere, so an occupied slot produces
-		// "you're already wearing something there" rather than "you can't
-		// wear that".
-		if fits < 0 {
-			fits = pos
+// findWearPosition picks the slot an unqualified `wear` uses, porting
+// find_eq_pos with no argument.
+//
+// It is a run of `if`s with no `else` and no break, so the *last* one that
+// matches wins rather than the first: something wearable on a finger and
+// around the neck goes around the neck. Nothing here looks at whether the
+// slot is free — perform_wear does that, and only it knows about the second
+// ring finger.
+//
+// The list is also short of three slots. Light, wield and hold are not in it,
+// so `wear torch` refuses and only `hold` and `wield` reach them.
+func findWearPosition(obj *game.Object) game.WearPosition {
+	where := game.WearPosition(-1)
+	for _, fit := range []struct {
+		flag game.Flags
+		pos  game.WearPosition
+	}{
+		{game.ItemWearFinger, game.WearFingerRight},
+		{game.ItemWearNeck, game.WearNeck1},
+		{game.ItemWearBody, game.WearBody},
+		{game.ItemWearHead, game.WearHead},
+		{game.ItemWearLegs, game.WearLegs},
+		{game.ItemWearFeet, game.WearFeet},
+		{game.ItemWearHands, game.WearHands},
+		{game.ItemWearArms, game.WearArms},
+		{game.ItemWearShield, game.WearShield},
+		{game.ItemWearAbout, game.WearAbout},
+		{game.ItemWearWaist, game.WearWaist},
+		{game.ItemWearWrist, game.WearWristRight},
+	} {
+		if obj.WearFlags.Has(fit.flag) {
+			where = fit.pos
 		}
 	}
-	return fits
+	return where
+}
+
+// wearPlaceNames are find_eq_pos's keywords[], in slot order. The empty
+// entries are the C's "!RESERVED!", which cannot be matched because
+// search_block refuses any argument beginning with `!`.
+var wearPlaceNames = [game.NumWears]string{
+	game.WearFingerRight: "finger",
+	game.WearNeck1:       "neck",
+	game.WearBody:        "body",
+	game.WearHead:        "head",
+	game.WearLegs:        "legs",
+	game.WearFeet:        "feet",
+	game.WearHands:       "hands",
+	game.WearArms:        "arms",
+	game.WearShield:      "shield",
+	game.WearAbout:       "about",
+	game.WearWaist:       "waist",
+	game.WearWristRight:  "wrist",
+}
+
+// wearPositionNamed resolves `wear ring finger`, matching a prefix as
+// search_block does.
+func wearPositionNamed(arg string) (game.WearPosition, bool) {
+	for pos, name := range wearPlaceNames {
+		if name != "" && strings.HasPrefix(name, strings.ToLower(arg)) {
+			return game.WearPosition(pos), true
+		}
+	}
+	return -1, false
 }
 
 // wearMessages is wear_messages (act.item.c:1130): the room's message first,

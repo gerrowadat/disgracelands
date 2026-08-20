@@ -37,6 +37,17 @@ type Live struct {
 	objects map[uint64]*Object
 	// roomObjects is what is lying on the floor of each room.
 	roomObjects map[RoomVnum][]*Object
+	// shops is the per-shop runtime state — the bank balance and how much of
+	// the keeper's inventory is known to be sorted. The C keeps both in
+	// shop_index beside the file data; kept apart here so the prototypes
+	// stay read-only.
+	shops map[ShopVnum]*shopState
+	// boards is the bulletin boards, loaded once at boot. The C keeps them
+	// in file-scope arrays in boards.c and loads them lazily, the first time
+	// anybody looks at one.
+	boards []*Board
+	// houses is the player housing control records, loaded once at boot.
+	houses []*House
 
 	nextObjectID uint64
 
@@ -60,6 +71,9 @@ func (l *Live) MudTime() MudTime { return TimePassed(time.Since(l.booted)) }
 
 // ObjectDef returns an object prototype, or nil.
 func (l *Live) ObjectDef(v ObjVnum) *ObjDef { return l.objectDefs[v] }
+
+// MobileDef returns a mobile prototype, or nil.
+func (l *Live) MobileDef(v MobVnum) *MobDef { return l.mobileDefs[v] }
 
 // NewLive indexes a loaded world for play.
 func NewLive(defs *World) *Live {
@@ -97,6 +111,16 @@ func NewLive(defs *World) *Live {
 
 // Room returns a room prototype, or nil.
 func (l *Live) Room(v RoomVnum) *RoomDef { return l.rooms[v] }
+
+// RoomAt returns the i'th room in load order, which is the C's *rnum* — the
+// index `number(0, top_of_world)` picks from when teleport chooses somewhere
+// at random. Nil if i is out of range.
+func (l *Live) RoomAt(i int) *RoomDef {
+	if l.defs == nil || i < 0 || i >= len(l.defs.Rooms) {
+		return nil
+	}
+	return l.defs.Rooms[i]
+}
 
 // RoomCount is how many rooms the world has.
 func (l *Live) RoomCount() int { return len(l.rooms) }
@@ -145,6 +169,12 @@ type Character struct {
 	BusyUntil time.Time
 	// Fighting is who they are attacking, or nil.
 	Fighting *Character
+
+	// Master is who they are following, and Followers is who follows them.
+	// Runtime only: the C keeps both on char_data and neither is saved, so a
+	// group does not survive a reboot. See follow.go.
+	Master    *Character
+	Followers []*Character
 	// fightSeq orders the combat round. Assigned when a fight starts, so a
 	// round happens in the order people joined it rather than in map order.
 	fightSeq uint64
@@ -247,6 +277,16 @@ func (l *Live) Enter(c *Character, room RoomVnum) error {
 	c.Room = room
 	l.occupants[room] = append(l.occupants[room], c)
 	l.byName[strings.ToLower(c.Name)] = c
+
+	// Entering the world is where a record and a body meet, so it is where
+	// the record learns where its equipment is and what it is. Nothing is
+	// recomputed here: the C does not total affects on entering a room
+	// either, and doing it would rebuild a character from real values that a
+	// caller may not have filled in yet.
+	c.bindEquipment()
+	if c.Record != nil {
+		c.Record.Mobile = c.NPC
+	}
 	return nil
 }
 
@@ -270,6 +310,11 @@ func (l *Live) Leave(c *Character) {
 
 // Remove takes a character out of the world entirely.
 func (l *Live) Remove(c *Character) {
+	// Every following relationship goes with them, as extract_char's call to
+	// die_follower does. A leader's follower list must never point at
+	// somebody who has left the world.
+	l.DieFollower(c)
+
 	l.Leave(c)
 	delete(l.byName, strings.ToLower(c.Name))
 }
@@ -300,6 +345,31 @@ func (l *Live) FindInRoom(room RoomVnum, word string) *Character {
 
 // Find returns a character by name, case-insensitively.
 func (l *Live) Find(name string) *Character { return l.byName[strings.ToLower(name)] }
+
+// FindAnywhere returns the first character anywhere in the world a typed word
+// names, porting get_char_world_vis.
+//
+// Rooms are walked in map order, so which of two identically named mobiles it
+// finds is not defined — the C walks its character list in creation order and
+// is equally arbitrary about it. Only the spells flagged TAR_CHAR_WORLD reach
+// this: summon, and the two dispels.
+func (l *Live) FindAnywhere(word string) *Character {
+	word = strings.ToLower(strings.TrimSpace(word))
+	if word == "" {
+		return nil
+	}
+	// An exact name first, which is the common case and is not subject to
+	// map order.
+	if c := l.byName[word]; c != nil {
+		return c
+	}
+	for room := range l.occupants {
+		if c := l.FindInRoom(room, word); c != nil {
+			return c
+		}
+	}
+	return nil
+}
 
 // Players returns everyone in the world, sorted by level descending then name
 // — the order the who-list wants.

@@ -20,6 +20,9 @@ type RoomDef struct {
 	Exits [NumDirections]*ExitDef
 
 	ExtraDescs []ExtraDesc
+	// Spec is the name of the special procedure attached to this room, or
+	// "". Set at boot from the assignment table, not read from the file.
+	Spec string
 }
 
 // ExitDef is one direction out of a room.
@@ -108,6 +111,9 @@ type MobDef struct {
 	// They are kept raw here: interpreting them needs the ability tables,
 	// which belong to a later phase.
 	Especs []Espec
+	// Spec is the name of the special procedure attached to this prototype,
+	// or "". Set at boot from the assignment table.
+	Spec string
 }
 
 // MobIsNPC is the action flag the loader sets on every mobile, whether or not
@@ -128,6 +134,20 @@ func (m *MobDef) HitRoll() int32 { return 20 - m.Thac0 }
 // ArmorClassScaled returns the internal armor class, which the C loader
 // stores as ten times the file value.
 func (m *MobDef) ArmorClassScaled() int32 { return 10 * m.ArmorClass }
+
+// Start rooms, from config.c:171. Compile-time constants in the C, and they
+// belong in the config file that the plan's §9.1 describes; until that exists
+// they live here with their provenance attached. Word of recall sends people
+// to the mortal one.
+const (
+	MortalStartRoom RoomVnum = 3001
+	ImmortStartRoom RoomVnum = 1204
+	FrozenStartRoom RoomVnum = 1202
+)
+
+// CircleMUDVersion is circlemud_version (constants.c:17), which this tree
+// never changed: it still names the base it was patched from.
+const CircleMUDVersion = "CircleMUD, version 3.00 beta patchlevel 19"
 
 // NumObjValues is the number of value slots an object carries. The C
 // NUM_OBJ_VAL_POSITIONS is 4 and the file format writes exactly four.
@@ -164,6 +184,9 @@ type ObjDef struct {
 
 	Affects    []ObjAffect
 	ExtraDescs []ExtraDesc
+	// Spec is the name of the special procedure attached to this prototype,
+	// or "". Set at boot from the assignment table.
+	Spec string
 }
 
 // ObjAffect is one `A` line: an apply location and its modifier.

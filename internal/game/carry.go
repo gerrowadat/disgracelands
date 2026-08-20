@@ -32,6 +32,10 @@ func (l *Live) detach(o *Object) {
 		if len(l.roomObjects[o.Room]) == 0 {
 			delete(l.roomObjects, o.Room)
 		}
+		// obj_from_room dirties a house too (handler.c:711): picking
+		// something up out of one changes what has to be saved just as much
+		// as dropping something in it.
+		l.MarkHouseChanged(o.Room)
 
 	case CarriedBy:
 		if o.Holder != nil {
@@ -72,6 +76,12 @@ func (l *Live) ObjectToRoom(o *Object, room RoomVnum) {
 	}
 	l.roomObjects[room] = append(l.roomObjects[room], o)
 	l.track(o)
+
+	// obj_to_room sets ROOM_HOUSE_CRASH on a house (handler.c:692), and
+	// obj_from_room does the same (handler.c:711). That dirty bit is what
+	// makes House_save_all cheap: a hundred houses do not get a hundred file
+	// rewrites a minute just because somebody walked through one.
+	l.MarkHouseChanged(room)
 }
 
 // ObjectToChar puts an object into somebody's inventory, porting
@@ -116,6 +126,11 @@ func (l *Live) ObjectToObject(o, container *Object) bool {
 // It returns false if the slot is occupied, which is the caller's cue to say
 // so. The C logs a SYSERR and drops the object on the floor, which is a way
 // of losing equipment.
+//
+// Armour class is applied here and not in the recompute, because that is
+// where the C applies it: equip_char subtracts apply_ac from the character's
+// own armour figure. The `A` applies are the other mechanism and are
+// recomputed from scratch. See equip.go.
 func (l *Live) Equip(o *Object, c *Character, pos WearPosition) bool {
 	if o == nil || c == nil || pos < 0 || pos >= NumWears {
 		return false
@@ -130,6 +145,12 @@ func (l *Live) Equip(o *Object, c *Character, pos WearPosition) bool {
 	o.WornAt = pos
 	c.Equipment[pos] = o
 	l.track(o)
+
+	if c.Record != nil {
+		c.Record.RealArmor -= ArmorClassOf(o, pos)
+		c.bindEquipment()
+		RecomputeAffects(c.Record)
+	}
 	return true
 }
 
@@ -144,7 +165,21 @@ func (l *Live) Unequip(c *Character, pos WearPosition) *Object {
 		return nil
 	}
 	l.detach(o)
+
+	if c.Record != nil {
+		c.Record.RealArmor += ArmorClassOf(o, pos)
+		c.bindEquipment()
+		RecomputeAffects(c.Record)
+	}
 	return o
+}
+
+// bindEquipment points a character's record at their equipment, so that
+// anything recomputing from the record alone can see what they are wearing.
+func (c *Character) bindEquipment() {
+	if c != nil && c.Record != nil {
+		c.Record.Worn = &c.Equipment
+	}
 }
 
 // ExtractObject destroys an object and everything in it, porting

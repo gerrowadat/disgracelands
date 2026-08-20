@@ -273,14 +273,12 @@ func (c *Context) skillHit(victim *game.Character, name string, damage int32) {
 		return
 	}
 
-	damage = game.ApplyDamage(damage, victim.Record, combatantOf(victim))
-	victim.Record.Points.Hit -= damage
+	// The damage goes through the same path as a swing in the round, so a
+	// kick that kills leaves a corpse and pays out.
+	dealt := c.Violence.Damage(c.World, c.Character, victim, damage)
 
-	c.Send("You %s %s. [%d]\r\n", name, victim.Name, damage)
-	victim.Tell("%s %ss you. [%d]\r\n", c.Character.Name, name, damage)
-
-	victim.Position = game.UpdatePosition(victim.Record, victim.Position)
-	c.startFight(victim)
+	c.Send("You %s %s. [%d]\r\n", name, victim.Name, dealt)
+	victim.Tell("%s %ss you. [%d]\r\n", c.Character.Name, name, dealt)
 }
 
 // startFight puts both parties into combat if they are not already.
@@ -294,4 +292,57 @@ func (c *Context) startFight(victim *game.Character) {
 	if victim.Fighting == nil && victim.Position > game.PosStunned {
 		c.World.SetFighting(victim, c.Character)
 	}
+}
+
+// doHide, porting do_hide (act.other.c).
+//
+// It says you tried whatever happens, and says nothing at all about whether
+// it worked — you find out by whether anybody reacts to you. The flag is
+// cleared first, so a failed attempt un-hides somebody who was already
+// hidden.
+func doHide(c *Context) error {
+	rec := c.Character.Record
+	if c.Character.IsNPC() || rec == nil || rec.Skills[game.SkillHide] == 0 {
+		c.Send("You have no idea how to do that.\r\n")
+		return nil
+	}
+
+	c.Send("You attempt to hide yourself.\r\n")
+	c.Character.SetHidden(false)
+
+	// 101 is a complete failure however good you are, and dexterity moves the
+	// bar by as much as sixty points either way.
+	if c.RNG.Number(1, 101) > rec.Skills[game.SkillHide]+
+		game.DexteritySkills(rec.Abilities.Dexterity).Hide {
+		return nil
+	}
+	c.Character.SetHidden(true)
+	return nil
+}
+
+// doSneak, porting do_sneak.
+//
+// Sneaking is an affect rather than a bare flag, so it runs out — after as
+// many mud hours as the sneaker has levels — where hiding lasts until
+// something breaks it.
+func doSneak(c *Context) error {
+	rec := c.Character.Record
+	if c.Character.IsNPC() || rec == nil || rec.Skills[game.SkillSneak] == 0 {
+		c.Send("You have no idea how to do that.\r\n")
+		return nil
+	}
+
+	c.Send("Okay, you'll try to move silently for a while.\r\n")
+	game.RemoveAffectsOf(rec, game.SkillSneak)
+
+	if c.RNG.Number(1, 101) > rec.Skills[game.SkillSneak]+
+		game.DexteritySkills(rec.Abilities.Dexterity).Sneak {
+		return nil
+	}
+	game.AddAffect(rec, game.Affect{
+		Type:     game.SkillSneak,
+		Duration: rec.Level,
+		Bits:     game.AffectSneak,
+	})
+	return nil
 }

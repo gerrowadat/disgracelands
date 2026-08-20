@@ -59,6 +59,11 @@ const (
 	// StateEnterDescription: typing the description others see on `look`,
 	// terminated by a lone '@'.
 	StateEnterDescription
+	// StateEditing is the general line editor, the C's string_write: collect
+	// lines until a lone '@' and hand the text to whoever asked. Writing on a
+	// bulletin board is the one thing that uses it so far, and mail will be
+	// the second.
+	StateEditing
 	// The three states of changing a password from the menu, matching
 	// CON_CHPWD_GETOLD, CON_CHPWD_GETNEW and CON_CHPWD_VRFY.
 	StateChangePasswordOld
@@ -97,6 +102,8 @@ func (s State) String() string {
 		return "menu"
 	case StateEnterDescription:
 		return "enter-description"
+	case StateEditing:
+		return "editing"
 	case StateChangePasswordOld:
 		return "change-password-old"
 	case StateChangePasswordNew:
@@ -157,12 +164,17 @@ type Session struct {
 	// editorLines buffers a multi-line entry — currently only the
 	// description — until its terminator arrives.
 	editorLines []string
+	// editorMax and editorDone belong to StateEditing: the length limit and
+	// what to do with the finished text.
+	editorMax  int
+	editorDone func(text string)
 
 	// proto is the telnet state: options, charset, GMCP.
 	proto protocol
 
 	closed atomic.Bool
 	quit   atomic.Bool
+	rented atomic.Bool
 	closer sync.Once
 	// done is closed when the session ends. The output channel deliberately
 	// is not: Send runs on whichever goroutine is talking to this player —
@@ -181,6 +193,18 @@ type Session struct {
 // from the world, a dropped connection leaves the character standing so it
 // can be reconnected to.
 func (s *Session) MarkQuit() { s.quit.Store(true) }
+
+// MarkRented records that this session ended by renting, so the disconnect
+// handling knows the objects have already been dealt with.
+//
+// Without it the teardown crash-saves a character whose things have just been
+// stored and extracted — which writes an empty file over the rent file, or
+// deletes it, depending on which write lands last. The C has the same shape
+// and no such problem, because extract_char does not crash-save.
+func (s *Session) MarkRented() { s.rented.Store(true) }
+
+// Rented reports whether the session ended at an inn.
+func (s *Session) Rented() bool { return s.rented.Load() }
 
 // Quit reports whether the player left deliberately.
 func (s *Session) Quit() bool { return s.quit.Load() }
@@ -222,6 +246,16 @@ type TextFiles interface {
 	Menu() string
 	// Background is the story behind menu choice 3.
 	Background() string
+	// The rest of the canned files, each behind its own command
+	// (do_gen_ps). A missing one is empty rather than an error: the C ships
+	// placeholders for most of them and a server with no news is quiet
+	// rather than broken.
+	News() string
+	Info() string
+	Policies() string
+	Handbook() string
+	WizList() string
+	ImmList() string
 }
 
 // LoginHandler performs the steps that need more than the connection.
@@ -239,8 +273,10 @@ type LoginHandler interface {
 	// standing rather than removing it, so a dropped connection can be
 	// resumed; this is how the login sequence finds it again.
 	Reconnect(ctx context.Context, name string) *game.Character
-	// Enter puts an authenticated character into the world.
-	Enter(ctx context.Context, s *Session, c *game.Character) error
+	// Enter puts an authenticated character into the world, and reports what
+	// happened to the things they left with. The C's CON_MENU has one line
+	// that depends on it (interpreter.c:1690).
+	Enter(ctx context.Context, s *Session, c *game.Character) (EnterResult, error)
 	// Leave takes them out again.
 	Leave(ctx context.Context, s *Session, c *game.Character) error
 

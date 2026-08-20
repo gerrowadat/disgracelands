@@ -28,20 +28,27 @@ does, how to configure it, how to run it.
 Building from source is in the top-level **`BUILDING.md`**, which covers
 both the C tree and the Go tree.
 
-> The Go server is at Phase 3: it loads the world, runs listeners on telnet
-> and TLS, takes a player through the full login and creation sequence and
-> the main menu, and lets them look around and walk between rooms. There is
-> no combat, magic or economy yet — that is Phase 4. `configuration.md` and
-> `operations.md` mark which settings are *(inert)* pending later phases.
+> The Go server is at the end of Phase 4: login and creation, the main menu,
+> a world that resets and mobiles that act, combat, spells, skills, affects,
+> equipment, containers, food and drink, following and grouping — a character
+> can kill something and level. There is no economy, no communication or
+> social commands, no mail or boards, and no special procedures yet; that is
+> Phase 5. `configuration.md` and `operations.md` mark which settings are
+> *(inert)* pending later phases.
 
-## `docs/proposals/` — work not yet done
+## `docs/proposals/` — the design, and the plan
 
-Designs and plans. Future tense, and expected to change.
+The design decisions and the phase order. Partly a record now: each finished
+phase carries a note of what it actually contained, what it did not, and what
+reading the C changed about the plan. The unfinished phases are still future
+tense and still expected to change.
 
 - **[go-port-plan.md](proposals/go-port-plan.md)** — the design and phasing
   for reimplementing the engine in Go: 64-bit safety, pluggable player- and
   world-file formats, the concurrency model, licensing constraints, and the
-  phase-by-phase sequence. Phases 0–3 are built; Phases 4–7 are not.
+  phase-by-phase sequence. Phases 0–4 are built and marked done with what
+  each one did and did not contain; Phase 5 is mapped into slices; 6 and 7
+  are not started.
 - **[data-format.md](proposals/data-format.md)** — a single native format
   for everything in `data/`: the world, players, boards, mail, houses and
   the game tuning still compiled into `config.c`. Replaces the eight

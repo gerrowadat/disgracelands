@@ -13,7 +13,9 @@ everything it does.
 ## Status
 
 **The C server works.** It compiles and boots on modern Linux and serves a
-playable game. Until the Go port catches up, that is the game.
+playable game. Until the Go port catches up, that is the game — and it stays
+the reference implementation either way: where the two disagree, the C is
+right by definition, because it is the one that was played.
 
 **The data in this repo is stock.** `data/` is CircleMUD 3.0 bpl20's `lib/`,
 unmodified — Midgaard, not Disgracelands. The world, help text and boards the
@@ -22,19 +24,29 @@ point `--lib-dir` at a converted copy to run the real thing (`dlctl convert`,
 see `docs/operations.md`). Everything in `docs/investigations/` describes that
 archive rather than what ships.
 
-**The Go port takes connections, and has no rules in it yet.** Phases 0–3 of
-`docs/proposals/go-port-plan.md` are done: it loads the world, listens on
+**The Go port is playable.** Phases 0–4 of
+`docs/proposals/go-port-plan.md` are done. It loads the world, listens on
 TLS or plaintext telnet, negotiates telnet properly (hidden passwords,
 CHARSET, GMCP), logs in an archived character or creates a new one through
 the full C creation flow, and shows the main menu — description editor,
-background story, change password, delete character — before putting them
-in the world to look, move, `who`, `credits`, `help` and `quit`. Characters
-autosave, and a dropped link leaves the body in the world to reconnect to.
+background story, change password, delete character — before putting them in
+the world. Characters autosave, and a dropped link leaves the body in the
+world to reconnect to.
 
-What is missing is the game itself: no combat, skills, spells or levelling,
-no shops, boards or mail, and no zone resets — so the world is empty of
-mobiles and objects and you are walking through the scenery. That is
-Phase 4 onwards.
+The rules core is there: zones reset and mobiles wander, scavenge and attack;
+combat runs on the two-second round with the C's own to-hit and damage
+tables; spells, skills, affects, position and regeneration, death and
+corpses, equipment that actually changes your numbers, containers, food and
+drink, following and grouping. A character can kill something, be paid for
+it, and rise a level — which is Phase 4's criterion, and there is a test that
+walks it end to end.
+
+What is missing is the surrounding game: no communication commands, socials,
+shops, banks, boards, mail or houses, no rent, no immortal commands, and no
+special procedures — so guildmasters and shopkeepers stand there inert.
+`practice` is a command rather than something a guildmaster does, which is
+the largest deliberate deviation and is recorded as one. That is Phase 5,
+mapped slice by slice in the plan's §10.
 
 The two servers load the world identically — every field of all 3,202
 records — and `scripts/world-parity.sh` checks that in CI.

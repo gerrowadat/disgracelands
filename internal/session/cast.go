@@ -106,7 +106,7 @@ func doCast(c *Context) error {
 		return nil
 	}
 
-	if c.castSpell(info, number, victim, object) && mana > 0 {
+	if c.castSpell(info, number, victim, object, game.SaveSpell) && mana > 0 {
 		rec.Points.Mana = max(0, min(rec.Points.MaxMana, rec.Points.Mana-mana))
 	}
 	return nil
@@ -133,7 +133,7 @@ func (c *Context) findSpellTarget(info game.SpellInfo, name string) (*game.Chara
 			}
 		}
 		if info.Targets.Has(game.TargetCharWorld) {
-			if victim := c.World.Find(name); victim != nil {
+			if victim := c.World.FindAnywhere(name); victim != nil {
 				return victim, nil, true
 			}
 		}
@@ -151,6 +151,14 @@ func (c *Context) findSpellTarget(info game.SpellInfo, name string) (*game.Chara
 		}
 		if info.Targets.Has(game.TargetObjRoom) {
 			if obj := findObject(c.World.RoomObjects(c.Character.Room), name); obj != nil {
+				return nil, obj, true
+			}
+		}
+		if info.Targets.Has(game.TargetObjWorld) {
+			// Anywhere at all, which only locate object asks for — and which
+			// is why locate object can only search by the first keyword of
+			// whatever the search happened to land on first.
+			if obj := findObject(c.World.Objects(), name); obj != nil {
 				return nil, obj, true
 			}
 		}
@@ -178,13 +186,30 @@ func (c *Context) broadcast(format string, args ...any) {
 
 // castSpell runs the spell's routines, porting call_magic.
 //
-// Two of the ten routines are implemented: damage and points. A spell whose
-// routines are all unimplemented says so rather than silently doing nothing
-// and charging for it — a player who cannot tell "this spell has no effect"
-// from "this spell is not written yet" cannot report a bug.
-func (c *Context) castSpell(info game.SpellInfo, number int32, victim *game.Character, object *game.Object) bool {
+// All ten routines are implemented. A spell whose routines all decline to do
+// anything says so rather than silently doing nothing and charging for it — a
+// player who cannot tell "this spell has no effect" from "this spell is not
+// written yet" cannot report a bug.
+func (c *Context) castSpell(info game.SpellInfo, number int32, victim *game.Character, object *game.Object, save game.SaveType) bool {
 	rec := c.Character.Record
 	level := rec.Level
+
+	// The two room checks at the top of call_magic. A no-magic room stops
+	// everything; a peaceful one stops anything violent, which includes every
+	// damage spell whether or not it is flagged violent.
+	if room := c.World.Room(c.Character.Room); room != nil {
+		if room.Flags.Has(game.RoomNoMagic) {
+			c.Send("Your magic fizzles out and dies.\r\n")
+			c.announce("%s's magic fizzles out and dies.\r\n", c.Character.Name)
+			return false
+		}
+		if room.Flags.Has(game.RoomPeaceful) &&
+			(info.Violent || info.Routines.Has(game.MagDamage)) {
+			c.Send("A flash of white light fills the room, dispelling your violent magic!\r\n")
+			c.announce("White light from no particular source suddenly fills the room, then vanishes.\r\n")
+			return false
+		}
+	}
 
 	var did bool
 
@@ -195,21 +220,12 @@ func (c *Context) castSpell(info game.SpellInfo, number int32, victim *game.Char
 
 	if info.Routines.Has(game.MagPoints) && victim != nil {
 		did = true
-		healing := game.SpellHealing(number, victim.Record, level, c.RNG)
-		if victim.Record != nil {
-			victim.Record.Points.Hit = min(
-				victim.Record.Points.MaxHit,
-				victim.Record.Points.Hit+healing.Amount)
-			victim.Position = game.UpdatePosition(victim.Record, victim.Position)
-		}
-		if healing.Message != "" {
-			victim.Tell("%s", healing.Message)
-		}
+		c.applyPoints(number, victim, level)
 	}
 
 	if info.Routines.Has(game.MagAffects) && victim != nil && victim.Record != nil {
 		did = true
-		c.spellAffect(number, victim)
+		c.spellAffect(number, victim, save)
 	}
 
 	if info.Routines.Has(game.MagUnaffects) && victim != nil && victim.Record != nil {
@@ -221,26 +237,76 @@ func (c *Context) castSpell(info game.SpellInfo, number int32, victim *game.Char
 		}
 	}
 
+	if info.Routines.Has(game.MagAlterObjs) && object != nil {
+		did = true
+		c.spellAlterObject(number, object)
+	}
+
+	if info.Routines.Has(game.MagAreas) {
+		did = true
+		c.spellArea(info, number, level)
+	}
+
+	if info.Routines.Has(game.MagGroups) {
+		did = true
+		c.spellGroup(number, level)
+	}
+
+	if info.Routines.Has(game.MagSummons) {
+		did = true
+		c.spellSummon(number, object, level)
+	}
+
+	// MAG_MASSES is in the C's switch and its switch is empty: no spell in
+	// stock CircleMUD is a mass spell. Counted as done so that a spell
+	// flagged with it and nothing else does not claim to be unimplemented.
+	if info.Routines.Has(game.MagMasses) {
+		did = true
+	}
+
+	if info.Routines.Has(game.MagCreations) {
+		did = true
+		c.spellCreation(number)
+	}
+
+	if info.Routines.Has(game.MagManual) && c.castManual(number, victim, object, level) {
+		did = true
+	}
+
 	if !did {
 		// Named so the player knows the spell exists and this server has not
 		// finished it, rather than wondering whether they missed.
 		c.Send("Nothing seems to happen. (%s is not implemented yet.)\r\n", info.Name)
 		return false
 	}
-
-	_ = object
 	return true
 }
 
+// applyPoints heals or drains, porting mag_points.
+func (c *Context) applyPoints(number int32, victim *game.Character, level int32) {
+	healing := game.SpellHealing(number, victim.Record, level, c.RNG)
+	if victim.Record != nil {
+		victim.Record.Points.Hit = min(
+			victim.Record.Points.MaxHit,
+			victim.Record.Points.Hit+healing.Amount)
+		victim.Position = game.UpdatePosition(victim.Record, victim.Position)
+	}
+	if healing.Message != "" {
+		victim.Tell("%s", healing.Message)
+	}
+}
+
 // spellAffect applies an affect spell, porting the tail of mag_affects.
-func (c *Context) spellAffect(number int32, victim *game.Character) {
+func (c *Context) spellAffect(number int32, victim *game.Character, save game.SaveType) {
 	rec := c.Character.Record
 
 	// One saving throw per casting, rolled here so every spell that consults
-	// it sees the same answer. Spell is the save type for everything
-	// mag_affects casts; the other four belong to breath weapons and the
-	// like.
-	saved := game.MakesSavingThrow(victim.Record, victim.IsNPC(), game.SaveSpell, 0, c.RNG)
+	// it sees the same answer. Which of the five it is depends on where the
+	// magic came from: a spell cast by a person is SAVING_SPELL, and anything
+	// out of a wand, staff, scroll or potion is SAVING_ROD — which is the
+	// column with the *better* numbers, so a scroll is easier to resist than
+	// the same spell cast at you.
+	saved := game.MakesSavingThrow(victim.Record, victim.IsNPC(), save, 0, c.RNG)
 
 	result := game.AffectsOfSpell(number, rec, victim.Record,
 		victim.IsNPC(), victim.MobFlags(), rec.Level, saved, c.RNG)
@@ -307,15 +373,12 @@ func (c *Context) spellDamage(info game.SpellInfo, number int32, victim *game.Ch
 		return
 	}
 
-	target.Record.Points.Hit -= damage
-	c.Send("You blast %s with %s. [%d]\r\n", target.Name, info.Name, damage)
-	target.Tell("%s blasts you with %s. [%d]\r\n", c.Character.Name, info.Name, damage)
+	// Through the same path as a swing: a spell that kills leaves a corpse and
+	// pays out. damage() starts the fight whatever the spell's violent flag
+	// says — the flag decides whether it may be cast at all in a peaceful
+	// room, not whether being blasted is provocation.
+	dealt := c.Violence.Damage(c.World, c.Character, target, damage)
 
-	target.Position = game.UpdatePosition(target.Record, target.Position)
-
-	// A violent spell starts a fight, as damage() does.
-	if info.Violent && target != c.Character && target.Fighting == nil &&
-		target.Position > game.PosStunned {
-		c.World.SetFighting(target, c.Character)
-	}
+	c.Send("You blast %s with %s. [%d]\r\n", target.Name, info.Name, dealt)
+	target.Tell("%s blasts you with %s. [%d]\r\n", c.Character.Name, info.Name, dealt)
 }

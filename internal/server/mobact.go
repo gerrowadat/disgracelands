@@ -8,6 +8,7 @@ package server
 
 import (
 	"github.com/gerrowadat/disgracelands/internal/game"
+	"github.com/gerrowadat/disgracelands/internal/session"
 )
 
 // What mobiles do when nobody is watching, ported from mobile_activity
@@ -33,9 +34,17 @@ const scavengeRoll = 10
 // mobileActivity runs one pass over the world's mobiles.
 func (s *Server) mobileActivity(w *game.Live) {
 	for _, mob := range w.Mobiles() {
-		// A mobile in a fight is busy, and one asleep is asleep. Special
-		// procedures would run before this check; they arrive with the
-		// scripting seam.
+		// The mobile's own special procedure runs first, and — this is the
+		// part that matters — *before* the fighting and awake checks below.
+		// A snake bites and a mobile mage casts only while fighting, so a
+		// special placed after those checks would never fire at all.
+		if !s.noSpecials && mob.HasMobFlag(game.MobSpec) {
+			if session.PulseSpecial(w, mob, s.rng, s) {
+				continue
+			}
+		}
+
+		// A mobile in a fight is busy, and one asleep is asleep.
 		if mob.Fighting != nil || !mob.Position.Awake() {
 			continue
 		}

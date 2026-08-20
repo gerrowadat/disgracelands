@@ -130,6 +130,51 @@ func ExperienceForKill(killer, victim *PlayerRecord, killerIsNPC, victimIsNPC bo
 	return exp, message
 }
 
+// GroupShare is one member's cut of a kill, porting group_gain's arithmetic
+// (fight.c:468).
+//
+//	tot_gain = (GET_EXP(victim) / 3) + tot_members - 1
+//	base     = MAX(1, tot_gain / tot_members)
+//
+// The `+ tot_members - 1` is the standard trick for making integer division
+// round *up*, so three people splitting ten points get four each — twelve
+// points out of a ten point kill. A group therefore earns more in total than
+// a soloist would, which is the incentive to group, and it looks accidental
+// until you notice it is not.
+//
+// Note what is missing compared with solo_gain: no level-difference bonus at
+// all. Killing something far above your level is worth more alone than it is
+// in a group.
+func GroupShare(victim *PlayerRecord, victimIsNPC bool, members int32) int32 {
+	if members < 1 {
+		return 0
+	}
+
+	total := (victim.Points.Exp / 3) + members - 1
+	// Killing a player cannot mint experience out of nothing.
+	if !victimIsNPC {
+		total = min(MaxExpLossPerDeath*2/3, total)
+	}
+	return max(1, total/members)
+}
+
+// GroupShareMessage is what perform_group_gain tells one member, which is
+// worded differently from the solo message and reports the *capped* figure.
+func GroupShareMessage(member *PlayerRecord, share int32) string {
+	switch {
+	case share > 1:
+		band := LevelExperience(member.Class, member.Level+1) -
+			LevelExperience(member.Class, member.Level)
+		if limit := band / 10; share > limit {
+			share = limit
+		}
+		return fmt.Sprintf("You receive your share of experience -- %d points.\r\n", share)
+	case share == 0:
+		return "You receive your share of experience -- Nothing! Ha!!\r\n"
+	}
+	return "You receive your share of experience -- one measly little point!\r\n"
+}
+
 // Wait sets a character's lag, porting WAIT_STATE.
 //
 // The unit is combat rounds — PULSE_VIOLENCE — because that is what every

@@ -53,7 +53,11 @@ linked list of 100-byte blocks written to a file; `hcontrol`, which is an
 array of `struct house_control_rec`; and the socials and damage-message
 files, which are two more bespoke line-oriented formats that share nothing
 with each other. Each needs its own parser, its own writer, its own tests
-and its own corruption modes.
+and its own corruption modes — which is no longer a prediction: Phase 5
+ported four of them, and they are `internal/persist/player/binary`,
+`internal/persist/player/binary/objfile.go`, `internal/persist/boards`,
+`internal/persist/houses` and `internal/persist/mail`, each with its own
+`layout_test.go` checking a struct layout against `gcc -m32`.
 
 **Half of it cannot survive a text conversion.** `dlctl convert` already
 has to detect the struct dumps and copy them verbatim, because a
@@ -70,6 +74,16 @@ migration, it is a deferral.
 underneath this game. Every one of those files has a 2038 problem and a
 `sizeof` problem, and no amount of careful reading fixes a format whose
 meaning depends on the compiler that wrote it.
+
+The board format is the sharpest illustration, and the port's own package
+comment says it plainly: a board file is a count followed by, for each
+message, a raw `struct board_msginfo` — which contains a live `char *heading`
+**pointer**, written straight to disk. The value is meaningless the moment
+the process exits and the loader ignores it, but its *width* decides where
+every subsequent field sits: four bytes on the i386 build the archive came
+from, eight on any 64-bit rebuild. A format that cannot be read without
+knowing which compiler wrote it is not a format, and this is the argument
+for the whole proposal in one field.
 
 **The positional formats cannot be extended.** Adding a field to the
 object format means adding a number to a whitespace-separated line, and
@@ -384,12 +398,25 @@ reset becomes `wield`.
 This is the single largest readability win in the format and it is not free
 of risk, so:
 
-- **The name tables become the source of truth.** `internal/game` currently
-  has the constants (`RoomIndoors`, `ItemWearBody`, `ApplyHitRoll`) but a
-  name table for only a few of them. Adding the missing ones — room flags,
-  sector types, mob act flags, affect flags, apply locations, positions,
-  shop flags, container flags — is real work and it is a prerequisite, not
-  a detail. They are the same tables the OLC layer will need anyway.
+- **The names are new tables, not the ones already there.**
+  `internal/game/bitnames.go` holds `constants.c`'s tables — `affect_bits[]`,
+  `extra_bits[]`, `apply_types[]` — and `SprintBit` prints them. Those are
+  *display* strings and cannot be reused here: they contain spaces and
+  hyphens (`DET-ALIGN`, `LIQ CONTAINER`), they are positional rather than
+  named, `sprintbit` renders an empty field as `NOBITS `, and they are
+  player-visible, so changing one to suit a file format would change what
+  `identify` prints. The format needs a parallel table of identifiers
+  (`detect_align`, `liq_container`) with a test asserting the two tables
+  describe the same set of bits, so that a bit added to one and not the other
+  fails rather than silently going unnameable.
+
+  `bitnames.go` is still the useful starting point, because it is the record
+  of *which bits exist in this tree* — including the local ones past where
+  stock CircleMUD stops (`HOLY-SHIELD`, `SNEAK`, `HIDE`, `SILENCE`, `CHARM`,
+  and the `UNUSED` slot its comment notes is not unused here). The tables
+  still missing entirely — room flags, sector types, mob act flags,
+  positions, shop flags, container flags — are real work and a prerequisite,
+  not a detail. They are the same tables the OLC layer will need anyway.
 
 - **An unknown name is an error, not a shrug.** `classic` silently ignores
   characters that are neither letters nor digits in a bitfield, because the
@@ -650,7 +677,10 @@ socket.
 
 Two facts bound what we have to support. The stock world contains **zero**
 ESC bytes — verified across `data/`. And the Go tree renders no colour at
-all: it has the preference flags and nothing behind them. So there is no
+all: it has the preference flags and nothing behind them. The one escape
+sequence it emits is `doClearScreen`'s home-and-clear
+(`internal/session/informational.go`), which is sent raw and is not colour.
+So there is no
 installed base on either side to stay compatible with, and the archive is
 the only unknown — if the real Disgracelands data carries colour, it
 carries it as raw ESC, because its server could not have understood
@@ -1103,6 +1133,16 @@ absence of a prefix.
 Small formats, listed for completeness because "all of it has to move
 together" is the entire point.
 
+All three of the struct-dump ones are now ported and working —
+`internal/persist/boards`, `internal/persist/mail`, `internal/persist/houses`
+— so none of this is urgent, and that is the right order: the C formats had
+to be readable before there was anything to convert *from*. What those ports
+buy this proposal is a precise specification of each format and a test
+oracle for it, which is most of the work of writing the converter. What they
+do not change is the case for replacing them, which is §1's: every one is a
+memory layout, and `layout_test.go` exists in each package because the only
+way to know where a field sits is to ask a C compiler.
+
 **`state/boards.yaml`** — replaces the `board.*` struct dumps. A board is a
 vnum, its read/write/remove levels, and a list of messages, each with a
 poster, a timestamp, a heading and a body as a block scalar. The stock
@@ -1232,9 +1272,11 @@ format-neutral and that is the whole reason it exists.
 | **6. The rest** | Boards, mail, houses, reports, socials, messages, help, game config. | `dlctl convert` reports zero `unsupported` files on a real `lib/`. |
 | **7. Retire** | `ascii` and `binary` become `dlctl`-only; `classic` becomes import-only. | The server has one format for everything. |
 
-Steps 1–4 are worth doing before Phase 5 of `go-port-plan.md`, because OLC
-writes zone files back and it would be perverse to implement a writer for
-`classic` and then a second one for `native`. Steps 5–6 can follow whenever.
+Steps 1–4 are worth doing before **Phase 6** of `go-port-plan.md`, which is
+where OasisOLC and `Sink` writeback land: OLC writes zone files back, and it
+would be perverse to implement a writer for `classic` and then a second one
+for `native`. That makes Phase 5 — currently in progress — the natural window.
+Steps 5–6 can follow whenever.
 
 `classic` is never deleted. It is the parity oracle for as long as the C
 server is authoritative, and it is how the 1,184 dated nightly world
