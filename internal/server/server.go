@@ -21,6 +21,7 @@ import (
 	"github.com/gerrowadat/disgracelands/internal/auth"
 	"github.com/gerrowadat/disgracelands/internal/engine"
 	"github.com/gerrowadat/disgracelands/internal/game"
+	"github.com/gerrowadat/disgracelands/internal/persist/boards"
 	"github.com/gerrowadat/disgracelands/internal/persist/player"
 	"github.com/gerrowadat/disgracelands/internal/rng"
 	"github.com/gerrowadat/disgracelands/internal/session"
@@ -54,9 +55,12 @@ type Server struct {
 	// load stops the server, and a rent file that will not load costs one
 	// player their backpack. Nil disables rent entirely.
 	objects player.ObjectStore
-	auth    auth.Verifier
-	text    *Text
-	logger  *slog.Logger
+	// boards holds the bulletin board files. Nil disables boards, which is
+	// what a test world without them gets.
+	boards *boards.Store
+	auth   auth.Verifier
+	text   *Text
+	logger *slog.Logger
 
 	// restrict refuses new characters, matching the C's -r.
 	restrict bool
@@ -76,6 +80,7 @@ type Options struct {
 	Engine   *engine.Engine
 	Players  player.Store
 	Objects  player.ObjectStore
+	Boards   *boards.Store
 	Auth     auth.Verifier
 	Text     *Text
 	Logger   *slog.Logger
@@ -93,6 +98,7 @@ func New(opts Options) *Server {
 		engine:     opts.Engine,
 		players:    opts.Players,
 		objects:    opts.Objects,
+		boards:     opts.Boards,
 		auth:       opts.Auth,
 		text:       opts.Text,
 		logger:     opts.Logger,

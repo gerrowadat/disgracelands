@@ -245,9 +245,16 @@ func (o *Object) FitsAt(pos WearPosition) bool {
 
 // ActionDescription is the object's `action_description`: what the room is
 // told when it is used. A wand with one says that instead of "$n points $p at
-// $N", which is how a builder gives an item its own voice.
+// $N", which is how a builder gives an item its own voice — and what a note
+// holds once somebody has written on it.
 func (o *Object) ActionDescription() string {
-	if o == nil || o.Def == nil {
+	if o == nil {
+		return ""
+	}
+	if o.ActionDesc != "" {
+		return o.ActionDesc
+	}
+	if o.Def == nil {
 		return ""
 	}
 	return o.Def.ActionDesc
@@ -297,6 +304,10 @@ type Object struct {
 	Keywords    string
 	ShortDesc   string
 	Description string
+	// ActionDesc is what the room is told when the object is used, and it is
+	// per-object rather than per-prototype because `write` puts your words on
+	// *this* note and not on every note of its kind.
+	ActionDesc string
 
 	Type       int32
 	ExtraFlags Flags

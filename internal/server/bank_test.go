@@ -8,6 +8,7 @@ package server
 
 import (
 	"testing"
+	"time"
 
 	"github.com/gerrowadat/disgracelands/internal/game"
 	"github.com/gerrowadat/disgracelands/internal/persist/player"
@@ -299,11 +300,20 @@ func TestRentingStoresYourThingsAndTakesYouOut(t *testing.T) {
 
 	// Renting is what sets the load room, and it is why you come back to the
 	// inn rather than the temple. A plain quit leaves it alone.
-	rec, err := srv.players.Load(t.Context(), "Lodger")
-	if err != nil {
-		t.Fatalf("loading the record: %v", err)
-	}
-	if rec.LoadRoom != innRoom {
-		t.Errorf("after renting the load room is %d, want the inn at %d", rec.LoadRoom, innRoom)
+	//
+	// Polled rather than read once: RentCharacter takes the character out of
+	// the world on the world goroutine and *then* saves, off it. So being
+	// gone from the world does not mean the record has been written yet, and
+	// reading it straight away is a race that a busy CI machine loses.
+	var got game.RoomVnum
+	if !eventually(5*time.Second, func() bool {
+		rec, err := srv.players.Load(t.Context(), "Lodger")
+		if err != nil {
+			return false
+		}
+		got = rec.LoadRoom
+		return got == innRoom
+	}) {
+		t.Errorf("after renting the load room is %d, want the inn at %d", got, innRoom)
 	}
 }

@@ -268,6 +268,22 @@ func (c *client) menuEnter() {
 	c.expect("> ")
 }
 
+// eventually polls until a condition holds or the deadline passes.
+//
+// For the things that happen *after* a command's reply and off the world
+// goroutine — a record written to disk, a file appearing. `expect` is not a
+// barrier for those; see the note on settle() in TestWhisperAndAsk.
+func eventually(within time.Duration, ok func() bool) bool {
+	deadline := time.Now().Add(within)
+	for time.Now().Before(deadline) {
+		if ok() {
+			return true
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	return ok()
+}
+
 // inWorld runs a function on the world goroutine.
 //
 // Every test that inspects a character's hit points, position, fight or wait

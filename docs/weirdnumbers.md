@@ -687,6 +687,34 @@ approach in one function.
 12,006 price pairs, built `-m32 -mfpmath=387`. CI installs the toolchain for
 any change that can reach it.
 
+### A board post's date has a weekday and no year
+
+```c
+sprintf(buf, "%6.10s %-12s :: %s", tmstr, buf2, arg);
+```
+
+`tmstr` is `asctime`'s output — "Thu Aug 20 01:23:45 2026". The `.10`
+precision truncates it to the first ten characters, "Thu Aug 20", and the `6`
+width does nothing at all because what is left is longer than six. So every
+message on every board is dated by weekday and month-day, the year is thrown
+away, and one of the two numbers in the format is dead.
+
+*Source*: `boards.c:219`.
+
+### A live pointer is written into every board file
+
+`struct board_msginfo` has a `char *heading` as its second member, and
+`Board_save_board` fwrites the whole struct. The address is meaningless the
+moment the process exits and `Board_load_board` reads it and ignores it — but
+its *width* decides where the three fields after it sit. Four bytes on the
+i386 build the archive came from; eight on any 64-bit rebuild, which reads the
+poster's level out of the pointer's second half.
+
+*Verified*: `reference/tools/boardlayout.c` against the offsets in
+`internal/persist/boards`, built `-m32`.
+
+*Source*: `boards.h:19`, `boards.c:416`.
+
 ---
 
 ## What to do about all this

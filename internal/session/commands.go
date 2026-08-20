@@ -65,6 +65,8 @@ type Context struct {
 	// Rent stores a character's belongings and takes them out of the world,
 	// for the receptionist.
 	Rent RentSaver
+	// SaveBoard writes a bulletin board back to disk.
+	SaveBoard BoardSaver
 	// Arg is everything after the command word, trimmed.
 	Arg string
 	// Social is the social being run, for the commands that are one.
@@ -193,6 +195,12 @@ func init() {
 		{Name: "list", Help: "List what a shopkeeper has for sale.", Run: doNotHere, CLine: 360},
 		{Name: "sell", Help: "Sell something to a shopkeeper.", Run: doNotHere, CLine: 454},
 		{Name: "value", Help: "Ask a shopkeeper what they would pay.", Run: doNotHere, CLine: 530},
+
+		// `read` is do_look with SCMD_READ (interpreter.c:427) and `write` is
+		// do_write (interpreter.c:557). Both are ordinary commands that a
+		// bulletin board takes away from you while you are standing at one.
+		{Name: "read", Help: "Read something.", Run: doRead, CLine: 427},
+		{Name: "write", Help: "Write on a note, with a pen.", Run: doWrite, CLine: 557},
 
 		// The bank and the inn. All `do_not_here` as well (interpreter.c:237,
 		// :275, :550, :391, :438), and picked up by the `bank` and
@@ -403,6 +411,8 @@ type Dispatcher struct {
 	Save func(*game.Character)
 	// Rent stores a character's belongings, for the receptionist.
 	Rent RentSaver
+	// SaveBoard writes a bulletin board back to disk.
+	SaveBoard BoardSaver
 }
 
 // Do implements CommandHandler.
@@ -444,7 +454,7 @@ func (d *Dispatcher) Do(ctx context.Context, s *Session, line string) error {
 		c := &Context{
 			Ctx: ctx, Session: s, Character: s.Character(),
 			World: w, Text: d.Text, RNG: d.RNG, Violence: d.Violence, Arg: arg,
-			Social: cmd.Social, Save: d.Save, Rent: d.Rent,
+			Social: cmd.Social, Save: d.Save, Rent: d.Rent, SaveBoard: d.SaveBoard,
 		}
 
 		// A command that panics must not leave the player staring at a dead

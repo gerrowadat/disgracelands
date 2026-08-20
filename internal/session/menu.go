@@ -312,3 +312,44 @@ func ensureTrailingNewline(s string) string {
 	}
 	return s + "\r\n"
 }
+
+// The general line editor, porting string_write (modify.c).
+//
+// Collect lines until a lone '@', then hand the text to whoever asked for it.
+// The C passes a pointer to the string being filled and a magic number saying
+// what to do when it is done; a closure says the same thing without the
+// magic.
+
+// beginEditor puts the session into the line editor.
+func (s *Session) beginEditor(maxLength int, done func(text string)) {
+	s.editorLines = nil
+	s.editorMax = maxLength
+	s.editorDone = done
+	s.state = StateEditing
+}
+
+// handleEditing collects one line of an edited text.
+func (s *Session) handleEditing(line string) error {
+	if strings.TrimSpace(line) != descriptionTerminator {
+		s.editorLines = append(s.editorLines, line)
+		return nil
+	}
+
+	text := strings.Join(s.editorLines, "\r\n")
+	if text != "" {
+		text += "\r\n"
+	}
+	if s.editorMax > 0 && len(text) > s.editorMax {
+		text = text[:s.editorMax]
+		s.Send("Your message was truncated to %d characters.\r\n", s.editorMax)
+	}
+
+	done := s.editorDone
+	s.editorLines, s.editorDone, s.editorMax = nil, nil, 0
+	s.state = StatePlaying
+	if done != nil {
+		done(text)
+	}
+	s.Send("%s", prompt(s))
+	return nil
+}

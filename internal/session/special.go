@@ -59,6 +59,8 @@ type SpecialCall struct {
 	// Rent stores a character's belongings and takes them out of the world.
 	// Only the receptionist uses it.
 	Rent RentSaver
+	// SaveBoard writes a bulletin board back to disk.
+	SaveBoard BoardSaver
 }
 
 // Is reports whether the command being run is this one, porting CMD_IS.
@@ -107,6 +109,7 @@ func init() {
 		"bank":         specBank,
 		"receptionist": specReceptionist,
 		"cryogenicist": specCryogenicist,
+		"gen_board":    specGenBoard,
 	}
 }
 
@@ -136,6 +139,7 @@ func (c *Context) runSpecials(command, arg string) bool {
 			World: c.World, Session: c.Session, Actor: c.Character,
 			Command: command, Arg: arg,
 			RNG: c.RNG, Violence: c.Violence, Rent: c.Rent,
+			SaveBoard: c.SaveBoard,
 		}
 		set(sc)
 		return fn(sc)

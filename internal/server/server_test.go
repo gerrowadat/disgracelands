@@ -28,6 +28,7 @@ import (
 	"github.com/gerrowadat/disgracelands/internal/auth"
 	"github.com/gerrowadat/disgracelands/internal/engine"
 	"github.com/gerrowadat/disgracelands/internal/game"
+	"github.com/gerrowadat/disgracelands/internal/persist/boards"
 	"github.com/gerrowadat/disgracelands/internal/persist/player"
 	"github.com/gerrowadat/disgracelands/internal/persist/player/ascii"
 	"github.com/gerrowadat/disgracelands/internal/persist/player/binary"
@@ -136,6 +137,8 @@ const (
 const (
 	testShopVnum game.ShopVnum = 9001
 	ShopRoom     game.RoomVnum = 3018
+	// BoardRoom holds a bulletin board.
+	BoardRoom game.RoomVnum = 3019
 )
 
 // MageGuildRoom is guild_info's first row: the magic-user guild, whose door
@@ -299,6 +302,16 @@ func testWorld() *game.Live {
 		Gold:            10_000,
 	})
 
+	// The mortal bulletin board, so gen_board has an object to be attached
+	// to. Vnum 3099 is board_info[0]'s.
+	objects = append(objects, &game.ObjDef{
+		Vnum: game.Boards[0].Vnum, Keywords: "board bulletin",
+		ShortDesc:   "a bulletin board",
+		Description: "A bulletin board is fastened to the wall here.",
+		Type:        game.ItemOther,
+		Spec:        "gen_board",
+	})
+
 	// One shop. It produces the sword, so the supply is endless and `list`
 	// shows "Unlimited"; it buys weapons and wands, which is enough to
 	// exercise trade_with's three refusals.
@@ -339,8 +352,12 @@ func testWorld() *game.Live {
 		Vnum: ShopRoom, Name: "A Small Shop", Description: "A shop.\r\n",
 	}
 
+	boardRoom := &game.RoomDef{
+		Vnum: BoardRoom, Name: "The Notice Board", Description: "A room with a board.\r\n",
+	}
+
 	live := game.NewLive(&game.World{
-		Rooms:   []*game.RoomDef{temple, board, guild, donation, shopRoom},
+		Rooms:   []*game.RoomDef{temple, board, guild, donation, shopRoom, boardRoom},
 		Objects: objects,
 		Mobiles: mobiles,
 		Zones:   zones,
@@ -371,6 +388,12 @@ func newTestServer(t *testing.T) (*Server, player.Store) {
 		t.Fatal(err)
 	}
 
+	// Board files, in their own throwaway directory.
+	boardStore, err := boards.New(filepath.Join(t.TempDir(), "etc"), false)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	eng := engine.New(engine.Options{World: testWorld(), Logger: logger})
 
@@ -383,11 +406,18 @@ func newTestServer(t *testing.T) (*Server, player.Store) {
 		Engine:  eng,
 		Players: store,
 		Objects: objects,
+		Boards:  boardStore,
 		Auth:    auth.Verifier{AllowLegacy: true},
 		Text:    text,
 		Logger:  logger,
 		RNG:     testRNG(),
 	})
+
+	// init_boards, which the real boot does inside BootReset. The test world
+	// skips that, so the boards are loaded here.
+	if err := eng.DoSync(ctx, srv.loadBoards); err != nil {
+		t.Fatal(err)
+	}
 
 	// BootReset is not called here — the test world's zones have no reset
 	// commands and every test that wants something in the world puts it there

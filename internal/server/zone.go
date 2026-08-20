@@ -74,6 +74,11 @@ func (s *Server) BootReset(w *game.Live) {
 			"implemented", len(session.SpecialNames()))
 	}
 
+	// init_boards, at boot rather than lazily. Before the reset, because the
+	// reset is what puts the board objects into their rooms and the load only
+	// needs the prototypes.
+	s.loadBoards(w)
+
 	var mobiles, objects, problems int
 
 	for _, zone := range w.Zones() {

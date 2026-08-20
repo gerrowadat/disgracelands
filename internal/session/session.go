@@ -59,6 +59,11 @@ const (
 	// StateEnterDescription: typing the description others see on `look`,
 	// terminated by a lone '@'.
 	StateEnterDescription
+	// StateEditing is the general line editor, the C's string_write: collect
+	// lines until a lone '@' and hand the text to whoever asked. Writing on a
+	// bulletin board is the one thing that uses it so far, and mail will be
+	// the second.
+	StateEditing
 	// The three states of changing a password from the menu, matching
 	// CON_CHPWD_GETOLD, CON_CHPWD_GETNEW and CON_CHPWD_VRFY.
 	StateChangePasswordOld
@@ -97,6 +102,8 @@ func (s State) String() string {
 		return "menu"
 	case StateEnterDescription:
 		return "enter-description"
+	case StateEditing:
+		return "editing"
 	case StateChangePasswordOld:
 		return "change-password-old"
 	case StateChangePasswordNew:
@@ -157,6 +164,10 @@ type Session struct {
 	// editorLines buffers a multi-line entry — currently only the
 	// description — until its terminator arrives.
 	editorLines []string
+	// editorMax and editorDone belong to StateEditing: the length limit and
+	// what to do with the finished text.
+	editorMax  int
+	editorDone func(text string)
 
 	// proto is the telnet state: options, charset, GMCP.
 	proto protocol

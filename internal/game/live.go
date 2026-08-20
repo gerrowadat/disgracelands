@@ -42,6 +42,10 @@ type Live struct {
 	// shop_index beside the file data; kept apart here so the prototypes
 	// stay read-only.
 	shops map[ShopVnum]*shopState
+	// boards is the bulletin boards, loaded once at boot. The C keeps them
+	// in file-scope arrays in boards.c and loads them lazily, the first time
+	// anybody looks at one.
+	boards []*Board
 
 	nextObjectID uint64
 

@@ -114,7 +114,13 @@ machine, which is how this was found.
 prints "Goodbye." from the command, but the disconnect handling — the save,
 the crash-save, removing the character from the world — runs afterwards in
 the connection goroutine's teardown. `waitForLogout` in `rent_test.go` is the
-pattern.
+pattern; `eventually` in `client_test.go` is the general one, for a record
+written to disk or a file appearing.
+
+Be careful about *which* signal you wait on. Renting removes the character
+from the world on the world goroutine and saves afterwards, off it — so
+"gone from the world" does not mean "record written", and a test that assumed
+it passed locally and failed in CI.
 
 **When a test and the implementation disagree, check the C before assuming
 the implementation is wrong.** Five `act()` expectations turned out to be

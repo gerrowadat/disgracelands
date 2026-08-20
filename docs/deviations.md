@@ -315,6 +315,23 @@ Listed here so they are not mistaken for deliberate differences.
 - **`steal` and `track`**, the two thief skills not ported: `steal` needs the
   killer/thief flag machinery and shopkeeper protection, and `track` needs the
   breadth-first search the C keeps in `graph.c`.
+- **A corrupt board file is reported, not deleted.** `Board_load_board` logs
+  "Board file %d corrupt.  Resetting." and calls `Board_reset_board`, which
+  `remove()`s it (boards.c:470). Deleting the only copy of everything anybody
+  ever posted because one length field looked wrong is not a behaviour worth
+  reproducing: the board starts empty, the file stays where it is, and the
+  error goes in the log.
+
+- **The boards are loaded at boot, not lazily.** The C loads them the first
+  time anybody looks at one, from inside the special procedure, behind a
+  `static int loaded` (boards.c:150). That is fine with globals and not fine
+  on a world goroutine. The only visible difference is when a bad board file
+  is reported.
+
+- **Mail and houses are not ported.** `mail.c` and `house.c` are the rest of
+  Phase 5g. `receive` is in the command table as `do_not_here` and there is
+  no postmaster to take it.
+
 - **The rent settings are constants, not options.** `free_rent`,
   `min_rent_cost` and `max_obj_save` are compiled in at the values
   `config.c` had. Making them configurable would be a feature; the archive's
