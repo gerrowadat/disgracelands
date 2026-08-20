@@ -1095,7 +1095,7 @@ it.
 | **5g-i. Bulletin boards ✅** | `gen_board` and the four commands it intercepts, the board files, and the line editor that `write` and mail both need. | `boards.c` |
 | **5g-ii. Mail ✅** | `mail`, `check`, `receive`, the postmaster, and the block-allocated mail file. | `mail.c` |
 | **5g-iii. Houses ✅** | `house`, `hcontrol`, the house control file, the per-room object saves, and the trespassing check in movement. | `house.c` |
-| **5h. The last of the rules** | `steal` and `track` — the two thief skills left, and the only two that need machinery of their own: the killer/thief flags for one and `graph.c`'s breadth-first search for the other. Plus `order`, `enter`, `leave`, `remort` (an implementor command in this tree) and `reroll`. | `act.offensive.c`, `act.movement.c`, `act.other.c`, `graph.c` |
+| **5h. The last of the rules ✅** | `steal` and `track` — the two thief skills left, and the only two that needed machinery of their own: the shopkeeper and player-thieving checks for one and `graph.c`'s breadth-first search for the other. Plus `order`, `enter` and `leave`. `remort` and `reroll` move to 5i, where `do_wizutil` lives. | `act.offensive.c`, `act.movement.c`, `act.other.c`, `graph.c` |
 | **5i. Immortal commands** | The whole of `act.wizard.c`: `goto`, `at`, `transfer`, `load`, `purge`, `stat`, `set`, `show`, `snoop`, `switch`, `force`, `restore`, `advance`, `freeze`, `ban`, `wiznet`, `shutdown`, and thirty more. Large, self-contained, and needed before the Phase 7 cutover — a server nobody can administer cannot go live. | `act.wizard.c` |
 
 Two things that are not in any slice and should be, once there is somewhere

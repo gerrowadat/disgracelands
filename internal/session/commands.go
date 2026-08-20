@@ -225,6 +225,13 @@ func init() {
 		// LVL_GRGOD in the C's table; `house` is any mortal in their own.
 		{Name: "hcontrol", Help: "Build, destroy and list houses.", Run: doHcontrol, CLine: 330},
 		{Name: "house", Help: "Let somebody into your house, or list who is.", Run: doHouse, CLine: 338},
+
+		// The last of the rules (interpreter.c:288, :358, :390, :493, :516).
+		{Name: "enter", Help: "Go inside.", Run: doEnter, CLine: 288},
+		{Name: "leave", Help: "Go back outside.", Run: doLeave, CLine: 358},
+		{Name: "order", Help: "Tell a charmed follower what to do.", Run: doOrder, CLine: 390},
+		{Name: "steal", Help: "Pick somebody's pocket.", Run: doSteal, CLine: 493},
+		{Name: "track", Help: "Sense which way somebody went.", Run: doTrack, CLine: 516},
 		{Name: "say", Help: "Talk to the room.", Run: doSay, CLine: 449},
 		{Name: "'", Help: "Talk to the room; the short form of say.", Run: doSay, CLine: 450},
 		{Name: "score", Help: "Show your own statistics.", Run: doScore, CLine: 452},

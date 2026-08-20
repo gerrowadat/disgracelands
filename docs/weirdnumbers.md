@@ -767,6 +767,33 @@ themselves. Nobody fixed it in seven years.
 
 *Source*: `db.c:607`, `mail.c:461`.
 
+### A pickpocket can take at most 1782 coins
+
+```c
+gold = (GET_GOLD(vict) * number(1, 10)) / 100;
+gold = MIN(1782, gold);
+```
+
+A tenth of what the victim is carrying, at most — and then capped at 1782.
+Not 1000, not 1500, not 2000. Nobody has ever explained it, and it has been
+in DikuMUD since before CircleMUD forked.
+
+*Source*: `act.other.c:1103`.
+
+### The track roll cannot be beaten
+
+```c
+if (number(0, 101) >= GET_SKILL(ch, SKILL_TRACK))
+```
+
+`number(0, 101)` is 102 possible values against a skill capped at 100, and
+the comparison is `>=`. So a perfect tracker still fails two rolls in every
+hundred and two — and gets sent a *random direction* rather than told
+nothing, because the failure branch picks one of the six at random and
+reports it as a trail.
+
+*Source*: `graph.c:191`.
+
 ---
 
 ## What to do about all this

@@ -312,9 +312,18 @@ Listed here so they are not mistaken for deliberate differences.
   `remmob`, `cerberus`, `teleporter` and the rest) are attached to vnums that
   exist only in the archived world. `assign_kings_castle` is a zone-sized
   script of its own and is untouched.
-- **`steal` and `track`**, the two thief skills not ported: `steal` needs the
-  killer/thief flag machinery and shopkeeper protection, and `track` needs the
-  breadth-first search the C keeps in `graph.c`.
+- **`remort` and `reroll` are not ported.** `reroll` *is* `do_wizutil`
+  (`act.wizard.c:2034`) and `remort` is an implementor command in the same
+  file, so both belong with the rest of Phase 5i rather than with the rules.
+  `remort` is a large local addition — a per-character bit vector of borrowed
+  class skills — and wants its own slice.
+
+- **`hunt_victim` is not ported, because nothing calls it.** `graph.c:219`
+  walks a mobile along a BFS path towards its prey, and in this whole tree
+  the only references to `HUNTING` are the two lines in `handler.c` that
+  *clear* it when somebody is extracted. Nothing ever sets it and nothing
+  ever calls the function. `Live.FindFirstStep` is there if a hunting mobile
+  is ever wanted.
 - **A corrupt board file is reported, not deleted.** `Board_load_board` logs
   "Board file %d corrupt.  Resetting." and calls `Board_reset_board`, which
   `remove()`s it (boards.c:470). Deleting the only copy of everything anybody
