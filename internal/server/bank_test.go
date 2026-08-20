@@ -8,7 +8,6 @@ package server
 
 import (
 	"testing"
-	"time"
 
 	"github.com/gerrowadat/disgracelands/internal/game"
 	"github.com/gerrowadat/disgracelands/internal/persist/player"
@@ -282,6 +281,10 @@ func TestRentingStoresYourThingsAndTakesYouOut(t *testing.T) {
 	// No c.close() here: renting is what ends the session, and closing the
 	// socket first would race it.
 	waitForLogout(t, srv, "Lodger")
+	// Leaving the world and the file being written are two different moments:
+	// RentCharacter removes them on the world goroutine and saves off it. Wait
+	// for the save, not for the removal.
+	srv.WaitForWrites()
 
 	f, err := srv.objects.LoadObjects(t.Context(), "Lodger")
 	if err != nil {
@@ -301,19 +304,13 @@ func TestRentingStoresYourThingsAndTakesYouOut(t *testing.T) {
 	// Renting is what sets the load room, and it is why you come back to the
 	// inn rather than the temple. A plain quit leaves it alone.
 	//
-	// Polled rather than read once: RentCharacter takes the character out of
-	// the world on the world goroutine and *then* saves, off it. So being
-	// gone from the world does not mean the record has been written yet, and
-	// reading it straight away is a race that a busy CI machine loses.
-	var got game.RoomVnum
-	if !eventually(5*time.Second, func() bool {
-		rec, err := srv.players.Load(t.Context(), "Lodger")
-		if err != nil {
-			return false
-		}
-		got = rec.LoadRoom
-		return got == innRoom
-	}) {
-		t.Errorf("after renting the load room is %d, want the inn at %d", got, innRoom)
+	// The record is written by the same background save, so it is settled
+	// too by now.
+	rec, err := srv.players.Load(t.Context(), "Lodger")
+	if err != nil {
+		t.Fatalf("loading the record: %v", err)
+	}
+	if rec.LoadRoom != innRoom {
+		t.Errorf("after renting the load room is %d, want the inn at %d", rec.LoadRoom, innRoom)
 	}
 }

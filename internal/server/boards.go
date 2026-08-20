@@ -82,9 +82,9 @@ func (s *Server) SaveBoard(b *game.Board) {
 	}
 	file := b.Def.File
 
-	go func() {
+	s.background(func() {
 		if err := s.boards.Save(file, msgs); err != nil {
 			s.logger.Error("writing a board file", "file", file, "error", err)
 		}
-	}()
+	})
 }

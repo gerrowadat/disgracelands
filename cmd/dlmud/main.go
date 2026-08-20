@@ -299,6 +299,12 @@ func run(args []string) error {
 	// diagnostics go, because it needs the world goroutine still turning.
 	srv.SaveEverything(shutdownCtx)
 
+	// And wait for the saves that were already in flight. A process that
+	// exits with one outstanding loses it, and the whole point of pushing
+	// them off the world goroutine is that nothing waits for them *during*
+	// play.
+	srv.WaitForWrites()
+
 	if err := diag.Shutdown(shutdownCtx); err != nil {
 		logger.Error("diagnostics shutdown failed", "error", err)
 	}

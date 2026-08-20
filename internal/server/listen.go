@@ -169,11 +169,11 @@ func (s *Server) serve(ctx context.Context, sess *session.Session, limits Limits
 			Save: func(c *game.Character) {
 				// Off the world goroutine, which is where the command that
 				// asked for it is running.
-				go func() {
+				s.background(func() {
 					if err := s.Save(context.Background(), c); err != nil {
 						s.logger.Error("saving on request", "character", c.Name, "error", err)
 					}
-				}()
+				})
 			},
 		},
 	})

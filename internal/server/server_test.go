@@ -445,6 +445,13 @@ func newTestServer(t *testing.T) (*Server, player.Store) {
 		RNG:     testRNG(),
 	})
 
+	// Every background write must finish before the test's t.TempDir() is
+	// removed. Without this the cleanup races the saves and fails with
+	// "directory not empty" — in whichever *other* test the scheduler
+	// happens to be running by then, which is why it looked like flakiness
+	// somewhere else entirely.
+	t.Cleanup(srv.WaitForWrites)
+
 	// init_boards, which the real boot does inside BootReset. The test world
 	// skips that, so the boards are loaded here.
 	if err := eng.DoSync(ctx, srv.loadBoards); err != nil {

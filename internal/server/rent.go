@@ -288,7 +288,7 @@ func (s *Server) RentCharacter(w *game.Live, c *game.Character, mode session.Ren
 		leaver.MarkRented()
 	}
 	w.Remove(c)
-	go func() {
+	s.background(func() {
 		ctx := context.Background()
 		if err := s.objects.SaveObjects(ctx, c.Name, f); err != nil {
 			s.logger.Error("writing a rent file", "character", c.Name, "error", err)
@@ -304,7 +304,7 @@ func (s *Server) RentCharacter(w *game.Live, c *game.Character, mode session.Ren
 		if leaver != nil {
 			leaver.Close()
 		}
-	}()
+	})
 }
 
 // appendRentable is appendForStorage with the unrentables dropped, which is

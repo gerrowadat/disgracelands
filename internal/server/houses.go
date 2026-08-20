@@ -167,11 +167,11 @@ func (k *houseKeeper) SaveControl(w *game.Live) {
 		})
 	}
 
-	go func() {
+	s.background(func() {
 		if err := s.houses.Save(records); err != nil {
 			s.logger.Error("writing the house control file", "error", err)
 		}
-	}()
+	})
 }
 
 // SaveHouse implements session.HouseKeeper: House_crashsave for one room.
@@ -187,11 +187,11 @@ func (k *houseKeeper) SaveHouse(w *game.Live, vnum game.RoomVnum) {
 		s.logger.Error("encoding a house file", "house", vnum, "error", err)
 		return
 	}
-	go func() {
+	s.background(func() {
 		if err := s.houses.SaveObjects(int32(vnum), b); err != nil {
 			s.logger.Error("writing a house file", "house", vnum, "error", err)
 		}
-	}()
+	})
 }
 
 // houseObjects flattens a room's contents in House_save's order, which is not
@@ -210,11 +210,11 @@ func houseObjects(out []player.StoredObject, list []*game.Object) []player.Store
 // DeleteHouse implements session.HouseKeeper.
 func (k *houseKeeper) DeleteHouse(vnum game.RoomVnum) {
 	s := k.s
-	go func() {
+	s.background(func() {
 		if err := s.houses.DeleteObjects(int32(vnum)); err != nil {
 			s.logger.Error("deleting a house file", "house", vnum, "error", err)
 		}
-	}()
+	})
 }
 
 // IDByName implements session.HouseKeeper.

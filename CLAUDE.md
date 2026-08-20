@@ -119,8 +119,19 @@ written to disk or a file appearing.
 
 Be careful about *which* signal you wait on. Renting removes the character
 from the world on the world goroutine and saves afterwards, off it — so
-"gone from the world" does not mean "record written", and a test that assumed
-it passed locally and failed in CI.
+"gone from the world" does not mean "record written".
+
+`srv.WaitForWrites()` is the barrier for anything written by a background
+save: it waits for every counted write goroutine to finish. Prefer it to
+polling with `eventually` when what you are waiting for is a file this server
+wrote.
+
+**Every background write must go through `Server.background`.** A bare
+`go func()` that writes into a test's `t.TempDir()` outlives the test, and
+the cleanup then fails with "directory not empty" — reported against
+*whichever other test the scheduler was running by then*, which is why this
+looked for a while like RNG flakiness somewhere else entirely. The same
+counter is what stops a shutdown losing a save that was in flight.
 
 **When a test and the implementation disagree, check the C before assuming
 the implementation is wrong.** Five `act()` expectations turned out to be

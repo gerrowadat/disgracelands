@@ -16,6 +16,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"sync"
 	"time"
 
 	"github.com/gerrowadat/disgracelands/internal/auth"
@@ -76,6 +77,12 @@ type Server struct {
 
 	rng *rng.Rand
 
+	// writes counts the background write goroutines — the saves that are
+	// deliberately pushed off the world goroutine so a slow disk cannot stall
+	// the game. Nothing waits for them during play; shutdown and the tests
+	// both do.
+	writes sync.WaitGroup
+
 	// Zone ageing state. Touched only from the world goroutine, which is
 	// where every periodic runs.
 	zones     map[int]*zoneState
@@ -122,6 +129,25 @@ func New(opts Options) *Server {
 	}
 	return s
 }
+
+// background runs a write off the world goroutine, counted so that shutdown
+// and the tests can wait for it.
+//
+// Every save in this package goes through here. The reason is durability at
+// one end and tidiness at the other: a process that exits with a save in
+// flight loses it, and a test whose t.TempDir() is removed with a save in
+// flight fails on "directory not empty" in whichever *other* test the
+// scheduler happens to be running by then.
+func (s *Server) background(f func()) {
+	s.writes.Add(1)
+	go func() {
+		defer s.writes.Done()
+		f()
+	}()
+}
+
+// WaitForWrites blocks until every background write has finished.
+func (s *Server) WaitForWrites() { s.writes.Wait() }
 
 // Text returns the canned files.
 func (s *Server) Text() *Text { return s.text }

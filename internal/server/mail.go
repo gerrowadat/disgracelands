@@ -36,11 +36,11 @@ func (m *mailSystem) HasMail(id int64) bool { return m.s.mail.HasMail(id) }
 // Send stores a message. Off the world goroutine, like every other write.
 func (m *mailSystem) Send(to, from int64, sent time.Time, text string) {
 	s := m.s
-	go func() {
+	s.background(func() {
 		if err := s.mail.Send(mail.Message{To: to, From: from, Sent: sent, Text: text}); err != nil {
 			s.logger.Error("storing mail", "to", to, "from", from, "error", err)
 		}
-	}()
+	})
 }
 
 // Receive takes the next letter and renders it, porting the header
