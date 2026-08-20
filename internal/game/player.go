@@ -141,6 +141,14 @@ type PlayerRecord struct {
 	FreezeLevel int32
 	// InvisLevel is the level below which they cannot be seen.
 	InvisLevel int32
+
+	// PoofIn and PoofOut are what the room is told when a god arrives and
+	// leaves. They live *outside* `player_special_data_saved` in the C
+	// (structs.h:899), so they are not in the player file and do not survive
+	// a reboot — every god who set one had to set it again next time the
+	// server came up.
+	PoofIn  string
+	PoofOut string
 	// LoadRoom is where they reappear, or NoRoom for the default.
 	LoadRoom RoomVnum
 	// BadPasswords counts consecutive failed logins.

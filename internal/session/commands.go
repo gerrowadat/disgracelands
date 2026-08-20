@@ -40,6 +40,9 @@ type Command struct {
 	// in their right places: they are a third of the C's table and they are
 	// loaded from a file at boot.
 	CLine int
+	// MinLevel is the level a character must be to use this command, and it
+	// is checked *while matching* rather than after — see lookup.
+	MinLevel int32
 	// Social is the social this command runs, for the entries built from
 	// `data/misc/socials` rather than written here.
 	Social *game.Social
@@ -232,6 +235,17 @@ func init() {
 		{Name: "order", Help: "Tell a charmed follower what to do.", Run: doOrder, CLine: 390},
 		{Name: "steal", Help: "Pick somebody's pocket.", Run: doSteal, CLine: 493},
 		{Name: "track", Help: "Sense which way somebody went.", Run: doTrack, CLine: 516},
+
+		// The wizard commands for getting about (interpreter.c:224, :313,
+		// :347, :406, :407, :507, :518). Their levels are part of matching,
+		// not a check afterwards — see lookupFor.
+		{Name: "at", Help: "Do something somewhere else.", Run: doAt, CLine: 224, MinLevel: game.LevelImmortal},
+		{Name: "goto", Help: "Go anywhere.", Run: doGoto, CLine: 313, MinLevel: game.LevelImmortal},
+		{Name: "invis", Help: "Set your invisibility level.", Run: doInvis, CLine: 347, MinLevel: game.LevelImmortal},
+		{Name: "poofin", Help: "Set what the room sees when you arrive.", Run: doPoofIn, CLine: 406, MinLevel: game.LevelImmortal},
+		{Name: "poofout", Help: "Set what the room sees when you leave.", Run: doPoofOut, CLine: 407, MinLevel: game.LevelImmortal},
+		{Name: "teleport", Help: "Send somebody somewhere.", Run: doTeleport, CLine: 507, MinLevel: game.LevelGod},
+		{Name: "transfer", Help: "Bring somebody to you.", Run: doTransfer, CLine: 518, MinLevel: game.LevelGod},
 		{Name: "say", Help: "Talk to the room.", Run: doSay, CLine: 449},
 		{Name: "'", Help: "Talk to the room; the short form of say.", Run: doSay, CLine: 450},
 		{Name: "score", Help: "Show your own statistics.", Run: doScore, CLine: 452},
@@ -449,7 +463,12 @@ func (d *Dispatcher) Do(ctx context.Context, s *Session, line string) error {
 		return nil
 	}
 
-	cmd := lookup(word)
+	// The level is part of the match. A command above your level is not
+	// refused, it is invisible: the word carries on matching down the table
+	// and, if nothing else answers to it, you get "Huh?!?" — the same answer
+	// as a word that means nothing at all. A mortal typing `goto` has never
+	// been told there is such a command.
+	cmd := lookupFor(word, characterLevel(s))
 	if cmd == nil {
 		s.Send("Huh?!?\r\n%s", prompt(s))
 		return nil
@@ -521,16 +540,48 @@ func (d *Dispatcher) Do(ctx context.Context, s *Session, line string) error {
 // memory and worth asserting from outside this package.
 func Lookup(word string) *Command { return lookup(word) }
 
-// lookup finds the first command the word is a prefix of, which is what the C
-// interpreter does.
-func lookup(word string) *Command {
+// LookupFor is Lookup for somebody of a given level, exported so tests can
+// assert what an abbreviation means on each side of the divide.
+func LookupFor(word string, level int32) *Command { return lookupFor(word, level) }
+
+// lookup finds the command a typed word means, for somebody of this level.
+//
+// The level is part of the *match*, not a check afterwards. The C's loop is
+//
+//	if (!strncmp(cmd_info[cmd].command, arg, length))
+//	  if (GET_LEVEL(ch) >= cmd_info[cmd].minimum_level)
+//	    break;
+//
+// — so a command above your level is skipped and matching carries on down the
+// table (interpreter.c:623). The consequence is that **abbreviations mean
+// different things to mortals and to gods**: an immortal command sitting
+// earlier in the table shadows a mortal one for the people who can use it,
+// and does not exist at all for everybody else. That is not a detail to
+// paper over; it is twenty years of muscle memory on both sides.
+func lookupFor(word string, level int32) *Command {
 	word = strings.ToLower(word)
 	for i := range Commands {
-		if strings.HasPrefix(Commands[i].Name, word) {
+		if strings.HasPrefix(Commands[i].Name, word) && level >= Commands[i].MinLevel {
 			return &Commands[i]
 		}
 	}
 	return nil
+}
+
+// lookup is lookupFor at implementor level: every command is visible. Used by
+// the help listing and by tests that ask what a word means in principle.
+func lookup(word string) *Command { return lookupFor(word, game.LevelImplementor) }
+
+// characterLevel is the level to match commands at. A session with no
+// character yet is a mortal of level zero.
+func characterLevel(s *Session) int32 {
+	if s == nil {
+		return 0
+	}
+	if c := s.Character(); c != nil && c.Record != nil {
+		return c.Record.Level
+	}
+	return 0
 }
 
 // split separates the command word from its argument.

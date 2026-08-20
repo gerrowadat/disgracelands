@@ -88,6 +88,21 @@ in that tree has to change them too.
 
 ## Superseded
 
+## Known flaky tests
+
+- **`TestPuffSaysThings` and `TestAlignmentSelectiveAggression`** fail
+  intermittently in a *full* suite run and never in isolation, on `main` as
+  well as on any branch. Both assert on an RNG-dependent outcome, and the
+  engine goroutine is pulsing in the background drawing from the same
+  generator — so how many draws have been taken by the time the test acts
+  depends on wall-clock timing, and a loaded machine running the whole suite
+  is a different stream from one running a handful of tests. Measured at 2
+  failures in 3 full runs on `main`, 0 in 20 runs of the test alone.
+
+  The fix is to stop these two depending on the shared stream — either drive
+  the behaviour rather than rolling for it, or give the assertion its own
+  generator. Not yet done.
+
 Kept here so it is clear these were decided rather than forgotten.
 
 - **Wiring ascii pfiles into the C server's live login/save path.** This was

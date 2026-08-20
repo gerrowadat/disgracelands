@@ -1096,7 +1096,10 @@ it.
 | **5g-ii. Mail ✅** | `mail`, `check`, `receive`, the postmaster, and the block-allocated mail file. | `mail.c` |
 | **5g-iii. Houses ✅** | `house`, `hcontrol`, the house control file, the per-room object saves, and the trespassing check in movement. | `house.c` |
 | **5h. The last of the rules ✅** | `steal` and `track` — the two thief skills left, and the only two that needed machinery of their own: the shopkeeper and player-thieving checks for one and `graph.c`'s breadth-first search for the other. Plus `order`, `enter` and `leave`. `remort` and `reroll` move to 5i, where `do_wizutil` lives. | `act.offensive.c`, `act.movement.c`, `act.other.c`, `graph.c` |
-| **5i. Immortal commands** | The whole of `act.wizard.c`: `goto`, `at`, `transfer`, `load`, `purge`, `stat`, `set`, `show`, `snoop`, `switch`, `force`, `restore`, `advance`, `freeze`, `ban`, `wiznet`, `shutdown`, and thirty more. Large, self-contained, and needed before the Phase 7 cutover — a server nobody can administer cannot go live. | `act.wizard.c` |
+| **5i-a. Getting about ✅** | The command table's minimum levels — which are part of *matching*, not a check afterwards — plus `goto`, `at`, `transfer`, `teleport`, `invis`, `poofin`, `poofout` and the shared `find_target_room`. | `act.wizard.c`, `interpreter.c` |
+| **5i-b. Looking at the innards** | `stat` (room, object, character), `vstat`, `vnum`, `show`, `last`, `date`. Read-only, and the largest of the four by line count. | `act.wizard.c` |
+| **5i-c. Changing things** | `load`, `purge`, `set`, `advance`, `restore`, `zreset`, `remort` (a large local addition), and `wizutil`'s subcommands — `reroll`, `pardon`, `freeze`, `thaw`, `unaffect`, `noshout`, `squelch`. | `act.wizard.c` |
+| **5i-d. Running the place** | `echo`, `send`, `gecho`, `snoop`, `switch`, `return`, `force`, `wiznet`, `syslog`, `dc`, `wizlock`, `shutdown`, `ban`. The operational half, and the one Phase 7 actually blocks on. | `act.wizard.c`, `ban.c` |
 
 Two things that are not in any slice and should be, once there is somewhere
 to put them: **`N.thing` targeting** (`get_number`, which every command using

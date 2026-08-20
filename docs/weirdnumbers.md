@@ -794,6 +794,27 @@ reports it as a trail.
 
 *Source*: `graph.c:191`.
 
+### Abbreviations mean different things to mortals and to gods
+
+```c
+for (length = strlen(arg), cmd = 0; *cmd_info[cmd].command != '\n'; cmd++)
+  if (!strncmp(cmd_info[cmd].command, arg, length))
+    if (GET_LEVEL(ch) >= cmd_info[cmd].minimum_level)
+      break;
+```
+
+The level check is *inside* the matching loop. A command above your level is
+not refused — it is skipped, and matching carries on down the table. So an
+immortal command sitting earlier than a mortal one shadows it for the people
+who can use it and does not exist at all for everybody else.
+
+The example that made this visible: `goto` is at line 313 and `gold` at 314,
+so **an immortal typing `go` counts their money never again.** And a mortal
+typing `goto` is told "Huh?!?" — the same answer as for a word that means
+nothing, so the command's existence is never given away.
+
+*Source*: `interpreter.c:623`.
+
 ---
 
 ## What to do about all this

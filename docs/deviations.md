@@ -312,6 +312,13 @@ Listed here so they are not mistaken for deliberate differences.
   `remmob`, `cerberus`, `teleporter` and the rest) are attached to vnums that
   exist only in the archived world. `assign_kings_castle` is a zone-sized
   script of its own and is untouched.
+- **`goto <object>` picks an arbitrary one when several answer to the name.**
+  `find_target_room` falls back to `get_obj_vis`, which walks the C's
+  `object_list` in creation order; this port walks a map, which has no order
+  at all. It matters only for `goto sword` with several swords in the world,
+  and keeping a creation-ordered list of every object alive to fix it is not
+  worth the cost.
+
 - **`remort` and `reroll` are not ported.** `reroll` *is* `do_wizutil`
   (`act.wizard.c:2034`) and `remort` is an implementor command in the same
   file, so both belong with the rest of Phase 5i rather than with the rules.

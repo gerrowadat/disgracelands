@@ -302,13 +302,40 @@ func TestMovementAbbreviationsStillWin(t *testing.T) {
 		"pou": "pour", "sip": "sip", "tas": "taste",
 		"st": "stand", "sit": "sit", "sl": "sleep", "wak": "wake",
 	} {
-		cmd := session.Lookup(word)
+		// At mortal level: the immortal commands are not merely refused,
+		// they are invisible to matching (interpreter.c:623).
+		cmd := session.LookupFor(word, 10)
 		if cmd == nil {
 			t.Errorf("%q matches nothing", word)
 			continue
 		}
 		if cmd.Name != want {
 			t.Errorf("%q is %s, want %s", word, cmd.Name, want)
+		}
+	}
+}
+
+// The same words mean different things to a god, because the level is part of
+// the match rather than a check afterwards.
+//
+// `go` is the example that made this visible: the C's table has `goto` at
+// line 313 and `gold` at 314, so an immortal typing `go` counts their money
+// never again.
+func TestSomeAbbreviationsMeanSomethingElseToAGod(t *testing.T) {
+	for word, want := range map[string]struct{ mortal, god string }{
+		"go": {mortal: "gold", god: "goto"},
+	} {
+		mortal := session.LookupFor(word, 10)
+		god := session.LookupFor(word, game.LevelImplementor)
+		if mortal == nil || god == nil {
+			t.Errorf("%q matches nothing", word)
+			continue
+		}
+		if mortal.Name != want.mortal {
+			t.Errorf("for a mortal %q is %s, want %s", word, mortal.Name, want.mortal)
+		}
+		if god.Name != want.god {
+			t.Errorf("for a god %q is %s, want %s", word, god.Name, want.god)
 		}
 	}
 }
