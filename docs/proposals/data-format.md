@@ -29,7 +29,7 @@ assumes them.
 | **Layout** | **One file per zone, holding everything in that zone** — the zone header, its resets, and every room, mobile, object and shop whose vnum falls in its range. A zone is the unit builders own and the unit OLC writes back. |
 | **Surface syntax** | **YAML 1.2 over a JSON data model.** Files are `.yaml`. The data model is strictly JSON-compatible, so JSON Schema, the existing parity dump and GMCP all keep working, and any `.json` file is accepted verbatim — YAML is a superset of JSON. |
 | **Prose** | **Stays prose.** Help entries, the MOTD, credits, news, policies and the greeting screens are plain UTF-8 text files, indexed from the data format rather than embedded in it. |
-| **Colour** | **Symbolic `&` codes in the data, ANSI rendered at the socket.** Forced rather than chosen: a raw ESC byte is not a legal character anywhere in a YAML stream. Export to `classic` renders codes back to the raw escapes `screen.h` defines, which is what the C server expects. See §5. |
+| **Colour** | **Named `{{red}}` codes in the data, ANSI rendered at the socket.** Symbolic markup is forced rather than chosen: a raw ESC byte is not a legal character anywhere in a YAML stream. The *spelling* is free, because the original data contains no colour codes to stay compatible with — so it is chosen for readability and for occurring zero times in the existing corpus, rather than borrowing the `&r` convention and its escaping burden. Export to `classic` renders codes back to the raw escapes `screen.h` defines, which is what the C server expects. See §5. |
 
 Naming: the format registers as **`native`**. `--world-format=native`,
 `--player-format=native`.
@@ -44,7 +44,9 @@ the Go and C loaders agree on all 3,202 records. So the case for replacing
 it has to be made, not assumed.
 
 **It is not one format, it is eight.** A `lib/` directory contains: the
-`#vnum` / `~` / letter-bitflag world files; the `zone.lst` index; the
+`#vnum` / `~` / letter-bitflag world files; the per-directory `index` and
+`index.mini` files that say which of them to load — not `zone.lst`, which
+looks like an index and is actually a builders' prose table; the
 positional shop file with its `-1` list terminators; the tag-per-line
 ascii player files; the `struct char_file_u` binary player database; the
 `objsave.c` rent files, which are struct dumps with a header; the board
@@ -205,6 +207,7 @@ data/
     12-mount-moria.yaml      the vnum inside the file is authoritative.
     30-midgaard.yaml
     ...
+    zones.yaml               Which zones load, and which exist but do not.
     sets.yaml                Named subsets of zones (`mini`, for --mini-mud).
 
   config/
@@ -243,15 +246,50 @@ data/
 
 Three structural rules, applied everywhere:
 
-**The directory is the index.** There is no `zone.lst`, no `plr_index`, no
-`index` file in `help/` listing the other files. Zones load in ascending
-vnum order, which is deterministic, is the order `classic` produces anyway,
-and cannot drift from the files on disk. The player roster is built by
-scanning `players/` at boot and cached in memory. This is the same
-reasoning `go-port-plan.md` §5.4 gives for rebuilding `plr_index` wholesale
-on every write — an index that disagrees with the files is a class of bug
-that then simply does not arise — taken one step further to not having the
-index at all.
+**The directory is the index — for everything the server owns.** There is no
+`plr_index` and no index file in `help/`. The player roster is built by
+scanning `players/` at boot and cached in memory. This is the same reasoning
+`go-port-plan.md` §5.4 gives for rebuilding `plr_index` wholesale on every
+write — an index that disagrees with the files is a class of bug that then
+simply does not arise — taken one step further to not having the index at
+all.
+
+**The world is the exception, and it took looking at a real data directory
+to see why.** An earlier draft of this section applied the same rule to
+zones: load every file in `world/`, in vnum order, no index. That is wrong,
+and it is wrong in the worst way — silently, and only on real data.
+
+A CircleMUD world directory is not a clean set of records. It is a working
+directory that people edited for years, and a real one contains: complete
+zone file sets that are present on disk but deliberately absent from the
+index, because the way you disable a zone is to unlist it rather than delete
+it; editor and operator backups sitting beside the files they back up, under
+suffixes chosen ad hoc; at least one file of the wrong type in the wrong
+subdirectory; and the prose `zone.lst` mentioned above, which is
+documentation. Directory-as-index would load every one of those, and its
+first visible effect would be silently re-enabling content somebody turned
+off — possibly years earlier, possibly because it was broken.
+
+So `world/` keeps an explicit manifest of which zones load. It is not a
+transcription of CircleMUD's `index` files, because the thing worth keeping
+is not the list but the *decision* the list encodes: a zone that exists and
+does not load is a deliberate state, and the format says so out loud rather
+than by omission.
+
+```yaml
+# data/world/zones.yaml
+zones:
+  - 30
+  - 31
+  - vnum: 42
+    enabled: false
+    note: unlisted in the source index; not loaded since at least the archive snapshot
+```
+
+Import reads the *source index*, never the directory listing, and reports
+every on-disk file the index does not mention rather than quietly adopting
+or quietly discarding it. `dlctl world lint` flags a zone file with no
+manifest entry, so the two cannot drift apart in the other direction either.
 
 **One writer per file.** Every file in this tree is written by exactly one
 subsystem, and always in full, never appended to. Writes are
@@ -446,6 +484,12 @@ of risk, so:
   that uses bit 32 or above *back* to `classic` cannot work, and
   `dlctl world export --format=classic` refuses rather than truncating.
 
+  Worth knowing before anyone spends effort on it: the real world does not
+  go anywhere near this. Every room and mobile bitfield in a snapshot of the
+  original data uses lowercase letters only — bit 18 at the highest, which
+  is where this tree's local flags sit. The ceiling is a property of the
+  encoding to be rid of, not a live problem to solve.
+
 ### 4.2 Exits are keyed by direction
 
 `D0`–`D5` becomes `north`, `east`, `south`, `west`, `up`, `down`. A missing
@@ -512,6 +556,11 @@ values: [0, 3, 0, 17]       # always accepted, always preserved exactly
 and `dlctl world lint` reports it, so a human decides whether it was junk
 or whether it meant something. Both forms load; the typed form is canonical
 where it is available.
+
+Sampling the original data suggests this fires on the order of one object in
+a hundred, which is the useful range: frequent enough that dropping the
+slots silently would lose something real, rare enough that the lint output
+is a list somebody can actually read to the end.
 
 ### 4.4 Resets become structural
 
@@ -621,7 +670,9 @@ obligations that follow from it are in §10.3.
 ### 4.7 Enhanced mobiles
 
 The `E` mob format's trailing `Key: value` block is a small closed set —
-across the whole stock world it is `BareHandAttack`, `Str`, `StrAdd`, `Int`,
+in the stock world *and* in a snapshot of the original one, which between
+them contain several hundred enhanced mobiles, it is `BareHandAttack`,
+`Str`, `StrAdd`, `Int`,
 `Wis`, `Dex`, `Con` and `Cha` — so it becomes a typed mapping rather than a
 list of raw pairs:
 
@@ -710,63 +761,67 @@ mutually exclusive.
 
 ### 5.3 The markup
 
-`&` followed by one character, with the code letters taken from `screen.h`
-so the mapping to and from the C server is mechanical:
+**Named codes in doubled braces**, `{{red}}` … `{{/}}`:
 
 | Code | Meaning | ANSI |
 |---|---|---|
-| `&n` | normal / reset | `\x1B[0m` |
-| `&r` `&g` `&y` `&b` `&m` `&c` `&w` | red, green, yellow, blue, magenta, cyan, white | `\x1B[3Xm` |
-| `&R` `&G` `&Y` `&B` `&M` `&C` `&W` | the bright variants | `\x1B[1;3Xm` |
-| `&&` | a literal `&` | — |
-| `&{…}` | raw SGR passthrough — see §5.5 | `\x1B[…m` |
+| `{{/}}` | reset | `\x1B[0m` |
+| `{{red}}` `{{green}}` `{{yellow}}` `{{blue}}` `{{magenta}}` `{{cyan}}` `{{white}}` | the seven `screen.h` colours | `\x1B[3Xm` |
+| `{{bright-red}}` … `{{bright-white}}` | the bright variants | `\x1B[1;3Xm` |
+| `{{sgr:…}}` | raw SGR passthrough — see §5.5 | `\x1B[…m` |
+| `{{lbrace}}` | a literal `{{` | — |
 
-**Why `&`:** because the data already uses this shape of markup and `&` is
-the one common sigil not yet taken. `act()` uses `$`-codes (`$n`, `$M`,
-`$e`) with `$$` as the literal escape and a `SYSERR` log for an unknown
-code — 1,480 of them in the stock data. Shop and damage messages use
-`printf`'s `%s`/`%d` — 418 more. `@` and `^` appear in prose. So `&` follows
-an established local precedent rather than inventing one, and `&&`-as-escape
-and unknown-code-is-an-error both mirror what `act()` already does.
+**Why not the `&r` convention every other MUD uses.** Because there is
+nothing to be compatible with. §5.1 establishes that this lineage never had
+in-band colour codes, and §12 that the original data contains none — so the
+usual reason to adopt `&` (players and builders already have it in their
+fingers, and the files are full of it) does not apply here. That leaves two
+criteria, YAML-safety and readability, and a single-character sigil loses on
+both.
 
-There are **13 literal ampersands** in the stock data: the "Hide & Tooth"
-shop that runs through zone 65, a credits line, and one social. Conversion
-escapes them to `&&`. That social is worth naming as the round-trip test
-case, because it is the most hostile string in the corpus and it exists
-already:
+On safety, the numbers come from the real corpus. Every plausible
+single-character sigil already occurs in builder-authored prose and would
+need escaping — `&` 18 times, `^` 117, `<` 257, `(` 413, `%` 722, `$` 1,513.
+`$` and `%` are additionally spoken for, by `act()`'s `$n`/`$M` codes and by
+`printf` in the shop and damage messages. Doubled `{{` occurs **zero** times
+in the entire corpus, so no escaping is required of any existing text and
+`{{lbrace}}` exists only for completeness.
 
+On readability, `{{bright-cyan}}` needs no table and `&C` does. That matters
+more than it sounds: the people editing this are builders, not the person
+who wrote the parser, and a file that can be read without a decoder ring is
+most of what this format is for.
+
+**The one syntactic wrinkle fails loudly, which is the point.** `{` is a
+YAML flow-mapping indicator, so a *plain* scalar cannot begin with `{{`:
+
+```yaml
+name: {{red}}The Temple Of Midgaard{{/}}    # parse error, with a line number
 ```
-$n swears: #@*"*&^$$%@*&!!!!!!
-```
 
-It contains `&`, `$$`, `%`, `@`, `^`, `#` and `"`. Anything that survives it
-intact will survive the rest of the corpus.
+Compare what a `&`-based scheme does with the same input — `&rThe` is
+silently consumed as an anchor named `rThe` and the value quietly loses its
+first four characters, with nothing reported anywhere. A loud failure at
+load time is worth a great deal more than a tidier first character, and it
+is the single strongest argument for this form over the conventional one.
+
+The mitigations are consequently mild: the writer quotes any single-line
+string beginning with `{{`, and that is all. **Block scalars are unaffected
+entirely** — `{{red}}` is literal text anywhere inside one, including as the
+very first characters — and since all prose in this format lives in block
+scalars, the wrinkle is confined to short single-line fields like a room
+name.
 
 **Colour is allowed in prose fields only.** Not in keywords: a player types
 keywords, and a colour code inside one silently breaks object and mobile
 matching in a way that is very hard to diagnose. Validation rejects it
 rather than trusting builders to know.
 
-**One sharp edge, and it fails silently.** `&` is YAML's anchor indicator,
-so a *plain* scalar that begins with a colour code is misparsed rather than
-rejected — a coloured room name is exactly this case, and it is a
-completely reasonable thing for a builder to write:
-
-```yaml
-name: &rThe Temple Of Midgaard&n     # parses as 'Temple Of Midgaard&n'
-```
-
-`&rThe` is consumed as an anchor named `rThe`, the rest becomes the value,
-and nothing anywhere reports a problem. The three mitigations are all
-required, not alternatives: the writer **always quotes** a single-line
-string that begins with `&`; the loader **rejects an anchor** anywhere in a
-file, which §2.1 already excludes from the data model and which turns this
-from silent corruption into an error with a line number; and
-`dlctl world lint` flags a value whose first characters look like a colour
-code that has gone missing. Block scalars are unaffected — a colour code
-anywhere inside one is literal text, including at the very start — which is
-another reason prose belongs in block scalars even when it happens to fit
-on one line.
+Worth keeping as the round-trip test case, because it is the most hostile
+string in the corpus and it already exists — one of the stock socials is a
+cartoon swear made entirely of the characters that mean something to
+somebody: `#`, `@`, `*`, `"`, `&`, `^`, `$$`, `%`. It contains no `{{`, so
+under this scheme it needs no escaping at all and must survive verbatim.
 
 ### 5.4 Rendering
 
@@ -791,8 +846,8 @@ answer to:
   `next_page()` does by hand in the C, and the Go server has no wrapping
   layer yet — so it should be built knowing this from the start rather than
   retrofitted, which is the substance of "we don't do colour well so far".
-- **Unbalanced colour is lintable.** A description that opens `&r` and never
-  returns to `&n` bleeds into whatever is printed next. That is the single
+- **Unbalanced colour is lintable.** A description that opens `{{red}}` and
+  never returns to `{{/}}` bleeds into whatever is printed next. That is the single
   most common colour bug in MUD data, it is trivial to detect on a symbolic
   grammar, and `dlctl world lint` reports it.
 
@@ -802,26 +857,27 @@ The requirement is that `native` data can go back to something the C server
 runs. Colour is the only part of this format where that is not simply a
 matter of re-encoding, so:
 
-**Export (`native` → `classic`) renders codes to raw ANSI.** `&r` becomes
+**Export (`native` → `classic`) renders codes to raw ANSI.** `{{red}}` becomes
 `\x1B[31m` in the written file. This is correct CircleMUD: the C server
-passes ESC through untouched and its pager already skips it. Exporting `&r`
-*literally* would show players the two characters `&r`, so rendering is
+passes ESC through untouched and its pager already skips it. Exporting
+`{{red}}` *literally* would show players those seven characters, so rendering is
 mandatory rather than an option — and it is the reason `screen.h`'s exact
 byte sequences are the table above rather than some tidier ANSI of our own.
 
 **Import (`classic` → `native`) recognises and demotes.** ESC sequences
-matching `screen.h`'s table become `&` codes; a literal `&` in the source
-becomes `&&`.
+matching `screen.h`'s table become named codes. Nothing in the source needs
+escaping, because `{{` does not occur in it.
 
-**Anything unrecognised survives via `&{…}`.** If the archive turns out to
+**Anything unrecognised survives via `{{sgr:…}}`.** If the archive turns out to
 contain 256-colour or truecolour sequences — `\x1B[38;5;208m` — there is no
-named code for them, so they import as `&{38;5;208}` and export back to the
+named code for them, so they import as `{{sgr:38;5;208}}` and export back to the
 identical bytes. This is what makes import lossless in all cases rather
 than only the easy one, and it means the format never has to refuse a file
 because someone was ambitious with colour in 2004.
 
 **The honest caveat: the round trip normalises.** `\x1B[1;31m` and
-`\x1B[31;1m` are the same colour and both import as `&R`; re-exporting emits
+`\x1B[31;1m` are the same colour and both import as `{{bright-red}}`;
+re-exporting emits
 `screen.h`'s spelling. So `classic → native → classic` preserves *meaning*
 exactly and *bytes* only where the original already used `screen.h`'s
 spelling. Under §10.4's posture this is a warning rather than a refusal —
@@ -836,13 +892,14 @@ representation the rest of the plan wants anyway:
 
 - **The web client.** `go-port-plan.md`'s decision record calls a self-hosted
   web front end "wanted, not merely kept open". A browser cannot use ANSI. A
-  renderer that turns `&r` into a `<span class="c-red">` is a lookup table;
+  renderer that turns `{{red}}` into a `<span class="c-red">` is a lookup
+  table;
   one that turns `\x1B[1;31m` into the same thing is an ANSI state machine
   that has to be right about every sequence a builder ever typed.
 - **GMCP and MXP** want structured text for the same reason.
 - **Everything that is not a terminal** — search, the parity dump, logs,
-  `dlctl` — strips colour by matching a two-character grammar rather than by
-  parsing escape sequences.
+  `dlctl` — strips colour by matching one unambiguous bracketed grammar
+  rather than by parsing escape sequences.
 
 The general principle is the one this format applies everywhere else:
 **store the intent, render the encoding at the edge.** Raw ANSI in the data
@@ -932,6 +989,17 @@ Help entries, the MOTD, the greeting screen, credits, news, policies and
 the handbook are text written by humans for humans, and wrapping them in a
 data format makes them harder to read, harder to grep and harder to diff
 while gaining nothing. They stay as UTF-8 `.txt` files.
+
+A note on the transcode those files are supposed to need. `dlctl convert`
+assumes CP1252 input, on the good evidence that the *stock* CircleMUD world
+shipped in `data/` contains high bytes. A snapshot of the original
+Disgracelands `lib/` does not: its world, text and misc directories are pure
+7-bit ASCII, so the transcode is a no-op on the data that actually matters.
+That is not a reason to drop the step — this is one snapshot of an archive
+that holds over a thousand nightly ones, and a converter that assumes ASCII
+and meets a curly quote does silent damage — but it does mean encoding is a
+smaller risk than it looked, and `dlctl world lint` reporting what it
+transcoded is more useful than any amount of care taken up front.
 
 Only help needs structure, because a help entry genuinely has fields —
 what keywords reach it, and what level may read it. That structure goes in
@@ -1168,6 +1236,20 @@ tool can triage instead of something someone greps.
 **`config/names.yaml`** — `misc/xnames`, a list of disallowed name
 substrings. Unchanged in substance; it is a list of strings either way.
 
+**`state/bans.yaml`** — the siteban list (`etc/badsites`, `BAN_FILE` in
+`db.h`, read and written by `ban.c`). A few lines of site, ban type, date
+and the immortal who set it. Small, but it was missing from an earlier draft
+of this section entirely, which is the hazard of enumerating a format's
+contents from the parts that are interesting rather than from a directory
+listing.
+
+**`state/clock.yaml`** — the MUD clock. `db.c` keeps the game's epoch in
+`etc/time` as a bare integer with nothing around it: no name, no units, no
+format marker, one number in a file. It is the smallest thing in `lib/` and
+it is genuinely global state — reboot without it and in-game time jumps —
+so it needs somewhere to live that is not "a number in a file called
+`time`".
+
 ---
 
 ## 10. Versioning, validation and the canonical writer
@@ -1217,9 +1299,9 @@ reader does not care about:
   trailing whitespace, which a block scalar cannot express at all.
 - **Quoted style for any single-line string beginning with an indicator
   character** — `&`, `*`, `!`, `%`, `@`, `` ` ``, `#`, `-`, `?`, `:`, `[`,
-  `{`. The `&` case is the one that will actually happen, it is a coloured
-  room name, and §5.3 explains why it is the dangerous one: it does not
-  fail, it silently returns the wrong string.
+  `{`. The case that will actually occur is `{`, from a coloured room name
+  written `{{red}}…`; §5.3 covers it, and notes that unlike the `&`
+  alternative it fails loudly rather than silently.
 - **Byte-preserving on round trip.** Every string that goes in comes back
   out identical, including trailing whitespace, tabs, leading indentation and
   colour codes. This is the property §2.4 flags as the real risk, and it is
@@ -1264,8 +1346,8 @@ format-neutral and that is the whole reason it exists.
 | Step | What lands | Done when |
 |---|---|---|
 | **1. Vocabularies** | Name tables for every flag set, sector, position, item type, apply location and wear slot in `internal/game`, with round-trip tests. | Every bit in the stock world has a name or is reported. |
-| **1b. Colour** | The `&`-code parser, the ANSI renderer keyed off `PrefColour1`/`PrefColour2`, the stripper, and a display-width function that the wrapping layer is built on rather than retrofitted to. | The swearing social in §5.3 survives parse → render → strip, and width is counted correctly across every code including `&{…}`. |
-| **2. World read** | `native` as a read-only `world.Source`, plus `dlctl world import` from `classic`, including ESC → `&` demotion. | `import` then load produces a parity dump byte-identical to loading `classic` directly. |
+| **1b. Colour** | The `{{…}}` parser, the ANSI renderer keyed off `PrefColour1`/`PrefColour2`, the stripper, and a display-width function that the wrapping layer is built on rather than retrofitted to. | The swearing social in §5.3 survives parse → render → strip unescaped and unchanged, and width is counted correctly across every code including `{{sgr:…}}`. |
+| **2. World read** | `native` as a read-only `world.Source`, plus `dlctl world import` from `classic`, including ESC → named-code demotion. | `import` then load produces a parity dump byte-identical to loading `classic` directly. |
 | **3. World write** | `world.Sink`, the canonical writer, `dlctl world fmt`, `dlctl world export`. | `classic → native → classic` round-trips the whole world byte-for-byte — exactly, for the stock world, which has no colour in it; modulo the escape normalisation of §5.5 for anything that does — and `fmt` is idempotent. |
 | **4. Flip the default** | `--world-format=native`, `data/` converted in the repo, `classic` demoted to import-only. | CI runs the parity harness against a converted `data/`. |
 | **5. Players** | `native` player store, `dlctl pfile convert --to=native`, aliases and rent folded in. | An archived roster survives `binary → ascii → native` with every field verified. |
@@ -1317,14 +1399,27 @@ readable and parses with `time.ParseDuration`, but is not a JSON number and
 is not obviously better for a value nobody reads by eye. Low stakes, needs
 picking once and applying everywhere.
 
-**Colour in the archive.** §5 establishes what the *server* does — nothing
-in-band, raw ESC or nothing — and that the stock world contains no escapes
-at all. What the private archive's own world and help text contain has not
-been surveyed, and it is the one input that could still move the design.
-Two outcomes are cheap and one is not: no colour at all, or plain
-`screen.h` colour, both convert straight to `&` codes. If it turns out
-builders were embedding raw escapes heavily *and* inconsistently — half-open
-sequences, cursor movement, anything that is not SGR — then import needs a
-policy for escapes that are not colour, which `&{…}` deliberately does not
-cover. Worth an hour with `grep -c $'\x1b'` over the archive before step 2
-of §11, because it is the cheapest possible way to find out.
+**~~Colour in the archive.~~ Answered — it is the cheap outcome.** A
+snapshot of the original `lib/` has now been surveyed, and there is no
+colour in any builder-authored content: the world files, the help corpus,
+the screen text, the socials and the damage messages contain **zero** escape
+bytes between them. The only real colour anywhere in the tree is a
+double-figure count of SGR sequences inside one archived player database,
+drawing on two distinct codes — a foreground colour and a reset — which is
+players having typed escapes into their own titles and descriptions.
+
+Three consequences. The scheme in §5 covers the real data comfortably —
+and, since there is no existing colour convention to preserve, it was free
+to be chosen for YAML-safety and legibility rather than for compatibility.
+`{{sgr:…}}` is insurance rather than a requirement, and should be kept anyway,
+because it costs nothing and one snapshot is not the whole archive. And
+colour is a *player-data* problem rather than a world-data one, which means
+it lands with step 5 of §11 and not step 2 — the opposite of where this
+document originally implied the risk was.
+
+One trap worth recording for whoever writes the importer: a naive
+`grep -c $'\x1b'` over `lib/` returns a number roughly fifty times the true
+one. The player database is a `struct` dump that is ~89% non-printable and
+uses all 256 byte values, so `0x1b` occurs constantly inside integer fields
+and means nothing. Escapes must be counted only in the text fields of a
+parsed record, never over the file's bytes.
