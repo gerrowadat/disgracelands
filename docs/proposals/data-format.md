@@ -44,7 +44,9 @@ the Go and C loaders agree on all 3,202 records. So the case for replacing
 it has to be made, not assumed.
 
 **It is not one format, it is eight.** A `lib/` directory contains: the
-`#vnum` / `~` / letter-bitflag world files; the `zone.lst` index; the
+`#vnum` / `~` / letter-bitflag world files; the per-directory `index` and
+`index.mini` files that say which of them to load — not `zone.lst`, which
+looks like an index and is actually a builders' prose table; the
 positional shop file with its `-1` list terminators; the tag-per-line
 ascii player files; the `struct char_file_u` binary player database; the
 `objsave.c` rent files, which are struct dumps with a header; the board
@@ -205,6 +207,7 @@ data/
     12-mount-moria.yaml      the vnum inside the file is authoritative.
     30-midgaard.yaml
     ...
+    zones.yaml               Which zones load, and which exist but do not.
     sets.yaml                Named subsets of zones (`mini`, for --mini-mud).
 
   config/
@@ -243,15 +246,50 @@ data/
 
 Three structural rules, applied everywhere:
 
-**The directory is the index.** There is no `zone.lst`, no `plr_index`, no
-`index` file in `help/` listing the other files. Zones load in ascending
-vnum order, which is deterministic, is the order `classic` produces anyway,
-and cannot drift from the files on disk. The player roster is built by
-scanning `players/` at boot and cached in memory. This is the same
-reasoning `go-port-plan.md` §5.4 gives for rebuilding `plr_index` wholesale
-on every write — an index that disagrees with the files is a class of bug
-that then simply does not arise — taken one step further to not having the
-index at all.
+**The directory is the index — for everything the server owns.** There is no
+`plr_index` and no index file in `help/`. The player roster is built by
+scanning `players/` at boot and cached in memory. This is the same reasoning
+`go-port-plan.md` §5.4 gives for rebuilding `plr_index` wholesale on every
+write — an index that disagrees with the files is a class of bug that then
+simply does not arise — taken one step further to not having the index at
+all.
+
+**The world is the exception, and it took looking at a real data directory
+to see why.** An earlier draft of this section applied the same rule to
+zones: load every file in `world/`, in vnum order, no index. That is wrong,
+and it is wrong in the worst way — silently, and only on real data.
+
+A CircleMUD world directory is not a clean set of records. It is a working
+directory that people edited for years, and a real one contains: complete
+zone file sets that are present on disk but deliberately absent from the
+index, because the way you disable a zone is to unlist it rather than delete
+it; editor and operator backups sitting beside the files they back up, under
+suffixes chosen ad hoc; at least one file of the wrong type in the wrong
+subdirectory; and the prose `zone.lst` mentioned above, which is
+documentation. Directory-as-index would load every one of those, and its
+first visible effect would be silently re-enabling content somebody turned
+off — possibly years earlier, possibly because it was broken.
+
+So `world/` keeps an explicit manifest of which zones load. It is not a
+transcription of CircleMUD's `index` files, because the thing worth keeping
+is not the list but the *decision* the list encodes: a zone that exists and
+does not load is a deliberate state, and the format says so out loud rather
+than by omission.
+
+```yaml
+# data/world/zones.yaml
+zones:
+  - 30
+  - 31
+  - vnum: 42
+    enabled: false
+    note: unlisted in the source index; not loaded since at least the archive snapshot
+```
+
+Import reads the *source index*, never the directory listing, and reports
+every on-disk file the index does not mention rather than quietly adopting
+or quietly discarding it. `dlctl world lint` flags a zone file with no
+manifest entry, so the two cannot drift apart in the other direction either.
 
 **One writer per file.** Every file in this tree is written by exactly one
 subsystem, and always in full, never appended to. Writes are
@@ -446,6 +484,12 @@ of risk, so:
   that uses bit 32 or above *back* to `classic` cannot work, and
   `dlctl world export --format=classic` refuses rather than truncating.
 
+  Worth knowing before anyone spends effort on it: the real world does not
+  go anywhere near this. Every room and mobile bitfield in a snapshot of the
+  original data uses lowercase letters only — bit 18 at the highest, which
+  is where this tree's local flags sit. The ceiling is a property of the
+  encoding to be rid of, not a live problem to solve.
+
 ### 4.2 Exits are keyed by direction
 
 `D0`–`D5` becomes `north`, `east`, `south`, `west`, `up`, `down`. A missing
@@ -512,6 +556,11 @@ values: [0, 3, 0, 17]       # always accepted, always preserved exactly
 and `dlctl world lint` reports it, so a human decides whether it was junk
 or whether it meant something. Both forms load; the typed form is canonical
 where it is available.
+
+Sampling the original data suggests this fires on the order of one object in
+a hundred, which is the useful range: frequent enough that dropping the
+slots silently would lose something real, rare enough that the lint output
+is a list somebody can actually read to the end.
 
 ### 4.4 Resets become structural
 
@@ -621,7 +670,9 @@ obligations that follow from it are in §10.3.
 ### 4.7 Enhanced mobiles
 
 The `E` mob format's trailing `Key: value` block is a small closed set —
-across the whole stock world it is `BareHandAttack`, `Str`, `StrAdd`, `Int`,
+in the stock world *and* in a snapshot of the original one, which between
+them contain several hundred enhanced mobiles, it is `BareHandAttack`,
+`Str`, `StrAdd`, `Int`,
 `Wis`, `Dex`, `Con` and `Cha` — so it becomes a typed mapping rather than a
 list of raw pairs:
 
@@ -933,6 +984,17 @@ the handbook are text written by humans for humans, and wrapping them in a
 data format makes them harder to read, harder to grep and harder to diff
 while gaining nothing. They stay as UTF-8 `.txt` files.
 
+A note on the transcode those files are supposed to need. `dlctl convert`
+assumes CP1252 input, on the good evidence that the *stock* CircleMUD world
+shipped in `data/` contains high bytes. A snapshot of the original
+Disgracelands `lib/` does not: its world, text and misc directories are pure
+7-bit ASCII, so the transcode is a no-op on the data that actually matters.
+That is not a reason to drop the step — this is one snapshot of an archive
+that holds over a thousand nightly ones, and a converter that assumes ASCII
+and meets a curly quote does silent damage — but it does mean encoding is a
+smaller risk than it looked, and `dlctl world lint` reporting what it
+transcoded is more useful than any amount of care taken up front.
+
 Only help needs structure, because a help entry genuinely has fields —
 what keywords reach it, and what level may read it. That structure goes in
 an index, not in the text:
@@ -1168,6 +1230,20 @@ tool can triage instead of something someone greps.
 **`config/names.yaml`** — `misc/xnames`, a list of disallowed name
 substrings. Unchanged in substance; it is a list of strings either way.
 
+**`state/bans.yaml`** — the siteban list (`etc/badsites`, `BAN_FILE` in
+`db.h`, read and written by `ban.c`). A few lines of site, ban type, date
+and the immortal who set it. Small, but it was missing from an earlier draft
+of this section entirely, which is the hazard of enumerating a format's
+contents from the parts that are interesting rather than from a directory
+listing.
+
+**`state/clock.yaml`** — the MUD clock. `db.c` keeps the game's epoch in
+`etc/time` as a bare integer with nothing around it: no name, no units, no
+format marker, one number in a file. It is the smallest thing in `lib/` and
+it is genuinely global state — reboot without it and in-game time jumps —
+so it needs somewhere to live that is not "a number in a file called
+`time`".
+
 ---
 
 ## 10. Versioning, validation and the canonical writer
@@ -1317,14 +1393,25 @@ readable and parses with `time.ParseDuration`, but is not a JSON number and
 is not obviously better for a value nobody reads by eye. Low stakes, needs
 picking once and applying everywhere.
 
-**Colour in the archive.** §5 establishes what the *server* does — nothing
-in-band, raw ESC or nothing — and that the stock world contains no escapes
-at all. What the private archive's own world and help text contain has not
-been surveyed, and it is the one input that could still move the design.
-Two outcomes are cheap and one is not: no colour at all, or plain
-`screen.h` colour, both convert straight to `&` codes. If it turns out
-builders were embedding raw escapes heavily *and* inconsistently — half-open
-sequences, cursor movement, anything that is not SGR — then import needs a
-policy for escapes that are not colour, which `&{…}` deliberately does not
-cover. Worth an hour with `grep -c $'\x1b'` over the archive before step 2
-of §11, because it is the cheapest possible way to find out.
+**~~Colour in the archive.~~ Answered — it is the cheap outcome.** A
+snapshot of the original `lib/` has now been surveyed, and there is no
+colour in any builder-authored content: the world files, the help corpus,
+the screen text, the socials and the damage messages contain **zero** escape
+bytes between them. The only real colour anywhere in the tree is a
+double-figure count of SGR sequences inside one archived player database,
+drawing on two distinct codes — a foreground colour and a reset — which is
+players having typed escapes into their own titles and descriptions.
+
+Three consequences. The `&` scheme in §5 covers the real data comfortably.
+`&{…}` is insurance rather than a requirement, and should be kept anyway,
+because it costs nothing and one snapshot is not the whole archive. And
+colour is a *player-data* problem rather than a world-data one, which means
+it lands with step 5 of §11 and not step 2 — the opposite of where this
+document originally implied the risk was.
+
+One trap worth recording for whoever writes the importer: a naive
+`grep -c $'\x1b'` over `lib/` returns a number roughly fifty times the true
+one. The player database is a `struct` dump that is ~89% non-printable and
+uses all 256 byte values, so `0x1b` occurs constantly inside integer fields
+and means nothing. Escapes must be counted only in the text fields of a
+parsed record, never over the file's bytes.
