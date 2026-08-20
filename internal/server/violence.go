@@ -63,7 +63,7 @@ func (s *Server) hit(w *game.Live, attacker, victim *game.Character) {
 	if attacker.Record == nil || victim.Record == nil {
 		return
 	}
-	if s.refusedByPeace(w, attacker, victim) {
+	if s.refusesDamage(w, attacker, victim) {
 		return
 	}
 
@@ -99,12 +99,24 @@ func (s *Server) hit(w *game.Live, attacker, victim *game.Character) {
 // The returned figure is the damage actually taken, after sanctuary and the
 // rest, because that is the number the caller prints in its `[n]`.
 func (s *Server) Damage(w *game.Live, attacker, victim *game.Character, amount int32) int32 {
-	if victim == nil || victim.Record == nil || s.refusedByPeace(w, attacker, victim) {
+	if victim == nil || victim.Record == nil || s.refusesDamage(w, attacker, victim) {
 		return 0
 	}
 	dam := game.ApplyDamage(amount, victim.Record, combatant{victim})
 	s.applyDamage(w, attacker, victim, dam)
 	return dam
+}
+
+// refusesDamage is the front of damage(): the checks that stop a blow before
+// anything is computed, in the C's order (fight.c:795 and :802).
+//
+// One function called from both entry points, because the C has one. `hit`
+// had its own copy of the peaceful-room check, and the shopkeeper check added
+// beside it in Damage alone did nothing for a punch — which is exactly the
+// divergence this shape prevents.
+func (s *Server) refusesDamage(w *game.Live, attacker, victim *game.Character) bool {
+	return s.refusedByPeace(w, attacker, victim) ||
+		s.refusedByShopkeeper(w, attacker, victim)
 }
 
 // refusedByPeace is damage()'s peaceful-room check. It lives here rather than
@@ -328,4 +340,37 @@ func (s *Server) toRoomExcept(w *game.Live, c *game.Character, format string, ar
 			other.Tell(format, args...)
 		}
 	}
+}
+
+// refusedByShopkeeper is ok_damage_shopkeeper (shop.c:941), checked in
+// damage() right after the peaceful-room test (fight.c:802).
+//
+// A shopkeeper whose shop is not flagged WILL_FIGHT cannot be hurt: they slap
+// you and tell you to get out. Being in damage() rather than in `kill` is the
+// point — a fireball is refused the same way a punch is.
+//
+// The charm check comes first and inverts the whole thing: a *charmed*
+// shopkeeper takes damage normally, because the alternative is an invincible
+// mobile fighting on somebody's behalf.
+func (s *Server) refusedByShopkeeper(w *game.Live, attacker, victim *game.Character) bool {
+	if attacker == nil || victim == nil || attacker == victim || !victim.IsNPC() {
+		return false
+	}
+	if victim.Record != nil && victim.Record.AffectFlags.Has(game.AffectCharm) {
+		return false
+	}
+	shop := w.ShopFor(victim)
+	if shop == nil || shop.Flags.Has(game.ShopWillFight) {
+		return false
+	}
+
+	// do_action(victim, GET_NAME(ch), cmd_slap, 0), then a tell.
+	attacker.Tell("%s slaps you in the face!\r\n", victim.Name)
+	for _, other := range w.Occupants(victim.Room) {
+		if other != attacker && other != victim {
+			other.Tell("%s slaps %s in the face!\r\n", victim.Name, attacker.Name)
+		}
+	}
+	attacker.Tell("%s tells you, 'Get out of here before I call the guards!'\r\n", victim.Name)
+	return true
 }

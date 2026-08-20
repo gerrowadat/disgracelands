@@ -56,6 +56,9 @@ type SpecialCall struct {
 
 	RNG      *rng.Rand
 	Violence Violence
+	// Rent stores a character's belongings and takes them out of the world.
+	// Only the receptionist uses it.
+	Rent RentSaver
 }
 
 // Is reports whether the command being run is this one, porting CMD_IS.
@@ -90,17 +93,20 @@ var specials = map[string]Special{}
 
 func init() {
 	specials = map[string]Special{
-		"guild":       specGuild,
-		"guild_guard": specGuildGuard,
-		"puff":        specPuff,
-		"fido":        specFido,
-		"janitor":     specJanitor,
-		"cityguard":   specCityguard,
-		"snake":       specSnake,
-		"magic_user":  specMagicUser,
-		"thief":       specThief,
-		"dump":        specDump,
-		"shop_keeper": specShopKeeper,
+		"guild":        specGuild,
+		"guild_guard":  specGuildGuard,
+		"puff":         specPuff,
+		"fido":         specFido,
+		"janitor":      specJanitor,
+		"cityguard":    specCityguard,
+		"snake":        specSnake,
+		"magic_user":   specMagicUser,
+		"thief":        specThief,
+		"dump":         specDump,
+		"shop_keeper":  specShopKeeper,
+		"bank":         specBank,
+		"receptionist": specReceptionist,
+		"cryogenicist": specCryogenicist,
 	}
 }
 
@@ -129,7 +135,7 @@ func (c *Context) runSpecials(command, arg string) bool {
 		sc := &SpecialCall{
 			World: c.World, Session: c.Session, Actor: c.Character,
 			Command: command, Arg: arg,
-			RNG: c.RNG, Violence: c.Violence,
+			RNG: c.RNG, Violence: c.Violence, Rent: c.Rent,
 		}
 		set(sc)
 		return fn(sc)

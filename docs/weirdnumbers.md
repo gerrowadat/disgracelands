@@ -637,14 +637,23 @@ involved it makes no difference, but it is what the archive says.
  */
 ```
 
-The caller acts on `2` and nothing else (`interpreter.c:1690`). The room comes
-from `GET_LOADROOM`, which is cleared to `NOWHERE` six lines later unless
-`PLR_LOADROOM` is set — so a player wakes up in the temple whether they rented
-or crashed, and the 0-versus-1 distinction the comment describes has no effect
-at all. The port keeps the distinction available (`RentCode.KeepsLoadRoom`) and
-likewise does not use it.
+The caller acts on `2` and nothing else (`interpreter.c:1690`).
 
-*Source*: `objsave.c:428`, `interpreter.c:1676`.
+The *behaviour* the other two describe is real, but it is achieved somewhere
+else entirely: `gen_receptionist` sets `GET_LOADROOM(ch)` to the inn just
+before it removes you (`objsave.c:1143`), and the entry sequence reads it,
+uses it, and then clears it back to `NOWHERE` unless `PLR_LOADROOM` is set
+(`interpreter.c:1676`). So renting brings you back to the inn exactly once,
+quitting leaves you in the temple, and `Crash_load`'s 0-versus-1 has nothing
+to do with it. The port keeps `RentCode.KeepsLoadRoom` available for the same
+reason the C keeps the return value: it documents the intent.
+
+Worth knowing because the natural way to write the Go — set the load room on
+every save, so people come back where they were — is a different game, and
+this port had it that way until the receptionist was written and the
+contradiction showed up.
+
+*Source*: `objsave.c:428`, `objsave.c:1143`, `interpreter.c:1676`.
 
 ### Shop prices depend on the width of a multiplication
 

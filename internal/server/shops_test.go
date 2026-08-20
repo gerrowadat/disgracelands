@@ -269,3 +269,51 @@ func TestAShutShopServesNobody(t *testing.T) {
 		t.Errorf("a shut shop took %d gold", 1000-got)
 	}
 }
+
+// ok_damage_shopkeeper: a shop without WILL_FIGHT cannot be hurt, and the
+// check is in damage() rather than in `kill`, so every route is covered.
+func TestAShopkeeperWithoutWillFightCannotBeHurt(t *testing.T) {
+	srv, _ := newTestServer(t)
+	c := dialClient(t, listening(t, srv))
+	c.create("Bruiser", "fistfight", "m", "w")
+	inShop(t, srv, "Bruiser", 0)
+
+	var before int32
+	inWorld(t, srv, func(w *game.Live) {
+		if keeper := w.FindInRoom(ShopRoom, "shopkeeper"); keeper != nil && keeper.Record != nil {
+			before = keeper.Record.Points.Hit
+		}
+	})
+
+	c.send("hit shopkeeper")
+	c.expect("Get out of here before I call the guards!")
+	c.settle()
+
+	var after int32
+	inWorld(t, srv, func(w *game.Live) {
+		if keeper := w.FindInRoom(ShopRoom, "shopkeeper"); keeper != nil && keeper.Record != nil {
+			after = keeper.Record.Points.Hit
+		}
+	})
+	if after != before {
+		t.Errorf("the shopkeeper lost %d hit points; a shop without WILL_FIGHT is untouchable",
+			before-after)
+	}
+}
+
+// With WILL_FIGHT set they are an ordinary mobile again.
+func TestAShopkeeperWithWillFightCanBeHurt(t *testing.T) {
+	srv, _ := newTestServer(t)
+	c := dialClient(t, listening(t, srv))
+	c.create("Brawler", "haveago", "m", "w")
+	inShop(t, srv, "Brawler", 0)
+
+	inWorld(t, srv, func(w *game.Live) {
+		for _, shop := range w.Shops() {
+			shop.Flags = shop.Flags.Set(game.ShopWillFight)
+		}
+	})
+
+	c.send("hit shopkeeper")
+	c.expectAny("You hit the shopkeeper", "You miss the shopkeeper")
+}

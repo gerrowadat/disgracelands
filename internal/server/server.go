@@ -357,11 +357,15 @@ func (s *Server) Save(ctx context.Context, c *game.Character) error {
 		return nil
 	}
 	var snapshot game.PlayerRecord
-	if err := s.engine.DoSync(ctx, func(w *game.Live) {
+	if err := s.engine.DoSync(ctx, func(_ *game.Live) {
 		snapshot = *c.Record
-		if w.Room(c.Room) != nil {
-			snapshot.LoadRoom = c.Room
-		}
+		// LoadRoom is *not* set from the current room. save_char writes
+		// whatever is on the record and nothing else touches it: the
+		// receptionist sets it when you rent (objsave.c:1143), and the entry
+		// sequence clears it again once it has been used
+		// (interpreter.c:1676). Writing the current room here — which this
+		// did — made every save a persistent load room and quietly undid
+		// both.
 	}); err != nil {
 		return err
 	}

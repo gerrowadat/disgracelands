@@ -62,6 +62,9 @@ type Context struct {
 	// writing elsewhere: this runs on the world goroutine, and a rule that
 	// waits for a disk stops the game for everybody.
 	Save func(*game.Character)
+	// Rent stores a character's belongings and takes them out of the world,
+	// for the receptionist.
+	Rent RentSaver
 	// Arg is everything after the command word, trimmed.
 	Arg string
 	// Social is the social being run, for the commands that are one.
@@ -190,6 +193,15 @@ func init() {
 		{Name: "list", Help: "List what a shopkeeper has for sale.", Run: doNotHere, CLine: 360},
 		{Name: "sell", Help: "Sell something to a shopkeeper.", Run: doNotHere, CLine: 454},
 		{Name: "value", Help: "Ask a shopkeeper what they would pay.", Run: doNotHere, CLine: 530},
+
+		// The bank and the inn. All `do_not_here` as well (interpreter.c:237,
+		// :275, :550, :391, :438), and picked up by the `bank` and
+		// `receptionist` specials.
+		{Name: "balance", Help: "Ask a banker what you have deposited.", Run: doNotHere, CLine: 237},
+		{Name: "deposit", Help: "Put money in the bank.", Run: doNotHere, CLine: 275},
+		{Name: "withdraw", Help: "Take money out of the bank.", Run: doNotHere, CLine: 550},
+		{Name: "offer", Help: "Ask an innkeeper what a stay would cost.", Run: doNotHere, CLine: 391},
+		{Name: "rent", Help: "Store your belongings and leave the game.", Run: doNotHere, CLine: 438},
 		{Name: "say", Help: "Talk to the room.", Run: doSay, CLine: 449},
 		{Name: "'", Help: "Talk to the room; the short form of say.", Run: doSay, CLine: 450},
 		{Name: "score", Help: "Show your own statistics.", Run: doScore, CLine: 452},
@@ -303,6 +315,20 @@ func init() {
 // A social whose name is not in the C's table is dropped with a note, which is
 // what the C does too — it logs "Unknown social '%s' in social file" and
 // re-uses the slot. Called once at boot, before anything can type anything.
+// SocialNamed returns a registered social by name, or nil.
+//
+// Only the receptionist needs this: it fidgets by performing one, and the C
+// reaches it through find_command() rather than through the social table
+// directly.
+func SocialNamed(name string) *game.Social {
+	for i := range Commands {
+		if Commands[i].Name == name {
+			return Commands[i].Social
+		}
+	}
+	return nil
+}
+
 func RegisterSocials(socials []game.Social) (added int, unknown []string) {
 	out := append([]Command(nil), staticCommands...)
 
@@ -375,6 +401,8 @@ type Dispatcher struct {
 	NoSpecials bool
 	// Save writes a character's record back, off the world goroutine.
 	Save func(*game.Character)
+	// Rent stores a character's belongings, for the receptionist.
+	Rent RentSaver
 }
 
 // Do implements CommandHandler.
@@ -416,7 +444,7 @@ func (d *Dispatcher) Do(ctx context.Context, s *Session, line string) error {
 		c := &Context{
 			Ctx: ctx, Session: s, Character: s.Character(),
 			World: w, Text: d.Text, RNG: d.RNG, Violence: d.Violence, Arg: arg,
-			Social: cmd.Social, Save: d.Save,
+			Social: cmd.Social, Save: d.Save, Rent: d.Rent,
 		}
 
 		// A command that panics must not leave the player staring at a dead

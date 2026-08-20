@@ -315,12 +315,16 @@ Listed here so they are not mistaken for deliberate differences.
 - **`steal` and `track`**, the two thief skills not ported: `steal` needs the
   killer/thief flag machinery and shopkeeper protection, and `track` needs the
   breadth-first search the C keeps in `graph.c`.
-- **`offer` is not ported.** It is the receptionist's command, not a shop's —
-  the C's table has it as `do_not_here` alongside `rent`, and both are picked
-  up by `gen_receptionist`. It arrives with the receptionist.
+- **The rent settings are constants, not options.** `free_rent`,
+  `min_rent_cost` and `max_obj_save` are compiled in at the values
+  `config.c` had. Making them configurable would be a feature; the archive's
+  values are what the game was.
 
-- **`ok_damage_shopkeeper` is not wired into the violence path**, so a shop
-  without WILL_FIGHT can still be attacked. The C slaps you and refuses.
+  The one that matters: **`free_rent` is YES**, so nobody on this server ever
+  paid rent. The receptionist says "Rent is free here.  Just quit, and your
+  objects will be saved!" and stops. Every price in `Crash_offer_rent` is
+  dead code on these settings — and ported anyway, because the setting is one
+  line and the path has to be right if it is ever turned off.
 
 - **There is no receptionist to rent at.** The rent files themselves are
   wired in — quitting writes one, logging in reads it, unpaid arrears cost you

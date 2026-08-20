@@ -13,6 +13,7 @@ import (
 
 	"github.com/gerrowadat/disgracelands/internal/game"
 	"github.com/gerrowadat/disgracelands/internal/persist/player"
+	"github.com/gerrowadat/disgracelands/internal/session"
 )
 
 // Crash_load and Crash_crashsave, ported from objsave.c.
@@ -218,6 +219,101 @@ func (s *Server) SaveEverything(ctx context.Context) {
 		}
 	}
 	s.crashSaveAll(ctx)
+}
+
+// RentCharacter is Crash_rentsave / Crash_cryosave (objsave.c:868, :914) plus
+// the extract_char that follows them.
+//
+// The receptionist calls this on the world goroutine, so the file writing and
+// the disconnect are pushed off it — the same reasoning as Save. The
+// character's belongings are read on the world goroutine before that happens,
+// because they are about to be destroyed.
+func (s *Server) RentCharacter(w *game.Live, c *game.Character, mode session.RentMode, cost int32) {
+	if c == nil || c.Record == nil {
+		return
+	}
+
+	code := player.RentRented
+	if mode == session.RentModeCryo {
+		code = player.RentCryo
+		// Cryo takes its fee once, up front, and stores no daily cost.
+		c.Record.Points.Gold = max(0, c.Record.Points.Gold-cost)
+		cost = 0
+	}
+
+	f := &player.RentFile{
+		Code:       code,
+		Written:    time.Now(),
+		CostPerDay: cost,
+		Gold:       c.Record.Points.Gold,
+		Bank:       c.Record.Points.BankGold,
+	}
+	// Crash_extract_norent_eq and Crash_extract_norents run first, so an
+	// unrentable item is destroyed rather than stored. The receptionist has
+	// already refused the whole transaction if there was one, so this only
+	// matters for a rent forced by something other than the desk.
+	for _, worn := range c.Equipment {
+		f.Objects = appendRentable(f.Objects, worn)
+	}
+	for i := len(c.Carrying) - 1; i >= 0; i-- {
+		f.Objects = appendRentable(f.Objects, c.Carrying[i])
+	}
+
+	// Everything is destroyed: Crash_rentsave ends with Crash_extract_objs.
+	// The file is the only copy now.
+	for _, worn := range c.Equipment {
+		w.ExtractObject(worn)
+	}
+	for _, obj := range append([]*game.Object(nil), c.Carrying...) {
+		w.ExtractObject(obj)
+	}
+
+	// extract_char (objsave.c:1144). Done here, on the world goroutine,
+	// rather than left to the session teardown: a renting character must not
+	// be left standing as a linkdead body for somebody to reconnect to, and
+	// relying on the socket closing first is a race that the tests lose.
+	//
+	// MarkQuit as well, so that if the teardown does get there it agrees.
+	leaver, _ := c.Client.(interface {
+		MarkQuit()
+		Close()
+	})
+	if leaver != nil {
+		leaver.MarkQuit()
+	}
+	w.Remove(c)
+	go func() {
+		ctx := context.Background()
+		if err := s.objects.SaveObjects(ctx, c.Name, f); err != nil {
+			s.logger.Error("writing a rent file", "character", c.Name, "error", err)
+		}
+		if err := s.Save(ctx, c); err != nil {
+			s.logger.Error("saving a renting character", "character", c.Name, "error", err)
+		}
+		s.logger.Info("has rented", "character", c.Name,
+			"mode", code.String(), "per_day", cost,
+			"total", c.Record.Points.Gold+c.Record.Points.BankGold)
+		// extract_char: they leave the game. Closing the session takes the
+		// usual Leave path, which is what removes them from the world.
+		if leaver != nil {
+			leaver.Close()
+		}
+	}()
+}
+
+// appendRentable is appendForStorage with the unrentables dropped, which is
+// what Crash_extract_norents leaves behind.
+func appendRentable(out []player.StoredObject, obj *game.Object) []player.StoredObject {
+	if obj == nil {
+		return out
+	}
+	for i := len(obj.Contents) - 1; i >= 0; i-- {
+		out = appendRentable(out, obj.Contents[i])
+	}
+	if game.IsUnrentable(obj) {
+		return out
+	}
+	return append(out, storedFrom(obj))
 }
 
 // crashSaveAll is Crash_save_all (objsave.c:1163), run on shutdown.

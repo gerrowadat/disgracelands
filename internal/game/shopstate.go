@@ -589,3 +589,76 @@ func hasSameObject(list []*Object, obj *Object) bool {
 	}
 	return false
 }
+
+// --- rent, the rules half ---------------------------------------------
+//
+// The receptionist's arithmetic. The file writing is in internal/server and
+// the conversation is in internal/session; this is what a stay costs and what
+// can be stored.
+
+// The rent settings from config.c, at the values this server ran with.
+//
+// They are constants rather than options because that is what the archive
+// says and the port's rule is that the archive wins. Making them
+// configurable would be a feature; see docs/deviations.md.
+// FreeRent is `free_rent = YES` (config.c:133), and it is the single most
+// consequential line in that file: **nobody on this server ever paid rent.**
+// The receptionist says "Rent is free here.  Just quit, and your objects will
+// be saved!" and stops there. Everything Crash_offer_rent computes is dead
+// code at this setting — ported anyway, because the setting is one line and
+// the path has to be right if it is ever turned off.
+//
+// A var rather than a constant, as the C's is: it is what makes the priced
+// path testable, and the tests that flip it restore it.
+var FreeRent = true
+
+const (
+	// MinRentCost is the receptionist's own fee, added to the items
+	// (config.c:139).
+	MinRentCost int32 = 100
+	// MaxObjSave is the most items a rent file will hold (config.c:136).
+	// Crash_load logs a "hoarding check" against it but does not enforce it;
+	// only the receptionist refuses.
+	MaxObjSave = 30
+)
+
+// Rent factors (objsave.c:22). A cryogenic stay costs four times a day's
+// rent, once, instead of a daily charge.
+const (
+	RentFactor int32 = 1
+	CryoFactor int32 = 4
+)
+
+// IsUnrentable reports whether an object cannot be stored at all, porting
+// Crash_is_unrentable (objsave.c:699).
+//
+// Four ways to be unstorable, and the last is the surprising one: **every key
+// is unrentable**, whatever its flags. Keys are how zones gate themselves, so
+// letting one survive a reboot in somebody's pocket would let them keep a
+// door open forever.
+func IsUnrentable(obj *Object) bool {
+	if obj == nil {
+		return false
+	}
+	return obj.ExtraFlags.Has(ItemNoRent) ||
+		obj.RentPerDay() < 0 ||
+		obj.Def == nil ||
+		obj.Type == ItemKey
+}
+
+// RentCostOf is Crash_calculate_rent (objsave.c:736): what one object and
+// everything inside it costs to store per day.
+//
+// Negative rents count as zero rather than as a discount, which matters
+// because an unrentable object is one with a negative rent and this is also
+// called on lists that have not been filtered.
+func RentCostOf(obj *Object) int32 {
+	if obj == nil {
+		return 0
+	}
+	total := max(0, obj.RentPerDay())
+	for _, inside := range obj.Contents {
+		total += RentCostOf(inside)
+	}
+	return total
+}
