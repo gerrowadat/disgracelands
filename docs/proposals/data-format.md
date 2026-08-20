@@ -29,7 +29,7 @@ assumes them.
 | **Layout** | **One file per zone, holding everything in that zone** — the zone header, its resets, and every room, mobile, object and shop whose vnum falls in its range. A zone is the unit builders own and the unit OLC writes back. |
 | **Surface syntax** | **YAML 1.2 over a JSON data model.** Files are `.yaml`. The data model is strictly JSON-compatible, so JSON Schema, the existing parity dump and GMCP all keep working, and any `.json` file is accepted verbatim — YAML is a superset of JSON. |
 | **Prose** | **Stays prose.** Help entries, the MOTD, credits, news, policies and the greeting screens are plain UTF-8 text files, indexed from the data format rather than embedded in it. |
-| **Colour** | **Symbolic `&` codes in the data, ANSI rendered at the socket.** Forced rather than chosen: a raw ESC byte is not a legal character anywhere in a YAML stream. Export to `classic` renders codes back to the raw escapes `screen.h` defines, which is what the C server expects. See §5. |
+| **Colour** | **Named `{{red}}` codes in the data, ANSI rendered at the socket.** Symbolic markup is forced rather than chosen: a raw ESC byte is not a legal character anywhere in a YAML stream. The *spelling* is free, because the original data contains no colour codes to stay compatible with — so it is chosen for readability and for occurring zero times in the existing corpus, rather than borrowing the `&r` convention and its escaping burden. Export to `classic` renders codes back to the raw escapes `screen.h` defines, which is what the C server expects. See §5. |
 
 Naming: the format registers as **`native`**. `--world-format=native`,
 `--player-format=native`.
@@ -761,63 +761,67 @@ mutually exclusive.
 
 ### 5.3 The markup
 
-`&` followed by one character, with the code letters taken from `screen.h`
-so the mapping to and from the C server is mechanical:
+**Named codes in doubled braces**, `{{red}}` … `{{/}}`:
 
 | Code | Meaning | ANSI |
 |---|---|---|
-| `&n` | normal / reset | `\x1B[0m` |
-| `&r` `&g` `&y` `&b` `&m` `&c` `&w` | red, green, yellow, blue, magenta, cyan, white | `\x1B[3Xm` |
-| `&R` `&G` `&Y` `&B` `&M` `&C` `&W` | the bright variants | `\x1B[1;3Xm` |
-| `&&` | a literal `&` | — |
-| `&{…}` | raw SGR passthrough — see §5.5 | `\x1B[…m` |
+| `{{/}}` | reset | `\x1B[0m` |
+| `{{red}}` `{{green}}` `{{yellow}}` `{{blue}}` `{{magenta}}` `{{cyan}}` `{{white}}` | the seven `screen.h` colours | `\x1B[3Xm` |
+| `{{bright-red}}` … `{{bright-white}}` | the bright variants | `\x1B[1;3Xm` |
+| `{{sgr:…}}` | raw SGR passthrough — see §5.5 | `\x1B[…m` |
+| `{{lbrace}}` | a literal `{{` | — |
 
-**Why `&`:** because the data already uses this shape of markup and `&` is
-the one common sigil not yet taken. `act()` uses `$`-codes (`$n`, `$M`,
-`$e`) with `$$` as the literal escape and a `SYSERR` log for an unknown
-code — 1,480 of them in the stock data. Shop and damage messages use
-`printf`'s `%s`/`%d` — 418 more. `@` and `^` appear in prose. So `&` follows
-an established local precedent rather than inventing one, and `&&`-as-escape
-and unknown-code-is-an-error both mirror what `act()` already does.
+**Why not the `&r` convention every other MUD uses.** Because there is
+nothing to be compatible with. §5.1 establishes that this lineage never had
+in-band colour codes, and §12 that the original data contains none — so the
+usual reason to adopt `&` (players and builders already have it in their
+fingers, and the files are full of it) does not apply here. That leaves two
+criteria, YAML-safety and readability, and a single-character sigil loses on
+both.
 
-There are **13 literal ampersands** in the stock data: the "Hide & Tooth"
-shop that runs through zone 65, a credits line, and one social. Conversion
-escapes them to `&&`. That social is worth naming as the round-trip test
-case, because it is the most hostile string in the corpus and it exists
-already:
+On safety, the numbers come from the real corpus. Every plausible
+single-character sigil already occurs in builder-authored prose and would
+need escaping — `&` 18 times, `^` 117, `<` 257, `(` 413, `%` 722, `$` 1,513.
+`$` and `%` are additionally spoken for, by `act()`'s `$n`/`$M` codes and by
+`printf` in the shop and damage messages. Doubled `{{` occurs **zero** times
+in the entire corpus, so no escaping is required of any existing text and
+`{{lbrace}}` exists only for completeness.
 
+On readability, `{{bright-cyan}}` needs no table and `&C` does. That matters
+more than it sounds: the people editing this are builders, not the person
+who wrote the parser, and a file that can be read without a decoder ring is
+most of what this format is for.
+
+**The one syntactic wrinkle fails loudly, which is the point.** `{` is a
+YAML flow-mapping indicator, so a *plain* scalar cannot begin with `{{`:
+
+```yaml
+name: {{red}}The Temple Of Midgaard{{/}}    # parse error, with a line number
 ```
-$n swears: #@*"*&^$$%@*&!!!!!!
-```
 
-It contains `&`, `$$`, `%`, `@`, `^`, `#` and `"`. Anything that survives it
-intact will survive the rest of the corpus.
+Compare what a `&`-based scheme does with the same input — `&rThe` is
+silently consumed as an anchor named `rThe` and the value quietly loses its
+first four characters, with nothing reported anywhere. A loud failure at
+load time is worth a great deal more than a tidier first character, and it
+is the single strongest argument for this form over the conventional one.
+
+The mitigations are consequently mild: the writer quotes any single-line
+string beginning with `{{`, and that is all. **Block scalars are unaffected
+entirely** — `{{red}}` is literal text anywhere inside one, including as the
+very first characters — and since all prose in this format lives in block
+scalars, the wrinkle is confined to short single-line fields like a room
+name.
 
 **Colour is allowed in prose fields only.** Not in keywords: a player types
 keywords, and a colour code inside one silently breaks object and mobile
 matching in a way that is very hard to diagnose. Validation rejects it
 rather than trusting builders to know.
 
-**One sharp edge, and it fails silently.** `&` is YAML's anchor indicator,
-so a *plain* scalar that begins with a colour code is misparsed rather than
-rejected — a coloured room name is exactly this case, and it is a
-completely reasonable thing for a builder to write:
-
-```yaml
-name: &rThe Temple Of Midgaard&n     # parses as 'Temple Of Midgaard&n'
-```
-
-`&rThe` is consumed as an anchor named `rThe`, the rest becomes the value,
-and nothing anywhere reports a problem. The three mitigations are all
-required, not alternatives: the writer **always quotes** a single-line
-string that begins with `&`; the loader **rejects an anchor** anywhere in a
-file, which §2.1 already excludes from the data model and which turns this
-from silent corruption into an error with a line number; and
-`dlctl world lint` flags a value whose first characters look like a colour
-code that has gone missing. Block scalars are unaffected — a colour code
-anywhere inside one is literal text, including at the very start — which is
-another reason prose belongs in block scalars even when it happens to fit
-on one line.
+Worth keeping as the round-trip test case, because it is the most hostile
+string in the corpus and it already exists — one of the stock socials is a
+cartoon swear made entirely of the characters that mean something to
+somebody: `#`, `@`, `*`, `"`, `&`, `^`, `$$`, `%`. It contains no `{{`, so
+under this scheme it needs no escaping at all and must survive verbatim.
 
 ### 5.4 Rendering
 
@@ -842,8 +846,8 @@ answer to:
   `next_page()` does by hand in the C, and the Go server has no wrapping
   layer yet — so it should be built knowing this from the start rather than
   retrofitted, which is the substance of "we don't do colour well so far".
-- **Unbalanced colour is lintable.** A description that opens `&r` and never
-  returns to `&n` bleeds into whatever is printed next. That is the single
+- **Unbalanced colour is lintable.** A description that opens `{{red}}` and
+  never returns to `{{/}}` bleeds into whatever is printed next. That is the single
   most common colour bug in MUD data, it is trivial to detect on a symbolic
   grammar, and `dlctl world lint` reports it.
 
@@ -853,26 +857,27 @@ The requirement is that `native` data can go back to something the C server
 runs. Colour is the only part of this format where that is not simply a
 matter of re-encoding, so:
 
-**Export (`native` → `classic`) renders codes to raw ANSI.** `&r` becomes
+**Export (`native` → `classic`) renders codes to raw ANSI.** `{{red}}` becomes
 `\x1B[31m` in the written file. This is correct CircleMUD: the C server
-passes ESC through untouched and its pager already skips it. Exporting `&r`
-*literally* would show players the two characters `&r`, so rendering is
+passes ESC through untouched and its pager already skips it. Exporting
+`{{red}}` *literally* would show players those seven characters, so rendering is
 mandatory rather than an option — and it is the reason `screen.h`'s exact
 byte sequences are the table above rather than some tidier ANSI of our own.
 
 **Import (`classic` → `native`) recognises and demotes.** ESC sequences
-matching `screen.h`'s table become `&` codes; a literal `&` in the source
-becomes `&&`.
+matching `screen.h`'s table become named codes. Nothing in the source needs
+escaping, because `{{` does not occur in it.
 
-**Anything unrecognised survives via `&{…}`.** If the archive turns out to
+**Anything unrecognised survives via `{{sgr:…}}`.** If the archive turns out to
 contain 256-colour or truecolour sequences — `\x1B[38;5;208m` — there is no
-named code for them, so they import as `&{38;5;208}` and export back to the
+named code for them, so they import as `{{sgr:38;5;208}}` and export back to the
 identical bytes. This is what makes import lossless in all cases rather
 than only the easy one, and it means the format never has to refuse a file
 because someone was ambitious with colour in 2004.
 
 **The honest caveat: the round trip normalises.** `\x1B[1;31m` and
-`\x1B[31;1m` are the same colour and both import as `&R`; re-exporting emits
+`\x1B[31;1m` are the same colour and both import as `{{bright-red}}`;
+re-exporting emits
 `screen.h`'s spelling. So `classic → native → classic` preserves *meaning*
 exactly and *bytes* only where the original already used `screen.h`'s
 spelling. Under §10.4's posture this is a warning rather than a refusal —
@@ -887,13 +892,14 @@ representation the rest of the plan wants anyway:
 
 - **The web client.** `go-port-plan.md`'s decision record calls a self-hosted
   web front end "wanted, not merely kept open". A browser cannot use ANSI. A
-  renderer that turns `&r` into a `<span class="c-red">` is a lookup table;
+  renderer that turns `{{red}}` into a `<span class="c-red">` is a lookup
+  table;
   one that turns `\x1B[1;31m` into the same thing is an ANSI state machine
   that has to be right about every sequence a builder ever typed.
 - **GMCP and MXP** want structured text for the same reason.
 - **Everything that is not a terminal** — search, the parity dump, logs,
-  `dlctl` — strips colour by matching a two-character grammar rather than by
-  parsing escape sequences.
+  `dlctl` — strips colour by matching one unambiguous bracketed grammar
+  rather than by parsing escape sequences.
 
 The general principle is the one this format applies everywhere else:
 **store the intent, render the encoding at the edge.** Raw ANSI in the data
@@ -1293,9 +1299,9 @@ reader does not care about:
   trailing whitespace, which a block scalar cannot express at all.
 - **Quoted style for any single-line string beginning with an indicator
   character** — `&`, `*`, `!`, `%`, `@`, `` ` ``, `#`, `-`, `?`, `:`, `[`,
-  `{`. The `&` case is the one that will actually happen, it is a coloured
-  room name, and §5.3 explains why it is the dangerous one: it does not
-  fail, it silently returns the wrong string.
+  `{`. The case that will actually occur is `{`, from a coloured room name
+  written `{{red}}…`; §5.3 covers it, and notes that unlike the `&`
+  alternative it fails loudly rather than silently.
 - **Byte-preserving on round trip.** Every string that goes in comes back
   out identical, including trailing whitespace, tabs, leading indentation and
   colour codes. This is the property §2.4 flags as the real risk, and it is
@@ -1340,8 +1346,8 @@ format-neutral and that is the whole reason it exists.
 | Step | What lands | Done when |
 |---|---|---|
 | **1. Vocabularies** | Name tables for every flag set, sector, position, item type, apply location and wear slot in `internal/game`, with round-trip tests. | Every bit in the stock world has a name or is reported. |
-| **1b. Colour** | The `&`-code parser, the ANSI renderer keyed off `PrefColour1`/`PrefColour2`, the stripper, and a display-width function that the wrapping layer is built on rather than retrofitted to. | The swearing social in §5.3 survives parse → render → strip, and width is counted correctly across every code including `&{…}`. |
-| **2. World read** | `native` as a read-only `world.Source`, plus `dlctl world import` from `classic`, including ESC → `&` demotion. | `import` then load produces a parity dump byte-identical to loading `classic` directly. |
+| **1b. Colour** | The `{{…}}` parser, the ANSI renderer keyed off `PrefColour1`/`PrefColour2`, the stripper, and a display-width function that the wrapping layer is built on rather than retrofitted to. | The swearing social in §5.3 survives parse → render → strip unescaped and unchanged, and width is counted correctly across every code including `{{sgr:…}}`. |
+| **2. World read** | `native` as a read-only `world.Source`, plus `dlctl world import` from `classic`, including ESC → named-code demotion. | `import` then load produces a parity dump byte-identical to loading `classic` directly. |
 | **3. World write** | `world.Sink`, the canonical writer, `dlctl world fmt`, `dlctl world export`. | `classic → native → classic` round-trips the whole world byte-for-byte — exactly, for the stock world, which has no colour in it; modulo the escape normalisation of §5.5 for anything that does — and `fmt` is idempotent. |
 | **4. Flip the default** | `--world-format=native`, `data/` converted in the repo, `classic` demoted to import-only. | CI runs the parity harness against a converted `data/`. |
 | **5. Players** | `native` player store, `dlctl pfile convert --to=native`, aliases and rent folded in. | An archived roster survives `binary → ascii → native` with every field verified. |
@@ -1402,8 +1408,10 @@ double-figure count of SGR sequences inside one archived player database,
 drawing on two distinct codes — a foreground colour and a reset — which is
 players having typed escapes into their own titles and descriptions.
 
-Three consequences. The `&` scheme in §5 covers the real data comfortably.
-`&{…}` is insurance rather than a requirement, and should be kept anyway,
+Three consequences. The scheme in §5 covers the real data comfortably —
+and, since there is no existing colour convention to preserve, it was free
+to be chosen for YAML-safety and legibility rather than for compatibility.
+`{{sgr:…}}` is insurance rather than a requirement, and should be kept anyway,
 because it costs nothing and one snapshot is not the whole archive. And
 colour is a *player-data* problem rather than a world-data one, which means
 it lands with step 5 of §11 and not step 2 — the opposite of where this
