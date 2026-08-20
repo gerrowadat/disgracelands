@@ -58,6 +58,12 @@ type ShopDef struct {
 	// that does not exist.
 	Keeper MobVnum
 
+	// Secondary is the special the keeper's prototype had *before*
+	// assign_the_shopkeepers overwrote it with shop_keeper (shop.c:1179).
+	// The C saves it in SHOP_FUNC and shop_keeper calls it first, which is
+	// how a mobile can be both a shopkeeper and something else.
+	Secondary string
+
 	// TradeWith is a bitvector of who the shop refuses to deal with
 	// (TRADE_NOGOOD, TRADE_NOEVIL, ...). Note the inversion: a set bit means
 	// "will not trade with".

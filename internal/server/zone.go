@@ -64,8 +64,13 @@ func (s *Server) BootReset(w *game.Live) {
 		s.logger.Info("special procedures disabled")
 	} else {
 		attached, missing := w.AssignSpecials()
+		// After AssignSpecials, and deliberately: assign_the_shopkeepers
+		// overwrites whatever the table gave a keeper and keeps the old one
+		// as the shop's secondary function (shop.c:1179).
+		keepers := w.AssignShopkeepers()
 		s.logger.Info("special procedures assigned",
 			"attached", attached, "missing_vnums", missing,
+			"shopkeepers", keepers,
 			"implemented", len(session.SpecialNames()))
 	}
 

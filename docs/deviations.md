@@ -315,6 +315,13 @@ Listed here so they are not mistaken for deliberate differences.
 - **`steal` and `track`**, the two thief skills not ported: `steal` needs the
   killer/thief flag machinery and shopkeeper protection, and `track` needs the
   breadth-first search the C keeps in `graph.c`.
+- **`offer` is not ported.** It is the receptionist's command, not a shop's —
+  the C's table has it as `do_not_here` alongside `rent`, and both are picked
+  up by `gen_receptionist`. It arrives with the receptionist.
+
+- **`ok_damage_shopkeeper` is not wired into the violence path**, so a shop
+  without WILL_FIGHT can still be attacked. The C slaps you and refuses.
+
 - **There is no receptionist to rent at.** The rent files themselves are
   wired in — quitting writes one, logging in reads it, unpaid arrears cost you
   the lot — but `gen_receptionist`, `offer` and `rent` are not ported, so the

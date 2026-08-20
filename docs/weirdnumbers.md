@@ -646,6 +646,38 @@ likewise does not use it.
 
 *Source*: `objsave.c:428`, `interpreter.c:1676`.
 
+### Shop prices depend on the width of a multiplication
+
+```c
+int buy_price(struct obj_data *obj, int shop_nr)
+{
+  return (GET_OBJ_COST(obj) * SHOP_BUYPROFIT(shop_nr));
+}
+```
+
+An `int` times a `float`, truncated back to an `int`. 1.15 stored as a
+float32 is exactly 1.1499999761581420898437500 — a hair *under* 1.15 — so a
+hundred-coin item at a 1.15 markup is 114.99999761581420898, and what happens
+next depends on where the product is kept:
+
+| evaluated as | product | price |
+| --- | --- | --- |
+| `float` (SSE, `FLT_EVAL_METHOD` 0) | rounds to exactly 115.0 | **115** |
+| x87 80-bit (`FLT_EVAL_METHOD` 2) | stays 114.999997… | **114** |
+
+The archived server was a 32-bit i386 build, so the second column is what
+players actually paid, and the port multiplies at `float64` to match. The
+sell prices go the other way for the same reason: 0.15 as a float32 is a hair
+*over* 0.15, so a hundred-coin item is still valued at 15.
+
+Two lines of C, no division, no cast that looks suspicious, and the answer
+depends on the machine. This one is the argument for the whole oracle
+approach in one function.
+
+*Verified*: `reference/tools/shopprice.c` against `BuyPrice`/`SellPrice`,
+12,006 price pairs, built `-m32 -mfpmath=387`. CI installs the toolchain for
+any change that can reach it.
+
 ---
 
 ## What to do about all this

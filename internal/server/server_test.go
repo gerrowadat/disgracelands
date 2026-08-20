@@ -128,6 +128,14 @@ const (
 const (
 	testDogVnum         game.MobVnum = 999
 	testGuildmasterVnum game.MobVnum = 998
+	testShopkeeperVnum  game.MobVnum = 997
+)
+
+// testShopVnum and the shop's room. The shop buys and sells weapons and
+// wands, produces the sword, and is open all day.
+const (
+	testShopVnum game.ShopVnum = 9001
+	ShopRoom     game.RoomVnum = 3018
 )
 
 // MageGuildRoom is guild_info's first row: the magic-user guild, whose door
@@ -154,7 +162,11 @@ func testWorld() *game.Live {
 			Type:        game.ItemWeapon,
 			WearFlags:   game.ItemWearTake | game.ItemWearWield,
 			Weight:      10,
-			Values:      [game.NumObjValues]int32{0, 2, 6, 3},
+			// A price, so the shop tests have something to charge for. 100 at
+			// the shop's 1.15 markup is 114, which is the number
+			// docs/weirdnumbers.md is about.
+			Cost:   100,
+			Values: [game.NumObjValues]int32{0, 2, 6, 3},
 		},
 		{
 			Vnum: testRingVnum, Keywords: "ring gold", ShortDesc: "a gold ring",
@@ -162,6 +174,7 @@ func testWorld() *game.Live {
 			Type:        game.ItemArmor,
 			WearFlags:   game.ItemWearTake | game.ItemWearFinger,
 			Weight:      1,
+			Cost:        50,
 		},
 		{
 			Vnum: testKeyVnum, Keywords: "key small", ShortDesc: "a small key",
@@ -229,6 +242,7 @@ func testWorld() *game.Live {
 			Type:        game.ItemWand,
 			WearFlags:   game.ItemWearTake | game.ItemWearHold,
 			Weight:      2,
+			Cost:        200,
 			// Level 20, three charges, three left, magic missile.
 			Values: [game.NumObjValues]int32{20, 3, 3, game.SpellMagicMissile},
 		},
@@ -275,6 +289,45 @@ func testWorld() *game.Live {
 		},
 	}
 
+	mobiles = append(mobiles, &game.MobDef{
+		Vnum: testShopkeeperVnum, Keywords: "shopkeeper keeper",
+		ShortDesc: "the shopkeeper", LongDesc: "The shopkeeper stands here.\r\n",
+		Level:           30,
+		HitDice:         game.Dice{Number: 1, Size: 1, Bonus: 500},
+		Position:        int32(game.PosStanding),
+		DefaultPosition: int32(game.PosStanding),
+		Gold:            10_000,
+	})
+
+	// One shop. It produces the sword, so the supply is endless and `list`
+	// shows "Unlimited"; it buys weapons and wands, which is enough to
+	// exercise trade_with's three refusals.
+	shops := []*game.ShopDef{{
+		Vnum:      testShopVnum,
+		Keeper:    testShopkeeperVnum,
+		Producing: []game.ObjVnum{testSwordVnum},
+		// 1.15 and 0.15 are the multipliers the real Midgaard magic shop
+		// uses, and the ones whose truncation is checked against the C.
+		ProfitBuy:  1.15,
+		ProfitSell: 0.15,
+		BuyTypes: []game.ShopBuyType{
+			{Type: game.ItemWeapon},
+			{Type: game.ItemWand},
+		},
+		Messages: [game.NumShopMessages]string{
+			game.MsgNoSuchItem1:  "%s Sorry, I haven't got exactly that item.",
+			game.MsgNoSuchItem2:  "%s You don't seem to have that.",
+			game.MsgDoNotBuy:     "%s I don't buy such items.",
+			game.MsgMissingCash1: "%s That is too expensive for me!",
+			game.MsgMissingCash2: "%s You can't afford it!",
+			game.MsgBuy:          "%s That'll be %d coins, please.",
+			game.MsgSell:         "%s You'll get %d coins for it!",
+		},
+		Rooms:  []game.RoomVnum{ShopRoom},
+		Open1:  0,
+		Close1: 28, // open all day: the MUD day is 24 hours
+	}}
+
 	// Two zones, so that anything which cares about zone boundaries — a
 	// shout, a reset — has one to cross. The numbers are Midgaard's own.
 	zones := []*game.ZoneDef{
@@ -282,12 +335,21 @@ func testWorld() *game.Live {
 		{Vnum: 30, Name: "Midgaard", Bottom: 3000, Top: 3099, ResetMode: 0},
 	}
 
-	return game.NewLive(&game.World{
-		Rooms:   []*game.RoomDef{temple, board, guild, donation},
+	shopRoom := &game.RoomDef{
+		Vnum: ShopRoom, Name: "A Small Shop", Description: "A shop.\r\n",
+	}
+
+	live := game.NewLive(&game.World{
+		Rooms:   []*game.RoomDef{temple, board, guild, donation, shopRoom},
 		Objects: objects,
 		Mobiles: mobiles,
 		Zones:   zones,
+		Shops:   shops,
 	})
+	// assign_the_shopkeepers, which the real boot runs after AssignSpecials.
+	// Done here because the test world skips BootReset.
+	live.AssignShopkeepers()
+	return live
 }
 
 // newTestServer builds a server on a temporary player directory and starts

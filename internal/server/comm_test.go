@@ -25,6 +25,9 @@ func TestSayReachesTheRoom(t *testing.T) {
 
 	c.send("say hello there")
 	c.expect("You say, 'hello there'")
+	// See the note on settle() in TestWhisperAndAsk: seeing your own
+	// reply does not mean the rest of the room has been written to yet.
+	c.settle()
 	if !listener.said("Zod says, 'hello there'") {
 		t.Error("the room did not hear it")
 	}
@@ -32,6 +35,9 @@ func TestSayReachesTheRoom(t *testing.T) {
 	// `'hi` with no space, which the interpreter special-cases.
 	c.send("'well then")
 	c.expect("You say, 'well then'")
+	// See the note on settle() in TestWhisperAndAsk: seeing your own
+	// reply does not mean the rest of the room has been written to yet.
+	c.settle()
 	if !listener.said("Zod says, 'well then'") {
 		t.Error("the room did not hear the short form")
 	}
@@ -84,6 +90,9 @@ func TestTellAndReply(t *testing.T) {
 
 	c.send("tell bob are you there")
 	c.expect("You tell Bob, 'are you there'")
+	// See the note on settle() in TestWhisperAndAsk: seeing your own
+	// reply does not mean the rest of the room has been written to yet.
+	c.settle()
 	if !listener.said("Welmar tells you, 'are you there'") {
 		t.Error("Bob was not told")
 	}
@@ -153,6 +162,9 @@ func TestChannelsReachEverybodyPlaying(t *testing.T) {
 
 	c.send("gossip anybody about?")
 	c.expect("You gossip, 'anybody about?'")
+	// See the note on settle() in TestWhisperAndAsk: seeing your own
+	// reply does not mean the rest of the room has been written to yet.
+	c.settle()
 	if !listener.said("Zod gossips, 'anybody about?'") {
 		t.Error("the gossip did not carry")
 	}
@@ -207,6 +219,9 @@ func TestNoRepeatSwallowsTheEcho(t *testing.T) {
 
 	c.send("say hello")
 	c.expect("Okay.")
+	// See the note on settle() in TestWhisperAndAsk: seeing your own
+	// reply does not mean the rest of the room has been written to yet.
+	c.settle()
 	if !listener.said("Zod says, 'hello'") {
 		t.Error("norepeat silenced the room as well as the echo")
 	}
@@ -226,6 +241,9 @@ func TestShoutCarriesOneZone(t *testing.T) {
 	c.send("shout is anybody here")
 	c.expect("You shout, 'is anybody here'")
 
+	// See the note on settle() in TestWhisperAndAsk: seeing your own
+	// reply does not mean the rest of the room has been written to yet.
+	c.settle()
 	if !nearBy.said("Zod shouts, 'is anybody here'") {
 		t.Error("somebody in the same zone did not hear the shout")
 	}
@@ -249,6 +267,15 @@ func TestWhisperAndAsk(t *testing.T) {
 	c.send("whisper bob meet me later")
 	c.expect("You whisper to Bob, 'meet me later'")
 
+	// A barrier before reading anybody else's buffer. `expect` waits for a
+	// write to *this* client's socket, and the messages to the rest of the
+	// room are separate writes on the world goroutine — seeing your own
+	// reply does not mean theirs have happened yet. settle() sends a command
+	// and waits for its answer, so everything the previous one queued is
+	// done. Without it this test passes locally and fails on a busier
+	// machine, which is exactly how it was found.
+	c.settle()
+
 	if !bob.said("Zod whispers to you, 'meet me later'") {
 		t.Error("Bob did not hear the whisper")
 	}
@@ -262,6 +289,7 @@ func TestWhisperAndAsk(t *testing.T) {
 
 	c.send("ask bob what time is it")
 	c.expect("You ask Bob, 'what time is it'")
+	c.settle()
 	if !cid.said("Zod asks a question of Bob.") {
 		t.Error("the room was not told about the question")
 	}
@@ -291,6 +319,9 @@ func TestGroupSayReachesTheGroupAnywhere(t *testing.T) {
 
 	c.send("gsay this way")
 	c.expect("You tell the group, 'this way'")
+	// See the note on settle() in TestWhisperAndAsk: seeing your own
+	// reply does not mean the rest of the room has been written to yet.
+	c.settle()
 	if !listener.said("Zod tells the group, 'this way'") {
 		t.Error("the group member did not hear it")
 	}
@@ -326,6 +357,9 @@ func TestSocialsWork(t *testing.T) {
 	// With no argument.
 	c.send("smile")
 	c.expect("You smile happily.")
+	// See the note on settle() in TestWhisperAndAsk: seeing your own
+	// reply does not mean the rest of the room has been written to yet.
+	c.settle()
 	if !bystander.said("Zod smiles happily.") {
 		t.Error("the room did not see the smile")
 	}
@@ -333,6 +367,9 @@ func TestSocialsWork(t *testing.T) {
 	// Aimed at somebody.
 	c.send("smile bob")
 	c.expect("You smile at him.")
+	// See the note on settle() in TestWhisperAndAsk: seeing your own
+	// reply does not mean the rest of the room has been written to yet.
+	c.settle()
 	if !victimClient.said("Zod smiles at you.") {
 		t.Error("Bob was not smiled at")
 	}
@@ -343,6 +380,9 @@ func TestSocialsWork(t *testing.T) {
 	// Aimed at yourself.
 	c.send("smile zod")
 	c.expect("You smile at yourself.")
+	// See the note on settle() in TestWhisperAndAsk: seeing your own
+	// reply does not mean the rest of the room has been written to yet.
+	c.settle()
 	if !bystander.said("Zod smiles at himself.") {
 		t.Error("the room did not see the self-smile")
 	}

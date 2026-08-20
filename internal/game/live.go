@@ -37,6 +37,11 @@ type Live struct {
 	objects map[uint64]*Object
 	// roomObjects is what is lying on the floor of each room.
 	roomObjects map[RoomVnum][]*Object
+	// shops is the per-shop runtime state — the bank balance and how much of
+	// the keeper's inventory is known to be sorted. The C keeps both in
+	// shop_index beside the file data; kept apart here so the prototypes
+	// stay read-only.
+	shops map[ShopVnum]*shopState
 
 	nextObjectID uint64
 

@@ -31,14 +31,15 @@ jobs:
           git diff --exit-code go.mod go.sum
 
       # Installing gcc-multilib takes longer than everything else in this job
-      # put together, and on a bad day apt stalls outright. It exists for one
-      # package's tests - the ILP32 player-file layout - so it is installed
-      # only for a change that could affect them.
+      # put together, and on a bad day apt stalls outright. It exists for two
+      # sets of tests - the ILP32 player-file layout, and the shop prices,
+      # which come out differently on the x87 because of its excess precision
+      # - so it is installed only for a change that could affect them.
       #
-      # The paths below are everything those tests read: the package itself,
-      # the two C programs they compile, and the headers those include. A
-      # change to the struct they describe changes the layout, which is the
-      # whole thing being verified.
+      # The paths below are everything those tests read: the packages
+      # themselves, the C programs they compile, and the headers those
+      # include. A change to any of them changes an answer that can only be
+      # verified against a 32-bit build.
       #
       # Anything that is not a pull request runs them regardless. main is the
       # branch that has to be verified in full, and a decision made from a
@@ -58,11 +59,11 @@ jobs:
           git cat-file -e "$base^{commit}" 2>/dev/null || run_them "base commit unavailable"
 
           changed=$(git diff --name-only "$base"...HEAD)
-          echo "$changed" | grep -qE '^(internal/persist/player/binary/|reference/tools/(pfile|objfile)(layout|gen)\.c$|reference/moderncserver/src/(structs\.h|sysdep\.h|conf\.h\.in)$|\.github/workflows/go\.yml$)' \
-            && run_them "the change touches the ILP32 layout or its inputs"
+          echo "$changed" | grep -qE '^(internal/persist/player/binary/|reference/tools/(pfile(layout|gen)|objfile(layout|gen)|shopprice)\.c$|internal/game/shopstate\.go$|reference/moderncserver/src/(structs\.h|sysdep\.h|conf\.h\.in)$|\.github/workflows/go\.yml$)' \
+            && run_them "the change touches the 32-bit layout or price checks, or their inputs"
 
           echo "needed=false" >> "$GITHUB_OUTPUT"
-          echo "32-bit checks: skipping (nothing in this change can affect the ILP32 layout)"
+          echo "32-bit checks: skipping (nothing in this change can affect the ILP32 layout or the shop prices)"
 
       # The player-file codec checks itself against C programs compiled for
       # both data models. The 32-bit one is the layout the archived player
@@ -117,6 +118,21 @@ jobs:
             exit 1
           fi
           grep -c -- "--- PASS.*ilp32" out.txt
+
+      # Same argument for the shop prices. This one is not a layout, it is an
+      # arithmetic width: buy_price truncates a float product, and the answer
+      # differs between an SSE build and the x87 build the archive came from.
+      # A silent skip here means the port charges 115 where players paid 114.
+      - name: The 32-bit shop price check must not have skipped
+        if: steps.ilp32.outputs.needed == 'true'
+        run: |
+          go test -count=1 -v -run TestShopPricesMatchA32BitBuildOfTheC ./internal/game/ > shop.txt 2>&1 || { cat shop.txt; exit 1; }
+          if grep -q -- "--- SKIP" shop.txt; then
+            echo "the 32-bit shop price check skipped; it must run in CI:"
+            grep -A2 -- "--- SKIP" shop.txt
+            exit 1
+          fi
+          grep -- "price pairs against the 32-bit C" shop.txt
 
       # The DES implementation is hand-written, so the comparison against the
       # system libcrypt is the only thing standing between it and "probably

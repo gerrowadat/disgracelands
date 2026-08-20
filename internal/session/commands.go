@@ -181,6 +181,15 @@ func init() {
 		{Name: "put", Help: "Put something into a container.", Run: doPut, CLine: 396},
 
 		{Name: "practice", Help: "Practise a spell or skill, or list what you know.", Run: doPractice, CLine: 411},
+
+		// The four shop commands. All four are `do_not_here` in the C's
+		// table (interpreter.c:246, :360, :454, :530) — what makes them work
+		// is a mobile in the room with the shop_keeper special, which gets
+		// first refusal and never hands them back.
+		{Name: "buy", Help: "Buy something from a shopkeeper.", Run: doNotHere, CLine: 246},
+		{Name: "list", Help: "List what a shopkeeper has for sale.", Run: doNotHere, CLine: 360},
+		{Name: "sell", Help: "Sell something to a shopkeeper.", Run: doNotHere, CLine: 454},
+		{Name: "value", Help: "Ask a shopkeeper what they would pay.", Run: doNotHere, CLine: 530},
 		{Name: "say", Help: "Talk to the room.", Run: doSay, CLine: 449},
 		{Name: "'", Help: "Talk to the room; the short form of say.", Run: doSay, CLine: 450},
 		{Name: "score", Help: "Show your own statistics.", Run: doScore, CLine: 452},

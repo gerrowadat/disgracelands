@@ -100,6 +100,7 @@ func init() {
 		"magic_user":  specMagicUser,
 		"thief":       specThief,
 		"dump":        specDump,
+		"shop_keeper": specShopKeeper,
 	}
 }
 

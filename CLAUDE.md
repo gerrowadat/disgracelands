@@ -103,6 +103,19 @@ command's reply. Use `expectCount` for the n'th occurrence, or `settle()`
 (sends `time`, waits for one more `o'clock`) to drain first. This one has
 recurred at least eight times.
 
+**`expect` is not a barrier for anybody else's buffer.** It waits for a write
+to *this* client's socket; messages to other characters in the room are
+separate writes on the world goroutine. Seeing your own reply does not mean
+theirs has happened. Call `settle()` before reading another client's or
+recorder's lines — otherwise the test passes locally and fails on a busier
+machine, which is how this was found.
+
+**Anything that happens after a command's reply needs its own wait.** `quit`
+prints "Goodbye." from the command, but the disconnect handling — the save,
+the crash-save, removing the character from the world — runs afterwards in
+the connection goroutine's teardown. `waitForLogout` in `rent_test.go` is the
+pattern.
+
 **When a test and the implementation disagree, check the C before assuming
 the implementation is wrong.** Five `act()` expectations turned out to be
 wrong and the code right: `$o` is the keyword, not the short description;
