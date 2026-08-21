@@ -72,6 +72,30 @@ func (l *Live) MudTime() MudTime { return TimePassed(time.Since(l.booted)) }
 // ObjectDef returns an object prototype, or nil.
 func (l *Live) ObjectDef(v ObjVnum) *ObjDef { return l.objectDefs[v] }
 
+// ObjectDefs returns every object prototype, sorted by vnum.
+//
+// Sorted because the only caller is `vnum`, which numbers its output — and a
+// list that comes out of a map in a different order every time is no use to
+// somebody reading vnums off the screen.
+func (l *Live) ObjectDefs() []*ObjDef {
+	out := make([]*ObjDef, 0, len(l.objectDefs))
+	for _, def := range l.objectDefs {
+		out = append(out, def)
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].Vnum < out[j].Vnum })
+	return out
+}
+
+// MobileDefs returns every mobile prototype, sorted by vnum.
+func (l *Live) MobileDefs() []*MobDef {
+	out := make([]*MobDef, 0, len(l.mobileDefs))
+	for _, def := range l.mobileDefs {
+		out = append(out, def)
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].Vnum < out[j].Vnum })
+	return out
+}
+
 // MobileDef returns a mobile prototype, or nil.
 func (l *Live) MobileDef(v MobVnum) *MobDef { return l.mobileDefs[v] }
 

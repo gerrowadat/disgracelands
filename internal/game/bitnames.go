@@ -92,3 +92,108 @@ func ExtraBitNames() []string { return extraBitNames }
 
 // ApplyTypeNames are the APPLY_* names.
 func ApplyTypeNames() []string { return applyTypeNames }
+
+// --- the rest of the name tables ---------------------------------------
+//
+// Added for `stat`, which prints nearly every bitfield the game has. They
+// are transcribed from the C rather than invented, and bitnames_test.go
+// re-parses constants.c and class.c and compares every entry — the same
+// treatment the command table and the special-procedure assignments get, and
+// for the same reason: a table is data, and data is checked rather than read.
+
+// roomBitNames are room_bits[] (constants.c:40): the ROOM_* flags.
+var roomBitNames = []string{
+	"DARK", "DEATH", "NO_MOB", "INDOORS", "PEACEFUL", "SOUNDPROOF", "NO_TRACK",
+	"NO_MAGIC", "TUNNEL", "PRIVATE", "GODROOM", "HOUSE", "HCRSH", "ATRIUM",
+	"OLC", "*", "GOOD_REGEN", "CAN_QUIT", "PKILL",
+}
+
+// exitBitNames are exit_bits[] (constants.c:67): the EX_* flags on a door.
+var exitBitNames = []string{
+	"DOOR", "CLOSED", "LOCKED", "PICKPROOF",
+}
+
+// sectorNames are sector_types[] (constants.c:77), indexed by SECT_* rather than by bit.
+var sectorNames = []string{
+	"Inside", "City", "Field", "Forest", "Hills", "Mountains", "Water (Swim)",
+	"Water (No Swim)", "In Flight", "Underwater",
+}
+
+// genderNames are genders[] (constants.c:96).
+var genderNames = []string{
+	"neutral", "male", "female",
+}
+
+// positionNames are position_types[] (constants.c:106), indexed by POS_*.
+var positionNames = []string{
+	"Dead", "Mortally wounded", "Incapacitated", "Stunned", "Sleeping",
+	"Resting", "Sitting", "Fighting", "Standing",
+}
+
+// playerBitNames are player_bits[] (constants.c:121): the PLR_* flags.
+var playerBitNames = []string{
+	"KILLER", "THIEF", "FROZEN", "DONTSET", "WRITING", "MAILING", "CSH",
+	"SITEOK", "NOSHOUT", "NOTITLE", "DELETED", "LOADRM", "NO_WIZL", "NO_DEL",
+	"INVST", "CRYO", "DEAD",
+}
+
+// actionBitNames are action_bits[] (constants.c:144): the MOB_* flags.
+var actionBitNames = []string{
+	"SPEC", "SENTINEL", "SCAVENGER", "ISNPC", "AWARE", "AGGR", "STAY-ZONE",
+	"WIMPY", "AGGR_EVIL", "AGGR_GOOD", "AGGR_NEUTRAL", "MEMORY", "HELPER",
+	"NO_CHARM", "NO_SUMMN", "NO_SLEEP", "NO_BASH", "NO_BLIND", "DEAD",
+}
+
+// preferenceBitNames are preference_bits[] (constants.c:169): the PRF_* flags.
+var preferenceBitNames = []string{
+	"BRIEF", "COMPACT", "DEAF", "NO_TELL", "D_HP", "D_MANA", "D_MOVE", "AUTOEX",
+	"NO_HASS", "QUEST", "SUMN", "NO_REP", "LIGHT", "C1", "C2", "NO_WIZ", "L1",
+	"L2", "NO_AUC", "NO_GOS", "NO_GTZ", "RMFLG",
+}
+
+// connectedNames are connected_types[] (constants.c:226): the CON_* login states.
+var connectedNames = []string{
+	"Playing", "Disconnecting", "Get name", "Confirm name", "Get password",
+	"Get new PW", "Confirm new PW", "Select sex", "Select class",
+	"Reading MOTD", "Main Menu", "Get descript.", "Changing PW 1",
+	"Changing PW 2", "Changing PW 3", "Self-Delete 1", "Self-Delete 2",
+	"Disconnecting", "Object edit", "Room edit", "Zone edit", "Mobile edit",
+	"Shop edit", "Text edit",
+}
+
+// wearBitNames are wear_bits[] (constants.c:336): the ITEM_WEAR_* flags.
+var wearBitNames = []string{
+	"TAKE", "FINGER", "NECK", "BODY", "HEAD", "LEGS", "FEET", "HANDS", "ARMS",
+	"SHIELD", "ABOUT", "WAIST", "WRIST", "WIELD", "HOLD",
+}
+
+// containerBitNames are container_bits[] (constants.c:414): the CONT_* flags.
+var containerBitNames = []string{
+	"CLOSEABLE", "PICKPROOF", "CLOSED", "LOCKED",
+}
+
+// npcClassNames are npc_class_types[] (constants.c:727).
+var npcClassNames = []string{
+	"Normal", "Undead",
+}
+
+// pcClassNames are pc_class_types[] (class.c:58).
+var pcClassNames = []string{
+	"Magic User", "Cleric", "Thief", "Warrior", "Paladin",
+}
+
+// Accessors, so the session package can print them without the tables
+// becoming part of its vocabulary.
+func RoomBitNames() []string       { return roomBitNames }
+func ExitBitNames() []string       { return exitBitNames }
+func SectorNames() []string        { return sectorNames }
+func GenderNames() []string        { return genderNames }
+func PositionNames() []string      { return positionNames }
+func PlayerBitNames() []string     { return playerBitNames }
+func ActionBitNames() []string     { return actionBitNames }
+func PreferenceBitNames() []string { return preferenceBitNames }
+func ConnectedNames() []string     { return connectedNames }
+func WearBitNames() []string       { return wearBitNames }
+func ContainerBitNames() []string  { return containerBitNames }
+func NpcClassNames() []string      { return npcClassNames }
+func PcClassNames() []string       { return pcClassNames }

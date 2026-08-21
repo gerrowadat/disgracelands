@@ -251,8 +251,16 @@ func (c *Context) announceExcept(victim *game.Character, format string, args ...
 	}
 }
 
+// skillOf is GET_SKILL.
+//
+// Skills is a *map*, so there is no bound to check: a missing entry is zero,
+// which is exactly "not learned". An earlier version of this guarded with
+// `int(skill) >= len(...)`, which on a map is the number of entries rather
+// than a capacity — so a character who knew six skills was reported as
+// knowing nothing about skill 139. The tests missed it because they set every
+// skill to zero rather than deleting them, which left the map large.
 func skillOf(who *game.Character, skill int32) int32 {
-	if who == nil || who.Record == nil || skill < 0 || int(skill) >= len(who.Record.Skills) {
+	if who == nil || who.Record == nil {
 		return 0
 	}
 	return who.Record.Skills[skill]

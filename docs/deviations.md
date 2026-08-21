@@ -319,6 +319,22 @@ Listed here so they are not mistaken for deliberate differences.
   and keeping a creation-ordered list of every object alive to fix it is not
   worth the cost.
 
+- **`stat` prints "Speaks: [0/0/0]" always.** The three tongue slots are in
+  the player file and nothing in this tree ever sets them — `speak` was never
+  ported and the C never writes them either. Printed rather than dropped,
+  because `stat` prints what is stored.
+
+- **`stat` prints no idle timer.** `char_specials.timer` counts ticks since
+  the last command and is used only by the idle-timeout reaper, which this
+  port does differently (`linkdeadTimeout`). The field is printed as zero to
+  keep the line's shape.
+
+- **`vstat mob` does not visit room zero.** The C reads a real mobile,
+  `char_to_room`s it into room 0, stats it and extracts it (act.wizard.c:1305).
+  This spawns it where the caller is standing and removes it immediately,
+  which matters because `read_mobile` rolls hit points and `stat` prints
+  them — so the mobile has to be made rather than read off the prototype.
+
 - **`remort` and `reroll` are not ported.** `reroll` *is* `do_wizutil`
   (`act.wizard.c:2034`) and `remort` is an implementor command in the same
   file, so both belong with the rest of Phase 5i rather than with the rules.

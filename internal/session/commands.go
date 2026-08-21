@@ -246,6 +246,11 @@ func init() {
 		{Name: "poofout", Help: "Set what the room sees when you leave.", Run: doPoofOut, CLine: 407, MinLevel: game.LevelImmortal},
 		{Name: "teleport", Help: "Send somebody somewhere.", Run: doTeleport, CLine: 507, MinLevel: game.LevelGod},
 		{Name: "transfer", Help: "Bring somebody to you.", Run: doTransfer, CLine: 518, MinLevel: game.LevelGod},
+
+		// Looking at the innards (interpreter.c:494, :528, :529).
+		{Name: "stat", Help: "Show everything about a room, object or character.", Run: doStat, CLine: 492, MinLevel: game.LevelImmortal},
+		{Name: "vnum", Help: "List the vnums answering to a name.", Run: doVnum, CLine: 533, MinLevel: game.LevelImmortal},
+		{Name: "vstat", Help: "Show everything about a prototype.", Run: doVstat, CLine: 534, MinLevel: game.LevelImmortal},
 		{Name: "say", Help: "Talk to the room.", Run: doSay, CLine: 449},
 		{Name: "'", Help: "Talk to the room; the short form of say.", Run: doSay, CLine: 450},
 		{Name: "score", Help: "Show your own statistics.", Run: doScore, CLine: 452},
