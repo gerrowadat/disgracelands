@@ -307,16 +307,6 @@ Listed here so they are not mistaken for deliberate differences.
 - **`data/` is the on-disk contract**, decided rather than deviated: both
   servers read the same directory, which is what the world-parity harness and
   the Phase 7 shadow run depend on.
-- **Minimum position is not enforced.** `cmd_info[]`'s second column is
-  `minimum_position` and `command_interpreter` gates every command on it
-  (interpreter.c:636–655), with a different refusal per position — *"You are in
-  a pretty bad shape, unable to do anything!"* when dead or mortally wounded,
-  *"All you can do right now is think about the stars!"* asleep, *"Nah... You
-  feel too relaxed to do that.."* resting, and so on. `session.Command` has no
-  such field and `lookupFor` checks only the level, so a sleeping character can
-  `kill` and a mortally wounded one can `buy`. What position checks exist are
-  the ones individual commands make for themselves — `do_flee`'s, the fighting
-  guards — which is not the same thing and does not cover the table.
 - **Nothing reads the visibility flags.** Invisibility, hiding, sneaking and
   infravision are all set correctly by the spells and skills that grant them,
   and no `CAN_SEE` equivalent consults them yet, so a hidden character is

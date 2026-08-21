@@ -35,9 +35,15 @@ func TestPositionCommands(t *testing.T) {
 		{"sit", "You stop resting, and sit up."},
 		{"sleep", "You go to sleep."},
 		{"sleep", "You are already sound asleep."},
-		{"stand", "You have to wake up first!"},
-		{"sit", "You have to wake up first."},
-		{"rest", "You have to wake up first."},
+		// `stand`, `sit` and `rest` are all POS_RESTING in the C's table
+		// (interpreter.c:490, :468, :426), so a sleeping character is stopped
+		// by the interpreter and never reaches the command. Each of the three
+		// has a POS_SLEEPING branch saying "You have to wake up first" that no
+		// player has ever seen. This test expected those three messages until
+		// minimum position was enforced. See docs/weirdnumbers.md.
+		{"stand", "In your dreams, or what?"},
+		{"sit", "In your dreams, or what?"},
+		{"rest", "In your dreams, or what?"},
 		{"wake", "You awaken, and sit up."},
 		{"wake", "You are already awake..."},
 		{"stand", "You stand up."},
@@ -238,8 +244,14 @@ func TestYouCannotFleeWhenDying(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	// `flee` is POS_FIGHTING in the C's table (interpreter.c:297) and
+	// `do_flee` opens with `if (GET_POS(ch) < POS_FIGHTING)` — the same test
+	// the interpreter has already made. So its "You are in pretty bad shape,
+	// unable to flee!" is unreachable, and what a stunned character actually
+	// gets is the interpreter's message for being stunned. See
+	// docs/weirdnumbers.md.
 	c.send("flee")
-	c.expect("You are in pretty bad shape, unable to flee!")
+	c.expect("All you can do right now is think about the stars!")
 }
 
 // TestScore shows the numbers, including the "/10" the C says out loud about

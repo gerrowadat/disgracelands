@@ -59,9 +59,8 @@ renting, boards, mail, houses, and the immortal commands. Characters autosave,
 a linkdead body stays to reconnect to, and it shuts down cleanly on SIGTERM.
 
 285 of the C's 318 commands answer. What is left — `remort`, the OasisOLC
-editors, and a tail of small commands, plus minimum-position enforcement,
-`CAN_SEE` and `N.thing` targeting — is listed one by one in
-`docs/proposals/go-port-plan.md` §10.
+editors, and a tail of small commands, plus `CAN_SEE` and `N.thing` targeting —
+is listed one by one in `docs/proposals/go-port-plan.md` §10.
 
 It needs at least one listener, and the TLS listener (on by default) needs a
 certificate, so the shortest thing that actually starts is:

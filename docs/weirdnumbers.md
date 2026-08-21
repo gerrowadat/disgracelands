@@ -815,6 +815,43 @@ nothing, so the command's existence is never given away.
 
 *Source*: `interpreter.c:623`.
 
+### Four "you have to wake up first" messages nobody has ever seen
+
+The interpreter refuses a command whose `minimum_position` is above yours
+before the command runs, so a command's *own* position check is dead code
+whenever it is testing the same thing or less.
+
+Four of them are:
+
+```c
+{ "rest"     , POS_RESTING , do_rest     , 0, 0 },   /* interpreter.c:426 */
+{ "sit"      , POS_RESTING , do_sit      , 0, 0 },   /* :468 */
+{ "stand"    , POS_RESTING , do_stand    , 0, 0 },   /* :490 */
+{ "flee"     , POS_FIGHTING, do_flee     , 1, 0 },   /* :297 */
+```
+
+`do_stand`, `do_sit` and `do_rest` each have a `case POS_SLEEPING:` arm saying
+*"You have to wake up first!"* — but POS_SLEEPING is 4 and POS_RESTING is 5,
+so a sleeping character is stopped by the interpreter with *"In your dreams, or
+what?"* and never arrives. `do_flee` opens with `if (GET_POS(ch) <
+POS_FIGHTING)`, which is the *identical* comparison the interpreter has already
+made, so its *"You are in pretty bad shape, unable to flee!"* is unreachable
+too. Nothing else in the tree calls any of the four.
+
+This is worth an entry because of the shape of the mistake it produces rather
+than the messages themselves. A port that implements `do_stand` faithfully and
+does not implement the interpreter's gate shows players a message the real
+server never showed — and every test written against that port agrees with it,
+because the function *is* a correct port of the function. Four such
+expectations were in this suite until minimum position was enforced, and all
+four had been read straight out of the C.
+
+The general form: **a command's own position check tells you what the
+interpreter already refused, not what a player sees.** Read `cmd_info[]`'s
+second column first.
+
+*Source*: `interpreter.c:636`, `act.movement.c:555`, `act.offensive.c:304`.
+
 ### `mute` is called SCMD_SQUELCH
 
 ```c

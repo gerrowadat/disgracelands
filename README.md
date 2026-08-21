@@ -50,9 +50,9 @@ player housing; and the immortal commands, from `goto` and `stat` through
 **285 of the C's 318 commands answer.** Of the 33 that do not, `remort` and
 `redeem` are the last slice of Phase 5, eight are the OasisOLC editors that
 belong to Phase 6, and the rest is a tail of small things listed command by
-command in the plan's §10. Three mechanisms are missing that cut across every
-command rather than being any one of them: minimum position, `CAN_SEE`
-visibility, and `N.thing` targeting.
+command in the plan's §10. Two mechanisms are missing that cut across every
+command rather than being any one of them: `CAN_SEE` visibility and `N.thing`
+targeting.
 
 The two servers load the world identically — every field of all 3,202
 records — and `scripts/world-parity.sh` checks that in CI.

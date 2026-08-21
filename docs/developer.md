@@ -232,6 +232,13 @@ Nearly all the remaining work is "port one more command", and it has a shape.
    muscle memory. Every entry that is not in the obvious place has a comment
    saying which C line put it there, and
    `TestMovementAbbreviationsStillWin` asserts the ones that matter.
+
+   You do **not** need to write the command's minimum position: all 318 of the
+   C's are already in `commandPositions` and `commandTable` fills it in by
+   name. Do read it, though — a command's own position check is often testing
+   what the interpreter has already refused, and porting that check faithfully
+   produces a message no player ever saw. Four of those were found this way;
+   see `docs/weirdnumbers.md`.
 4. **Anything that can hurt somebody goes through `session.Violence`**, not
    through its own arithmetic. That interface exists because commands used to
    subtract hit points themselves and none of them noticed when the hit points

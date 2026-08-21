@@ -11,6 +11,8 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+
+	"github.com/gerrowadat/disgracelands/internal/game"
 )
 
 // TestFillWordsAreInvisible. `put sword in bag` and `put sword bag` must parse
@@ -173,5 +175,89 @@ func TestEverySocialHasATablePosition(t *testing.T) {
 
 	if found != len(socialLines) {
 		t.Errorf("the C has %d socials, socialLines has %d", found, len(socialLines))
+	}
+}
+
+// TestEveryCommandsMinimumPositionIsTheCs re-parses `cmd_info[]`'s second
+// column and requires commandPositions to be that column exactly.
+//
+// Both directions matter. A missing or wrong entry lets somebody act from a
+// position the C refuses — fight in their sleep, buy while mortally wounded —
+// and nothing else in the suite would notice, because a command that runs when
+// it should not still runs correctly. An entry the C does not have is a name
+// nobody will ever look up, which is harmless but means the map was edited by
+// hand, and this map is not supposed to be.
+func TestEveryCommandsMinimumPositionIsTheCs(t *testing.T) {
+	src, err := os.ReadFile("../../reference/moderncserver/src/interpreter.c")
+	if err != nil {
+		t.Fatalf("reading interpreter.c: %v", err)
+	}
+
+	positions := map[string]game.Position{
+		"POS_DEAD": game.PosDead, "POS_MORTALLYW": game.PosMortallyWounded,
+		"POS_INCAP": game.PosIncapacitated, "POS_STUNNED": game.PosStunned,
+		"POS_SLEEPING": game.PosSleeping, "POS_RESTING": game.PosResting,
+		"POS_SITTING": game.PosSitting, "POS_FIGHTING": game.PosFighting,
+		"POS_STANDING": game.PosStanding,
+	}
+
+	// RESERVED is skipped: it is a placeholder so a specproc can return
+	// command 0, not something anybody types.
+	entry := regexp.MustCompile(`^\s*\{ *"([^"]+)"\s*,\s*([A-Z_]+)\s*,`)
+	want := map[string]game.Position{}
+	for _, line := range strings.Split(string(src), "\n") {
+		m := entry.FindStringSubmatch(line)
+		if m == nil || m[1] == "RESERVED" {
+			continue
+		}
+		pos, ok := positions[m[2]]
+		if !ok {
+			t.Errorf("%q has position %q, which is not a POS_ constant", m[1], m[2])
+			continue
+		}
+		if _, dup := want[m[1]]; !dup {
+			want[m[1]] = pos
+		}
+	}
+
+	if len(want) != 318 {
+		t.Errorf("parsed %d rows out of the C's table, expected 318", len(want))
+	}
+	for name, pos := range want {
+		got, ok := commandPositions[name]
+		if !ok {
+			t.Errorf("%q is in the C's table and not in commandPositions", name)
+		} else if got != pos {
+			t.Errorf("%q: commandPositions says %v, the C says %v", name, got, pos)
+		}
+	}
+	for name := range commandPositions {
+		if _, ok := want[name]; !ok {
+			t.Errorf("%q is in commandPositions and not in the C's table", name)
+		}
+	}
+}
+
+// TestEveryCommandInTheTableHasItsPosition checks the wiring rather than the
+// data: that commandTable actually filled MinPosition in, on the socials as
+// well as on the commands written in Go.
+//
+// PosDead is the zero value and also a real position that 102 of the C's
+// commands legitimately have, so "did the fill happen" cannot be asked of a
+// single entry. It is asked of the table as a whole instead.
+func TestEveryCommandInTheTableHasItsPosition(t *testing.T) {
+	if len(Commands) == 0 {
+		t.Fatal("the command table is empty")
+	}
+	for _, cmd := range Commands {
+		want, ok := commandPositions[cmd.Name]
+		if !ok {
+			t.Errorf("%q is in the table and not in the C's", cmd.Name)
+			continue
+		}
+		if cmd.MinPosition != want {
+			t.Errorf("%q has MinPosition %v, the C's table says %v",
+				cmd.Name, cmd.MinPosition, want)
+		}
 	}
 }

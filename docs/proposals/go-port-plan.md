@@ -1125,6 +1125,7 @@ it.
 | **5i-f. Running the place ✅** | `snoop`, `switch`, `return` — the only commands in the game that reach past the character to the connection — plus `dc`, `wizlock`, `shutdown`, `date`, `uptime`, `last`. | `act.wizard.c` |
 | **5i-g. Bans and `show` ✅** | `ban`, `unban`, the ban file and its enforcement at the name prompt; `show` and its ten fields. `show rent` and `show shops` wait on their own listings. | `ban.c`, `act.wizard.c` |
 | **5i-h. `remort`** | A local addition: a per-character bit vector of borrowed class skills, the `IS_<CLASS>` macros that read it, and `redeem` for a fallen paladin. The last slice of Phase 5. | `act.wizard.c`, `class.c` |
+| **5j. The interpreter's own refusals ✅** | `command_interpreter`'s `else if` ladder between finding a command and running it: the frozen check, the switched-immortal check, and `minimum_position` — `cmd_info[]`'s second column, which nothing had been reading. Not a slice when Phase 5 was planned, because it is a property of every command rather than of any one; see below. | `interpreter.c` |
 
 ### What is not in it
 
@@ -1139,27 +1140,49 @@ deviation.
 **Phase 6's, and correctly so.** `medit`, `oedit`, `redit`, `sedit`, `zedit`,
 `olc` and `edit` are OasisOLC; `tedit` is the in-game text-file editor.
 
-**Three mechanisms that never had a slice, and want one.** Each is a property
-of *every* command rather than of any one of them, which is exactly why none
-of them got scheduled — and two of the three are things a player would notice
-inside a minute.
+**Two mechanisms that never had a slice, and want one.** Each is a property of
+*every* command rather than of any one of them, which is exactly why neither
+got scheduled.
 
-- **Minimum position is not enforced at all.** `cmd_info[]`'s second column is
-  `minimum_position`, and `command_interpreter` gates on it
-  (interpreter.c:636–655) with five refusals by position — *"You are in a
-  pretty bad shape, unable to do anything!"*, *"All you can do right now is
-  think about the stars!"*, *"Nah... You feel too relaxed to do that.."* and
-  the rest. `Command` has no such field, so a sleeping character can `kill`,
-  a mortally wounded one can `buy`, and every commands's own position checks
-  (`do_flee`'s, the fighting checks) are the only ones there are. This is the
-  largest of the three and the cheapest: one column, copied out of the C's
-  table beside the `CLine` numbers already there, plus the gate in `lookup`.
 - **`N.thing` targeting** (`get_number`, which every command using
   `generic_find` inherits) belongs with the first slice that touches
   `generic_find`.
 - **The `CAN_SEE` visibility rules** — invisibility, hiding, sneaking and
   infravision all set flags today that nothing reads yet — want a slice of
   their own, and every command that lists anybody is a consumer.
+
+There was a third — **minimum position** — and it is now built, as 5j.
+
+### What 5j changed, and what it caught
+
+`cmd_info[]`'s second column is `minimum_position`, and `command_interpreter`
+gates every command on it (interpreter.c:636–661) with seven refusals chosen by
+the position the character is *in*. Nothing had been reading it, so a sleeping
+character could `kill` and a mortally wounded one could `buy`.
+
+Two things about the shape of the fix are worth keeping.
+
+**The values are generated, not transcribed.** `commandPositions` is all 318
+rows of the C's table, extracted mechanically, and a test re-parses
+`interpreter.c` and requires the map to be that column exactly — in both
+directions, so a row the C does not have fails too. Three hundred values typed
+by hand is three hundred chances to let somebody fight in their sleep, and
+none of them would fail any other test: a command that runs when it should not
+still runs correctly.
+
+**It found four messages no player has ever seen.** `do_stand`, `do_sit` and
+`do_rest` each have a `POS_SLEEPING` arm saying *"You have to wake up first"*,
+and all three commands are `POS_RESTING` in the table — so the interpreter
+stops a sleeping character first and those arms are unreachable. `do_flee`
+opens with the identical comparison the interpreter has already made. This
+port had all four, read faithfully out of the C, with tests asserting them.
+That is the general lesson and it is now in `docs/weirdnumbers.md`: **a
+command's own position check tells you what the interpreter already refused,
+not what a player sees.**
+
+Two adjacent branches of the same ladder went in with it, both also missing:
+the **frozen** check (interpreter.c:629 — `freeze` set the flag and nothing
+enforced it in the world) and the **switched-immortal** check (:634).
 
 **And one command whose guards are missing rather than the command.** `quit`
 works, saves and removes the character, but `do_quit`'s own checks

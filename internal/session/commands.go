@@ -43,6 +43,17 @@ type Command struct {
 	// MinLevel is the level a character must be to use this command, and it
 	// is checked *while matching* rather than after — see lookup.
 	MinLevel int32
+	// MinPosition is `cmd_info[]`'s second column: the position a character
+	// must be in at least, or the interpreter refuses with a message chosen by
+	// the position they are actually in (interpreter.c:636).
+	//
+	// Unlike MinLevel this is *not* part of matching. A command you are too
+	// prone to use is still found, and still yours — you are told you cannot
+	// do it now, rather than told the word means nothing.
+	//
+	// Filled in by commandTable from commandPositions rather than written
+	// here; see that map for why.
+	MinPosition game.Position
 	// Social is the social this command runs, for the entries built from
 	// `data/misc/socials` rather than written here.
 	Social *game.Social
@@ -416,7 +427,7 @@ func init() {
 		{Name: "recite", Help: "Read a scroll aloud.", Run: doRecite, CLine: 435},
 		{Name: "use", Help: "Use a wand or a staff you are holding.", Run: doUse, CLine: 527},
 	}
-	Commands = sortedByCLine(staticCommands)
+	Commands = commandTable(staticCommands)
 }
 
 // RegisterSocials rebuilds the command table with the socials in it, in the
@@ -481,16 +492,29 @@ func RegisterSocials(socials []game.Social) (added int, unknown []string) {
 	// build more than one server in a process, and a second one writing this
 	// while the first still has a goroutine reading it is a data race for no
 	// gain — the socials file is the same file either way.
-	socialsOnce.Do(func() { Commands = sortedByCLine(out) })
+	socialsOnce.Do(func() { Commands = commandTable(out) })
 	return added, unknown
 }
 
 var socialsOnce sync.Once
 
-// sortedByCLine puts the table in the C's order. Stable, so two entries that
-// somehow share a line keep the order they were written in.
-func sortedByCLine(in []Command) []Command {
+// commandTable builds the finished table: each command's minimum position
+// filled in from the C's, then the whole lot in the C's order.
+//
+// Every path that produces a table goes through here — the static commands at
+// init, and the same list with the socials interleaved once they are loaded —
+// so neither step can be forgotten on one of them.
+//
+// The sort is stable, so two entries that somehow share a line keep the order
+// they were written in.
+func commandTable(in []Command) []Command {
 	out := append([]Command(nil), in...)
+	for i := range out {
+		// A command not in the C's table is a bug the tests catch by name.
+		// Leaving MinPosition at PosDead here is the lenient answer, which is
+		// the right way round to be wrong: it refuses nobody.
+		out[i].MinPosition = commandPositions[out[i].Name]
+	}
 	sort.SliceStable(out, func(i, j int) bool { return out[i].CLine < out[j].CLine })
 	return out
 }
@@ -568,6 +592,19 @@ func (d *Dispatcher) Do(ctx context.Context, s *Session, line string) error {
 		// command_interpreter and catches people out constantly.
 		s.Character().SetHidden(false)
 
+		// The three refusals command_interpreter makes between finding a
+		// command and running it (interpreter.c:629-661). They come *before*
+		// the special procedure gets first refusal, which is load-bearing: a
+		// shopkeeper does not get to sell to somebody who is asleep.
+		if refusal := refuse(s, cmd); refusal != "" {
+			s.Send("%s", refusal)
+			if !s.Closed() {
+				s.SendVitals(s.Character())
+				s.Send("%s", prompt(s))
+			}
+			return
+		}
+
 		c := &Context{
 			Ctx: ctx, Session: s, Character: s.Character(),
 			World: w, Text: d.Text, RNG: d.RNG, Violence: d.Violence, Arg: arg,
@@ -605,6 +642,72 @@ func (d *Dispatcher) Do(ctx context.Context, s *Session, line string) error {
 			s.Send("%s", prompt(s))
 		}
 	})
+}
+
+// refuse is the `else if` ladder in command_interpreter between finding a
+// command and running it (interpreter.c:629-661). It returns what to say, or
+// "" to go ahead.
+//
+// The order is the C's and is not arbitrary. Frozen comes first, so somebody a
+// god has put on ice is told that and nothing else, whatever they typed and
+// whatever position they are in. The position check comes last, and in
+// particular after the switched-immortal check, so a god switched into a
+// sleeping rat hears about the switch rather than about the sleeping.
+//
+// One branch of the C's ladder is missing and costs nothing: `command_pointer
+// == NULL`, the "Sorry, that command hasn't been implemented yet.". Exactly one
+// row of the C's table has a null pointer — `RESERVED`, the placeholder that
+// lets a specproc return command 0 — and it cannot be matched, because
+// any_one_arg lowercases the typed word (interpreter.c:1028) and the name is
+// upper case. So that message is unreachable in the C as well, and a command
+// this port has not got answers "Huh?!?" from the lookup, which is what the C
+// does for a word that is in no row at all.
+func refuse(s *Session, cmd *Command) string {
+	ch := s.Character()
+	if ch == nil {
+		return ""
+	}
+
+	// Frozen. Only a mortal — an implementor can thaw themselves out, which is
+	// the point of the level test rather than an oversight.
+	if !ch.IsNPC() && ch.Record != nil &&
+		ch.Record.PlayerFlags.Has(game.PlayerFrozen) && ch.Record.Level < game.LevelImplementor {
+		return "You try, but the mind-numbing cold prevents you...\r\n"
+	}
+
+	// A god switched into a mobile is a mobile, and the interpreter tells them
+	// so rather than letting them keep their own commands. Reachable only for
+	// a mob whose own level is high enough to have matched the command in the
+	// first place — the level is part of the match, so a rat never gets here.
+	if ch.IsNPC() && cmd.MinLevel >= game.LevelImmortal {
+		return "You can't use immortal commands while switched.\r\n"
+	}
+
+	if ch.Position >= cmd.MinPosition {
+		return ""
+	}
+	// Chosen by the position they are *in*, not the one the command wanted, so
+	// the refusal describes them rather than the command.
+	switch ch.Position {
+	case game.PosDead:
+		return "Lie still; you are DEAD!!! :-(\r\n"
+	case game.PosIncapacitated, game.PosMortallyWounded:
+		return "You are in a pretty bad shape, unable to do anything!\r\n"
+	case game.PosStunned:
+		return "All you can do right now is think about the stars!\r\n"
+	case game.PosSleeping:
+		return "In your dreams, or what?\r\n"
+	case game.PosResting:
+		return "Nah... You feel too relaxed to do that..\r\n"
+	case game.PosSitting:
+		return "Maybe you should get on your feet first?\r\n"
+	case game.PosFighting:
+		return "No way!  You're fighting for your life!\r\n"
+	}
+	// POS_STANDING, which cannot be below any minimum: the C's switch has no
+	// default and falls through to running nothing at all, having printed
+	// nothing either. Unreachable, and harmless if it ever is not.
+	return ""
 }
 
 // Lookup finds the first command the word is a prefix of, which is what the C
