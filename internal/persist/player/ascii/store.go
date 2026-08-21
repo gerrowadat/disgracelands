@@ -53,6 +53,9 @@ type Store struct {
 	readOnly bool
 
 	mu sync.RWMutex
+	// indexProblems are malformed plr_index lines from the last read, kept
+	// so the server can report them. Guarded by mu with the rest.
+	indexProblems []string
 }
 
 // New opens an ascii player store.
@@ -92,11 +95,21 @@ func (s *Store) pathFor(name string) (string, error) {
 	if clean == "" {
 		return "", fmt.Errorf("empty character name")
 	}
-	// A name is a filename here, so anything that could escape the directory
-	// has to be refused rather than sanitised — a character called "../etc"
-	// is not a character.
-	if strings.ContainsAny(clean, `/\.`) || clean == "." || clean == ".." {
-		return "", fmt.Errorf("character name %q contains characters that cannot appear in one", name)
+	// A name is a filename here *and* a whitespace-separated field in
+	// plr_index, so it has to be a real player name and not merely a safe
+	// path. The C's _parse_name accepts letters and nothing else
+	// (interpreter.c), and that is the rule enforced here.
+	//
+	// This is stricter than it needs to be for safety and deliberately so. A
+	// name with a space in it produced a file *and* an index line that split
+	// into the wrong number of fields, which made the whole roster
+	// unreadable — every login and every character creation failed. Refusing
+	// at the store is the backstop that keeps a caller's mistake from
+	// costing everybody their game.
+	for _, r := range clean {
+		if r < 'a' || r > 'z' {
+			return "", fmt.Errorf("character name %q is not a valid player name", name)
+		}
 	}
 	return filepath.Join(s.dir, clean[:1], clean), nil
 }
@@ -239,6 +252,15 @@ func (s *Store) readIndex() ([]player.IndexEntry, error) {
 	}
 	defer func() { _ = f.Close() }()
 
+	// A malformed line is skipped rather than fatal.
+	//
+	// The index is *derived*: rebuildIndex regenerates the whole thing from
+	// the player files, so a line lost here comes back the next time anybody
+	// saves. Refusing to read it at all is not recoverable — it takes down
+	// every login and every character creation for everybody, which is
+	// exactly what a stray unparseable line once did. The skipped lines are
+	// returned so the caller can say so rather than swallowing them.
+	var skipped []string
 	var out []player.IndexEntry
 	sc := bufio.NewScanner(f)
 	for line := 1; sc.Scan(); line++ {
@@ -249,23 +271,42 @@ func (s *Store) readIndex() ([]player.IndexEntry, error) {
 		// "<idnum> <name> <level> <flags> <last_logon>"
 		fields := strings.Fields(text)
 		if len(fields) < 5 {
-			return nil, fmt.Errorf("%s line %d: want 5 fields, got %d: %q", IndexFile, line, len(fields), text)
+			skipped = append(skipped, fmt.Sprintf("line %d: want 5 fields, got %d: %q", line, len(fields), text))
+			continue
 		}
 		id, err := strconv.ParseInt(fields[0], 10, 64)
 		if err != nil {
-			return nil, fmt.Errorf("%s line %d: id %q is not a number", IndexFile, line, fields[0])
+			skipped = append(skipped, fmt.Sprintf("line %d: id %q is not a number", line, fields[0]))
+			continue
 		}
 		level, err := strconv.ParseInt(fields[2], 10, 32)
 		if err != nil {
-			return nil, fmt.Errorf("%s line %d: level %q is not a number", IndexFile, line, fields[2])
+			skipped = append(skipped, fmt.Sprintf("line %d: level %q is not a number", line, fields[2]))
+			continue
 		}
 		flags, _ := game.ParseFlags(fields[3])
 		out = append(out, player.IndexEntry{
 			Name: fields[1], IDNum: id, Level: int32(level), Flags: flags,
 		})
 	}
-	return out, sc.Err()
+	if err := sc.Err(); err != nil {
+		return nil, err
+	}
+	if len(skipped) > 0 {
+		s.noteSkipped(skipped)
+	}
+	return out, nil
 }
+
+// noteSkipped records malformed index lines. The store has no logger, so it
+// keeps them for LastIndexProblems to report.
+func (s *Store) noteSkipped(problems []string) {
+	s.indexProblems = problems
+}
+
+// IndexProblems returns the malformed plr_index lines seen by the last read,
+// so the server can log them once at boot rather than losing them.
+func (s *Store) IndexProblems() []string { return s.indexProblems }
 
 // rebuildIndex regenerates plr_index from the player files.
 //

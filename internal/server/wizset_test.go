@@ -7,6 +7,7 @@
 package server
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/gerrowadat/disgracelands/internal/game"
@@ -312,4 +313,63 @@ func TestMortalsCannotSet(t *testing.T) {
 			t.Error("a mortal set their own gold")
 		}
 	})
+}
+
+// Setting a field on a mobile must not write a player file for it.
+//
+// This is the regression test for the bug that filled the roster with
+// mobiles: `Live.Players()` returned everybody in the world, the autosave
+// saved each of them, and `Server.Save` had no IS_NPC guard. Their names have
+// spaces, plr_index is whitespace-separated, and the result was that every
+// login and every character creation failed with "level \"bad\" is not a
+// number".
+func TestSettingAMobileDoesNotPutItOnTheRoster(t *testing.T) {
+	srv, store := newTestServer(t)
+	c := dialClient(t, listening(t, srv))
+	c.create("Tinkerer", "pokethebeast", "m", "w")
+
+	if aMobile(t, srv, "Tinkerer") == nil {
+		t.Fatal("no mobile")
+	}
+
+	c.send("set dog str 18")
+	c.expect("dog's str set to 18.")
+	srv.WaitForWrites()
+
+	for entry, err := range store.List(t.Context()) {
+		if err != nil {
+			t.Errorf("listing the roster: %v", err)
+			continue
+		}
+		if strings.Contains(entry.Name, "dog") {
+			t.Errorf("a mobile is on the roster: %q", entry.Name)
+		}
+	}
+}
+
+// And neither does the autosave, which is what actually filled the roster:
+// it walks Players() and saves every one.
+func TestTheAutosaveDoesNotSaveMobiles(t *testing.T) {
+	srv, _ := newTestServer(t)
+	c := dialClient(t, listening(t, srv))
+	c.create("Resident", "justaperson", "m", "w")
+
+	if aMobile(t, srv, "Resident") == nil {
+		t.Fatal("no mobile")
+	}
+
+	var names []string
+	inWorld(t, srv, func(w *game.Live) {
+		for _, who := range w.Players() {
+			names = append(names, who.Name)
+		}
+	})
+	for _, name := range names {
+		if strings.Contains(name, "dog") {
+			t.Errorf("Players() returned a mobile: %q", name)
+		}
+	}
+	if len(names) != 1 {
+		t.Errorf("Players() returned %d characters (%v), want just the player", len(names), names)
+	}
 }

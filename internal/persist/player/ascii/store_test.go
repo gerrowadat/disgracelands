@@ -339,3 +339,81 @@ func TestRegisteredUnderItsName(t *testing.T) {
 		t.Errorf("Formats() = %v, want it to include %q", player.Formats(), FormatName)
 	}
 }
+
+// A name that is not a valid player name is refused outright.
+//
+// This is the backstop for the bug that put a player file on disk for every
+// mobile in the world: their names have spaces, plr_index is
+// whitespace-separated, and one such line made the whole roster unreadable.
+func TestNamesThatAreNotPlayerNamesAreRefused(t *testing.T) {
+	s, err := New(player.Config{Dir: t.TempDir()})
+	if err != nil {
+		t.Fatalf("opening: %v", err)
+	}
+
+	for _, name := range []string{
+		"a bad feeling",     // a mobile
+		"abdul the armorer", // another
+		"",
+		"../etc/passwd",
+		"zod.bak",
+		"zod1",
+	} {
+		if err := s.Save(t.Context(), &game.PlayerRecord{Name: name}); err == nil {
+			t.Errorf("saving a character called %q succeeded", name)
+		}
+	}
+
+	// And an ordinary name still works.
+	if err := s.Save(t.Context(), &game.PlayerRecord{Name: "Zod", Level: 30}); err != nil {
+		t.Errorf("saving an ordinary name failed: %v", err)
+	}
+}
+
+// A malformed index line is skipped, not fatal: the index is derived from the
+// files, so losing a line is recoverable and refusing to read it is not.
+func TestAMalformedIndexLineDoesNotBreakTheRoster(t *testing.T) {
+	dir := t.TempDir()
+	s, err := New(player.Config{Dir: dir})
+	if err != nil {
+		t.Fatalf("opening: %v", err)
+	}
+
+	// One good character, so there is an index and a file.
+	if err := s.Save(t.Context(), &game.PlayerRecord{Name: "Zod", Level: 30, IDNum: 1}); err != nil {
+		t.Fatalf("saving: %v", err)
+	}
+
+	// Now put the kind of line the bug produced at the top of it.
+	path := filepath.Join(dir, IndexFile)
+	existing, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("reading the index: %v", err)
+	}
+	broken := "0 a bad feeling 18 0 0\n" + string(existing)
+	if err := os.WriteFile(path, []byte(broken), 0o600); err != nil {
+		t.Fatalf("writing the index: %v", err)
+	}
+
+	again, err := New(player.Config{Dir: dir})
+	if err != nil {
+		t.Fatalf("reopening: %v", err)
+	}
+
+	found := 0
+	for entry, err := range again.List(t.Context()) {
+		if err != nil {
+			t.Errorf("listing: %v", err)
+			continue
+		}
+		if entry.Name == "zod" {
+			found++
+		}
+	}
+	if found != 1 {
+		t.Errorf("the good character was listed %d times, want once", found)
+	}
+	if len(again.IndexProblems()) == 0 {
+		t.Error("the malformed line was skipped silently")
+	}
+}

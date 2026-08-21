@@ -395,11 +395,21 @@ func (l *Live) FindAnywhere(word string) *Character {
 	return nil
 }
 
-// Players returns everyone in the world, sorted by level descending then name
-// — the order the who-list wants.
+// Players returns the *players* in the world, sorted by level descending then
+// name — the order the who-list wants.
+//
+// Mobiles are excluded, and the filter is not a nicety: `byName` holds
+// everybody, because `Find` has to be able to reach a mobile by name, and
+// every caller of this function — the wizard channels, `transfer all`,
+// `force all`, the autosave, the shutdown sweep — means players and only
+// players. Returning mobiles here once wrote a player file for every mobile
+// in the world; see the note on Server.Save.
 func (l *Live) Players() []*Character {
 	out := make([]*Character, 0, len(l.byName))
 	for _, c := range l.byName {
+		if c.IsNPC() {
+			continue
+		}
 		out = append(out, c)
 	}
 	sort.Slice(out, func(i, j int) bool {

@@ -479,6 +479,15 @@ func (s *Server) Save(ctx context.Context, c *game.Character) error {
 	if c == nil || c.Record == nil {
 		return nil
 	}
+	// save_char's first line is `if (IS_NPC(ch) || ...) return;` (db.c:2206),
+	// and it is not defensive programming — it is load-bearing. A mobile has
+	// a PlayerRecord like anybody else, so without this guard `set dog str
+	// 18` writes a player file called "a large dog", the index rebuild picks
+	// it up, and its spaces make the index unparseable. Every login and every
+	// character creation then fails, for everybody.
+	if c.IsNPC() {
+		return nil
+	}
 	var snapshot game.PlayerRecord
 	if err := s.engine.DoSync(ctx, func(_ *game.Live) {
 		snapshot = *c.Record

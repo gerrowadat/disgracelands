@@ -379,6 +379,13 @@ Listed here so they are not mistaken for deliberate differences.
   recycling, which this port does not have. The three lines are dropped
   rather than printed as zeroes.
 
+- **A malformed `plr_index` line is skipped rather than fatal.** The index is
+  derived data — `rebuildIndex` regenerates the whole thing from the player
+  files — so a line lost to a parse error comes back the next time anybody
+  saves. Refusing to read the file at all is not recoverable: it takes down
+  every login and every character creation for everybody. The skipped lines
+  are kept and reported rather than swallowed.
+
 - **`set <name> passwd` does not echo the new password.** The C answers
   "Password changed to '<the password>'." in clear on the god's screen — and
   into a snooper's, and into whatever the god's client logs. The password is
