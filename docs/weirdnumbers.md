@@ -923,6 +923,32 @@ entirely for the display, which is in list order.
 
 *Source*: `ban.c:103`, `ban.c:63`.
 
+### `set` tells you the number you asked for, not the one it stored
+
+```c
+} else if (set_fields[mode].type == NUMBER) {
+  value = atoi(val_arg);
+  sprintf(output, "%s's %s set to %d.", GET_NAME(vict),
+	  set_fields[mode].cmd, value);
+}
+
+switch (mode) {
+...
+case 19:
+  GET_GOLD(vict) = RANGE(0, 100000000);
+```
+
+The acknowledgement is formatted *before* the switch runs, and `RANGE` clamps
+inside it. So `set someone gold -100` reports "set to -100." and stores 0, and
+`set someone str 25` on a mortal reports 25 and stores 18. Every one of the
+thirty-odd NUMBER fields behaves this way.
+
+The three condition fields are the exception, and only because they re-format
+the message after clamping — which reads like somebody noticing the problem
+once and not going back for the rest.
+
+*Source*: `act.wizard.c:2467`.
+
 ---
 
 ## What to do about all this

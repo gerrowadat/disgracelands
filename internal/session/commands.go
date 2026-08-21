@@ -79,6 +79,10 @@ type Context struct {
 	Operator Operator
 	// Bans is the site ban list.
 	Bans BanKeeper
+	// SetPassword replaces somebody's credential, for `set <name> passwd`.
+	// A seam rather than a field write, because hashing a password is the
+	// auth package's business and not the session's.
+	SetPassword func(c *game.Character, password string) error
 	// Arg is everything after the command word, trimmed.
 	Arg string
 	// Social is the social being run, for the commands that are one.
@@ -306,6 +310,7 @@ func init() {
 		// :524).
 		{Name: "ban", Help: "Ban a site, or list the bans.", Run: doBan, CLine: 236, MinLevel: game.LevelGreaterGod},
 		{Name: "show", Help: "Show what the server knows about itself.", Run: doShow, CLine: 461, MinLevel: game.LevelImmortal},
+		{Name: "set", Help: "Set a field on a character.", Run: doSet, CLine: 456, MinLevel: game.LevelGod},
 		{Name: "unban", Help: "Lift a site ban.", Run: doUnban, CLine: 524, MinLevel: game.LevelGreaterGod},
 		{Name: "say", Help: "Talk to the room.", Run: doSay, CLine: 449},
 		{Name: "'", Help: "Talk to the room; the short form of say.", Run: doSay, CLine: 450},
@@ -518,6 +523,8 @@ type Dispatcher struct {
 	Operator Operator
 	// Bans is the site ban list.
 	Bans BanKeeper
+	// SetPassword replaces somebody's credential.
+	SetPassword func(c *game.Character, password string) error
 }
 
 // Do implements CommandHandler.
@@ -564,7 +571,7 @@ func (d *Dispatcher) Do(ctx context.Context, s *Session, line string) error {
 		c := &Context{
 			Ctx: ctx, Session: s, Character: s.Character(),
 			World: w, Text: d.Text, RNG: d.RNG, Violence: d.Violence, Arg: arg,
-			Social: cmd.Social, Save: d.Save, Rent: d.Rent, SaveBoard: d.SaveBoard, Mail: d.Mail, Houses: d.Houses, Operator: d.Operator, Bans: d.Bans,
+			Social: cmd.Social, Save: d.Save, Rent: d.Rent, SaveBoard: d.SaveBoard, Mail: d.Mail, Houses: d.Houses, Operator: d.Operator, Bans: d.Bans, SetPassword: d.SetPassword,
 		}
 
 		// A command that panics must not leave the player staring at a dead

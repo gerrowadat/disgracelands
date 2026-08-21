@@ -61,3 +61,4 @@ data/.acme/
 # editor/OS cruft
 *~
 .DS_Store
+.claude/worktrees/

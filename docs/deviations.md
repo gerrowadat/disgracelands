@@ -379,10 +379,24 @@ Listed here so they are not mistaken for deliberate differences.
   recycling, which this port does not have. The three lines are dropped
   rather than printed as zeroes.
 
-- **`set` and `remort` are not ported.** `do_set` is a ninety-line dispatcher
-  over a table of sixty-odd fields, and `remort` is a local addition with a
-  per-character bit vector of borrowed class skills. Each is large enough to
-  want its own slice; see the plan's 5i-e.
+- **`set <name> passwd` does not echo the new password.** The C answers
+  "Password changed to '<the password>'." in clear on the god's screen — and
+  into a snooper's, and into whatever the god's client logs. The password is
+  set and the acknowledgement says so without repeating it.
+
+- **`set file <name>` is not supported.** The C loads a character who is not
+  logged in, edits the record and writes it straight back. Doing that safely
+  needs the same locking the login path has, for a command that is used once
+  a year; `set` works on anybody who is logged in.
+
+- **`set <name> idnum` cannot be used at all** — in the C either. The field
+  is marked PC, and the handler refuses anything that is not an NPC, so the
+  two conditions can never both hold. Ported as it stands rather than
+  "fixed", since either reading changes behaviour.
+
+- **`remort` is not ported.** A local addition with a per-character bit
+  vector of borrowed class skills, the `IS_<CLASS>` macros that read it, and
+  `redeem` for a fallen paladin. See the plan's 5i-h.
 
 - **`redeem` is not ported.** It is the eighth branch of `do_wizutil`, a local
   addition clearing a `PSF_FALLEN` flag on a paladin — and the paladin class,
