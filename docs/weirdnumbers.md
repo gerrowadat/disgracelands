@@ -815,6 +815,38 @@ nothing, so the command's existence is never given away.
 
 *Source*: `interpreter.c:623`.
 
+### `mute` is called SCMD_SQUELCH
+
+```c
+{ "mute"     , POS_DEAD    , do_wizutil  , LVL_GOD, SCMD_SQUELCH },
+```
+
+The subcommand, the flag (`PLR_NOSHOUT`) and the message ("Squelch ON for
+%s") all say squelch; the word a god types is `mute`. Somebody renamed the
+command and left everything behind it alone.
+
+Worth an entry only because the command-line test caught it: the port was
+written as `squelch`, which is what every other name in that code path says,
+and the check against `interpreter.c` refused it.
+
+*Source*: `interpreter.c:371`.
+
+### Demoting somebody costs them more than levels
+
+```c
+if (newlevel < GET_LEVEL(victim)) {
+  do_start(victim);
+  GET_LEVEL(victim) = newlevel;
+```
+
+`do_start` is the routine that sets a *brand new* character up: it rolls the
+starting points, resets the skills and applies level one's gains. `advance`
+runs it first and then stamps the new level on top — so being demoted from 30
+to 29 gives you a level-one character's hit points with a 29 written on it.
+Going *up* does nothing of the kind; it just hands the experience over.
+
+*Source*: `act.wizard.c:1472`.
+
 ---
 
 ## What to do about all this

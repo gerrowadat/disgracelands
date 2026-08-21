@@ -174,3 +174,36 @@ var levelExperience = map[int32][]int32{
 		7200000, 8000000, 9000000, 9500000, // 28-31
 	},
 }
+
+// GainExperienceRegardless is gain_exp_regardless (limits.c:334): experience
+// with none of the limits.
+//
+// No per-kill cap, no tenth-of-a-band cap, and — the part that matters — it
+// levels all the way to LVL_IMPL rather than stopping at the mortal ceiling.
+// It exists for `advance`, which is how somebody becomes an immortal in the
+// first place, and it is the only route past level 30.
+//
+// Note it never levels *down*: handing it a negative number takes the
+// experience away and leaves the level where it was. `advance` demoting
+// somebody sets the level itself first, for exactly that reason.
+func GainExperienceRegardless(rec *PlayerRecord, gain int32, r *rng.Rand) int32 {
+	rec.Points.Exp += gain
+	if rec.Points.Exp < 0 {
+		rec.Points.Exp = 0
+	}
+	if rec.Mobile {
+		return 0
+	}
+
+	levels := int32(0)
+	for rec.Level < LevelImplementor &&
+		rec.Points.Exp >= LevelExperience(rec.Class, rec.Level+1) {
+		rec.Level++
+		levels++
+		AdvanceLevel(rec, r)
+	}
+	if levels > 0 {
+		rec.Title = Title(rec.Class, rec.Level, rec.Sex)
+	}
+	return levels
+}

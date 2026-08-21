@@ -124,3 +124,6 @@ func (f Flags) String() string {
 	}
 	return b.String()
 }
+
+// Toggle flips the given bits, porting the C's TOG_BIT.
+func (f Flags) Toggle(bits Flags) Flags { return f ^ bits }

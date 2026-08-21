@@ -251,6 +251,24 @@ func init() {
 		{Name: "stat", Help: "Show everything about a room, object or character.", Run: doStat, CLine: 492, MinLevel: game.LevelImmortal},
 		{Name: "vnum", Help: "List the vnums answering to a name.", Run: doVnum, CLine: 533, MinLevel: game.LevelImmortal},
 		{Name: "vstat", Help: "Show everything about a prototype.", Run: doVstat, CLine: 534, MinLevel: game.LevelImmortal},
+
+		// Changing things. LVL_FREEZE is LVL_GRGOD (structs.h:495), which is
+		// why freeze and thaw sit a rank above the rest of do_wizutil.
+		{Name: "advance", Help: "Set somebody's level.", Run: doAdvance, CLine: 225, MinLevel: game.LevelImplementor},
+		{Name: "freeze", Help: "Stop somebody doing anything at all.", Run: doFreeze, CLine: 302, MinLevel: game.LevelGreaterGod},
+		{Name: "load", Help: "Create an object or a mobile.", Run: doLoad, CLine: 363, MinLevel: game.LevelGod},
+		{Name: "notitle", Help: "Stop somebody setting a title.", Run: doNoTitle, CLine: 385, MinLevel: game.LevelGod},
+		{Name: "pardon", Help: "Clear somebody's killer and thief flags.", Run: doPardon, CLine: 399, MinLevel: game.LevelGod},
+		{Name: "purge", Help: "Destroy something, or clean out the room.", Run: doPurge, CLine: 416, MinLevel: game.LevelGod},
+		{Name: "reroll", Help: "Roll somebody's abilities again.", Run: doReroll, CLine: 440, MinLevel: game.LevelGreaterGod},
+		{Name: "restore", Help: "Heal somebody completely.", Run: doRestore, CLine: 442, MinLevel: game.LevelGod},
+		// `mute`, not `squelch` — the subcommand is SCMD_SQUELCH but the word
+		// players and gods type is `mute` (interpreter.c:371). Caught by the
+		// command-line test, which is what it is for.
+		{Name: "mute", Help: "Stop somebody shouting.", Run: doSquelch, CLine: 371, MinLevel: game.LevelGod},
+		{Name: "thaw", Help: "Unfreeze somebody.", Run: doThaw, CLine: 511, MinLevel: game.LevelGreaterGod},
+		{Name: "unaffect", Help: "Strip every spell from somebody.", Run: doUnaffect, CLine: 525, MinLevel: game.LevelGod},
+		{Name: "zreset", Help: "Reset a zone, or the whole world.", Run: doZreset, CLine: 563, MinLevel: game.LevelGreaterGod},
 		{Name: "say", Help: "Talk to the room.", Run: doSay, CLine: 449},
 		{Name: "'", Help: "Talk to the room; the short form of say.", Run: doSay, CLine: 450},
 		{Name: "score", Help: "Show your own statistics.", Run: doScore, CLine: 452},

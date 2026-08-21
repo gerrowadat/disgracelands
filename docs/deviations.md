@@ -335,11 +335,14 @@ Listed here so they are not mistaken for deliberate differences.
   which matters because `read_mobile` rolls hit points and `stat` prints
   them — so the mobile has to be made rather than read off the prototype.
 
-- **`remort` and `reroll` are not ported.** `reroll` *is* `do_wizutil`
-  (`act.wizard.c:2034`) and `remort` is an implementor command in the same
-  file, so both belong with the rest of Phase 5i rather than with the rules.
-  `remort` is a large local addition — a per-character bit vector of borrowed
-  class skills — and wants its own slice.
+- **`set` and `remort` are not ported.** `do_set` is a ninety-line dispatcher
+  over a table of sixty-odd fields, and `remort` is a local addition with a
+  per-character bit vector of borrowed class skills. Each is large enough to
+  want its own slice; see the plan's 5i-e.
+
+- **`redeem` is not ported.** It is the eighth branch of `do_wizutil`, a local
+  addition clearing a `PSF_FALLEN` flag on a paladin — and the paladin class,
+  the fallen state and the flag it lives in are all part of the remort work.
 
 - **`hunt_victim` is not ported, because nothing calls it.** `graph.c:219`
   walks a mobile along a BFS path towards its prey, and in this whole tree
