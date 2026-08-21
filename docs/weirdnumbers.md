@@ -876,6 +876,25 @@ Nothing documents it and the usage message does not mention it.
 
 *Source*: `act.wizard.c:1882`.
 
+### A switched god cannot type `return`... unless the body is high enough level
+
+The level used to match a command is the level of the *body you are in*
+(`interpreter.c:623`), and `switch` puts a god inside somebody else. So a god
+switched into a level-one dog is, for the interpreter's purposes, a
+level-one dog: every immortal command becomes invisible and answers
+"Huh?!?".
+
+`return` works because it is deliberately level 0 — it is the one command in
+the file with no minimum, and it has to be, or a god who switched into a rat
+would be a rat until the server restarted.
+
+The C's message for this case — "You can't use immortal commands while
+switched" — is checked *after* a command has been found, so it only ever
+fires when the borrowed body is itself high enough level to have matched the
+command in the first place. Most switched gods never see it.
+
+*Source*: `interpreter.c:623`, `interpreter.c:634`, `act.wizard.c:1206`.
+
 ---
 
 ## What to do about all this

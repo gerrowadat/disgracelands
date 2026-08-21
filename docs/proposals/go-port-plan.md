@@ -1101,7 +1101,8 @@ it.
 | **5i-c. Changing things ✅** | `load`, `purge`, `advance`, `restore`, `zreset`, and all seven of `do_wizutil` — `reroll`, `pardon`, `notitle`, `mute`, `freeze`, `thaw`, `unaffect`. | `act.wizard.c` |
 | **5i-e. `set` and `remort`** | `do_set` is a ninety-line dispatcher over a table of sixty-odd fields, and `remort` is a local addition with a per-character bit vector of borrowed class skills. Each is its own slice. | `act.wizard.c` |
 | **5i-d. Talking as a god ✅** | `echo`, `emote`, `send`, `gecho`, `wiznet` (and its `;` alias), `syslog`, `force`. | `act.wizard.c` |
-| **5i-f. Running the place** | `snoop`, `switch`, `return` — which need the session to be able to drive a *different* character, and are the only commands in the game that do — plus `dc`, `wizlock`, `shutdown`, `ban`, `show`, `last`, `date`. The operational half, and the one Phase 7 actually blocks on. | `act.wizard.c`, `ban.c` |
+| **5i-f. Running the place ✅** | `snoop`, `switch`, `return` — the only commands in the game that reach past the character to the connection — plus `dc`, `wizlock`, `shutdown`, `date`, `uptime`, `last`. | `act.wizard.c` |
+| **5i-g. Bans and `show`** | `ban`/`unban`/`allow` and the ban file, and `show` — a six-hundred-line dispatcher over everything the server knows about itself. | `ban.c`, `act.wizard.c` |
 
 Two things that are not in any slice and should be, once there is somewhere
 to put them: **`N.thing` targeting** (`get_number`, which every command using

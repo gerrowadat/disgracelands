@@ -133,8 +133,16 @@ func run(args []string) error {
 
 	// Signal handling first, so a SIGTERM arriving during a slow boot is
 	// honoured rather than killing the process outright.
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	signalCtx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
+
+	// A second context on top, so a god typing `shutdown` can stop the
+	// listeners the same way a signal does. NotifyContext's stop() only stops
+	// the *signal relaying* — it does not cancel anything — so without this
+	// an in-game shutdown would run the saves and then sit there with the
+	// listeners still up.
+	ctx, cancel := context.WithCancel(signalCtx)
+	defer cancel()
 
 	// Load the world before anything can connect to it. A world that will
 	// not load is a boot failure, not something to serve around.
@@ -283,7 +291,18 @@ func run(args []string) error {
 
 	health.SetReady(true)
 	logger.Info("ready")
-	<-ctx.Done()
+
+	// Either a signal or a god typing `shutdown`. The second runs exactly the
+	// same path as the first — the saves, the crash-saves, the waiting for
+	// writes — because a shutdown that skipped those would be worse than no
+	// shutdown command at all.
+	select {
+	case <-ctx.Done():
+	case <-srv.ShutdownRequested():
+		logger.Info("shutdown requested from inside the game",
+			"reboot", srv.RebootWanted())
+		cancel()
+	}
 
 	// Stop treating further signals specially: a second Ctrl-C should kill a
 	// wedged shutdown rather than being swallowed.

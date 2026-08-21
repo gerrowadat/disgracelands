@@ -116,6 +116,19 @@ type Limits struct {
 
 // serve runs one session.
 func (s *Server) serve(ctx context.Context, sess *session.Session, limits Limits) {
+	// Registered for the whole life of the connection, so `users` and `dc`
+	// can see it and number it. Unregistered on the way out, and the snoop
+	// links broken with it — a snooper watching a connection that has gone
+	// would otherwise write into a closed session forever.
+	s.connections.add(sess)
+	defer func() {
+		sess.StopSnooping()
+		if watcher := sess.SnoopedBy(); watcher != nil {
+			watcher.StopSnooping()
+		}
+		s.connections.remove(sess)
+	}()
+
 	// Shutting down must actually shut down. A session sits blocked in
 	// conn.Read, which no amount of context cancellation interrupts on its
 	// own, so the connection is closed for it — otherwise Accept's wg.Wait
@@ -166,6 +179,7 @@ func (s *Server) serve(ctx context.Context, sess *session.Session, limits Limits
 			SaveBoard:  s.SaveBoard,
 			Mail:       mailOrNil(s),
 			Houses:     housesOrNilIface(s),
+			Operator:   s,
 			Save: func(c *game.Character) {
 				// Off the world goroutine, which is where the command that
 				// asked for it is running.

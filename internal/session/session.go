@@ -155,6 +155,16 @@ type Session struct {
 
 	state     State
 	character *game.Character
+	// original is set while this session is switched into somebody else.
+	original *game.Character
+	// snooping is the session this one is watching; snoopedBy is the session
+	// watching this one. Guarded by mu because Send runs from the world
+	// goroutine and the commands that set them run there too, but Close can
+	// come from the connection goroutine.
+	snooping  *Session
+	snoopedBy *Session
+	// snoopMu guards the two above.
+	snoopMu sync.Mutex
 
 	// pending holds what has been gathered so far during creation.
 	pendingName     string
@@ -336,6 +346,87 @@ func (s *Session) Character() *game.Character { return s.character }
 // SetCharacter attaches a character to the session.
 func (s *Session) SetCharacter(c *game.Character) { s.character = c }
 
+// Original is the character this session belongs to when it has been
+// switched into somebody else's body, or nil.
+//
+// The C keeps this on the descriptor as `d->original` and swaps
+// `d->character` — so while switched, everything the session does happens as
+// the *victim*, and `return` is the only way back. Note what that means for
+// the level check on every command: a god switched into a rat is a rat, and
+// the interpreter refuses them their own commands. The C has a message for
+// exactly that case ("You can't use immortal commands while switched").
+func (s *Session) Original() *game.Character { return s.original }
+
+// SwitchInto puts this session in charge of another character.
+func (s *Session) SwitchInto(victim *game.Character) {
+	if s.original == nil {
+		s.original = s.character
+	}
+	s.character = victim
+	victim.Client = s
+}
+
+// SwitchBack undoes it, returning the character that was borrowed.
+func (s *Session) SwitchBack() *game.Character {
+	if s.original == nil {
+		return nil
+	}
+	borrowed := s.character
+	if borrowed != nil && borrowed.Client == game.Client(s) {
+		borrowed.Client = nil
+	}
+	s.character = s.original
+	s.original = nil
+	if s.character != nil {
+		s.character.Client = s
+	}
+	return borrowed
+}
+
+// SnoopOn makes this session a copy of everything written to another. A nil
+// argument stops.
+func (s *Session) SnoopOn(other *Session) {
+	s.snoopMu.Lock()
+	s.snooping = other
+	s.snoopMu.Unlock()
+
+	if other != nil {
+		other.snoopMu.Lock()
+		other.snoopedBy = s
+		other.snoopMu.Unlock()
+	}
+}
+
+// Snooping returns the session being watched, or nil.
+func (s *Session) Snooping() *Session {
+	s.snoopMu.Lock()
+	defer s.snoopMu.Unlock()
+	return s.snooping
+}
+
+// SnoopedBy returns the session watching this one, or nil.
+func (s *Session) SnoopedBy() *Session {
+	s.snoopMu.Lock()
+	defer s.snoopMu.Unlock()
+	return s.snoopedBy
+}
+
+// StopSnooping breaks the link from both ends.
+func (s *Session) StopSnooping() {
+	s.snoopMu.Lock()
+	watched := s.snooping
+	s.snooping = nil
+	s.snoopMu.Unlock()
+
+	if watched != nil {
+		watched.snoopMu.Lock()
+		if watched.snoopedBy == s {
+			watched.snoopedBy = nil
+		}
+		watched.snoopMu.Unlock()
+	}
+}
+
 // Send queues output. It never blocks: a client that cannot keep up is
 // disconnected rather than allowed to stall the world.
 func (s *Session) Send(format string, args ...any) {
@@ -352,6 +443,13 @@ func (s *Session) Send(format string, args ...any) {
 	default:
 		s.logger.Warn("output queue full; dropping the connection")
 		s.Close()
+	}
+
+	// Anybody snooping sees it too. The C copies at the descriptor's write,
+	// so a snooper sees everything including prompts — which is what makes
+	// snooping useful and also what makes it noisy.
+	if watcher := s.SnoopedBy(); watcher != nil {
+		watcher.Send("%s", text)
 	}
 }
 

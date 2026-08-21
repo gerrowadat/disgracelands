@@ -74,6 +74,9 @@ type Context struct {
 	Mail MailSystem
 	// Houses is the player housing system.
 	Houses HouseKeeper
+	// Operator is the connections and the shutdown switch, for the commands
+	// that run the server rather than the game.
+	Operator Operator
 	// Arg is everything after the command word, trimmed.
 	Arg string
 	// Social is the social being run, for the commands that are one.
@@ -283,6 +286,19 @@ func init() {
 		// `;` is wiznet with no space, the way `'` is say. The one-character
 		// command path in split() is what makes it work.
 		{Name: ";", Help: "Talk on the gods' channel.", Run: doWiznet, CLine: 552, MinLevel: game.LevelImmortal},
+
+		// Running the place (interpreter.c:272, :274, :357, :443, :464,
+		// :483, :498, :526, :555). `return` is level 0 — a mortal switched
+		// into by a god needs a way of saying so.
+		{Name: "date", Help: "Show the machine's clock.", Run: doDate, CLine: 272, MinLevel: game.LevelImmortal},
+		{Name: "dc", Help: "Close somebody's connection.", Run: doDisconnect, CLine: 274, MinLevel: game.LevelGod},
+		{Name: "last", Help: "Show when somebody was last on.", Run: doLast, CLine: 357, MinLevel: game.LevelGod},
+		{Name: "return", Help: "Go back to your own body.", Run: doReturn, CLine: 443},
+		{Name: "shutdown", Help: "Stop the server.", Run: doShutdown, CLine: 464, MinLevel: game.LevelGreaterGod},
+		{Name: "snoop", Help: "Watch somebody's screen.", Run: doSnoop, CLine: 483, MinLevel: game.LevelGod},
+		{Name: "switch", Help: "Take over somebody else's body.", Run: doSwitch, CLine: 498, MinLevel: game.LevelGod},
+		{Name: "uptime", Help: "Show how long the server has been up.", Run: doUptime, CLine: 526, MinLevel: game.LevelImmortal},
+		{Name: "wizlock", Help: "Set who may log in.", Run: doWizlock, CLine: 555, MinLevel: game.LevelGreaterGod},
 		{Name: "say", Help: "Talk to the room.", Run: doSay, CLine: 449},
 		{Name: "'", Help: "Talk to the room; the short form of say.", Run: doSay, CLine: 450},
 		{Name: "score", Help: "Show your own statistics.", Run: doScore, CLine: 452},
@@ -490,6 +506,8 @@ type Dispatcher struct {
 	Mail MailSystem
 	// Houses is the player housing system.
 	Houses HouseKeeper
+	// Operator is the connections and the shutdown switch.
+	Operator Operator
 }
 
 // Do implements CommandHandler.
@@ -536,7 +554,7 @@ func (d *Dispatcher) Do(ctx context.Context, s *Session, line string) error {
 		c := &Context{
 			Ctx: ctx, Session: s, Character: s.Character(),
 			World: w, Text: d.Text, RNG: d.RNG, Violence: d.Violence, Arg: arg,
-			Social: cmd.Social, Save: d.Save, Rent: d.Rent, SaveBoard: d.SaveBoard, Mail: d.Mail, Houses: d.Houses,
+			Social: cmd.Social, Save: d.Save, Rent: d.Rent, SaveBoard: d.SaveBoard, Mail: d.Mail, Houses: d.Houses, Operator: d.Operator,
 		}
 
 		// A command that panics must not leave the player staring at a dead

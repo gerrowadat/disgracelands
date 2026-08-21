@@ -335,6 +335,17 @@ Listed here so they are not mistaken for deliberate differences.
   which matters because `read_mobile` rolls hit points and `stat` prints
   them — so the mobile has to be made rather than read off the prototype.
 
+- **`shutdown`'s five spellings collapse to two outcomes.** The C touches one
+  of `FASTBOOT_FILE`, `KILLSCRIPT_FILE` or `PAUSE_FILE` on its way out and
+  lets the wrapper shell script decide whether to start the server again.
+  This port has no wrapper — the container runtime restarts it, see
+  `docs/operations.md` — so `reboot` and `now` ask to come back and `die` and
+  `pause` ask not to, and the answer is an exit code rather than a file.
+
+- **`ban` and `show` are not ported.** `ban.c` is its own file with its own
+  control file, and `do_show` is a six-hundred-line dispatcher. See the
+  plan's 5i-g.
+
 - **`set` and `remort` are not ported.** `do_set` is a ninety-line dispatcher
   over a table of sixty-odd fields, and `remort` is a local addition with a
   per-character bit vector of borrowed class skills. Each is large enough to

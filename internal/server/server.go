@@ -17,6 +17,7 @@ import (
 	"fmt"
 	"log/slog"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/gerrowadat/disgracelands/internal/auth"
@@ -72,6 +73,21 @@ type Server struct {
 
 	// restrict refuses new characters, matching the C's -r.
 	restrict bool
+	// wizlock is the C's `circle_restrict`: the minimum level allowed in,
+	// set at runtime by the `wizlock` command.
+	wizlock atomic.Int32
+
+	// connections is every live session, for `users` and `dc`.
+	connections registry
+
+	// booted is when the server came up, for `uptime`.
+	booted time.Time
+
+	// The shutdown switch. A god asking to stop closes the channel; main
+	// waits on it and runs the ordinary shutdown.
+	shutdownWanted chan struct{}
+	shutdownOnce   sync.Once
+	rebootWanted   atomic.Bool
 	// noSpecials suppresses special procedures, matching the C's -s.
 	noSpecials bool
 
@@ -124,6 +140,8 @@ func New(opts Options) *Server {
 		noSpecials: opts.NoSpecials,
 		rng:        opts.RNG,
 	}
+	s.booted = time.Now()
+	s.shutdownWanted = make(chan struct{})
 	if s.rng == nil {
 		s.rng = rng.NewRand(rng.NewModern(uint64(time.Now().UnixNano()))) //nolint:gosec // a game seed, not a secret
 	}
@@ -202,7 +220,10 @@ func (s *Server) Authenticate(ctx context.Context, name, password string) (*game
 
 // Create implements session.LoginHandler.
 func (s *Server) Create(ctx context.Context, req session.CreateRequest) (*game.Character, error) {
-	if s.restrict {
+	// `-r` on the command line, and `wizlock 1` or higher at runtime: both
+	// close the door to new characters. The C keeps them as separate globals
+	// and tests them in different places; one check covers both.
+	if s.restrict || s.wizlock.Load() >= 1 {
 		return nil, fmt.Errorf("the game is not accepting new characters")
 	}
 
@@ -301,6 +322,16 @@ func (s *Server) Reconnect(ctx context.Context, name string) *game.Character {
 		}
 	})
 	return found
+}
+
+// AllowedIn reports whether somebody of this level may enter, porting the
+// `circle_restrict` check in nanny (interpreter.c).
+//
+// A wizlock of 1 closes the game to *new* characters only; anything higher
+// is a level threshold and keeps existing ones out too.
+func (s *Server) AllowedIn(level int32) bool {
+	lock := s.wizlock.Load()
+	return lock <= 1 || level >= lock
 }
 
 // Enter implements session.LoginHandler: puts a character into the world.
