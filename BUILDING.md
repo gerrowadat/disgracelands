@@ -49,17 +49,19 @@ currently agree on every field of all 3,202 records. This runs in CI.
 If it reports a difference, the Go loader is what is wrong: the C server is
 the reference implementation and the one that has been running the game.
 
-## Current state: Phases 0–3 done, no rules yet
+## Current state: Phases 0–4 done, Phase 5 all but finished
 
-`dlmud` loads the world, takes connections over TLS or plaintext telnet,
-runs the login, character-creation and main-menu sequence, and gives a
-player the pulse loop, movement, `look`, `who`, `credits`, `help` and `quit`
-— plus autosave and a linkdead body to reconnect to. It shuts down cleanly
-on SIGTERM.
+`dlmud` loads the world, takes connections over TLS or plaintext telnet, runs
+the login, character-creation and main-menu sequence, resets zones, and runs
+the game: combat, spells, skills, affects, equipment, death and corpses,
+mobiles that act, special procedures, the channels and socials, shops, banks,
+renting, boards, mail, houses, and the immortal commands. Characters autosave,
+a linkdead body stays to reconnect to, and it shuts down cleanly on SIGTERM.
 
-There is no rules core yet: no combat, skills, spells or levelling, no
-shops, boards or mail, and no zone resets, so nothing is loaded into the
-rooms. That is Phase 4 onwards; see `docs/proposals/go-port-plan.md` §10.
+285 of the C's 318 commands answer. What is left — `remort`, the OasisOLC
+editors, and a tail of small commands, plus minimum-position enforcement,
+`CAN_SEE` and `N.thing` targeting — is listed one by one in
+`docs/proposals/go-port-plan.md` §10.
 
 It needs at least one listener, and the TLS listener (on by default) needs a
 certificate, so the shortest thing that actually starts is:

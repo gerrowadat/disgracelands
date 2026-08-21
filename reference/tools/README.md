@@ -16,7 +16,7 @@ documents its own build command in its header comment, because some — like
 `bin2ascii` — have requirements (32-bit compilation) that do not fit the
 normal build.
 
-There are two kinds of thing here.
+There are three kinds of thing here.
 
 ## Oracles
 
@@ -44,10 +44,38 @@ wrong. Every oracle written so far has caught at least one real mistake.
 - **`cryptoracle.c`** — the system `crypt(3)`, for checking the hand-written
   DES in `internal/auth/descrypt` against. Skips where the system libcrypt no
   longer does traditional DES.
+- **`shopprice.c`** — `buy_price` and `sell_price` from `shop.c`, which are one
+  line each and whose answer depends on the *width the multiplication happens
+  at*: `int * float` truncated back to `int` is 115 with SSE and 114 in the
+  x87's 80-bit registers, and the archived server was i386. Built `-m32
+  -mfpmath=387` for that reason.
 
 If you are about to port anything with a division, a cast, or a comment
 describing numbers in it, the next file in this directory is probably the one
 you are about to write. `docs/developer.md` has the pattern.
+
+## Layout tools
+
+Several of CircleMUD's on-disk formats are `fwrite`s of a struct, which means
+**the format is the struct's memory layout** — padding holes included, and
+those holes hold whatever the stack held. Each of these prints the offsets,
+sizes and padding gcc actually chose, and the Go codec is required by a test to
+reproduce them field for field under both data models (ILP32 for the archived
+data, LP64 for a modern rebuild) rather than hard-coding them.
+
+Like `bin2ascii`, the 32-bit half needs `gcc -m32`. CI installs the toolchain
+only for changes that can affect these — see the `ilp32` step in
+`.github/workflows/go.yml`, and add to its path filter if you add a tool here.
+
+- **`pfilelayout.c`** — `struct char_file_u`, the player database.
+- **`boardlayout.c`** — `struct board_msginfo`, the bulletin board files. The
+  second member is a `char *`, so a live heap pointer is written into every
+  board file and the record's size changes with the pointer width.
+- **`maillayout.c`** — the mud mail file's header and data blocks. `BLOCK_SIZE`
+  does not change with the data model but the split *inside* a block does, so
+  the same file means different things to a 32- and a 64-bit server.
+- **`houselayout.c`** — `struct house_control_rec`, the house control file. It
+  has a padding hole at offset 6 under ILP32 that nothing ever writes.
 
 ## Player-file tooling
 
@@ -64,7 +92,9 @@ binary format. **Superseded by `dlctl`'s `pfile` subcommands**, which need no
   Ordinary native build.
 - **`pfilegen.c`** — writes a synthetic binary player database with known
   values, so the Go decoder can be tested against a file the C actually
-  wrote rather than one the Go encoder produced.
-- **`pfilelayout.c`** — reports the on-disk layout of `struct char_file_u`:
-  field offsets, sizes and padding, which is what the Go codec is written
-  against.
+  wrote rather than one the Go encoder produced. It memsets each record to
+  0xAB first, so a reader that accidentally depended on padding being zero
+  fails instead of passing.
+
+`pfilelayout.c` is here too; it is listed under "Layout tools" above with its
+three siblings, since that is what it is.

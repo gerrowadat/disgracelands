@@ -25,13 +25,13 @@ see `docs/operations.md`). Everything in `docs/investigations/` describes that
 archive rather than what ships.
 
 **The Go port is playable.** Phases 0–4 of
-`docs/proposals/go-port-plan.md` are done. It loads the world, listens on
-TLS or plaintext telnet, negotiates telnet properly (hidden passwords,
-CHARSET, GMCP), logs in an archived character or creates a new one through
-the full C creation flow, and shows the main menu — description editor,
-background story, change password, delete character — before putting them in
-the world. Characters autosave, and a dropped link leaves the body in the
-world to reconnect to.
+`docs/proposals/go-port-plan.md` are done and Phase 5 is all but finished. It
+loads the world, listens on TLS or plaintext telnet, negotiates telnet
+properly (hidden passwords, CHARSET, GMCP), logs in an archived character or
+creates a new one through the full C creation flow, and shows the main menu —
+description editor, background story, change password, delete character —
+before putting them in the world. Characters autosave, and a dropped link
+leaves the body in the world to reconnect to.
 
 The rules core is there: zones reset and mobiles wander, scavenge and attack;
 combat runs on the two-second round with the C's own to-hit and damage
@@ -41,12 +41,18 @@ drink, following and grouping. A character can kill something, be paid for
 it, and rise a level — which is Phase 4's criterion, and there is a test that
 walks it end to end.
 
-What is missing is the surrounding game: no communication commands, socials,
-shops, banks, boards, mail or houses, no rent, no immortal commands, and no
-special procedures — so guildmasters and shopkeepers stand there inert.
-`practice` is a command rather than something a guildmaster does, which is
-the largest deliberate deviation and is recorded as one. That is Phase 5,
-mapped slice by slice in the plan's §10.
+The game around it is there too: special procedures, so guildmasters teach and
+guild guards turn you away; the channels and the 104 socials; shops, banks,
+renting at an inn and the rent files behind it; bulletin boards, mud mail and
+player housing; and the immortal commands, from `goto` and `stat` through
+`set`, `snoop`, `switch` and the site bans.
+
+**285 of the C's 318 commands answer.** Of the 33 that do not, `remort` and
+`redeem` are the last slice of Phase 5, eight are the OasisOLC editors that
+belong to Phase 6, and the rest is a tail of small things listed command by
+command in the plan's §10. Three mechanisms are missing that cut across every
+command rather than being any one of them: minimum position, `CAN_SEE`
+visibility, and `N.thing` targeting.
 
 The two servers load the world identically — every field of all 3,202
 records — and `scripts/world-parity.sh` checks that in CI.

@@ -15,12 +15,12 @@ environment variable name in brackets after each description. If the two
 ever disagree, `--help` is right and this file is stale — CI checks that
 every flag appears here, but it cannot check that the prose is accurate.
 
-> **Current state:** the rules core is built (Phase 4). What is not built is
-> the economy, communication, mail and special procedures — Phase 5. Settings
-> marked *(inert)* are accepted and validated but do not yet affect anything,
-> because the subsystem they configure does not exist. They are here because
-> the configuration surface was built first, deliberately — see
-> `docs/proposals/go-port-plan.md` §10.
+> **Current state:** Phase 5 is finished bar one slice, so the rules core, the
+> economy, communication, boards, mail, houses, special procedures and the
+> immortal commands are all built. Settings marked *(inert)* are accepted and
+> validated but do not yet affect anything, because the subsystem they
+> configure does not exist. They are here because the configuration surface was
+> built first, deliberately — see `docs/proposals/go-port-plan.md` §10.
 
 ## Data locations
 
@@ -169,12 +169,18 @@ These correspond one-to-one with the C server's single-letter options.
 | `--mini-mud` | `-m` | Load a minimal world, for testing. |
 | `--skip-rent-check` | `-q` | Skip the rent scan on boot (faster startup). *(inert)* |
 | `--restrict` | `-r` | Allow no new player registrations. |
-| `--no-specials` | `-s` | Suppress special procedure assignment. *(inert)* |
+| `--no-specials` | `-s` | Suppress special procedure assignment. |
 
 `--mini-mud` loads each world subdirectory's `index.mini` instead of
-`index`, and `--restrict` turns new characters away at the login prompt.
-The other two configure subsystems that do not exist yet: rent arrives in
-Phase 5e and special procedures in Phase 5a.
+`index`, `--restrict` turns new characters away at the login prompt, and
+`--no-specials` skips the assignment table entirely, so guildmasters,
+shopkeepers, bankers and the rest are ordinary mobiles.
+
+`--skip-rent-check` is the one still inert. The rent files themselves are
+built and wired in, but the thing the flag turns off — `update_obj_file()`
+(objsave.c:332), the boot-time sweep that deletes rent files older than
+`rent_file_timeout` days, called from `db.c:457` under exactly this
+condition — has no equivalent here. There is nothing yet for the flag to skip.
 
 ## Security
 

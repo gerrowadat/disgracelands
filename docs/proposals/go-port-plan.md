@@ -5,11 +5,12 @@ pluggable player- and world-file formats, and packaged as a normal modern
 service (flags, env vars, structured logs, containers) rather than a
 2002-era autoconf tree driven by `autorun`.
 
-This is a design/sequencing document. **Phases 0–3 (§10) are built** — the
-server takes logins and players can move around — and everything from Phase
-4 on, the rules core included, is still a plan. Each built phase carries a
-retrospective in §10 saying what actually landed and where it diverged from
-what was planned. See `BUILDING.md` for how to build and run what exists.
+This is a design/sequencing document. **Phases 0–4 (§10) are built and
+Phase 5 is all but finished** — one slice of it is left, `remort`, and the
+gaps outside the slices are listed with it. Phases 6 and 7 are still a plan.
+Each built phase carries a retrospective in §10 saying what actually landed
+and where it diverged from what was planned. See `BUILDING.md` for how to
+build and run what exists.
 
 ---
 
@@ -1010,8 +1011,9 @@ The pattern from Phase 3 repeated, and harder: **the C is not what it looks
 like, and the difference is never in the obvious place.**
 
 `docs/weirdnumbers.md` was written during this phase and is the single most
-useful document in the repository. Twenty-odd entries, each one a place where
-the arithmetic does not do what it appears to — `compute_thaco` truncating
+useful document in the repository. Twenty-odd entries when the phase closed
+and 57 now, each one a place where the arithmetic does not do what it appears
+to — `compute_thaco` truncating
 after each subtraction rather than at the end, `graf`'s 60–79 band dividing by
 20 where every other band divides by 10, a container's own weight counting
 against its own capacity, a player's abilities being clamped to **18** rather
@@ -1023,8 +1025,10 @@ holds the original function bodies with the `char_data` dereferences
 substituted and nothing else changed, and the Go tests compare against them
 across the whole input space where that is affordable. Verified this way so
 far: 30,000 RNG draws across six seeds, 36,288 regeneration values, 1,512,000
-to-hit values, 1,125 saving throws, every ability table, the title tables, the
-experience tables and `money_desc`.
+to-hit values, 1,125 saving throws, 9,680 DES `crypt(3)` pairs, every ability
+table, the title tables, the experience tables and `money_desc`. Phase 5 added
+a fifth oracle, `shopprice.c`, and three layout tools for the on-disk formats
+it built — see `reference/tools/README.md`.
 
 **Two structural decisions worth keeping.**
 
@@ -1077,11 +1081,21 @@ built.
 2008. *Done when: an archived character can do everything they did then,
 except build.*
 
-The C's command table holds 316 entries. Sixty are implemented. Of the 256
-left, 106 are socials — one function and a data file between them — and the
-rest divide into the slices below. They are listed in dependency order rather
-than in order of importance: the first slice unblocks three of the others,
-and after that the work is genuinely parallel.
+**Counted rather than remembered, and the earlier figures here were wrong.**
+`cmd_info[]` holds 319 rows before the `"\n"` sentinel, one of which is
+`RESERVED` — a placeholder that exists so a specproc can return command 0 and
+is not typeable — so **318 commands**. 105 of them are `do_action`, and the
+shipped socials file fills 104 of those (it also carries a `you` entry with no
+table slot, which the C drops with a log and so does this port).
+
+**285 of the 318 are implemented**: 181 in `internal/session/commands.go` plus
+the 104 socials. The 33 left are listed under "What is not in it" below — they
+are one remaining slice, the OLC editors that belong to Phase 6, and a
+scattering of small commands that never had a slice of their own.
+
+The slices are listed in dependency order rather than in order of importance:
+the first one unblocks three of the others, and after that the work was
+genuinely parallel.
 
 The seam itself turned out to be smaller than the thing it unblocks. A special
 is a function that gets first refusal on a command, or a tick with no command
@@ -1106,17 +1120,67 @@ it.
 | **5i-a. Getting about ✅** | The command table's minimum levels — which are part of *matching*, not a check afterwards — plus `goto`, `at`, `transfer`, `teleport`, `invis`, `poofin`, `poofout` and the shared `find_target_room`. | `act.wizard.c`, `interpreter.c` |
 | **5i-b. Looking at the innards ✅** | `stat` (room, object, character), `vstat`, `vnum`, and the fourteen name tables they print — now checked against `constants.c` by re-parsing it. `show`, `last` and `date` move to 5i-d, where the operational state they report lives. | `act.wizard.c`, `constants.c` |
 | **5i-c. Changing things ✅** | `load`, `purge`, `advance`, `restore`, `zreset`, and all seven of `do_wizutil` — `reroll`, `pardon`, `notitle`, `mute`, `freeze`, `thaw`, `unaffect`. | `act.wizard.c` |
-| **5i-e. `set` ✅** | `do_set` and `perform_set`: fifty-two fields, each with its own level, PC/NPC restriction and range, checked against the C's table by re-parsing it. | `act.wizard.c` |
-| **5i-h. `remort`** | A local addition: a per-character bit vector of borrowed class skills, the `IS_<CLASS>` macros that read it, and `redeem` for a fallen paladin. The last of Phase 5. | `act.wizard.c`, `class.c` |
 | **5i-d. Talking as a god ✅** | `echo`, `emote`, `send`, `gecho`, `wiznet` (and its `;` alias), `syslog`, `force`. | `act.wizard.c` |
+| **5i-e. `set` ✅** | `do_set` and `perform_set`: fifty-two fields, each with its own level, PC/NPC restriction and range, checked against the C's table by re-parsing it. | `act.wizard.c` |
 | **5i-f. Running the place ✅** | `snoop`, `switch`, `return` — the only commands in the game that reach past the character to the connection — plus `dc`, `wizlock`, `shutdown`, `date`, `uptime`, `last`. | `act.wizard.c` |
 | **5i-g. Bans and `show` ✅** | `ban`, `unban`, the ban file and its enforcement at the name prompt; `show` and its ten fields. `show rent` and `show shops` wait on their own listings. | `ban.c`, `act.wizard.c` |
+| **5i-h. `remort`** | A local addition: a per-character bit vector of borrowed class skills, the `IS_<CLASS>` macros that read it, and `redeem` for a fallen paladin. The last slice of Phase 5. | `act.wizard.c`, `class.c` |
 
-Two things that are not in any slice and should be, once there is somewhere
-to put them: **`N.thing` targeting** (`get_number`, which every command using
-`generic_find` inherits) belongs with the first slice that touches
-`generic_find`, and the **`CAN_SEE` visibility rules** — invisibility,
-hiding, sneaking and infravision all set flags today that nothing reads yet.
+### What is not in it
+
+The 33 commands of the 318 that nothing answers to yet, and the two mechanisms
+that cut across all of them. Everything here is a gap rather than a decision,
+so it is in `docs/deviations.md` under "gaps still to fill" rather than as a
+deviation.
+
+**The remaining slice, 5i-h.** `remort` (interpreter.c:432) and `redeem`
+(:431), `do_wizutil`'s eighth branch.
+
+**Phase 6's, and correctly so.** `medit`, `oedit`, `redit`, `sedit`, `zedit`,
+`olc` and `edit` are OasisOLC; `tedit` is the in-game text-file editor.
+
+**Three mechanisms that never had a slice, and want one.** Each is a property
+of *every* command rather than of any one of them, which is exactly why none
+of them got scheduled — and two of the three are things a player would notice
+inside a minute.
+
+- **Minimum position is not enforced at all.** `cmd_info[]`'s second column is
+  `minimum_position`, and `command_interpreter` gates on it
+  (interpreter.c:636–655) with five refusals by position — *"You are in a
+  pretty bad shape, unable to do anything!"*, *"All you can do right now is
+  think about the stars!"*, *"Nah... You feel too relaxed to do that.."* and
+  the rest. `Command` has no such field, so a sleeping character can `kill`,
+  a mortally wounded one can `buy`, and every commands's own position checks
+  (`do_flee`'s, the fighting checks) are the only ones there are. This is the
+  largest of the three and the cheapest: one column, copied out of the C's
+  table beside the `CLine` numbers already there, plus the gate in `lookup`.
+- **`N.thing` targeting** (`get_number`, which every command using
+  `generic_find` inherits) belongs with the first slice that touches
+  `generic_find`.
+- **The `CAN_SEE` visibility rules** — invisibility, hiding, sneaking and
+  infravision all set flags today that nothing reads yet — want a slice of
+  their own, and every command that lists anybody is a consumer.
+
+**And one command whose guards are missing rather than the command.** `quit`
+works, saves and removes the character, but `do_quit`'s own checks
+(act.other.c:99–172) are not there: the `POS_FIGHTING` refusal, the
+`POS_STUNNED`-and-below path that kills you outright, and — a `<DoC>` local
+modification, so exactly the kind of thing the fidelity rule is for — the
+`MAX_RENT` count of carried, worn and contained items that refuses the quit
+above 28 and otherwise announces *"Saving %d items."*. The house loadroom
+assignment on the way out is missing too.
+
+**The small things left over.** None is more than an afternoon; they are here
+because a command with no slice is a command nobody schedules.
+
+| | |
+|---|---|
+| The immortal `do_gen_tog` toggles | `holylight`, `nohassle`, `nowiz`, `roomflags`, `slowns`, `trackthru` (interpreter.c:336, :380, :386, :446, :472, :517). The mortal `PRF_*` toggles landed in 5d; these six did not, and the state most of them switch *does* exist — `game.TrackThroughDoors` is read by the BFS, `nohassle` is settable through `set`. |
+| `do_gen_write` | `bug`, `idea`, `typo` (interpreter.c:247, :342, :520) — one function appending a timestamped line to a file, with a `-` prefix check and a size cap. |
+| Aliases and half-spellings | `:` for emote (interpreter.c:286), `take` for get (:503), and the C's two deliberate stumps, `qui` (:421) and `shutdow` (:463), which exist so that an abbreviation of a dangerous command reaches something that refuses rather than something that acts. |
+| Immortal odds and ends | `users` (:528), `wizhelp` (:553, `do_commands` with `SCMD_WIZHELP`), `skillset` (:469), `reload` (:428), `qecho` (:419), `page` (:398). |
+| Mortal odds and ends | `color` (:258) — the `PRF_COLOR` bits are stored and `set color` works, but nothing emits colour, so the command has nothing to switch; `insult` (:346); `hop` (:337), the one `do_action` slot the shipped socials file does not fill; and `alias` (:226), which needs `plralias/` and is the only one of these with a format behind it. |
+| `mudlog`'s in-game half | `syslog` sets `PRF_LOG1`/`PRF_LOG2` and nothing reads them: the `wizvis` attribute on a log record (`internal/obs/log.go`) has no consumer, so gods cannot watch the log from in-game. Wanted whenever the syslog levels are meant to mean something. |
 
 **Phase 6 — Building tools.** OasisOLC equivalent, `Sink` writeback,
 the `gen*` layer. Deferrable — offline editing plus a reboot works
@@ -1146,9 +1210,12 @@ backends, the WipeMud race system (`TODO.md` §2).
   holds original C function bodies with the `char_data` dereferences
   substituted and nothing else changed, compiled by the Go tests and compared
   across the input space. Where a table is transcribed rather than computed,
-  the test re-parses the C source instead. See `docs/weirdnumbers.md` for why
-  reading the arithmetic across is not good enough. *Built, and the rule now
-  is that anything with a division, a cast or a comment describing numbers
+  the test re-parses the C source instead — `class.c`, `constants.c`,
+  `interpreter.c`, `spec_assign.c`, `handler.c`, `spells.h` and `act.wizard.c`'s
+  `set` table are all compared that way rather than asserted about. See
+  `docs/weirdnumbers.md` for
+  why reading the arithmetic across is not good enough. *Built, and the rule
+  now is that anything with a division, a cast or a comment describing numbers
   gets one.*
 - **Session tests against a real socket.** Each command is exercised through
   the whole stack — telnet parser, login, dispatcher, world goroutine — by a

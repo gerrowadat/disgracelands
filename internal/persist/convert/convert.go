@@ -131,9 +131,15 @@ func (r *Report) Count(a Action) int {
 //
 // Every one of them is a `fwrite` of a struct containing pointers or
 // explicit length fields, so both a byte-level transcode and a naive copy
-// with re-encoded text would damage them. They are carried across untouched
-// and reported, and each will be handled by the phase that implements the
-// subsystem that reads it.
+// with re-encoded text would damage them.
+//
+// All five subsystems are now built and read these formats unchanged, so a
+// byte-for-byte copy is the whole job as far as the *server* is concerned.
+// What is still not done is the text inside them: converting that means
+// decoding each record, transcoding its strings and rewriting the lengths
+// that were stored beside them, which is a per-format job rather than
+// anything a directory-level converter can do. They are carried across
+// untouched and reported so that is visible rather than assumed.
 var binaryFormats = []struct {
 	// prefix matches the start of the path, suffix its end. An empty suffix
 	// matches anything. Matching on both matters: plrobjs/ and house/ also
@@ -142,11 +148,11 @@ var binaryFormats = []struct {
 	// enough to classify them.
 	prefix, suffix, note string
 }{
-	{prefix: "etc/board.", note: "message board: a struct dump with length-prefixed text; converted when boards are implemented"},
-	{prefix: "etc/plrmail", note: "player mail: a struct dump; converted when mail is implemented"},
-	{prefix: "etc/hcontrol", note: "house control: a struct dump; converted when houses are implemented"},
-	{prefix: "plrobjs/", suffix: ".objs", note: "player rent file: a struct dump; converted when object save is implemented"},
-	{prefix: "house/", suffix: ".house", note: "house contents: a struct dump; converted when houses are implemented"},
+	{prefix: "etc/board.", note: "message board: a struct dump with length-prefixed text; read as-is, but its text is not transcoded"},
+	{prefix: "etc/plrmail", note: "player mail: a block-allocated struct dump; read as-is, but its text is not transcoded"},
+	{prefix: "etc/hcontrol", note: "house control: a struct dump; read as-is, and holds no text to transcode"},
+	{prefix: "plrobjs/", suffix: ".objs", note: "player rent file: a struct dump; read as-is, and holds no text to transcode"},
+	{prefix: "house/", suffix: ".house", note: "house contents: a struct dump; read as-is, and holds no text to transcode"},
 }
 
 // unsupportedNote returns the reason a path is left alone, or "".

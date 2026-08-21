@@ -307,29 +307,73 @@ Listed here so they are not mistaken for deliberate differences.
 - **`data/` is the on-disk contract**, decided rather than deviated: both
   servers read the same directory, which is what the world-parity harness and
   the Phase 7 shadow run depend on.
-- The main menu's six choices all work, but nothing behind them reads **mail**
-  or handles **rent** yet — the C's menu choice 1 calls `Crash_load` and
-  reports lost items. Phase 5e.
+- **Minimum position is not enforced.** `cmd_info[]`'s second column is
+  `minimum_position` and `command_interpreter` gates every command on it
+  (interpreter.c:636–655), with a different refusal per position — *"You are in
+  a pretty bad shape, unable to do anything!"* when dead or mortally wounded,
+  *"All you can do right now is think about the stars!"* asleep, *"Nah... You
+  feel too relaxed to do that.."* resting, and so on. `session.Command` has no
+  such field and `lookupFor` checks only the level, so a sleeping character can
+  `kill` and a mortally wounded one can `buy`. What position checks exist are
+  the ones individual commands make for themselves — `do_flee`'s, the fighting
+  guards — which is not the same thing and does not cover the table.
 - **Nothing reads the visibility flags.** Invisibility, hiding, sneaking and
   infravision are all set correctly by the spells and skills that grant them,
   and no `CAN_SEE` equivalent consults them yet, so a hidden character is
-  still listed in the room. Phase 5.
+  still listed in the room.
+- **`do_quit`'s own guards are not ported**, though everything after them is:
+  quitting saves, crash-saves, tells the room and removes the character. What
+  is missing is the front of `do_quit` (act.other.c:99–172) — the
+  `POS_FIGHTING` refusal (*"No way!  You're fighting for your life!"*), the
+  `POS_STUNNED`-and-below branch that prints *"You die before your time..."*
+  and calls `die()`, and the `<DoC>` local modification above both: a count of
+  carried, worn and contained items that refuses the quit when it exceeds
+  `MAX_RENT` (28, structs.h:1141), logs the attempt to immortals, and
+  otherwise says *"Saving %d items.\r\n"*. Also missing is the line that makes
+  a house your load room if you quit inside one — which the port otherwise
+  models correctly; see the comment in `Server.Save`.
 - **`N.thing` targeting is not implemented.** `get_number` splits a leading
   `2.` off any argument and makes the search take the *second* match, in every
   command that uses `generic_find`. `get 2 sword` (a count) works; `get
   2.sword` (the second sword) currently reads the whole word as a keyword and
   finds nothing. It belongs with the rest of `generic_find` rather than in any
   one command.
-- **`alias`.** The per-character command aliases, saved alongside the
-  character. `alias.c` and the `plralias/` directory.
-- **Most special procedures.** The seam exists and ten of the C's specials are
-  on it — guildmasters, guild guards, Puff, fidos, janitors, cityguards,
-  snakes, mobile mages, thieves and the dump. Shopkeepers, the postmaster,
-  bankers, pet shops, receptionists and the boards are not, because each needs
-  a subsystem that is not built; the local ones (`talkera`, `marblesa`,
-  `remmob`, `cerberus`, `teleporter` and the rest) are attached to vnums that
-  exist only in the archived world. `assign_kings_castle` is a zone-sized
-  script of its own and is untouched.
+- **Thirty-three of the C's 318 commands are not implemented**, and the plan's
+  §10 "What is not in it" lists every one with its `interpreter.c` line. In
+  brief: `remort` and `redeem` (the one slice of Phase 5 still open), the eight
+  OasisOLC and `tedit` editors (Phase 6), the six immortal `do_gen_tog`
+  toggles, `bug`/`idea`/`typo`, the aliases `:` and `take`, the C's two
+  deliberate half-spellings `qui` and `shutdow`, and a short tail of
+  `users`, `wizhelp`, `skillset`, `reload`, `qecho`, `page`, `color`,
+  `insult`, `hop` and `alias`.
+
+  Two are worth calling out here rather than leaving in a list. **`alias`** is
+  the only one with a persistence format behind it — `alias.c` and the
+  `plralias/` directory — so it is more than an afternoon. **`color`** cannot
+  usefully be written yet: the `PRF_COLOR` bits are stored and `set color`
+  works, but nothing in the port emits colour, so the command would have
+  nothing to switch.
+
+- **`syslog` sets a preference nothing reads.** `mudlog()` had two jobs: write
+  the line, and echo it to online immortals at or above a level. The second
+  survives as far as the `wizvis` attribute on the log record
+  (`internal/obs/log.go`) and stops there — nothing consumes it, so
+  `PRF_LOG1`/`PRF_LOG2` are set and stored by `do_syslog` and no god ever sees
+  a log line in-game. That is how immortals actually watched a running game,
+  and every `mudlog` call site in the ported commands is a would-be producer.
+- **Two special procedures are left.** The subsystems that were blocking the
+  rest all landed in 5f and 5g, so the seam now carries the guildmasters,
+  guild guards, Puff, fidos, janitors, cityguards, snakes, mobile mages,
+  thieves, the dump, the shopkeeper, the banker, the receptionist, the
+  cryogenicist, the postmaster and the boards — sixteen in all. Two stock ones
+  are left, and both are assigned to vnums the shipped world really has: the
+  **pet shop** (`pet_shops`, room 3031, its own two-room buy-a-follower
+  mechanic) and the **mayor** (mob 3105, a scripted walk around Midgaard on a
+  timer, opening and closing the gates). Neither blocks anything else.
+  **`assign_kings_castle`** is a zone-sized script rather than a special and
+  stays untouched. The local ones (`talkera`, `marblesa`, `remmob`, `cerberus`,
+  `teleporter` and the rest) are attached to vnums that exist only in the
+  archived world, so there is nothing here to attach them to.
 - **`goto <object>` picks an arbitrary one when several answer to the name.**
   `find_target_room` falls back to `get_obj_vis`, which walks the C's
   `object_list` in creation order; this port walks a map, which has no order
@@ -360,12 +404,15 @@ Listed here so they are not mistaken for deliberate differences.
   `docs/operations.md` — so `reboot` and `now` ask to come back and `die` and
   `pause` ask not to, and the answer is an exit code rather than a file.
 
-- **A `select` ban is treated as `all`.** SELECT lets in only characters
-  flagged `PLR_SITEOK`, and nothing in this tree ever sets that flag — the
-  only thing that does is `set <name> siteok`, which is part of `set` and not
-  ported. Refusing is the safe reading of a half-implemented ban; letting
-  everybody through would make `ban select` do nothing at all and say
-  nothing about it.
+- **A `select` ban is treated as `all`, and no longer has to be.** SELECT lets
+  in only characters flagged `PLR_SITEOK`. When this was written nothing in
+  the tree could set that flag, so refusing everybody was the safe reading of
+  a half-implemented ban — letting them all through would have made `ban
+  select` do nothing at all and say nothing about it. `set <name> siteok`
+  landed with the rest of `set` in 5i-e, so the flag is now settable and the
+  real check is a one-line lookup at the name prompt. Until someone writes it,
+  the conservative behaviour stands; the comment at
+  `internal/session/login.go` says the same.
 
 - **`show rent` and `show shops` are not ported.** The first is
   `Crash_listrent`, which lists a rent file without loading it; the second is
@@ -468,13 +515,7 @@ Listed here so they are not mistaken for deliberate differences.
   dead code on these settings — and ported anyway, because the setting is one
   line and the path has to be right if it is ever turned off.
 
-- **There is no receptionist to rent at.** The rent files themselves are
-  wired in — quitting writes one, logging in reads it, unpaid arrears cost you
-  the lot — but `gen_receptionist`, `offer` and `rent` are not ported, so the
-  only rent code this port ever *writes* is `RENT_CRASH` and the only way to
-  pay is not to have to. Renting proper arrives with the shop specprocs.
-
-  Worth knowing: **renting empties your bags and strips your body.**
+- **Renting empties your bags and strips your body.**
   `USE_AUTOEQ` is 0 in this tree (`structs.h:30`), so `struct obj_file_elem`
   has no `location` member. `Crash_save` still walks containers and still
   computes a location for every item, and the file has nowhere to record it —
@@ -482,6 +523,13 @@ Listed here so they are not mistaken for deliberate differences.
   `cont_row` machinery are dead code in this build. That is the C's behaviour,
   not a limitation of the port, and there is a test asserting it so that
   nobody "fixes" it.
+
+- **Rent files are never swept.** `update_obj_file()` (objsave.c:332) runs at
+  boot unless `-q` was given (db.c:457) and deletes any rent file older than
+  `rent_file_timeout` days — 30 for a rent, 10 for a crash save. Nothing here
+  does, so a character who stopped playing in 2003 still has their things.
+  `--skip-rent-check` is accepted and marked *(inert)* in
+  `docs/configuration.md` because this is what it would have skipped.
 
 - **A dropped link crash-saves.** The C leaves a linkdead body standing and
   only writes its objects when the idle timeout forces a rent

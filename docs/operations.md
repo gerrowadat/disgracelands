@@ -5,12 +5,12 @@ How to run `dlmud`, what it exposes while running, and what to watch.
 For the full settings list see `docs/configuration.md`. For building from
 source see `BUILDING.md`.
 
-> **Current state:** the world resets, mobiles act, and characters fight,
-> cast, level and die — Phase 4 is done. The economy, communication, mail and
-> special procedures are Phase 5, so shopkeepers and guildmasters stand there
-> inert. Everything below about process management, health checking, logging
-> and player data is real and works. See
-> `docs/proposals/go-port-plan.md` §10 for what arrives when.
+> **Current state:** Phase 5 is finished bar one slice. The world resets,
+> mobiles act, characters fight, cast, level and die, guildmasters teach,
+> shopkeepers trade, and the boards, mail, houses, rent and the immortal
+> commands all work. What is left is listed command by command in
+> `docs/proposals/go-port-plan.md` §10. Everything below about process
+> management, health checking, logging and player data is real and works.
 
 ## Starting it
 
@@ -159,9 +159,12 @@ gods actually watch a running game, and it is preserved — log records carry
 a `wizvis` attribute holding the minimum level that should see them
 in-game.
 
-Nothing consumes it yet. There are sessions to echo to now, but the
-immortal side — who is watching, and at what level — arrives with
-`act.wizard.c`, which is Phase 5i.
+**Nothing consumes it yet, and the immortal half is now the only piece
+missing.** `syslog` is ported — it sets `PRF_LOG1`/`PRF_LOG2`, so every god has
+a stored preference for how much of the log they want — but nothing reads
+either the preference or the `wizvis` attribute, so no log line reaches
+anybody in-game. Until that is wired up, watching the game means watching the
+log the server writes. Recorded as a gap in `docs/deviations.md`.
 
 ## Backups
 
@@ -250,8 +253,7 @@ struct dumps rather than text — the message boards, player mail, house
 contents, rent files. Running a byte-level transcode over one of those
 corrupts it twice: once by rewriting bytes that were never characters, and
 again by changing the length of text whose length is stored separately in
-the file. Those are copied byte for byte and listed at the end of the run,
-each with the phase that will handle it:
+the file. Those are copied byte for byte and listed at the end of the run:
 
 ```
 5 file(s) are binary formats this cannot convert yet. They have been
@@ -259,8 +261,17 @@ copied exactly as they are, because a byte-level conversion would corrupt
 them — they hold struct fields and length-prefixed text, not characters.
 
   etc/board.mort
-    message board: a struct dump with length-prefixed text; converted when boards are implemented
+    message board: a struct dump with length-prefixed text; read as-is, but its text is not transcoded
 ```
+
+**The server reads all five of those formats as they are**, so a converted
+directory is fully usable — the copy is not a placeholder. What is still
+outstanding is narrower than it sounds: three of the five (the rent files,
+the house contents and the house control file) hold no text at all, and for
+the other two — the boards and the mail — the CP1252 text *inside* the
+records is left as it was. Transcoding that means decoding each record,
+converting its strings and rewriting the lengths stored beside them, which
+is a per-format job rather than something a directory-level converter can do.
 
 Converting into a directory that already has something in it needs
 `--force`, and converting a directory into itself is refused outright — a
@@ -307,6 +318,28 @@ Password hashes are never printed, by either command. They are real people's
 credentials, they are DES with a public salt, and a terminal scrollback or a
 CI log is not where they should end up.
 
+### Setting a password from outside the game
+
+```sh
+dlctl pfile passwd --player-dir=data/pfiles Someone
+printf '%s\n' "$NEW" | dlctl pfile passwd Someone    # scripted
+```
+
+At a terminal it prompts twice with echo off, exactly as the game's menu does;
+piped, it reads one line and skips the confirmation, because there is nobody
+there to have made a typo. Either way it writes an argon2id hash.
+
+Nothing in the game can do this — `set` has no password field and the menu
+only ever lets the owner change their own — which leaves an archived character
+whose 2008 password nobody remembers with no way back in. It applies the same
+rule the menu does (`auth.BadPassword`: six characters minimum, no maximum)
+and refuses any format that cannot store an argon2id hash.
+
+**Do not run it against a live server.** A logged-in character's record is in
+memory and gets written back on the next save, which would silently undo the
+change. There is no lock enforcing that, only this warning and the one in the
+command's help. See `docs/deviations.md`.
+
 ### Comparing against the C server
 
 ```sh
@@ -349,5 +382,9 @@ old password hashes. The sane posture for now, and for a while yet:
 - `--metrics-addr` and `--debug-addr` on loopback or not at all.
 - Local, LAN, or VPN-only.
 
-`docs/proposals/go-port-plan.md` §7 covers what the network layer will do
-about connection limits, login rate limiting and ban lists as it is built.
+Some of §7 is built: per-address connection limits, a login grace period, a
+handshake timeout, and `data/etc/badsites` honoured at the name prompt with
+`ban`/`unban` to maintain it in-game. `--max-players` is still not enforced,
+and neither is a login-attempt rate limiter — the grace period and the
+per-address cap are what stand in for one. See `docs/configuration.md` for
+which settings are live.

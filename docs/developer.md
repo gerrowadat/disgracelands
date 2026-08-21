@@ -154,7 +154,7 @@ Useful `FLAGS` when reproducing something specific:
 | Flag | Why |
 |---|---|
 | `--restrict` | No new players — the `-r` of old runbooks. |
-| `--no-specials` | Suppress special procedures. Inert until Phase 5a builds them. |
+| `--no-specials` | Suppress special procedures, so guildmasters, shopkeepers and the rest are ordinary mobiles. |
 | `--pulse-interval=1s` | Slows the game loop to human speed; makes pulse-driven behaviour observable. |
 | `--log-format=json` | What production logs look like. |
 | `--debug-addr=127.0.0.1:6060` | pprof. Never anywhere but loopback. |
@@ -250,11 +250,22 @@ describing numbers gets an oracle rather than a reading.**
 `reference/tools/*.c` holds original C function bodies with the `char_data`
 dereferences substituted and nothing else changed. The Go tests compile them
 and compare across the whole input space where that is affordable — 30,000 RNG
-draws, 1,512,000 to-hit values, 36,288 regeneration values, every saving
-throw. Where a table is
-transcribed rather than computed, the test re-parses the C source and compares
-entry by entry, so a typo in a table is a failing test rather than a subtly
-wrong game.
+draws, 1,512,000 to-hit values, 36,288 regeneration values, 1,125 saving
+throws, 9,680 DES `crypt(3)` pairs, and shop prices against a 32-bit x87 build
+of the C, because there `int * float` truncated to `int` gives a different
+answer than the same line built for SSE.
+
+Where a table is transcribed rather than computed, the test re-parses the C
+source and compares entry by entry, so a typo in a table is a failing test
+rather than a subtly wrong game. `class.c`, `constants.c`, `interpreter.c`,
+`spec_assign.c`, `handler.c`, `spells.h` and `act.wizard.c`'s `set` table are
+all read that way.
+
+Where the *format* is a C struct's memory layout — the player database, the
+boards, the mail file, the house control file — there is a third kind of tool:
+a small C program that prints the offsets the compiler actually chose, which
+the Go codec must reproduce field for field under both data models.
+`reference/tools/README.md` lists all three kinds.
 
 This is not belt and braces. Every oracle written so far has caught at least
 one thing, and the mistakes it catches all look right.

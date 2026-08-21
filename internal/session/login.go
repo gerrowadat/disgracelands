@@ -113,11 +113,13 @@ func (s *Session) handleGetName(ctx context.Context, deps Deps, line string) err
 			return nil
 		}
 	case "select":
-		// SELECT lets in only characters flagged PLR_SITEOK, and nothing in
-		// this tree ever sets that flag — `set <name> siteok` is part of
-		// `set`, which is not ported. Treated as `all` until it is, and
-		// noted in docs/deviations.md rather than quietly letting everybody
-		// through.
+		// SELECT lets in only characters flagged PLR_SITEOK. Treated as `all`,
+		// which is the conservative reading: letting everybody through would
+		// make `ban select` do nothing at all and say nothing about it.
+		//
+		// `set <name> siteok` landed in 5i-e, so the flag is settable now and
+		// the real check is a lookup of the named character's record here.
+		// Noted in docs/deviations.md rather than left to be discovered.
 		s.Send("You are not welcome here.\r\n")
 		s.logger.Info("refused a banned site", "host", s.Host(), "ban", "select")
 		s.Close()

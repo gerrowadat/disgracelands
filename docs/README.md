@@ -28,12 +28,15 @@ does, how to configure it, how to run it.
 Building from source is in the top-level **`BUILDING.md`**, which covers
 both the C tree and the Go tree.
 
-> The Go server is at the end of Phase 4: login and creation, the main menu,
-> a world that resets and mobiles that act, combat, spells, skills, affects,
-> equipment, containers, food and drink, following and grouping — a character
-> can kill something and level. There is no economy, no communication or
-> social commands, no mail or boards, and no special procedures yet; that is
-> Phase 5. `configuration.md` and `operations.md` mark which settings are
+> The Go server is at the end of Phase 5, bar one slice. Login and creation,
+> the main menu, a world that resets and mobiles that act, combat, spells,
+> skills, affects, equipment, containers, food and drink, following and
+> grouping; special procedures, the channels and socials, shops, banks, rent,
+> boards, mail, houses, and the immortal commands. 285 of the C's 318 commands
+> answer; `remort` is the slice still open and the plan's §10 lists the other
+> 32 one by one, along with three mechanisms — minimum position, `CAN_SEE` and
+> `N.thing` targeting — that belong to every command rather than to any of
+> them. `configuration.md` and `operations.md` mark which settings are
 > *(inert)* pending later phases.
 
 ## `docs/proposals/` — the design, and the plan
@@ -47,8 +50,9 @@ tense and still expected to change.
   for reimplementing the engine in Go: 64-bit safety, pluggable player- and
   world-file formats, the concurrency model, licensing constraints, and the
   phase-by-phase sequence. Phases 0–4 are built and marked done with what
-  each one did and did not contain; Phase 5 is mapped into slices; 6 and 7
-  are not started.
+  each one did and did not contain; Phase 5 is mapped into slices, all but one
+  of them finished, with its gaps listed command by command; 6 and 7 are not
+  started.
 - **[data-format.md](proposals/data-format.md)** — a single native format
   for everything in `data/`: the world, players, boards, mail, houses and
   the game tuning still compiled into `config.c`. Replaces the eight

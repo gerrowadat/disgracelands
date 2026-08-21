@@ -26,27 +26,36 @@ don't do it.
 ## Do not read the C and transcribe it
 
 This is the single most useful thing learned so far. Reading C arithmetic
-across into Go is unreliable — not occasionally, but routinely. Thirty-six
+across into Go is unreliable — not occasionally, but routinely. All 57
 findings in `docs/weirdnumbers.md` were found by testing, and several of them
 had already been transcribed wrongly by eye first.
 
-Two patterns catch what reading misses. Use them.
+Three patterns catch what reading misses. Use them.
 
 **C oracles.** `reference/tools/*.c` holds original C function bodies, with
 `char_data` dereferences substituted for plain parameters, compiled and run
 against the Go. Existing ones cover the RNG (30,000 draws over 6 seeds),
-to-hit (1,512,000 values), regeneration (36,288), saving throws (1,125) and
-DES crypt (9,680 pairs). Adding one is cheap; see `reference/tools/README.md`.
+to-hit (1,512,000 values), regeneration (36,288), saving throws (1,125), DES
+crypt (9,680 pairs) and shop prices (which need `-m32 -mfpmath=387`, because
+the answer depends on the width the multiplication happens at). Adding one is
+cheap; see `reference/tools/README.md`.
 
 **Table re-parsing.** Where the C holds data in a table, the test re-parses
-the C source and compares entry by entry: `constants.c`, `spec_assign.c`,
-`interpreter.c`, `handler.c`. This is why the command table is sorted by
+the C source and compares entry by entry: `class.c`, `constants.c`,
+`interpreter.c`, `spec_assign.c`, `handler.c`, `spells.h`, and `act.wizard.c`
+for `do_set`'s field table. This is why the command table is sorted by
 `interpreter.c` line number — abbreviation behaviour is *derived* from the C
 rather than asserted about it, so a command inserted in the wrong place fails
 a test instead of quietly shadowing another.
 
-If you are porting something numeric or table-driven and you are not doing one
-of these two things, expect to be wrong.
+**Layout tools.** Where an on-disk format is an `fwrite` of a struct — the
+pfile, the rent files, the boards, the mail file, the house control file — the
+format *is* the memory layout. `reference/tools/*layout.c` prints the offsets
+gcc chose and a test requires the Go codec to reproduce them, under both data
+models. Never hard-code an offset.
+
+If you are porting something numeric, table-driven or struct-shaped and you
+are not doing one of these three things, expect to be wrong.
 
 ## Layout of the tree
 
