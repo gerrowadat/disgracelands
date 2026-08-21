@@ -271,6 +271,10 @@ type TextFiles interface {
 // LoginHandler performs the steps that need more than the connection.
 type LoginHandler interface {
 	// Exists reports whether a character is known.
+	// BanFor reports how much of a site is banned: "" for not at all, or one
+	// of "new", "select", "all". Checked at the name prompt, which is where
+	// the C checks it — a banned site gets as far as being asked its name.
+	BanFor(host string) string
 	Exists(ctx context.Context, name string) (bool, error)
 	// Authenticate checks a password and returns the character on success.
 	// A nil character with a nil error means the password was wrong.

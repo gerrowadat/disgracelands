@@ -33,6 +33,7 @@ import (
 	"github.com/gerrowadat/disgracelands/internal/engine"
 	"github.com/gerrowadat/disgracelands/internal/game"
 	"github.com/gerrowadat/disgracelands/internal/obs"
+	"github.com/gerrowadat/disgracelands/internal/persist/bans"
 	"github.com/gerrowadat/disgracelands/internal/persist/boards"
 	"github.com/gerrowadat/disgracelands/internal/persist/houses"
 	"github.com/gerrowadat/disgracelands/internal/persist/mail"
@@ -197,6 +198,12 @@ func run(args []string) error {
 		return err
 	}
 
+	// The site ban list — the one archive file that is plain text.
+	banStore, err := bans.New(filepath.Join(cfg.LibDir, "etc", "badsites"), false)
+	if err != nil {
+		return err
+	}
+
 	// The greeting and the credits are licence obligations; LoadText refuses
 	// to return if either is missing, which is deliberate.
 	text, err := server.LoadText(cfg.LibDir)
@@ -230,6 +237,7 @@ func run(args []string) error {
 		Boards:     boardStore,
 		Mail:       mailStore,
 		Houses:     houseStore,
+		Bans:       banStore,
 		Auth:       auth.Verifier{AllowLegacy: cfg.AllowLegacyPasswords},
 		Text:       text,
 		Logger:     logger,

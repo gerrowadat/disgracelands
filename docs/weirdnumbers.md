@@ -895,6 +895,34 @@ command in the first place. Most switched gods never see it.
 
 *Source*: `interpreter.c:623`, `interpreter.c:634`, `act.wizard.c:1206`.
 
+### A site ban is a substring match
+
+```c
+if (strstr(hostname, banned_node->site))	/* if hostname is a substring */
+```
+
+Not a suffix, not a glob — `strstr`. Banning `example.com` also bans
+`notexample.computer`; banning `1` bans a remarkable proportion of the
+internet. The comment beside it says "if hostname is a substring", which has
+the direction backwards as well.
+
+This is why the ban list was always short and carefully written, and it is
+reproduced exactly: a ban list carried across from the archive has to keep
+meaning what it meant.
+
+*Source*: `ban.c:96`.
+
+### The ban file is written backwards so that reading it comes out forwards
+
+`_write_one_node` recurses to the tail of the list before printing anything,
+so the file is written oldest-first. `load_banned` then pushes each line onto
+the *front* of the list as it reads. The two reversals cancel, and the list
+survives a restart in the same order — which matters not at all for
+behaviour, since `isbanned` takes the worst match whatever the order, and
+entirely for the display, which is in list order.
+
+*Source*: `ban.c:103`, `ban.c:63`.
+
 ---
 
 ## What to do about all this

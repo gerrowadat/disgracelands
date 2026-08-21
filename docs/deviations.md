@@ -342,9 +342,24 @@ Listed here so they are not mistaken for deliberate differences.
   `docs/operations.md` — so `reboot` and `now` ask to come back and `die` and
   `pause` ask not to, and the answer is an exit code rather than a file.
 
-- **`ban` and `show` are not ported.** `ban.c` is its own file with its own
-  control file, and `do_show` is a six-hundred-line dispatcher. See the
-  plan's 5i-g.
+- **A `select` ban is treated as `all`.** SELECT lets in only characters
+  flagged `PLR_SITEOK`, and nothing in this tree ever sets that flag — the
+  only thing that does is `set <name> siteok`, which is part of `set` and not
+  ported. Refusing is the safe reading of a half-implemented ban; letting
+  everybody through would make `ban select` do nothing at all and say
+  nothing about it.
+
+- **`show rent` and `show shops` are not ported.** The first is
+  `Crash_listrent`, which lists a rent file without loading it; the second is
+  `show_shops` in shop.c. Both are listings of their own and neither is
+  needed to run the server. `show houses` is `hcontrol show`, which is
+  ported, so `show houses` answers "Sorry, I don't understand that." rather
+  than duplicating it.
+
+- **`show stats` does not report buffer counts.** `buf_largecount`,
+  `buf_switches` and `buf_overflows` count the C's own string-buffer
+  recycling, which this port does not have. The three lines are dropped
+  rather than printed as zeroes.
 
 - **`set` and `remort` are not ported.** `do_set` is a ninety-line dispatcher
   over a table of sixty-odd fields, and `remort` is a local addition with a

@@ -28,6 +28,7 @@ import (
 	"github.com/gerrowadat/disgracelands/internal/auth"
 	"github.com/gerrowadat/disgracelands/internal/engine"
 	"github.com/gerrowadat/disgracelands/internal/game"
+	"github.com/gerrowadat/disgracelands/internal/persist/bans"
 	"github.com/gerrowadat/disgracelands/internal/persist/boards"
 	"github.com/gerrowadat/disgracelands/internal/persist/houses"
 	"github.com/gerrowadat/disgracelands/internal/persist/mail"
@@ -417,6 +418,11 @@ func newTestServer(t *testing.T) (*Server, player.Store) {
 		t.Fatal(err)
 	}
 
+	banStore, err := bans.New(filepath.Join(t.TempDir(), "badsites"), false)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	houseDir := t.TempDir()
 	houseStore, err := houses.New(
 		filepath.Join(houseDir, "hcontrol"), filepath.Join(houseDir, "house"), false)
@@ -439,6 +445,7 @@ func newTestServer(t *testing.T) (*Server, player.Store) {
 		Boards:  boardStore,
 		Mail:    mailStore,
 		Houses:  houseStore,
+		Bans:    banStore,
 		Auth:    auth.Verifier{AllowLegacy: true},
 		Text:    text,
 		Logger:  logger,

@@ -42,6 +42,28 @@ type Operator interface {
 	// LastLogin looks a character up in the roster without loading them into
 	// the world, for `last`.
 	LastLogin(name string) (LastLogin, bool)
+	// ShowPlayer is the same lookup with more of the record, for
+	// `show player`.
+	ShowPlayer(name string) (PlayerSummary, bool)
+	// ZoneAge is how many minutes since a zone last reset, which the C keeps
+	// in the zone table and this port keeps beside the pulse.
+	ZoneAge(vnum game.ZoneVnum) int32
+}
+
+// PlayerSummary is what `show player` reports.
+type PlayerSummary struct {
+	Name      string
+	Sex       int32
+	Level     int32
+	Class     int32
+	Gold      int32
+	Bank      int32
+	Exp       int32
+	Alignment int32
+	Lessons   int32
+	Born      time.Time
+	LastLogon time.Time
+	Played    time.Duration
 }
 
 // LastLogin is what `last` reports.

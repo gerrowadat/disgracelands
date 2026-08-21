@@ -101,6 +101,34 @@ func (s *Session) handleGetName(ctx context.Context, deps Deps, line string) err
 		return nil
 	}
 
+	// The ban check, at the name prompt (interpreter.c's CON_GET_NAME). A
+	// site banned outright is refused whoever they say they are; one banned
+	// to new players is refused only if the name is new.
+	switch deps.Login.BanFor(s.Host()) {
+	case "all":
+		s.Send("You are not welcome here.\r\n")
+		s.logger.Info("refused a banned site", "host", s.Host(), "ban", "all")
+		s.Close()
+		return nil
+	case "new":
+		if !exists {
+			s.Send("Sorry, new characters are not allowed from your site!\r\n")
+			s.logger.Info("refused a new character from a banned site", "host", s.Host())
+			s.Close()
+			return nil
+		}
+	case "select":
+		// SELECT lets in only characters flagged PLR_SITEOK, and nothing in
+		// this tree ever sets that flag — `set <name> siteok` is part of
+		// `set`, which is not ported. Treated as `all` until it is, and
+		// noted in docs/deviations.md rather than quietly letting everybody
+		// through.
+		s.Send("You are not welcome here.\r\n")
+		s.logger.Info("refused a banned site", "host", s.Host(), "ban", "select")
+		s.Close()
+		return nil
+	}
+
 	s.pendingName = name
 	if exists {
 		s.state = StatePassword

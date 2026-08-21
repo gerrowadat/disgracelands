@@ -23,6 +23,7 @@ import (
 	"github.com/gerrowadat/disgracelands/internal/auth"
 	"github.com/gerrowadat/disgracelands/internal/engine"
 	"github.com/gerrowadat/disgracelands/internal/game"
+	"github.com/gerrowadat/disgracelands/internal/persist/bans"
 	"github.com/gerrowadat/disgracelands/internal/persist/boards"
 	"github.com/gerrowadat/disgracelands/internal/persist/houses"
 	"github.com/gerrowadat/disgracelands/internal/persist/mail"
@@ -67,6 +68,8 @@ type Server struct {
 	mail *mail.Store
 	// houses is the player housing files. Nil disables housing.
 	houses *houses.Store
+	// bans is the site ban list. Nil disables banning.
+	bans   *bans.Store
 	auth   auth.Verifier
 	text   *Text
 	logger *slog.Logger
@@ -113,6 +116,7 @@ type Options struct {
 	Boards   *boards.Store
 	Mail     *mail.Store
 	Houses   *houses.Store
+	Bans     *bans.Store
 	Auth     auth.Verifier
 	Text     *Text
 	Logger   *slog.Logger
@@ -133,6 +137,7 @@ func New(opts Options) *Server {
 		boards:     opts.Boards,
 		mail:       opts.Mail,
 		houses:     opts.Houses,
+		bans:       opts.Bans,
 		auth:       opts.Auth,
 		text:       opts.Text,
 		logger:     opts.Logger,

@@ -77,6 +77,8 @@ type Context struct {
 	// Operator is the connections and the shutdown switch, for the commands
 	// that run the server rather than the game.
 	Operator Operator
+	// Bans is the site ban list.
+	Bans BanKeeper
 	// Arg is everything after the command word, trimmed.
 	Arg string
 	// Social is the social being run, for the commands that are one.
@@ -299,6 +301,12 @@ func init() {
 		{Name: "switch", Help: "Take over somebody else's body.", Run: doSwitch, CLine: 498, MinLevel: game.LevelGod},
 		{Name: "uptime", Help: "Show how long the server has been up.", Run: doUptime, CLine: 526, MinLevel: game.LevelImmortal},
 		{Name: "wizlock", Help: "Set who may log in.", Run: doWizlock, CLine: 555, MinLevel: game.LevelGreaterGod},
+
+		// Bans and the server's view of itself (interpreter.c:236, :461,
+		// :524).
+		{Name: "ban", Help: "Ban a site, or list the bans.", Run: doBan, CLine: 236, MinLevel: game.LevelGreaterGod},
+		{Name: "show", Help: "Show what the server knows about itself.", Run: doShow, CLine: 461, MinLevel: game.LevelImmortal},
+		{Name: "unban", Help: "Lift a site ban.", Run: doUnban, CLine: 524, MinLevel: game.LevelGreaterGod},
 		{Name: "say", Help: "Talk to the room.", Run: doSay, CLine: 449},
 		{Name: "'", Help: "Talk to the room; the short form of say.", Run: doSay, CLine: 450},
 		{Name: "score", Help: "Show your own statistics.", Run: doScore, CLine: 452},
@@ -508,6 +516,8 @@ type Dispatcher struct {
 	Houses HouseKeeper
 	// Operator is the connections and the shutdown switch.
 	Operator Operator
+	// Bans is the site ban list.
+	Bans BanKeeper
 }
 
 // Do implements CommandHandler.
@@ -554,7 +564,7 @@ func (d *Dispatcher) Do(ctx context.Context, s *Session, line string) error {
 		c := &Context{
 			Ctx: ctx, Session: s, Character: s.Character(),
 			World: w, Text: d.Text, RNG: d.RNG, Violence: d.Violence, Arg: arg,
-			Social: cmd.Social, Save: d.Save, Rent: d.Rent, SaveBoard: d.SaveBoard, Mail: d.Mail, Houses: d.Houses, Operator: d.Operator,
+			Social: cmd.Social, Save: d.Save, Rent: d.Rent, SaveBoard: d.SaveBoard, Mail: d.Mail, Houses: d.Houses, Operator: d.Operator, Bans: d.Bans,
 		}
 
 		// A command that panics must not leave the player staring at a dead
