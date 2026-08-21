@@ -51,8 +51,13 @@ func TestGetAndDrop(t *testing.T) {
 	c.send("get sword")
 	c.expect("You get a long sword.")
 
-	if sword.Location != game.CarriedBy {
-		t.Errorf("the sword is %v, want carried", sword.Location)
+	// Read on the world goroutine: the command that moved it runs there, and
+	// reading the field from here is a race the detector catches
+	// intermittently. See the note on inWorld.
+	var where game.Location
+	inWorld(t, srv, func(_ *game.Live) { where = sword.Location })
+	if where != game.CarriedBy {
+		t.Errorf("the sword is %v, want carried", where)
 	}
 
 	c.send("inventory")
@@ -62,8 +67,9 @@ func TestGetAndDrop(t *testing.T) {
 
 	c.send("drop sword")
 	c.expect("You drop a long sword.")
-	if sword.Location != game.InRoom {
-		t.Errorf("the sword is %v, want on the floor", sword.Location)
+	inWorld(t, srv, func(_ *game.Live) { where = sword.Location })
+	if where != game.InRoom {
+		t.Errorf("the sword is %v, want on the floor", where)
 	}
 }
 

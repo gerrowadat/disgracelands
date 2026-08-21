@@ -847,6 +847,35 @@ Going *up* does nothing of the kind; it just hands the experience over.
 
 *Source*: `act.wizard.c:1472`.
 
+### A lesser god typing `force all` looks for somebody called "all"
+
+```c
+else if ((GET_LEVEL(ch) < LVL_GRGOD) || (str_cmp("all", arg) && str_cmp("room", arg))) {
+  if (!(vict = get_char_vis(ch, arg, NULL, FIND_CHAR_WORLD)))
+```
+
+The level test and the keyword test are folded into one condition, so failing
+*either* sends you down the single-victim branch. A god below LVL_GRGOD
+typing `force all smile` is not refused — the game looks for a character
+named "all", does not find one, and answers "No-one by that name here."
+
+*Source*: `act.wizard.c:1815`.
+
+### `wiznet *32 waves` is an emote *and* a level restriction
+
+```c
+case '*':
+  emote = TRUE;
+case '#':
+```
+
+No `break`. The `*` case falls through into `#`, so a line beginning with `*`
+is checked for a leading level number exactly as `#` is. `wiznet *waves` is a
+plain emote; `wiznet *32 waves` is an emote heard only at level 32 and above.
+Nothing documents it and the usage message does not mention it.
+
+*Source*: `act.wizard.c:1882`.
+
 ---
 
 ## What to do about all this

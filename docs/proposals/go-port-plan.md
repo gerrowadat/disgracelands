@@ -1100,7 +1100,8 @@ it.
 | **5i-b. Looking at the innards ✅** | `stat` (room, object, character), `vstat`, `vnum`, and the fourteen name tables they print — now checked against `constants.c` by re-parsing it. `show`, `last` and `date` move to 5i-d, where the operational state they report lives. | `act.wizard.c`, `constants.c` |
 | **5i-c. Changing things ✅** | `load`, `purge`, `advance`, `restore`, `zreset`, and all seven of `do_wizutil` — `reroll`, `pardon`, `notitle`, `mute`, `freeze`, `thaw`, `unaffect`. | `act.wizard.c` |
 | **5i-e. `set` and `remort`** | `do_set` is a ninety-line dispatcher over a table of sixty-odd fields, and `remort` is a local addition with a per-character bit vector of borrowed class skills. Each is its own slice. | `act.wizard.c` |
-| **5i-d. Running the place** | `echo`, `send`, `gecho`, `snoop`, `switch`, `return`, `force`, `wiznet`, `syslog`, `dc`, `wizlock`, `shutdown`, `ban`, plus `show`, `last` and `date`. The operational half, and the one Phase 7 actually blocks on. | `act.wizard.c`, `ban.c` |
+| **5i-d. Talking as a god ✅** | `echo`, `emote`, `send`, `gecho`, `wiznet` (and its `;` alias), `syslog`, `force`. | `act.wizard.c` |
+| **5i-f. Running the place** | `snoop`, `switch`, `return` — which need the session to be able to drive a *different* character, and are the only commands in the game that do — plus `dc`, `wizlock`, `shutdown`, `ban`, `show`, `last`, `date`. The operational half, and the one Phase 7 actually blocks on. | `act.wizard.c`, `ban.c` |
 
 Two things that are not in any slice and should be, once there is somewhere
 to put them: **`N.thing` targeting** (`get_number`, which every command using

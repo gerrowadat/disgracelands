@@ -269,6 +269,20 @@ func init() {
 		{Name: "thaw", Help: "Unfreeze somebody.", Run: doThaw, CLine: 511, MinLevel: game.LevelGreaterGod},
 		{Name: "unaffect", Help: "Strip every spell from somebody.", Run: doUnaffect, CLine: 525, MinLevel: game.LevelGod},
 		{Name: "zreset", Help: "Reset a zone, or the whole world.", Run: doZreset, CLine: 563, MinLevel: game.LevelGreaterGod},
+
+		// Talking as a god, and making other people act (interpreter.c:284,
+		// :285, :294, :309, :455, :499, :551, :552). `emote` is the odd one
+		// out: same function, level 1, and a mortal command.
+		{Name: "echo", Help: "Say something with nobody's name on it.", Run: doEcho, CLine: 284, MinLevel: game.LevelImmortal},
+		{Name: "emote", Help: "Act something out.", Run: doEmote, CLine: 285},
+		{Name: "force", Help: "Make somebody do something.", Run: doForce, CLine: 294, MinLevel: game.LevelGod},
+		{Name: "gecho", Help: "Say something to everybody in the game.", Run: doGecho, CLine: 309, MinLevel: game.LevelGod},
+		{Name: "send", Help: "Send a line to one person.", Run: doSend, CLine: 455, MinLevel: game.LevelGod},
+		{Name: "syslog", Help: "Set how much of the log you see.", Run: doSyslog, CLine: 499, MinLevel: game.LevelImmortal},
+		{Name: "wiznet", Help: "Talk on the gods' channel.", Run: doWiznet, CLine: 551, MinLevel: game.LevelImmortal},
+		// `;` is wiznet with no space, the way `'` is say. The one-character
+		// command path in split() is what makes it work.
+		{Name: ";", Help: "Talk on the gods' channel.", Run: doWiznet, CLine: 552, MinLevel: game.LevelImmortal},
 		{Name: "say", Help: "Talk to the room.", Run: doSay, CLine: 449},
 		{Name: "'", Help: "Talk to the room; the short form of say.", Run: doSay, CLine: 450},
 		{Name: "score", Help: "Show your own statistics.", Run: doScore, CLine: 452},
