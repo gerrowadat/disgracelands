@@ -31,7 +31,8 @@ Two binaries:
   environment (`--lib-dir` ↔ `DL_LIB_DIR`); precedence is flag >
   environment > default. `--help` lists the lot.
 - **`dlctl`** — offline tooling: world linting and dumping, player-file
-  conversion and inspection, and converting a whole original data directory.
+  conversion, inspection and password setting, and converting a whole
+  original data directory.
   The jobs `reference/moderncserver/src/util/` and `reference/tools/` do
   today. Any subcommand added before the layer it needs reports which plan
   phase implements it rather than pretending to work.

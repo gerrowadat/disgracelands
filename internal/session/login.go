@@ -30,13 +30,8 @@ import (
 // conversion in both directions lossless.
 const maxNameLength = 20
 
-// minPasswordLength is what a new password must be.
-//
-// The C server enforced three characters. That was a reasonable floor when
-// the hash truncated to eight anyway; now that a password is stored under
-// argon2id and used in full, there is no reason to keep it that low. Old
-// characters are unaffected: this applies only to passwords being set.
-const minPasswordLength = 6
+// What a new password must be is auth.MinPasswordLength, beside the hashing
+// it is a floor for; badNewPassword is the only thing here that cares.
 
 // handle advances the login state machine by one line of input.
 func (s *Session) handle(ctx context.Context, deps Deps, line string) error {

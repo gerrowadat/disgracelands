@@ -8,9 +8,9 @@ package session
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
+	"github.com/gerrowadat/disgracelands/internal/auth"
 	"github.com/gerrowadat/disgracelands/internal/game"
 )
 
@@ -289,21 +289,11 @@ func (s *Session) handleDeleteConfirm(ctx context.Context, deps Deps, line strin
 
 // badNewPassword reports why a password cannot be set, or "".
 //
-// The C refuses an empty password, one longer than ten characters, one
-// shorter than three, and one equal to the character's name
-// (interpreter.c:1526). Two of those four are kept, and the reasons are
-// recorded in docs/deviations.md: the ten-character ceiling existed because
-// the field in the binary record is ten bytes wide, and the three-character
-// floor was reasonable when the hash truncated to eight characters anyway.
-// Neither is true now.
+// The rule itself is auth.BadPassword: `dlctl pfile passwd` sets passwords
+// too, and the two must agree about what is settable or an administrator can
+// hand out a password the owner could never have chosen themselves.
 func badNewPassword(password, name string) string {
-	if len(password) < minPasswordLength {
-		return fmt.Sprintf("Passwords must be at least %d characters.", minPasswordLength)
-	}
-	if strings.EqualFold(password, name) {
-		return "Illegal password."
-	}
-	return ""
+	return auth.BadPassword(password, name)
 }
 
 func ensureTrailingNewline(s string) string {

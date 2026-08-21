@@ -402,6 +402,13 @@ writing; `--force` overwrites characters already present.
 
 Also `dlctl pfile verify` (§4) and `dlctl pfile dump`.
 
+`dlctl pfile passwd <name>` sets a character's password offline. Nothing in
+the C or in the game can: `set` has no password field and the menu only ever
+lets the owner change their own, which leaves an archived character whose
+password nobody remembers with no way back in. It applies the same rule the
+menu does and refuses any format that cannot hold an argon2id hash. See
+`docs/deviations.md`.
+
 ### 5.6 The rest of the player-adjacent state
 
 `data/plrobjs` (rent/crash files, `objsave.c`), `data/plralias`,

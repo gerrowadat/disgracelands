@@ -78,6 +78,11 @@ var commands = []command{
 		summary: "List a roster, or print one character (replaces pfiledump)",
 		run:     cmdPfileDump,
 	},
+	{
+		name:    "pfile passwd",
+		summary: "Set a character's password (the game itself has no way to)",
+		run:     cmdPfilePasswd,
+	},
 }
 
 func main() {

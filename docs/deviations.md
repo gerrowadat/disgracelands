@@ -38,7 +38,7 @@ are fidelity, not deviation, and they live in the tests that assert them.
 | **C** | `nanny` (interpreter.c:1526) refuses a password shorter than 3 characters or longer than `MAX_PWD_LENGTH` (10). Traditional DES `crypt(3)` then truncates it to 8 characters regardless. |
 | **Go** | Minimum 6, no maximum. |
 | **Why** | Both C limits were consequences of the storage, not policy. The ten-character ceiling is the width of the field in `char_file_u`; the three-character floor was a defensible minimum when only the first eight characters were hashed anyway. Under argon2id the whole password is used and the stored form is not fixed-width, so neither limit has a reason to exist. Applies only to passwords being *set* — no existing character is locked out. |
-| **Where** | `badNewPassword` in `internal/session/menu.go`. |
+| **Where** | `auth.BadPassword` in `internal/auth/policy.go`, called from `badNewPassword` (`internal/session/menu.go`) and from `dlctl pfile passwd`. |
 
 ### Passwords are argon2id; legacy DES hashes are accepted and upgraded
 
@@ -279,6 +279,24 @@ criterion is identity across every *significant* byte, not every byte.
 The binary format can still be read and written, because `dlctl` needs both
 directions to convert between them. But a live server refuses to run on it.
 (Plan §5.2.)
+
+### A password can be set from outside the game
+
+The C has no way for anyone but the owner to change a password: `set`
+(act.wizard.c) has no such field, and `nanny`'s menu choice 4 is the only
+writer. That is right for a live game and unworkable for an archive, where a
+character's password is a DES hash from 2008 that nobody has. `dlctl pfile
+passwd <name>` sets one offline, under the same rule the menu applies
+(`auth.BadPassword`), refusing any format that cannot store an argon2id hash.
+
+It stays out of the game deliberately. A god who could set another
+character's password could log in as them, which is not something any of the
+C's immortal levels grant; offline, it is available to whoever already has
+the pfiles on disk and could have edited them by hand anyway. It is also not
+safe to run against a live server — a logged-in character's record is in
+memory and gets written back on the next save — and there is no lock to
+enforce that, only the warning in the command's help.
+(`cmd/dlctl/passwd.go`.)
 
 ---
 
