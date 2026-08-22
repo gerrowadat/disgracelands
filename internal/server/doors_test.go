@@ -69,12 +69,19 @@ func TestTheRoomBeyondIsTold(t *testing.T) {
 
 	c.send("open gate")
 	c.expect("Okay.")
+	// settle() before reading the watcher's lines. `expect` waits for a write
+	// to *this* client's socket; the message to the room beyond is a separate
+	// write on the world goroutine and may not have happened yet. Without
+	// this the test passes locally and fails on a busier machine, which is
+	// exactly what it did in CI.
+	c.settle()
 	if !watcherClient.said("The gate is opened from the other side.") {
 		t.Error("the room beyond was not told the gate opened")
 	}
 
 	c.send("close gate")
 	c.expectCount("Okay.", 2)
+	c.settle()
 	if !watcherClient.said("The gate is closed from the other side.") {
 		t.Error("the room beyond was not told the gate closed")
 	}
