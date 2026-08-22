@@ -15,6 +15,7 @@ import (
 	"sync"
 
 	"github.com/gerrowadat/disgracelands/internal/game"
+	"github.com/gerrowadat/disgracelands/internal/persist/help"
 	"github.com/gerrowadat/disgracelands/internal/persist/messages"
 	"github.com/gerrowadat/disgracelands/internal/persist/socials"
 )
@@ -49,6 +50,12 @@ type Text struct {
 	// socialsFormat is misc/socials'/config/socials.yaml's format, the
 	// same reasoning and the same non-involvement in Reload's swap map.
 	socialsFormat string
+	// helpFormat is text/help's format — classic (index + .hlp files) or
+	// native (help.yaml + one .txt per entry), both under the same
+	// directory (internal/persist/help's own package doc explains why).
+	// Unlike messages/socials, help *is* in Reload's swap map (`xhelp`),
+	// so this is read by Reload as well as stored for it.
+	helpFormat string
 
 	greeting   string
 	motd       string
@@ -116,11 +123,10 @@ const (
 	// the same config/ directory names.yaml/messages.yaml already share.
 	socialsConfigDir = "config"
 
-	// helpDir, helpIndexFile and helpScreenFile are text/help/, its index
-	// (db.h's nameless index_filename under HLP_PREFIX) and screen
-	// (HELP_PAGE_FILE, db.h:78).
+	// helpDir and helpScreenFile are text/help/ (both formats' directory,
+	// per internal/persist/help's own doc) and screen (HELP_PAGE_FILE,
+	// db.h:78) — always plain prose, unaffected by --help-format.
 	helpDir        = "text/help"
-	helpIndexFile  = "text/help/index"
 	helpScreenFile = "text/help/screen"
 
 	// messagesFile is MESS_FILE (db.h:89): lib/misc/messages.
@@ -159,8 +165,8 @@ const (
 )
 
 // LoadText reads the canned files from a data directory.
-func LoadText(dir, messagesFormat, socialsFormat string) (*Text, error) {
-	t := &Text{dir: dir, messagesFormat: messagesFormat, socialsFormat: socialsFormat}
+func LoadText(dir, messagesFormat, socialsFormat, helpFormat string) (*Text, error) {
+	t := &Text{dir: dir, messagesFormat: messagesFormat, socialsFormat: socialsFormat, helpFormat: helpFormat}
 
 	// Required. The licence names both of these.
 	for _, f := range []struct {
@@ -222,29 +228,15 @@ func LoadText(dir, messagesFormat, socialsFormat string) (*Text, error) {
 	// The help table, same optional posture as socials: index_boot
 	// (db.c:699-817) reads text/help/index, one filename per line, then
 	// load_help (db.c:1701-1734) on each in turn into one shared table,
-	// sorted by hsort (db.c:1739-1747) once loading finishes.
-	if f, err := os.Open(filepath.Join(dir, helpIndexFile)); err == nil { //nolint:gosec // operator-configured data directory
-		files, err := game.ParseHelpIndex(f)
-		_ = f.Close()
-		if err != nil {
-			return nil, fmt.Errorf("reading %s: %w", helpIndexFile, err)
-		}
-		var entries []game.HelpEntry
-		for _, name := range files {
-			path := filepath.Join(helpDir, name)
-			hf, err := os.Open(filepath.Join(dir, path)) //nolint:gosec // as above
-			if err != nil {
-				return nil, fmt.Errorf("reading %s: %w", path, err)
-			}
-			fileEntries, err := game.ParseHelpFile(hf)
-			_ = hf.Close()
-			if err != nil {
-				return nil, fmt.Errorf("reading %s: %w", path, err)
-			}
-			entries = append(entries, fileEntries...)
-		}
-		t.help = game.NewHelpIndex(entries)
+	// sorted by hsort (db.c:1739-1747) once loading finishes. classic and
+	// native share the same directory (internal/persist/help's own doc
+	// comment explains why), unlike messages/socials' file-vs-directory
+	// split.
+	helpEntries, err := help.Load(helpFormat, filepath.Join(dir, helpDir))
+	if err != nil {
+		return nil, fmt.Errorf("reading %s: %w", filepath.Join(dir, helpDir), err)
 	}
+	t.help = game.NewHelpIndex(helpEntries)
 
 	// misc/messages, the same optional posture as help and socials —
 	// porting load_messages (fight.c:145-193). classic is a file, native
@@ -404,7 +396,7 @@ func (t *Text) Reload(what string) error {
 	// the old text in place rather than blanking it, which is not the C's
 	// behaviour — file_to_string_alloc leaves the pointer alone on failure
 	// too, so the effect is the same and the reasoning is explicit.
-	fresh, err := LoadText(t.dir, t.messagesFormat, t.socialsFormat)
+	fresh, err := LoadText(t.dir, t.messagesFormat, t.socialsFormat, t.helpFormat)
 	if err != nil {
 		return err
 	}

@@ -43,6 +43,7 @@ files edited in-game. Back it up; mount it as a volume in a container.
 | `--names-format` | `classic` | `classic`, `native` |
 | `--messages-format` | `classic` | `classic`, `native` |
 | `--socials-format` | `classic` | `classic`, `native` |
+| `--help-format` | `classic` | `classic`, `native` |
 
 `ascii` is the ascii_pfiles 2.1 one-text-file-per-player format. `classic`
 is the original CircleMUD `.wld`/`.mob`/`.obj`/`.zon`/`.shp` flat-file world.
@@ -120,6 +121,19 @@ move together. Convert an existing table once:
 
 ```sh
 dlctl socials import --from-path=data/misc/socials --to-dir=data/config
+```
+
+`--help-format` covers the help database — `text/help/index` plus the
+`.hlp` files it lists under `classic`, `text/help/help.yaml` plus one
+`.txt` file per entry under `native`. Unlike the three flags above, both
+formats live in the *same* directory rather than `misc/` versus
+`config/`: they simply never read each other's files, so a converted
+tree can sit right beside the classic one it came from. Convert an
+existing archive once (`--to-dir` defaults to the same directory as
+`--from-dir`, so this runs in place unless told otherwise):
+
+```sh
+dlctl helpdb import --from-dir=data/text/help --to-dir=data/text/help
 ```
 
 **The server will not start on `--player-format=binary`**, and says so with

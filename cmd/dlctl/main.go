@@ -143,6 +143,23 @@ var commands = []command{
 		summary: "Canonicalise a native config/socials.yaml in place",
 		run:     cmdSocialsFmt,
 	},
+	{
+		// Named "helpdb", not "help": dlctl's own bare "help" is reserved
+		// (run's own args[0] == "help" check, alongside -h/--help) for
+		// printing this usage listing, before the command table is even
+		// consulted — a subcommand group literally named "help ..."
+		// would be unreachable. "helpdb" matches the term
+		// internal/server/text.go's own Reload doc comment already uses
+		// for this data ("xhelp is the help *database*").
+		name:    "helpdb import",
+		summary: "Convert text/help/index and its .hlp files into text/help/help.yaml (docs/proposals/data-format.md)",
+		run:     cmdHelpImport,
+	},
+	{
+		name:    "helpdb fmt",
+		summary: "Canonicalise a native text/help/help.yaml in place",
+		run:     cmdHelpFmt,
+	},
 }
 
 func main() {

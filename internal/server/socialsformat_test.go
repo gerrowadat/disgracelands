@@ -42,7 +42,7 @@ func TestNativeSocialsFormatEndToEnd(t *testing.T) {
 		t.Fatalf("Save(native): %v", err)
 	}
 
-	text, err := LoadText(dir, "classic", "native")
+	text, err := LoadText(dir, "classic", "native", "classic")
 	if err != nil {
 		t.Fatalf("LoadText: %v", err)
 	}

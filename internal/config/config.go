@@ -68,6 +68,12 @@ type Config struct {
 	// several unrelated administrative concerns in one directory, and
 	// each moves on its own schedule.
 	SocialsFormat string
+	// HelpFormat covers text/help (docs/proposals/data-format.md §7) —
+	// its own flag too, though unlike Names/Messages/SocialsFormat it
+	// does not live under config/: classic and native share text/help/
+	// itself, distinguished by which files are present rather than by
+	// directory.
+	HelpFormat string
 
 	// Listeners. An empty address means the listener is disabled.
 	TelnetAddr  string
@@ -155,6 +161,7 @@ var (
 	knownNamesFormats    = []string{"classic", "native"}
 	knownMessagesFormats = []string{"classic", "native"}
 	knownSocialsFormats  = []string{"classic", "native"}
+	knownHelpFormats     = []string{"classic", "native"}
 	knownLogFormats      = []string{"text", "json"}
 )
 
@@ -171,6 +178,7 @@ func Default() Config {
 		NamesFormat:          "classic",
 		MessagesFormat:       "classic",
 		SocialsFormat:        "classic",
+		HelpFormat:           "classic",
 		TelnetAddr:           "",
 		TelnetsAddr:          ":4443",
 		WSAddr:               "",
@@ -294,6 +302,7 @@ func Load(args []string, lookupEnv func(string) (string, bool), out io.Writer) (
 	str("names-format", "Disallowed-name list format: "+strings.Join(knownNamesFormats, ", "), &cfg.NamesFormat)
 	str("messages-format", "Damage message table format: "+strings.Join(knownMessagesFormats, ", "), &cfg.MessagesFormat)
 	str("socials-format", "Social (do_action) table format: "+strings.Join(knownSocialsFormats, ", "), &cfg.SocialsFormat)
+	str("help-format", "Help database format: "+strings.Join(knownHelpFormats, ", "), &cfg.HelpFormat)
 
 	str("listen-telnet", "Plaintext telnet listen address (empty = disabled)", &cfg.TelnetAddr)
 	str("listen-telnets", "TLS telnet listen address (empty = disabled)", &cfg.TelnetsAddr)
@@ -435,6 +444,9 @@ func (c *Config) Validate() error {
 	}
 	if !contains(knownSocialsFormats, c.SocialsFormat) {
 		return fmt.Errorf("--socials-format: unknown format %q (have: %s)", c.SocialsFormat, strings.Join(knownSocialsFormats, ", "))
+	}
+	if !contains(knownHelpFormats, c.HelpFormat) {
+		return fmt.Errorf("--help-format: unknown format %q (have: %s)", c.HelpFormat, strings.Join(knownHelpFormats, ", "))
 	}
 	if !contains(knownMessagesFormats, c.MessagesFormat) {
 		return fmt.Errorf("--messages-format: unknown format %q (have: %s)", c.MessagesFormat, strings.Join(knownMessagesFormats, ", "))

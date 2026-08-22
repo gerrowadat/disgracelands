@@ -143,6 +143,62 @@ func TestParseHelpFileAgainstTheRealArchive(t *testing.T) {
 	}
 }
 
+func TestHelpSlug(t *testing.T) {
+	for _, tc := range []struct {
+		keywords []string
+		want     string
+	}{
+		{[]string{"ac"}, "ac"},
+		{[]string{"ac", "armor class"}, "ac-armor-class"},
+		{[]string{"\"CURE", "LIGHT\""}, "cure-light"},
+		{[]string{"\"CURE", "BLIND\""}, "cure-blind"},
+		{[]string{"!", "^"}, ""},
+	} {
+		if got := HelpSlug(tc.keywords); got != tc.want {
+			t.Errorf("HelpSlug(%v) = %q, want %q", tc.keywords, got, tc.want)
+		}
+	}
+}
+
+// TestHelpSlugsAreUniqueAgainstTheRealArchive: slugging the whole keyword
+// line, not just the first keyword, is what makes this hold — six
+// quoted-spell-name groups (CURE/CREATE/DETECT/MAGIC/REMOVE/DISPEL) share
+// a first token but not a whole line. Checked, not assumed.
+func TestHelpSlugsAreUniqueAgainstTheRealArchive(t *testing.T) {
+	var all []HelpEntry
+	for _, file := range []string{"commands.hlp", "info.hlp", "socials.hlp", "spells.hlp", "wizhelp.hlp"} {
+		f, err := os.Open("../../data/text/help/" + file)
+		if err != nil {
+			t.Fatalf("%s: %v", file, err)
+		}
+		entries, err := ParseHelpFile(f)
+		_ = f.Close()
+		if err != nil {
+			t.Fatalf("%s: ParseHelpFile: %v", file, err)
+		}
+		all = append(all, entries...)
+	}
+
+	seen := map[string]int{}
+	empty := 0
+	for _, e := range all {
+		slug := HelpSlug(e.Keywords)
+		if slug == "" {
+			empty++
+			continue
+		}
+		seen[slug]++
+	}
+	if empty != 1 {
+		t.Errorf("got %d entries with an empty slug, want exactly 1 (the \"! ^\" entry)", empty)
+	}
+	for slug, count := range seen {
+		if count > 1 {
+			t.Errorf("slug %q used by %d entries, want unique", slug, count)
+		}
+	}
+}
+
 func TestCirclemudCreditsEntryIsReachable(t *testing.T) {
 	f, err := os.Open("../../data/text/help/info.hlp")
 	if err != nil {

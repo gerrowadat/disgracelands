@@ -111,6 +111,40 @@ func helpLine(sc *bufio.Scanner) (line string, ok bool, err error) {
 	return strings.TrimRight(sc.Text(), "\r"), true, nil
 }
 
+// HelpSlug names a help entry for the native format's one-file-per-entry
+// layout (docs/proposals/data-format.md §7): every keyword joined by a
+// space, lowercased, with every run of characters outside [a-z0-9]
+// collapsed to one `-` and trimmed from both ends.
+//
+// Slugging the *whole* keyword line rather than just the first keyword —
+// the doc's own illustrative example uses only the first ("ac.txt" for
+// `[ac, "armor class"]") — is deliberate, not cosmetic: the real 216-entry
+// archive's own quoted multi-word spell names are split into several
+// keyword tokens apiece by strings.Fields (the same naive tokenisation
+// the C's own keyword-line parsing does, see ParseHelpFile), so "CURE
+// LIGHT WOUNDS" and "CURE BLIND" and "CURE CRITIC" all share the token
+// `"CURE` — slugging only that shared first token collides three ways.
+// Joining the whole line first keeps every entry's slug distinct: checked
+// against the real archive, not assumed, and it holds for all 216 with no
+// collision, one entry's whole line (`! ^`, both keywords pure
+// punctuation) slugging to empty — the one case a caller needs its own
+// fallback for, since a blank filename is not a filename.
+func HelpSlug(keywords []string) string {
+	var b strings.Builder
+	lastDash := false
+	for _, r := range strings.ToLower(strings.Join(keywords, " ")) {
+		switch {
+		case r >= 'a' && r <= 'z' || r >= '0' && r <= '9':
+			b.WriteRune(r)
+			lastDash = false
+		case !lastDash:
+			b.WriteByte('-')
+			lastDash = true
+		}
+	}
+	return strings.Trim(b.String(), "-")
+}
+
 // helpRow is one keyword's row in the sorted table hsort (db.c:1739-1747)
 // builds — one row per keyword, not per entry, since do_help's binary
 // search walks keywords.
