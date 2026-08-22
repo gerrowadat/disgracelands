@@ -191,9 +191,11 @@ func TestHoldingThings(t *testing.T) {
 	c.send("grab sword")
 	c.expect("You can't hold that.")
 
-	// `h` is help, not hold — the C's table order.
+	// `h` is help, not hold — the C's table order. Bare `help` shows the
+	// real text/help/screen file now (step 6c), not the command-list
+	// stub, so that is what proves `h` reached it.
 	c.send("h")
-	c.expect("Commands")
+	c.expect("Further information available by HELP")
 }
 
 // TestWearingSomethingUnwearable.

@@ -266,6 +266,12 @@ type TextFiles interface {
 	Handbook() string
 	WizList() string
 	ImmList() string
+	// HelpScreen is what bare `help` shows instead of a lookup
+	// (HELP_PAGE_FILE, db.h:78).
+	HelpScreen() string
+	// Help is do_help's lookup (act.informative.c:966-988): the entry
+	// text for a query, and whether anything matched.
+	Help(query string) (string, bool)
 }
 
 // LoginHandler performs the steps that need more than the connection.

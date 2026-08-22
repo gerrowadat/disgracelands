@@ -90,6 +90,28 @@ func testText(t *testing.T) *Text {
 		t.Fatal(err)
 	}
 
+	// The real help data too, for the same reason as socials: the tests
+	// that need `help circlemud` to actually work — the licence
+	// requirement go-port-plan.md §12 describes — need the real table,
+	// not a synthetic stand-in.
+	realHelpDir := filepath.Join(repoRoot(t), "data", helpDir)
+	entries, err := os.ReadDir(realHelpDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(filepath.Join(dir, helpDir), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	for _, e := range entries {
+		b, err := os.ReadFile(filepath.Join(realHelpDir, e.Name()))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(dir, helpDir, e.Name()), b, 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+
 	text, err := LoadText(dir)
 	if err != nil {
 		t.Fatal(err)
@@ -1042,11 +1064,21 @@ func TestCreditsAndHelpCircleMUD(t *testing.T) {
 		t.Errorf("`credits` did not show the credits file intact:\n%s", c.transcript())
 	}
 
-	// The CIRCLEMUD help entry is the second half of the same obligation.
-	c.send("help circlemud")
-	c.expectCount("CREDITS-FILE", 2)
-	if n := strings.Count(c.transcript(), "CREDITS-FILE"); n < 2 {
-		t.Errorf("`help circlemud` did not show the credits (seen %d times):\n%s",
+	// The CIRCLEMUD help entry is the second half of the same obligation,
+	// and a different mechanism from `credits`: a real keyword
+	// (CIRCLE CIRCLEMUD CREDITS) in the real archived help data
+	// (data/text/help/info.hlp), reached by the ordinary help lookup —
+	// not the credits file, and not a special case anywhere in the code.
+	// The text is identical for all three, so each occurrence has to be
+	// asked for by number — expect alone would match the first reply
+	// again and return immediately (CLAUDE.md's testing-traps note).
+	const wantCredits = "CircleMUD was developed from DikuMud"
+	for i, query := range []string{"help circlemud", "help credits", "help circle"} {
+		c.send(query)
+		c.expectCount(wantCredits, i+1)
+	}
+	if n := strings.Count(c.transcript(), wantCredits); n != 3 {
+		t.Errorf("the real credits entry appeared %d times, want 3 (once per query):\n%s",
 			n, c.transcript())
 	}
 }

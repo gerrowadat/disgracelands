@@ -14,9 +14,12 @@ half (§11 step 5) and seven of the "rest of the state" formats — bans,
 boards, mail, houses (§11 step 6a), plus xnames, the clock and reports
 (§11 step 6b) — are now built. Each is `internal/persist/<name>/native/`,
 registered as `native` alongside `classic`/`ascii` in the same per-package
-registries this document always said they would slot into. Game config,
-help, socials and messages (§11 step 6c and the rest of §6/§7) are not;
-see §11 for what landed and what is still a plan, and why those are
+registries this document always said they would slot into. `help` is now
+a real feature too (§11 step 6c-i), on `classic` only — its own
+`config/help.yaml` needs a format shape (one file per entry, §7) nothing
+built so far has, and is not attempted yet either. Damage messages, game
+config, socials and messages (§11 step 6c-ii and the rest of §6/§7) are
+not; see §11 for what landed and what is still a plan, and why those are
 staged separately rather than bundled in.
 
 ---
@@ -1009,6 +1012,12 @@ Only help needs structure, because a help entry genuinely has fields —
 what keywords reach it, and what level may read it. That structure goes in
 an index, not in the text:
 
+*(Checked against the real C, step 6c-i: `struct help_index_element`,
+`db.h:207-211`, carries no level field at all — nothing in `do_help` ever
+gates an entry by who is asking. `min_level` below is this sketch's own
+invention, not something the archive has any data for; a real native
+design should drop it rather than gate something the C never gated.)*
+
 ```yaml
 # data/text/help/help.yaml
 schema: dl/help@1
@@ -1402,7 +1411,8 @@ format-neutral and that is the whole reason it exists.
 | **5. Players ✅** | `native` player store (`internal/persist/player/native/`), implementing both `player.Store` and `player.ObjectStore` against one file (§8); `dlctl pfile import`/`pfile fmt`; the `alias` command (`interpreter.c`'s `do_alias`/`perform_alias`, previously unported — no archived alias data exists anywhere to have ported instead); real container nesting, format-gated on `native` as a user-approved deviation (`docs/deviations.md`). | `dlctl pfile import` converts a `binary` roster (rent files included); `dlmud --player-format=native` boots, and a character created on it, quit and logged back in, keeps a bag's contents *inside* the bag — proven live (`TestRentingUnderNativeKeepsTheRingInTheBag`), not just at the codec level. `PlayerRecord`/`player.Store` needed no restructuring: `ObjectStore` was already a separate interface a format could additionally implement, and `StoredObject` grew one field (`Contains`) rather than being redesigned. |
 | **6a. Bans, boards, mail, houses ✅** | `native` for each (`internal/persist/{bans,boards,mail,houses}/native/`), every one retrofitted to the `Store`/`Register`/`Open` shape `world`/`player` already had (`classic` moved to its own subpackage per format, unchanged); `--state-format`; `dlctl state import`/`fmt`, converting all four together. Houses' contents reuse the player object-instance schema directly, always flat (containment stayed scoped to player rent files, §8's own note in this table's row 5). | `dlctl state import`/`fmt` round-trip a synthetic fixture (no real archived data exists for any of these four — confirmed, not assumed, in the scoping survey); a live server integration test per format proves each one end to end (posting/reading a board message, sending/receiving mail, a ban refusing a connection, a house crash-save surviving a reload), all under `--state-format=native`. |
 | **6b. xnames, the clock, reports ✅** | Three of step 6a's own deferred pieces, each small enough to build the feature and its format together in one pass: character creation now consults `misc/xnames`/`config/names.yaml` (`internal/persist/names`, `--names-format`); the MUD clock's epoch is persisted (`internal/persist/clock`, joining `--state-format`, `Live.SetBooted`/`SavedEpoch`); `do_gen_write` (`bug`/`idea`/`typo`) is implemented and gets `state/reports.yaml` (`internal/persist/reports`, joining `--state-format`). | A disallowed name is refused at creation; a persisted epoch survives a simulated restart within the C's own sub-hour rounding bound (`docs/weirdnumbers.md`); `bug`/`idea`/`typo` append, refuse NPCs/empty text/a full file, and round-trip through `dlctl state import`/`fmt` — all proved with live server integration tests, not just at the codec level. |
-| **6c. Help, damage messages, game config** | Help (needs the real keyword/level lookup built first — today's `help` is a stub), damage messages (needs `messg.msg`'s selection logic ported first), game config (`config.c`'s tuning, currently scattered `const`s — a cross-cutting refactor independent of any file format). | Not attempted. Each is a feature or a refactor first and a format question second — building the format before the feature existed is the mistake step 5 (`alias`, containment) already showed the cost of avoiding, and bundling three unrelated efforts into one pass would risk every one of them. |
+| **6c-i. Help ✅ (classic only)** | The real keyword lookup: `do_help`'s binary search plus backward-walk over `text/help/index` and the `.hlp` files it lists, ported to `internal/game/help.go` and wired through `internal/server/text.go`; `help circlemud` now reaches the real archived `CIRCLE CIRCLEMUD CREDITS` entry instead of a special case. `config/help.yaml` — the proposal's own one-file-per-entry design (§7), a different format shape from everything else here — is its own future pass, not attempted. | `help`, `help <keyword>` and the ambiguous-prefix behaviour all proved against the real 216-entry, 86KB archive (`internal/game/help_test.go`), plus a live server test that `help circlemud`/`help credits`/`help circle` show the real credits text with no special case in the command (`internal/server/help_test.go`). |
+| **6c-ii. Damage messages, game config** | Damage messages (needs `messg.msg`'s selection logic ported first, and touches `internal/server/violence.go`'s already-working combat path — more care warranted than a read-only lookup table), game config (`config.c`'s tuning, currently scattered `const`s — a cross-cutting refactor independent of any file format). | Not attempted. Each is a feature or a refactor first and a format question second — building the format before the feature existed is the mistake step 5 (`alias`, containment) already showed the cost of avoiding, and bundling unrelated efforts into one pass would risk every one of them. |
 | **7. Retire** | `ascii` and `binary` become `dlctl`-only; `classic` becomes import-only. | Not attempted. |
 
 Steps 1–4 are worth doing before **Phase 6** of `go-port-plan.md`, which is

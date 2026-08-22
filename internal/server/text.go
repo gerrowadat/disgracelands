@@ -37,6 +37,13 @@ type Text struct {
 	// socials are the entries from misc/socials. They are commands rather
 	// than text, but this is the thing that reads the data directory.
 	socials []game.Social
+	// help is the loaded, sorted help table (text/help/index plus each
+	// file it lists). nil for a server with no help data — a poorer game,
+	// not a broken one, the same posture socials already has.
+	help *game.HelpIndex
+	// helpScreen is text/help/screen, HELP_PAGE_FILE — what bare `help`
+	// shows instead of a lookup.
+	helpScreen string
 }
 
 // Socials returns the loaded socials, for the boot step that puts them into
@@ -63,6 +70,13 @@ const (
 	immlistFile    = "text/immlist"
 	// socialsFile is not text/ — the C's SOCMESS_FILE is lib/misc/socials.
 	socialsFile = "misc/socials"
+
+	// helpDir, helpIndexFile and helpScreenFile are text/help/, its index
+	// (db.h's nameless index_filename under HLP_PREFIX) and screen
+	// (HELP_PAGE_FILE, db.h:78).
+	helpDir        = "text/help"
+	helpIndexFile  = "text/help/index"
+	helpScreenFile = "text/help/screen"
 )
 
 // MainMenu is the C's MENU (config.c:271), verbatim.
@@ -131,6 +145,7 @@ func LoadText(dir string) (*Text, error) {
 		{handbookFile, &t.handbook},
 		{wizlistFile, &t.wizlist},
 		{immlistFile, &t.immlist},
+		{helpScreenFile, &t.helpScreen},
 	} {
 		if b, err := os.ReadFile(filepath.Join(dir, f.path)); err == nil { //nolint:gosec // as above
 			*f.dst = string(b)
@@ -147,6 +162,33 @@ func LoadText(dir string) (*Text, error) {
 		if err != nil {
 			return nil, fmt.Errorf("reading %s: %w", socialsFile, err)
 		}
+	}
+
+	// The help table, same optional posture as socials: index_boot
+	// (db.c:699-817) reads text/help/index, one filename per line, then
+	// load_help (db.c:1701-1734) on each in turn into one shared table,
+	// sorted by hsort (db.c:1739-1747) once loading finishes.
+	if f, err := os.Open(filepath.Join(dir, helpIndexFile)); err == nil { //nolint:gosec // operator-configured data directory
+		files, err := game.ParseHelpIndex(f)
+		_ = f.Close()
+		if err != nil {
+			return nil, fmt.Errorf("reading %s: %w", helpIndexFile, err)
+		}
+		var entries []game.HelpEntry
+		for _, name := range files {
+			path := filepath.Join(helpDir, name)
+			hf, err := os.Open(filepath.Join(dir, path)) //nolint:gosec // as above
+			if err != nil {
+				return nil, fmt.Errorf("reading %s: %w", path, err)
+			}
+			fileEntries, err := game.ParseHelpFile(hf)
+			_ = hf.Close()
+			if err != nil {
+				return nil, fmt.Errorf("reading %s: %w", path, err)
+			}
+			entries = append(entries, fileEntries...)
+		}
+		t.help = game.NewHelpIndex(entries)
 	}
 
 	return t, nil
@@ -206,3 +248,19 @@ func (t *Text) WizList() string { return t.wizlist }
 
 // ImmList is the shorter list the `immlist` command shows.
 func (t *Text) ImmList() string { return t.immlist }
+
+// HelpScreen is HELP_PAGE_FILE (db.h:78): what bare `help` shows instead
+// of a lookup.
+func (t *Text) HelpScreen() string { return t.helpScreen }
+
+// Help is do_help's lookup (act.informative.c:966-988), reporting whether
+// anything matched. False both when nothing matches and when there is no
+// help data at all — the caller cannot and does not need to tell those
+// apart.
+func (t *Text) Help(query string) (string, bool) {
+	if t.help == nil {
+		return "", false
+	}
+	e, ok := t.help.Lookup(query)
+	return e.Body, ok
+}

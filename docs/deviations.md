@@ -403,6 +403,17 @@ Listed here so they are not mistaken for deliberate differences.
   `slog` at info level, but its `mudlog(..., CMP, LVL_IMMORT, FALSE)` half
   (act.other.c:904-905) — the in-game echo to online gods — goes nowhere,
   same as every command already on this list.
+- **Nothing paginates.** `page_string` (`modify.c:436`) is the C's full
+  terminal-height "--More--" pager — `credits`, `wizlist`, `immlist`,
+  `background`, `news`, `policies`, `handbook` and now `help` all go
+  through it there. None of this port's equivalents do: every long text is
+  sent whole, in one write. This was never written down until `help`
+  landed (step 6c) made it the most visible instance — individual help
+  entries run to several KB, and a client with a short scrollback loses
+  the top of one — but the gap is exactly as old as `credits`, the first
+  of these commands built. `PAGE_LENGTH` (`comm.h:44`) is a fixed 22
+  lines in the C, not a per-player preference — there is nothing to read
+  back even if this were ported, only a constant to reintroduce.
 - **Two special procedures are left.** The subsystems that were blocking the
   rest all landed in 5f and 5g, so the seam now carries the guildmasters,
   guild guards, Puff, fidos, janitors, cityguards, snakes, mobile mages,

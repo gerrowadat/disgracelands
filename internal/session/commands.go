@@ -1337,27 +1337,39 @@ func doCredits(c *Context) error {
 	return nil
 }
 
-// doHelp lists the commands, and answers `help circlemud`.
+// doHelp is do_help (act.informative.c:953-991): a lookup into the loaded
+// help table, or the bare-`help` screen with no argument.
 //
-// The CIRCLEMUD help entry is also a licence requirement and must be shown
-// intact. Until the help database is loaded (a later phase), it is served
-// from the credits file, which carries the same attribution and is required
-// to be intact for the same reason.
+// `help circlemud` (also `help credits`, `help circle`) is a licence
+// requirement (docs/proposals/go-port-plan.md §12) and needs no special
+// case to satisfy it: CIRCLE CIRCLEMUD CREDITS is a real keyword in the
+// real archived help data (data/text/help/info.hlp), reached by the same
+// lookup as anything else, once the table is loaded. The `credits`
+// command above is a different mechanism entirely — a separate file,
+// text/credits — and both have to work; they are not one thing wearing
+// two names.
 func doHelp(c *Context) error {
-	if strings.EqualFold(c.Arg, "circlemud") {
-		c.Send("%s", ensureNewline(c.Text.Credits()))
-		return nil
-	}
-	if c.Arg != "" {
-		c.Send("There is no help on that yet.\r\n")
+	if c.Arg == "" {
+		if screen := c.Text.HelpScreen(); screen != "" {
+			c.Send("%s", ensureNewline(screen))
+			return nil
+		}
+		// No help data configured at all: the command list this stub
+		// always showed, so a server with none is no worse off than
+		// before this landed.
+		c.Send("Commands\r\n--------\r\n")
+		for _, cmd := range Commands {
+			c.Send("  %-10s %s\r\n", cmd.Name, cmd.Help)
+		}
 		return nil
 	}
 
-	c.Send("Commands\r\n--------\r\n")
-	for _, cmd := range Commands {
-		c.Send("  %-10s %s\r\n", cmd.Name, cmd.Help)
+	entry, ok := c.Text.Help(c.Arg)
+	if !ok {
+		c.Send("There is no help on that word.\r\n")
+		return nil
 	}
-	c.Send("\r\nType `help circlemud` for the credits.\r\n")
+	c.Send("%s", ensureNewline(entry))
 	return nil
 }
 
