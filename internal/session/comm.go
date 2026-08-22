@@ -7,6 +7,7 @@
 package session
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/gerrowadat/disgracelands/internal/game"
@@ -345,8 +346,17 @@ func (c *Context) genComm(name string) error {
 	return nil
 }
 
-// doQuestSay is do_qcomm's SCMD_QSAY: a channel for whoever is on the quest.
-func doQuestSay(c *Context) error {
+// doQuestSay and doQuestEcho are do_qcomm's two subcommands (act.comm.c:549):
+// one channel, two ways of putting a line on it.
+//
+// `qsay` wraps what you type — "You quest-say, '...'" — and `qecho` sends the
+// argument raw, with nobody's name on it. Everything else about them is the
+// same function, including the refusal, the empty-argument joke (which spells
+// itself out of the command's own name) and the `PRF_NOREPEAT` handling.
+func doQuestSay(c *Context) error  { return questComm(c, "qsay") }
+func doQuestEcho(c *Context) error { return questComm(c, "qecho") }
+
+func questComm(c *Context, name string) error {
 	if !c.prefers(game.PrefQuest) {
 		c.Send("You aren't even part of the quest!\r\n")
 		return nil
@@ -354,22 +364,78 @@ func doQuestSay(c *Context) error {
 
 	said := strings.TrimSpace(c.Arg)
 	if said == "" {
-		c.Send("Qsay?  Yes, fine, qsay we must, but WHAT??\r\n")
+		// CMD_NAME twice, then CAP() over the lot — so it is the command you
+		// typed, capitalised once at the front.
+		c.Send("%s?  Yes, fine, %s we must, but WHAT??\r\n", capitaliseFirst(name), name)
 		return nil
+	}
+
+	mine, theirs := said, said
+	if name == "qsay" {
+		mine = fmt.Sprintf("You quest-say, '%s'", said)
+		theirs = fmt.Sprintf("%s quest-says, '%s'", c.Character.Name, said)
 	}
 
 	if c.prefers(game.PrefNoRepeat) {
 		c.Send("Okay.\r\n")
 	} else {
-		c.Send("You quest-say, '%s'\r\n", said)
+		c.Send("%s\r\n", mine)
 	}
 	for _, other := range c.World.Players() {
 		if other == c.Character || other.Record == nil {
 			continue
 		}
+		// TO_SLEEP: the quest channel reaches you asleep, which most do not.
 		if other.Record.Preferences.Has(game.PrefQuest) {
-			other.Tell("%s quest-says, '%s'\r\n", c.Character.Name, said)
+			other.Tell("%s\r\n", theirs)
 		}
+	}
+	return nil
+}
+
+// doPage is do_page (act.comm.c:383): a line straight to one person, with two
+// bells in front of it.
+//
+// `page all` is the interesting half — it needs *above* LVL_GOD rather than
+// at it, which is the only place in the game that distinction is drawn, and
+// the refusal is worth keeping for its own sake: "You will never be godly
+// enough to do that!"
+func doPage(c *Context) error {
+	target, message := halfChop(c.Arg)
+
+	if c.Character.IsNPC() {
+		c.Send("Monsters can't page.. go away.\r\n")
+		return nil
+	}
+	if target == "" {
+		c.Send("Whom do you wish to page?\r\n")
+		return nil
+	}
+
+	// \007 twice: the C really does ring the bell at you.
+	line := fmt.Sprintf("\007\007*%s* %s", c.Character.Name, message)
+
+	if strings.EqualFold(target, "all") {
+		if c.Character.Level() <= game.LevelGod {
+			c.Send("You will never be godly enough to do that!\r\n")
+			return nil
+		}
+		for _, other := range c.World.Players() {
+			other.Tell("%s\r\n", line)
+		}
+		return nil
+	}
+
+	victim := c.findAnywhere(target)
+	if victim == nil {
+		c.Send("There is no such person in the game!\r\n")
+		return nil
+	}
+	victim.Tell("%s\r\n", line)
+	if c.prefers(game.PrefNoRepeat) {
+		c.Send("Okay.\r\n")
+	} else {
+		c.Send("%s\r\n", line)
 	}
 	return nil
 }

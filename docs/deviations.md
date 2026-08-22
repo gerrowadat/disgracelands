@@ -352,11 +352,10 @@ Listed here so they are not mistaken for deliberate differences.
   combination, and reports which of them it found the thing in. Here each
   command searches the lists it cares about in the order it wants. The
   behaviour is the same for every command ported so far; the shape is not.
-- **Twenty of the C's 318 commands are not implemented**, and the plan's
+- **Fourteen of the C's 318 commands are not implemented**, and the plan's
   §10 "What is not in it" lists every one with its `interpreter.c` line. In
-  brief: the eight OasisOLC and `tedit` editors (Phase 6),
-  the aliases `:` and `take`, and a short tail of `users`, `wizhelp`,
-  `skillset`, `reload`, `qecho`, `page`, `color` and `insult`. **`hop` is not
+  brief: the nine OasisOLC and text editors (Phase 6), `slowns`/`trackthru`,
+  and a short tail of `users`, `skillset`, `reload` and `color`. **`hop` is not
   among them**: it is the one `do_action` row the shipped socials file does not
   fill, and `RegisterSocials` gives it a command anyway that answers "That
   action is not supported." — which is what the C does too. `alias`

@@ -377,12 +377,51 @@ func doToggle(c *Context) error {
 
 // doCommands, porting do_commands. `commands` lists the ordinary ones and
 // `socials` the socials, from the same function and the same table.
-func doCommands(socialsOnly bool) func(*Context) error {
+// listMode is which of do_commands' three subcommands is running.
+type listMode int
+
+const (
+	// listCommands is SCMD_COMMANDS: everything a mortal can type that is not
+	// a social.
+	listCommands listMode = iota
+	// listSocials is SCMD_SOCIALS.
+	listSocials
+	// listWizhelp is SCMD_WIZHELP: the immortal commands, and *only* those.
+	listWizhelp
+)
+
+// doCommands is do_commands (act.informative.c:1770) under all three of its
+// names.
+//
+// The filter is three tests and the middle one is the surprise:
+//
+//	if ((cmd_info[i].minimum_level >= LVL_IMMORT) != wizhelp)
+//	  continue;
+//
+// So `wizhelp` shows the immortal commands and nothing else, and `commands`
+// shows the mortal ones and nothing else — a god typing `commands` does not
+// see their own. The two lists are disjoint rather than nested, which is not
+// what either name suggests.
+//
+// The third test puts `insult` among the socials, because it is a social that
+// happens to be written in C rather than in the socials file.
+func doCommands(mode listMode) func(*Context) error {
 	return func(c *Context) error {
+		level := c.Character.Level()
+
 		var names []string
 		for _, cmd := range Commands {
-			if (cmd.Social != nil || cmd.Run == nil) != socialsOnly {
+			if cmd.Run == nil || level < cmd.MinLevel {
 				continue
+			}
+			if (cmd.MinLevel >= game.LevelImmortal) != (mode == listWizhelp) {
+				continue
+			}
+			if mode != listWizhelp {
+				isSocial := cmd.Social != nil || cmd.Name == "insult"
+				if isSocial != (mode == listSocials) {
+					continue
+				}
 			}
 			// A one-character command is an alias for a real one and is not
 			// listed; the C's table has them and `commands` shows them, but
@@ -395,10 +434,14 @@ func doCommands(socialsOnly bool) func(*Context) error {
 		sort.Strings(names)
 
 		kind := "commands"
-		if socialsOnly {
+		if mode == listSocials {
 			kind = "socials"
 		}
-		c.Send("The following %s are available to you:\r\n", kind)
+		privileged := ""
+		if mode == listWizhelp {
+			privileged = "privileged "
+		}
+		c.Send("The following %s%s are available to you:\r\n", privileged, kind)
 
 		// Seven to a line, eleven columns each, as the C does.
 		var b strings.Builder

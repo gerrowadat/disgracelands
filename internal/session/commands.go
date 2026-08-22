@@ -310,6 +310,8 @@ func init() {
 		// out: same function, level 1, and a mortal command.
 		{Name: "echo", Help: "Say something with nobody's name on it.", Run: doEcho, CLine: 284, MinLevel: game.LevelImmortal},
 		{Name: "emote", Help: "Act something out.", Run: doEmote, CLine: 285},
+		// `:` is emote with no space, the way `'` is say (interpreter.c:286).
+		{Name: ":", Help: "Act something out.", Run: doEmote, CLine: 286},
 		{Name: "force", Help: "Make somebody do something.", Run: doForce, CLine: 294, MinLevel: game.LevelGod},
 		{Name: "gecho", Help: "Say something to everybody in the game.", Run: doGecho, CLine: 309, MinLevel: game.LevelGod},
 		{Name: "send", Help: "Send a line to one person.", Run: doSend, CLine: 455, MinLevel: game.LevelGod},
@@ -425,7 +427,7 @@ func init() {
 		{Name: "roomflags", Help: "Show each room's vnum and flags.", Run: toggleCommand("roomflags"), CLine: 446, MinLevel: game.LevelImmortal},
 		{Name: "clear", Help: "Clear the screen.", Run: doClearScreen, CLine: 254},
 		{Name: "cls", Help: "Clear the screen.", Run: doClearScreen, CLine: 256},
-		{Name: "commands", Help: "List the commands you can use.", Run: doCommands(false), CLine: 261},
+		{Name: "commands", Help: "List the commands you can use.", Run: doCommands(listCommands), CLine: 261},
 		{Name: "compact", Help: "Drop the blank line before each prompt.", Run: toggleCommand("compact"), CLine: 262},
 		{Name: "diagnose", Help: "See how hurt somebody is.", Run: doDiagnose, CLine: 276},
 		{Name: "display", Help: "Choose what the prompt shows.", Run: doDisplay, CLine: 277},
@@ -441,7 +443,14 @@ func init() {
 		{Name: "prompt", Help: "Choose what the prompt shows.", Run: doDisplay, CLine: 410},
 		{Name: "report", Help: "Tell your group how you are doing.", Run: doReport, CLine: 439},
 		{Name: "save", Help: "Save your character.", Run: doSave, CLine: 451},
-		{Name: "socials", Help: "List the socials you can use.", Run: doCommands(true), CLine: 485},
+		{Name: "socials", Help: "List the socials you can use.", Run: doCommands(listSocials), CLine: 485},
+		// `take` is `get` under another name (interpreter.c:503), which is
+		// why `ta` is take and not taste — take is two lines earlier.
+		{Name: "take", Help: "Pick something up.", Run: doGet, CLine: 503},
+		{Name: "insult", Help: "Be rude to somebody.", Run: doInsult, CLine: 346},
+		{Name: "page", Help: "Send a line straight to somebody.", Run: doPage, CLine: 398, MinLevel: game.LevelGod},
+		{Name: "qecho", Help: "Say something unattributed on the quest channel.", Run: doQuestEcho, CLine: 419, MinLevel: game.LevelImmortal},
+		{Name: "wizhelp", Help: "List the immortal commands.", Run: doCommands(listWizhelp), CLine: 553, MinLevel: game.LevelImmortal},
 		{Name: "split", Help: "Share gold with your group.", Run: doSplit, CLine: 486},
 		{Name: "title", Help: "Set the title that follows your name.", Run: doTitle, CLine: 512},
 		{Name: "toggle", Help: "Show every one of your settings.", Run: doToggle, CLine: 515},
