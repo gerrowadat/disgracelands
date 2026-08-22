@@ -258,12 +258,21 @@ ci-pr: ## Run the test job as a pull_request, to exercise the 32-bit path filter
 
 # .actrc passes --reuse, so the job containers survive between runs and carry
 # their caches with them. That is the difference between a second run taking
-# seconds and taking minutes, and it is also how a run goes stale: if a job
-# starts failing for no reason you can see, throw the containers away first.
+# seconds and taking minutes, and it is also how a run goes stale.
+#
+# The volumes matter more than the containers, and this is the trap: act keeps
+# each job's working directory in a named volume that outlives the container,
+# and it populates that directory with `docker cp`, which overwrites files but
+# never removes them. So a file you deleted on your branch stays in the volume
+# and keeps getting compiled. That reads as a failure in code you cannot find
+# -- `undefined: New` in a _test.go that is not on disk -- and it could as
+# easily read as a pass. Removing the containers alone does not fix it.
 .PHONY: ci-clean
-ci-clean: ## Remove the containers act reuses between runs
+ci-clean: ## Remove the containers *and volumes* act reuses between runs
 	@ids=$$(docker ps -aq --filter "name=act-"); \
 	  if [ -n "$$ids" ]; then docker rm -f $$ids; else echo "no act containers"; fi
+	@vols=$$(docker volume ls -q --filter "name=act-"); \
+	  if [ -n "$$vols" ]; then docker volume rm -f $$vols; else echo "no act volumes"; fi
 
 ##@ Data and tooling
 

@@ -108,6 +108,16 @@ jobs:
       # player data is in, and a hand-written implementation of a cipher -
       # and both skip silently where their toolchain is missing. CI is where
       # they have to actually run.
+      #
+      # Every one of these greps a package path recursively (`/...`), and that
+      # is not incidental. They were written against non-recursive paths, the
+      # layout tests later moved down into `classic/` subpackages, and
+      # `go test ./internal/persist/boards/` started reporting "no test files"
+      # - so the grep for the success marker found nothing and the step failed.
+      # main was red for five merges before anything noticed, because the gate
+      # above skips these steps on most pull requests and only a push runs
+      # them. Keep the `/...`, and if you move one of these tests again, check
+      # it with `make ci` rather than by reading.
       - name: The 32-bit codec checks must not have skipped
         if: steps.ilp32.outputs.needed == 'true'
         run: |
@@ -125,7 +135,7 @@ jobs:
       - name: The 32-bit board layout check must not have skipped
         if: steps.ilp32.outputs.needed == 'true'
         run: |
-          go test -count=1 -v ./internal/persist/boards/ > boards.txt 2>&1 || { cat boards.txt; exit 1; }
+          go test -count=1 -v ./internal/persist/boards/... > boards.txt 2>&1 || { cat boards.txt; exit 1; }
           if grep -q -- "--- SKIP" boards.txt; then
             echo "the 32-bit board layout check skipped; it must run in CI:"
             grep -A2 -- "--- SKIP" boards.txt
@@ -140,7 +150,7 @@ jobs:
       - name: The 32-bit mail layout check must not have skipped
         if: steps.ilp32.outputs.needed == 'true'
         run: |
-          go test -count=1 -v ./internal/persist/mail/ > mail.txt 2>&1 || { cat mail.txt; exit 1; }
+          go test -count=1 -v ./internal/persist/mail/... > mail.txt 2>&1 || { cat mail.txt; exit 1; }
           if grep -q -- "--- SKIP" mail.txt; then
             echo "the 32-bit mail layout check skipped; it must run in CI:"
             grep -A2 -- "--- SKIP" mail.txt
@@ -153,7 +163,7 @@ jobs:
       - name: The 32-bit house layout check must not have skipped
         if: steps.ilp32.outputs.needed == 'true'
         run: |
-          go test -count=1 -v ./internal/persist/houses/ > houses.txt 2>&1 || { cat houses.txt; exit 1; }
+          go test -count=1 -v ./internal/persist/houses/... > houses.txt 2>&1 || { cat houses.txt; exit 1; }
           if grep -q -- "--- SKIP" houses.txt; then
             echo "the 32-bit house layout check skipped; it must run in CI:"
             grep -A2 -- "--- SKIP" houses.txt

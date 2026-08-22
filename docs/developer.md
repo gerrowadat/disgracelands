@@ -241,9 +241,20 @@ Node slim image with no `sudo` and no `apt`, and the test job installs
 
 `--reuse` is on, so job containers survive between runs and keep their Go
 module cache, their apt lists and whatever `setup-go` downloaded. That is the
-difference between a second run taking seconds and taking minutes. It is also
-how a run goes stale: **if a job starts failing for no reason you can see, run
-`make ci-clean` before believing it.**
+difference between a second run taking seconds and taking minutes.
+
+It is also how a run goes stale, and the way it goes stale is worse than a
+cold cache. **act keeps each job's working directory in a named Docker volume
+that outlives the container, and populates it with `docker cp` — which
+overwrites files but never removes them.** A file you deleted on your branch
+stays in that volume and keeps getting compiled. What that looks like is
+`undefined: New` in a `_test.go` that is not on disk and not in `git ls-tree`,
+which is a genuinely disorienting twenty minutes; it could as easily look like
+a *pass*, from a deleted file still satisfying a reference.
+
+So: **if a job fails for a reason you cannot find on disk, run `make ci-clean`
+before believing it.** That removes the containers *and* the `act-*` volumes,
+which is what makes it work — removing the containers alone does not.
 
 ### What this reproduces, and what it does not
 
@@ -285,6 +296,14 @@ test job under it. Watch for the line the gate prints:
 If you add a reference tool or a source file that feeds the binary layouts,
 extend the regex and then check it with `make ci-pr` — both branches, not just
 the one you expect.
+
+The same gate is why a workflow bug can sit on `main` for a long time. The
+32-bit steps run on a push and on a pull request that touches those paths, and
+on nothing else — so a PR that breaks one of them goes green, and `main` goes
+red the moment it merges. That is not hypothetical: it is how the three layout
+checks came to be pointing at package paths their tests had moved out of, red
+for five merges. `make ci` reproduces a push, which is exactly the case those
+PRs were not running.
 
 ### Secrets
 
