@@ -16,6 +16,7 @@ import (
 
 	"github.com/gerrowadat/disgracelands/internal/game"
 	"github.com/gerrowadat/disgracelands/internal/persist/messages"
+	"github.com/gerrowadat/disgracelands/internal/persist/socials"
 )
 
 // Text holds the server's canned files.
@@ -45,6 +46,9 @@ type Text struct {
 	// currently reload messages at all; see its own doc comment) still
 	// passes LoadText the format it was originally configured with.
 	messagesFormat string
+	// socialsFormat is misc/socials'/config/socials.yaml's format, the
+	// same reasoning and the same non-involvement in Reload's swap map.
+	socialsFormat string
 
 	greeting   string
 	motd       string
@@ -108,6 +112,9 @@ const (
 	immlistFile    = "text/immlist"
 	// socialsFile is not text/ — the C's SOCMESS_FILE is lib/misc/socials.
 	socialsFile = "misc/socials"
+	// socialsConfigDir is where config/socials.yaml lives under native —
+	// the same config/ directory names.yaml/messages.yaml already share.
+	socialsConfigDir = "config"
 
 	// helpDir, helpIndexFile and helpScreenFile are text/help/, its index
 	// (db.h's nameless index_filename under HLP_PREFIX) and screen
@@ -152,8 +159,8 @@ const (
 )
 
 // LoadText reads the canned files from a data directory.
-func LoadText(dir, messagesFormat string) (*Text, error) {
-	t := &Text{dir: dir, messagesFormat: messagesFormat}
+func LoadText(dir, messagesFormat, socialsFormat string) (*Text, error) {
+	t := &Text{dir: dir, messagesFormat: messagesFormat, socialsFormat: socialsFormat}
 
 	// Required. The licence names both of these.
 	for _, f := range []struct {
@@ -199,14 +206,18 @@ func LoadText(dir, messagesFormat string) (*Text, error) {
 	// The socials are optional in the same way the message of the day is: a
 	// server without them is a poorer game and still a game. The C exits the
 	// process on a missing socials file, which is a stronger reaction than
-	// this port takes to anything that is not a licence obligation.
-	if f, err := os.Open(filepath.Join(dir, socialsFile)); err == nil { //nolint:gosec // operator-configured data directory
-		t.socials, err = game.ParseSocials(f)
-		_ = f.Close()
-		if err != nil {
-			return nil, fmt.Errorf("reading %s: %w", socialsFile, err)
-		}
+	// this port takes to anything that is not a licence obligation. classic
+	// is a file, native a directory — the same asymmetry messages already
+	// has, just below.
+	socialsPath := filepath.Join(dir, socialsFile)
+	if socialsFormat == "native" {
+		socialsPath = filepath.Join(dir, socialsConfigDir)
 	}
+	socialsList, err := socials.Load(socialsFormat, socialsPath)
+	if err != nil {
+		return nil, fmt.Errorf("reading %s: %w", socialsPath, err)
+	}
+	t.socials = socialsList
 
 	// The help table, same optional posture as socials: index_boot
 	// (db.c:699-817) reads text/help/index, one filename per line, then
@@ -393,7 +404,7 @@ func (t *Text) Reload(what string) error {
 	// the old text in place rather than blanking it, which is not the C's
 	// behaviour — file_to_string_alloc leaves the pointer alone on failure
 	// too, so the effect is the same and the reasoning is explicit.
-	fresh, err := LoadText(t.dir, t.messagesFormat)
+	fresh, err := LoadText(t.dir, t.messagesFormat, t.socialsFormat)
 	if err != nil {
 		return err
 	}

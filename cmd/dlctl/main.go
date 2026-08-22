@@ -133,6 +133,16 @@ var commands = []command{
 		summary: "Canonicalise a native config/messages.yaml in place",
 		run:     cmdMessagesFmt,
 	},
+	{
+		name:    "socials import",
+		summary: "Convert misc/socials into config/socials.yaml (docs/proposals/data-format.md)",
+		run:     cmdSocialsImport,
+	},
+	{
+		name:    "socials fmt",
+		summary: "Canonicalise a native config/socials.yaml in place",
+		run:     cmdSocialsFmt,
+	},
 }
 
 func main() {

@@ -42,6 +42,7 @@ files edited in-game. Back it up; mount it as a volume in a container.
 | `--state-format` | `classic` | `classic`, `native` |
 | `--names-format` | `classic` | `classic`, `native` |
 | `--messages-format` | `classic` | `classic`, `native` |
+| `--socials-format` | `classic` | `classic`, `native` |
 
 `ascii` is the ascii_pfiles 2.1 one-text-file-per-player format. `classic`
 is the original CircleMUD `.wld`/`.mob`/`.obj`/`.zon`/`.shp` flat-file world.
@@ -108,6 +109,17 @@ Convert an existing table once:
 
 ```sh
 dlctl messages import --from-path=data/misc/messages --to-dir=data/config
+```
+
+`--socials-format` covers the `do_action` table on its own (`misc/socials`
+under `classic`, `data/config/socials.yaml` under `native`) — its own
+flag for the same reason `--messages-format` is: it shares `config/`
+with the disallowed-name list and the damage-message table, but the
+three are otherwise unrelated administrative concerns and do not need to
+move together. Convert an existing table once:
+
+```sh
+dlctl socials import --from-path=data/misc/socials --to-dir=data/config
 ```
 
 **The server will not start on `--player-format=binary`**, and says so with

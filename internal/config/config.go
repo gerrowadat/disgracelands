@@ -62,6 +62,12 @@ type Config struct {
 	// that kept them from sharing StateFormat's "one directory, one
 	// flag" grouping in the first place.
 	MessagesFormat string
+	// SocialsFormat covers the do_action table (docs/proposals/
+	// data-format.md §9, step 6c) — its own flag for the same reason
+	// MessagesFormat is not folded into NamesFormat: config/ groups
+	// several unrelated administrative concerns in one directory, and
+	// each moves on its own schedule.
+	SocialsFormat string
 
 	// Listeners. An empty address means the listener is disabled.
 	TelnetAddr  string
@@ -148,6 +154,7 @@ var (
 	knownStateFormats    = []string{"classic", "native"}
 	knownNamesFormats    = []string{"classic", "native"}
 	knownMessagesFormats = []string{"classic", "native"}
+	knownSocialsFormats  = []string{"classic", "native"}
 	knownLogFormats      = []string{"text", "json"}
 )
 
@@ -163,6 +170,7 @@ func Default() Config {
 		StateFormat:          "classic",
 		NamesFormat:          "classic",
 		MessagesFormat:       "classic",
+		SocialsFormat:        "classic",
 		TelnetAddr:           "",
 		TelnetsAddr:          ":4443",
 		WSAddr:               "",
@@ -285,6 +293,7 @@ func Load(args []string, lookupEnv func(string) (string, bool), out io.Writer) (
 	str("state-format", "Boards/mail/houses/bans format: "+strings.Join(knownStateFormats, ", "), &cfg.StateFormat)
 	str("names-format", "Disallowed-name list format: "+strings.Join(knownNamesFormats, ", "), &cfg.NamesFormat)
 	str("messages-format", "Damage message table format: "+strings.Join(knownMessagesFormats, ", "), &cfg.MessagesFormat)
+	str("socials-format", "Social (do_action) table format: "+strings.Join(knownSocialsFormats, ", "), &cfg.SocialsFormat)
 
 	str("listen-telnet", "Plaintext telnet listen address (empty = disabled)", &cfg.TelnetAddr)
 	str("listen-telnets", "TLS telnet listen address (empty = disabled)", &cfg.TelnetsAddr)
@@ -423,6 +432,9 @@ func (c *Config) Validate() error {
 	}
 	if !contains(knownNamesFormats, c.NamesFormat) {
 		return fmt.Errorf("--names-format: unknown format %q (have: %s)", c.NamesFormat, strings.Join(knownNamesFormats, ", "))
+	}
+	if !contains(knownSocialsFormats, c.SocialsFormat) {
+		return fmt.Errorf("--socials-format: unknown format %q (have: %s)", c.SocialsFormat, strings.Join(knownSocialsFormats, ", "))
 	}
 	if !contains(knownMessagesFormats, c.MessagesFormat) {
 		return fmt.Errorf("--messages-format: unknown format %q (have: %s)", c.MessagesFormat, strings.Join(knownMessagesFormats, ", "))

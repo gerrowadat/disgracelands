@@ -112,7 +112,7 @@ func testText(t *testing.T) *Text {
 		}
 	}
 
-	text, err := LoadText(dir, "classic")
+	text, err := LoadText(dir, "classic", "classic")
 	if err != nil {
 		t.Fatal(err)
 	}

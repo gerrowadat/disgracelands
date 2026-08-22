@@ -342,7 +342,7 @@ func TestNativeMessagesFormatEndToEnd(t *testing.T) {
 		t.Fatalf("Save(native): %v", err)
 	}
 
-	text, err := LoadText(dir, "native")
+	text, err := LoadText(dir, "native", "classic")
 	if err != nil {
 		t.Fatalf("LoadText: %v", err)
 	}
