@@ -258,9 +258,15 @@ describing numbers gets an oracle rather than a reading.**
 dereferences substituted and nothing else changed. The Go tests compile them
 and compare across the whole input space where that is affordable — 30,000 RNG
 draws, 1,512,000 to-hit values, 36,288 regeneration values, 1,125 saving
-throws, 9,680 DES `crypt(3)` pairs, and shop prices against a 32-bit x87 build
-of the C, because there `int * float` truncated to `int` gives a different
-answer than the same line built for SSE.
+throws, 9,680 DES `crypt(3)` pairs, 168 `isname` pairings, and shop prices
+against a 32-bit x87 build of the C, because there `int * float` truncated to
+`int` gives a different answer than the same line built for SSE.
+
+**An oracle is worth writing for string code too, not only arithmetic.**
+`isname` has no numbers in it at all and was still read wrong for four phases:
+its loop has the shape of a prefix match and the semantics of a whole-word one.
+The rule is really *anything whose behaviour you would have to simulate in your
+head to be sure of*.
 
 Where a table is transcribed rather than computed, the test re-parses the C
 source and compares entry by entry, so a typo in a table is a failing test

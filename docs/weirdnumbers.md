@@ -725,6 +725,72 @@ than a million.
 
 ---
 
+## Naming things
+
+### `isname` is a whole-word match, and reads like a prefix one
+
+```c
+for (curstr = str;; curstr++, curname++) {
+  if (!*curstr && !isalpha(*curname))
+    return (1);
+  ...
+  if (!*curstr || *curname == ' ')
+    break;
+```
+
+The loop walks a keyword character by character against the typed word and
+breaks when the word runs out, which is exactly the shape of a prefix match. It
+is not one: the *only* return of 1 needs `!*curstr` **and** the keyword
+character underneath to be non-alphabetic — that is, both strings to have ended
+together. `swo` against `sword long` reaches the break, skips to `long`, fails
+there too, and returns 0.
+
+So **`get swo` does not pick up a sword**, `kill dra` finds no dragon, and
+`kill zo` finds no Zod. Every search in the game goes through this one
+function, for objects and mobiles and players alike, because `player.name` is a
+keyword list for a mobile and a plain name for a player.
+
+This port had it as a prefix match for four phases, with a comment in
+`carry.go` saying *"The C matches a prefix of any keyword, which is why `get
+swo` picks up a sword"*, and a test asserting it. All three were wrong, and
+`reference/tools/nameoracle.c` is what settled it — 168 pairings, compared
+rather than read.
+
+*Source*: `handler.c:56`.
+
+### `get_number` rewrites the argument before it decides the prefix was a number
+
+```c
+if ((ppos = strchr(*name, '.')) != NULL) {
+  *ppos++ = '\0';
+  strcpy(number, *name);
+  strcpy(*name, ppos);          /* <- the caller's buffer, already rewritten */
+
+  for (i = 0; *(number + i); i++)
+    if (!isdigit(*(number + i)))
+      return (0);               /* <- and only now is it rejected */
+```
+
+So `foo.sword` returns 0 *and leaves "sword" behind*. What that means depends
+on who asked: `get_char_room_vis` reads 0 as **"a player with this name"**
+(handler.c:1068) and searches the player list; every object search reads it as
+**"give up"** and returns NULL immediately. One value, two meanings.
+
+Three more, all `atoi`:
+
+- `007.sword` is the **seventh** sword.
+- `2.3.sword` is the second `3.sword` — only the first dot is consumed, and
+  the rest is handed on with the dot still in it.
+- `-1.sword` is 0, because `-` is not a digit, so it becomes a player search
+  for somebody called "sword".
+
+And the counter is a **pointer shared down a chain of calls**: `get_obj_vis`
+passes the same `number` to the inventory search, then the room, then the
+world. `2.sword` is therefore the second sword across the whole search *order*,
+not the second in whichever list it ends up looking at.
+
+*Source*: `handler.c:590`, `handler.c:1148`.
+
 ## Storage and limits
 
 ### Flags are `unsigned long`, and the letter encoding breaks at bit 31

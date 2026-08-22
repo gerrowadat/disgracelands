@@ -6,7 +6,10 @@
 
 package game
 
-import "strings"
+import (
+	"strconv"
+	"strings"
+)
 
 // Moving objects about, porting handler.c's obj_to_*/obj_from_* family and
 // equip_char/unequip_char.
@@ -269,19 +272,73 @@ func removeObject(list []*Object, o *Object) []*Object {
 func MatchesAnyKeyword(keywords, word string) bool { return matchesKeywords(keywords, word) }
 
 // matchesKeywords reports whether word names something with these keywords,
-// porting isname() (handler.c).
+// porting isname() (handler.c:56).
 //
-// The C matches a prefix of any keyword, which is why `get swo` picks up a
-// sword. It is case-insensitive.
+// **It is a whole-word match, not a prefix one.** `get sword` picks up a long
+// sword and `get swo` does not, because the C returns 1 only where the search
+// string runs out *and* the keyword underneath it has ended too:
+//
+//	if (!*curstr && !isalpha(*curname))
+//	  return (1);
+//
+// This port had it as a prefix match for four phases, with a comment claiming
+// the C matched prefixes. It does not, and the oracle in
+// `reference/tools/nameoracle.c` is what settled it — the loop reads like a
+// prefix match and is not one. See docs/weirdnumbers.md.
+//
+// Case-insensitive, and an empty word matches nothing here. (The C's isname
+// would match an empty string against anything, since `!*curstr` is true
+// immediately; every caller checks for an empty argument first, so the
+// difference is unreachable and refusing is the safer shape.)
 func matchesKeywords(keywords, word string) bool {
 	word = strings.ToLower(strings.TrimSpace(word))
 	if word == "" {
 		return false
 	}
 	for _, keyword := range strings.Fields(strings.ToLower(keywords)) {
-		if strings.HasPrefix(keyword, word) {
+		if keyword == word {
 			return true
 		}
 	}
 	return false
+}
+
+// GetNumber splits a leading `2.` off a typed argument, porting get_number
+// (handler.c:590): it returns which match the player asked for, and the rest
+// of the word.
+//
+// The C rewrites the caller's buffer in place and returns the count, and three
+// details of that are load-bearing:
+//
+//   - **The rewrite happens before the digits are checked.** `foo.sword`
+//     returns 0 *and* leaves "sword" behind, so a caller looking for a
+//     character searches for a *player* called sword, and one looking for an
+//     object finds nothing at all. `.sword` does the same.
+//   - **Zero is a value, not a failure.** `get_char_room_vis` reads it as
+//     "player with this name" (handler.c:1068) and every object search reads
+//     it as "give up". So 0 has two meanings depending on who asked.
+//   - **atoi, with everything that implies.** `007.sword` is the seventh
+//     sword; `2.3.sword` is the second `3.sword`, because only the first dot
+//     is consumed; `-1.sword` is 0, because '-' is not a digit.
+//
+// Verified against the C over every one of those cases; see
+// `reference/tools/nameoracle.c`.
+func GetNumber(arg string) (int, string) {
+	dot := strings.IndexByte(arg, '.')
+	if dot < 0 {
+		return 1, arg
+	}
+	prefix, rest := arg[:dot], arg[dot+1:]
+	for _, r := range prefix {
+		if r < '0' || r > '9' {
+			return 0, rest
+		}
+	}
+	// An empty prefix reaches atoi("") == 0, which is the C's answer for a
+	// bare leading dot.
+	n, err := strconv.Atoi(prefix)
+	if err != nil {
+		return 0, rest
+	}
+	return n, rest
 }

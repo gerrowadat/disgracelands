@@ -336,7 +336,9 @@ Listed here so they are not mistaken for deliberate differences.
 
   So you cannot see an invisible thief and you can still `kill` them by name.
   It is the same forty-odd call sites that want `get_number` for `N.thing`
-  targeting, and the two belong together.
+  targeting, and the two belong together. Both primitives are ported and
+  oracle-checked (`game.GetNumber`, `matchesKeywords`); what is missing is the
+  threading.
 - **`do_quit`'s own guards are not ported**, though everything after them is:
   quitting saves, crash-saves, tells the room and removes the character. What
   is missing is the front of `do_quit` (act.other.c:99–172) — the

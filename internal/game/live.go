@@ -382,24 +382,37 @@ func (l *Live) Remove(c *Character) {
 // not retain or reorder it.
 func (l *Live) Occupants(room RoomVnum) []*Character { return l.occupants[room] }
 
-// FindInRoom finds a character in a room by a typed word, matching a prefix
-// of their name as the C's get_char_room_vis does.
+// FindInRoom finds a character in a room by a typed word, porting
+// get_char_room_vis' matching (handler.c:1071).
+//
+// The C does one thing here: `isname(name, i->player.name)`. That field is a
+// keyword list for a mobile and a plain name for a player, which is why one
+// call serves both — and because isname is a **whole-word** match, `kill dra`
+// does not find a dragon and `kill zo` does not find Zod. This port had it as
+// a prefix match on both halves. See NamesMatch.
 func (l *Live) FindInRoom(room RoomVnum, word string) *Character {
-	word = strings.ToLower(strings.TrimSpace(word))
-	if word == "" {
-		return nil
-	}
 	for _, c := range l.occupants[room] {
-		if strings.HasPrefix(strings.ToLower(c.Name), word) {
-			return c
-		}
-		// A mobile is named by any of its keywords, as isname() does — which
-		// is why `kill dragon` finds "the fractal dragon Puff".
-		if c.Keywords != "" && matchesKeywords(c.Keywords, word) {
+		if c.NamedBy(word) {
 			return c
 		}
 	}
 	return nil
+}
+
+// NamedBy reports whether a typed word names this character, which for a
+// mobile means any of its keywords and for a player means their name.
+//
+// One function because the C has one field. `kill dragon` finds "the fractal
+// dragon Puff" through the keyword list; `kill puff` finds her through it too.
+func (c *Character) NamedBy(word string) bool {
+	word = strings.ToLower(strings.TrimSpace(word))
+	if c == nil || word == "" {
+		return false
+	}
+	if strings.ToLower(c.Name) == word {
+		return true
+	}
+	return c.Keywords != "" && matchesKeywords(c.Keywords, word)
 }
 
 // Find returns a character by name, case-insensitively.

@@ -49,6 +49,12 @@ wrong. Every oracle written so far has caught at least one real mistake.
   at*: `int * float` truncated back to `int` is 115 with SSE and 114 in the
   x87's 80-bit registers, and the archived server was i386. Built `-m32
   -mfpmath=387` for that reason.
+- **`nameoracle.c`** — `isname` and `get_number` from `handler.c`, the two
+  functions that decide what a typed word means. `isname` reads like a prefix
+  match and is a whole-word one, which this port got wrong for four phases;
+  `get_number` rewrites the caller's buffer before deciding the prefix was a
+  number, so what it leaves behind matters as much as what it returns. Checked
+  over 168 name pairings and 15 argument forms.
 
 If you are about to port anything with a division, a cast, or a comment
 describing numbers in it, the next file in this directory is probably the one

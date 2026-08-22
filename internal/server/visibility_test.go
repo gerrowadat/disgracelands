@@ -329,3 +329,28 @@ func TestALinklessBodyIsMarked(t *testing.T) {
 	mortal.send("look")
 	mortal.expect("(linkless)")
 }
+
+// TestAnAbbreviationDoesNotNameAnybody, through a socket.
+//
+// isname() is a whole-word match (handler.c:56), so `kill dra` finds no dragon
+// and `kill zo` finds no Zod. This port matched prefixes until an oracle said
+// otherwise; the change makes the game stricter, and it is what players typed
+// against for seven years.
+func TestAnAbbreviationDoesNotNameAnybody(t *testing.T) {
+	srv, _ := newTestServer(t)
+	addr := listening(t, srv)
+	_, mortal := twoInARoom(t, srv, addr)
+
+	// A mobile, by a partial keyword and then a whole one.
+	spawnDog(t, srv, MortalStartRoom)
+	mortal.send("look do")
+	mortal.expect("You do not see that here.")
+	mortal.send("look dog")
+	mortal.expect("You see nothing special about a large dog.")
+
+	// And a player, by a partial name.
+	mortal.send("look zo")
+	mortal.expectCount("You do not see that here.", 2)
+	mortal.send("look zod")
+	mortal.expect("You see nothing special about Zod.")
+}

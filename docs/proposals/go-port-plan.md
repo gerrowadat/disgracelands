@@ -1128,6 +1128,7 @@ it.
 | **5j. The interpreter's own refusals ✅** | `command_interpreter`'s `else if` ladder between finding a command and running it: the frozen check, the switched-immortal check, and `minimum_position` — `cmd_info[]`'s second column, which nothing had been reading. Not a slice when Phase 5 was planned, because it is a property of every command rather than of any one; see below. | `interpreter.c` |
 | **5k. Light and darkness ✅** | `world[].light`, `room_is_dark` and `CAN_SEE_IN_DARK`, and with them `look_at_room` in full: the pitch-black and blindness branches, `PRF_BRIEF`, `PRF_AUTOEXIT`, `PRF_ROOMFLAGS` and the two `<DoC>` room messages. Plus the four preference-based immortal toggles, `holylight` among them, without which nothing could switch the new behaviour on. The half of `CAN_SEE` that is about the room; the half about people is next. | `utils.c`, `handler.c`, `act.informative.c`, `act.other.c` |
 | **5l. Seeing people ✅** | `CAN_SEE` itself and the display half of its call sites: `PERS`/`OBJS` inside `act()`, `list_char_to_char` and `list_one_char` in full, `list_obj_to_char`, `who` and `where`. Invisibility, hiding and the invis level all mean something now. Targeting — `get_char_room_vis` and the rest of `generic_find` — is the other half and is not in it; see below. | `utils.h`, `act.informative.c`, `comm.c` |
+| **5m. What a typed word means ✅** | `isname` and `get_number`, the two pure functions every search in the game goes through, with a C oracle over 168 name pairings and 15 argument forms. `isname` was being read as a prefix match and is not one, so `get swo` had been picking up a sword since Phase 4. Groundwork for the targeting pass as well as a fix in its own right. | `handler.c` |
 
 ### What is not in it
 
@@ -1146,9 +1147,11 @@ deviation.
 *every* command rather than of any one of them, which is exactly why neither
 got scheduled.
 
-- **`N.thing` targeting** (`get_number`, which every command using
-  `generic_find` inherits) belongs with the first slice that touches
-  `generic_find`.
+- **`N.thing` targeting.** `get_number` itself is ported and oracle-checked
+  (`game.GetNumber`); what is left is threading its count through the search
+  functions, which every command using `generic_find` inherits. It wants doing
+  in the same pass as the targeting visibility below, because both change the
+  same forty-odd signatures.
 - **`CAN_SEE` in the *targeting* path.** The macro and its display sites landed
   as 5l, so a hidden character is no longer listed in the room — but
   `get_char_room_vis`, `get_char_world_vis` and `get_obj_vis` (handler.c:1053

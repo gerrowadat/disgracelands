@@ -462,13 +462,9 @@ func doVisible(c *Context) error {
 }
 
 // nameMatches reports whether a typed word names somebody, the way `where`
-// searches.
-func nameMatches(who *game.Character, word string) bool {
-	if strings.HasPrefix(strings.ToLower(who.Name), strings.ToLower(word)) {
-		return true
-	}
-	return who.Keywords != "" && game.MatchesAnyKeyword(who.Keywords, word)
-}
+// searches — which is the same isname() every other search uses, so a
+// whole word and not a prefix.
+func nameMatches(who *game.Character, word string) bool { return who.NamedBy(word) }
 
 // roomName is a room's name, or a placeholder for one that has gone.
 func (c *Context) roomName(vnum game.RoomVnum) string {

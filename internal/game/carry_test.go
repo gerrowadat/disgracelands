@@ -277,16 +277,21 @@ func TestCanWearAt(t *testing.T) {
 	}
 }
 
+// TestKeywordMatching. isname is a **whole word** match, case-insensitively —
+// see TestMatchesKeywordsAgainstTheC, which checks 168 pairings against the C.
+//
+// This test asserted that "swo" and "s" matched a long sword until that oracle
+// was written. They never did on the real server.
 func TestKeywordMatching(t *testing.T) {
 	l := objectWorld()
 	sword := l.NewObject(100) // "sword long"
 
-	for _, word := range []string{"sword", "swo", "s", "long", "LONG", "Sword"} {
+	for _, word := range []string{"sword", "long", "LONG", "Sword"} {
 		if !sword.Matches(word) {
 			t.Errorf("%q does not match %q", word, sword.Keywords)
 		}
 	}
-	for _, word := range []string{"", "swords", "bag", "ong"} {
+	for _, word := range []string{"", "swo", "s", "swords", "bag", "ong", "lon"} {
 		if sword.Matches(word) {
 			t.Errorf("%q matches %q and should not", word, sword.Keywords)
 		}
