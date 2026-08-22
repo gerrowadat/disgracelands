@@ -35,10 +35,13 @@ import (
 	"github.com/gerrowadat/disgracelands/internal/obs"
 	"github.com/gerrowadat/disgracelands/internal/persist/bans"
 	"github.com/gerrowadat/disgracelands/internal/persist/boards"
+	"github.com/gerrowadat/disgracelands/internal/persist/clock"
 	"github.com/gerrowadat/disgracelands/internal/persist/houses"
 	"github.com/gerrowadat/disgracelands/internal/persist/mail"
+	"github.com/gerrowadat/disgracelands/internal/persist/names"
 	"github.com/gerrowadat/disgracelands/internal/persist/player"
 	"github.com/gerrowadat/disgracelands/internal/persist/player/binary"
+	"github.com/gerrowadat/disgracelands/internal/persist/reports"
 	"github.com/gerrowadat/disgracelands/internal/persist/world"
 	"github.com/gerrowadat/disgracelands/internal/rng"
 	"github.com/gerrowadat/disgracelands/internal/server"
@@ -54,6 +57,8 @@ import (
 	_ "github.com/gerrowadat/disgracelands/internal/persist/mail/native"
 	_ "github.com/gerrowadat/disgracelands/internal/persist/player/ascii"
 	_ "github.com/gerrowadat/disgracelands/internal/persist/player/native"
+	_ "github.com/gerrowadat/disgracelands/internal/persist/reports/classic"
+	_ "github.com/gerrowadat/disgracelands/internal/persist/reports/native"
 	_ "github.com/gerrowadat/disgracelands/internal/persist/world/classic"
 	_ "github.com/gerrowadat/disgracelands/internal/persist/world/native"
 )
@@ -169,6 +174,21 @@ func run(args []string) error {
 		return err
 	}
 	live := game.NewLive(defs)
+
+	// The mud clock's persisted epoch: etc/time under classic, the same
+	// state/clock.yaml directory the other four state stores share under
+	// native (docs/proposals/data-format.md §9). Applied before anyone can
+	// see the clock — BootReset and every command after it read MudTime().
+	clockPath := filepath.Join(cfg.LibDir, "etc", "time")
+	if cfg.StateFormat == "native" {
+		clockPath = filepath.Join(cfg.LibDir, "state")
+	}
+	epoch, err := clock.Load(cfg.StateFormat, clockPath)
+	if err != nil {
+		return err
+	}
+	live.SetBooted(epoch)
+
 	logger.Info("world loaded",
 		"rooms", len(defs.Rooms), "mobiles", len(defs.Mobiles),
 		"objects", len(defs.Objects), "zones", len(defs.Zones), "shops", len(defs.Shops))
@@ -243,6 +263,31 @@ func run(args []string) error {
 		return err
 	}
 
+	// The bug/idea/typo log: misc/{bugs,ideas,typos} under classic, or the
+	// same state/ directory the other four state stores share under
+	// native.
+	reportsDir := filepath.Join(cfg.LibDir, "misc")
+	if cfg.StateFormat == "native" {
+		reportsDir = filepath.Join(cfg.LibDir, "state")
+	}
+	reportStore, err := reports.Open(cfg.StateFormat, reports.Config{Dir: reportsDir})
+	if err != nil {
+		return err
+	}
+
+	// The disallowed-name list: misc/xnames under classic, or
+	// config/names.yaml under native. Missing is not an error — see
+	// names.Load's doc comment — so a server with no list disallows
+	// nothing, matching Valid_Name's own posture.
+	namesPath := filepath.Join(cfg.LibDir, "misc", "xnames")
+	if cfg.NamesFormat == "native" {
+		namesPath = filepath.Join(cfg.LibDir, "config")
+	}
+	disallowedNames, err := names.Load(cfg.NamesFormat, namesPath)
+	if err != nil {
+		return err
+	}
+
 	// The greeting and the credits are licence obligations; LoadText refuses
 	// to return if either is missing, which is deliberate.
 	text, err := server.LoadText(cfg.LibDir)
@@ -270,19 +315,23 @@ func run(args []string) error {
 		"seed", seed, "reproducible", cfg.RNGSeed != 0)
 
 	srv := server.New(server.Options{
-		Engine:     eng,
-		Players:    players,
-		Objects:    objects,
-		Boards:     boardStore,
-		Mail:       mailStore,
-		Houses:     houseStore,
-		Bans:       banStore,
-		Auth:       auth.Verifier{AllowLegacy: cfg.AllowLegacyPasswords},
-		Text:       text,
-		Logger:     logger,
-		Restrict:   cfg.Restrict,
-		NoSpecials: cfg.NoSpecials,
-		RNG:        rng.NewRand(source),
+		Engine:      eng,
+		Players:     players,
+		Objects:     objects,
+		Boards:      boardStore,
+		Mail:        mailStore,
+		Houses:      houseStore,
+		Bans:        banStore,
+		Reports:     reportStore,
+		Names:       disallowedNames,
+		ClockFormat: cfg.StateFormat,
+		ClockPath:   clockPath,
+		Auth:        auth.Verifier{AllowLegacy: cfg.AllowLegacyPasswords},
+		Text:        text,
+		Logger:      logger,
+		Restrict:    cfg.Restrict,
+		NoSpecials:  cfg.NoSpecials,
+		RNG:         rng.NewRand(source),
 	})
 	// The engine's periodic work belongs to the server, which is the side
 	// that can reach both the world and the player store. Started only now
@@ -298,6 +347,7 @@ func run(args []string) error {
 	go eng.Run(ctx)
 
 	go srv.RunAutosave(ctx)
+	go srv.RunClockSave(ctx)
 
 	limits := server.Limits{
 		MaxPerHost: cfg.MaxConnsPerIP,

@@ -275,6 +275,10 @@ type LoginHandler interface {
 	// of "new", "select", "all". Checked at the name prompt, which is where
 	// the C checks it — a banned site gets as far as being asked its name.
 	BanFor(host string) string
+	// DisallowedName reports whether name matches an entry in the xnames
+	// list — Valid_Name's substring check (ban.c:255), separate from
+	// BanFor's site check but consulted at the same CON_GET_NAME prompt.
+	DisallowedName(name string) bool
 	Exists(ctx context.Context, name string) (bool, error)
 	// Authenticate checks a password and returns the character on success.
 	// A nil character with a nil error means the password was wrong.

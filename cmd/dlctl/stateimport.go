@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/gerrowadat/disgracelands/internal/game"
 	"github.com/gerrowadat/disgracelands/internal/persist/bans"
@@ -20,22 +21,27 @@ import (
 	"github.com/gerrowadat/disgracelands/internal/persist/boards"
 	boardsclassic "github.com/gerrowadat/disgracelands/internal/persist/boards/classic"
 	boardsnative "github.com/gerrowadat/disgracelands/internal/persist/boards/native"
+	"github.com/gerrowadat/disgracelands/internal/persist/clock"
 	"github.com/gerrowadat/disgracelands/internal/persist/houses"
 	housesclassic "github.com/gerrowadat/disgracelands/internal/persist/houses/classic"
 	housesnative "github.com/gerrowadat/disgracelands/internal/persist/houses/native"
 	"github.com/gerrowadat/disgracelands/internal/persist/mail"
 	mailclassic "github.com/gerrowadat/disgracelands/internal/persist/mail/classic"
 	mailnative "github.com/gerrowadat/disgracelands/internal/persist/mail/native"
+	"github.com/gerrowadat/disgracelands/internal/persist/reports"
+	reportsclassic "github.com/gerrowadat/disgracelands/internal/persist/reports/classic"
+	reportsnative "github.com/gerrowadat/disgracelands/internal/persist/reports/native"
 )
 
-// cmdStateImport converts bans, boards, mail and houses into native
-// together, per step 6a of docs/proposals/data-format.md §9 — one command,
-// since they end up in one directory and there is no reason to convert
-// boards without mail.
+// cmdStateImport converts bans, boards, mail, houses, the clock and the
+// bug/idea/typo reports into native together, per step 6a/6b of
+// docs/proposals/data-format.md §9 — one command, since they end up in one
+// directory and there is no reason to convert boards without mail.
 func cmdStateImport(args []string) error {
 	fs := flag.NewFlagSet("state import", flag.ContinueOnError)
-	fromDir := fs.String("from-dir", "data/etc", "Source (classic) directory for bans, boards, mail and the house control file")
+	fromDir := fs.String("from-dir", "data/etc", "Source (classic) directory for bans, boards, mail, the house control file and the clock")
 	fromHouseDir := fs.String("from-house-dir", "data/house", "Source (classic) directory for the per-room house object files")
+	fromMiscDir := fs.String("from-misc-dir", "data/misc", "Source (classic) directory for the bug/idea/typo report files")
 	toDir := fs.String("to-dir", "data/state", "Destination (native) directory")
 	if err := fs.Parse(args); err != nil {
 		return err
@@ -55,6 +61,12 @@ func cmdStateImport(args []string) error {
 	}
 	if err := importHouses(*fromDir, *fromHouseDir, *toDir, out); err != nil {
 		return fmt.Errorf("houses: %w", err)
+	}
+	if err := importReports(*fromMiscDir, *toDir, out); err != nil {
+		return fmt.Errorf("reports: %w", err)
+	}
+	if err := importClock(*fromDir, *toDir, out); err != nil {
+		return fmt.Errorf("clock: %w", err)
 	}
 	return out.Flush()
 }
@@ -175,6 +187,43 @@ func importHouses(fromDir, fromHouseDir, toDir string, out *bufio.Writer) error 
 	return nil
 }
 
+func importReports(fromMiscDir, toDir string, out *bufio.Writer) error {
+	src, err := reportsclassic.New(reports.Config{Dir: fromMiscDir, ReadOnly: true})
+	if err != nil {
+		return err
+	}
+	defer func() { _ = src.Close() }()
+	dst, err := reportsnative.New(reports.Config{Dir: toDir})
+	if err != nil {
+		return err
+	}
+	defer func() { _ = dst.Close() }()
+
+	all, err := src.All()
+	if err != nil {
+		return err
+	}
+	for _, r := range all {
+		if _, err := dst.Append(r); err != nil {
+			return err
+		}
+	}
+	_, _ = fmt.Fprintf(out, "reports: imported %d\n", len(all))
+	return nil
+}
+
+func importClock(fromDir, toDir string, out *bufio.Writer) error {
+	epoch, err := clock.Load("classic", filepath.Join(fromDir, "time"))
+	if err != nil {
+		return err
+	}
+	if err := clock.Save("native", toDir, epoch); err != nil {
+		return err
+	}
+	_, _ = fmt.Fprintf(out, "clock: imported epoch %s\n", epoch.Format(time.RFC3339))
+	return nil
+}
+
 // cmdStateFmt canonicalises a native state directory in place: load and
 // immediately re-save bans, boards, mail and houses.
 func cmdStateFmt(args []string) error {
@@ -232,6 +281,22 @@ func cmdStateFmt(args []string) error {
 		return fmt.Errorf("houses: %w", err)
 	}
 
-	_, _ = fmt.Fprintln(out, "formatted bans, boards, mail and houses")
+	reportStore, err := reportsnative.New(reports.Config{Dir: *dir})
+	if err != nil {
+		return fmt.Errorf("reports: %w", err)
+	}
+	if err := reportStore.Rewrite(); err != nil {
+		return fmt.Errorf("reports: %w", err)
+	}
+
+	epoch, err := clock.Load("native", *dir)
+	if err != nil {
+		return fmt.Errorf("clock: %w", err)
+	}
+	if err := clock.Save("native", *dir, epoch); err != nil {
+		return fmt.Errorf("clock: %w", err)
+	}
+
+	_, _ = fmt.Fprintln(out, "formatted bans, boards, mail, houses, reports and the clock")
 	return out.Flush()
 }

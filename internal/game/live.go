@@ -69,6 +69,29 @@ type Live struct {
 // MudTime is the current moment on the mud calendar.
 func (l *Live) MudTime() MudTime { return TimePassed(time.Since(l.booted)) }
 
+// SetBooted overrides the epoch mud time is measured from, which
+// [NewLive] otherwise sets to the moment it runs. The caller reads a
+// persisted epoch (internal/persist/clock, porting reset_time, db.c:483)
+// and applies it before anyone can see the clock — a separate call rather
+// than a NewLive parameter so every other caller (chiefly the test suite)
+// is untouched.
+func (l *Live) SetBooted(t time.Time) { l.booted = t }
+
+// SavedEpoch is what save_mud_time (db.c:534) would write at moment now:
+// the real-time epoch that reproduces the *current* mud-time components
+// exactly, which is not the same as the original booted epoch —
+// mud_time_to_secs (utils.c:353) re-derives it from MudTime's four
+// components rather than remembering the elapsed duration they came from,
+// so up to SecondsPerMudHour-1 seconds of progress within the current mud
+// hour is lost on every save. structs.h:519 acknowledges this in a
+// comment on PULSE_TIMESAVE itself ("should be >= SECS_PER_MUD_HOUR"): the
+// interval between saves is deliberately no finer than the precision a
+// save keeps.
+func (l *Live) SavedEpoch(now time.Time) time.Time {
+	elapsed := TimePassed(now.Sub(l.booted))
+	return now.Add(-time.Duration(elapsed.Seconds()) * time.Second)
+}
+
 // ObjectDef returns an object prototype, or nil.
 func (l *Live) ObjectDef(v ObjVnum) *ObjDef { return l.objectDefs[v] }
 

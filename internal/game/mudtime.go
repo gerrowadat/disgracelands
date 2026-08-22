@@ -91,6 +91,20 @@ func TimePassed(elapsed time.Duration) MudTime {
 	return t
 }
 
+// Seconds is mud_time_to_secs's summation half (utils.c:353-361): the real
+// seconds this mud-time's four components represent. It is *not* generally
+// the elapsed duration TimePassed computed them from — each field there
+// discards its remainder (an hour's worth of seconds, a day's, and so on),
+// so round-tripping a duration through TimePassed and back through Seconds
+// loses up to SecondsPerMudHour-1 of it. mud_time_to_secs itself then goes
+// on to subtract this from time(NULL) to produce a fresh epoch
+// (utils.c:362); that half belongs where "now" is meaningful, on
+// [Live.SavedEpoch].
+func (t MudTime) Seconds() int64 {
+	return int64(t.Year)*SecondsPerMudYear + int64(t.Month)*SecondsPerMudMonth +
+		int64(t.Day)*SecondsPerMudDay + int64(t.Hours)*SecondsPerMudHour
+}
+
 // AgeOf is a character's age broken down the way age() (utils.c:366) returns
 // it: years, months, days and hours on the mud calendar, with seventeen years
 // added because every player starts at seventeen.

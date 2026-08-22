@@ -105,13 +105,23 @@ var commands = []command{
 	},
 	{
 		name:    "state import",
-		summary: "Convert bans, boards, mail and houses into native together (docs/proposals/data-format.md)",
+		summary: "Convert bans, boards, mail, houses, reports and the clock into native together (docs/proposals/data-format.md)",
 		run:     cmdStateImport,
 	},
 	{
 		name:    "state fmt",
 		summary: "Canonicalise a native state directory in place",
 		run:     cmdStateFmt,
+	},
+	{
+		name:    "names import",
+		summary: "Convert misc/xnames into config/names.yaml (docs/proposals/data-format.md)",
+		run:     cmdNamesImport,
+	},
+	{
+		name:    "names fmt",
+		summary: "Canonicalise a native config/names.yaml in place",
+		run:     cmdNamesFmt,
 	},
 }
 

@@ -1217,7 +1217,7 @@ it.
 
 ### What is not in it
 
-The 23 commands of the 318 that nothing answers to yet. Everything here is a gap rather than a decision,
+The 20 commands of the 318 that nothing answers to yet. Everything here is a gap rather than a decision,
 so it is in `docs/deviations.md` under "gaps still to fill" rather than as a
 deviation.
 
@@ -1356,7 +1356,10 @@ standing here" for everybody whatever they were doing, with no title, no
 `(invisible)`, `(hidden)`, `(linkless)` or `(writing)` marker, no aura, and
 nothing for a mobile fighting somebody. All of it is there now.
 
-(`do_quit`'s own guards were the last of these and are now built — see below.)
+(`do_quit`'s own guards were the last of these and are now built — see below.
+`do_gen_write` — `bug`/`idea`/`typo`, interpreter.c:247, :342, :520 — is also
+now built, alongside its `state/reports.yaml` format:
+docs/proposals/data-format.md §11 step 6b.)
 
 **The small things left over.** None is more than an afternoon; they are here
 because a command with no slice is a command nobody schedules.
@@ -1364,7 +1367,6 @@ because a command with no slice is a command nobody schedules.
 | | |
 |---|---|
 | The last two `do_gen_tog` toggles | `slowns` (interpreter.c:472) and `trackthru` (:517). The other fifteen are done. These two flip a server-wide **global** rather than a preference (act.other.c:1021, :1028), which is right in the C — one server per process — and a race here, where the tests build several servers in one. Whichever lands first has to decide where the value lives, most likely on `Live`. `slowns` also has nothing behind it: this port does no reverse DNS. |
-| `do_gen_write` | `bug`, `idea`, `typo` (interpreter.c:247, :342, :520) — one function appending a timestamped line to a file, with a `-` prefix check and a size cap. |
 | Aliases | `:` for emote (interpreter.c:286) and `take` for get (:503). The C's two deliberate stumps, `qui` and `shutdow`, are built. |
 | Immortal odds and ends | `users` (:528), `wizhelp` (:553, `do_commands` with `SCMD_WIZHELP`), `skillset` (:469), `reload` (:428), `qecho` (:419), `page` (:398). |
 | Mortal odds and ends | `color` (:258) — the `PRF_COLOR` bits are stored and `set color` works, but nothing emits colour, so the command has nothing to switch; `insult` (:346); and `alias` (:226), which needs `plralias/` and is the only one of these with a format behind it. **`hop` is not among them**: it is the one `do_action` slot the shipped socials file does not fill, and `RegisterSocials` gives it a command anyway that answers "That action is not supported." — which is what the C does too. |

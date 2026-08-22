@@ -117,7 +117,7 @@ outside it. `inWorld`'s doc comment says this in capitals; believe it.
 So an assertion written after a second command happily matches the *first*
 command's reply. Use `expectCount` for the n'th occurrence, or `settle()`
 (sends `time`, waits for one more `o'clock`) to drain first. This one has
-recurred at least eight times.
+recurred at least nine times.
 
 **`expect` is not a barrier for anybody else's buffer.** It waits for a write
 to *this* client's socket; messages to other characters in the room are

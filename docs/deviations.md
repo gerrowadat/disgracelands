@@ -116,10 +116,19 @@ character can walk into a guild whose master will then refuse to teach them.
 
 | | |
 |---|---|
-| **C** | `_parse_name` rejects a bad name with "Illegal name, please try another." |
-| **Go** | Says which rule was broken: too short, too long, or not all letters. Also refuses `con`, `nul`, `aux` and `prn`. |
-| **Why** | A player who typed an apostrophe deserves to know that is the problem. The reserved names are a filesystem concern the C never had, because a name is a filename in the ascii player format. |
-| **Where** | `invalidName` in `internal/session/login.go`. |
+| **C** | `_parse_name` rejects a bad name with "Illegal name, please try another." `Valid_Name` (ban.c:255) and `reserved_word` (interpreter.c:952) each have their own message too, folded into the same "Invalid name, please try another." by `nanny`. |
+| **Go** | Says which rule was broken: too short, too long, not all letters, reserved, or matching the xnames list. Also refuses `con`, `nul`, `aux` and `prn`. |
+| **Why** | A player who typed an apostrophe deserves to know that is the problem. The reserved names (`con`/`nul`/`aux`/`prn`) are a filesystem concern the C never had, because a name is a filename in the ascii player format. |
+| **Where** | `invalidName` in `internal/session/login.go`; the xnames substring check is `Server.DisallowedName` (`internal/server/names.go`), consulted separately at the same call site since it needs per-server data `invalidName` has no way to receive. |
+
+`Valid_Name`'s other check — refusing a name that matches someone currently
+`CON_PLAYING` on a live descriptor (ban.c:260-262) — is not ported. It is a
+narrower race guard than the roster's own existence check (a mid-creation
+name has no roster entry yet to catch it), and porting it needs a live-
+connection registry threaded to the name-prompt call site, which nothing
+in step 6b otherwise touches. Two connections racing to create the exact
+same name at the exact same moment is the only case this leaves open; it
+would need its own scoping pass.
 
 ### Output is UTF-8, and the client is asked what it reads
 
@@ -343,9 +352,9 @@ Listed here so they are not mistaken for deliberate differences.
   combination, and reports which of them it found the thing in. Here each
   command searches the lists it cares about in the order it wants. The
   behaviour is the same for every command ported so far; the shape is not.
-- **Twenty-three of the C's 318 commands are not implemented**, and the plan's
+- **Twenty of the C's 318 commands are not implemented**, and the plan's
   §10 "What is not in it" lists every one with its `interpreter.c` line. In
-  brief: the eight OasisOLC and `tedit` editors (Phase 6), `bug`/`idea`/`typo`,
+  brief: the eight OasisOLC and `tedit` editors (Phase 6),
   the aliases `:` and `take`, and a short tail of `users`, `wizhelp`,
   `skillset`, `reload`, `qecho`, `page`, `color` and `insult`. **`hop` is not
   among them**: it is the one `do_action` row the shipped socials file does not
@@ -353,7 +362,8 @@ Listed here so they are not mistaken for deliberate differences.
   action is not supported." — which is what the C does too. `alias`
   is off this list now — landed with the native player format (step 5 of
   `docs/proposals/data-format.md`), including `perform_alias`'s complex
-  substitution grammar (`;`/`$1`-`$9`/`$*`/`$$`).
+  substitution grammar (`;`/`$1`-`$9`/`$*`/`$$`). `bug`/`idea`/`typo` are
+  off it too — `do_gen_write` (step 6b), see the reports entry below.
 
   Its persistence is not quite everywhere the roster is, though: an
   alias survives a save under `ascii` (it grew an `Aliases:`-tagged section
@@ -389,7 +399,11 @@ Listed here so they are not mistaken for deliberate differences.
   (`internal/obs/log.go`) and stops there — nothing consumes it, so
   `PRF_LOG1`/`PRF_LOG2` are set and stored by `do_syslog` and no god ever sees
   a log line in-game. That is how immortals actually watched a running game,
-  and every `mudlog` call site in the ported commands is a would-be producer.
+  and every `mudlog` call site in the ported commands is a would-be producer
+  — `bug`/`idea`/`typo` (step 6b) is the newest of them: it logs through
+  `slog` at info level, but its `mudlog(..., CMP, LVL_IMMORT, FALSE)` half
+  (act.other.c:904-905) — the in-game echo to online gods — goes nowhere,
+  same as every command already on this list.
 - **Two special procedures are left.** The subsystems that were blocking the
   rest all landed in 5f and 5g, so the seam now carries the guildmasters,
   guild guards, Puff, fidos, janitors, cityguards, snakes, mobile mages,

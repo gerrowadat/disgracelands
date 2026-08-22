@@ -28,6 +28,7 @@ import (
 	"github.com/gerrowadat/disgracelands/internal/persist/houses"
 	"github.com/gerrowadat/disgracelands/internal/persist/mail"
 	"github.com/gerrowadat/disgracelands/internal/persist/player"
+	"github.com/gerrowadat/disgracelands/internal/persist/reports"
 	"github.com/gerrowadat/disgracelands/internal/rng"
 	"github.com/gerrowadat/disgracelands/internal/session"
 )
@@ -41,6 +42,12 @@ const (
 
 // autosaveInterval matches the C's PULSE_AUTOSAVE.
 const autosaveInterval = 60 * time.Second
+
+// clockSaveInterval matches PULSE_TIMESAVE (structs.h:519): thirty real
+// minutes, deliberately no finer than the precision a save keeps — see
+// docs/weirdnumbers.md's "Saving the clock loses up to an hour, on
+// purpose".
+const clockSaveInterval = 30 * time.Minute
 
 // linkdeadTimeout is how long a character whose connection dropped stays
 // standing before being saved and removed.
@@ -69,10 +76,23 @@ type Server struct {
 	// houses is the player housing files. Nil disables housing.
 	houses houses.Store
 	// bans is the site ban list. Nil disables banning.
-	bans   bans.Store
-	auth   auth.Verifier
-	text   *Text
-	logger *slog.Logger
+	bans bans.Store
+	// reports is the bug/idea/typo log. Nil disables `bug`/`idea`/`typo`,
+	// the same "nothing configured" posture as boards/mail/houses/bans.
+	reports reports.Store
+	// names is the xnames disallowed-substring list. Empty (not nil-checked
+	// specially) means nothing is disallowed, matching Valid_Name's own
+	// posture when num_invalid is 0 (ban.c:263-264).
+	names []string
+	// clockFormat/clockPath locate the persisted mud-clock epoch
+	// (internal/persist/clock). An empty clockPath disables persistence —
+	// the clock still runs, it just always starts from time.Now() the way
+	// it always used to, which is what a test world gets by default.
+	clockFormat string
+	clockPath   string
+	auth        auth.Verifier
+	text        *Text
+	logger      *slog.Logger
 
 	// restrict refuses new characters, matching the C's -r.
 	restrict bool
@@ -110,17 +130,28 @@ type Server struct {
 
 // Options configure a Server.
 type Options struct {
-	Engine   *engine.Engine
-	Players  player.Store
-	Objects  player.ObjectStore
-	Boards   boards.Store
-	Mail     mail.Store
-	Houses   houses.Store
-	Bans     bans.Store
-	Auth     auth.Verifier
-	Text     *Text
-	Logger   *slog.Logger
-	Restrict bool
+	Engine  *engine.Engine
+	Players player.Store
+	Objects player.ObjectStore
+	Boards  boards.Store
+	Mail    mail.Store
+	Houses  houses.Store
+	Bans    bans.Store
+	// Reports is the bug/idea/typo log (see Server.reports).
+	Reports reports.Store
+	// Names is the xnames disallowed-substring list (see Server.names).
+	Names []string
+	// ClockFormat/ClockPath locate the persisted mud-clock epoch (see
+	// Server.clockFormat/clockPath). Loading the epoch itself happens
+	// before a Server exists (it has to be applied to the *game.Live
+	// before anyone can see the clock) — these are only where a save
+	// later goes back to.
+	ClockFormat string
+	ClockPath   string
+	Auth        auth.Verifier
+	Text        *Text
+	Logger      *slog.Logger
+	Restrict    bool
 	// NoSpecials suppresses special procedures (C: -s).
 	NoSpecials bool
 	// RNG is the generator the game rolls on. A nil one gets the modern
@@ -131,19 +162,23 @@ type Options struct {
 // New creates a Server.
 func New(opts Options) *Server {
 	s := &Server{
-		engine:     opts.Engine,
-		players:    opts.Players,
-		objects:    opts.Objects,
-		boards:     opts.Boards,
-		mail:       opts.Mail,
-		houses:     opts.Houses,
-		bans:       opts.Bans,
-		auth:       opts.Auth,
-		text:       opts.Text,
-		logger:     opts.Logger,
-		restrict:   opts.Restrict,
-		noSpecials: opts.NoSpecials,
-		rng:        opts.RNG,
+		engine:      opts.Engine,
+		players:     opts.Players,
+		objects:     opts.Objects,
+		boards:      opts.Boards,
+		mail:        opts.Mail,
+		houses:      opts.Houses,
+		bans:        opts.Bans,
+		reports:     opts.Reports,
+		names:       opts.Names,
+		clockFormat: opts.ClockFormat,
+		clockPath:   opts.ClockPath,
+		auth:        opts.Auth,
+		text:        opts.Text,
+		logger:      opts.Logger,
+		restrict:    opts.Restrict,
+		noSpecials:  opts.NoSpecials,
+		rng:         opts.RNG,
 	}
 	s.booted = time.Now()
 	s.shutdownWanted = make(chan struct{})

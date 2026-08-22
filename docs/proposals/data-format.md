@@ -10,14 +10,14 @@ of them: everything they can express, it can express, and it can express
 more.
 
 This started as a proposal; the world half (§11 steps 1–3), the players
-half (§11 step 5) and the four small state formats — bans, boards, mail,
-houses — (§11 step 6a) are now built. Each is `internal/persist/<name>/
-native/`, registered as `native` alongside `classic`/`ascii` in the same
-per-package registries this document always said they would slot into.
-Game config, help, socials, messages, reports, the clock and `misc/
-xnames` (§11 step 6b and the rest of §6/§7) are not; see §11 for what
-landed and what is still a plan, and why those are staged separately
-rather than bundled in.
+half (§11 step 5) and seven of the "rest of the state" formats — bans,
+boards, mail, houses (§11 step 6a), plus xnames, the clock and reports
+(§11 step 6b) — are now built. Each is `internal/persist/<name>/native/`,
+registered as `native` alongside `classic`/`ascii` in the same per-package
+registries this document always said they would slot into. Game config,
+help, socials and messages (§11 step 6c and the rest of §6/§7) are not;
+see §11 for what landed and what is still a plan, and why those are
+staged separately rather than bundled in.
 
 ---
 
@@ -1266,18 +1266,20 @@ containment was step 5's own explicitly-scoped deviation for player rent
 files, not extended here. The `MAX_HOUSES` of 100 and `MAX_GUESTS` of 10
 go the same way as the board limits.
 
-**`state/reports.yaml`** — the `bugs`, `ideas` and `typos` files, which are
-currently three append-only text logs with a timestamp convention. One list
-with a `kind`, a reporter, a room and a body, which makes them something a
-tool can triage instead of something someone greps. Not built: `do_gen_write`
-(`bug`/`idea`/`typo`) is not itself ported yet, and a format for a command
-that does not exist is the wrong order, the same lesson `alias` and
-containment already taught in step 5.
+**`state/reports.yaml` ✅** — the `bugs`, `ideas` and `typos` files, which
+were three append-only text logs with a timestamp convention that could
+only hold a month and a day, no year. One list with a `kind`, a reporter,
+a room, a body and (for anything filed after this landed) a real
+timestamp — which makes them something a tool can triage instead of
+something someone greps. Landed in step 6b alongside `do_gen_write`
+(`bug`/`idea`/`typo`) itself, in that order: the format followed the
+feature, the same lesson `alias` and containment already taught in step 5.
 
-**`config/names.yaml`** — `misc/xnames`, a list of disallowed name
-substrings. Unchanged in substance; it is a list of strings either way. Not
-built: nothing in character creation consults `misc/xnames` yet either, so
-like reports this is a small feature to add before it is a format question.
+**`config/names.yaml` ✅** — `misc/xnames`, a list of disallowed name
+substrings. Unchanged in substance; it is a list of strings either way.
+Character creation now consults it (`Server.DisallowedName`, step 6b) —
+this landed once the feature existed to put a format under, the same
+order every other piece here insists on.
 
 **`state/bans.yaml` ✅** — the siteban list (`etc/badsites`, `BAN_FILE` in
 `db.h`, read and written by `ban.c`). A flat list of `{site, type, when,
@@ -1286,12 +1288,16 @@ reason. It was also missing from an earlier draft of this section entirely,
 which is the hazard of enumerating a format's contents from the parts that
 are interesting rather than from a directory listing.
 
-**`state/clock.yaml`** — the MUD clock. `db.c` keeps the game's epoch in
+**`state/clock.yaml` ✅** — the MUD clock. `db.c` keeps the game's epoch in
 `etc/time` as a bare integer with nothing around it: no name, no units, no
 format marker, one number in a file. It is the smallest thing in `lib/` and
 it is genuinely global state — reboot without it and in-game time jumps —
 so it needs somewhere to live that is not "a number in a file called
-`time`".
+`time`". Landed in step 6b as an RFC 3339 timestamp, saved on the same
+thirty-real-minute cadence and at shutdown the C uses
+(`PULSE_TIMESAVE`/`comm.c:441`), including the C's own lossy
+epoch-reconstruction on every save (`docs/weirdnumbers.md`'s "Saving the
+clock loses up to an hour, on purpose").
 
 ---
 
@@ -1395,7 +1401,8 @@ format-neutral and that is the whole reason it exists.
 | **4. Flip the default** | `--world-format=native`, `data/` converted in the repo, `classic` demoted to import-only. | Not attempted — a decision about `data/` itself, separate from this code landing. `--world-format=native` is available and works today; `classic` stays the default. |
 | **5. Players ✅** | `native` player store (`internal/persist/player/native/`), implementing both `player.Store` and `player.ObjectStore` against one file (§8); `dlctl pfile import`/`pfile fmt`; the `alias` command (`interpreter.c`'s `do_alias`/`perform_alias`, previously unported — no archived alias data exists anywhere to have ported instead); real container nesting, format-gated on `native` as a user-approved deviation (`docs/deviations.md`). | `dlctl pfile import` converts a `binary` roster (rent files included); `dlmud --player-format=native` boots, and a character created on it, quit and logged back in, keeps a bag's contents *inside* the bag — proven live (`TestRentingUnderNativeKeepsTheRingInTheBag`), not just at the codec level. `PlayerRecord`/`player.Store` needed no restructuring: `ObjectStore` was already a separate interface a format could additionally implement, and `StoredObject` grew one field (`Contains`) rather than being redesigned. |
 | **6a. Bans, boards, mail, houses ✅** | `native` for each (`internal/persist/{bans,boards,mail,houses}/native/`), every one retrofitted to the `Store`/`Register`/`Open` shape `world`/`player` already had (`classic` moved to its own subpackage per format, unchanged); `--state-format`; `dlctl state import`/`fmt`, converting all four together. Houses' contents reuse the player object-instance schema directly, always flat (containment stayed scoped to player rent files, §8's own note in this table's row 5). | `dlctl state import`/`fmt` round-trip a synthetic fixture (no real archived data exists for any of these four — confirmed, not assumed, in the scoping survey); a live server integration test per format proves each one end to end (posting/reading a board message, sending/receiving mail, a ban refusing a connection, a house crash-save surviving a reload), all under `--state-format=native`. |
-| **6b. The rest** | Reports (`bug`/`idea`/`typo` — needs `do_gen_write` built first), the MUD clock (needs a persisted-epoch feature built first), `misc/xnames` (needs a name-substring check built first), help (needs the real keyword/level lookup built first — today's `help` is a stub), damage messages (needs `messg.msg`'s selection logic ported first), game config (`config.c`'s tuning, currently scattered `const`s — a cross-cutting refactor independent of any file format). | Not attempted. Each is a feature or a refactor first and a format question second — building the format before the feature existed is the mistake step 5 (`alias`, containment) already showed the cost of avoiding, and bundling six unrelated efforts into one pass would risk every one of them. |
+| **6b. xnames, the clock, reports ✅** | Three of step 6a's own deferred pieces, each small enough to build the feature and its format together in one pass: character creation now consults `misc/xnames`/`config/names.yaml` (`internal/persist/names`, `--names-format`); the MUD clock's epoch is persisted (`internal/persist/clock`, joining `--state-format`, `Live.SetBooted`/`SavedEpoch`); `do_gen_write` (`bug`/`idea`/`typo`) is implemented and gets `state/reports.yaml` (`internal/persist/reports`, joining `--state-format`). | A disallowed name is refused at creation; a persisted epoch survives a simulated restart within the C's own sub-hour rounding bound (`docs/weirdnumbers.md`); `bug`/`idea`/`typo` append, refuse NPCs/empty text/a full file, and round-trip through `dlctl state import`/`fmt` — all proved with live server integration tests, not just at the codec level. |
+| **6c. Help, damage messages, game config** | Help (needs the real keyword/level lookup built first — today's `help` is a stub), damage messages (needs `messg.msg`'s selection logic ported first), game config (`config.c`'s tuning, currently scattered `const`s — a cross-cutting refactor independent of any file format). | Not attempted. Each is a feature or a refactor first and a format question second — building the format before the feature existed is the mistake step 5 (`alias`, containment) already showed the cost of avoiding, and bundling three unrelated efforts into one pass would risk every one of them. |
 | **7. Retire** | `ascii` and `binary` become `dlctl`-only; `classic` becomes import-only. | Not attempted. |
 
 Steps 1–4 are worth doing before **Phase 6** of `go-port-plan.md`, which is

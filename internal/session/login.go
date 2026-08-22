@@ -86,6 +86,14 @@ func (s *Session) handleGetName(ctx context.Context, deps Deps, line string) err
 		s.Send("%s\r\nBy what name do you wish to be known? ", reason)
 		return nil
 	}
+	// Valid_Name's xnames half (ban.c:255-286): a case-insensitive
+	// substring match against a loaded list, separate from invalidName's
+	// checks because the list is per-server data, not a pure function of
+	// the name alone.
+	if deps.Login.DisallowedName(name) {
+		s.Send("That name is not allowed.\r\nBy what name do you wish to be known? ")
+		return nil
+	}
 
 	name = capitalise(name)
 	exists, err := deps.Login.Exists(ctx, name)
@@ -298,7 +306,10 @@ func (s *Session) handleReadMOTD(deps Deps) error {
 // The C server checks length and that every character is a letter
 // (interpreter.c's _parse_name). The same rules are kept, with the reasons
 // spelled out rather than the C's single "Illegal name" — a player who typed
-// an apostrophe deserves to know that is the problem.
+// an apostrophe deserves to know that is the problem. The xnames substring
+// check (Valid_Name, ban.c:255) is not here: it needs per-server data
+// invalidName has no way to receive, so it is a separate call at the
+// handleGetName call site instead — see [Session.handleGetName].
 func invalidName(name string) string {
 	if len(name) < 2 {
 		return "That name is too short."
@@ -316,6 +327,12 @@ func invalidName(name string) string {
 	switch strings.ToLower(name) {
 	case "con", "nul", "aux", "prn":
 		return "That name is not available."
+	}
+	// reserved_word (interpreter.c:952), checked alongside fill_word right
+	// beside Valid_Name at every CON_GET_NAME call site — an exact match,
+	// not the substring one xnames does below.
+	if reservedNames[strings.ToLower(name)] {
+		return "That name is reserved."
 	}
 	return ""
 }

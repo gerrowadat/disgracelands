@@ -30,6 +30,16 @@ var fillWords = map[string]bool{
 	"on": true, "at": true, "to": true,
 }
 
+// reservedNames are reserved[] (interpreter.c:580-591): words fill_word and
+// reserved_word (interpreter.c:946-955) refuse as a character name, checked
+// by nanny's CON_GET_NAME (interpreter.c:~1356) alongside Valid_Name. Both
+// are search_block(..., TRUE) — a case-insensitive *exact* match, unlike
+// xnames' substring one (see invalidName in login.go).
+var reservedNames = map[string]bool{
+	"a": true, "an": true, "self": true, "me": true,
+	"all": true, "room": true, "someone": true, "something": true,
+}
+
 // oneArgument takes the next word, porting one_argument.
 //
 // The word is lower-cased — the C does it as it copies, which is why object

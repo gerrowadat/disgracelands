@@ -90,6 +90,8 @@ type Context struct {
 	Operator Operator
 	// Bans is the site ban list.
 	Bans BanKeeper
+	// Reports is the bug/idea/typo report log, for `bug`/`idea`/`typo`.
+	Reports ReportWriter
 	// SetPassword replaces somebody's credential, for `set <name> passwd`.
 	// A seam rather than a field write, because hashing a password is the
 	// auth package's business and not the session's.
@@ -454,6 +456,10 @@ func init() {
 		{Name: "quaff", Help: "Drink a potion.", Run: doQuaff, CLine: 418},
 		{Name: "recite", Help: "Read a scroll aloud.", Run: doRecite, CLine: 435},
 		{Name: "use", Help: "Use a wand or a staff you are holding.", Run: doUse, CLine: 527},
+
+		{Name: "bug", Help: "Report a bug.", Run: doGenWrite("bug"), CLine: 247},
+		{Name: "idea", Help: "Suggest an idea.", Run: doGenWrite("idea"), CLine: 342},
+		{Name: "typo", Help: "Report a typo.", Run: doGenWrite("typo"), CLine: 520},
 	}
 	Commands = commandTable(staticCommands)
 }
@@ -575,6 +581,8 @@ type Dispatcher struct {
 	Operator Operator
 	// Bans is the site ban list.
 	Bans BanKeeper
+	// Reports is the bug/idea/typo report log.
+	Reports ReportWriter
 	// SetPassword replaces somebody's credential.
 	SetPassword func(c *game.Character, password string) error
 }
@@ -636,7 +644,7 @@ func (d *Dispatcher) Do(ctx context.Context, s *Session, line string) error {
 		c := &Context{
 			Ctx: ctx, Session: s, Character: s.Character(),
 			World: w, Text: d.Text, RNG: d.RNG, Violence: d.Violence, Arg: arg,
-			Social: cmd.Social, Save: d.Save, Rent: d.Rent, SaveBoard: d.SaveBoard, Mail: d.Mail, Houses: d.Houses, Operator: d.Operator, Bans: d.Bans, SetPassword: d.SetPassword,
+			Social: cmd.Social, Save: d.Save, Rent: d.Rent, SaveBoard: d.SaveBoard, Mail: d.Mail, Houses: d.Houses, Operator: d.Operator, Bans: d.Bans, Reports: d.Reports, SetPassword: d.SetPassword,
 		}
 
 		// A command that panics must not leave the player staring at a dead

@@ -40,6 +40,7 @@ files edited in-game. Back it up; mount it as a volume in a container.
 | `--player-format` | `ascii` | `ascii`, `native` |
 | `--world-format` | `classic` | `classic`, `native` |
 | `--state-format` | `classic` | `classic`, `native` |
+| `--names-format` | `classic` | `classic`, `native` |
 
 `ascii` is the ascii_pfiles 2.1 one-text-file-per-player format. `classic`
 is the original CircleMUD `.wld`/`.mob`/`.obj`/`.zon`/`.shp` flat-file world.
@@ -77,13 +78,24 @@ format for them regardless of `--player-format`, matching the C):
 dlctl pfile import --from-dir=data/etc --to-dir=data/players
 ```
 
-`--state-format` covers bans, boards, mail and player housing together —
-one flag, since they end up in one directory (`data/state/` under
-`native`) and there is no reason to convert boards without mail. Convert
-an existing set once:
+`--state-format` covers bans, boards, mail, player housing, the mud
+clock and the bug/idea/typo reports together — one flag, since they end
+up in one directory (`data/state/` under `native`) and there is no
+reason to convert boards without mail. Convert an existing set once:
 
 ```sh
-dlctl state import --from-dir=data/etc --from-house-dir=data/house --to-dir=data/state
+dlctl state import --from-dir=data/etc --from-house-dir=data/house \
+                    --from-misc-dir=data/misc --to-dir=data/state
+```
+
+`--names-format` covers the disallowed-name list on its own
+(`misc/xnames` under `classic`, `data/config/names.yaml` under `native`)
+— its own flag because `config/` is a different directory than `state/`
+is, not one that happens to move with the five stores above. Convert an
+existing list once:
+
+```sh
+dlctl names import --from-path=data/misc/xnames --to-dir=data/config
 ```
 
 **The server will not start on `--player-format=binary`**, and says so with

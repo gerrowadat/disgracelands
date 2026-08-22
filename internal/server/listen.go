@@ -181,6 +181,7 @@ func (s *Server) serve(ctx context.Context, sess *session.Session, limits Limits
 			Houses:     housesOrNilIface(s),
 			Operator:   s,
 			Bans:       bansOrNil(s),
+			Reports:    reportsOrNil(s),
 			SetPassword: func(c *game.Character, password string) error {
 				return s.SetPassword(context.Background(), c, password)
 			},

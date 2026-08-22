@@ -47,6 +47,13 @@ type Config struct {
 	// are one directory in practice and there is no reason to convert one
 	// without the others.
 	StateFormat string
+	// NamesFormat covers the xnames disallowed-name list
+	// (docs/proposals/data-format.md §9, step 6b) — its own flag rather
+	// than folded into StateFormat, because native's config/names.yaml is
+	// a different directory than state/ is: config/ is where game config,
+	// socials and messages will eventually join it too, whenever each of
+	// those lands.
+	NamesFormat string
 
 	// Listeners. An empty address means the listener is disabled.
 	TelnetAddr  string
@@ -131,6 +138,7 @@ var (
 	serverPlayerFormats = []string{"ascii", "native"}
 	knownWorldFormats   = []string{"classic", "native"}
 	knownStateFormats   = []string{"classic", "native"}
+	knownNamesFormats   = []string{"classic", "native"}
 	knownLogFormats     = []string{"text", "json"}
 )
 
@@ -144,6 +152,7 @@ func Default() Config {
 		PlayerFormat:         "ascii",
 		WorldFormat:          "classic",
 		StateFormat:          "classic",
+		NamesFormat:          "classic",
 		TelnetAddr:           "",
 		TelnetsAddr:          ":4443",
 		WSAddr:               "",
@@ -264,6 +273,7 @@ func Load(args []string, lookupEnv func(string) (string, bool), out io.Writer) (
 		" (the tooling also reads and writes: "+strings.Join(knownPlayerFormats, ", ")+")", &cfg.PlayerFormat)
 	str("world-format", "World-file format: "+strings.Join(knownWorldFormats, ", "), &cfg.WorldFormat)
 	str("state-format", "Boards/mail/houses/bans format: "+strings.Join(knownStateFormats, ", "), &cfg.StateFormat)
+	str("names-format", "Disallowed-name list format: "+strings.Join(knownNamesFormats, ", "), &cfg.NamesFormat)
 
 	str("listen-telnet", "Plaintext telnet listen address (empty = disabled)", &cfg.TelnetAddr)
 	str("listen-telnets", "TLS telnet listen address (empty = disabled)", &cfg.TelnetsAddr)
@@ -399,6 +409,9 @@ func (c *Config) Validate() error {
 	}
 	if !contains(knownStateFormats, c.StateFormat) {
 		return fmt.Errorf("--state-format: unknown format %q (have: %s)", c.StateFormat, strings.Join(knownStateFormats, ", "))
+	}
+	if !contains(knownNamesFormats, c.NamesFormat) {
+		return fmt.Errorf("--names-format: unknown format %q (have: %s)", c.NamesFormat, strings.Join(knownNamesFormats, ", "))
 	}
 	if !contains(knownLogFormats, c.LogFormat) {
 		return fmt.Errorf("--log-format: unknown format %q (have: %s)", c.LogFormat, strings.Join(knownLogFormats, ", "))

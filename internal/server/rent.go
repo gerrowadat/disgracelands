@@ -251,6 +251,8 @@ func (s *Server) SaveEverything(ctx context.Context) {
 	}
 	s.crashSaveAll(ctx)
 	s.SaveChangedHouses(ctx)
+	// save_mud_time, right after save_all() on the C's way down (comm.c:441).
+	s.saveClock(ctx)
 }
 
 // RentCharacter is Crash_rentsave / Crash_cryosave (objsave.c:868, :914) plus

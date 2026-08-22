@@ -1250,6 +1250,60 @@ once and not going back for the rest.
 
 ---
 
+## Time
+
+### The clock's fallback epoch is a magic number with no explanation
+
+```c
+if (beginning_of_time == 0)
+  beginning_of_time = 650336715;
+```
+
+`reset_time` reads a Unix timestamp from `lib/etc/time` as the point the mud
+calendar is measured forward from. If the file is missing, unreadable, or its
+first line parses to zero, this literal is used instead — a specific real
+moment (11 August 1990, 01:05:15 UTC) with nothing in the source saying what
+it commemorates. It is very likely when the original DikuMUD or an ancestor
+codebase first booted, but nothing in this tree confirms that, so it is
+recorded here as a magic number rather than a fact.
+
+*Source*: `db.c:483-496`. Ported as `clock.DefaultEpoch`
+(`internal/persist/clock/clock.go`).
+
+### Saving the clock loses up to an hour, on purpose
+
+```c
+time_t mud_time_to_secs(struct time_info_data *now)
+{
+  time_t when = 0;
+  when += now->year  * SECS_PER_MUD_YEAR;
+  when += now->month * SECS_PER_MUD_MONTH;
+  when += now->day   * SECS_PER_MUD_DAY;
+  when += now->hours * SECS_PER_MUD_HOUR;
+  return (time(NULL) - when);
+}
+```
+
+`save_mud_time` does not remember the epoch it originally loaded; it
+reconstructs one from the *current* `time_info`'s four integer fields, each
+of which already discarded its own remainder when `mud_time_passed` computed
+it (`mud_time_passed` truncates seconds into hours, hours into days, and so
+on). So every time this runs — at shutdown and every real thirty minutes,
+`PULSE_TIMESAVE` — the epoch written is not the one that was read; it drifts
+forward by whatever fraction of the current mud-hour had already elapsed,
+up to `SECS_PER_MUD_HOUR - 1` (74) real seconds.
+
+The original author knew: `PULSE_TIMESAVE`'s own definition carries the
+comment `/* should be >= SECS_PER_MUD_HOUR */` — the interval between saves
+is deliberately no finer than the precision a save keeps, so the drift never
+compounds into something a player could notice.
+
+*Source*: `utils.c:353-363`, `db.c:534-544`, `structs.h:519`. Ported as
+`MudTime.Seconds` (`internal/game/mudtime.go`) and `Live.SavedEpoch`
+(`internal/game/live.go`).
+
+---
+
 ## What to do about all this
 
 The rule that has worked: **anything with a division, a cast, or a comment
