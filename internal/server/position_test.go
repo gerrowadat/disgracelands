@@ -66,7 +66,7 @@ func TestYouCannotRestWhileFighting(t *testing.T) {
 	// `hit`, not `kill`: for an implementor `kill` is the instant slay, and
 	// these tests want a fight rather than a corpse.
 	c.send("hit dog")
-	c.expectAny("You hit a large dog", "You miss a large dog")
+	c.expect("a large dog") // present in every damage tier's text, hit or miss
 
 	for _, tc := range []struct{ command, expect string }{
 		{"sit", "Sit down while fighting? Are you MAD?"},
@@ -110,7 +110,7 @@ func TestFleeingLeavesTheRoomAndTheFight(t *testing.T) {
 	// `hit`, not `kill`: for an implementor `kill` is the instant slay, and
 	// these tests want a fight rather than a corpse.
 	c.send("hit dog")
-	c.expectAny("You hit a large dog", "You miss a large dog")
+	c.expect("a large dog") // present in every damage tier's text, hit or miss
 
 	fleeUntilItWorks(t, c)
 
@@ -166,7 +166,7 @@ func TestFleeingCostsExperience(t *testing.T) {
 	// `hit`, not `kill`: for an implementor `kill` is the instant slay, and
 	// these tests want a fight rather than a corpse.
 	c.send("hit dog")
-	c.expectAny("You hit a large dog", "You miss a large dog")
+	c.expect("a large dog") // present in every damage tier's text, hit or miss
 
 	// The cost is the opponent's *missing* hit points times their level, read
 	// at the moment of fleeing — `hit` has already landed one blow of its
@@ -220,7 +220,7 @@ func TestFleeingAnotherPlayerCostsNothing(t *testing.T) {
 
 	// Another player, so it has to be `murder` — `hit` refuses.
 	c.send("murder grimm")
-	c.expectAny("You hit Grimm", "You miss Grimm")
+	c.expect("Grimm") // present in every damage tier's text, hit or miss
 
 	var before, after int32
 	inWorld(t, srv, func(_ *game.Live) { before = runner.Record.Points.Exp })

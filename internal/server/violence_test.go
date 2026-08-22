@@ -63,10 +63,15 @@ func TestAFightRunsOnTheViolencePulse(t *testing.T) {
 		t.Errorf("the victim is on %d hit points, was %d — no blow landed",
 			victim.Record.Points.Hit, before)
 	}
-	if !attackerClient.said("You hit Welmar") {
+	// The exact wording now varies by damage tier and weapon verb
+	// (internal/game/damage_messages.go), so this checks for the name
+	// every tier's text includes rather than one fixed phrase — HitRoll
+	// guarantees a landed blow, so it is always the hit text, never a
+	// miss.
+	if !attackerClient.said("Welmar") {
 		t.Error("the attacker was not told they hit")
 	}
-	if !victimClient.said("Zod hits you") {
+	if !victimClient.said("Zod") {
 		t.Error("the victim was not told they were hit")
 	}
 

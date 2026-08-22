@@ -414,6 +414,24 @@ Listed here so they are not mistaken for deliberate differences.
   of these commands built. `PAGE_LENGTH` (`comm.h:44`) is a fixed 22
   lines in the C, not a per-player preference — there is nothing to read
   back even if this were ported, only a constant to reintroduce.
+- **Combat messages are real for the ordinary weapon swing, and only
+  that.** `internal/server/violence.go`'s `s.hit` now ports `dam_message`
+  and `skill_message`'s weapon-type half of `misc/messages` in full
+  (step 6c), replacing the fixed `"You hit %s. [%d]"`/`"You miss %s."`
+  strings with the real, tiered, sometimes-randomised text. Every *other*
+  way to hurt somebody — kick, bash, backstab, a spell, anything reaching
+  `Violence.Damage` rather than `.Swing` — still prints its own message
+  and never calls `skill_message` at all, so those attack types' own
+  `misc/messages` entries (spell/skill numbers, not weapon types) go
+  unused. Each is its own future pass.
+
+  An unarmed NPC always resolves to bare-hand attack text (`AttackHit`,
+  "hit"/"hits") for the purposes of this message, even one the C would
+  give a distinct verb via `mob_specials.attack_type`. Nothing in this
+  tree parses a mobile's attack type from the world format at all —
+  confirmed, not assumed: `MobDef` has no such field, and nothing reads
+  one — so there was nothing to resolve it from. Worth a note when the
+  world format's mob fields are next revisited.
 - **Two special procedures are left.** The subsystems that were blocking the
   rest all landed in 5f and 5g, so the seam now carries the guildmasters,
   guild guards, Puff, fidos, janitors, cityguards, snakes, mobile mages,

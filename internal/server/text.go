@@ -44,6 +44,21 @@ type Text struct {
 	// helpScreen is text/help/screen, HELP_PAGE_FILE — what bare `help`
 	// shows instead of a lookup.
 	helpScreen string
+	// messages is the loaded misc/messages table (skill_message's weapon-
+	// type entries, consulted by the ordinary combat swing). nil for a
+	// server with none — dam_message's compiled table is what a fresh
+	// server always had before this existed, and stays the whole story
+	// when there is nothing to prefer over it.
+	messages *game.FightMessages
+}
+
+// FightMessages returns the loaded misc/messages table. Safe to call and
+// to Pick from when t or the table itself is nil.
+func (t *Text) FightMessages() *game.FightMessages {
+	if t == nil {
+		return nil
+	}
+	return t.messages
 }
 
 // Socials returns the loaded socials, for the boot step that puts them into
@@ -77,6 +92,9 @@ const (
 	helpDir        = "text/help"
 	helpIndexFile  = "text/help/index"
 	helpScreenFile = "text/help/screen"
+
+	// messagesFile is MESS_FILE (db.h:89): lib/misc/messages.
+	messagesFile = "misc/messages"
 )
 
 // MainMenu is the C's MENU (config.c:271), verbatim.
@@ -189,6 +207,17 @@ func LoadText(dir string) (*Text, error) {
 			entries = append(entries, fileEntries...)
 		}
 		t.help = game.NewHelpIndex(entries)
+	}
+
+	// misc/messages, the same optional posture as help and socials —
+	// porting load_messages (fight.c:145-193).
+	if f, err := os.Open(filepath.Join(dir, messagesFile)); err == nil { //nolint:gosec // operator-configured data directory
+		records, err := game.ParseMessagesFile(f)
+		_ = f.Close()
+		if err != nil {
+			return nil, fmt.Errorf("reading %s: %w", messagesFile, err)
+		}
+		t.messages = game.NewFightMessages(records)
 	}
 
 	return t, nil

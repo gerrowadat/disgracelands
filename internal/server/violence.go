@@ -58,7 +58,12 @@ func (s *Server) performViolence(w *game.Live) {
 	}
 }
 
-// hit is one swing and everything that follows from it.
+// hit is one swing and everything that follows from it, including the
+// message — dam_message/skill_message's weapon-type half
+// (fight.c:591-620, :703-767), ported in full for this one call site. A
+// miss is not a separate code path: the C calls damage(ch, victim, 0,
+// w_type) for one (fight.c:1067-1068), the same function a real hit goes
+// through, which is why this does too.
 func (s *Server) hit(w *game.Live, attacker, victim *game.Character) {
 	if attacker.Record == nil || victim.Record == nil {
 		return
@@ -69,22 +74,91 @@ func (s *Server) hit(w *game.Live, attacker, victim *game.Character) {
 
 	af, vf := combatant{attacker}, combatant{victim}
 	swing := game.Attack(attacker.Record, victim.Record, af, vf, s.rng)
+	attackType := game.WeaponAttackType(af.Wielded())
 
+	amount := swing.Damage
 	if !swing.Hit {
-		attacker.Tell("You miss %s.\r\n", victim.Name)
-		victim.Tell("%s misses you.\r\n", attacker.Name)
-		s.toRoomExcept(w, attacker, "%s misses %s.\r\n", attacker.Name, victim.Name, victim)
-		s.startFighting(w, attacker, victim)
-		return
+		amount = 0
 	}
+	dam := game.ApplyDamage(amount, victim.Record, vf)
 
-	dam := game.ApplyDamage(swing.Damage, victim.Record, vf)
+	s.applyDamage(w, attacker, victim, dam, func() {
+		s.sendCombatMessage(w, attacker, victim, af.Wielded(), dam, attackType)
+	})
+}
 
-	attacker.Tell("You hit %s. [%d]\r\n", victim.Name, dam)
-	victim.Tell("%s hits you. [%d]\r\n", attacker.Name, dam)
-	s.toRoomExcept(w, attacker, "%s hits %s.\r\n", attacker.Name, victim.Name, victim)
+// sendCombatMessage is the messaging half of damage() (fight.c:855-871),
+// for a weapon attack — the only kind an ordinary combat-round swing ever
+// is, which is the only case this covers (kick, bash, backstab and every
+// spell still print their own message, unaffected — see Damage's own doc
+// comment).
+//
+// Called from applyDamage's hook, after victim.Position has already been
+// updated — the same point damage() calls dam_message/skill_message from,
+// right after its own update_pos and before the position-announcement
+// text ("mortally wounded", etc.).
+func (s *Server) sendCombatMessage(w *game.Live, attacker, victim *game.Character, weapon *game.Object, dam, attackType int32) {
+	// damage()'s dispatch: a miss or a death blow prefers a registered
+	// message; anything else always uses the compiled severity table.
+	if dam == 0 || victim.Position == game.PosDead {
+		if fm, ok := s.text.FightMessages().Pick(attackType, s.rng); ok {
+			var set game.MsgSet
+			switch {
+			case dam != 0:
+				set = fm.Die
+			case attacker != victim:
+				set = fm.Miss
+			default:
+				// skill_message sends nothing for a self-inflicted miss
+				// (fight.c:752's `else if (ch != vict)` has no self case)
+				// — not reachable through performViolence in practice,
+				// kept for fidelity to the guard itself.
+				return
+			}
+			s.sendMsgSet(w, attacker, victim, weapon, set)
+			return
+		}
+	}
+	s.sendDamageMessage(w, attacker, victim, dam, attackType)
+}
 
-	s.applyDamage(w, attacker, victim, dam)
+// sendMsgSet sends a registered skill_message MsgSet to all three
+// audiences, porting its act() calls (fight.c:719-758) minus colour —
+// nothing in this port emits colour yet (docs/deviations.md). An empty
+// field is '#', no message for that audience: internal/game.Act's own
+// callers already treat an empty format as "send nothing"
+// (internal/session/social.go's act()), the same posture here.
+func (s *Server) sendMsgSet(w *game.Live, attacker, victim *game.Character, weapon *game.Object, set game.MsgSet) {
+	args := game.ActArgs{Actor: attacker, Victim: victim, Obj: weapon}
+	if set.Attacker != "" {
+		attacker.Tell("%s", w.Act(set.Attacker, args, attacker))
+	}
+	if set.Victim != "" {
+		victim.Tell("%s", w.Act(set.Victim, args, victim))
+	}
+	if set.Room != "" {
+		s.actToRoomExcept(w, attacker, victim, args, set.Room)
+	}
+}
+
+// sendDamageMessage is dam_message (fight.c:591-620) minus colour.
+func (s *Server) sendDamageMessage(w *game.Live, attacker, victim *game.Character, dam, attackType int32) {
+	args := game.ActArgs{Actor: attacker, Victim: victim}
+	attacker.Tell("%s", w.Act(game.DamageMessage(dam, attackType, game.AudienceChar), args, attacker))
+	victim.Tell("%s", w.Act(game.DamageMessage(dam, attackType, game.AudienceVictim), args, victim))
+	s.actToRoomExcept(w, attacker, victim, args, game.DamageMessage(dam, attackType, game.AudienceRoom))
+}
+
+// actToRoomExcept renders an Act message once per listener in a room —
+// the codes resolve differently for each of them — skipping the two
+// combatants themselves. TO_NOTVICT (fight.c).
+func (s *Server) actToRoomExcept(w *game.Live, exclude1, exclude2 *game.Character, args game.ActArgs, format string) {
+	for _, other := range w.Occupants(exclude1.Room) {
+		if other == exclude1 || other == exclude2 {
+			continue
+		}
+		other.Tell("%s", w.Act(format, args, other))
+	}
 }
 
 // Damage implements session.Violence: everything damage() does apart from the
@@ -103,7 +177,7 @@ func (s *Server) Damage(w *game.Live, attacker, victim *game.Character, amount i
 		return 0
 	}
 	dam := game.ApplyDamage(amount, victim.Record, combatant{victim})
-	s.applyDamage(w, attacker, victim, dam)
+	s.applyDamage(w, attacker, victim, dam, nil)
 	return dam
 }
 
@@ -140,7 +214,13 @@ func (s *Server) refusedByPeace(w *game.Live, attacker, victim *game.Character) 
 
 // applyDamage is the tail of damage(): take the hit points off, start the
 // fight, work out what position that leaves them in, and deal with the body.
-func (s *Server) applyDamage(w *game.Live, attacker, victim *game.Character, dam int32) {
+//
+// onDamaged, if not nil, runs at the exact point damage() itself calls
+// dam_message/skill_message — right after update_pos, before the
+// position-announcement text. Only s.hit passes one: every other caller
+// (kick, bash, spells, via Damage) prints its own message elsewhere and
+// leaves this nil, unaffected by anything a weapon-swing message does.
+func (s *Server) applyDamage(w *game.Live, attacker, victim *game.Character, dam int32, onDamaged func()) {
 	victim.Record.Points.Hit -= dam
 
 	if attacker != nil {
@@ -155,6 +235,11 @@ func (s *Server) applyDamage(w *game.Live, attacker, victim *game.Character, dam
 	}
 
 	victim.Position = game.UpdatePosition(victim.Record, victim.Position)
+
+	if onDamaged != nil {
+		onDamaged()
+	}
+
 	s.announcePosition(w, victim)
 
 	// Somebody stunned or worse stops swinging back.

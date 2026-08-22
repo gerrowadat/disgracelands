@@ -53,7 +53,7 @@ func TestYouCannotQuitWhileFighting(t *testing.T) {
 	spawnDog(t, srv, MortalStartRoom)
 
 	c.send("hit dog")
-	c.expectAny("You hit a large dog", "You miss a large dog")
+	c.expect("a large dog") // present in every damage tier's text, hit or miss
 
 	c.send("quit")
 	c.expect("No way!  You're fighting for your life!")
