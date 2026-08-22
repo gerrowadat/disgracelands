@@ -1129,6 +1129,7 @@ it.
 | **5k. Light and darkness ✅** | `world[].light`, `room_is_dark` and `CAN_SEE_IN_DARK`, and with them `look_at_room` in full: the pitch-black and blindness branches, `PRF_BRIEF`, `PRF_AUTOEXIT`, `PRF_ROOMFLAGS` and the two `<DoC>` room messages. Plus the four preference-based immortal toggles, `holylight` among them, without which nothing could switch the new behaviour on. The half of `CAN_SEE` that is about the room; the half about people is next. | `utils.c`, `handler.c`, `act.informative.c`, `act.other.c` |
 | **5l. Seeing people ✅** | `CAN_SEE` itself and the display half of its call sites: `PERS`/`OBJS` inside `act()`, `list_char_to_char` and `list_one_char` in full, `list_obj_to_char`, `who` and `where`. Invisibility, hiding and the invis level all mean something now. Targeting — `get_char_room_vis` and the rest of `generic_find` — is the other half and is not in it; see below. | `utils.h`, `act.informative.c`, `comm.c` |
 | **5m. What a typed word means ✅** | `isname` and `get_number`, the two pure functions every search in the game goes through, with a C oracle over 168 name pairings and 15 argument forms. `isname` was being read as a prefix match and is not one, so `get swo` had been picking up a sword since Phase 4. Groundwork for the targeting pass as well as a fix in its own right. | `handler.c` |
+| **5n. Targeting ✅** | `game.Search`: the `*_vis` family's shared, decrementing count, with CAN_SEE and CAN_SEE_OBJ applied at every search. `FindInRoom`, `FindAnywhere` and `findObject` take a viewer; `2.sword` works; `0.name` means a player. The last of the three cross-cutting mechanisms. | `handler.c` |
 
 ### What is not in it
 
@@ -1143,28 +1144,38 @@ deviation.
 **Phase 6's, and correctly so.** `medit`, `oedit`, `redit`, `sedit`, `zedit`,
 `olc` and `edit` are OasisOLC; `tedit` is the in-game text-file editor.
 
-**Two mechanisms that never had a slice, and want one.** Each is a property of
-*every* command rather than of any one of them, which is exactly why neither
-got scheduled.
+**The three mechanisms that never had a slice are now built.** Each was a
+property of *every* command rather than of any one of them, which is exactly
+why none of them got scheduled and why all three had to be found rather than
+picked off a list: **minimum position** as 5j, **`CAN_SEE`** for display as 5l
+and for targeting as 5n, and **`N.thing`** alongside it in 5n.
 
-- **`N.thing` targeting.** `get_number` itself is ported and oracle-checked
-  (`game.GetNumber`); what is left is threading its count through the search
-  functions, which every command using `generic_find` inherits. It wants doing
-  in the same pass as the targeting visibility below, because both change the
-  same forty-odd signatures.
-- **`CAN_SEE` in the *targeting* path.** The macro and its display sites landed
-  as 5l, so a hidden character is no longer listed in the room — but
-  `get_char_room_vis`, `get_char_world_vis` and `get_obj_vis` (handler.c:1053
-  and neighbours) also filter on it, and this port's `FindInRoom`,
-  `FindAnywhere` and the object finds take no viewer at all. So you cannot
-  *see* an invisible thief and you can still `kill` them by name.
+What is left of Phase 5 is the `remort` slice and the loose commands above.
 
-  It is a wide, mechanical change — around forty call sites, each of which has
-  an obvious viewer — and it wants doing with `get_number` at the same time,
-  since `N.thing` lives in the same functions and touches the same signatures.
+### What 5n changed, and what it caught
 
-There was a third — **minimum position** — and it is now built, as 5j. `CAN_SEE`
-for *display* is 5l.
+`game.Search` is the C's count made explicit. The count is a **pointer** in the
+C, handed down a chain of searches — `get_obj_vis` gives the same `int *` to
+the inventory, then the room, then the world (handler.c:1148) — so `2.sword` is
+the second sword across the whole search *order*, not the second in whichever
+list holds it. A Search carries that state, and CAN_SEE is applied inside it,
+so no caller can forget either.
+
+Two things came out of doing it.
+
+**A nil viewer sees everything, deliberately.** The C's `*_vis` functions
+always have a `ch`; a search here with no viewer is not a pair of eyes at all —
+a zone reset looking for the mobile it just made, a test asking what is in a
+room. Filtering those through nobody's sight finds nothing, which is a silent
+and very confusing failure, so it is spelled out instead.
+
+**You cannot get your torch out in the dark.** `hold` looks the torch up with
+`get_obj_in_list_vis`, which asks `CAN_SEE_OBJ`, which asks `LIGHT_OK` — and in
+an unlit room that is false for everything, including the contents of your own
+pack. So a torch has to be lit before you go down, and somebody who puts theirs
+away in a cave has put it away for good. Nothing decides this anywhere; it
+falls out of two unrelated functions agreeing. A test that had been lighting a
+torch *in* the cellar started failing, which is how it was noticed.
 
 ### What 5j changed, and what it caught
 

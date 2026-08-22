@@ -36,7 +36,7 @@ func doFollow(c *Context) error {
 		return nil
 	}
 
-	leader := c.World.FindInRoom(c.Character.Room, name)
+	leader := c.findInRoom(name)
 	if leader == nil {
 		c.Send("No-one by that name here.\r\n")
 		return nil
@@ -156,7 +156,7 @@ func doGroup(c *Context) error {
 		return nil
 	}
 
-	victim := c.World.FindInRoom(c.Character.Room, name)
+	victim := c.findInRoom(name)
 	switch {
 	case victim == nil:
 		c.Send("No-one by that name here.\r\n")
@@ -274,7 +274,7 @@ func doUngroup(c *Context) error {
 		return nil
 	}
 
-	victim := c.World.FindInRoom(c.Character.Room, name)
+	victim := c.findInRoom(name)
 	switch {
 	case victim == nil:
 		c.Send("There is no such person!\r\n")

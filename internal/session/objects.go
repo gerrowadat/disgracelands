@@ -110,7 +110,7 @@ func doWear(c *Context) error {
 		return nil
 	}
 
-	obj := findObject(c.Character.Carrying, arg1)
+	obj := c.findObject(c.Character.Carrying, arg1)
 	if obj == nil {
 		c.Send("You don't seem to have %s %s.\r\n", article(arg1), arg1)
 		return nil
@@ -147,7 +147,7 @@ func doWield(c *Context) error {
 		return nil
 	}
 
-	obj := findObject(c.Character.Carrying, c.Arg)
+	obj := c.findObject(c.Character.Carrying, c.Arg)
 	if obj == nil {
 		c.Send("You don't seem to have %s %s.\r\n", article(c.Arg), c.Arg)
 		return nil
@@ -169,7 +169,7 @@ func doGrab(c *Context) error {
 		return nil
 	}
 
-	obj := findObject(c.Character.Carrying, c.Arg)
+	obj := c.findObject(c.Character.Carrying, c.Arg)
 	if obj == nil {
 		c.Send("You don't seem to have %s %s.\r\n", article(c.Arg), c.Arg)
 		return nil
@@ -268,14 +268,15 @@ func (c *Context) announce(format string, args ...any) {
 	}
 }
 
-// findObject picks the first object in a list a typed word names.
-func findObject(list []*game.Object, word string) *game.Object {
-	for _, obj := range list {
-		if obj.Matches(word) {
-			return obj
-		}
-	}
-	return nil
+// findObject picks the object in a list a typed word names, porting
+// get_obj_in_list_vis (handler.c:1124).
+//
+// Filtered on CAN_SEE_OBJ and honouring a `2.` prefix, both of which the C
+// does here and neither of which this port did. A viewer who cannot see an
+// object cannot pick it up by name either — which is what stops an invisible
+// object being findable by somebody without detect invisible.
+func (c *Context) findObject(list []*game.Object, word string) *game.Object {
+	return c.World.NewSearch(c.Character, word).ObjectIn(list)
 }
 
 // findWearPosition picks the slot an unqualified `wear` uses, porting

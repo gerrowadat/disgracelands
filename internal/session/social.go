@@ -39,7 +39,7 @@ func doAction(c *Context) error {
 		return nil
 	}
 
-	victim := c.World.FindInRoom(c.Character.Room, name)
+	victim := c.findInRoom(name)
 	switch {
 	case victim == nil:
 		c.Send("%s", c.act(social.NotFound, game.ActArgs{Actor: c.Character}, c.Character))

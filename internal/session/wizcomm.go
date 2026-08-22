@@ -58,7 +58,7 @@ func doSend(c *Context) error {
 		c.Send("Send what to who?\r\n")
 		return nil
 	}
-	victim := c.World.FindAnywhere(name)
+	victim := c.findAnywhere(name)
 	if victim == nil {
 		c.Send("%s", noPerson)
 		return nil
@@ -112,7 +112,7 @@ func doForce(c *Context) error {
 	// actually called "all" rather than being refused.
 	group := strings.ToLower(name)
 	if levelOf(c.Character) < game.LevelGreaterGod || (group != "all" && group != "room") {
-		victim := c.World.FindAnywhere(name)
+		victim := c.findAnywhere(name)
 		switch {
 		case victim == nil:
 			c.Send("%s", noPerson)

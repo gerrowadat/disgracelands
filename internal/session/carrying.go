@@ -344,7 +344,7 @@ func (c *Context) drop(mode dropMode) error {
 		case dots == findAllDot && word == "":
 			c.Send("What do you want to %s all of?\r\n", mode.verb())
 		case dots == findIndiv:
-			obj := findObject(c.Character.Carrying, word)
+			obj := c.findObject(c.Character.Carrying, word)
 			if obj == nil {
 				c.Send("You don't seem to have %s %s.\r\n", article(word), word)
 				return nil
@@ -581,7 +581,7 @@ func doGive(c *Context) error {
 	mode, word := findAllDots(arg)
 	switch {
 	case mode == findIndiv:
-		obj := findObject(c.Character.Carrying, word)
+		obj := c.findObject(c.Character.Carrying, word)
 		if obj == nil {
 			c.Send("You don't seem to have %s %s.\r\n", article(word), word)
 			return nil
@@ -606,7 +606,7 @@ func (c *Context) giveFindVictim(arg string) *game.Character {
 		c.Send("To who?\r\n")
 		return nil
 	}
-	victim := c.World.FindInRoom(c.Character.Room, arg)
+	victim := c.findInRoom(arg)
 	if victim == nil {
 		c.Send("No-one by that name here.\r\n")
 		return nil
@@ -688,10 +688,10 @@ func (c *Context) giveGold(victim *game.Character, amount int32) {
 // return says which, because it decides whether taking from it counts as
 // taking from the ground.
 func (c *Context) findContainer(name string) (obj *game.Object, onGround bool) {
-	if obj := findObject(c.Character.Carrying, name); obj != nil {
+	if obj := c.findObject(c.Character.Carrying, name); obj != nil {
 		return obj, false
 	}
-	return findObject(c.World.RoomObjects(c.Character.Room), name), true
+	return c.findObject(c.World.RoomObjects(c.Character.Room), name), true
 }
 
 // matchingObjects returns up to howmany objects a word names, in list order.

@@ -96,7 +96,7 @@ func doTell(c *Context) error {
 		return nil
 	}
 
-	victim := c.World.FindAnywhere(name)
+	victim := c.findAnywhere(name)
 	if victim == nil || (victim.IsNPC() && c.Character.Level() < game.LevelImmortal) {
 		c.Send("No-one by that name here.\r\n")
 		return nil
@@ -197,7 +197,7 @@ func (c *Context) specComm(singular, plural, others string) error {
 		return nil
 	}
 
-	victim := c.World.FindInRoom(c.Character.Room, name)
+	victim := c.findInRoom(name)
 	if victim == nil {
 		c.Send("No-one by that name here.\r\n")
 		return nil

@@ -100,7 +100,7 @@ func doOrder(c *Context) error {
 		return nil
 	}
 
-	victim := c.World.FindInRoom(who.Room, name)
+	victim := c.World.FindInRoom(who, who.Room, name)
 	toFollowers := isPrefixOf(name, "followers")
 	if victim == nil && !toFollowers {
 		c.Send("That person isn't here.\r\n")

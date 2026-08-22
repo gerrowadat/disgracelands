@@ -74,10 +74,10 @@ func TestResetCreatesMobilesAndObjects(t *testing.T) {
 	if guard.Keywords != "guard cityguard" {
 		t.Errorf("the guard's keywords are %q", guard.Keywords)
 	}
-	if l.FindInRoom(3001, "guard") != guard {
+	if l.FindInRoom(nil, 3001, "guard") != guard {
 		t.Error("`guard` does not find the cityguard")
 	}
-	if l.FindInRoom(3001, "cityguard") != guard {
+	if l.FindInRoom(nil, 3001, "cityguard") != guard {
 		t.Error("`cityguard` does not find the cityguard")
 	}
 

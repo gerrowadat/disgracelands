@@ -108,7 +108,7 @@ func TestAProducingShopNeverRunsOut(t *testing.T) {
 
 	var stock int
 	inWorld(t, srv, func(w *game.Live) {
-		if keeper := w.FindInRoom(ShopRoom, "shopkeeper"); keeper != nil {
+		if keeper := w.FindInRoom(nil, ShopRoom, "shopkeeper"); keeper != nil {
 			stock = len(keeper.Carrying)
 		}
 	})
@@ -201,7 +201,7 @@ func TestListingAShopsStock(t *testing.T) {
 	inShop(t, srv, "Browser", 10_000)
 
 	inWorld(t, srv, func(w *game.Live) {
-		keeper := w.FindInRoom(ShopRoom, "shopkeeper")
+		keeper := w.FindInRoom(nil, ShopRoom, "shopkeeper")
 		if keeper == nil {
 			t.Error("no shopkeeper")
 			return
@@ -280,7 +280,7 @@ func TestAShopkeeperWithoutWillFightCannotBeHurt(t *testing.T) {
 
 	var before int32
 	inWorld(t, srv, func(w *game.Live) {
-		if keeper := w.FindInRoom(ShopRoom, "shopkeeper"); keeper != nil && keeper.Record != nil {
+		if keeper := w.FindInRoom(nil, ShopRoom, "shopkeeper"); keeper != nil && keeper.Record != nil {
 			before = keeper.Record.Points.Hit
 		}
 	})
@@ -291,7 +291,7 @@ func TestAShopkeeperWithoutWillFightCannotBeHurt(t *testing.T) {
 
 	var after int32
 	inWorld(t, srv, func(w *game.Live) {
-		if keeper := w.FindInRoom(ShopRoom, "shopkeeper"); keeper != nil && keeper.Record != nil {
+		if keeper := w.FindInRoom(nil, ShopRoom, "shopkeeper"); keeper != nil && keeper.Record != nil {
 			after = keeper.Record.Points.Hit
 		}
 	})

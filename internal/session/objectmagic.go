@@ -48,7 +48,7 @@ func (c *Context) useItem(verb string) error {
 			c.Send("You don't seem to be holding %s %s.\r\n", article(name), name)
 			return nil
 		}
-		if item = findObject(c.Character.Carrying, name); item == nil {
+		if item = c.findObject(c.Character.Carrying, name); item == nil {
 			c.Send("You don't seem to have %s %s.\r\n", article(name), name)
 			return nil
 		}
@@ -83,7 +83,7 @@ func (c *Context) objectMagic(obj *game.Object, arg string) {
 	var victim *game.Character
 	var target *game.Object
 	if arg != "" {
-		victim = c.World.FindInRoom(c.Character.Room, arg)
+		victim = c.findInRoom(arg)
 		if victim == nil {
 			target = c.findVisibleObject(arg)
 		}

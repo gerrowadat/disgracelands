@@ -61,7 +61,7 @@ func doPurge(c *Context) error {
 	name, _ := oneArgument(c.Arg)
 
 	if name != "" {
-		if victim := c.World.FindInRoom(c.Character.Room, name); victim != nil {
+		if victim := c.findInRoom(name); victim != nil {
 			// You cannot purge somebody your own level or above — and note
 			// the test is `<=`, so two implementors cannot purge each other.
 			if !victim.IsNPC() && levelOf(c.Character) <= levelOf(victim) {
@@ -73,7 +73,7 @@ func doPurge(c *Context) error {
 			c.Send("Okay.\r\n")
 			return nil
 		}
-		obj := findObject(c.World.RoomObjects(c.Character.Room), name)
+		obj := c.findObject(c.World.RoomObjects(c.Character.Room), name)
 		if obj == nil {
 			c.Send("Nothing here by that name.\r\n")
 			return nil
@@ -128,7 +128,7 @@ func doRestore(c *Context) error {
 		c.Send("Whom do you wish to restore?\r\n")
 		return nil
 	}
-	victim := c.World.FindAnywhere(name)
+	victim := c.findAnywhere(name)
 	if victim == nil {
 		c.Send("%s", noPerson)
 		return nil
@@ -216,7 +216,7 @@ func doAdvance(c *Context) error {
 		c.Send("Advance who?\r\n")
 		return nil
 	}
-	victim := c.World.FindAnywhere(name)
+	victim := c.findAnywhere(name)
 	if victim == nil {
 		c.Send("That player is not here.\r\n")
 		return nil
@@ -301,10 +301,10 @@ func (c *Context) wizutilTarget() *game.Character {
 	switch {
 	case name == "":
 		c.Send("Yes, but for whom?!?\r\n")
-	case c.World.FindAnywhere(name) == nil:
+	case c.findAnywhere(name) == nil:
 		c.Send("There is no such player.\r\n")
 	default:
-		victim := c.World.FindAnywhere(name)
+		victim := c.findAnywhere(name)
 		switch {
 		case victim.IsNPC():
 			c.Send("You can't do that to a mob!\r\n")

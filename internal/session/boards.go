@@ -284,16 +284,16 @@ func doWrite(c *Context) error {
 
 	var paper, pen *game.Object
 	if penName != "" {
-		if paper = findObject(c.Character.Carrying, paperName); paper == nil {
+		if paper = c.findObject(c.Character.Carrying, paperName); paper == nil {
 			c.Send("You have no %s.\r\n", paperName)
 			return nil
 		}
-		if pen = findObject(c.Character.Carrying, penName); pen == nil {
+		if pen = c.findObject(c.Character.Carrying, penName); pen == nil {
 			c.Send("You have no %s.\r\n", penName)
 			return nil
 		}
 	} else {
-		found := findObject(c.Character.Carrying, paperName)
+		found := c.findObject(c.Character.Carrying, paperName)
 		if found == nil {
 			c.Send("There is no %s in your inventory.\r\n", paperName)
 			return nil

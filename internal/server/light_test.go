@@ -97,6 +97,42 @@ func TestAWornTorchLightsTheRoom(t *testing.T) {
 	c := dialClient(t, listening(t, srv))
 	c.create("Zod", "swordfish", "m", "w")
 
+	// Light it *before* going down. `hold` finds the torch through
+	// get_obj_in_list_vis, which asks CAN_SEE_OBJ, which asks LIGHT_OK — so in
+	// a pitch dark room you cannot see the torch in your own pack and cannot
+	// get it out. See TestYouCannotGetYourTorchOutInTheDark.
+	if err := srv.engine.DoSync(context.Background(), func(w *game.Live) {
+		w.ObjectToChar(w.NewObject(testTorchVnum), w.Find("Zod"))
+	}); err != nil {
+		t.Fatal(err)
+	}
+	c.send("hold torch")
+	c.expect("You light a torch and hold it.")
+
+	putInCellar(t, srv, "Zod")
+	c.send("look")
+	c.expect("A Pitch Dark Cellar")
+
+	// Back into the pack, and the lights go out: the count is of what is worn
+	// in WEAR_LIGHT, not of what is carried.
+	c.send("remove torch")
+	c.expect("You stop using a torch.")
+	c.send("look")
+	c.expect("It is pitch black...")
+}
+
+// TestYouCannotGetYourTorchOutInTheDark, which follows from the C rather than
+// being decided anywhere: `hold` looks the torch up with get_obj_in_list_vis,
+// that asks CAN_SEE_OBJ, and CAN_SEE_OBJ asks LIGHT_OK. In an unlit room
+// LIGHT_OK is false for everything, including the contents of your own pack.
+//
+// So a torch has to be lit before you go down, and somebody who puts theirs
+// away in a cave has put it away for good.
+func TestYouCannotGetYourTorchOutInTheDark(t *testing.T) {
+	srv, _ := newTestServer(t)
+	c := dialClient(t, listening(t, srv))
+	c.create("Zod", "swordfish", "m", "w")
+
 	ch := putInCellar(t, srv, "Zod")
 	if err := srv.engine.DoSync(context.Background(), func(w *game.Live) {
 		w.ObjectToChar(w.NewObject(testTorchVnum), ch)
@@ -104,27 +140,8 @@ func TestAWornTorchLightsTheRoom(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Carrying it is not enough: the count is of what is worn in WEAR_LIGHT.
-	c.send("look")
-	c.expect("It is pitch black...")
-
 	c.send("hold torch")
-	c.expect("You light a torch and hold it.")
-	c.send("look")
-	c.expect("A Pitch Dark Cellar")
-
-	// Back into the pack, and the lights go out again.
-	c.send("remove torch")
-	c.expect("You stop using a torch.")
-	c.send("look")
-	c.expectCount("It is pitch black...", 2)
-
-	// On the floor, still burning, and the room stays dark — obj_to_room does
-	// not touch the count, so a lit torch at your feet is no light at all.
-	c.send("drop torch")
-	c.expect("You drop a torch.")
-	c.send("look")
-	c.expectCount("It is pitch black...", 3)
+	c.expect("You don't seem to have a torch.")
 }
 
 // TestBlindnessIsReportedAfterDarkness, on look_at_room's path.

@@ -87,7 +87,7 @@ func doSnoop(c *Context) error {
 		c.stopSnooping()
 		return nil
 	}
-	victim := c.World.FindAnywhere(name)
+	victim := c.findAnywhere(name)
 	switch victim {
 	case nil:
 		c.Send("No such person around.\r\n")
@@ -154,7 +154,7 @@ func doSwitch(c *Context) error {
 		c.Send("Switch with who?\r\n")
 		return nil
 	}
-	victim := c.World.FindAnywhere(name)
+	victim := c.findAnywhere(name)
 	switch {
 	case victim == nil:
 		c.Send("No such character.\r\n")

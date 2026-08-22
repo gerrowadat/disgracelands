@@ -124,7 +124,7 @@ func doBackstab(c *Context) error {
 		c.Send("Backstab who?\r\n")
 		return nil
 	}
-	victim := c.World.FindInRoom(c.Character.Room, c.Arg)
+	victim := c.findInRoom(c.Arg)
 	if victim == nil {
 		c.Send("Backstab who?\r\n")
 		return nil
@@ -185,7 +185,7 @@ func doRescue(c *Context) error {
 		c.Send("Whom do you want to rescue?\r\n")
 		return nil
 	}
-	victim := c.World.FindInRoom(c.Character.Room, c.Arg)
+	victim := c.findInRoom(c.Arg)
 	if victim == nil {
 		c.Send("Whom do you want to rescue?\r\n")
 		return nil
@@ -249,7 +249,7 @@ func (c *Context) roundLength() time.Duration { return 2 * time.Second }
 // work mid-fight.
 func (c *Context) skillTarget(arg, missing string) *game.Character {
 	if name := strings.TrimSpace(arg); name != "" {
-		if victim := c.World.FindInRoom(c.Character.Room, name); victim != nil {
+		if victim := c.findInRoom(name); victim != nil {
 			return victim
 		}
 	}

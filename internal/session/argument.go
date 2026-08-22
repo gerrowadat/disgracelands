@@ -9,6 +9,8 @@ package session
 import (
 	"strconv"
 	"strings"
+
+	"github.com/gerrowadat/disgracelands/internal/game"
 )
 
 // Argument parsing, ported from one_argument/two_arguments/is_number
@@ -110,4 +112,22 @@ func findAllDots(arg string) (dotMode, string) {
 	default:
 		return findIndiv, arg
 	}
+}
+
+// Targeting helpers: the common shapes of get_char_room_vis and
+// get_char_world_vis, with the viewer filled in.
+//
+// Every search in the C is filtered on CAN_SEE and honours a `2.` prefix.
+// Both need to know who is looking, and for all but two callers that is the
+// character who typed the command — so these exist rather than repeating
+// `c.World.FindInRoom(c.Character, c.Character.Room, name)` forty times.
+
+// findInRoom looks for somebody in the room the commanding character is in.
+func (c *Context) findInRoom(word string) *game.Character {
+	return c.World.FindInRoom(c.Character, c.Character.Room, word)
+}
+
+// findAnywhere looks for somebody anywhere in the world.
+func (c *Context) findAnywhere(word string) *game.Character {
+	return c.World.FindAnywhere(c.Character, word)
 }

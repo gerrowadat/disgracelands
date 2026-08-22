@@ -146,7 +146,7 @@ func (c *Context) wakeSomebody(arg string) error {
 		return nil
 	}
 
-	victim := c.World.FindInRoom(c.Character.Room, arg)
+	victim := c.findInRoom(arg)
 	switch {
 	case victim == nil:
 		c.Send("No-one by that name here.\r\n")

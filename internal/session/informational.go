@@ -78,7 +78,7 @@ func doDiagnose(c *Context) error {
 		return nil
 	}
 
-	victim := c.World.FindInRoom(c.Character.Room, name)
+	victim := c.findInRoom(name)
 	if victim == nil {
 		c.Send("No-one by that name here.\r\n")
 		return nil

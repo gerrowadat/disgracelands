@@ -47,7 +47,7 @@ func (c *Context) eat(taste bool) error {
 		return nil
 	}
 
-	food := findObject(c.Character.Carrying, arg)
+	food := c.findObject(c.Character.Carrying, arg)
 	if food == nil {
 		c.Send("You don't seem to have %s %s.\r\n", article(arg), arg)
 		return nil
@@ -130,9 +130,9 @@ func (c *Context) drink(sip bool) error {
 	// Carried first, then the floor — a fountain is drunk from where it
 	// stands, a bottle has to be held.
 	onGround := false
-	vessel := findObject(c.Character.Carrying, arg)
+	vessel := c.findObject(c.Character.Carrying, arg)
 	if vessel == nil {
-		vessel = findObject(c.World.RoomObjects(c.Character.Room), arg)
+		vessel = c.findObject(c.World.RoomObjects(c.Character.Room), arg)
 		onGround = true
 	}
 	if vessel == nil {
@@ -248,7 +248,7 @@ func (c *Context) pour(filling bool) error {
 			c.Send("From what do you want to pour?\r\n")
 			return nil
 		}
-		if from = findObject(c.Character.Carrying, arg1); from == nil {
+		if from = c.findObject(c.Character.Carrying, arg1); from == nil {
 			c.Send("You can't find it!\r\n")
 			return nil
 		}
@@ -261,7 +261,7 @@ func (c *Context) pour(filling bool) error {
 			c.Send("What do you want to fill?  And what are you filling it from?\r\n")
 			return nil
 		}
-		if to = findObject(c.Character.Carrying, arg1); to == nil {
+		if to = c.findObject(c.Character.Carrying, arg1); to == nil {
 			c.Send("You can't find it!\r\n")
 			return nil
 		}
@@ -275,7 +275,7 @@ func (c *Context) pour(filling bool) error {
 		}
 		// Filling is from something standing in the room, and only from a
 		// fountain: you cannot fill a waterskin from a bottle.
-		if from = findObject(c.World.RoomObjects(c.Character.Room), arg2); from == nil {
+		if from = c.findObject(c.World.RoomObjects(c.Character.Room), arg2); from == nil {
 			c.Send("There doesn't seem to be %s %s here.\r\n", article(arg2), arg2)
 			return nil
 		}
@@ -303,7 +303,7 @@ func (c *Context) pour(filling bool) error {
 			emptyDrinkContainer(from)
 			return nil
 		}
-		if to = findObject(c.Character.Carrying, arg2); to == nil {
+		if to = c.findObject(c.Character.Carrying, arg2); to == nil {
 			c.Send("You can't find it!\r\n")
 			return nil
 		}

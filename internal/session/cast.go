@@ -128,17 +128,17 @@ func (c *Context) findSpellTarget(info game.SpellInfo, name string) (*game.Chara
 
 	if name != "" {
 		if info.Targets.Has(game.TargetCharRoom) {
-			if victim := c.World.FindInRoom(c.Character.Room, name); victim != nil {
+			if victim := c.findInRoom(name); victim != nil {
 				return victim, nil, true
 			}
 		}
 		if info.Targets.Has(game.TargetCharWorld) {
-			if victim := c.World.FindAnywhere(name); victim != nil {
+			if victim := c.findAnywhere(name); victim != nil {
 				return victim, nil, true
 			}
 		}
 		if info.Targets.Has(game.TargetObjInv) {
-			if obj := findObject(c.Character.Carrying, name); obj != nil {
+			if obj := c.findObject(c.Character.Carrying, name); obj != nil {
 				return nil, obj, true
 			}
 		}
@@ -150,7 +150,7 @@ func (c *Context) findSpellTarget(info game.SpellInfo, name string) (*game.Chara
 			}
 		}
 		if info.Targets.Has(game.TargetObjRoom) {
-			if obj := findObject(c.World.RoomObjects(c.Character.Room), name); obj != nil {
+			if obj := c.findObject(c.World.RoomObjects(c.Character.Room), name); obj != nil {
 				return nil, obj, true
 			}
 		}
@@ -158,7 +158,7 @@ func (c *Context) findSpellTarget(info game.SpellInfo, name string) (*game.Chara
 			// Anywhere at all, which only locate object asks for — and which
 			// is why locate object can only search by the first keyword of
 			// whatever the search happened to land on first.
-			if obj := findObject(c.World.Objects(), name); obj != nil {
+			if obj := c.findObject(c.World.Objects(), name); obj != nil {
 				return nil, obj, true
 			}
 		}

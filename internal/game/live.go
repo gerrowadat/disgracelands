@@ -390,10 +390,114 @@ func (l *Live) Occupants(room RoomVnum) []*Character { return l.occupants[room] 
 // call serves both — and because isname is a **whole-word** match, `kill dra`
 // does not find a dragon and `kill zo` does not find Zod. This port had it as
 // a prefix match on both halves. See NamesMatch.
-func (l *Live) FindInRoom(room RoomVnum, word string) *Character {
-	for _, c := range l.occupants[room] {
-		if c.NamedBy(word) {
+// It takes the viewer because the C filters on CAN_SEE here as well as on the
+// name, and honours the `2.` prefix, which is what `number` is for.
+func (l *Live) FindInRoom(viewer *Character, room RoomVnum, word string) *Character {
+	s := l.NewSearch(viewer, word)
+	return s.CharIn(l.occupants[room])
+}
+
+// Search is one targeting request: who is looking, what they typed, and which
+// match they asked for.
+//
+// It exists because the C's count is a **pointer** threaded down a chain of
+// searches (`get_obj_vis` hands the same `int *` to the inventory, then the
+// room, then the world — handler.c:1148). So `2.sword` means the second sword
+// across the whole search *order*, not the second in whichever list happens to
+// hold it, and a Search has to be reused across lists to reproduce that.
+type Search struct {
+	world  *Live
+	viewer *Character
+	// Word is what is left of the argument after the `2.` is taken off.
+	Word string
+	// n counts down as matches are found; the match that takes it to zero is
+	// the answer. Zero on entry is not "no matches" — see NewSearch.
+	n int
+}
+
+// NewSearch splits the count off a typed argument and prepares a search.
+//
+// A count of zero is the C's signal that the prefix was not a number, or was
+// literally `0.`. For characters that means "look for a *player* with this
+// name" (handler.c:1068); for objects it means give up. Both are honoured by
+// the methods below rather than here, because the two disagree.
+func (l *Live) NewSearch(viewer *Character, arg string) *Search {
+	n, word := GetNumber(strings.TrimSpace(arg))
+	return &Search{world: l, viewer: viewer, Word: word, n: n}
+}
+
+// Number is the count remaining, for a caller that needs to know whether the
+// argument was `0.something`.
+func (s *Search) Number() int { return s.n }
+
+// CharIn returns the next matching character in a list the viewer can see,
+// counting down. Called more than once, it carries on where it left off.
+func (s *Search) CharIn(list []*Character) *Character {
+	if s.Word == "" {
+		return nil
+	}
+	// `0.name` means a player of that name, wherever they are — the count is
+	// not a count at all in that case.
+	if s.n == 0 {
+		return s.player(list)
+	}
+	for _, c := range list {
+		if !c.NamedBy(s.Word) || !s.sees(c) {
+			continue
+		}
+		s.n--
+		if s.n == 0 {
 			return c
+		}
+	}
+	return nil
+}
+
+// player is get_player_vis: players only, matched on the whole name rather
+// than through isname, and still filtered on CAN_SEE.
+func (s *Search) player(list []*Character) *Character {
+	for _, c := range list {
+		if c.IsNPC() || !strings.EqualFold(c.Name, s.Word) {
+			continue
+		}
+		if s.sees(c) {
+			return c
+		}
+	}
+	return nil
+}
+
+// sees and seesObject apply CAN_SEE, except that a search with **no viewer**
+// sees everything.
+//
+// The C always has one — every *_vis function takes a `ch` — so a nil viewer
+// here means the caller is not a pair of eyes at all: a zone reset looking for
+// the mobile it just made, a test asking what is in a room. Filtering those by
+// nobody's sight would find nothing, which is a silent and very confusing
+// failure. A search that is meant to be filtered always has a viewer.
+func (s *Search) sees(c *Character) bool {
+	return s.viewer == nil || s.world.CanSee(s.viewer, c)
+}
+
+func (s *Search) seesObject(o *Object) bool {
+	return s.viewer == nil || s.world.CanSeeObj(s.viewer, o)
+}
+
+// ObjectIn returns the next matching object in a list the viewer can see.
+//
+// Unlike CharIn, a count of zero finds nothing at all: every object search in
+// the C opens with `if (*number == 0) return (NULL);`.
+func (s *Search) ObjectIn(list []*Object) *Object {
+	if s.Word == "" || s.n == 0 {
+		return nil
+	}
+	for _, o := range list {
+		if !o.Matches(s.Word) || !s.seesObject(o) {
+			continue
+		}
+		s.n--
+		if s.n == 0 {
+			return o
 		}
 	}
 	return nil
@@ -425,18 +529,30 @@ func (l *Live) Find(name string) *Character { return l.byName[strings.ToLower(na
 // finds is not defined — the C walks its character list in creation order and
 // is equally arbitrary about it. Only the spells flagged TAR_CHAR_WORLD reach
 // this: summon, and the two dispels.
-func (l *Live) FindAnywhere(word string) *Character {
-	word = strings.ToLower(strings.TrimSpace(word))
-	if word == "" {
+func (l *Live) FindAnywhere(viewer *Character, word string) *Character {
+	s := l.NewSearch(viewer, word)
+	if s.Word == "" {
 		return nil
 	}
-	// An exact name first, which is the common case and is not subject to
-	// map order.
-	if c := l.byName[word]; c != nil {
+	// The viewer's own room first, as get_char_world_vis does — it calls
+	// get_char_room_vis before walking the world (handler.c:1091), so
+	// somebody standing in front of you wins over a namesake elsewhere.
+	if viewer != nil {
+		if c := s.CharIn(l.occupants[viewer.Room]); c != nil {
+			return c
+		}
+	}
+	// Then an exact name, which is the common case and is not subject to map
+	// order. Filtered like everything else: an invisible player is not found
+	// by name either.
+	if c := l.byName[strings.ToLower(s.Word)]; c != nil && l.CanSee(viewer, c) {
 		return c
 	}
 	for room := range l.occupants {
-		if c := l.FindInRoom(room, word); c != nil {
+		if viewer != nil && room == viewer.Room {
+			continue
+		}
+		if c := s.CharIn(l.occupants[room]); c != nil {
 			return c
 		}
 	}

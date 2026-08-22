@@ -29,7 +29,7 @@ func (c *Context) attack(murder bool) error {
 		return nil
 	}
 
-	victim := c.World.FindInRoom(c.Character.Room, name)
+	victim := c.findInRoom(name)
 	switch {
 	case victim == nil:
 		c.Send("They don't seem to be here.\r\n")
@@ -89,7 +89,7 @@ func doKill(c *Context) error {
 		return nil
 	}
 
-	victim := c.World.FindInRoom(c.Character.Room, name)
+	victim := c.findInRoom(name)
 	if victim == nil {
 		c.Send("They aren't here.\r\n")
 		return nil
@@ -128,7 +128,7 @@ func doAssist(c *Context) error {
 		return nil
 	}
 
-	helpee := c.World.FindInRoom(c.Character.Room, name)
+	helpee := c.findInRoom(name)
 	if helpee == nil {
 		c.Send("No-one by that name here.\r\n")
 		return nil

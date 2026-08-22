@@ -326,19 +326,14 @@ Listed here so they are not mistaken for deliberate differences.
 - **`data/` is the on-disk contract**, decided rather than deviated: both
   servers read the same directory, which is what the world-parity harness and
   the Phase 7 shadow run depend on.
-- **`CAN_SEE` filters what you see, not yet what you can name.** The macro is
-  ported and every *display* site asks it — `act()`'s `$n` and `$p`, the room's
-  list of people and objects, `who`, `where` — so a hidden or invisible
-  character is no longer listed. The *targeting* sites are not: the C's
-  `get_char_room_vis`, `get_char_world_vis` and `get_obj_vis` (handler.c:1053
-  and neighbours) filter on it too, and this port's `FindInRoom`,
-  `FindAnywhere` and object finds take no viewer at all.
-
-  So you cannot see an invisible thief and you can still `kill` them by name.
-  It is the same forty-odd call sites that want `get_number` for `N.thing`
-  targeting, and the two belong together. Both primitives are ported and
-  oracle-checked (`game.GetNumber`, `matchesKeywords`); what is missing is the
-  threading.
+- **`generic_find`'s combined forms are not ported.** `CAN_SEE` and `N.thing`
+  both reach the search functions now, so an invisible thief can neither be
+  seen nor named and `2.sword` picks the second one. What the C keeps in
+  `generic_find` and this port does not is the *bitvector* — one call that
+  searches inventory, equipment, the room and the world in a caller-chosen
+  combination, and reports which of them it found the thing in. Here each
+  command searches the lists it cares about in the order it wants. The
+  behaviour is the same for every command ported so far; the shape is not.
 - **`do_quit`'s own guards are not ported**, though everything after them is:
   quitting saves, crash-saves, tells the room and removes the character. What
   is missing is the front of `do_quit` (act.other.c:99–172) — the
@@ -350,12 +345,6 @@ Listed here so they are not mistaken for deliberate differences.
   otherwise says *"Saving %d items.\r\n"*. Also missing is the line that makes
   a house your load room if you quit inside one — which the port otherwise
   models correctly; see the comment in `Server.Save`.
-- **`N.thing` targeting is not implemented.** `get_number` splits a leading
-  `2.` off any argument and makes the search take the *second* match, in every
-  command that uses `generic_find`. `get 2 sword` (a count) works; `get
-  2.sword` (the second sword) currently reads the whole word as a keyword and
-  finds nothing. It belongs with the rest of `generic_find` rather than in any
-  one command.
 - **Twenty-nine of the C's 318 commands are not implemented**, and the plan's
   §10 "What is not in it" lists every one with its `interpreter.c` line. In
   brief: `remort` and `redeem` (the one slice of Phase 5 still open), the eight

@@ -416,7 +416,7 @@ func doSet(c *Context) error {
 		return nil
 	}
 
-	victim := c.World.FindAnywhere(name)
+	victim := c.findAnywhere(name)
 	switch {
 	case victim == nil:
 		c.Send("There is no such player.\r\n")

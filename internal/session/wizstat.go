@@ -34,7 +34,7 @@ func doStat(c *Context) error {
 		c.statRoom()
 		return nil
 	case isPrefixOf(what, "mob"):
-		if victim := c.World.FindInRoom(c.Character.Room, name); victim != nil {
+		if victim := c.findInRoom(name); victim != nil {
 			c.statCharacter(victim)
 		} else {
 			c.Send("No such monster around.\r\n")
@@ -60,7 +60,7 @@ func doStat(c *Context) error {
 	// looks — equipment, inventory, somebody here, the floor, then the whole
 	// world.
 	target := strings.TrimSpace(c.Arg)
-	if victim := c.World.FindInRoom(c.Character.Room, target); victim != nil {
+	if victim := c.findInRoom(target); victim != nil {
 		c.statCharacter(victim)
 		return nil
 	}
@@ -68,7 +68,7 @@ func doStat(c *Context) error {
 		c.statObject(obj)
 		return nil
 	}
-	if victim := c.World.FindAnywhere(target); victim != nil {
+	if victim := c.findAnywhere(target); victim != nil {
 		c.statCharacter(victim)
 		return nil
 	}

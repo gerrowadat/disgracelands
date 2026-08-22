@@ -354,3 +354,70 @@ func TestAnAbbreviationDoesNotNameAnybody(t *testing.T) {
 	mortal.send("look zod")
 	mortal.expect("You see nothing special about Zod.")
 }
+
+// TestYouCannotTargetWhatYouCannotSee — the other half of CAN_SEE, and the
+// gap `docs/deviations.md` recorded when the display half landed: you could
+// not see an invisible thief and could still `kill` them by name.
+func TestYouCannotTargetWhatYouCannotSee(t *testing.T) {
+	srv, _ := newTestServer(t)
+	addr := listening(t, srv)
+	god, mortal := twoInARoom(t, srv, addr)
+
+	mortal.send("look zod")
+	mortal.expect("You see nothing special about Zod.")
+
+	affect(t, srv, "Zod", game.AffectInvisible)
+	mortal.send("look zod")
+	mortal.expect("You do not see that here.")
+
+	// Detect invisible brings them back within reach.
+	affect(t, srv, "Bystander", game.AffectDetectInvis)
+	mortal.send("look zod")
+	mortal.expectCount("You see nothing special about Zod.", 2)
+
+	_ = god
+}
+
+// TestNThingTargeting is get_number, threaded through the search at last:
+// `2.sword` is the second sword rather than a keyword nobody has.
+func TestNThingTargeting(t *testing.T) {
+	srv, _ := newTestServer(t)
+	c := dialClient(t, listening(t, srv))
+	c.create("Zod", "swordfish", "m", "w")
+
+	if err := srv.engine.DoSync(context.Background(), func(w *game.Live) {
+		ch := w.Find("Zod")
+		for i := 0; i < 3; i++ {
+			w.ObjectToChar(w.NewObject(testSwordVnum), ch)
+		}
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	// All three answer to "sword"; the count picks which.
+	c.send("drop 2.sword")
+	c.expect("You drop a long sword.")
+	c.send("inventory")
+	c.expect("a long sword")
+
+	// Past the end finds nothing rather than the last one.
+	c.send("drop 9.sword")
+	c.expect("You don't seem to have a 9.sword.")
+}
+
+// TestZeroDotMeansAPlayer. get_number returns 0 for a non-numeric prefix and
+// for a literal `0.`, and a character search reads that as "a player of this
+// name" (handler.c:1068) — so `0.zod` finds the player and never a mobile.
+func TestZeroDotMeansAPlayer(t *testing.T) {
+	srv, _ := newTestServer(t)
+	addr := listening(t, srv)
+	_, mortal := twoInARoom(t, srv, addr)
+	spawnDog(t, srv, MortalStartRoom)
+
+	mortal.send("look 0.zod")
+	mortal.expect("You see nothing special about Zod.")
+
+	// A mobile is not a player, so 0. never reaches one.
+	mortal.send("look 0.dog")
+	mortal.expect("You do not see that here.")
+}

@@ -43,7 +43,7 @@ func doSteal(c *Context) error {
 	}
 
 	objName, victName, _ := twoArguments(c.Arg)
-	victim := c.World.FindInRoom(who.Room, victName)
+	victim := c.World.FindInRoom(who, who.Room, victName)
 	switch victim {
 	case nil:
 		c.Send("Steal what from who?\r\n")
@@ -93,7 +93,7 @@ func doSteal(c *Context) error {
 func stealObject(c *Context, victim *game.Character, name string, percent int32) bool {
 	who := c.Character
 
-	obj := findObject(victim.Carrying, name)
+	obj := c.findObject(victim.Carrying, name)
 	if obj == nil {
 		// Not carried — try what they are wearing.
 		worn, slot := findWorn(victim, name)
@@ -187,7 +187,7 @@ func doTrack(c *Context) error {
 		c.Send("Whom are you trying to track?\r\n")
 		return nil
 	}
-	victim := c.World.FindAnywhere(name)
+	victim := c.findAnywhere(name)
 	if victim == nil {
 		c.Send("No one is around by that name.\r\n")
 		return nil

@@ -158,7 +158,7 @@ func purchaseObject(sc *SpecialCall, shop *game.ShopDef, keeper *game.Character,
 		if strings.HasPrefix(name, "#") || isNumber(name) {
 			obj = shopObjectByIndex(sc, shop, keeper, strings.TrimPrefix(name, "#"))
 		} else {
-			obj = findObject(keeper.Carrying, name)
+			obj = sc.World.NewSearch(sc.Actor, name).ObjectIn(keeper.Carrying)
 		}
 		if obj == nil {
 			if complain {
@@ -352,7 +352,7 @@ func shoppingBuy(sc *SpecialCall, shop *game.ShopDef, keeper *game.Character) {
 func sellingObject(sc *SpecialCall, shop *game.ShopDef, keeper *game.Character,
 	name string, complain bool,
 ) *game.Object {
-	obj := findObject(sc.Actor.Carrying, name)
+	obj := sc.World.NewSearch(sc.Actor, name).ObjectIn(sc.Actor.Carrying)
 	if obj == nil {
 		if complain {
 			keeperTells(sc, keeper, "%s", shopMessage(shop, game.MsgNoSuchItem2, sc.Actor.Name))

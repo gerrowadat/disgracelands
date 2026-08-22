@@ -42,7 +42,7 @@ func (c *Context) findTargetRoom(arg string) (game.RoomVnum, bool) {
 			return game.NoRoom, false
 		}
 	} else {
-		switch target := c.World.FindAnywhere(arg); {
+		switch target := c.findAnywhere(arg); {
 		case target != nil:
 			location = target.Room
 		default:
@@ -89,12 +89,7 @@ func (c *Context) findTargetRoom(arg string) (game.RoomVnum, bool) {
 // with several swords about, and the sorting is not worth the cost — noted
 // in docs/deviations.md rather than papered over.
 func (c *Context) findObjectAnywhere(name string) *game.Object {
-	for _, obj := range c.World.Objects() {
-		if obj.Matches(name) {
-			return obj
-		}
-	}
-	return nil
+	return c.findObject(c.World.Objects(), name)
 }
 
 // objectRoom is where an object effectively is: the room it lies in, or the
@@ -215,7 +210,7 @@ func doTransfer(c *Context) error {
 	}
 
 	if !strings.EqualFold(name, "all") {
-		victim := c.World.FindAnywhere(name)
+		victim := c.findAnywhere(name)
 		switch {
 		case victim == nil:
 			c.Send("%s", noPerson)
@@ -265,7 +260,7 @@ func doTeleport(c *Context) error {
 		c.Send("Whom do you wish to teleport?\r\n")
 		return nil
 	}
-	victim := c.World.FindAnywhere(name)
+	victim := c.findAnywhere(name)
 	switch {
 	case victim == nil:
 		c.Send("%s", noPerson)

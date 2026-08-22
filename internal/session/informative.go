@@ -26,7 +26,7 @@ func doConsider(c *Context) error {
 		return nil
 	}
 
-	victim := c.World.FindInRoom(c.Character.Room, c.Arg)
+	victim := c.findInRoom(c.Arg)
 	if victim == nil {
 		c.Send("Consider killing who?\r\n")
 		return nil
@@ -93,7 +93,7 @@ func doExamine(c *Context) error {
 func (c *Context) lookAtTarget(arg string) error {
 	name := strings.TrimSpace(arg)
 
-	if victim := c.World.FindInRoom(c.Character.Room, name); victim != nil {
+	if victim := c.findInRoom(name); victim != nil {
 		return c.lookAtCharacter(victim)
 	}
 	if obj := c.findVisibleObject(name); obj != nil {
@@ -171,10 +171,10 @@ func (c *Context) findVisibleObject(name string) *game.Object {
 			return obj
 		}
 	}
-	if obj := findObject(c.Character.Carrying, name); obj != nil {
+	if obj := c.findObject(c.Character.Carrying, name); obj != nil {
 		return obj
 	}
-	return findObject(c.World.RoomObjects(c.Character.Room), name)
+	return c.findObject(c.World.RoomObjects(c.Character.Room), name)
 }
 
 // showContents lists what is inside a container.
