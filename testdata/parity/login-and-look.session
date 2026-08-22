@@ -1,0 +1,37 @@
+# A first parity script: create a character, look around, walk, and type a few
+# things that have no randomness in them.
+#
+# Deliberately no combat, no shops and no spells — those roll dice, and until
+# the harness seeds both generators identically they would report differences
+# that are not differences. What is here is message wording, which is exactly
+# where reading the C has gone wrong repeatedly.
+#
+# Lines beginning with # are comments. A blank line IS sent: pressing return at
+# the MOTD prompt is a real thing a player does.
+Parityone
+y
+swordfish
+swordfish
+m
+w
+
+1
+look
+north
+look
+south
+inventory
+equipment
+score
+who
+commands
+socials
+time
+weather
+exits
+# Things that should fail, because the failure wording matters just as much.
+get nothing
+kill nobody
+look at nothing
+frobnicate
+quit

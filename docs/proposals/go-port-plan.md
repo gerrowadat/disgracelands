@@ -1417,11 +1417,36 @@ backends, the WipeMud race system (`TODO.md` §2).
 - **Golden-file tests** for command output, matching the C server's text byte
   for byte. *Not built.* The session tests assert the strings inline instead,
   which is the same idea with worse ergonomics and no diff.
-- **A scripted-session harness**: a list of commands in, expected transcript
-  out, run against **both** servers. *Not built*, and it is the missing piece
-  — everything above compares the Go against a reading of the C or against an
-  oracle built by hand. This is what Phase 7's shadow run needs, and building
-  it earlier would have caught the message-wording mistakes sooner.
+- **A scripted-session harness**: a list of commands in, transcript out, run
+  against **both** servers and diffed. *Built* — `scripts/session-parity.sh`,
+  `internal/parity` and `dlctl parity session`. It boots both servers on
+  throwaway copies of `data/` with the same fixed RNG seed, plays a script at
+  each, normalises away the handful of things two servers can never agree on,
+  and diffs.
+
+  **Not in CI yet, on purpose.** Its first run found real differences and they
+  are not all fixed, so wiring it in would mean a permanently red job or a
+  suppression that hides the findings. It runs by hand until the list below is
+  empty.
+
+  What the first run found, in order of size:
+
+  - **The C emits colour and this port emits none.** Every room title, exit
+    line and object description differs by an ANSI escape. That is the
+    unported `color` command and the fact that nothing here writes an escape
+    sequence; `--ignore-colour` silences it so the rest is readable, and it is
+    off by default because hiding the loudest finding inside the harness would
+    defeat the point.
+  - **Blank lines and listing order.** Around a hundred lines differ once
+    colour is set aside: where a blank line falls around the menu and the
+    message of the day, and where a mobile's long description sits relative to
+    the objects in the room.
+  - **The message of the day for a brand-new implementor** — fixed here, see
+    below.
+
+  The C server needed one addition to make this possible: `-S <seed>` fixes
+  the RNG seed, marked `<DoC>` like `-J`, so a session is reproducible. Zero
+  keeps `time(0)` and an ordinary boot is unchanged.
 - **Property tests** on the numeric core — combat damage, experience,
   saving throws — asserting no overflow and no negative-where-impossible
   across the full input range, which is where the 64-bit work either holds

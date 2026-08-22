@@ -288,7 +288,20 @@ func (s *Session) handleQueryClass(ctx context.Context, deps Deps, line string) 
 
 	s.character = character
 	s.state = StateReadMOTD
-	s.Send("\r\n%s\r\n*** PRESS RETURN: ", motdFor(deps, character))
+	// **The mortal message of the day, unconditionally**, even for the first
+	// character on the roster — who `init_char` has just made an implementor.
+	//
+	// The C has two paths and only one of them checks: an existing character
+	// logging in gets `imotd` if they are immortal (interpreter.c:1503), and a
+	// character who has *just been created* gets `motd` whatever their level
+	// (:1603), one line after init_char set it to 34. So the founding
+	// implementor sees the mortal file on the day they are made and the
+	// immortal one every time after.
+	//
+	// Found by the session-parity harness on its first run, which is the sort
+	// of thing it is for: nothing about the code looks wrong, and the two
+	// servers simply said different things.
+	s.Send("\r\n%s\r\n*** PRESS RETURN: ", deps.Text.MOTD())
 	return nil
 }
 

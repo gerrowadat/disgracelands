@@ -54,6 +54,11 @@ var commands = []command{
 		run:     cmdConvert,
 	},
 	{
+		name:    "parity session",
+		summary: "Play a script against both servers and diff what they say",
+		run:     cmdParitySession,
+	},
+	{
 		name:    "world lint",
 		summary: "Check world files for errors (replaces the C tree's scheck, and dlmud -c)",
 		run:     cmdWorldLint,

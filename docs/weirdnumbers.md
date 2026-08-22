@@ -725,6 +725,42 @@ than a million.
 
 ---
 
+## The reference tree itself
+
+### The patched C server cannot boot on the data this repo ships
+
+`boards.c:67-72` declares six bulletin boards, and two of them — 3094
+"suggestion" and 3095 "pkill" — are Disgracelands additions whose *objects*
+only ever existed in the archived world. `data/` here is stock CircleMUD 3.0
+bpl20, which has 3096 to 3099 and no more.
+
+`init_boards` treats a missing board as fatal (boards.c:126), so the C server
+dies the moment an immortal looks at the board room:
+
+    SYSERR: Fatal board error: board vnum 3095 does not exist!
+
+It is not a problem for the world-parity harness, which never boots into the
+game — but the session-parity harness does, so `scripts/session-parity.sh`
+synthesises the two objects into its scratch copy. `data/` itself is untouched.
+
+*Source*: `boards.c:67`, `boards.c:126`.
+
+### A world file out of vnum order is a world file the server cannot read
+
+`real_object` binary-searches `obj_index`, which is built in the order the
+records appear in the file. So a record whose vnum is out of order is loaded,
+counted, and then invisible to every lookup — no error, no warning, just a
+prototype nothing can find.
+
+Discovered the hard way: the two synthetic boards above were first appended to
+the end of `obj/30.obj`, after 3099, and produced exactly the same "does not
+exist" as not adding them at all.
+
+Worth knowing before anybody hand-edits a world file, and worth knowing that
+`dlctl world lint` does not check for it.
+
+*Source*: `db.c`'s `real_object`.
+
 ## Naming things
 
 ### `do_users` hides nobody, because it asks the wrong character

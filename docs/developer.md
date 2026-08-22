@@ -197,6 +197,21 @@ just run, workflow and all, with `make ci` (see below):
   each loader holds. It needs a C toolchain and about a minute, which is why
   it is a separate target. Run it after touching `internal/persist/world/`.
   If it reports a difference, the Go loader is what is wrong.
+- **Session parity** — `scripts/session-parity.sh`. Boots *both* servers on
+  throwaway copies of `data/` with the same fixed RNG seed, plays a script from
+  `testdata/parity/` at each, and diffs what they said. Where they differ, the
+  C server is right.
+
+  Not in CI: its first run found differences that are not all fixed, so it
+  would be a permanently red job. Run it by hand after changing anything a
+  player reads, which is most things. `--ignore-colour` sets aside the one
+  systematic difference — the C emits ANSI and this port does not — so the
+  rest is legible.
+
+  Adding a script is a file of lines to type in `testdata/parity/`. Prefer
+  things with no dice in them: the seed is fixed on both sides but the two
+  servers do not consume the sequence in the same order, so a script that
+  fights something is comparing rolls rather than wording.
 - **The 32-bit codec checks** in `internal/persist/player`, which skip
   silently without `gcc-multilib`. They verify the layout the archived player
   database is actually in — and CI installs that toolchain **only for a change

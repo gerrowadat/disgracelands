@@ -109,6 +109,9 @@ int tics = 0;			/* for extern checkpointing */
 int scheck = 0;			/* for syntax checking mode */
 /* <DoC> */
 const char *dump_world_file = NULL;	/* -J: dump world as JSON and exit	*/
+/* <DoC> -S: fix the RNG seed, for the Go port's session-parity harness.
+ * Zero means "use time(0)", which is what the server has always done.	*/
+unsigned long fixed_random_seed = 0;
 void dump_world_json(FILE *f);		/* worlddump.c				*/
 /* </DoC> */
 struct timeval null_time;	/* zero-valued time structure */
@@ -284,6 +287,16 @@ int main(int argc, char **argv)
 	exit(1);
       }
       break;
+    case 'S':
+      if (*(argv[pos] + 2))
+	fixed_random_seed = strtoul(argv[pos] + 2, NULL, 10);
+      else if (++pos < argc)
+	fixed_random_seed = strtoul(argv[pos], NULL, 10);
+      else {
+	puts("SYSERR: Seed expected after option -S.");
+	exit(1);
+      }
+      break;
     /* </DoC> */
     case 'q':
       no_rent_check = 1;
@@ -308,6 +321,7 @@ int main(int argc, char **argv)
 	      "  -o <file>      Write log to <file> instead of stderr.\n"
               "  -q             Quick boot (doesn't scan rent for object limits)\n"
               "  -r             Restrict MUD -- no new players allowed.\n"
+              "  -S <seed>      Fix the random seed, for the parity harness.\n"
               "  -s             Suppress special procedure assignments.\n",
 		 argv[0]
       );
@@ -403,7 +417,11 @@ void init_game(ush_int port)
   /* We don't want to restart if we crash before we get up. */
   touch(KILLSCRIPT_FILE);
 
-  circle_srandom(time(0));
+  /* <DoC> A fixed seed makes a session reproducible, which is what lets the
+   * Go port's harness diff a transcript against this server's. Zero keeps the
+   * original behaviour, so an ordinary boot is unchanged.			*/
+  circle_srandom(fixed_random_seed ? fixed_random_seed : (unsigned long) time(0));
+  /* </DoC> */
 
   log("Finding player limit.");
   max_players = get_max_players();

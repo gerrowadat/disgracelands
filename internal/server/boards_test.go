@@ -76,12 +76,27 @@ func TestWritingReadingAndRemovingAMessage(t *testing.T) {
 	c.expect("Message 1 : ")
 	c.expect("Hello everybody.")
 
-	// The message survives a reboot: it is on disk the moment it is written.
-	msgs, err := srv.boards.Load(game.Boards[0].File)
-	if err != nil {
-		t.Fatalf("reading the board file: %v", err)
+	// The message survives a reboot: it is on disk shortly after it is
+	// written.
+	//
+	// Polled rather than read straight off. The board is saved by a
+	// *background* write, so `expect` on the read reply says nothing about the
+	// file — it waits for a write to this client's socket and the save is a
+	// different goroutine. And WaitForWrites is not the barrier here: its
+	// WaitGroup Add happens on the world goroutine while the command is still
+	// being processed, which is the "Add concurrent with Wait" pattern
+	// sync.WaitGroup documents as unsafe. TestTwoPostersOnOneBoard below says
+	// the same and polls; this one read immediately and passed locally for
+	// months before a loaded CI runner caught it.
+	var msgs []boards.Message
+	if !eventually(5*time.Second, func() bool {
+		var loadErr error
+		msgs, loadErr = srv.boards.Load(game.Boards[0].File)
+		return loadErr == nil && len(msgs) == 1
+	}) {
+		t.Fatalf("the board file never gained the one post; last read: %+v", msgs)
 	}
-	if len(msgs) != 1 || !strings.Contains(msgs[0].Heading, "a first post") {
+	if !strings.Contains(msgs[0].Heading, "a first post") {
 		t.Errorf("the board file holds %+v, want the one post", msgs)
 	}
 
@@ -91,8 +106,12 @@ func TestWritingReadingAndRemovingAMessage(t *testing.T) {
 	c.send("look board")
 	c.expectCount("The board is empty.", 2)
 
-	// An emptied board leaves no file at all.
-	if _, err := srv.boards.Load(game.Boards[0].File); err == nil {
+	// An emptied board leaves no file at all — once the removal has reached
+	// the disk, polled for the same reason as above.
+	if !eventually(5*time.Second, func() bool {
+		_, loadErr := srv.boards.Load(game.Boards[0].File)
+		return loadErr != nil
+	}) {
 		t.Error("emptying the board left the file behind")
 	}
 }

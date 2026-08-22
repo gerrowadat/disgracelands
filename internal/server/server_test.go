@@ -661,11 +661,23 @@ func TestTheFirstCharacterIsAnImplementor(t *testing.T) {
 	if !strings.Contains(got, "500H 100M 82V > ") {
 		t.Errorf("the prompt is not an Implementor's:\n%s", got)
 	}
-	if !strings.Contains(got, "Immortal news.") {
-		t.Errorf("an Implementor was shown the mortal message of the day:\n%s", got)
+	// The **mortal** message of the day, even though this character is a
+	// level 34 implementor by the time it is sent.
+	//
+	// The C has two paths and only one checks the level: an existing
+	// character logging in gets `imotd` if immortal (interpreter.c:1503), and
+	// one who has just been created gets `motd` whatever their level (:1603),
+	// one line after init_char set it to 34. So the founding implementor sees
+	// the mortal file the day they are made and the immortal one every time
+	// after.
+	//
+	// This test asserted the opposite until the session-parity harness played
+	// the same script against both servers and they disagreed here.
+	if !strings.Contains(got, "Mortal news.") {
+		t.Errorf("a newly created character was not shown the mortal MOTD:\n%s", got)
 	}
-	if strings.Contains(got, "Mortal news.") {
-		t.Errorf("an Implementor was shown the mortal message of the day:\n%s", got)
+	if strings.Contains(got, "Immortal news.") {
+		t.Errorf("a newly created implementor was shown the immortal MOTD; the C sends motd unconditionally at interpreter.c:1603:\n%s", got)
 	}
 
 	rec, err := store.Load(context.Background(), "Zod")
