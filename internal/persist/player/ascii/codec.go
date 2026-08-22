@@ -92,6 +92,17 @@ const (
 	tagRmrt = "Rmrt"
 	tagSkil = "Skil"
 	tagAffs = "Affs"
+	// tagAlis is not part of the public ascii_pfiles 2.1 patch this package
+	// otherwise implements — that format predates the `alias` command
+	// landing in this port (docs/deviations.md, "gaps still to fill") and
+	// has no tag for it. Added here so an alias survives a save on the
+	// server's actual default format, not only under native (which folds
+	// aliases into the same file, §8) — the reference ascii reader logs and
+	// skips a tag it does not recognise (this package's own Decode does the
+	// same for anything it doesn't know), so an older ascii_pfiles reader
+	// meeting a file with this tag degrades to "no aliases" rather than
+	// failing to load the character at all.
+	tagAlis = "Alis"
 )
 
 // savingThrowTag returns the tag for saving throw n (0-based): Thr1..Thr5.
@@ -231,6 +242,14 @@ func Encode(w io.Writer, p *game.PlayerRecord) error {
 			_, _ = fmt.Fprintf(bw, "%d %d %d %d %d\n", a.Type, a.Duration, a.Modifier, a.Location, uint64(a.Bits))
 		}
 		_, _ = fmt.Fprint(bw, "0 0 0 0 0\n")
+	}
+
+	if len(p.Aliases) > 0 {
+		_, _ = fmt.Fprintf(bw, "%s:\n", tagAlis)
+		for _, a := range p.Aliases {
+			_, _ = fmt.Fprintf(bw, "%s\n%s\n", a.Name, a.Replacement)
+		}
+		_, _ = fmt.Fprint(bw, "~\n")
 	}
 
 	return bw.Flush()
@@ -452,6 +471,8 @@ func assign(p *game.PlayerRecord, tag, value string, next func() (string, bool),
 		p.Skills = readSkills(next)
 	case "Affs":
 		p.Affects = readAffects(next)
+	case "Alis":
+		p.Aliases = readAliases(next)
 
 	default:
 		*unknown = append(*unknown, fmt.Sprintf("line %d: unknown tag %q", line, tag))
@@ -502,6 +523,30 @@ func readSkills(next func() (string, bool)) map[int32]int32 {
 		if pct != 0 {
 			skills[num] = pct
 		}
+	}
+}
+
+// readAliases reads name/replacement line pairs, in the order Encode wrote
+// them (newest-first, matching game.PlayerRecord.Aliases' own ordering —
+// see its doc comment), until a lone "~". An alias literally named "~" is
+// the one string this can't round-trip, the same way readTildeBlock's
+// description block can't hold a line that is only "~" — accepted for the
+// same reason: nothing in the real format ever has, and neither has ever
+// come up in practice.
+func readAliases(next func() (string, bool)) []game.Alias {
+	var aliases []game.Alias
+	for {
+		name, ok := next()
+		if !ok || strings.TrimRight(name, "\r") == "~" {
+			return aliases
+		}
+		replacement, ok := next()
+		if !ok {
+			return aliases
+		}
+		aliases = append(aliases, game.Alias{
+			Name: strings.TrimRight(name, "\r"), Replacement: strings.TrimRight(replacement, "\r"),
+		})
 	}
 }
 

@@ -9,11 +9,13 @@ them documented in the same place — with one, and it is a superset of all
 of them: everything they can express, it can express, and it can express
 more.
 
-This started as a proposal; the world half of it (§11 steps 1–3) is now
-built — `internal/persist/world/native/`, registered as `native` alongside
-`classic` in the same `internal/persist/world` registry this document always
-said it would slot into. Players and the rest of the state tree (§11 steps
-5–6) are not; see §11 for what landed and what is still a plan.
+This started as a proposal; the world half (§11 steps 1–3) and the players
+half (§11 step 5) are now built — `internal/persist/world/native/` and
+`internal/persist/player/native/`, registered as `native` alongside
+`classic`/`ascii` in the same `internal/persist/world`/`internal/persist/
+player` registries this document always said they would slot into. The rest
+of the state tree (§11 step 6) is not; see §11 for what landed and what is
+still a plan.
 
 ---
 
@@ -1183,16 +1185,42 @@ one schema where `lib/` has three.
 inventory *is* the rent file. A crash save rewrites the player file. At a
 few kilobytes per player and a few hundred players this is not a
 performance question, and it removes the possibility of a character whose
-pfile and rent file disagree — which is how items get duplicated.
+pfile and rent file disagree — which is how items get duplicated. Because
+this is the one format where `Object instances nest` (above) is not just a
+storage-layer nicety but something the *loader* can act on, it is also the
+one format where an item saved inside a bag comes back inside it —
+`internal/server/rent.go` never actually threw the container tree away at
+runtime, only the round trip through `binary`/`ascii`'s flat rent file did.
+Landed as a deliberate, explicitly scoped deviation (`docs/deviations.md`,
+"Renting empties your bags and strips your body") rather than something
+this section originally anticipated in that much detail — running
+`--player-format=native` is what turns it on; `binary`/`ascii` are
+byte-for-byte unchanged. Stock auto-equip (putting worn items back *on the
+body*) is a separate deviation nobody has approved, so there is no
+`equipment:` section either — see `internal/persist/player/native/doc.go`.
 
 **No `plr_index`.** The roster is built by scanning `players/` at boot and
 held in memory; §3 covers why.
 
-**Credentials are scheme-prefixed**, as `go-port-plan.md` §5.4 already
-decided for `ascii`. A legacy DES hash converts to
-`des-crypt10$<10 chars>` — explicitly named as the truncated ten-character
-form documented in §5.3.1 of that plan, so nothing has to infer it from the
-absence of a prefix.
+**Credentials are scheme-prefixed for anything but the legacy DES hash.**
+`go-port-plan.md` §5.4's actual decision, which this section's own example
+above got slightly ahead of: a bare, unprefixed hash is DES by definition,
+since that is all any format here has ever held and a DES `crypt(3)` hash
+can never contain a colon — nothing has to infer it from a
+`des-crypt10$`-style marker this section once sketched but neither `ascii`
+nor `native` actually writes.
+
+**`aliases:` is a list, not a map.** The example above shows `{name:
+replacement}`; what shipped is `[{name, replacement}]`. Order is meaningful
+— `do_alias` prepends, so a player's own `alias` listing is newest-first —
+and a YAML mapping cannot preserve insertion order the way a sequence does.
+
+**The field set matches what `internal/persist/player/ascii/codec.go`
+actually persists, not this section's own illustrative sketch.** `race:` is
+in the real schema (ascii writes it; the sketch above does not); there is
+no `real_*`/base-values block, because neither `ascii` nor `binary` has
+ever persisted one — a fresh login recomputes the live figures from
+whatever *was* saved, the same as it always has.
 
 ---
 
@@ -1350,19 +1378,22 @@ format-neutral and that is the whole reason it exists.
 | **2. World read ✅** | `native` as a `world.Source` (`internal/persist/world/native/`), plus `dlctl world import` from `classic`, including CP1252→UTF-8 transcoding and ESC → named-code demotion. | `dlctl world import` on the real `data/world` produces zero `dlctl world lint --world-format=native` findings, and `dlmud --world-format=native` boots, populates and serves a connection. |
 | **3. World write ✅ (export not yet)** | `world.Sink` (`WriteZone`), the canonical writer (`text.go`'s `Text`/`NestedText`), `dlctl world fmt`. `dlctl world export` (native → classic) is **not built** — it needs a classic-format *writer*, which does not exist in this tree at all yet (`classic` has only ever been a reader). | `classic → native → classic` round-trips byte-identical at the in-memory/parity-dump level for the whole real world (`native/parity_test.go`, 30 zones / 3,202 records) modulo one documented, reported lossy transform (trailing blank lines beyond one, `text.go`'s `TrimsTrailingBlankLines` — see §12); `fmt` is idempotent, verified against the real corpus. |
 | **4. Flip the default** | `--world-format=native`, `data/` converted in the repo, `classic` demoted to import-only. | Not attempted — a decision about `data/` itself, separate from this code landing. `--world-format=native` is available and works today; `classic` stays the default. |
-| **5. Players** | `native` player store, `dlctl pfile convert --to=native`, aliases and rent folded in. | Not attempted. Needs `PlayerRecord`/`player.Store` restructured to fold rent/equipment/aliases into one file first (§8). |
+| **5. Players ✅** | `native` player store (`internal/persist/player/native/`), implementing both `player.Store` and `player.ObjectStore` against one file (§8); `dlctl pfile import`/`pfile fmt`; the `alias` command (`interpreter.c`'s `do_alias`/`perform_alias`, previously unported — no archived alias data exists anywhere to have ported instead); real container nesting, format-gated on `native` as a user-approved deviation (`docs/deviations.md`). | `dlctl pfile import` converts a `binary` roster (rent files included); `dlmud --player-format=native` boots, and a character created on it, quit and logged back in, keeps a bag's contents *inside* the bag — proven live (`TestRentingUnderNativeKeepsTheRingInTheBag`), not just at the codec level. `PlayerRecord`/`player.Store` needed no restructuring: `ObjectStore` was already a separate interface a format could additionally implement, and `StoredObject` grew one field (`Contains`) rather than being redesigned. |
 | **6. The rest** | Boards, mail, houses, reports, socials, messages, help, game config. | Not attempted. |
 | **7. Retire** | `ascii` and `binary` become `dlctl`-only; `classic` becomes import-only. | Not attempted. |
 
 Steps 1–4 are worth doing before **Phase 6** of `go-port-plan.md`, which is
 where OasisOLC and `Sink` writeback land: OLC writes zone files back, and it
 would be perverse to implement a writer for `classic` and then a second one
-for `native`. That makes Phase 5 — currently in progress — the natural window.
-Steps 5–6 can follow whenever.
+for `native`. That makes Phase 5 — where step 5 has now also landed — the
+natural window. Step 6 can follow whenever.
 
-`classic` is never deleted. It is the parity oracle for as long as the C
-server is authoritative, and it is how the 1,184 dated nightly world
-backups in the archive get read.
+`classic` and `binary` are never deleted. `classic` is the world-format
+parity oracle for as long as the C server is authoritative, and it is how
+the 1,184 dated nightly world backups in the archive get read; `binary` is
+the only format that can read the archived roster and rent files at all,
+and remains the tooling's own path for reading them, even once a server
+is running on `native`.
 
 ---
 
@@ -1468,3 +1499,13 @@ fields) and falls back to a quoted, escaped scalar for anything nested
 deeper that would need one (`NestedText`) — correct everywhere, at the cost
 of losing block-scalar readability for the rare content (four ASCII-art
 signs in the real corpus) that needs it at that depth.
+
+**Alias persistence is not quite everywhere the roster is.** `ascii` and
+`native` both persist `alias`'s definitions (§8); `binary` does not, and
+this is a real, permanent gap rather than a "not yet" — `alias.c`'s
+`plralias/` file format has zero archived instances anywhere in `data/` to
+build a codec against or verify one with, which is exactly the situation
+this codebase's own testing discipline (`CLAUDE.md`, "do not read the C
+and transcribe it") says not to build blind. A character loaded from
+`binary` simply starts with none, the same as before this section's
+step 5 landed at all.

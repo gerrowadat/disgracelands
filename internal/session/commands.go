@@ -160,6 +160,13 @@ func init() {
 		// :238) and therefore what `ba` means.
 		{Name: "backstab", Help: "Stab someone who is not looking.", Run: doBackstab, CLine: 235},
 		{Name: "bash", Help: "Knock someone over.", Run: doBash, CLine: 238},
+		// alias is interpreter.c:226, ahead of at/advance (:224/:225, both
+		// LVL_IMMORT and so invisible to a mortal's own abbreviation
+		// matching) and ahead of assist (:229) too — so a mortal's bare `a`
+		// has always meant alias in the C, not assist. Landing this command
+		// is what makes that abbreviation correct rather than assist quietly
+		// squatting on it for want of anything earlier being implemented.
+		{Name: "alias", Help: "Define or list command aliases: alias, alias <name>, alias <name> <commands>.", Run: doAlias, CLine: 226},
 		// The C has assist at interpreter.c:229, before ask — so `as` is
 		// assist. Nothing ported shares its prefix.
 		{Name: "assist", Help: "Join a fight on somebody's side.", Run: doAssist, CLine: 229},

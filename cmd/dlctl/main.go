@@ -93,6 +93,16 @@ var commands = []command{
 		summary: "Set a character's password (the game itself has no way to)",
 		run:     cmdPfilePasswd,
 	},
+	{
+		name:    "pfile import",
+		summary: "Convert a player roster into native, folding in rent/crash files (docs/proposals/data-format.md)",
+		run:     cmdPfileImport,
+	},
+	{
+		name:    "pfile fmt",
+		summary: "Canonicalise a native player directory in place",
+		run:     cmdPfileFmt,
+	},
 }
 
 func main() {

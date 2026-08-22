@@ -398,7 +398,7 @@ func testWorld() *game.Live {
 }
 
 // newTestServer builds a server on a temporary player directory and starts
-// its engine.
+// its engine, on ascii/binary — the server's real defaults.
 func newTestServer(t *testing.T) (*Server, player.Store) {
 	t.Helper()
 
@@ -415,6 +415,16 @@ func newTestServer(t *testing.T) (*Server, player.Store) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	return newTestServerWith(t, store, objects)
+}
+
+// newTestServerWith is newTestServer's common tail, factored out so a test
+// that needs a different player.Store/player.ObjectStore pair — native's
+// own alias_test.go-style containment test, chiefly — does not have to
+// duplicate the engine/world/board/mail/house/text wiring to get one.
+func newTestServerWith(t *testing.T, store player.Store, objects player.ObjectStore) (*Server, player.Store) {
+	t.Helper()
 
 	// Board files, in their own throwaway directory.
 	boardStore, err := boards.New(filepath.Join(t.TempDir(), "etc"), false)

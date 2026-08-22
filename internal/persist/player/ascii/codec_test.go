@@ -10,6 +10,7 @@
 package ascii
 
 import (
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -181,6 +182,10 @@ func TestRoundTrip(t *testing.T) {
 			{Type: 23, Duration: 12, Modifier: 3, Location: 1, Bits: 1 << 5},
 			{Type: 24, Duration: 6, Modifier: -2, Location: 2},
 		},
+		Aliases: []game.Alias{
+			{Name: "gbb", Replacement: "get bread bag"},
+			{Name: "mm", Replacement: "cast 'magic missile'"},
+		},
 		Conditions:    [3]int32{-1, -1, -1},
 		WimpLevel:     50,
 		FreezeLevel:   34,
@@ -261,6 +266,9 @@ func TestRoundTrip(t *testing.T) {
 		if got.Affects[i] != want.Affects[i] {
 			t.Errorf("affect %d = %+v, want %+v", i, got.Affects[i], want.Affects[i])
 		}
+	}
+	if !reflect.DeepEqual(got.Aliases, want.Aliases) {
+		t.Errorf("aliases = %+v, want %+v", got.Aliases, want.Aliases)
 	}
 }
 

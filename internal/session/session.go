@@ -627,11 +627,19 @@ func (s *Session) readLoop(ctx context.Context, deps Deps) error {
 
 					text := string(line)
 					line = line[:0]
-					if handleErr := s.handle(ctx, deps, text); handleErr != nil {
-						return handleErr
-					}
-					if s.state == StateClosed || s.closed.Load() {
-						return nil
+					// perform_alias (comm.c:803), run once per line actually
+					// read off the socket rather than once per command: a
+					// complex alias expands to several, run here in order,
+					// before anything further is read — the same effect as
+					// the C pushing them to the front of the input queue. See
+					// alias.go's expandAliasedLine.
+					for _, part := range s.expandAliasedLine(text) {
+						if handleErr := s.handle(ctx, deps, part); handleErr != nil {
+							return handleErr
+						}
+						if s.state == StateClosed || s.closed.Load() {
+							return nil
+						}
 					}
 					continue
 				}

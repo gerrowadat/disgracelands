@@ -116,13 +116,14 @@ func (c *Config) WorldPath() string {
 // authoritative list is the registry in internal/persist; until those
 // packages exist, this is the list.
 var (
-	// The server runs on ascii or better. The binary format stays readable
-	// and writable by the tooling — conversion needs both directions — but a
-	// live server will not start on it: its password field is eleven bytes,
-	// so a modern credential cannot be stored at all, and every other field
-	// is fixed-width. See docs/proposals/go-port-plan.md §5.2.
-	knownPlayerFormats  = []string{"ascii", "binary"}
-	serverPlayerFormats = []string{"ascii"}
+	// The server runs on ascii, native, or better. The binary format stays
+	// readable and writable by the tooling — conversion needs both
+	// directions — but a live server will not start on it: its password
+	// field is eleven bytes, so a modern credential cannot be stored at
+	// all, and every other field is fixed-width. See
+	// docs/proposals/go-port-plan.md §5.2.
+	knownPlayerFormats  = []string{"ascii", "binary", "native"}
+	serverPlayerFormats = []string{"ascii", "native"}
 	knownWorldFormats   = []string{"classic", "native"}
 	knownLogFormats     = []string{"text", "json"}
 )

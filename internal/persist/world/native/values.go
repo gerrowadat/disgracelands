@@ -147,11 +147,6 @@ func TypedValues(objType int32, values [game.NumObjValues]int32) (typed any, unu
 	case game.ItemWand, game.ItemStaff:
 		return ChargesValues{
 			Level: values[0], Max: values[1], Remaining: values[2],
-			// Spell is a spells.h number the proposal does not otherwise
-			// name; §4.3's example uses a bare spell identifier, and the
-			// spell-name vocabulary is out of scope for the world format
-			// pass (it belongs with spells.h's table, not this file), so
-			// it round-trips as its raw number rendered as a string.
 			Spell: formatSpellNumber(values[3]),
 		}, false, true
 	}
@@ -243,20 +238,10 @@ func parseDice(s string) (num, size int32, ok bool) {
 	return int32(n), int32(sz), true //nolint:gosec // world-data-scale dice values
 }
 
-func parseSpellNumber(s string) (int32, bool) {
-	if len(s) < 2 || s[0] != '#' {
-		return 0, false
-	}
-	n, err := strconv.Atoi(s[1:])
-	if err != nil {
-		return 0, false
-	}
-	return int32(n), true //nolint:gosec // spell numbers are small
-}
-
-func formatSpellNumber(n int32) string {
-	// A placeholder until the spell-name table lands (out of scope here,
-	// see TypedValues' ChargesValues comment): the raw number, so nothing
-	// is lost and dlctl world lint can flag it as unnamed.
-	return "#" + strconv.Itoa(int(n))
-}
+// parseSpellNumber and formatSpellNumber are game.SpellNumberFromNameOrNumber
+// and game.SpellNameOrNumber under this file's own naming — kept as thin
+// wrappers rather than replaced at every call site, and shared (not
+// duplicated) with internal/persist/player/native, which needs exactly the
+// same name<->number rule for a player's skills.
+func parseSpellNumber(s string) (int32, bool) { return game.SpellNumberFromNameOrNumber(s) }
+func formatSpellNumber(n int32) string        { return game.SpellNameOrNumber(n) }

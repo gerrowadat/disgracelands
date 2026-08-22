@@ -420,6 +420,33 @@ and less interesting than the playerfile but they're the reason a
 "just swap the playerfile" plan doesn't actually let you move a MUD
 anywhere — all of it has to move together.
 
+### 5.7 `native` — a second `Store`/`ObjectStore`, landed during Phase 5
+
+`docs/proposals/data-format.md` §8's "one player, one file" is now built:
+`native` (`internal/persist/player/native/`) is a second registered
+`player.Store`, and also a `player.ObjectStore` — folding §5.6's `plrobjs`
+into the same file as the roster rather than needing a second interface
+implementation, since `ObjectStore` was already separate from `Store` and
+nothing about either needed to change shape to let one type serve both.
+`--player-format=native` boots the server (`cmd/dlmud/main.go` picks the
+opened `Store` as the `ObjectStore` too when it satisfies that interface,
+falling back to `binary` — §5.6's still-not-pluggable rent files —
+otherwise), and `dlctl pfile import`/`fmt` convert and canonicalise it.
+`ascii` stays the default.
+
+Landing this also closed two real gaps rather than only adding a format:
+the `alias` command (§10's "what is not in it" list, `do_alias`/
+`perform_alias`, `interpreter.c:693-845`) had never been ported at all —
+there is no archived `plralias` data anywhere to have ported instead, so
+this is new functionality riding the format rather than data recovered by
+it — and rent/crash files stop discarding containment when running on
+`native`, a deliberate, explicitly-scoped deviation
+(`docs/deviations.md`, "Renting empties your bags and strips your body")
+rather than a side effect of the format landing: `binary`/`ascii` are
+unchanged, byte for byte, and a test proves it stays that way. See
+`data-format.md`'s §11 table and its updated §8/§12 for exactly what
+shipped against what that section originally sketched.
+
 ---
 
 ## 6. Pluggable world format

@@ -45,6 +45,7 @@ import (
 
 	// Register the formats the server can be configured to use.
 	_ "github.com/gerrowadat/disgracelands/internal/persist/player/ascii"
+	_ "github.com/gerrowadat/disgracelands/internal/persist/player/native"
 	_ "github.com/gerrowadat/disgracelands/internal/persist/world/classic"
 	_ "github.com/gerrowadat/disgracelands/internal/persist/world/native"
 )
@@ -170,13 +171,20 @@ func run(args []string) error {
 	}
 	defer func() { _ = players.Close() }()
 
-	// The rent files are not pluggable the way the roster is. The C has one
-	// format for them and the ascii roster is this port's own addition, so
-	// there is nothing to choose between: `plrobjs/` is read and written in
-	// the layout the archived files are in, whatever the roster is kept as.
-	objects, err := binary.NewObjectStore(player.Config{Dir: cfg.PlayerPath()})
-	if err != nil {
-		return err
+	// The rent files are not pluggable the way the roster is, with one
+	// exception: native folds them into the same file as the roster
+	// (docs/proposals/data-format.md §8, "one player, one file"), so a
+	// Store that is also an ObjectStore serves both — there is no separate
+	// plrobjs/ to point a second store at. Every other format still uses
+	// `plrobjs/` in the layout the archived files are in, whatever the
+	// roster is kept as, since the C has one format for them and ascii's
+	// own roster format is this port's own addition.
+	objects, ok := players.(player.ObjectStore)
+	if !ok {
+		objects, err = binary.NewObjectStore(player.Config{Dir: cfg.PlayerPath()})
+		if err != nil {
+			return err
+		}
 	}
 
 	// The bulletin boards, beside the player data in the etc directory.

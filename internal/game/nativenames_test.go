@@ -23,6 +23,8 @@ func TestNativeBitTablesMatchDisplayTables(t *testing.T) {
 		{"affect flags", affectBitNames, nativeAffectFlagNames},
 		{"item extra flags", extraBitNames, nativeItemExtraFlagNames},
 		{"wear flags", wearBitNames, nativeWearFlagNames},
+		{"player flags", playerBitNames, nativePlayerFlagNames},
+		{"preferences", preferenceBitNames, nativePreferenceNames},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -133,5 +135,32 @@ func TestNameByValueAndValueByName(t *testing.T) {
 	}
 	if _, ok := ValueByName("nope", table); ok {
 		t.Fatal("ValueByName(nope) should fail")
+	}
+}
+
+// ClassNames is a map, not a slice like every other display table here, so
+// it gets its own test rather than fitting the []string-shaped cases above.
+// Also checks that nativeClassNames' index-N entry is class N's remort-vector
+// bit name, per classRemortMasks (create.go): class N always sets bit N.
+func TestNativeClassNamesMatchDisplayTable(t *testing.T) {
+	if len(nativeClassNames) != len(ClassNames) {
+		t.Fatalf("nativeClassNames has %d entries, ClassNames has %d", len(nativeClassNames), len(ClassNames))
+	}
+	for class, display := range ClassNames {
+		if class < 0 || int(class) >= len(nativeClassNames) {
+			t.Fatalf("class %d (%q) is out of nativeClassNames' range", class, display)
+		}
+		if nativeClassNames[class] == "" {
+			t.Errorf("class %d (%q) has no native identifier", class, display)
+		}
+		mask, ok := classRemortMasks[class]
+		if !ok {
+			t.Fatalf("class %d (%q) has no entry in classRemortMasks", class, display)
+		}
+		if mask != 1<<uint(class) {
+			t.Fatalf("class %d (%q): classRemortMasks = %d, want bit %d -- "+
+				"nativeClassNames can no longer double as the remort-vector name table",
+				class, display, mask, class)
+		}
 	}
 }

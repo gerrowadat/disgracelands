@@ -138,6 +138,40 @@ var nativeLiquidNames = []string{
 	"coffee", "blood", "salt_water", "clear_water",
 }
 
+// nativePlayerFlagNames match playerBitNames bit for bit — the PLR_* flags
+// a player record's `flags.act:` list uses. PlayerBanned (bit 17) has no
+// name here because it has none in playerBitNames either: it is a local
+// addition that was never given a slot in the C's own player_bits[]
+// (bitnames.go's comment on it), so SprintBit already renders it
+// "UNDEFINED" today — the native format leaves it exactly as unnamed as the
+// C does, rather than inventing the identifier the original source never
+// had. It still round-trips, via flags_raw.
+var nativePlayerFlagNames = []string{
+	"killer", "thief", "frozen", "dont_set", "writing", "mailing",
+	"crash_save", "siteok", "no_shout", "no_title", "deleted", "load_room",
+	"no_wizlist", "no_delete", "invis_start", "cryo", "not_dead_yet",
+}
+
+// nativePreferenceNames match preferenceBitNames bit for bit — a player's
+// `flags.prefs:` list. PrefClearScreen (bit 22, OasisOLC's own addition) is
+// unnamed for the same reason PlayerBanned is above.
+var nativePreferenceNames = []string{
+	"brief", "compact", "deaf", "no_tell", "display_hp", "display_mana",
+	"display_move", "autoexit", "no_hassle", "quest", "summonable",
+	"no_repeat", "holylight", "color_1", "color_2", "no_wiz", "log_1",
+	"log_2", "no_auction", "no_gossip", "no_grats", "room_flags",
+}
+
+// nativeClassNames match ClassNames value for value (ClassMagicUser through
+// ClassPaladin) — a player's `identity.class:` field. The same table also
+// names RemortVector's bits: classRemortMasks (create.go) assigns class N
+// bit 1<<N, so a class name at index N is simultaneously its remort-vector
+// bit's name, and `identity.remort:` reads through NameBits/ParseBitNames
+// against this table rather than a second one.
+var nativeClassNames = []string{
+	"magic_user", "cleric", "thief", "warrior", "paladin",
+}
+
 // nativeShopFlagNames match shopstate.go's ShopWillFight/ShopUsesBank.
 var nativeShopFlagNames = []string{"will_fight", "uses_bank"}
 
@@ -167,3 +201,6 @@ func NativeAttackTypeNames() []string    { return nativeAttackTypeNames }
 func NativeLiquidNames() []string        { return nativeLiquidNames }
 func NativeShopFlagNames() []string      { return nativeShopFlagNames }
 func NativeShopTradeNames() []string     { return nativeShopTradeNames }
+func NativePlayerFlagNames() []string    { return nativePlayerFlagNames }
+func NativePreferenceNames() []string    { return nativePreferenceNames }
+func NativeClassNames() []string         { return nativeClassNames }

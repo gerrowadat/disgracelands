@@ -6,7 +6,10 @@
 
 package game
 
-import "strings"
+import (
+	"strconv"
+	"strings"
+)
 
 // The spell table, ported from mag_assign_spells (spell_parser.c) and
 // init_spell_levels (class.c).
@@ -116,6 +119,36 @@ func SpellNumberByName(name string) (int32, bool) {
 		return 0, false
 	}
 	return best, true
+}
+
+// SpellNameOrNumber names a spell/skill number via SpellName, or formats it
+// as "#N" when the table does not cover it — a placeholder the native data
+// format's writers (world and player) can round-trip losslessly for a
+// number nothing names, while still preferring a real name whenever one
+// exists. Shared here rather than duplicated per package, since both need
+// exactly the same rule: a wand's charge spell and a player's learned
+// skill are both just a spellTable number underneath.
+func SpellNameOrNumber(n int32) string {
+	if name := SpellName(n); name != "!UNUSED!" {
+		return name
+	}
+	return "#" + strconv.Itoa(int(n))
+}
+
+// SpellNumberFromNameOrNumber is SpellNameOrNumber's inverse: a name is
+// looked up via SpellNumberByName, which matches an exact name outright
+// before it ever falls back to a prefix — so a name SpellNameOrNumber
+// produced is always matched exactly, never by coincidental abbreviation
+// against some other entry sharing a prefix. "#N" parses back to N.
+func SpellNumberFromNameOrNumber(s string) (int32, bool) {
+	if rest, ok := strings.CutPrefix(s, "#"); ok {
+		n, err := strconv.Atoi(rest)
+		if err != nil {
+			return 0, false
+		}
+		return int32(n), true //nolint:gosec // spell numbers are small
+	}
+	return SpellNumberByName(s)
 }
 
 // MinLevelFor is the level a class learns a spell at, or LevelImmortal if it

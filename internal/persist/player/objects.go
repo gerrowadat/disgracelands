@@ -110,6 +110,51 @@ type StoredObject struct {
 	// Affects are the apply slots. Exactly MaxObjAffect of them are stored,
 	// including the empty ones.
 	Affects []game.ObjAffect
+
+	// Contains is what this object had inside it, when the format writing
+	// the file can represent that.
+	//
+	// The C's own rent/crash file cannot: with USE_AUTOEQ 0, struct
+	// obj_file_elem has no `location` member, so Crash_save flattens every
+	// container before writing (objsave.c) and everything comes back loose
+	// — see docs/deviations.md. binary and ascii reproduce that on-disk
+	// shape exactly and this field is always nil for both: their SaveObjects
+	// flattens depth-first the way Crash_save always has, and their
+	// LoadObjects has nothing on disk to populate it from. Only native's
+	// codec, and internal/server/rent.go's tree-building/restoring, ever
+	// set or read this — running --player-format=native is what turns real
+	// containment on, as a deliberate, format-gated deviation rather than a
+	// change to what ascii/binary have always done.
+	Contains []StoredObject
+}
+
+// FlattenStoredObjects reproduces the C's own on-disk shape for a format
+// that has nowhere to record containment (StoredObject.Contains' doc
+// comment explains why): every object in objs, and everything inside it,
+// depth-first with contents before their container — the exact order
+// internal/server/rent.go's storedTreeFrom/rentableTreeFrom build the tree
+// in, and the exact order objsave.c's own recursion has always written
+// (Obj_to_store, objsave.c:99, called from Crash_save's contents-then-self
+// walk at objsave.c:640) — so flattening here undoes only the nesting, not
+// the sequence, and a binary or ascii rent file this produces is
+// byte-identical to what this port wrote before Contains existed. Every
+// element of the result has Contains cleared to nil: there is nowhere on
+// disk for a flat format to put it, so nothing downstream needs to notice
+// it was ever there.
+func FlattenStoredObjects(objs []StoredObject) []StoredObject {
+	var out []StoredObject
+	for _, obj := range objs {
+		out = flattenStoredObject(out, obj)
+	}
+	return out
+}
+
+func flattenStoredObject(out []StoredObject, obj StoredObject) []StoredObject {
+	for _, inner := range obj.Contains {
+		out = flattenStoredObject(out, inner)
+	}
+	obj.Contains = nil
+	return append(out, obj)
 }
 
 // ObjectStore reads and writes rent files.

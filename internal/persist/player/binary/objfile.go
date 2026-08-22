@@ -329,7 +329,14 @@ func (s *ObjectStore) SaveObjects(_ context.Context, name string, f *player.Rent
 	if err != nil {
 		return err
 	}
-	b, err := s.codec.encode(f)
+	// struct obj_file_elem has no location member (USE_AUTOEQ is 0 — see
+	// newObjCodec above), so nothing on disk can say what was inside what.
+	// A copy is flattened for encoding rather than f itself, since f is the
+	// caller's and this is the only format that needs to throw the shape
+	// away — player.FlattenStoredObjects.
+	flat := *f
+	flat.Objects = player.FlattenStoredObjects(f.Objects)
+	b, err := s.codec.encode(&flat)
 	if err != nil {
 		return fmt.Errorf("writing %s's rent file: %w", name, err)
 	}

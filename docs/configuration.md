@@ -37,10 +37,44 @@ files edited in-game. Back it up; mount it as a volume in a container.
 
 | Flag | Default | Values |
 |---|---|---|
-| `--player-format` | `ascii` | `ascii` |
+| `--player-format` | `ascii` | `ascii`, `native` |
 | `--world-format` | `classic` | `classic`, `native` |
 
-`ascii` is the ascii_pfiles 2.1 one-text-file-per-player format.
+`ascii` is the ascii_pfiles 2.1 one-text-file-per-player format. `classic`
+is the original CircleMUD `.wld`/`.mob`/`.obj`/`.zon`/`.shp` flat-file world.
+Both are what the archived `data/` is kept in, and both remain the default
+so pointing the server at it needs no conversion step.
+
+`native` is the YAML-over-JSON format `docs/proposals/data-format.md`
+describes — for the world, one file per zone; for players, one file per
+character, folding in the roster entry and the rent/crash file both (§8) —
+read and written directly by the server, no conversion step needed to run
+on it once converted. `--player-format=native` is also what turns on real
+container nesting (an item saved inside a bag comes back inside it): every
+other player format's on-disk shape has nowhere to record that, a
+deliberate, documented deviation — see `docs/deviations.md`, "Renting
+empties your bags and strips your body".
+
+Convert an existing world directory once:
+
+```sh
+dlctl world import --from-dir=data/world --to-dir=data/world
+```
+
+Convert an existing roster once, into `ascii`:
+
+```sh
+dlctl pfile convert --from=binary --from-dir=data/etc \
+                    --to=ascii    --to-dir=data/pfiles
+```
+
+— or into `native`, which also carries over any rent/crash file (read via
+`binary`, since rent files are not pluggable the way the roster is — one
+format for them regardless of `--player-format`, matching the C):
+
+```sh
+dlctl pfile import --from-dir=data/etc --to-dir=data/players
+```
 
 **The server will not start on `--player-format=binary`**, and says so with
 the conversion command in the error. The binary format is the original
@@ -50,24 +84,6 @@ in it is fixed-width. It remains fully readable and writable by `dlctl`,
 because conversion needs both directions; it is simply not something a live
 server should be stuck behind. See
 `docs/proposals/go-port-plan.md` §5.2.
-
-Convert an existing roster once:
-
-`native` is the YAML-over-JSON format `docs/proposals/data-format.md`
-describes — one file per zone, read and written directly by the server, no
-conversion step needed to run on it. Convert an existing `classic` world
-directory once:
-
-```sh
-dlctl world import --from-dir=data/world --to-dir=data/world
-```
-
-Convert an existing roster once:
-
-```sh
-dlctl pfile convert --from=binary --from-dir=data/etc \
-                    --to=ascii    --to-dir=data/pfiles
-```
 
 See `docs/investigations/ascii-pfile-format.md` for what the ascii format
 contains, and `docs/proposals/go-port-plan.md` §5 for why formats are

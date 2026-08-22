@@ -104,23 +104,42 @@ func (s *Server) loadObjects(ctx context.Context, c *game.Character) (lost bool,
 
 // restoreObjects turns stored records back into objects in somebody's hands.
 //
-// Everything lands loose in inventory. That is not a simplification: with
-// USE_AUTOEQ 0 the file has no location field, so the C cannot put anything
-// back on your body or into your bags either. See the note in objfile.go.
+// For binary and ascii, everything lands loose in inventory regardless of
+// what was recorded — not a simplification, but the C's own behaviour: with
+// USE_AUTOEQ 0 the file has no location field, so Crash_load cannot put
+// anything back on your body or into your bags either (see the note in
+// objfile.go). A RentFile those formats produced always has Contains nil at
+// every StoredObject, which is exactly the input that makes restoreOneObject
+// behave that way — it does not need to know which format loaded the file.
+// native is the only format that ever populates Contains (see
+// player.StoredObject's doc comment), and running --player-format=native is
+// what turns real containment on: an item whose record has Contains restores
+// *inside* the container rebuilt for it, rather than loose.
 //
-// The file is walked backwards because the C's obj_to_char prepends and this
-// port's appends. Same order out either way, and the file stays readable by
-// the C server.
+// The file is walked backwards at the top level because the C's obj_to_char
+// prepends and this port's appends. Same order out either way, and the file
+// stays readable by the C server.
 func restoreObjects(w *game.Live, c *game.Character, stored []player.StoredObject) {
 	for i := len(stored) - 1; i >= 0; i-- {
-		st := stored[i]
-		obj := w.NewObject(st.Vnum)
-		if obj == nil {
-			// read_object returning NULL: the prototype has been deleted from
-			// the world since the file was written. The C skips it silently
-			// and so does this, because there is nothing to make.
-			continue
-		}
+		restoreOneObject(w, c, nil, stored[i])
+	}
+}
+
+// restoreOneObject creates one object from its stored record and places it
+// either inside container (when non-nil) or loose in c's inventory, then
+// recurses into whatever was recorded as being inside it, in the same
+// backwards order the top level uses.
+//
+// A vanished prototype (read_object returning NULL, objsave.c) drops the
+// item itself, matching the C — but not whatever was stored inside it:
+// those still come back, loose in inventory rather than disappearing along
+// with a container that no longer exists. There is no C behaviour to match
+// here (a flat rent file never had this situation to begin with — nothing
+// was ever "inside" anything on disk), so this is the deliberately safer
+// of the two readings, not a faithfulness question.
+func restoreOneObject(w *game.Live, c *game.Character, container *game.Object, st player.StoredObject) {
+	obj := w.NewObject(st.Vnum)
+	if obj != nil {
 		// Only the fields the file stores are overwritten. Everything else —
 		// the name, the descriptions, the wear flags, the cost — comes from
 		// the prototype, which is why editing a zone file changes items
@@ -131,7 +150,14 @@ func restoreObjects(w *game.Live, c *game.Character, stored []player.StoredObjec
 		obj.Timer = st.Timer
 		obj.PermAffect = st.PermAffect
 		obj.Affects = append([]game.ObjAffect(nil), st.Affects...)
-		w.ObjectToChar(obj, c)
+		if container != nil {
+			w.ObjectToObject(obj, container)
+		} else {
+			w.ObjectToChar(obj, c)
+		}
+	}
+	for i := len(st.Contains) - 1; i >= 0; i-- {
+		restoreOneObject(w, c, obj, st.Contains[i])
 	}
 }
 
@@ -150,12 +176,17 @@ func (s *Server) crashSave(ctx context.Context, c *game.Character) error {
 	if err := s.engine.DoSync(ctx, func(_ *game.Live) {
 		f.Gold, f.Bank = c.Record.Points.Gold, c.Record.Points.BankGold
 		// Equipment first, in wear-position order, then inventory — the order
-		// Crash_crashsave writes them in.
+		// Crash_crashsave writes them in. Each entry is the full nested tree
+		// of what it contains (storedTreeFrom); a format that cannot record
+		// that flattens it back out itself before writing — see
+		// player.FlattenStoredObjects and player.StoredObject.Contains.
 		for _, worn := range c.Equipment {
-			f.Objects = appendForStorage(f.Objects, worn)
+			if worn != nil {
+				f.Objects = append(f.Objects, storedTreeFrom(worn))
+			}
 		}
 		for i := len(c.Carrying) - 1; i >= 0; i-- {
-			f.Objects = appendForStorage(f.Objects, c.Carrying[i])
+			f.Objects = append(f.Objects, storedTreeFrom(c.Carrying[i]))
 		}
 	}); err != nil {
 		return err
@@ -170,20 +201,20 @@ func (s *Server) crashSave(ctx context.Context, c *game.Character) error {
 	return s.objects.SaveObjects(ctx, c.Name, f)
 }
 
-// appendForStorage flattens one object and anything inside it, in the order
-// Crash_save's recursion produces: the rest of the list, then the contents,
-// then the object itself (objsave.c:640).
-//
-// Contents come out *before* their container, and on the way back in they are
-// no longer inside it — the file cannot say that they were.
-func appendForStorage(out []player.StoredObject, obj *game.Object) []player.StoredObject {
-	if obj == nil {
-		return out
-	}
+// storedTreeFrom builds the full nested StoredObject tree for obj and
+// everything inside it — Obj_to_store (objsave.c:99) plus, unlike the C, an
+// actual place to record what was inside what (player.StoredObject.Contains).
+// Contents are visited in the same order Crash_save's own recursion always
+// has (objsave.c:640: the rest of the list, then the contents, then the
+// object itself) so that a format with nowhere to put Contains can flatten
+// this tree back out — player.FlattenStoredObjects — and get byte-identical
+// output to what this port has always written.
+func storedTreeFrom(obj *game.Object) player.StoredObject {
+	st := storedFrom(obj)
 	for i := len(obj.Contents) - 1; i >= 0; i-- {
-		out = appendForStorage(out, obj.Contents[i])
+		st.Contains = append(st.Contains, storedTreeFrom(obj.Contents[i]))
 	}
-	return append(out, storedFrom(obj))
+	return st
 }
 
 // storedFrom is Obj_to_store (objsave.c:99).
@@ -254,10 +285,10 @@ func (s *Server) RentCharacter(w *game.Live, c *game.Character, mode session.Ren
 	// already refused the whole transaction if there was one, so this only
 	// matters for a rent forced by something other than the desk.
 	for _, worn := range c.Equipment {
-		f.Objects = appendRentable(f.Objects, worn)
+		f.Objects = append(f.Objects, rentableTreeFrom(worn)...)
 	}
 	for i := len(c.Carrying) - 1; i >= 0; i-- {
-		f.Objects = appendRentable(f.Objects, c.Carrying[i])
+		f.Objects = append(f.Objects, rentableTreeFrom(c.Carrying[i])...)
 	}
 
 	// Everything is destroyed: Crash_rentsave ends with Crash_extract_objs.
@@ -307,19 +338,28 @@ func (s *Server) RentCharacter(w *game.Live, c *game.Character, mode session.Ren
 	})
 }
 
-// appendRentable is appendForStorage with the unrentables dropped, which is
-// what Crash_extract_norents leaves behind.
-func appendRentable(out []player.StoredObject, obj *game.Object) []player.StoredObject {
+// rentableTreeFrom is storedTreeFrom with the unrentables dropped, which is
+// what Crash_extract_norents leaves behind. An unrentable *container*'s own
+// rentable contents still come along — the old flat appendRentable already
+// appended contents to the list before it ever checked whether the
+// container itself was rentable, so an unrentable bag never took its
+// contents down with it; the tree shape preserves that by promoting the
+// contents to whatever level the container would have occupied, rather
+// than returning them nested inside a container that is not being kept.
+func rentableTreeFrom(obj *game.Object) []player.StoredObject {
 	if obj == nil {
-		return out
+		return nil
 	}
+	var contents []player.StoredObject
 	for i := len(obj.Contents) - 1; i >= 0; i-- {
-		out = appendRentable(out, obj.Contents[i])
+		contents = append(contents, rentableTreeFrom(obj.Contents[i])...)
 	}
 	if game.IsUnrentable(obj) {
-		return out
+		return contents
 	}
-	return append(out, storedFrom(obj))
+	st := storedFrom(obj)
+	st.Contains = contents
+	return []player.StoredObject{st}
 }
 
 // crashSaveAll is Crash_save_all (objsave.c:1163), run on shutdown.

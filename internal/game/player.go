@@ -126,6 +126,16 @@ type PlayerRecord struct {
 	// Affects are the spells currently on the character.
 	Affects []Affect
 
+	// Aliases are the character's own `alias` command definitions
+	// (interpreter.c's alias_data, do_alias). Ordered newest-first, matching
+	// GET_ALIASES' prepend-on-add (interpreter.c:743) — `alias` with no
+	// arguments lists them in that order, and a name can legitimately be
+	// redefined, so which entry a lookup finds is meaningful. NPCs never
+	// have any: IS_NPC(ch) returns before do_alias or perform_alias touch
+	// GET_ALIASES at all (interpreter.c:699, :818), so this is nil for a
+	// mobile's record rather than merely unused.
+	Aliases []Alias
+
 	// Conditions are drunk, full and thirsty, in that order. -1 means the
 	// condition does not apply, which is how immortals are stored.
 	Conditions [3]int32
@@ -212,6 +222,22 @@ type Affect struct {
 	Location int32
 	// Bits are the AFF_* flags the affect sets while it lasts.
 	Bits Flags
+}
+
+// Alias is one `alias` command definition — interpreter.c's alias_data,
+// minus the a->type (ALIAS_SIMPLE/ALIAS_COMPLEX) field, which is not stored
+// state: it is recomputed from Replacement's content every time (whether it
+// contains ';' or '$'), the same way the C derives it at alias-creation time
+// (interpreter.c:735-738) rather than keeping it as an independent fact that
+// could disagree with the string it describes.
+type Alias struct {
+	// Name is the word that triggers the alias — what do_alias calls "arg".
+	Name string
+	// Replacement is the substituted text: a plain command for a simple
+	// alias, or a template using ';' to separate multiple commands and
+	// '$1'-'$9'/'$*' for positional/whole-line substitution for a complex
+	// one. See internal/session's alias expansion.
+	Replacement string
 }
 
 // LegacySpares holds the reserved slots in the binary format. They exist so

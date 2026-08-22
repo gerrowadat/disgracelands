@@ -343,12 +343,25 @@ Listed here so they are not mistaken for deliberate differences.
   combination, and reports which of them it found the thing in. Here each
   command searches the lists it cares about in the order it wants. The
   behaviour is the same for every command ported so far; the shape is not.
-- **Twenty-five of the C's 318 commands are not implemented**, and the plan's
+- **Twenty-four of the C's 318 commands are not implemented**, and the plan's
   §10 "What is not in it" lists every one with its `interpreter.c` line. In
   brief: the eight OasisOLC and `tedit` editors (Phase 6), `bug`/`idea`/`typo`,
   the aliases `:` and `take`, and a short tail of `users`, `wizhelp`,
-  `skillset`, `reload`, `qecho`, `page`, `color`, `insult`, `hop` and
-  `alias`.
+  `skillset`, `reload`, `qecho`, `page`, `color`, `insult` and `hop`. `alias`
+  is off this list now — landed with the native player format (step 5 of
+  `docs/proposals/data-format.md`), including `perform_alias`'s complex
+  substitution grammar (`;`/`$1`-`$9`/`$*`/`$$`).
+
+  Its persistence is not quite everywhere the roster is, though: an
+  alias survives a save under `ascii` (it grew an `Aliases:`-tagged section
+  for exactly this) and `native` (folded into the one file, §8), but
+  **`binary` has no `plralias`-equivalent codec at all** — `alias.c`'s
+  format is a separate file the C keeps regardless of pfile format, and
+  zero archived instances of it exist anywhere in `data/` to build or
+  verify one against. Building a format with no corpus behind it is what
+  the "do not read the C and transcribe it" testing discipline warns off,
+  so it was not attempted; a character loaded from `binary` simply starts
+  with no aliases.
 
   Two of `do_gen_tog`'s seventeen are among them, and both for the same
   reason: `slowns` and `trackthru` flip a server-wide **global** rather than a
@@ -360,12 +373,12 @@ Listed here so they are not mistaken for deliberate differences.
   applies to. `slowns` additionally has nothing behind it: this port does no
   reverse DNS to slow down.
 
-  Two are worth calling out here rather than leaving in a list. **`alias`** is
-  the only one with a persistence format behind it — `alias.c` and the
-  `plralias/` directory — so it is more than an afternoon. **`color`** cannot
-  usefully be written yet: the `PRF_COLOR` bits are stored and `set color`
-  works, but nothing in the port emits colour, so the command would have
-  nothing to switch.
+  One is worth calling out here rather than leaving in the list.
+  **`color`** cannot usefully be written yet: the `PRF_COLOR` bits are
+  stored and `set color` works, but nothing in a live session emits colour
+  — `internal/game/colour.go`'s `{{...}}` engine (data-format.md §5) is
+  data-format machinery for the world/player files, not something a
+  session renders with yet — so the command would have nothing to switch.
 
 - **`syslog` sets a preference nothing reads.** `mudlog()` had two jobs: write
   the line, and echo it to online immortals at or above a level. The second
@@ -528,14 +541,35 @@ Listed here so they are not mistaken for deliberate differences.
   dead code on these settings — and ported anyway, because the setting is one
   line and the path has to be right if it is ever turned off.
 
-- **Renting empties your bags and strips your body.**
-  `USE_AUTOEQ` is 0 in this tree (`structs.h:30`), so `struct obj_file_elem`
-  has no `location` member. `Crash_save` still walks containers and still
-  computes a location for every item, and the file has nowhere to record it —
-  so everything comes back loose in inventory. Sixty lines of `Crash_load`'s
-  `cont_row` machinery are dead code in this build. That is the C's behaviour,
-  not a limitation of the port, and there is a test asserting it so that
-  nobody "fixes" it.
+- **Renting empties your bags and strips your body — on `binary` and
+  `ascii`.** `USE_AUTOEQ` is 0 in this tree (`structs.h:30`), so
+  `struct obj_file_elem` has no `location` member. `Crash_save` still walks
+  containers and still computes a location for every item, and the file has
+  nowhere to record it — so everything comes back loose in inventory. Sixty
+  lines of `Crash_load`'s `cont_row` machinery are dead code in this build.
+  That is the C's behaviour, not a limitation of the port, and there is a
+  test (`TestRentingEmptiesYourBags`) asserting it so that nobody "fixes" it
+  for those two formats.
+
+  **`native` fixes it, as a deliberate, user-approved deviation (step 5 of
+  `docs/proposals/data-format.md`, scoped explicitly for this).**
+  `internal/server/rent.go`'s object tree was never actually thrown away at
+  runtime — `game.Object.Contents` holds real containment the whole time a
+  character is in the world — it was only the round trip through storage
+  that flattened it. `player.StoredObject` gained a `Contains` field that
+  `binary`/`ascii` still always leave empty (their on-disk shape genuinely
+  cannot hold it, so those two are unchanged, byte for byte, and the test
+  above proves it), but that `native`'s codec, and `rent.go`'s
+  `storedTreeFrom`/`restoreOneObject`, populate and honour for real. Running
+  `--player-format=native` is what turns this on —
+  `TestRentingUnderNativeKeepsTheRingInTheBag` is the same fixture as the
+  `ascii`/`binary` test above, quit and logged back in under `native`,
+  asserting the opposite outcome. Stock auto-equip (putting worn items back
+  *on the body*, the other half of what `USE_AUTOEQ` would have covered) is
+  **not** part of this fix — that's a separate deviation nobody has signed
+  off on, so worn items still come back loose in inventory under every
+  format, `native` included; see `internal/persist/player/native/doc.go`'s
+  package comment for why there is deliberately no `equipment:` section.
 
 - **Rent files are never swept.** `update_obj_file()` (objsave.c:332) runs at
   boot unless `-q` was given (db.c:457) and deletes any rent file older than
