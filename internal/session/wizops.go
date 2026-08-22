@@ -279,6 +279,20 @@ func doWizlock(c *Context) error {
 // whether to start it again. This port has no wrapper — the container runtime
 // restarts it, see docs/operations.md — so `reboot` and `now` ask to come
 // back and `die` and `pause` ask not to.
+// shutdownCommand is do_shutdown under its two names (interpreter.c:463,
+// :464). The half-spelling refuses, exactly as `qui` does for `quit` — the
+// same guard, for the same reason, on the other command in the game that
+// cannot be taken back.
+func shutdownCommand(full bool) func(*Context) error {
+	return func(c *Context) error {
+		if !full {
+			c.Send("If you want to shut something down, say so!\r\n")
+			return nil
+		}
+		return doShutdown(c)
+	}
+}
+
 func doShutdown(c *Context) error {
 	if c.Operator == nil {
 		return nil

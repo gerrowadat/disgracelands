@@ -1098,9 +1098,9 @@ except build.*
 
 **Met, with the tail named rather than waved at.** Every slice below is built,
 including the three mechanisms that were never slices at all and had to be
-found. 291 of the C's 318 commands answer. Of the 27 that do not, eight are the
+found. 293 of the C's 318 commands answer. Of the 25 that do not, eight are the
 OasisOLC and text editors that belong to Phase 6 by design, and the other
-nineteen are listed one by one under "What is not in it" — none of them a
+seventeen are listed one by one under "What is not in it" — none of them a
 subsystem, none of them blocking anything, all of them an afternoon.
 
 **Counted rather than remembered, and the earlier figures here were wrong.**
@@ -1110,8 +1110,8 @@ is not typeable — so **318 commands**. 105 of them are `do_action`, and the
 shipped socials file fills 104 of those (it also carries a `you` entry with no
 table slot, which the C drops with a log and so does this port).
 
-**291 of the 318 are implemented**: 187 in `internal/session/commands.go` plus
-the 104 socials. **Every slice below is built.** The 27 left are listed under
+**293 of the 318 are implemented**: 189 in `internal/session/commands.go` plus
+the 104 socials. **Every slice below is built.** The 25 left are listed under
 "What is not in it" — the OLC editors that belong to Phase 6, and a scattering
 of small commands that never had a slice of their own.
 
@@ -1155,7 +1155,7 @@ it.
 
 ### What is not in it
 
-The 27 commands of the 318 that nothing answers to yet. Everything here is a gap rather than a decision,
+The 25 commands of the 318 that nothing answers to yet. Everything here is a gap rather than a decision,
 so it is in `docs/deviations.md` under "gaps still to fill" rather than as a
 deviation.
 
@@ -1294,14 +1294,7 @@ standing here" for everybody whatever they were doing, with no title, no
 `(invisible)`, `(hidden)`, `(linkless)` or `(writing)` marker, no aura, and
 nothing for a mobile fighting somebody. All of it is there now.
 
-**And one command whose guards are missing rather than the command.** `quit`
-works, saves and removes the character, but `do_quit`'s own checks
-(act.other.c:99–172) are not there: the `POS_FIGHTING` refusal, the
-`POS_STUNNED`-and-below path that kills you outright, and — a `<DoC>` local
-modification, so exactly the kind of thing the fidelity rule is for — the
-`MAX_RENT` count of carried, worn and contained items that refuses the quit
-above 28 and otherwise announces *"Saving %d items."*. The house loadroom
-assignment on the way out is missing too.
+(`do_quit`'s own guards were the last of these and are now built — see below.)
 
 **The small things left over.** None is more than an afternoon; they are here
 because a command with no slice is a command nobody schedules.
@@ -1310,7 +1303,7 @@ because a command with no slice is a command nobody schedules.
 |---|---|
 | The last two `do_gen_tog` toggles | `slowns` (interpreter.c:472) and `trackthru` (:517). The other fifteen are done. These two flip a server-wide **global** rather than a preference (act.other.c:1021, :1028), which is right in the C — one server per process — and a race here, where the tests build several servers in one. Whichever lands first has to decide where the value lives, most likely on `Live`. `slowns` also has nothing behind it: this port does no reverse DNS. |
 | `do_gen_write` | `bug`, `idea`, `typo` (interpreter.c:247, :342, :520) — one function appending a timestamped line to a file, with a `-` prefix check and a size cap. |
-| Aliases and half-spellings | `:` for emote (interpreter.c:286), `take` for get (:503), and the C's two deliberate stumps, `qui` (:421) and `shutdow` (:463), which exist so that an abbreviation of a dangerous command reaches something that refuses rather than something that acts. |
+| Aliases | `:` for emote (interpreter.c:286) and `take` for get (:503). The C's two deliberate stumps, `qui` and `shutdow`, are built. |
 | Immortal odds and ends | `users` (:528), `wizhelp` (:553, `do_commands` with `SCMD_WIZHELP`), `skillset` (:469), `reload` (:428), `qecho` (:419), `page` (:398). |
 | Mortal odds and ends | `color` (:258) — the `PRF_COLOR` bits are stored and `set color` works, but nothing emits colour, so the command has nothing to switch; `insult` (:346); `hop` (:337), the one `do_action` slot the shipped socials file does not fill; and `alias` (:226), which needs `plralias/` and is the only one of these with a format behind it. |
 | `mudlog`'s in-game half | `syslog` sets `PRF_LOG1`/`PRF_LOG2` and nothing reads them: the `wizvis` attribute on a log record (`internal/obs/log.go`) has no consumer, so gods cannot watch the log from in-game. Wanted whenever the syslog levels are meant to mean something. |

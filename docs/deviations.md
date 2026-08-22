@@ -343,24 +343,12 @@ Listed here so they are not mistaken for deliberate differences.
   combination, and reports which of them it found the thing in. Here each
   command searches the lists it cares about in the order it wants. The
   behaviour is the same for every command ported so far; the shape is not.
-- **`do_quit`'s own guards are not ported**, though everything after them is:
-  quitting saves, crash-saves, tells the room and removes the character. What
-  is missing is the front of `do_quit` (act.other.c:99–172) — the
-  `POS_FIGHTING` refusal (*"No way!  You're fighting for your life!"*), the
-  `POS_STUNNED`-and-below branch that prints *"You die before your time..."*
-  and calls `die()`, and the `<DoC>` local modification above both: a count of
-  carried, worn and contained items that refuses the quit when it exceeds
-  `MAX_RENT` (28, structs.h:1141), logs the attempt to immortals, and
-  otherwise says *"Saving %d items.\r\n"*. Also missing is the line that makes
-  a house your load room if you quit inside one — which the port otherwise
-  models correctly; see the comment in `Server.Save`.
-- **Twenty-nine of the C's 318 commands are not implemented**, and the plan's
+- **Twenty-five of the C's 318 commands are not implemented**, and the plan's
   §10 "What is not in it" lists every one with its `interpreter.c` line. In
-  brief: `remort` and `redeem` (the one slice of Phase 5 still open), the eight
-  OasisOLC and `tedit` editors (Phase 6), `bug`/`idea`/`typo`, the aliases `:`
-  and `take`, the C's two deliberate half-spellings `qui` and `shutdow`, and a
-  short tail of `users`, `wizhelp`, `skillset`, `reload`, `qecho`, `page`,
-  `color`, `insult`, `hop` and `alias`.
+  brief: the eight OasisOLC and `tedit` editors (Phase 6), `bug`/`idea`/`typo`,
+  the aliases `:` and `take`, and a short tail of `users`, `wizhelp`,
+  `skillset`, `reload`, `qecho`, `page`, `color`, `insult`, `hop` and
+  `alias`.
 
   Two of `do_gen_tog`'s seventeen are among them, and both for the same
   reason: `slowns` and `trackthru` flip a server-wide **global** rather than a

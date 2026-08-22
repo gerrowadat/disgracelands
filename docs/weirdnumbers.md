@@ -791,6 +791,32 @@ not the second in whichever list it ends up looking at.
 
 *Source*: `handler.c:590`, `handler.c:1148`.
 
+### `qui` and `shutdow` are commands, and they exist to refuse
+
+```c
+{ "qui"      , POS_DEAD    , do_quit     , 0, 0 },
+{ "quit"     , POS_DEAD    , do_quit     , 0, SCMD_QUIT },
+{ "shutdow"  , POS_DEAD    , do_shutdown , LVL_GRGOD, 0 },
+{ "shutdown" , POS_DEAD    , do_shutdown , LVL_GRGOD, SCMD_SHUTDOWN },
+```
+
+Two rows each, the same function, and the shorter spelling passes no
+subcommand — so it lands in the same body and takes the branch that says *"You
+have to type quit--no less, to quit!"* or *"If you want to shut something down,
+say so!"*.
+
+They are there because the interpreter matches on prefixes. Without a stump at
+the earlier line, `q` would leave the game and `shutdow` would stop the server.
+With one, every abbreviation reaches the refusal instead, and only the word
+typed in full does anything. It is a guard built out of the table's ordering
+rather than out of a check, and it is invisible unless you notice that two rows
+name the same function.
+
+An immortal is exempt from the `quit` half — `subcmd != SCMD_QUIT &&
+GET_LEVEL(ch) < LVL_IMMORT` — so a god may type `qui` and leave.
+
+*Source*: `interpreter.c:421`, `act.other.c:143`.
+
 ### Undoing a remort the character never had *grants* it
 
 ```c

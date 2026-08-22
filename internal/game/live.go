@@ -593,3 +593,13 @@ func (l *Live) Exit(from RoomVnum, dir Direction) *ExitDef {
 	}
 	return room.Exits[dir]
 }
+
+// MaxRent is structs.h:1141, and it is not the rent *cost* cap it sounds like:
+// it is the number of items a rent file can hold, and therefore the number a
+// character may quit carrying.
+//
+// A `<DoC>` local addition reads it in do_quit to refuse a mortal who is over
+// it, because the objects past the limit would simply be lost. Compiled in at
+// the archive's value, like the rest of the rent settings — see
+// docs/deviations.md.
+const MaxRent int32 = 28

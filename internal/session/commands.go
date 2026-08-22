@@ -317,7 +317,8 @@ func init() {
 		{Name: "dc", Help: "Close somebody's connection.", Run: doDisconnect, CLine: 274, MinLevel: game.LevelGod},
 		{Name: "last", Help: "Show when somebody was last on.", Run: doLast, CLine: 357, MinLevel: game.LevelGod},
 		{Name: "return", Help: "Go back to your own body.", Run: doReturn, CLine: 443},
-		{Name: "shutdown", Help: "Stop the server.", Run: doShutdown, CLine: 464, MinLevel: game.LevelGreaterGod},
+		{Name: "shutdow", Help: "Not enough. Type `shutdown`.", Run: shutdownCommand(false), CLine: 463, MinLevel: game.LevelGreaterGod},
+		{Name: "shutdown", Help: "Stop the server.", Run: shutdownCommand(true), CLine: 464, MinLevel: game.LevelGreaterGod},
 		{Name: "snoop", Help: "Watch somebody's screen.", Run: doSnoop, CLine: 483, MinLevel: game.LevelGod},
 		{Name: "switch", Help: "Take over somebody else's body.", Run: doSwitch, CLine: 498, MinLevel: game.LevelGod},
 		{Name: "uptime", Help: "Show how long the server has been up.", Run: doUptime, CLine: 526, MinLevel: game.LevelImmortal},
@@ -390,7 +391,12 @@ func init() {
 		{Name: "hold", Help: "Take something in your hands.", Run: doGrab, CLine: 334},
 		{Name: "holler", Help: "Shout across the whole game, at a cost.", Run: doHoller, CLine: 335},
 		{Name: "quest", Help: "Join or leave the quest channel.", Run: toggleCommand("quest"), CLine: 420},
-		{Name: "quit", Help: "Leave the game.", Run: doQuit, CLine: 422},
+		// `qui` and `quit` are the same function with different subcommands
+		// (interpreter.c:421, :422): the short spelling refuses, so that an
+		// abbreviation of a dangerous command cannot act by accident. `q`
+		// therefore reaches `qui` and tells you to type it out.
+		{Name: "qui", Help: "Not enough. Type `quit`.", Run: quitCommand(false), CLine: 421},
+		{Name: "quit", Help: "Leave the game.", Run: quitCommand(true), CLine: 422},
 		{Name: "qsay", Help: "Talk to everybody on the quest.", Run: doQuestSay, CLine: 423},
 		// Nowhere near the others: the C has it among the u's, after unlock
 		// (interpreter.c:522 and :523), so `un` is unlock and ungrouping
@@ -1331,11 +1337,97 @@ func doHelp(c *Context) error {
 	return nil
 }
 
-func doQuit(c *Context) error {
-	c.Send("Goodbye, friend.. Come back soon!\r\n")
-	c.Session.MarkQuit()
-	c.Session.Close()
+// quitCommand is do_quit under its two names. The C passes SCMD_QUIT for the
+// full spelling and nothing for `qui`.
+func quitCommand(full bool) func(*Context) error {
+	return func(c *Context) error { return doQuit(c, full) }
+}
+
+// doQuit is do_quit (act.other.c:99), guards included.
+//
+// `quit` is POS_DEAD in the command table, so the interpreter refuses nobody
+// and every check here has to be made by the command itself. Three of them:
+//
+//   - The `<DoC>` item count, which is a local addition and the first thing
+//     the function does. A mortal carrying more than MAX_RENT items cannot
+//     leave, because the rent file cannot hold them and quitting would lose
+//     the excess. Note what it counts: everything carried, everything worn,
+//     and the contents of any container in either — recursively, so a bag in
+//     a bag is counted through.
+//   - The `qui`/`quit` distinction. `qui` reaches this function with no
+//     subcommand, which is the C's way of making an abbreviation of a
+//     dangerous command refuse rather than act. An immortal is exempt.
+//   - Position. Fighting refuses; below stunned kills you outright, which is
+//     the C being literal about a character who quits while dying.
+func doQuit(c *Context, full bool) error {
+	ch := c.Character
+	immortal := ch.Level() >= game.LevelImmortal
+
+	if items := carriedItemCount(ch); items > game.MaxRent && !immortal {
+		c.Send("You currently have too many items (%d items in total).\r\n"+
+			"You must have %d items or less before leaving.\r\n", items, game.MaxRent)
+		return nil
+	} else {
+		// Unconditional in the C, and on the *else* of the refusal — so a
+		// player who is allowed to leave is always told the count.
+		c.Send("Saving %d items.\r\n", items)
+	}
+
+	switch {
+	case !full && !immortal:
+		c.Send("You have to type quit--no less, to quit!\r\n")
+	case ch.Position == game.PosFighting:
+		c.Send("No way!  You're fighting for your life!\r\n")
+	case ch.Position < game.PosStunned:
+		// die() rather than a refusal: quitting while mortally wounded is
+		// taken as giving up.
+		c.Send("You die before your time...\r\n")
+		c.Violence.Damage(c.World, nil, ch, ch.Record.Points.Hit+1)
+	default:
+		c.announce("%s has left the game.\r\n", ch.Name)
+		c.Send("Goodbye, friend.. Come back soon!\r\n")
+		// Quitting in a house makes it your load room, unless a god has
+		// already pinned one (act.other.c:167).
+		if room := c.World.Room(ch.Room); room != nil && ch.Record != nil &&
+			!ch.Record.PlayerFlags.Has(game.PlayerLoadRoom) && room.Flags.Has(game.RoomHouse) {
+			ch.Record.LoadRoom = ch.Room
+		}
+		c.Session.MarkQuit()
+		c.Session.Close()
+	}
 	return nil
+}
+
+// carriedItemCount is count_items (act.other.c:77) over the inventory, plus
+// do_quit's loop over the equipment.
+//
+// Each object counts one, and a container counts its contents as well as
+// itself — recursively, so a pouch inside a bag inside a backpack is three
+// items plus whatever is in the pouch. Worn containers are counted the same
+// way; worn anything-else counts one.
+func carriedItemCount(ch *game.Character) int32 {
+	count := countItems(ch.Carrying)
+	for _, worn := range ch.Equipment {
+		if worn == nil {
+			continue
+		}
+		if worn.Type == game.ItemContainer {
+			count += countItems(worn.Contents)
+		}
+		count++
+	}
+	return count
+}
+
+func countItems(list []*game.Object) int32 {
+	var count int32
+	for _, o := range list {
+		if o.Type == game.ItemContainer {
+			count += countItems(o.Contents)
+		}
+		count++
+	}
+	return count
 }
 
 func ensureNewline(s string) string {

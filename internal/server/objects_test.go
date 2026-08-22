@@ -265,10 +265,12 @@ func TestMovementAbbreviationsStillWin(t *testing.T) {
 		"gi": "give", "p": "put", "pu": "put",
 		"wea": "wear", "wie": "wield",
 		"l": "look", "k": "kill",
-		// `q` is quaff in the C (interpreter.c:418) and quaff is not ported,
-		// so it currently lands on quest (:420). Only `qui` is stable.
-		"qui": "quit",
-		"sc":  "score", "ex": "exits",
+		// `qui` is a command in its own right (interpreter.c:421), one line
+		// above `quit` — the C's way of making an abbreviation of a dangerous
+		// command refuse rather than act. So `q`, `qu` and `qui` all reach it
+		// and none of them leaves the game.
+		"qui": "qui", "quit": "quit",
+		"sc": "score", "ex": "exits",
 
 		// `rest` before `remove` is the C's own order (interpreter.c:426 and
 		// :437), so `res` and `rem` are the unambiguous forms. Bare `r`
