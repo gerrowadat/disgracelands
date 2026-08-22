@@ -159,16 +159,7 @@ func TestDeathBlowAgainstTheRealArchive(t *testing.T) {
 	attacker, attackerClient := place(t, srv, fighterRecord("Zod", 30, 500), MortalStartRoom)
 	victim, _ := place(t, srv, fighterRecord("Welmar", 5, 200), MortalStartRoom)
 
-	f, err := os.Open(filepath.Join(repoRoot(t), "data", messagesFile))
-	if err != nil {
-		t.Fatalf("opening the real archive: %v", err)
-	}
-	records, err := game.ParseMessagesFile(f)
-	_ = f.Close()
-	if err != nil {
-		t.Fatalf("parsing the real archive: %v", err)
-	}
-	srv.text.messages = game.NewFightMessages(records)
+	loadRealFightMessages(t, srv)
 
 	inWorld(t, srv, func(w *game.Live) {
 		victim.Position = game.PosDead
@@ -187,10 +178,137 @@ func TestDeathBlowAgainstTheRealArchive(t *testing.T) {
 	}
 }
 
+// loadRealFightMessages loads the real data/misc/messages archive into
+// srv, for a test that specifically wants real registered entries rather
+// than newTestServer's default (no messages configured at all — see
+// TestDeathBlowAgainstTheRealArchive's own doc comment for why that stays
+// the default).
+func loadRealFightMessages(t *testing.T, srv *Server) {
+	t.Helper()
+	f, err := os.Open(filepath.Join(repoRoot(t), "data", messagesFile))
+	if err != nil {
+		t.Fatalf("opening the real archive: %v", err)
+	}
+	records, err := game.ParseMessagesFile(f)
+	_ = f.Close()
+	if err != nil {
+		t.Fatalf("parsing the real archive: %v", err)
+	}
+	srv.text.messages = game.NewFightMessages(records)
+}
+
 // sendCombatMessageT calls sendCombatMessage with a bare-handed attack
 // type, from within an inWorld closure — t.Fatal is never safe there
 // (CLAUDE.md), so this only ever calls t.Helper.
 func sendCombatMessageT(t *testing.T, srv *Server, w *game.Live, attacker, victim *game.Character, dam int32) {
 	t.Helper()
 	srv.sendCombatMessage(w, attacker, victim, nil, dam, game.TypeHit+game.AttackHit)
+}
+
+// SkillDamage (kick/bash/backstab) always prefers a registered message —
+// there is no dam_message fallback for a non-weapon attack at all
+// (fight.c:854's `!IS_WEAPON` branch), unlike the weapon swing.
+
+func TestSkillDamageUsesARegisteredHitMessage(t *testing.T) {
+	srv, _ := newTestServer(t)
+	attacker, attackerClient := place(t, srv, fighterRecord("Zod", 30, 500), MortalStartRoom)
+	victim, _ := place(t, srv, fighterRecord("Welmar", 5, 200), MortalStartRoom)
+
+	srv.text.messages = game.NewFightMessages([]game.FightMessage{
+		{AttackType: game.SkillKick, Hit: game.MsgSet{Attacker: "REGISTERED KICK HIT"}},
+	})
+
+	inWorld(t, srv, func(w *game.Live) {
+		victim.Position = game.PosFighting
+		srv.SkillDamage(w, attacker, victim, 5, game.SkillKick)
+	})
+
+	if !attackerClient.said("REGISTERED KICK HIT") {
+		t.Errorf("attacker was not told the registered hit message: %v", attackerClient.lines)
+	}
+}
+
+func TestSkillDamageUsesARegisteredMissMessage(t *testing.T) {
+	srv, _ := newTestServer(t)
+	attacker, attackerClient := place(t, srv, fighterRecord("Zod", 30, 500), MortalStartRoom)
+	victim, _ := place(t, srv, fighterRecord("Welmar", 5, 200), MortalStartRoom)
+
+	srv.text.messages = game.NewFightMessages([]game.FightMessage{
+		{AttackType: game.SkillBash, Miss: game.MsgSet{Attacker: "REGISTERED BASH MISS"}},
+	})
+
+	inWorld(t, srv, func(w *game.Live) {
+		victim.Position = game.PosFighting
+		srv.SkillDamage(w, attacker, victim, 0, game.SkillBash)
+	})
+
+	if !attackerClient.said("REGISTERED BASH MISS") {
+		t.Errorf("attacker was not told the registered miss message: %v", attackerClient.lines)
+	}
+}
+
+func TestSkillDamageUsesARegisteredDieMessage(t *testing.T) {
+	srv, _ := newTestServer(t)
+	attacker, attackerClient := place(t, srv, fighterRecord("Zod", 30, 500), MortalStartRoom)
+	victim, _ := place(t, srv, fighterRecord("Welmar", 5, 1), MortalStartRoom)
+
+	srv.text.messages = game.NewFightMessages([]game.FightMessage{
+		{AttackType: game.SkillBackstab, Die: game.MsgSet{Attacker: "REGISTERED BACKSTAB DIE"}},
+	})
+
+	inWorld(t, srv, func(w *game.Live) {
+		srv.SkillDamage(w, attacker, victim, 40, game.SkillBackstab)
+	})
+
+	if !attackerClient.said("REGISTERED BACKSTAB DIE") {
+		t.Errorf("attacker was not told the registered die message: %v", attackerClient.lines)
+	}
+	// Not asserting victim.Position here: a player who dies is
+	// resurrected at 1 HP standing (internal/server/tick.go's die, "A
+	// dead player wakes up at the temple with one hit point") as part of
+	// the same applyDamage call, after the die message has already gone
+	// out — which is exactly what the check above already proved.
+}
+
+// Against the real archive: kick (skill 134) has two registered variants
+// whose hit-text disagrees on whether it names the victim at all — real
+// data, not synthetic, is what surfaces that kind of thing — so this
+// checks only that *something* was sent, not its exact wording. Bash and
+// backstab's own real-archive coverage lives in
+// internal/server/skills_test.go (TestBashNeedsAWeapon,
+// TestBackstabNeedsAPiercingWeapon), which can wait on the victim's name
+// because each has only one registered variant.
+func TestSkillDamageAgainstTheRealArchive(t *testing.T) {
+	srv, _ := newTestServer(t)
+	attacker, attackerClient := place(t, srv, fighterRecord("Zod", 30, 500), MortalStartRoom)
+	victim, _ := place(t, srv, fighterRecord("Welmar", 5, 200), MortalStartRoom)
+	loadRealFightMessages(t, srv)
+
+	inWorld(t, srv, func(w *game.Live) {
+		victim.Position = game.PosFighting
+		srv.SkillDamage(w, attacker, victim, 5, game.SkillKick)
+	})
+
+	if len(attackerClient.lines) == 0 {
+		t.Error("attacker was told nothing for a registered kick hit")
+	}
+}
+
+// No dam_message fallback exists for a non-weapon attack: nothing
+// registered means genuine silence, not compiled text.
+func TestSkillDamageIsSilentWithNothingRegistered(t *testing.T) {
+	srv, _ := newTestServer(t)
+	attacker, attackerClient := place(t, srv, fighterRecord("Zod", 30, 500), MortalStartRoom)
+	victim, victimClient := place(t, srv, fighterRecord("Welmar", 5, 200), MortalStartRoom)
+
+	inWorld(t, srv, func(w *game.Live) {
+		victim.Position = game.PosFighting
+		srv.SkillDamage(w, attacker, victim, 5, game.SkillKick)
+	})
+
+	for _, c := range []*recorder{attackerClient, victimClient} {
+		if len(c.lines) != 0 {
+			t.Errorf("SkillDamage with nothing registered said %v, want silence", c.lines)
+		}
+	}
 }

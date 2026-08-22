@@ -132,6 +132,26 @@ func (c *client) settle() {
 	c.expectCount(marker, n+1)
 }
 
+// promptMarker is the one substring every prompt carries regardless of a
+// character's HP/mana/move — see prompt() (interpreter.c's make_prompt,
+// internal/session/commands.go).
+const promptMarker = "V > "
+
+// waitPromptCount is how many prompts have arrived so far — call before
+// sending a command, and pass the result +1 to waitForPrompt afterwards.
+//
+// settle() does not work as a "wait for this command to finish" barrier
+// when the command just sent imposes a wait state (kick/bash/backstab):
+// settle()'s own probe command would be held by that wait state right
+// along with anything else typed next, and hang until its own 5-second
+// deadline. The prompt is sent after every command completes regardless
+// of what the command itself said (interpreter.c's command_interpreter),
+// so waiting for the next one works even when nothing else does.
+func waitPromptCount(c *client) int { return strings.Count(c.text.String(), promptMarker) }
+
+// waitForPrompt waits for the n'th prompt to have arrived.
+func waitForPrompt(c *client, n int) { c.expectCount(promptMarker, n) }
+
 // expectAny reads until any one of the given strings appears.
 func (c *client) expectAny(wants ...string) string {
 	c.t.Helper()

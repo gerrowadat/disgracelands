@@ -432,16 +432,21 @@ Listed here so they are not mistaken for deliberate differences.
   of these commands built. `PAGE_LENGTH` (`comm.h:44`) is a fixed 22
   lines in the C, not a per-player preference — there is nothing to read
   back even if this were ported, only a constant to reintroduce.
-- **Combat messages are real for the ordinary weapon swing, and only
-  that.** `internal/server/violence.go`'s `s.hit` now ports `dam_message`
-  and `skill_message`'s weapon-type half of `misc/messages` in full
-  (step 6c), replacing the fixed `"You hit %s. [%d]"`/`"You miss %s."`
-  strings with the real, tiered, sometimes-randomised text. Every *other*
-  way to hurt somebody — kick, bash, backstab, a spell, anything reaching
-  `Violence.Damage` rather than `.Swing` — still prints its own message
-  and never calls `skill_message` at all, so those attack types' own
-  `misc/messages` entries (spell/skill numbers, not weapon types) go
-  unused. Each is its own future pass.
+- **Combat messages are real for the ordinary weapon swing, kick, bash
+  and backstab — spells are what is left.** `internal/server/
+  violence.go`'s `s.hit` ports `dam_message` and `skill_message`'s
+  weapon-type half of `misc/messages` in full (step 6c), replacing the
+  fixed `"You hit %s. [%d]"`/`"You miss %s."` strings with the real,
+  tiered, sometimes-randomised text. `SkillDamage` (the same step, second
+  pass) does the equivalent for `do_kick`/`do_bash`/`do_backstab` —
+  `skill_message` alone, with no `dam_message` fallback, matching
+  `damage()`'s own `!IS_WEAPON` branch: an attack type nothing is
+  registered for produces genuine silence, not invented text. Every
+  *spell* still prints its own ad-hoc message and never calls
+  `skill_message` at all, so those attack types' own `misc/messages`
+  entries (spell numbers, not weapon or combat-skill ones) go unused —
+  its own future pass, there being dozens of them each needing its own
+  audit rather than one mechanical sweep.
 
   An unarmed NPC always resolves to bare-hand attack text (`AttackHit`,
   "hit"/"hits") for the purposes of this message, even one the C would

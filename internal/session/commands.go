@@ -112,6 +112,14 @@ type Violence interface {
 	// Damage applies damage and everything that follows from it, returning
 	// what was actually taken after sanctuary and the rest.
 	Damage(w *game.Live, attacker, victim *game.Character, amount int32) int32
+	// SkillDamage is Damage plus skill_message's own weapon-free half
+	// (fight.c's damage() dispatch, the branch every attack that is not a
+	// weapon swing takes): the real message registered under skillType in
+	// misc/messages, or silence if there is none — never the compiled
+	// dam_message table, which only ever answers for a weapon attack.
+	// amount 0 is a miss, the same "not a separate code path" rule the
+	// ordinary weapon swing follows.
+	SkillDamage(w *game.Live, attacker, victim *game.Character, amount, skillType int32) int32
 	// Swing is one weapon attack, taken now rather than on the next round.
 	Swing(w *game.Live, attacker, victim *game.Character)
 }

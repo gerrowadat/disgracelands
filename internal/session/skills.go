@@ -47,9 +47,9 @@ func doKick(c *Context) error {
 	percent := (10-armour/10)*2 + c.RNG.Number(1, 101)
 
 	if percent > rec.Skills[game.SkillKick] {
-		c.skillMiss(victim, "kick")
+		c.Violence.SkillDamage(c.World, c.Character, victim, 0, game.SkillKick)
 	} else {
-		c.skillHit(victim, "kick", rec.Level/2)
+		c.Violence.SkillDamage(c.World, c.Character, victim, rec.Level/2, game.SkillKick)
 	}
 
 	c.Character.Wait(3, c.roundLength())
@@ -91,11 +91,11 @@ func doBash(c *Context) error {
 	}
 
 	if percent > rec.Skills[game.SkillBash] {
-		c.skillMiss(victim, "bash")
+		c.Violence.SkillDamage(c.World, c.Character, victim, 0, game.SkillBash)
 		// Missing a bash puts *you* on the floor.
 		c.Character.Position = game.PosSitting
 	} else {
-		c.skillHit(victim, "bash", 1)
+		c.Violence.SkillDamage(c.World, c.Character, victim, 1, game.SkillBash)
 		// Only if they are still here: the C's comment explains that a victim
 		// who wimps out flees before this runs, and setting them sitting
 		// first would stop the bash landing at all.
@@ -160,13 +160,13 @@ func doBackstab(c *Context) error {
 
 	percent := c.RNG.Number(1, 101)
 	if victim.Position.Awake() && percent > rec.Skills[game.SkillBackstab] {
-		c.skillMiss(victim, "backstab")
+		c.Violence.SkillDamage(c.World, c.Character, victim, 0, game.SkillBackstab)
 	} else {
 		// A sleeping victim is stabbed regardless of the roll.
 		damage := game.BackstabMultiplier(rec.Level) *
 			(game.Strength(rec.Abilities.Strength, rec.Abilities.StrengthPercentile).ToDamage +
 				rec.Points.DamRoll + c.RNG.Dice(weapon.Values[1], weapon.Values[2]))
-		c.skillHit(victim, "backstab", max(1, damage))
+		c.Violence.SkillDamage(c.World, c.Character, victim, max(1, damage), game.SkillBackstab)
 	}
 
 	c.Character.Wait(2, c.roundLength())
@@ -258,40 +258,6 @@ func (c *Context) skillTarget(arg, missing string) *game.Character {
 	}
 	c.Send("%s", missing)
 	return nil
-}
-
-// skillMiss reports a skill that did not land, and starts the fight anyway.
-func (c *Context) skillMiss(victim *game.Character, name string) {
-	c.Send("You try to %s %s, but miss.\r\n", name, victim.Name)
-	victim.Tell("%s tries to %s you, but misses.\r\n", c.Character.Name, name)
-	c.startFight(victim)
-}
-
-// skillHit applies a skill's damage.
-func (c *Context) skillHit(victim *game.Character, name string, damage int32) {
-	if victim.Record == nil {
-		return
-	}
-
-	// The damage goes through the same path as a swing in the round, so a
-	// kick that kills leaves a corpse and pays out.
-	dealt := c.Violence.Damage(c.World, c.Character, victim, damage)
-
-	c.Send("You %s %s. [%d]\r\n", name, victim.Name, dealt)
-	victim.Tell("%s %ss you. [%d]\r\n", c.Character.Name, name, dealt)
-}
-
-// startFight puts both parties into combat if they are not already.
-func (c *Context) startFight(victim *game.Character) {
-	if victim == c.Character {
-		return
-	}
-	if c.Character.Fighting == nil && c.Character.Position > game.PosStunned {
-		c.World.SetFighting(c.Character, victim)
-	}
-	if victim.Fighting == nil && victim.Position > game.PosStunned {
-		c.World.SetFighting(victim, c.Character)
-	}
 }
 
 // doHide, porting do_hide (act.other.c).

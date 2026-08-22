@@ -89,9 +89,7 @@ func (s *Server) hit(w *game.Live, attacker, victim *game.Character) {
 
 // sendCombatMessage is the messaging half of damage() (fight.c:855-871),
 // for a weapon attack — the only kind an ordinary combat-round swing ever
-// is, which is the only case this covers (kick, bash, backstab and every
-// spell still print their own message, unaffected — see Damage's own doc
-// comment).
+// is.
 //
 // Called from applyDamage's hook, after victim.Position has already been
 // updated — the same point damage() calls dam_message/skill_message from,
@@ -101,25 +99,46 @@ func (s *Server) sendCombatMessage(w *game.Live, attacker, victim *game.Characte
 	// damage()'s dispatch: a miss or a death blow prefers a registered
 	// message; anything else always uses the compiled severity table.
 	if dam == 0 || victim.Position == game.PosDead {
-		if fm, ok := s.text.FightMessages().Pick(attackType, s.rng); ok {
-			var set game.MsgSet
-			switch {
-			case dam != 0:
-				set = fm.Die
-			case attacker != victim:
-				set = fm.Miss
-			default:
-				// skill_message sends nothing for a self-inflicted miss
-				// (fight.c:752's `else if (ch != vict)` has no self case)
-				// — not reachable through performViolence in practice,
-				// kept for fidelity to the guard itself.
-				return
-			}
-			s.sendMsgSet(w, attacker, victim, weapon, set)
+		if s.sendSkillMessage(w, attacker, victim, weapon, dam, attackType) {
 			return
 		}
 	}
 	s.sendDamageMessage(w, attacker, victim, dam, attackType)
+}
+
+// sendSkillMessage is skill_message itself (fight.c:703-767) minus
+// colour: looks up skillType (a spell/skill number, or — reached only
+// from sendCombatMessage — a weapon type) in the loaded misc/messages
+// table and sends whichever of Die/Miss/Hit applies, reporting whether it
+// found anything to send at all.
+//
+// Shared by two very different callers with two very different fallback
+// postures: sendCombatMessage (the weapon-swing path) falls back to
+// dam_message when this returns false, because damage()'s dispatch gives
+// weapon attacks that fallback; SkillDamage does not fall back to
+// anything, because skill_message alone is the whole story for a kick, a
+// bash, a backstab or a spell — a silent swing is the C's own behaviour
+// for an attack type nothing is registered for, not a bug to paper over.
+func (s *Server) sendSkillMessage(w *game.Live, attacker, victim *game.Character, weapon *game.Object, dam, skillType int32) bool {
+	fm, ok := s.text.FightMessages().Pick(skillType, s.rng)
+	if !ok {
+		return false
+	}
+	var set game.MsgSet
+	switch {
+	case dam != 0 && victim.Position == game.PosDead:
+		set = fm.Die
+	case dam != 0:
+		set = fm.Hit
+	case attacker != victim:
+		set = fm.Miss
+	default:
+		// skill_message sends nothing for a self-inflicted miss
+		// (fight.c:752's `else if (ch != vict)` has no self case).
+		return true
+	}
+	s.sendMsgSet(w, attacker, victim, weapon, set)
+	return true
 }
 
 // sendMsgSet sends a registered skill_message MsgSet to all three
@@ -162,7 +181,10 @@ func (s *Server) actToRoomExcept(w *game.Live, exclude1, exclude2 *game.Characte
 }
 
 // Damage implements session.Violence: everything damage() does apart from the
-// messages, which the command that caused it prints in its own words.
+// messages, which the command that caused it prints in its own words. Kick,
+// bash and backstab moved to SkillDamage once they got a real message of
+// their own to send instead; a spell still calling this is the reason it
+// stays exported rather than folding into SkillDamage entirely.
 //
 // It exists because until now every command that could hurt somebody applied
 // the damage itself — a kick, a bash, a spell — and none of them handled what
@@ -171,13 +193,37 @@ func (s *Server) actToRoomExcept(w *game.Live, exclude1, exclude2 *game.Characte
 // one path now, and this is it.
 //
 // The returned figure is the damage actually taken, after sanctuary and the
-// rest, because that is the number the caller prints in its `[n]`.
+// rest, because that is the number a caller with no message of its own to
+// send yet still needs, to print its own `[n]`.
 func (s *Server) Damage(w *game.Live, attacker, victim *game.Character, amount int32) int32 {
 	if victim == nil || victim.Record == nil || s.refusesDamage(w, attacker, victim) {
 		return 0
 	}
 	dam := game.ApplyDamage(amount, victim.Record, combatant{victim})
 	s.applyDamage(w, attacker, victim, dam, nil)
+	return dam
+}
+
+// SkillDamage implements session.Violence: Damage plus the messaging
+// damage() gives every non-weapon attack (fight.c:854's `!IS_WEAPON`
+// branch) — kick, bash, backstab today; every spell is still its own
+// future pass. amount 0 is a miss, the same "not a separate code path"
+// rule the ordinary weapon swing already follows: do_kick/do_bash/
+// do_backstab all call damage(ch, vict, 0, SKILL_*) for one
+// (act.offensive.c), not a bespoke miss branch of their own.
+func (s *Server) SkillDamage(w *game.Live, attacker, victim *game.Character, amount, skillType int32) int32 {
+	if victim == nil || victim.Record == nil || s.refusesDamage(w, attacker, victim) {
+		return 0
+	}
+	vf := combatant{victim}
+	dam := game.ApplyDamage(amount, victim.Record, vf)
+	s.applyDamage(w, attacker, victim, dam, func() {
+		// skill_message's own weap = GET_EQ(ch, WEAR_WIELD) (fight.c:711):
+		// whatever the attacker happens to be wielding, regardless of
+		// whether this particular attack used it — a kick with a sword in
+		// hand still carries the sword as $o/$p if a message uses it.
+		s.sendSkillMessage(w, attacker, victim, combatant{attacker}.Wielded(), dam, skillType)
+	})
 	return dam
 }
 

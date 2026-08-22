@@ -207,8 +207,13 @@ func TestASkillThatKillsLeavesACorpse(t *testing.T) {
 	})
 
 	// An implementor's kick does level/2 = 17 damage, which is past -11.
+	// Waits for the next prompt rather than the kick's own reply or
+	// settle()'s usual probe command: kick's own wait state would hold
+	// settle()'s "time" right along with anything else typed next — see
+	// internal/server/client_test.go's waitForPrompt.
+	beforePrompts := waitPromptCount(c)
 	c.send("kick dog")
-	c.expect("You kick a large dog.")
+	waitForPrompt(c, beforePrompts+1)
 
 	inWorld(t, srv, func(w *game.Live) {
 		var corpse bool
