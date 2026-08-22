@@ -149,6 +149,11 @@ type Session struct {
 	// transport names how they arrived, for logs and the who-list.
 	transport string
 	host      string
+	// loginTime is when the connection was accepted, which is the C's
+	// `d->login_time`. Only `users` reads it, and it is the *connection's*
+	// time rather than the character's: a descriptor sitting at the name
+	// prompt has one too.
+	loginTime time.Time
 
 	out    chan outgoing
 	logger *slog.Logger
@@ -333,6 +338,7 @@ func New(id uint64, conn net.Conn, transport string, logger *slog.Logger) *Sessi
 		conn:      conn,
 		transport: transport,
 		host:      host,
+		loginTime: time.Now(),
 		out:       make(chan outgoing, outputQueue),
 		done:      make(chan struct{}),
 		written:   make(chan struct{}),
@@ -350,6 +356,10 @@ func (s *Session) Transport() string { return s.transport }
 
 // Host is the address they came from.
 func (s *Session) Host() string { return s.host }
+
+// LoginTime is when the connection was accepted — `d->login_time`. `users`
+// prints the clock time of it, and nothing else wants it.
+func (s *Session) LoginTime() time.Time { return s.loginTime }
 
 // State returns where the session has got to.
 func (s *Session) State() State { return s.state }
@@ -740,4 +750,50 @@ func (s *Session) flush() {
 			return
 		}
 	}
+}
+
+// connectedNames are `connected_types[]` (constants.c:226), indexed by the
+// C's CON_* value rather than by this port's State.
+//
+// The two orders are not the same and there is no reason they should be: the C
+// numbers its states by where somebody happened to add them, and this port
+// numbers them by the order a player passes through. `users` prints these
+// words, so the mapping has to be explicit — and a test re-parses constants.c
+// and checks it, because a table transcribed by eye is how a state ends up
+// labelled as its neighbour.
+//
+// The nolint is for gosec, which reads "Get password" as a hardcoded
+// credential. They are the C's labels for a prompt, not a secret.
+var connectedNames = map[State]string{ //nolint:gosec // prompt labels, not credentials
+	StateGetName:              "Get name",
+	StateConfirmName:          "Confirm name",
+	StatePassword:             "Get password",
+	StateNewPassword:          "Get new PW",
+	StateConfirmPassword:      "Confirm new PW",
+	StateQuerySex:             "Select sex",
+	StateQueryClass:           "Select class",
+	StateReadMOTD:             "Reading MOTD",
+	StateMenu:                 "Main Menu",
+	StateEnterDescription:     "Get descript.",
+	StateChangePasswordOld:    "Changing PW 1",
+	StateChangePasswordNew:    "Changing PW 2",
+	StateChangePasswordVerify: "Changing PW 3",
+	StateDeleteVerify:         "Self-Delete 1",
+	StateDeleteConfirm:        "Self-Delete 2",
+	StatePlaying:              "Playing",
+	StateClosed:               "Disconnecting",
+	// StateEditing has no CON_ of its own: the C reaches its line editor
+	// through string_write from whatever state asked for it, so a player
+	// writing on a board is still shown as whatever they were. "Get descript."
+	// is the closest thing the C would print, since that is the state its own
+	// editor runs in.
+	StateEditing: "Get descript.",
+}
+
+// ConnectedName is what `users` calls this state.
+func (s State) ConnectedName() string {
+	if name, ok := connectedNames[s]; ok {
+		return name
+	}
+	return "Unknown"
 }

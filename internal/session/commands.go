@@ -450,6 +450,7 @@ func init() {
 		{Name: "insult", Help: "Be rude to somebody.", Run: doInsult, CLine: 346},
 		{Name: "page", Help: "Send a line straight to somebody.", Run: doPage, CLine: 398, MinLevel: game.LevelGod},
 		{Name: "qecho", Help: "Say something unattributed on the quest channel.", Run: doQuestEcho, CLine: 419, MinLevel: game.LevelImmortal},
+		{Name: "users", Help: "List every connection, not just the players.", Run: doUsers, CLine: 528, MinLevel: game.LevelImmortal},
 		{Name: "wizhelp", Help: "List the immortal commands.", Run: doCommands(listWizhelp), CLine: 553, MinLevel: game.LevelImmortal},
 		{Name: "split", Help: "Share gold with your group.", Run: doSplit, CLine: 486},
 		{Name: "title", Help: "Set the title that follows your name.", Run: doTitle, CLine: 512},

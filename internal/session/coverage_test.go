@@ -48,7 +48,6 @@ var notPorted = map[string]string{
 	"trackthru": "flips a server-wide global; game.TrackThroughDoors is read by the BFS already",
 
 	// Simply not written yet.
-	"users":    "a hundred lines of flag parsing over the connection list",
 	"skillset": "sets one skill on one character",
 	"reload":   "re-reads the text files",
 }
@@ -172,4 +171,46 @@ func itoa(n int) string {
 		b = append([]byte{byte('0' + n%10)}, b...)
 	}
 	return string(b)
+}
+
+// TestConnectedNamesMatchTheCSource re-parses `connected_types[]`.
+//
+// The C indexes it by CON_*, this port indexes by State, and the two orders
+// differ — so the mapping is written out by hand and this is what stops a
+// state being labelled as its neighbour. Checked by *set* rather than by
+// index, since the orders are not comparable.
+func TestConnectedNamesMatchTheCSource(t *testing.T) {
+	src, err := os.ReadFile("../../reference/moderncserver/src/constants.c")
+	if err != nil {
+		t.Fatalf("reading constants.c: %v", err)
+	}
+
+	block := regexp.MustCompile(`(?s)connected_types\[\] = \{(.*?)\};`).FindSubmatch(src)
+	if block == nil {
+		t.Fatal("connected_types not found in constants.c")
+	}
+
+	inC := map[string]bool{}
+	for _, m := range regexp.MustCompile(`"([^"\\]*)"`).FindAllStringSubmatch(string(block[1]), -1) {
+		if m[1] != "" {
+			inC[m[1]] = true
+		}
+	}
+	if len(inC) == 0 {
+		t.Fatal("no names parsed out of connected_types")
+	}
+
+	for state, name := range connectedNames {
+		if !inC[name] {
+			t.Errorf("state %v is called %q, which is not in the C's connected_types", state, name)
+		}
+	}
+
+	// Every state the port has must have a name, or `users` prints "Unknown"
+	// at somebody.
+	for s := StateGetName; s <= StateClosed; s++ {
+		if connectedNames[s] == "" {
+			t.Errorf("state %v has no connected_types name", s)
+		}
+	}
 }
