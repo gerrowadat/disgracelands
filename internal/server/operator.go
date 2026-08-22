@@ -110,3 +110,19 @@ func (s *Server) LastLogin(name string) (session.LastLogin, bool) {
 		When:  rec.LastLogon,
 	}, true
 }
+
+// ReloadText implements session.Operator: `reload`.
+//
+// The known/error split lets the session layer print the C's "Unknown reload
+// option." for a name it does not recognise, without the command having to
+// know what the names are.
+func (s *Server) ReloadText(what string) (bool, error) {
+	if s.text == nil {
+		return false, nil
+	}
+	err := s.text.Reload(what)
+	if ErrUnknownReload(err) {
+		return false, nil
+	}
+	return true, err
+}

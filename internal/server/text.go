@@ -7,10 +7,12 @@
 package server
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"github.com/gerrowadat/disgracelands/internal/game"
 )
@@ -23,6 +25,21 @@ import (
 // are loaded at boot and their absence is a startup failure, not a warning —
 // a server that cannot meet the licence should not begin serving.
 type Text struct {
+	// mu guards everything below, because `reload` replaces these while
+	// sessions are reading them.
+	//
+	// Nothing else in the server needs a lock — the world goroutine owns the
+	// world — but the canned text is read from *two* places: commands, on the
+	// world goroutine, and the greeting, on the connection goroutine before a
+	// session has a character at all. One implementor-only command that
+	// rewrites them is enough to make that a race, so it is an RWMutex and the
+	// readers are one line each.
+	mu sync.RWMutex
+
+	// dir is the data directory these were read from, so `reload` can read
+	// them again. Set by LoadText and never changed.
+	dir string
+
 	greeting   string
 	motd       string
 	imotd      string
@@ -127,7 +144,7 @@ const (
 
 // LoadText reads the canned files from a data directory.
 func LoadText(dir string) (*Text, error) {
-	t := &Text{}
+	t := &Text{dir: dir}
 
 	// Required. The licence names both of these.
 	for _, f := range []struct {
@@ -224,15 +241,25 @@ func LoadText(dir string) (*Text, error) {
 }
 
 // Greeting implements session.TextFiles.
-func (t *Text) Greeting() string { return t.greeting }
+func (t *Text) Greeting() string {
+	t.mu.RLock()
+	defer t.mu.RUnlock()
+	return t.greeting
+}
 
 // MOTD implements session.TextFiles.
-func (t *Text) MOTD() string { return t.motd }
+func (t *Text) MOTD() string {
+	t.mu.RLock()
+	defer t.mu.RUnlock()
+	return t.motd
+}
 
 // ImmortalMOTD implements session.TextFiles. The C shows this instead of the
 // ordinary message of the day to anyone of immortal level
 // (interpreter.c:1504); a server without one falls back to the mortal file.
 func (t *Text) ImmortalMOTD() string {
+	t.mu.RLock()
+	defer t.mu.RUnlock()
 	if t.imotd == "" {
 		return t.motd
 	}
@@ -250,6 +277,8 @@ func (t *Text) Menu() string { return MainMenu }
 
 // Background implements session.TextFiles: menu choice 3.
 func (t *Text) Background() string {
+	t.mu.RLock()
+	defer t.mu.RUnlock()
 	if t.background == "" {
 		return "There is no background story on file.\r\n"
 	}
@@ -257,39 +286,149 @@ func (t *Text) Background() string {
 }
 
 // Credits implements session.TextFiles.
-func (t *Text) Credits() string { return t.credits }
+func (t *Text) Credits() string {
+	t.mu.RLock()
+	defer t.mu.RUnlock()
+	return t.credits
+}
 
 // News, Info, Policies, Handbook, WizList and ImmList are the rest of the
 // canned files, each shown by one command.
-func (t *Text) News() string { return t.news }
+func (t *Text) News() string {
+	t.mu.RLock()
+	defer t.mu.RUnlock()
+	return t.news
+}
 
 // Info is the `info` command's text.
-func (t *Text) Info() string { return t.info }
+func (t *Text) Info() string {
+	t.mu.RLock()
+	defer t.mu.RUnlock()
+	return t.info
+}
 
 // Policies is the `policy` command's text.
-func (t *Text) Policies() string { return t.policies }
+func (t *Text) Policies() string {
+	t.mu.RLock()
+	defer t.mu.RUnlock()
+	return t.policies
+}
 
 // Handbook is the immortals' handbook.
-func (t *Text) Handbook() string { return t.handbook }
+func (t *Text) Handbook() string {
+	t.mu.RLock()
+	defer t.mu.RUnlock()
+	return t.handbook
+}
 
 // WizList is the list of gods.
-func (t *Text) WizList() string { return t.wizlist }
+func (t *Text) WizList() string {
+	t.mu.RLock()
+	defer t.mu.RUnlock()
+	return t.wizlist
+}
 
 // ImmList is the shorter list the `immlist` command shows.
-func (t *Text) ImmList() string { return t.immlist }
+func (t *Text) ImmList() string {
+	t.mu.RLock()
+	defer t.mu.RUnlock()
+	return t.immlist
+}
 
 // HelpScreen is HELP_PAGE_FILE (db.h:78): what bare `help` shows instead
 // of a lookup.
-func (t *Text) HelpScreen() string { return t.helpScreen }
+func (t *Text) HelpScreen() string {
+	t.mu.RLock()
+	defer t.mu.RUnlock()
+	return t.helpScreen
+}
 
 // Help is do_help's lookup (act.informative.c:966-988), reporting whether
 // anything matched. False both when nothing matches and when there is no
 // help data at all — the caller cannot and does not need to tell those
 // apart.
 func (t *Text) Help(query string) (string, bool) {
+	t.mu.RLock()
+	defer t.mu.RUnlock()
 	if t.help == nil {
 		return "", false
 	}
 	e, ok := t.help.Lookup(query)
 	return e.Body, ok
 }
+
+// Reload re-reads one of the canned files, porting do_reboot (db.c:195).
+//
+// The C's body is an else-if chain over the argument, one file each, plus
+// `all` (or `*`) for the lot — and this is the same chain. Two names are worth
+// knowing apart because they read alike and are not: **`help` is the help
+// *screen*** (HELP_PAGE_FILE, what bare `help` shows), while **`xhelp` is the
+// help *database*** — the index and every file it lists.
+//
+// It reads on the calling goroutine, which for a command means the world
+// goroutine. That is a deliberate exception to the rule that I/O runs off it:
+// these are a dozen small files, it is an implementor-only command run about
+// as often as the server is upgraded, and the alternative — a command whose
+// effect arrives some time after it returns — is worse to use and unlike the
+// C. Recorded in docs/deviations.md.
+func (t *Text) Reload(what string) error {
+	if t == nil {
+		return errUnknownReload
+	}
+	what = strings.ToLower(strings.TrimSpace(what))
+
+	// Read first, then swap: a file that has gone missing since boot leaves
+	// the old text in place rather than blanking it, which is not the C's
+	// behaviour — file_to_string_alloc leaves the pointer alone on failure
+	// too, so the effect is the same and the reasoning is explicit.
+	fresh, err := LoadText(t.dir)
+	if err != nil {
+		return err
+	}
+
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
+	swap := map[string]func(){
+		"wizlist":    func() { t.wizlist = fresh.wizlist },
+		"immlist":    func() { t.immlist = fresh.immlist },
+		"news":       func() { t.news = fresh.news },
+		"credits":    func() { t.credits = fresh.credits },
+		"motd":       func() { t.motd = fresh.motd },
+		"imotd":      func() { t.imotd = fresh.imotd },
+		"help":       func() { t.helpScreen = fresh.helpScreen },
+		"info":       func() { t.info = fresh.info },
+		"policy":     func() { t.policies = fresh.policies },
+		"handbook":   func() { t.handbook = fresh.handbook },
+		"background": func() { t.background = fresh.background },
+		"greetings":  func() { t.greeting = fresh.greeting },
+		"xhelp":      func() { t.help = fresh.help },
+	}
+
+	if what == "all" || what == "*" {
+		// The C's `all` does not include xhelp — it lists the twelve
+		// file_to_string_alloc calls and stops. Reproduced, so `reload all`
+		// followed by a puzzled `reload xhelp` is the same sequence it always
+		// was.
+		for name, apply := range swap {
+			if name != "xhelp" {
+				apply()
+			}
+		}
+		return nil
+	}
+
+	apply, ok := swap[what]
+	if !ok {
+		return errUnknownReload
+	}
+	apply()
+	return nil
+}
+
+// errUnknownReload is what `reload` says for a name it does not know.
+var errUnknownReload = errors.New("unknown reload option")
+
+// ErrUnknownReload reports whether an error is that one, so the session layer
+// can print the C's message without importing the reason.
+func ErrUnknownReload(err error) bool { return errors.Is(err, errUnknownReload) }

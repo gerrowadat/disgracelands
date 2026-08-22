@@ -47,8 +47,8 @@ renting at an inn and the rent files behind it; bulletin boards, mud mail and
 player housing; and the immortal commands, from `goto` and `stat` through
 `set`, `snoop`, `switch` and the site bans.
 
-**307 of the C's 318 commands answer**, and every slice of Phase 5 is built.
-Of the 11 that do not, nine are the OasisOLC and text editors that belong to Phase 6
+**308 of the C's 318 commands answer**, and every slice of Phase 5 is built.
+Of the 10 that do not, nine are the OasisOLC and text editors that belong to Phase 6
 and the rest is a tail of small things listed command by command in the plan's
 §10.
 

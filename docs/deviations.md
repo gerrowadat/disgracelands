@@ -279,6 +279,24 @@ the cost is nothing.
 | **Why** | Plan §0 puts the `sprintf`-overlap class of bug in the "fix and record" category rather than the "reproduce faithfully" one. This is squarely that: an uninitialised-buffer read whose output is whatever happened to be lying there. The character's own message is the C's and unchanged — only the god's line is invented, because the C has none to reproduce. |
 | **Where** | `doRemort` in `internal/session/remort.go`, `TestRemortUndo`. |
 
+### `reload` reads on the world goroutine
+
+| | |
+|---|---|
+| **C** | `do_reboot` (db.c:195) calls `file_to_string_alloc` inline. |
+| **Go** | The same, inline, on the world goroutine. |
+| **Why** | This is a deliberate exception to the rule that I/O runs off-loop, and it is written down because the rule is otherwise absolute. A dozen small text files, an implementor-only command run about as often as the server is upgraded, and the alternative is a command whose effect arrives some time after it returns — worse to use, and unlike the C. The pulse budget is 100ms and the read is well inside it. |
+| **Where** | `Text.Reload` in `internal/server/text.go`. |
+
+### The canned text is the one thing in the server behind a lock
+
+Nothing else needs one: the world goroutine owns the world. But the canned text
+is read from *two* goroutines — commands, on the world goroutine, and the
+greeting, on the connection goroutine before a session has a character — and
+`reload` rewrites it while they do. So `Text` has an `RWMutex` and its readers
+are one line each. One implementor-only command is enough to make an unguarded
+field a race.
+
 ### Ability tables are indexed with a bound
 
 `advance_level` indexes `con_app[]` and `wis_app[]` with the raw score
@@ -352,7 +370,7 @@ Listed here so they are not mistaken for deliberate differences.
   combination, and reports which of them it found the thing in. Here each
   command searches the lists it cares about in the order it wants. The
   behaviour is the same for every command ported so far; the shape is not.
-- **Eleven of the C's 318 commands are not implemented**, and the plan's
+- **Ten of the C's 318 commands are not implemented**, and the plan's
   §10 "What is not in it" lists every one with its `interpreter.c` line. In
   brief: the nine OasisOLC and text editors (Phase 6), `slowns`/`trackthru`,
   and a short tail of `users`, `skillset`, `reload` and `color`. **`hop` is not

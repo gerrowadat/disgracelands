@@ -45,9 +45,6 @@ var notPorted = map[string]string{
 	// Blocked on something.
 	"color":  "the PRF_COLOR bits are stored and set color works, but nothing emits colour",
 	"slowns": "switches reverse-DNS resolution, which this port does not do at all",
-
-	// Simply not written yet.
-	"reload": "re-reads the text files",
 }
 
 // TestEveryCommandIsPortedOrListed compares the C's table against ours.

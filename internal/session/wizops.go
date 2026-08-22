@@ -48,6 +48,10 @@ type Operator interface {
 	// ZoneAge is how many minutes since a zone last reset, which the C keeps
 	// in the zone table and this port keeps beside the pulse.
 	ZoneAge(vnum game.ZoneVnum) int32
+	// ReloadText re-reads one of the canned text files, for `reload`. It
+	// reports whether the name was one it knows, so the command can print the
+	// C's "Unknown reload option." without knowing what the names are.
+	ReloadText(what string) (known bool, err error)
 }
 
 // PlayerSummary is what `show player` reports.
@@ -279,6 +283,33 @@ func doWizlock(c *Context) error {
 // whether to start it again. This port has no wrapper — the container runtime
 // restarts it, see docs/operations.md — so `reboot` and `now` ask to come
 // back and `die` and `pause` ask not to.
+// doReload is do_reboot (db.c:195), which despite the function's name does not
+// reboot anything: it re-reads one of the canned text files.
+//
+// `reload` and `reboot` are different commands in the C — `reboot` is a
+// spelling of `shutdown` — and the confusion is the C's own, since the command
+// named reload calls the function named do_reboot.
+func doReload(c *Context) error {
+	if c.Operator == nil {
+		return nil
+	}
+	what, _ := oneArgument(c.Arg)
+
+	known, err := c.Operator.ReloadText(what)
+	switch {
+	case !known:
+		c.Send("Unknown reload option.\r\n")
+	case err != nil:
+		// The C has no message for a failed read — file_to_string_alloc logs
+		// and leaves the old text alone. Saying so is better than silence for
+		// somebody who has just edited a file and wants to know it took.
+		c.Send("Could not reload that: %s\r\n", err)
+	default:
+		c.Send("Okay.\r\n")
+	}
+	return nil
+}
+
 // shutdownCommand is do_shutdown under its two names (interpreter.c:463,
 // :464). The half-spelling refuses, exactly as `qui` does for `quit` — the
 // same guard, for the same reason, on the other command in the game that
