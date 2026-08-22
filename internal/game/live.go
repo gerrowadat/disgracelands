@@ -237,6 +237,41 @@ func (c *Character) Level() int32 {
 	return c.Record.Level
 }
 
+// RealLevel ports GET_REAL_LEVEL (utils.h:268): the level of whoever is *at
+// the keyboard*, which differs from Level only while a god is switched into
+// somebody else's body.
+//
+// `CAN_SEE` is the only thing in the whole C tree that asks for it
+// (utils.h:442), and the reason is narrow: a god switched into a rat should
+// still see the invisible immortals their own level entitles them to, rather
+// than acquiring the rat's blindness to them. Everything else about a switched
+// god deliberately uses the body's level, which is why the interpreter refuses
+// them their own commands.
+//
+// The switch lives on the connection, not on the character, so the answer has
+// to come from the client. Asked through an optional interface rather than by
+// widening Client, because only sessions can be switched and the test doubles
+// that implement Client have no notion of it.
+func (c *Character) RealLevel() int32 {
+	if c == nil {
+		return 0
+	}
+	if sw, ok := c.Client.(interface{ SwitchedFromLevel() (int32, bool) }); ok {
+		if level, switched := sw.SwitchedFromLevel(); switched {
+			return level
+		}
+	}
+	return c.Level()
+}
+
+// HasAffect reports whether an AFF_* bit is set, porting AFF_FLAGGED.
+//
+// A character with no record has none: a mobile made outside the world for a
+// test has no affects rather than all of them.
+func (c *Character) HasAffect(flag Flags) bool {
+	return c != nil && c.Record != nil && c.Record.AffectFlags.Has(flag)
+}
+
 // Sex is the character's sex, defaulting to neuter for anything without a
 // record — which is what the C's pronoun macros assume of an unset field.
 func (c *Character) Sex() int32 {

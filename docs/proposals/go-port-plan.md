@@ -1127,6 +1127,7 @@ it.
 | **5i-h. `remort`** | A local addition: a per-character bit vector of borrowed class skills, the `IS_<CLASS>` macros that read it, and `redeem` for a fallen paladin. The last slice of Phase 5. | `act.wizard.c`, `class.c` |
 | **5j. The interpreter's own refusals ✅** | `command_interpreter`'s `else if` ladder between finding a command and running it: the frozen check, the switched-immortal check, and `minimum_position` — `cmd_info[]`'s second column, which nothing had been reading. Not a slice when Phase 5 was planned, because it is a property of every command rather than of any one; see below. | `interpreter.c` |
 | **5k. Light and darkness ✅** | `world[].light`, `room_is_dark` and `CAN_SEE_IN_DARK`, and with them `look_at_room` in full: the pitch-black and blindness branches, `PRF_BRIEF`, `PRF_AUTOEXIT`, `PRF_ROOMFLAGS` and the two `<DoC>` room messages. Plus the four preference-based immortal toggles, `holylight` among them, without which nothing could switch the new behaviour on. The half of `CAN_SEE` that is about the room; the half about people is next. | `utils.c`, `handler.c`, `act.informative.c`, `act.other.c` |
+| **5l. Seeing people ✅** | `CAN_SEE` itself and the display half of its call sites: `PERS`/`OBJS` inside `act()`, `list_char_to_char` and `list_one_char` in full, `list_obj_to_char`, `who` and `where`. Invisibility, hiding and the invis level all mean something now. Targeting — `get_char_room_vis` and the rest of `generic_find` — is the other half and is not in it; see below. | `utils.h`, `act.informative.c`, `comm.c` |
 
 ### What is not in it
 
@@ -1148,16 +1149,19 @@ got scheduled.
 - **`N.thing` targeting** (`get_number`, which every command using
   `generic_find` inherits) belongs with the first slice that touches
   `generic_find`.
-- **`CAN_SEE` for people.** Half of this landed as 5k: the room half, which is
-  the light count, `room_is_dark` and `CAN_SEE_IN_DARK`, and which is what
-  `LIGHT_OK` is built on. What is left is the macro itself and its call sites —
-  `INVIS_OK`, the invisibility level, and then teaching `personName` (the one
-  hook `act()` leaves for it), the room's list of people, `who`, `where` and
-  the targeting in `generic_find`. Until then invisibility, hiding and sneaking
-  set flags that nothing consults, so a hidden character is still listed in the
-  room.
+- **`CAN_SEE` in the *targeting* path.** The macro and its display sites landed
+  as 5l, so a hidden character is no longer listed in the room — but
+  `get_char_room_vis`, `get_char_world_vis` and `get_obj_vis` (handler.c:1053
+  and neighbours) also filter on it, and this port's `FindInRoom`,
+  `FindAnywhere` and the object finds take no viewer at all. So you cannot
+  *see* an invisible thief and you can still `kill` them by name.
 
-There was a third — **minimum position** — and it is now built, as 5j.
+  It is a wide, mechanical change — around forty call sites, each of which has
+  an obvious viewer — and it wants doing with `get_number` at the same time,
+  since `N.thing` lives in the same functions and touches the same signatures.
+
+There was a third — **minimum position** — and it is now built, as 5j. `CAN_SEE`
+for *display* is 5l.
 
 ### What 5j changed, and what it caught
 
@@ -1218,6 +1222,45 @@ two `<DoC>` room messages, for `ROOM_GOOD_REGEN` and `ROOM_PKILL`, were absent.
 
 The four preference-based immortal toggles went in with it, because `holylight`
 is half of `CAN_SEE_IN_DARK` and there was no way to switch it on.
+
+### What 5l changed, and what it caught
+
+`CAN_SEE` is six macros nested three deep, and taking them apart is worth doing
+once. Two things the nesting hides:
+
+- **Holylight appears twice and means different things.** `LIGHT_OK` does not
+  consult it; `IMM_CAN_SEE` puts it *beside* the whole mortal test rather than
+  inside it, so a god with holylight sees through darkness, invisibility and
+  hiding in one step rather than three.
+- **The invis-level test sits outside `IMM_CAN_SEE`**, which makes it the one
+  thing holylight cannot defeat. A god cannot see an equal-or-higher god who is
+  `invis`, whatever else they have on. That is the whole reason `invis` works
+  against other immortals.
+
+And one that is not in the macro at all: **`AFF_SNEAK` is not in `INVIS_OK`.**
+Sneaking conceals *movement*, not the person, so somebody sneaking in front of
+you is plainly visible. The three are granted close enough together that
+assuming otherwise is easy, and there is a test that fails if anybody adds it.
+
+`GET_REAL_LEVEL` (utils.h:268) exists for exactly one caller, `CAN_SEE`: a god
+switched into a rat keeps their own level for the invis-level test and for
+nothing else. It is asked of the connection through an optional interface,
+because only sessions can be switched.
+
+**Three more unreachable-or-inconsistent findings**, all in
+`docs/weirdnumbers.md`. `do_look` and `look_at_room` guard themselves
+differently — blindness before darkness in one, darkness before blindness in
+the other, and different sentences for both, so a blind character gets a
+different answer for typing `look` than for walking through a door. `do_look`'s
+first branch is a *fifth* message nobody has ever seen, refused by the same
+minimum-position gate as the four in 5j. And the "glowing red eyes" line turns
+out to be reachable from exactly one of `list_char_to_char`'s two callers,
+which is why the C's only comment on it is `/* glowing red eyes */`.
+
+Going in after it, in `list_one_char`: the port had been printing "%s is
+standing here" for everybody whatever they were doing, with no title, no
+`(invisible)`, `(hidden)`, `(linkless)` or `(writing)` marker, no aura, and
+nothing for a mobile fighting somebody. All of it is there now.
 
 **And one command whose guards are missing rather than the command.** `quit`
 works, saves and removes the character, but `do_quit`'s own checks

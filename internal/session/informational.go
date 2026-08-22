@@ -101,6 +101,11 @@ func doWhere(c *Context) error {
 			if other == c.Character || other.Client == nil || !c.sameZone(other.Room) {
 				continue
 			}
+			// CAN_SEE (act.informative.c:1429). An invis god is not in your
+			// zone as far as you are concerned.
+			if !c.World.CanSee(c.Character, other) {
+				continue
+			}
 			c.Send("%-20s - %s\r\n", other.Name, c.roomName(other.Room))
 		}
 		return nil
@@ -108,6 +113,9 @@ func doWhere(c *Context) error {
 
 	for _, other := range c.World.Players() {
 		if other == c.Character || !c.sameZone(other.Room) || !nameMatches(other, name) {
+			continue
+		}
+		if !c.World.CanSee(c.Character, other) {
 			continue
 		}
 		c.Send("%-25s - %s\r\n", other.Name, c.roomName(other.Room))

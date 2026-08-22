@@ -127,34 +127,27 @@ func TestAWornTorchLightsTheRoom(t *testing.T) {
 	c.expectCount("It is pitch black...", 3)
 }
 
-// TestBlindnessIsReportedAfterDarkness. The C tests IS_DARK first, so a blind
-// character standing in a dark room is told about the dark rather than about
-// their eyes — and only sees "infinite darkness" somewhere lit.
+// TestBlindnessIsReportedAfterDarkness, on look_at_room's path.
+//
+// `look_at_room` tests IS_DARK *first*, so a blind character arriving in a
+// dark room is told about the dark rather than about their eyes, and only sees
+// "infinite darkness" somewhere lit. Note that typing `look` does **not** get
+// here: `do_look` has its own gate with the two tests the other way round and
+// different words for both — see TestLookWhileBlindSaysSomethingElse. So this
+// arrives by `goto` rather than by looking.
 func TestBlindnessIsReportedAfterDarkness(t *testing.T) {
 	srv, _ := newTestServer(t)
 	c := dialClient(t, listening(t, srv))
 	c.create("Zod", "swordfish", "m", "w")
 
-	ch := putInCellar(t, srv, "Zod")
-	if err := srv.engine.DoSync(context.Background(), func(_ *game.Live) {
-		ch.Record.AffectFlags = ch.Record.AffectFlags.Set(game.AffectBlind)
-	}); err != nil {
-		t.Fatal(err)
-	}
+	affect(t, srv, "Zod", game.AffectBlind)
 
 	// Dark and blind: darkness wins.
-	c.send("look")
+	c.send("goto 3022")
 	c.expect("It is pitch black...")
 
 	// Lit and blind: now the blindness shows.
-	if err := srv.engine.DoSync(context.Background(), func(w *game.Live) {
-		if err := w.Enter(ch, ImmortStartRoom); err != nil {
-			t.Errorf("moving out of the cellar: %v", err)
-		}
-	}); err != nil {
-		t.Fatal(err)
-	}
-	c.send("look")
+	c.send("goto 1204")
 	c.expect("You see nothing but infinite darkness...")
 }
 

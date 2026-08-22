@@ -361,6 +361,21 @@ func (s *Session) SetCharacter(c *game.Character) { s.character = c }
 // exactly that case ("You can't use immortal commands while switched").
 func (s *Session) Original() *game.Character { return s.original }
 
+// SwitchedFromLevel answers game.Character.RealLevel: the level of the
+// character this connection really belongs to, and whether it is switched at
+// all.
+//
+// This is the whole of GET_REAL_LEVEL (utils.h:268), and `CAN_SEE` is its only
+// consumer — a god switched into a rat still sees the invisible immortals
+// their own level entitles them to. Everything else about a switched god uses
+// the body's level.
+func (s *Session) SwitchedFromLevel() (int32, bool) {
+	if s == nil || s.original == nil {
+		return 0, false
+	}
+	return s.original.Level(), true
+}
+
 // SwitchInto puts this session in charge of another character.
 func (s *Session) SwitchInto(victim *game.Character) {
 	if s.original == nil {

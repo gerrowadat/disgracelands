@@ -280,11 +280,11 @@ func (sc *SpecialCall) runSocialFor(who *game.Character, name string) {
 		return
 	}
 	if social.CharNoArg != "" {
-		who.Tell("%s", game.Act(social.CharNoArg, game.ActArgs{Actor: who}, who))
+		who.Tell("%s", sc.World.Act(social.CharNoArg, game.ActArgs{Actor: who}, who))
 	}
 	for _, other := range sc.World.Occupants(who.Room) {
 		if other != who && social.OthersNoArg != "" {
-			other.Tell("%s", game.Act(social.OthersNoArg, game.ActArgs{Actor: who}, other))
+			other.Tell("%s", sc.World.Act(social.OthersNoArg, game.ActArgs{Actor: who}, other))
 		}
 	}
 }

@@ -72,7 +72,7 @@ func (c *Context) act(format string, args game.ActArgs, to *game.Character) stri
 	if format == "" {
 		return ""
 	}
-	return game.Act(format, args, to)
+	return c.World.Act(format, args, to)
 }
 
 // toRoom renders a message once per listener, because the codes resolve
@@ -83,7 +83,7 @@ func (c *Context) toRoom(format string, args game.ActArgs) {
 	}
 	for _, other := range c.World.Occupants(c.Character.Room) {
 		if other != c.Character {
-			other.Tell("%s", game.Act(format, args, other))
+			other.Tell("%s", c.World.Act(format, args, other))
 		}
 	}
 }

@@ -42,7 +42,13 @@ type ActArgs struct {
 // the C does unconditionally at the end of the function — so a message that
 // starts with a `$n` gets the *name* capitalised, and one that starts with a
 // lower-case word gets that.
-func Act(format string, args ActArgs, to *Character) string {
+//
+// It hangs off Live because the `$n`/`$N`/`$o`/`$p` codes resolve through PERS
+// and OBJS, and those ask CAN_SEE — which needs the world to know whether the
+// audience's room is dark. Resolving *per audience* is the whole point of the
+// routine, and visibility is the sharpest case of it: the same message names
+// the actor to one bystander and calls them "someone" to another.
+func (l *Live) Act(format string, args ActArgs, to *Character) string {
 	var b strings.Builder
 	upperNext := false
 
@@ -71,9 +77,9 @@ func Act(format string, args ActArgs, to *Character) string {
 
 		switch runes[i] {
 		case 'n':
-			write(personName(args.Actor, to))
+			write(l.personName(args.Actor, to))
 		case 'N':
-			write(personName(args.Victim, to))
+			write(l.personName(args.Victim, to))
 		case 'm':
 			write(args.Actor.Objective())
 		case 'M':
@@ -91,9 +97,9 @@ func Act(format string, args ActArgs, to *Character) string {
 		case 'O':
 			write(objectKeyword(args.VictimObj))
 		case 'p':
-			write(objectName(args.Obj))
+			write(l.objectName(args.Obj, to))
 		case 'P':
-			write(objectName(args.VictimObj))
+			write(l.objectName(args.VictimObj, to))
 		case 'a':
 			write(articleFor(objectKeyword(args.Obj)))
 		case 'A':
@@ -118,26 +124,12 @@ func Act(format string, args ActArgs, to *Character) string {
 	return capitaliseFirst(b.String()) + "\r\n"
 }
 
-// personName is PERS(ch, to): their name, or "someone" if the audience
-// cannot see them.
-//
-// Nothing computes visibility yet, so everybody is seen. When CAN_SEE lands
-// this is the one place it has to be taught.
-func personName(who, to *Character) string {
-	if who == nil {
-		return ""
-	}
-	_ = to
-	return who.Name
-}
+// personName is PERS(ch, to): their name, or "someone" if the audience cannot
+// see them.
+func (l *Live) personName(who, to *Character) string { return l.Pers(who, to) }
 
 // objectName is OBJS: the short description, or "something" unseen.
-func objectName(o *Object) string {
-	if o == nil {
-		return ""
-	}
-	return o.Name()
-}
+func (l *Live) objectName(o *Object, to *Character) string { return l.Objs(o, to) }
 
 // objectKeyword is OBJN: the object's *first keyword* rather than its short
 // description, which is why `$o` reads as "sword" where `$p` reads as "a long

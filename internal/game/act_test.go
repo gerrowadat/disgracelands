@@ -13,17 +13,23 @@ import (
 )
 
 // actPeople builds an actor and a victim with known pronouns.
-func actPeople() (actor, victim *Character) {
-	actor = newCharacter("Zod")
+// actPeople puts two characters in a lit room. They need a world now: the
+// `$n` and `$p` codes resolve through PERS and OBJS, which ask CAN_SEE, which
+// wants to know whether the audience's room is dark.
+func actPeople(t *testing.T) (l *Live, actor, victim *Character) {
+	t.Helper()
+	l = darkWorld(t)
+	atHour(l, 12)
+	actor = inRoom(t, l, "Zod", 3001)
 	actor.Record.Sex = SexMale
-	victim = newCharacter("Welmar")
+	victim = inRoom(t, l, "Welmar", 3001)
 	victim.Record.Sex = SexFemale
-	return actor, victim
+	return l, actor, victim
 }
 
 // TestActSubstitutesEveryCode.
 func TestActSubstitutesEveryCode(t *testing.T) {
-	actor, victim := actPeople()
+	l, actor, victim := actPeople(t)
 	sword := &Object{Keywords: "sword long", ShortDesc: "a long sword"}
 	shield := &Object{Keywords: "shield", ShortDesc: "an iron shield"}
 
@@ -44,8 +50,8 @@ func TestActSubstitutesEveryCode(t *testing.T) {
 		"the cost is 5$$.":  "The cost is 5$.\r\n",
 		"$n drops $p here.": "Zod drops a long sword here.\r\n",
 	} {
-		if got := Act(format, args, victim); got != want {
-			t.Errorf("Act(%q) = %q, want %q", format, got, want)
+		if got := l.Act(format, args, victim); got != want {
+			t.Errorf("l.Act(%q) = %q, want %q", format, got, want)
 		}
 	}
 }
@@ -54,20 +60,20 @@ func TestActSubstitutesEveryCode(t *testing.T) {
 // end — so a message beginning with a name gets the name capitalised and one
 // beginning with a word gets the word.
 func TestActCapitalisesTheWholeMessage(t *testing.T) {
-	actor, victim := actPeople()
+	l, actor, victim := actPeople(t)
 	args := ActArgs{Actor: actor, Victim: victim}
 
-	if got := Act("$e smiles.", args, victim); got != "He smiles.\r\n" {
+	if got := l.Act("$e smiles.", args, victim); got != "He smiles.\r\n" {
 		t.Errorf("got %q", got)
 	}
-	if got := Act("with a grin, $n leaves.", args, victim); !strings.HasPrefix(got, "With a grin") {
+	if got := l.Act("with a grin, $n leaves.", args, victim); !strings.HasPrefix(got, "With a grin") {
 		t.Errorf("got %q", got)
 	}
 }
 
 // TestActUppercaseCodes: $u takes the word already written, $U the next one.
 func TestActUppercaseCodes(t *testing.T) {
-	actor, victim := actPeople()
+	l, actor, victim := actPeople(t)
 	args := ActArgs{Actor: actor, Victim: victim, Text: "some words here"}
 
 	for format, want := range map[string]string{
@@ -82,8 +88,8 @@ func TestActUppercaseCodes(t *testing.T) {
 		// whatever has just been written and upper-cases that letter.
 		"$e said hello$u": "He said Hello\r\n",
 	} {
-		if got := Act(format, args, victim); got != want {
-			t.Errorf("Act(%q) = %q, want %q", format, got, want)
+		if got := l.Act(format, args, victim); got != want {
+			t.Errorf("l.Act(%q) = %q, want %q", format, got, want)
 		}
 	}
 }
@@ -91,12 +97,12 @@ func TestActUppercaseCodes(t *testing.T) {
 // TestActWithNothingToSubstitute. A social aimed at nobody has no victim, and
 // a code for one must not panic — the C substitutes nothing and carries on.
 func TestActWithNothingToSubstitute(t *testing.T) {
-	actor, _ := actPeople()
+	l, actor, _ := actPeople(t)
 
-	if got := Act("$n waves at $N.", ActArgs{Actor: actor}, actor); got != "Zod waves at .\r\n" {
+	if got := l.Act("$n waves at $N.", ActArgs{Actor: actor}, actor); got != "Zod waves at .\r\n" {
 		t.Errorf("got %q", got)
 	}
-	if got := Act("$n drops $p.", ActArgs{Actor: actor}, actor); got != "Zod drops .\r\n" {
+	if got := l.Act("$n drops $p.", ActArgs{Actor: actor}, actor); got != "Zod drops .\r\n" {
 		t.Errorf("got %q", got)
 	}
 }
@@ -191,7 +197,7 @@ func TestSocialsRenderThroughAct(t *testing.T) {
 		}
 	}
 
-	actor, victim := actPeople()
+	l, actor, victim := actPeople(t)
 	bystander := newCharacter("Cid")
 	args := ActArgs{Actor: actor, Victim: victim}
 
@@ -205,7 +211,7 @@ func TestSocialsRenderThroughAct(t *testing.T) {
 		{smile.OthersFound, bystander, "Zod beams a smile at Welmar.\r\n"},
 		{smile.OthersAuto, bystander, "Zod smiles at himself.\r\n"},
 	} {
-		if got := Act(tc.format, args, tc.to); got != tc.want {
+		if got := l.Act(tc.format, args, tc.to); got != tc.want {
 			t.Errorf("%q = %q, want %q", tc.format, got, tc.want)
 		}
 	}

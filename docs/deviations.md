@@ -326,10 +326,17 @@ Listed here so they are not mistaken for deliberate differences.
 - **`data/` is the on-disk contract**, decided rather than deviated: both
   servers read the same directory, which is what the world-parity harness and
   the Phase 7 shadow run depend on.
-- **Nothing reads the visibility flags.** Invisibility, hiding, sneaking and
-  infravision are all set correctly by the spells and skills that grant them,
-  and no `CAN_SEE` equivalent consults them yet, so a hidden character is
-  still listed in the room.
+- **`CAN_SEE` filters what you see, not yet what you can name.** The macro is
+  ported and every *display* site asks it — `act()`'s `$n` and `$p`, the room's
+  list of people and objects, `who`, `where` — so a hidden or invisible
+  character is no longer listed. The *targeting* sites are not: the C's
+  `get_char_room_vis`, `get_char_world_vis` and `get_obj_vis` (handler.c:1053
+  and neighbours) filter on it too, and this port's `FindInRoom`,
+  `FindAnywhere` and object finds take no viewer at all.
+
+  So you cannot see an invisible thief and you can still `kill` them by name.
+  It is the same forty-odd call sites that want `get_number` for `N.thing`
+  targeting, and the two belong together.
 - **`do_quit`'s own guards are not ported**, though everything after them is:
   quitting saves, crash-saves, tells the room and removes the character. What
   is missing is the front of `do_quit` (act.other.c:99–172) — the

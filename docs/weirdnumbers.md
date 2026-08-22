@@ -540,6 +540,74 @@ one for both jobs is wrong in a way that only shows up for a blind god.
 
 *Source*: `utils.h:348`, `utils.h:426`.
 
+### `do_look` and `look_at_room` disagree about being blind in the dark
+
+Both check darkness and blindness before showing you anything, and they do not
+agree on the order or on the words:
+
+```c
+/* do_look, act.informative.c:662 */
+if (GET_POS(ch) < POS_SLEEPING)      "You can't see anything but stars!"
+else if (AFF_FLAGGED(ch, AFF_BLIND)) "You can't see a damned thing, you're blind!"
+else if (IS_DARK && !CAN_SEE_IN_DARK) "It is pitch black..." + list_char_to_char
+
+/* look_at_room, act.informative.c:418 */
+if (IS_DARK && !CAN_SEE_IN_DARK)     "It is pitch black..."
+else if (AFF_FLAGGED(ch, AFF_BLIND)) "You see nothing but infinite darkness..."
+```
+
+Blindness first in one, darkness first in the other, and two different
+sentences for being blind. Both are reachable: a blind character who *types*
+`look` is told they are blind, and the same character who *walks into* a dark
+room is told it is pitch black. Nothing suggests this was intended; it is two
+people writing the same guard twice.
+
+And the first branch of `do_look` is a **fifth unreachable message**, of the
+family in "Four 'you have to wake up first' messages nobody has ever seen":
+`look` and `read` are both `POS_RESTING` in the command table
+(interpreter.c:355, :427), so `GET_POS(ch) < POS_SLEEPING` cannot hold by the
+time `do_look` runs. Nobody has seen "You can't see anything but stars!"
+either.
+
+*Source*: `act.informative.c:662`, `act.informative.c:418`.
+
+### The glowing red eyes are reachable from exactly one place
+
+`list_char_to_char` has an `else if` for somebody you cannot see:
+
+```c
+else if (IS_DARK(IN_ROOM(ch)) && !CAN_SEE_IN_DARK(ch) &&
+         AFF_FLAGGED(i, AFF_INFRAVISION))
+  send_to_char("You see a pair of glowing red eyes looking your way.\r\n", ch);
+```
+
+Note whose infravision it is: **`i`'s, not `ch`'s** — the creature's own night
+vision is what gives it away, not yours.
+
+It looks dead, because the only two callers of `list_char_to_char` are
+`look_at_room`, which returns before its listing when the room is dark, and
+`do_look` — which prints "It is pitch black..." and then calls it *anyway*
+(act.informative.c:668). The C's whole comment on that line is `/* glowing red
+eyes */`, and without it there is nothing to suggest the second branch is ever
+taken. So the eyes are visible when you **type `look`** in a dark room and not
+when you walk into one.
+
+*Source*: `act.informative.c:351`, `act.informative.c:668`.
+
+### `who` shows nobody at all if you are standing in the dark
+
+`do_who` filters on `CAN_SEE(ch, tch)` (act.informative.c:1086), `CAN_SEE` is
+built on `LIGHT_OK`, and `LIGHT_OK` asks whether **the viewer's own room** is
+lit. The people on the who-list are all over the world and it makes no
+difference: standing in an unlit room, a mortal with no infravision sees an
+empty who-list and a count of zero.
+
+The same applies to `where`. It is invisible in Midgaard, where every room is
+`SECT_INSIDE` or `SECT_CITY` and therefore always lit, and it is startling the
+first time somebody types `who` in a cave.
+
+*Source*: `utils.h:426`, `act.informative.c:1086`.
+
 ### An implementor cannot see in the dark
 
 `PRF_HOLYLIGHT` is set by `advance_level` (class.c:1920). The first character

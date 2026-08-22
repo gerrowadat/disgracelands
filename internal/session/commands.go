@@ -819,6 +819,33 @@ func prompt(s *Session) string {
 }
 
 func doLook(c *Context) error {
+	// do_look has a gate of its own (act.informative.c:662), and it is *not*
+	// look_at_room's: different words, and the two tests the other way round.
+	// Typing `look` while blind says "you're blind"; walking into a dark room
+	// while blind says it is pitch black, because there the darkness is asked
+	// first. Both are reachable and they disagree on purpose — or at least
+	// they disagree, and there is no sign anybody meant them to.
+	//
+	// The C's first branch, `GET_POS(ch) < POS_SLEEPING` → "You can't see
+	// anything but stars!", is **unreachable**: `look` and `read` are both
+	// POS_RESTING in the command table (interpreter.c:355, :427), so the
+	// interpreter has already refused anything below that. Not ported, and
+	// recorded in docs/weirdnumbers.md with the other four of its kind.
+	if isBlind(c.Character) {
+		c.Send("You can't see a damned thing, you're blind!\r\n")
+		return nil
+	}
+	if c.World.RoomIsDark(c.Character.Room) && !game.CanSeeInDark(c.Character) {
+		c.Send("It is pitch black...\r\n")
+		// And the one thing you *can* see in the dark. The C's comment on this
+		// line is just "glowing red eyes", which is the only clue that
+		// list_char_to_char has a second branch at all.
+		if room := c.World.Room(c.Character.Room); room != nil {
+			c.Send("%s", listCharToChar(c.World, room, c.Character))
+		}
+		return nil
+	}
+
 	// `look <something>` describes one thing; bare `look` describes the room.
 	if arg := strings.TrimSpace(c.Arg); arg != "" {
 		// `look in <container>` and `look at <thing>` are both the C's, and
@@ -902,7 +929,13 @@ func roomDescription(w *game.Live, room *game.RoomDef, viewer *game.Character, i
 		b.WriteString("You have entered a [Player Killer] room. Beware!\r\n")
 	}
 
+	// list_obj_to_char (act.informative.c:165). An object you cannot see is
+	// simply not there, with no marker: the C's `show` argument produces
+	// " Nothing." for an empty *inventory*, never for an empty floor.
 	for _, obj := range w.RoomObjects(room.Vnum) {
+		if !w.CanSeeObj(viewer, obj) {
+			continue
+		}
 		if obj.Description != "" {
 			fmt.Fprintf(&b, "%s\r\n", obj.Description)
 			continue
@@ -910,17 +943,172 @@ func roomDescription(w *game.Live, room *game.RoomDef, viewer *game.Character, i
 		fmt.Fprintf(&b, "%s is lying here.\r\n", capitaliseFirst(obj.Name()))
 	}
 
+	b.WriteString(listCharToChar(w, room, viewer))
+	return b.String()
+}
+
+// listCharToChar is list_char_to_char (act.informative.c:343).
+//
+// The `else if` is the interesting half and is easy to skip past: somebody you
+// *cannot* see is not always silent. If the room is dark, you cannot see in the
+// dark, and **they** have infravision, you get a pair of glowing red eyes
+// instead of nothing. Note whose infravision it is — theirs, not yours — so it
+// is the creature's own night vision that gives it away.
+func listCharToChar(w *game.Live, room *game.RoomDef, viewer *game.Character) string {
+	var b strings.Builder
+	dark := w.RoomIsDark(room.Vnum) && !game.CanSeeInDark(viewer)
+
 	for _, other := range w.Occupants(room.Vnum) {
 		if other == viewer {
 			continue
 		}
-		// A mobile has a long description written for exactly this line; a
-		// player does not, so they get the generic one.
-		if other.MobDef != nil && other.MobDef.LongDesc != "" {
-			b.WriteString(ensureNewline(other.MobDef.LongDesc))
+		if w.CanSee(viewer, other) {
+			b.WriteString(listOneChar(w, other, viewer))
 			continue
 		}
-		fmt.Fprintf(&b, "%s is standing here.\r\n", other.Name)
+		if dark && other.HasAffect(game.AffectInfravision) {
+			b.WriteString("You see a pair of glowing red eyes looking your way.\r\n")
+		}
+	}
+	return b.String()
+}
+
+// charPositions are list_one_char's positions[] (act.informative.c:261),
+// indexed by position. POS_FIGHTING's slot is never used — the code branches
+// before reaching it — and the C's placeholder is left here for the same
+// reason it is there: so the indices line up with the position constants.
+var charPositions = [...]string{
+	" is lying here, dead.",
+	" is lying here, mortally wounded.",
+	" is lying here, incapacitated.",
+	" is lying here, stunned.",
+	" is sleeping here.",
+	" is resting here.",
+	" is sitting here.",
+	"!FIGHTING!",
+	" is standing here.",
+}
+
+// listOneChar is list_one_char (act.informative.c:259): one line describing
+// somebody the viewer can see.
+//
+// Two shapes, and which one you get is not about being a mobile. A mobile
+// standing in its *default* position uses the long description the builder
+// wrote for it; the same mobile sitting down, or fighting, or dead, falls
+// through to the constructed line — which is why a corpse-to-be says "the
+// cityguard is lying here, mortally wounded" rather than the long description
+// that has it standing at attention.
+func listOneChar(w *game.Live, who, viewer *game.Character) string {
+	if who.MobDef != nil && who.MobDef.LongDesc != "" &&
+		who.Position == game.Position(who.MobDef.Position) {
+		var b strings.Builder
+		// A `*` in front of a long description means invisible. You only ever
+		// see it with detect invisible on, since otherwise the mobile is not
+		// listed at all.
+		if who.HasAffect(game.AffectInvisible) {
+			b.WriteString("*")
+		}
+		b.WriteString(auraPrefix(who, viewer))
+		b.WriteString(ensureNewline(who.MobDef.LongDesc))
+		b.WriteString(glowLines(w, who, viewer))
+		return b.String()
+	}
+
+	var b strings.Builder
+	if who.IsNPC() {
+		b.WriteString(capitaliseFirst(who.Name))
+	} else {
+		fmt.Fprintf(&b, "%s %s", who.Name, title(who))
+	}
+
+	if who.HasAffect(game.AffectInvisible) {
+		b.WriteString(" (invisible)")
+	}
+	if who.HasAffect(game.AffectHide) {
+		b.WriteString(" (hidden)")
+	}
+	if !who.IsNPC() && who.Client == nil {
+		b.WriteString(" (linkless)")
+	}
+	if !who.IsNPC() && who.Record != nil && who.Record.PlayerFlags.Has(game.PlayerWriting) {
+		b.WriteString(" (writing)")
+	}
+
+	if who.Position != game.PosFighting {
+		b.WriteString(charPositions[who.Position])
+	} else if who.Fighting == nil {
+		// The C's comment is "NIL fighting pointer", and it happens: a
+		// position of FIGHTING outlives the opponent by however long it takes
+		// something to clear it.
+		b.WriteString(" is here struggling with thin air.")
+	} else {
+		b.WriteString(" is here, fighting ")
+		switch {
+		case who.Fighting == viewer:
+			b.WriteString("YOU!")
+		case who.Fighting.Room != who.Room:
+			b.WriteString("someone who has already left!")
+		default:
+			// PERS, so an invisible opponent is "someone" even here.
+			fmt.Fprintf(&b, "%s!", w.Pers(who.Fighting, viewer))
+		}
+	}
+
+	b.WriteString(auraSuffix(who, viewer))
+	b.WriteString("\r\n")
+	b.WriteString(glowLines(w, who, viewer))
+	return b.String()
+}
+
+// title is the player's title, which follows their name in the room list. A
+// mobile has none.
+func title(who *game.Character) string {
+	if who.Record == nil {
+		return ""
+	}
+	return who.Record.Title
+}
+
+// auraPrefix and auraSuffix are the same two tests written twice in the C, in
+// the two branches of list_one_char, and they differ: the long-description
+// branch puts "(Red Aura) " *before* with a trailing space, the constructed one
+// puts " (Red Aura)" *after*. Reproduced rather than unified, because the
+// difference is visible.
+func auraPrefix(who, viewer *game.Character) string {
+	switch {
+	case !viewer.HasAffect(game.AffectDetectAlign) || who.Record == nil:
+		return ""
+	case game.IsEvil(who.Record):
+		return "(Red Aura) "
+	case game.IsGood(who.Record):
+		return "(Blue Aura) "
+	}
+	return ""
+}
+
+func auraSuffix(who, viewer *game.Character) string {
+	switch {
+	case !viewer.HasAffect(game.AffectDetectAlign) || who.Record == nil:
+		return ""
+	case game.IsEvil(who.Record):
+		return " (Red Aura)"
+	case game.IsGood(who.Record):
+		return " (Blue Aura)"
+	}
+	return ""
+}
+
+// glowLines are the act() messages list_one_char sends after the line itself.
+// Both branches send the sanctuary one; only the long-description branch sends
+// the blindness one, which is the C's and looks like an oversight rather than
+// a decision — a blind *player* is never reported as groping around.
+func glowLines(w *game.Live, who, viewer *game.Character) string {
+	var b strings.Builder
+	if who.HasAffect(game.AffectSanctuary) {
+		b.WriteString(w.Act("...$e glows with a bright light!", game.ActArgs{Actor: who}, viewer))
+	}
+	if who.MobDef != nil && who.MobDef.LongDesc != "" && who.HasAffect(game.AffectBlind) {
+		b.WriteString(w.Act("...$e is groping around blindly!", game.ActArgs{Actor: who}, viewer))
 	}
 	return b.String()
 }
@@ -1073,16 +1261,32 @@ func announce(w *game.Live, room game.RoomVnum, except *game.Character, format s
 // `hit`, `murder`, `kill` and `assist` live in offensive.go.
 
 func doWho(c *Context) error {
-	players := c.World.Players()
+	// CAN_SEE, as do_who does (act.informative.c:1086) — so an `invis` god is
+	// off the list for anyone below their level, and an invisible player is
+	// off it for anyone without detect invisible.
+	//
+	// Worth knowing what else this drags in: CAN_SEE asks LIGHT_OK, and
+	// LIGHT_OK asks about the *viewer's* room. **A mortal standing in an
+	// unlit room sees nobody at all on the who-list.** That is the C's, it is
+	// invisible in Midgaard because every room there is lit, and it is
+	// startling the first time it happens in a cave. See
+	// docs/weirdnumbers.md.
+	var shown []*game.Character
+	for _, p := range c.World.Players() {
+		if c.World.CanSee(c.Character, p) {
+			shown = append(shown, p)
+		}
+	}
+
 	c.Send("Players\r\n-------\r\n")
-	for _, p := range players {
+	for _, p := range shown {
 		title := p.Title()
 		if title != "" {
 			title = " " + title
 		}
 		c.Send("[%3d] %s%s\r\n", p.Level(), p.Name, title)
 	}
-	c.Send("\r\n%d character%s playing.\r\n", len(players), plural(len(players)))
+	c.Send("\r\n%d character%s playing.\r\n", len(shown), plural(len(shown)))
 	return nil
 }
 

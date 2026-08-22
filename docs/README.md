@@ -34,7 +34,8 @@ both the C tree and the Go tree.
 > grouping; special procedures, the channels and socials, shops, banks, rent,
 > boards, mail, houses, and the immortal commands. 289 of the C's 318 commands
 > answer; `remort` is the slice still open and the plan's §10 lists the other
-> 28 one by one, along with two mechanisms — `CAN_SEE` and `N.thing` targeting
+> 28 one by one, along with the two mechanisms — visibility in the *targeting*
+> path, and `N.thing` targeting
 > — that belong to every command rather than to any of them.
 > `configuration.md` and `operations.md` mark which settings are *(inert)*
 > pending later phases.
