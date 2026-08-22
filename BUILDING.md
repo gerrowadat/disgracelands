@@ -58,7 +58,7 @@ mobiles that act, special procedures, the channels and socials, shops, banks,
 renting, boards, mail, houses, and the immortal commands. Characters autosave,
 a linkdead body stays to reconnect to, and it shuts down cleanly on SIGTERM.
 
-294 of the C's 318 commands answer and every slice of Phase 5 is built. What is
+295 of the C's 318 commands answer and every slice of Phase 5 is built. What is
 left — the OasisOLC editors and a tail of small commands — is listed one by one
 in `docs/proposals/go-port-plan.md` §10.
 

@@ -203,6 +203,7 @@ func TestReportTellsTheGroup(t *testing.T) {
 
 	c.send("report")
 	c.expect("You report to the group.")
+	c.settle()
 	if !listener.said("Zod reports: 500/500H") {
 		t.Error("the group did not get the report")
 	}

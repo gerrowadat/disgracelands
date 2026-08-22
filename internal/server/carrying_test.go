@@ -352,6 +352,7 @@ func TestGivingCoins(t *testing.T) {
 
 	c.send("give 25 coins bob")
 	c.expect("Okay.")
+	c.settle()
 
 	if !bobClient.said("Zod gives you 25 gold coins.") {
 		t.Error("Bob was not told about the money")

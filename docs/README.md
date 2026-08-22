@@ -32,8 +32,8 @@ both the C tree and the Go tree.
 > world that resets and mobiles that act, combat, spells, skills, affects,
 > equipment, containers, food and drink, following and grouping; special
 > procedures, the channels and socials, shops, banks, rent, boards, mail,
-> houses, the immortal commands and remorting. 294 of the C's 318 commands
-> answer, and the plan's §10 lists the other 24 one by one.
+> houses, the immortal commands and remorting. 295 of the C's 318 commands
+> answer, and the plan's §10 lists the other 23 one by one.
 > `configuration.md` and `operations.md` mark which settings are *(inert)*
 > pending later phases.
 

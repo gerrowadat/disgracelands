@@ -42,13 +42,13 @@ it, and rise a level — which is Phase 4's criterion, and there is a test that
 walks it end to end.
 
 The game around it is there too: special procedures, so guildmasters teach and
-guild guards turn you away; the channels and the 104 socials; shops, banks,
+guild guards turn you away; the channels and the socials; shops, banks,
 renting at an inn and the rent files behind it; bulletin boards, mud mail and
 player housing; and the immortal commands, from `goto` and `stat` through
 `set`, `snoop`, `switch` and the site bans.
 
-**294 of the C's 318 commands answer**, and every slice of Phase 5 is built.
-Of the 24 that do not, eight are the OasisOLC editors that belong to Phase 6
+**295 of the C's 318 commands answer**, and every slice of Phase 5 is built.
+Of the 23 that do not, eight are the OasisOLC editors that belong to Phase 6
 and the rest is a tail of small things listed command by command in the plan's
 §10.
 

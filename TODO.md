@@ -3,7 +3,7 @@
 The project is a Go port of the Disgracelands server. What to do next is
 mostly "the next phase", and that lives in
 `docs/proposals/go-port-plan.md` §10 — Phases 0–4 are done and **every slice of
-Phase 5 is built**. Its §10 also lists, command by command, the 24 of the C's
+Phase 5 is built**. Its §10 also lists, command by command, the 23 of the C's
 318 that nothing answers to yet.
 
 This file is for the things that are not phases: work on the C server in

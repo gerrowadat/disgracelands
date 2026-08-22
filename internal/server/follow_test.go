@@ -80,6 +80,7 @@ func TestFollowAndStopFollowing(t *testing.T) {
 
 	c.send("follow bob")
 	c.expect("You now follow Bob.")
+	c.settle()
 	if !bobClient.said("Zod starts following you.") {
 		t.Error("Bob was not told")
 	}
@@ -147,6 +148,7 @@ func TestGroupingAndUngrouping(t *testing.T) {
 
 	c.send("group bob")
 	c.expect("Bob is now a member of your group.")
+	c.settle()
 	if !bobClient.said("You are now a member of Zod's group.") {
 		t.Error("Bob was not told he had been enrolled")
 	}
@@ -197,6 +199,7 @@ func TestUngroupDisbands(t *testing.T) {
 
 	c.send("ungroup")
 	c.expect("You disband the group.")
+	c.settle()
 
 	if !bobClient.said("Zod has disbanded the group.") {
 		t.Error("Bob was not told the group had gone")
@@ -224,6 +227,7 @@ func TestTheGroupLevelSpread(t *testing.T) {
 
 	c.send("group bob")
 	c.expect("Bob cannot hope to keep up with you!")
+	c.settle()
 	if !bobClient.said("You simply cannot keep up with Zod's group.") {
 		t.Error("Bob was not told why")
 	}

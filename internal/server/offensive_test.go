@@ -142,6 +142,7 @@ func TestAssistJoinsSomebodyElsesFight(t *testing.T) {
 
 	c.send("assist bob")
 	c.expect("You join the fight!")
+	c.settle()
 
 	if !friendClient.said("Zod assists you!") {
 		t.Error("Bob was not told")

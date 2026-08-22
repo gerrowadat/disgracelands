@@ -343,11 +343,14 @@ Listed here so they are not mistaken for deliberate differences.
   combination, and reports which of them it found the thing in. Here each
   command searches the lists it cares about in the order it wants. The
   behaviour is the same for every command ported so far; the shape is not.
-- **Twenty-four of the C's 318 commands are not implemented**, and the plan's
+- **Twenty-three of the C's 318 commands are not implemented**, and the plan's
   §10 "What is not in it" lists every one with its `interpreter.c` line. In
   brief: the eight OasisOLC and `tedit` editors (Phase 6), `bug`/`idea`/`typo`,
   the aliases `:` and `take`, and a short tail of `users`, `wizhelp`,
-  `skillset`, `reload`, `qecho`, `page`, `color`, `insult` and `hop`. `alias`
+  `skillset`, `reload`, `qecho`, `page`, `color` and `insult`. **`hop` is not
+  among them**: it is the one `do_action` row the shipped socials file does not
+  fill, and `RegisterSocials` gives it a command anyway that answers "That
+  action is not supported." — which is what the C does too. `alias`
   is off this list now — landed with the native player format (step 5 of
   `docs/proposals/data-format.md`), including `perform_alias`'s complex
   substitution grammar (`;`/`$1`-`$9`/`$*`/`$$`).
