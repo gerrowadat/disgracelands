@@ -110,18 +110,32 @@ var toggles = map[string]toggle{
 	},
 }
 
-// Two of do_gen_tog's seventeen are still missing, and both for the same
-// reason: they flip a server-wide *global* rather than a preference
-// (act.other.c:1021 and :1028). `slowns` switches reverse-DNS resolution,
-// which this port does not do at all, and `trackthru` switches
-// `game.TrackThroughDoors`, which the breadth-first search already reads.
+// doTrackThrough is `trackthru` (act.other.c:1028), the odd one out in
+// do_gen_tog: it flips a server-wide setting rather than a preference, so
+// every character is affected and nothing about it is saved.
 //
-// A global is right in the C, which is one server per process. Here the tests
-// build several servers in one, each with its own world goroutine, so a
-// command writing a package-level variable is a race between them rather than
-// a setting. Whichever of the two lands first has to decide where the value
-// lives — most likely on Live, beside the world it applies to. Recorded in
-// docs/deviations.md.
+// The value lives on Live rather than in a package variable. A global is right
+// in the C, which is one server per process; here the tests build several
+// servers in one, each with its own world goroutine, and a command writing a
+// package variable would be a race between them rather than a setting.
+//
+// `slowns` is the other of the pair and is still not ported: it switches
+// reverse-DNS resolution, and this port does not resolve at all — so there is
+// nothing for it to switch and a command that reported success would be
+// lying. See docs/deviations.md.
+func doTrackThrough(c *Context) error {
+	if c.Character.IsNPC() {
+		return nil
+	}
+	on := !c.World.TrackThroughDoors()
+	c.World.SetTrackThroughDoors(on)
+	if on {
+		c.Send("Will now track through doors.\r\n")
+		return nil
+	}
+	c.Send("Will no longer track through doors.\r\n")
+	return nil
+}
 
 // toggleCommand returns the command for one preference.
 func toggleCommand(name string) func(*Context) error {

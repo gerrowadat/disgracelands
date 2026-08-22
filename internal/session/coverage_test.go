@@ -43,13 +43,11 @@ var notPorted = map[string]string{
 	"edit": "OasisOLC", "tedit": "the in-game text-file editor",
 
 	// Blocked on something.
-	"color":     "the PRF_COLOR bits are stored and set color works, but nothing emits colour",
-	"slowns":    "flips a server-wide global; needs somewhere to live that is not a package variable",
-	"trackthru": "flips a server-wide global; game.TrackThroughDoors is read by the BFS already",
+	"color":  "the PRF_COLOR bits are stored and set color works, but nothing emits colour",
+	"slowns": "switches reverse-DNS resolution, which this port does not do at all",
 
 	// Simply not written yet.
-	"skillset": "sets one skill on one character",
-	"reload":   "re-reads the text files",
+	"reload": "re-reads the text files",
 }
 
 // TestEveryCommandIsPortedOrListed compares the C's table against ours.

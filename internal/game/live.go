@@ -59,6 +59,10 @@ type Live struct {
 	// C measures from the boot time it writes to lib/etc/time.
 	booted time.Time
 
+	// noTrackThroughDoors is `track_through_doors` inverted, so that the zero
+	// value is this server's YES. See TrackThroughDoors.
+	noTrackThroughDoors bool
+
 	// mobileDefs indexes the mobile prototypes by vnum.
 	mobileDefs map[MobVnum]*MobDef
 	// mobiles is every mobile instance in the world, which is what the zone

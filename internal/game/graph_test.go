@@ -131,15 +131,16 @@ func TestClosedDoorsDependOnTheSetting(t *testing.T) {
 		}
 	}
 
-	was := TrackThroughDoors
-	defer func() { TrackThroughDoors = was }()
-
-	TrackThroughDoors = true
+	// The setting is per-world now rather than a package variable, so this
+	// needs no saving and restoring — and two tests can run at once.
+	if !w.TrackThroughDoors() {
+		t.Error("a fresh world should track through doors, as this server did")
+	}
 	if got := w.FindFirstStep(100, 110); got != int(South) {
 		t.Errorf("with track_through_doors on, a shut door gave %d, want south", got)
 	}
 
-	TrackThroughDoors = false
+	w.SetTrackThroughDoors(false)
 	if got := w.FindFirstStep(100, 110); got != BFSNoPath {
 		t.Errorf("with track_through_doors off, a shut door gave %d, want BFSNoPath", got)
 	}

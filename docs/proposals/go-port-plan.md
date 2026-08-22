@@ -1160,7 +1160,7 @@ except build.*
 
 **Met, with the tail named rather than waved at.** Every slice below is built,
 including the three mechanisms that were never slices at all and had to be
-found. 305 of the C's 318 commands answer. Of the 13 that do not, nine are the
+found. 307 of the C's 318 commands answer. Of the 11 that do not, nine are the
 OasisOLC and text editors that belong to Phase 6 by design, and the other
 nine are listed one by one under "What is not in it" — none of them a
 subsystem, none of them blocking anything, all of them an afternoon.
@@ -1172,8 +1172,8 @@ is not typeable — so **318 commands**. 105 of them are `do_action`, and the
 shipped socials file fills 104 of those (it also carries a `you` entry with no
 table slot, which the C drops with a log and so does this port).
 
-**305 of the 318 are implemented**: 200 in `internal/session/commands.go` plus
-the 105 socials. **Every slice below is built.** The 13 left are listed under
+**307 of the 318 are implemented**: 202 in `internal/session/commands.go` plus
+the 105 socials. **Every slice below is built.** The 11 left are listed under
 "What is not in it" — the OLC editors that belong to Phase 6, and a scattering
 of small commands that never had a slice of their own.
 
@@ -1366,9 +1366,9 @@ because a command with no slice is a command nobody schedules.
 
 | | |
 |---|---|
-| The last two `do_gen_tog` toggles | `slowns` (interpreter.c:472) and `trackthru` (:517). The other fifteen are done. These two flip a server-wide **global** rather than a preference (act.other.c:1021, :1028), which is right in the C — one server per process — and a race here, where the tests build several servers in one. Whichever lands first has to decide where the value lives, most likely on `Live`. `slowns` also has nothing behind it: this port does no reverse DNS. |
+| The last `do_gen_tog` toggle | `slowns` (interpreter.c:472). The other sixteen are done. `trackthru` landed with the setting moved onto `Live` — a package variable would have been a race between the several servers a test run builds, where the C's global is right for one server per process. `slowns` has nothing behind it at all: this port does no reverse DNS, so a command reporting success would be lying. |
 | ~~Aliases~~ | All built: `:` for emote (interpreter.c:286), `take` for get (:503), and the C's two deliberate stumps `qui` (:421) and `shutdow` (:463). |
-| Immortal odds and ends | `skillset` (:469) and `reload` (:428). `users` (:528), `wizhelp` (:553), `qecho` (:419) and `page` (:398) are built. |
+| Immortal odds and ends | `reload` (:428), which re-reads the canned text files and wants a seam that does the reading off the world goroutine. `users` (:528), `skillset` (:469), `wizhelp` (:553), `qecho` (:419) and `page` (:398) are built. |
 | Mortal odds and ends | `color` (:258), and only that: the `PRF_COLOR` bits are stored and `set color` works, but nothing emits colour, so the command has nothing to switch. `insult` (:346) and `alias` (:226) are built. **`hop` (:337) was never missing**: it is the one `do_action` row the shipped socials file does not fill, and `RegisterSocials` gives it a command anyway that answers "That action is not supported." — which is what the C does too. |
 | `mudlog`'s in-game half | `syslog` sets `PRF_LOG1`/`PRF_LOG2` and nothing reads them: the `wizvis` attribute on a log record (`internal/obs/log.go`) has no consumer, so gods cannot watch the log from in-game. Wanted whenever the syslog levels are meant to mean something. |
 

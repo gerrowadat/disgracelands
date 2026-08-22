@@ -22,9 +22,23 @@ const (
 	BFSNoPath = -3
 )
 
-// TrackThroughDoors is `track_through_doors = YES` (config.c:109), so a
-// closed door does not break a trail on this server. The stock default is NO.
-var TrackThroughDoors = true
+// TrackThroughDoors reports whether a closed door breaks a trail, which is
+// `track_through_doors` (config.c:109). It is YES on this server, where the
+// stock default is NO.
+//
+// It lives on Live rather than in a package variable, and the reason is the
+// concurrency model rather than taste. The C has one server per process, so a
+// global is exactly right there; here the tests build several servers in one
+// process, each with its own world goroutine, and a command writing a package
+// variable would be a race between them rather than a setting. `trackthru`
+// flips this one, and `slowns` is the other of the pair — see
+// docs/deviations.md for why that one is still not ported.
+func (l *Live) TrackThroughDoors() bool { return !l.noTrackThroughDoors }
+
+// SetTrackThroughDoors is what `trackthru` calls. Phrased as a setter over a
+// negated field so that the zero value of Live is the server's YES rather than
+// the stock NO: a world built by a test has the setting the game ran on.
+func (l *Live) SetTrackThroughDoors(on bool) { l.noTrackThroughDoors = !on }
 
 // FindFirstStep returns the first direction of a shortest path from src to
 // target, or one of the BFS* constants.
@@ -57,7 +71,7 @@ func (l *Live) FindFirstStep(src, target RoomVnum) int {
 		if exit == nil || exit.ToRoom == NoRoom {
 			return 0, false
 		}
-		if !TrackThroughDoors && exit.State.Has(ExitClosed) {
+		if !l.TrackThroughDoors() && exit.State.Has(ExitClosed) {
 			return 0, false
 		}
 		to := l.Room(exit.ToRoom)
