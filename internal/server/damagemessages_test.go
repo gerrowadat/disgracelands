@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/gerrowadat/disgracelands/internal/game"
+	"github.com/gerrowadat/disgracelands/internal/persist/messages"
 )
 
 // damage()'s dispatch (fight.c:855-871), for the ordinary weapon swing:
@@ -310,5 +311,43 @@ func TestSkillDamageIsSilentWithNothingRegistered(t *testing.T) {
 		if len(c.lines) != 0 {
 			t.Errorf("SkillDamage with nothing registered said %v, want silence", c.lines)
 		}
+	}
+}
+
+// End to end: LoadText(dir, "native") reads config/messages.yaml, not
+// misc/messages, and a kick still resolves a real registered message
+// through it — proving the wiring (internal/server/text.go's own
+// messages.Load call, the --messages-format flag it is fed from in
+// cmd/dlmud/main.go), not just internal/persist/messages' own codec
+// (already covered by its own real-archive round-trip test).
+func TestNativeMessagesFormatEndToEnd(t *testing.T) {
+	classic, err := messages.Load("classic", "../../data/misc/messages")
+	if err != nil {
+		t.Fatalf("Load(classic): %v", err)
+	}
+
+	dir := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(dir, "text"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	for name, body := range map[string]string{
+		greetingFile: testGreeting,
+		creditsFile:  testCredits,
+	} {
+		if err := os.WriteFile(filepath.Join(dir, name), []byte(body), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := messages.Save("native", filepath.Join(dir, "config"), classic); err != nil {
+		t.Fatalf("Save(native): %v", err)
+	}
+
+	text, err := LoadText(dir, "native")
+	if err != nil {
+		t.Fatalf("LoadText: %v", err)
+	}
+
+	if _, ok := text.FightMessages().Pick(game.SkillKick, testRNG()); !ok {
+		t.Error("LoadText(dir, \"native\") found no registered kick message, want the real archive's")
 	}
 }

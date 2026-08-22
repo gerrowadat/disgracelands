@@ -6,6 +6,8 @@
 
 package game
 
+import "strconv"
+
 // The ordinary weapon-swing message, ported from dam_message and
 // skill_message's weapon-type half (fight.c). damage()'s dispatch
 // (fight.c:855-871), restricted to a weapon attack (the only kind an
@@ -228,4 +230,39 @@ func WeaponAttackType(wielded *Object) int32 {
 		return TypeHit + AttackHit + wielded.Values[3]
 	}
 	return TypeHit + AttackHit
+}
+
+// AttackTypeName names a misc/messages record's attack type for the
+// native format, for step 6c's step-and-a-half question: the number
+// spans two spaces the C never had to name together, because it never
+// wrote either one out symbolically at all. TypeHit and above is a
+// weapon type, named by NativeAttackTypeNames() the same way a weapon's
+// own fourth value already is (internal/persist/world/native/values.go);
+// below it is a spell or skill number, named by SpellNameOrNumber — which
+// already covers SkillBackstab/SkillBash/SkillKick alongside every real
+// spell, since spellTable is one table for both (confirmed: init_spell_
+// levels assigns skill levels through the same mechanism spello() uses
+// for spells). Either way, a number neither table names round-trips as
+// "#N" rather than being lost — SpellNameOrNumber's own convention,
+// reused rather than inventing a second one for the other half.
+func AttackTypeName(attackType int32) string {
+	if attackType >= TypeHit {
+		if name, ok := NameByValue(attackType-TypeHit, NativeAttackTypeNames()); ok {
+			return name
+		}
+		return "#" + strconv.Itoa(int(attackType))
+	}
+	return SpellNameOrNumber(attackType)
+}
+
+// AttackTypeFromName is AttackTypeName's inverse. A weapon-type name is
+// tried first — the two spaces cannot collide (spell/skill names are
+// never single hit-verbs like "slash", and neither table is consulted for
+// entries the other already claimed) — before falling back to
+// SpellNumberFromNameOrNumber, which itself already understands "#N".
+func AttackTypeFromName(name string) (int32, bool) {
+	if offset, ok := ValueByName(name, NativeAttackTypeNames()); ok {
+		return TypeHit + offset, true
+	}
+	return SpellNumberFromNameOrNumber(name)
 }

@@ -54,6 +54,14 @@ type Config struct {
 	// socials and messages will eventually join it too, whenever each of
 	// those lands.
 	NamesFormat string
+	// MessagesFormat covers the skill_message/dam_message table
+	// (docs/proposals/data-format.md §9, step 6c) — its own flag rather
+	// than sharing NamesFormat's: the two live in the same config/
+	// directory but are otherwise unrelated administrative concerns (a
+	// moderation list versus combat flavour text), the same reasoning
+	// that kept them from sharing StateFormat's "one directory, one
+	// flag" grouping in the first place.
+	MessagesFormat string
 
 	// Listeners. An empty address means the listener is disabled.
 	TelnetAddr  string
@@ -134,12 +142,13 @@ var (
 	// field is eleven bytes, so a modern credential cannot be stored at
 	// all, and every other field is fixed-width. See
 	// docs/proposals/go-port-plan.md §5.2.
-	knownPlayerFormats  = []string{"ascii", "binary", "native"}
-	serverPlayerFormats = []string{"ascii", "native"}
-	knownWorldFormats   = []string{"classic", "native"}
-	knownStateFormats   = []string{"classic", "native"}
-	knownNamesFormats   = []string{"classic", "native"}
-	knownLogFormats     = []string{"text", "json"}
+	knownPlayerFormats   = []string{"ascii", "binary", "native"}
+	serverPlayerFormats  = []string{"ascii", "native"}
+	knownWorldFormats    = []string{"classic", "native"}
+	knownStateFormats    = []string{"classic", "native"}
+	knownNamesFormats    = []string{"classic", "native"}
+	knownMessagesFormats = []string{"classic", "native"}
+	knownLogFormats      = []string{"text", "json"}
 )
 
 // Default returns the configuration used when nothing is specified. Every
@@ -153,6 +162,7 @@ func Default() Config {
 		WorldFormat:          "classic",
 		StateFormat:          "classic",
 		NamesFormat:          "classic",
+		MessagesFormat:       "classic",
 		TelnetAddr:           "",
 		TelnetsAddr:          ":4443",
 		WSAddr:               "",
@@ -274,6 +284,7 @@ func Load(args []string, lookupEnv func(string) (string, bool), out io.Writer) (
 	str("world-format", "World-file format: "+strings.Join(knownWorldFormats, ", "), &cfg.WorldFormat)
 	str("state-format", "Boards/mail/houses/bans format: "+strings.Join(knownStateFormats, ", "), &cfg.StateFormat)
 	str("names-format", "Disallowed-name list format: "+strings.Join(knownNamesFormats, ", "), &cfg.NamesFormat)
+	str("messages-format", "Damage message table format: "+strings.Join(knownMessagesFormats, ", "), &cfg.MessagesFormat)
 
 	str("listen-telnet", "Plaintext telnet listen address (empty = disabled)", &cfg.TelnetAddr)
 	str("listen-telnets", "TLS telnet listen address (empty = disabled)", &cfg.TelnetsAddr)
@@ -412,6 +423,9 @@ func (c *Config) Validate() error {
 	}
 	if !contains(knownNamesFormats, c.NamesFormat) {
 		return fmt.Errorf("--names-format: unknown format %q (have: %s)", c.NamesFormat, strings.Join(knownNamesFormats, ", "))
+	}
+	if !contains(knownMessagesFormats, c.MessagesFormat) {
+		return fmt.Errorf("--messages-format: unknown format %q (have: %s)", c.MessagesFormat, strings.Join(knownMessagesFormats, ", "))
 	}
 	if !contains(knownLogFormats, c.LogFormat) {
 		return fmt.Errorf("--log-format: unknown format %q (have: %s)", c.LogFormat, strings.Join(knownLogFormats, ", "))

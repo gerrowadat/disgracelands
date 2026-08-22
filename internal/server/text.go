@@ -15,6 +15,7 @@ import (
 	"sync"
 
 	"github.com/gerrowadat/disgracelands/internal/game"
+	"github.com/gerrowadat/disgracelands/internal/persist/messages"
 )
 
 // Text holds the server's canned files.
@@ -39,6 +40,11 @@ type Text struct {
 	// dir is the data directory these were read from, so `reload` can read
 	// them again. Set by LoadText and never changed.
 	dir string
+	// messagesFormat is misc/messages'/config/messages.yaml's format —
+	// stored alongside dir for the same reason, so Reload (which does not
+	// currently reload messages at all; see its own doc comment) still
+	// passes LoadText the format it was originally configured with.
+	messagesFormat string
 
 	greeting   string
 	motd       string
@@ -112,6 +118,9 @@ const (
 
 	// messagesFile is MESS_FILE (db.h:89): lib/misc/messages.
 	messagesFile = "misc/messages"
+	// messagesConfigDir is where config/messages.yaml lives under native
+	// — the same config/ directory names.yaml already shares.
+	messagesConfigDir = "config"
 )
 
 // MainMenu is the C's MENU (config.c:271), verbatim.
@@ -143,8 +152,8 @@ const (
 )
 
 // LoadText reads the canned files from a data directory.
-func LoadText(dir string) (*Text, error) {
-	t := &Text{dir: dir}
+func LoadText(dir, messagesFormat string) (*Text, error) {
+	t := &Text{dir: dir, messagesFormat: messagesFormat}
 
 	// Required. The licence names both of these.
 	for _, f := range []struct {
@@ -227,15 +236,18 @@ func LoadText(dir string) (*Text, error) {
 	}
 
 	// misc/messages, the same optional posture as help and socials —
-	// porting load_messages (fight.c:145-193).
-	if f, err := os.Open(filepath.Join(dir, messagesFile)); err == nil { //nolint:gosec // operator-configured data directory
-		records, err := game.ParseMessagesFile(f)
-		_ = f.Close()
-		if err != nil {
-			return nil, fmt.Errorf("reading %s: %w", messagesFile, err)
-		}
-		t.messages = game.NewFightMessages(records)
+	// porting load_messages (fight.c:145-193). classic is a file, native
+	// a directory — the same asymmetry every other pluggable format in
+	// this tree already has.
+	messagesPath := filepath.Join(dir, messagesFile)
+	if messagesFormat == "native" {
+		messagesPath = filepath.Join(dir, messagesConfigDir)
 	}
+	records, err := messages.Load(messagesFormat, messagesPath)
+	if err != nil {
+		return nil, fmt.Errorf("reading %s: %w", messagesPath, err)
+	}
+	t.messages = game.NewFightMessages(records)
 
 	return t, nil
 }
@@ -381,7 +393,7 @@ func (t *Text) Reload(what string) error {
 	// the old text in place rather than blanking it, which is not the C's
 	// behaviour — file_to_string_alloc leaves the pointer alone on failure
 	// too, so the effect is the same and the reasoning is explicit.
-	fresh, err := LoadText(t.dir)
+	fresh, err := LoadText(t.dir, t.messagesFormat)
 	if err != nil {
 		return err
 	}

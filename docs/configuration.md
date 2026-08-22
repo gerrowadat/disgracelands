@@ -41,6 +41,7 @@ files edited in-game. Back it up; mount it as a volume in a container.
 | `--world-format` | `classic` | `classic`, `native` |
 | `--state-format` | `classic` | `classic`, `native` |
 | `--names-format` | `classic` | `classic`, `native` |
+| `--messages-format` | `classic` | `classic`, `native` |
 
 `ascii` is the ascii_pfiles 2.1 one-text-file-per-player format. `classic`
 is the original CircleMUD `.wld`/`.mob`/`.obj`/`.zon`/`.shp` flat-file world.
@@ -96,6 +97,17 @@ existing list once:
 
 ```sh
 dlctl names import --from-path=data/misc/xnames --to-dir=data/config
+```
+
+`--messages-format` covers the `skill_message`/`dam_message` table on its
+own (`misc/messages` under `classic`, `data/config/messages.yaml` under
+`native`) — its own flag for the same reason `--names-format` is: it
+shares `config/` with the disallowed-name list, but the two are otherwise
+unrelated administrative concerns and do not need to move together.
+Convert an existing table once:
+
+```sh
+dlctl messages import --from-path=data/misc/messages --to-dir=data/config
 ```
 
 **The server will not start on `--player-format=binary`**, and says so with

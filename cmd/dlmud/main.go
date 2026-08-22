@@ -290,7 +290,7 @@ func run(args []string) error {
 
 	// The greeting and the credits are licence obligations; LoadText refuses
 	// to return if either is missing, which is deliberate.
-	text, err := server.LoadText(cfg.LibDir)
+	text, err := server.LoadText(cfg.LibDir, cfg.MessagesFormat)
 	if err != nil {
 		return err
 	}

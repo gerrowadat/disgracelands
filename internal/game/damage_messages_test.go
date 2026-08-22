@@ -6,7 +6,10 @@
 
 package game
 
-import "testing"
+import (
+	"strconv"
+	"testing"
+)
 
 func TestDamageTierBoundaries(t *testing.T) {
 	for _, tc := range []struct {
@@ -81,5 +84,57 @@ func TestDamageMessageAllAudiences(t *testing.T) {
 	}
 	if got, want := DamageMessage(0, TypeHit+AttackHit, AudienceVictim), "$n tries to hit you, but misses."; got != want {
 		t.Errorf("victim = %q, want %q", got, want)
+	}
+}
+
+func TestAttackTypeNameRoundTrips(t *testing.T) {
+	for _, tc := range []struct {
+		name       string
+		attackType int32
+		want       string
+	}{
+		{"weapon", TypeHit + AttackSlash, "slash"},
+		{"bare hands", TypeHit + AttackHit, "hit"},
+		{"skill", SkillBackstab, "backstab"},
+		{"spell", 1, SpellName(1)},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			got := AttackTypeName(tc.attackType)
+			if got != tc.want {
+				t.Errorf("AttackTypeName(%d) = %q, want %q", tc.attackType, got, tc.want)
+			}
+			back, ok := AttackTypeFromName(got)
+			if !ok || back != tc.attackType {
+				t.Errorf("AttackTypeFromName(%q) = %d, %v, want %d, true", got, back, ok, tc.attackType)
+			}
+		})
+	}
+}
+
+func TestAttackTypeNameFallsBackToHashNumber(t *testing.T) {
+	for _, tc := range []struct {
+		name       string
+		attackType int32
+	}{
+		{"unnamed weapon type", TypeHit + 999},
+		{"unnamed spell/skill number", 99999},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			got := AttackTypeName(tc.attackType)
+			want := "#" + strconv.Itoa(int(tc.attackType))
+			if got != want {
+				t.Errorf("AttackTypeName(%d) = %q, want %q", tc.attackType, got, want)
+			}
+			back, ok := AttackTypeFromName(got)
+			if !ok || back != tc.attackType {
+				t.Errorf("AttackTypeFromName(%q) = %d, %v, want %d, true", got, back, ok, tc.attackType)
+			}
+		})
+	}
+}
+
+func TestAttackTypeFromNameUnknown(t *testing.T) {
+	if _, ok := AttackTypeFromName("not a real attack type"); ok {
+		t.Error("AttackTypeFromName matched a name that names nothing")
 	}
 }
