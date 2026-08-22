@@ -9,13 +9,15 @@ them documented in the same place — with one, and it is a superset of all
 of them: everything they can express, it can express, and it can express
 more.
 
-This started as a proposal; the world half (§11 steps 1–3) and the players
-half (§11 step 5) are now built — `internal/persist/world/native/` and
-`internal/persist/player/native/`, registered as `native` alongside
-`classic`/`ascii` in the same `internal/persist/world`/`internal/persist/
-player` registries this document always said they would slot into. The rest
-of the state tree (§11 step 6) is not; see §11 for what landed and what is
-still a plan.
+This started as a proposal; the world half (§11 steps 1–3), the players
+half (§11 step 5) and the four small state formats — bans, boards, mail,
+houses — (§11 step 6a) are now built. Each is `internal/persist/<name>/
+native/`, registered as `native` alongside `classic`/`ascii` in the same
+per-package registries this document always said they would slot into.
+Game config, help, socials, messages, reports, the clock and `misc/
+xnames` (§11 step 6b and the rest of §6/§7) are not; see §11 for what
+landed and what is still a plan, and why those are staged separately
+rather than bundled in.
 
 ---
 
@@ -1229,47 +1231,60 @@ whatever *was* saved, the same as it always has.
 Small formats, listed for completeness because "all of it has to move
 together" is the entire point.
 
-All three of the struct-dump ones are now ported and working —
-`internal/persist/boards`, `internal/persist/mail`, `internal/persist/houses`
-— so none of this is urgent, and that is the right order: the C formats had
-to be readable before there was anything to convert *from*. What those ports
-buy this proposal is a precise specification of each format and a test
-oracle for it, which is most of the work of writing the converter. What they
-do not change is the case for replacing them, which is §1's: every one is a
-memory layout, and `layout_test.go` exists in each package because the only
-way to know where a field sits is to ask a C compiler.
+Four of these are now built — step 6a, `internal/persist/{bans,boards,
+mail,houses}`, each retrofitted to the `Store` interface/registry shape
+`world` and `player` already had, `classic` moved to its own subpackage
+unchanged, `native` added beside it, `--state-format` selecting between
+them, `dlctl state import`/`fmt` converting and canonicalising. All three
+struct-dump ones were already ported and working before this — boards,
+mail, houses — which is the right order: the C formats had to be readable
+before there was anything to convert *from*, and those ports' test
+oracles were most of the work a converter needed anyway.
 
-**`state/boards.yaml`** — replaces the `board.*` struct dumps. A board is a
-vnum, its read/write/remove levels, and a list of messages, each with a
-poster, a timestamp, a heading and a body as a block scalar. The stock
-`MAX_BOARD_MESSAGES` of 60 and `MAX_MESSAGE_LENGTH` of 4096 are properties
-of a fixed-size array, not of the game, and do not come along.
+**`state/boards.yaml` ✅** — replaces the `board.*` struct dumps. One file
+holding every board's messages together, keyed by the name classic used as
+a filename (`board.mort` etc.) — board *definitions* (vnum, read/write/
+remove levels) stay a hardcoded Go table, matching the C's own compiled-in
+`board_info[]`; there was never anything data-driven there to convert. The
+stock `MAX_BOARD_MESSAGES` of 60 and `MAX_MESSAGE_LENGTH` of 4096 are
+properties of a fixed-size array, not of the game, and do not come along.
 
-**`state/mail.yaml`** — replaces the 100-byte-block linked list in
-`mail.c`. A list of `{to, from, sent, body}`. The free-block list, the
-block chaining and the `BLOCK_SIZE` arithmetic all vanish; they exist only
-because the file was a hand-rolled allocator.
+**`state/mail.yaml` ✅** — replaces the 100-byte-block linked list in
+`mail.c`. A flat list of `{to, from, sent, text}`, oldest first by
+construction (append on send, take-the-first-match on receive) rather than
+needing the reversal trick classic's own `findHeader` does to reproduce
+the C's list-order quirk. The free-block list, the block chaining and the
+`BLOCK_SIZE` arithmetic all vanish; they existed only because the file was
+a hand-rolled allocator.
 
-**`state/houses.yaml`** — replaces `etc/hcontrol`, an array of
-`struct house_control_rec` complete with eight `spare` longs. Becomes a
-list of `{room, atrium, exit, owner, guests, built, last_payment, mode}`.
-The `MAX_HOUSES` of 100 and `MAX_GUESTS` of 10 go the same way as the board
-limits.
+**`state/houses.yaml` ✅** — replaces `etc/hcontrol` *and* the
+`<vnum>.house` object files together: a house's own control record and
+its contents sit nested in the same entry, one file instead of a control
+array plus a directory of per-room files. Contents reuse the player
+format's object-instance schema (§8) directly, always flat — real
+containment was step 5's own explicitly-scoped deviation for player rent
+files, not extended here. The `MAX_HOUSES` of 100 and `MAX_GUESTS` of 10
+go the same way as the board limits.
 
 **`state/reports.yaml`** — the `bugs`, `ideas` and `typos` files, which are
 currently three append-only text logs with a timestamp convention. One list
 with a `kind`, a reporter, a room and a body, which makes them something a
-tool can triage instead of something someone greps.
+tool can triage instead of something someone greps. Not built: `do_gen_write`
+(`bug`/`idea`/`typo`) is not itself ported yet, and a format for a command
+that does not exist is the wrong order, the same lesson `alias` and
+containment already taught in step 5.
 
 **`config/names.yaml`** — `misc/xnames`, a list of disallowed name
-substrings. Unchanged in substance; it is a list of strings either way.
+substrings. Unchanged in substance; it is a list of strings either way. Not
+built: nothing in character creation consults `misc/xnames` yet either, so
+like reports this is a small feature to add before it is a format question.
 
-**`state/bans.yaml`** — the siteban list (`etc/badsites`, `BAN_FILE` in
-`db.h`, read and written by `ban.c`). A few lines of site, ban type, date
-and the immortal who set it. Small, but it was missing from an earlier draft
-of this section entirely, which is the hazard of enumerating a format's
-contents from the parts that are interesting rather than from a directory
-listing.
+**`state/bans.yaml` ✅** — the siteban list (`etc/badsites`, `BAN_FILE` in
+`db.h`, read and written by `ban.c`). A flat list of `{site, type, when,
+by}` — the smallest of the four, and the first built for exactly that
+reason. It was also missing from an earlier draft of this section entirely,
+which is the hazard of enumerating a format's contents from the parts that
+are interesting rather than from a directory listing.
 
 **`state/clock.yaml`** — the MUD clock. `db.c` keeps the game's epoch in
 `etc/time` as a bare integer with nothing around it: no name, no units, no
@@ -1379,14 +1394,16 @@ format-neutral and that is the whole reason it exists.
 | **3. World write ✅ (export not yet)** | `world.Sink` (`WriteZone`), the canonical writer (`text.go`'s `Text`/`NestedText`), `dlctl world fmt`. `dlctl world export` (native → classic) is **not built** — it needs a classic-format *writer*, which does not exist in this tree at all yet (`classic` has only ever been a reader). | `classic → native → classic` round-trips byte-identical at the in-memory/parity-dump level for the whole real world (`native/parity_test.go`, 30 zones / 3,202 records) modulo one documented, reported lossy transform (trailing blank lines beyond one, `text.go`'s `TrimsTrailingBlankLines` — see §12); `fmt` is idempotent, verified against the real corpus. |
 | **4. Flip the default** | `--world-format=native`, `data/` converted in the repo, `classic` demoted to import-only. | Not attempted — a decision about `data/` itself, separate from this code landing. `--world-format=native` is available and works today; `classic` stays the default. |
 | **5. Players ✅** | `native` player store (`internal/persist/player/native/`), implementing both `player.Store` and `player.ObjectStore` against one file (§8); `dlctl pfile import`/`pfile fmt`; the `alias` command (`interpreter.c`'s `do_alias`/`perform_alias`, previously unported — no archived alias data exists anywhere to have ported instead); real container nesting, format-gated on `native` as a user-approved deviation (`docs/deviations.md`). | `dlctl pfile import` converts a `binary` roster (rent files included); `dlmud --player-format=native` boots, and a character created on it, quit and logged back in, keeps a bag's contents *inside* the bag — proven live (`TestRentingUnderNativeKeepsTheRingInTheBag`), not just at the codec level. `PlayerRecord`/`player.Store` needed no restructuring: `ObjectStore` was already a separate interface a format could additionally implement, and `StoredObject` grew one field (`Contains`) rather than being redesigned. |
-| **6. The rest** | Boards, mail, houses, reports, socials, messages, help, game config. | Not attempted. |
+| **6a. Bans, boards, mail, houses ✅** | `native` for each (`internal/persist/{bans,boards,mail,houses}/native/`), every one retrofitted to the `Store`/`Register`/`Open` shape `world`/`player` already had (`classic` moved to its own subpackage per format, unchanged); `--state-format`; `dlctl state import`/`fmt`, converting all four together. Houses' contents reuse the player object-instance schema directly, always flat (containment stayed scoped to player rent files, §8's own note in this table's row 5). | `dlctl state import`/`fmt` round-trip a synthetic fixture (no real archived data exists for any of these four — confirmed, not assumed, in the scoping survey); a live server integration test per format proves each one end to end (posting/reading a board message, sending/receiving mail, a ban refusing a connection, a house crash-save surviving a reload), all under `--state-format=native`. |
+| **6b. The rest** | Reports (`bug`/`idea`/`typo` — needs `do_gen_write` built first), the MUD clock (needs a persisted-epoch feature built first), `misc/xnames` (needs a name-substring check built first), help (needs the real keyword/level lookup built first — today's `help` is a stub), damage messages (needs `messg.msg`'s selection logic ported first), game config (`config.c`'s tuning, currently scattered `const`s — a cross-cutting refactor independent of any file format). | Not attempted. Each is a feature or a refactor first and a format question second — building the format before the feature existed is the mistake step 5 (`alias`, containment) already showed the cost of avoiding, and bundling six unrelated efforts into one pass would risk every one of them. |
 | **7. Retire** | `ascii` and `binary` become `dlctl`-only; `classic` becomes import-only. | Not attempted. |
 
 Steps 1–4 are worth doing before **Phase 6** of `go-port-plan.md`, which is
 where OasisOLC and `Sink` writeback land: OLC writes zone files back, and it
 would be perverse to implement a writer for `classic` and then a second one
-for `native`. That makes Phase 5 — where step 5 has now also landed — the
-natural window. Step 6 can follow whenever.
+for `native`. That makes Phase 5 — where steps 5 and 6a have now also
+landed — the natural window. Step 6b can follow whenever, each piece on
+its own schedule once the feature underneath it exists.
 
 `classic` and `binary` are never deleted. `classic` is the world-format
 parity oracle for as long as the C server is authoritative, and it is how

@@ -29,9 +29,13 @@ import (
 	"github.com/gerrowadat/disgracelands/internal/engine"
 	"github.com/gerrowadat/disgracelands/internal/game"
 	"github.com/gerrowadat/disgracelands/internal/persist/bans"
+	bansclassic "github.com/gerrowadat/disgracelands/internal/persist/bans/classic"
 	"github.com/gerrowadat/disgracelands/internal/persist/boards"
+	boardsclassic "github.com/gerrowadat/disgracelands/internal/persist/boards/classic"
 	"github.com/gerrowadat/disgracelands/internal/persist/houses"
+	housesclassic "github.com/gerrowadat/disgracelands/internal/persist/houses/classic"
 	"github.com/gerrowadat/disgracelands/internal/persist/mail"
+	mailclassic "github.com/gerrowadat/disgracelands/internal/persist/mail/classic"
 	"github.com/gerrowadat/disgracelands/internal/persist/player"
 	"github.com/gerrowadat/disgracelands/internal/persist/player/ascii"
 	"github.com/gerrowadat/disgracelands/internal/persist/player/binary"
@@ -416,37 +420,53 @@ func newTestServer(t *testing.T) (*Server, player.Store) {
 		t.Fatal(err)
 	}
 
-	return newTestServerWith(t, store, objects)
+	return newTestServerWith(t, store, objects, nil, nil, nil, nil)
 }
 
 // newTestServerWith is newTestServer's common tail, factored out so a test
 // that needs a different player.Store/player.ObjectStore pair — native's
 // own alias_test.go-style containment test, chiefly — does not have to
 // duplicate the engine/world/board/mail/house/text wiring to get one.
-func newTestServerWith(t *testing.T, store player.Store, objects player.ObjectStore) (*Server, player.Store) {
+//
+// banStore, boardStore and mailStore override the default classic ones when
+// non-nil — the shape this will likely grow for houses too once it is
+// pluggable — see docs/proposals/data-format.md §9 step 6a.
+func newTestServerWith(t *testing.T, store player.Store, objects player.ObjectStore, banStore bans.Store, boardStore boards.Store, mailStore mail.Store, houseStore houses.Store) (*Server, player.Store) {
 	t.Helper()
 
 	// Board files, in their own throwaway directory.
-	boardStore, err := boards.New(filepath.Join(t.TempDir(), "etc"), false)
-	if err != nil {
-		t.Fatal(err)
+	if boardStore == nil {
+		var err error
+		boardStore, err = boardsclassic.New(boards.Config{Dir: filepath.Join(t.TempDir(), "etc")})
+		if err != nil {
+			t.Fatal(err)
+		}
 	}
 
-	mailStore, err := mail.New(filepath.Join(t.TempDir(), "plrmail"), false)
-	if err != nil {
-		t.Fatal(err)
+	if mailStore == nil {
+		var err error
+		mailStore, err = mailclassic.New(mail.Config{Path: filepath.Join(t.TempDir(), "plrmail")})
+		if err != nil {
+			t.Fatal(err)
+		}
 	}
 
-	banStore, err := bans.New(filepath.Join(t.TempDir(), "badsites"), false)
-	if err != nil {
-		t.Fatal(err)
+	var err error
+	if banStore == nil {
+		banStore, err = bansclassic.New(bans.Config{Path: filepath.Join(t.TempDir(), "badsites")})
+		if err != nil {
+			t.Fatal(err)
+		}
 	}
 
-	houseDir := t.TempDir()
-	houseStore, err := houses.New(
-		filepath.Join(houseDir, "hcontrol"), filepath.Join(houseDir, "house"), false)
-	if err != nil {
-		t.Fatal(err)
+	if houseStore == nil {
+		houseDir := t.TempDir()
+		houseStore, err = housesclassic.New(houses.Config{
+			ControlPath: filepath.Join(houseDir, "hcontrol"), ObjectDir: filepath.Join(houseDir, "house"),
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
 	}
 
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))

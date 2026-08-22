@@ -103,6 +103,16 @@ var commands = []command{
 		summary: "Canonicalise a native player directory in place",
 		run:     cmdPfileFmt,
 	},
+	{
+		name:    "state import",
+		summary: "Convert bans, boards, mail and houses into native together (docs/proposals/data-format.md)",
+		run:     cmdStateImport,
+	},
+	{
+		name:    "state fmt",
+		summary: "Canonicalise a native state directory in place",
+		run:     cmdStateFmt,
+	},
 }
 
 func main() {

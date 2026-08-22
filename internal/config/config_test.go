@@ -173,6 +173,7 @@ func TestValidation(t *testing.T) {
 		// the server cannot run on it: its password field is eleven bytes.
 		{"binary is conversion-only", append(minimal, "--player-format=binary"), "conversion format only"},
 		{"unknown world format", append(minimal, "--world-format=json"), "--world-format"},
+		{"unknown state format", append(minimal, "--state-format=json"), "--state-format"},
 		{"unknown log format", append(minimal, "--log-format=xml"), "--log-format"},
 		{"bad log level", append(minimal, "--log-level=chatty"), "--log-level"},
 		{"empty lib dir", append(minimal, "--lib-dir="), "--lib-dir"},

@@ -4,7 +4,7 @@
 // (Copyright (C) 1990, 1991). Use of this file is governed by the CircleMUD
 // and DikuMUD licenses; see LICENSE. Non-commercial use only.
 
-package houses
+package classic
 
 import (
 	"bufio"
@@ -13,6 +13,8 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/gerrowadat/disgracelands/internal/persist/houses"
 )
 
 // The house control record, against a 32-bit build of the C.
@@ -25,7 +27,7 @@ func TestHouseLayoutMatchesA32BitBuildOfTheC(t *testing.T) {
 		t.Skip("gcc not found; skipping the 32-bit house layout check (ilp32)")
 	}
 
-	src, err := filepath.Abs(filepath.Join("..", "..", "..", "reference", "tools", "houselayout.c"))
+	src, err := filepath.Abs(filepath.Join("..", "..", "..", "..", "reference", "tools", "houselayout.c"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -80,9 +82,9 @@ func TestHouseLayoutMatchesA32BitBuildOfTheC(t *testing.T) {
 		}
 		// The guest array's stride, checked through its total size.
 		if fields[0] == "guests" {
-			if got := atoi(t, fields[2]); got != MaxGuests*guestStride {
+			if got := atoi(t, fields[2]); got != houses.MaxGuests*guestStride {
 				t.Errorf("guests is %d bytes, this package assumes %d",
-					got, MaxGuests*guestStride)
+					got, houses.MaxGuests*guestStride)
 			}
 		}
 		seen++

@@ -39,6 +39,7 @@ files edited in-game. Back it up; mount it as a volume in a container.
 |---|---|---|
 | `--player-format` | `ascii` | `ascii`, `native` |
 | `--world-format` | `classic` | `classic`, `native` |
+| `--state-format` | `classic` | `classic`, `native` |
 
 `ascii` is the ascii_pfiles 2.1 one-text-file-per-player format. `classic`
 is the original CircleMUD `.wld`/`.mob`/`.obj`/`.zon`/`.shp` flat-file world.
@@ -74,6 +75,15 @@ format for them regardless of `--player-format`, matching the C):
 
 ```sh
 dlctl pfile import --from-dir=data/etc --to-dir=data/players
+```
+
+`--state-format` covers bans, boards, mail and player housing together —
+one flag, since they end up in one directory (`data/state/` under
+`native`) and there is no reason to convert boards without mail. Convert
+an existing set once:
+
+```sh
+dlctl state import --from-dir=data/etc --from-house-dir=data/house --to-dir=data/state
 ```
 
 **The server will not start on `--player-format=binary`**, and says so with

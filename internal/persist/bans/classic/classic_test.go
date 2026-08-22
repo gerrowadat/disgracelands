@@ -4,7 +4,7 @@
 // (Copyright (C) 1990, 1991). Use of this file is governed by the CircleMUD
 // and DikuMUD licenses; see LICENSE. Non-commercial use only.
 
-package bans
+package classic
 
 import (
 	"os"
@@ -12,12 +12,14 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/gerrowadat/disgracelands/internal/persist/bans"
 )
 
 func newStore(t *testing.T) (*Store, string) {
 	t.Helper()
 	path := filepath.Join(t.TempDir(), "badsites")
-	s, err := New(path, false)
+	s, err := New(bans.Config{Path: path})
 	if err != nil {
 		t.Fatalf("opening: %v", err)
 	}
@@ -28,9 +30,9 @@ func TestBansRoundTrip(t *testing.T) {
 	s, path := newStore(t)
 
 	when := time.Unix(1_000_000_000, 0).UTC()
-	for _, ban := range []Ban{
-		{Site: "example.com", Type: TypeAll, When: when, By: "Zod"},
-		{Site: "spam.net", Type: TypeNew, When: when, By: "Welmar"},
+	for _, ban := range []bans.Ban{
+		{Site: "example.com", Type: bans.TypeAll, When: when, By: "Zod"},
+		{Site: "spam.net", Type: bans.TypeNew, When: when, By: "Welmar"},
 	} {
 		added, err := s.Add(ban)
 		if err != nil || !added {
@@ -38,7 +40,7 @@ func TestBansRoundTrip(t *testing.T) {
 		}
 	}
 
-	again, err := New(path, false)
+	again, err := New(bans.Config{Path: path})
 	if err != nil {
 		t.Fatalf("reopening: %v", err)
 	}
@@ -51,7 +53,7 @@ func TestBansRoundTrip(t *testing.T) {
 	if got[0].Site != "spam.net" {
 		t.Errorf("the list starts with %q, want the newest ban first", got[0].Site)
 	}
-	if got[0].Type != TypeNew || got[0].By != "Welmar" || !got[0].When.Equal(when) {
+	if got[0].Type != bans.TypeNew || got[0].By != "Welmar" || !got[0].When.Equal(when) {
 		t.Errorf("the ban round-tripped as %+v", got[0])
 	}
 }
@@ -60,8 +62,8 @@ func TestBansRoundTrip(t *testing.T) {
 // loop reads it back.
 func TestTheFileFormatIsWhatTheCWrites(t *testing.T) {
 	s, path := newStore(t)
-	if _, err := s.Add(Ban{
-		Site: "example.com", Type: TypeSelect,
+	if _, err := s.Add(bans.Ban{
+		Site: "example.com", Type: bans.TypeSelect,
 		When: time.Unix(1_700_000_000, 0), By: "Zod",
 	}); err != nil {
 		t.Fatalf("adding: %v", err)
@@ -80,21 +82,21 @@ func TestTheFileFormatIsWhatTheCWrites(t *testing.T) {
 // isbanned is a *substring* match, which is much broader than it looks.
 func TestCheckIsASubstringMatch(t *testing.T) {
 	s, _ := newStore(t)
-	if _, err := s.Add(Ban{Site: "example.com", Type: TypeAll}); err != nil {
+	if _, err := s.Add(bans.Ban{Site: "example.com", Type: bans.TypeAll}); err != nil {
 		t.Fatalf("adding: %v", err)
 	}
 
 	for _, tc := range []struct {
 		host string
-		want Type
+		want bans.Type
 	}{
-		{"example.com", TypeAll},
-		{"EXAMPLE.COM", TypeAll},
-		{"mail.example.com", TypeAll},
+		{"example.com", bans.TypeAll},
+		{"EXAMPLE.COM", bans.TypeAll},
+		{"mail.example.com", bans.TypeAll},
 		// The surprising one: a substring match catches this too.
-		{"notexample.computer", TypeAll},
-		{"example.org", TypeNone},
-		{"", TypeNone},
+		{"notexample.computer", bans.TypeAll},
+		{"example.org", bans.TypeNone},
+		{"", bans.TypeNone},
 	} {
 		if got := s.Check(tc.host); got != tc.want {
 			t.Errorf("Check(%q) = %v, want %v", tc.host, got, tc.want)
@@ -105,18 +107,18 @@ func TestCheckIsASubstringMatch(t *testing.T) {
 // The worst matching ban wins.
 func TestCheckTakesTheWorstMatch(t *testing.T) {
 	s, _ := newStore(t)
-	for _, ban := range []Ban{
-		{Site: "example.com", Type: TypeNew},
-		{Site: "mail.example.com", Type: TypeAll},
+	for _, ban := range []bans.Ban{
+		{Site: "example.com", Type: bans.TypeNew},
+		{Site: "mail.example.com", Type: bans.TypeAll},
 	} {
 		if _, err := s.Add(ban); err != nil {
 			t.Fatalf("adding: %v", err)
 		}
 	}
-	if got := s.Check("mail.example.com"); got != TypeAll {
+	if got := s.Check("mail.example.com"); got != bans.TypeAll {
 		t.Errorf("Check gave %v, want the worst of the two", got)
 	}
-	if got := s.Check("www.example.com"); got != TypeNew {
+	if got := s.Check("www.example.com"); got != bans.TypeNew {
 		t.Errorf("Check gave %v, want the only one that matches", got)
 	}
 }
@@ -125,20 +127,20 @@ func TestCheckTakesTheWorstMatch(t *testing.T) {
 // C's message says to do about it.
 func TestAddingTwiceIsRefused(t *testing.T) {
 	s, _ := newStore(t)
-	if added, _ := s.Add(Ban{Site: "example.com", Type: TypeNew}); !added {
+	if added, _ := s.Add(bans.Ban{Site: "example.com", Type: bans.TypeNew}); !added {
 		t.Fatal("the first add was refused")
 	}
-	if added, _ := s.Add(Ban{Site: "EXAMPLE.COM", Type: TypeAll}); added {
+	if added, _ := s.Add(bans.Ban{Site: "EXAMPLE.COM", Type: bans.TypeAll}); added {
 		t.Error("adding an already-banned site succeeded")
 	}
-	if got := s.Check("example.com"); got != TypeNew {
+	if got := s.Check("example.com"); got != bans.TypeNew {
 		t.Errorf("the ban type changed to %v", got)
 	}
 }
 
 func TestRemove(t *testing.T) {
 	s, _ := newStore(t)
-	if _, err := s.Add(Ban{Site: "example.com", Type: TypeAll}); err != nil {
+	if _, err := s.Add(bans.Ban{Site: "example.com", Type: bans.TypeAll}); err != nil {
 		t.Fatalf("adding: %v", err)
 	}
 
@@ -149,10 +151,10 @@ func TestRemove(t *testing.T) {
 	if err != nil || !found {
 		t.Fatalf("removing: found=%v err=%v", found, err)
 	}
-	if ban.Type != TypeAll {
+	if ban.Type != bans.TypeAll {
 		t.Errorf("the removed ban was %v", ban.Type)
 	}
-	if got := s.Check("example.com"); got != TypeNone {
+	if got := s.Check("example.com"); got != bans.TypeNone {
 		t.Errorf("the site is still banned: %v", got)
 	}
 }
@@ -170,7 +172,7 @@ func TestAShortLineStopsTheRead(t *testing.T) {
 		t.Fatalf("writing: %v", err)
 	}
 
-	s, err := New(path, false)
+	s, err := New(bans.Config{Path: path})
 	if err != nil {
 		t.Fatalf("opening: %v", err)
 	}
@@ -180,7 +182,7 @@ func TestAShortLineStopsTheRead(t *testing.T) {
 }
 
 func TestAMissingFileIsNoBans(t *testing.T) {
-	s, err := New(filepath.Join(t.TempDir(), "nothing"), false)
+	s, err := New(bans.Config{Path: filepath.Join(t.TempDir(), "nothing")})
 	if err != nil {
 		t.Fatalf("opening: %v", err)
 	}
@@ -190,11 +192,11 @@ func TestAMissingFileIsNoBans(t *testing.T) {
 }
 
 func TestAReadOnlyStoreRefusesToWrite(t *testing.T) {
-	s, err := New(filepath.Join(t.TempDir(), "badsites"), true)
+	s, err := New(bans.Config{Path: filepath.Join(t.TempDir(), "badsites"), ReadOnly: true})
 	if err != nil {
 		t.Fatalf("opening: %v", err)
 	}
-	if _, err := s.Add(Ban{Site: "example.com", Type: TypeAll}); err == nil {
+	if _, err := s.Add(bans.Ban{Site: "example.com", Type: bans.TypeAll}); err == nil {
 		t.Error("a read-only store wrote a ban")
 	}
 }

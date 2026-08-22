@@ -4,7 +4,7 @@
 // (Copyright (C) 1990, 1991). Use of this file is governed by the CircleMUD
 // and DikuMUD licenses; see LICENSE. Non-commercial use only.
 
-package mail
+package classic
 
 import (
 	"os"
@@ -12,12 +12,14 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/gerrowadat/disgracelands/internal/persist/mail"
 )
 
 func newStore(t *testing.T) (*Store, string) {
 	t.Helper()
 	path := filepath.Join(t.TempDir(), "plrmail")
-	s, err := New(path, false)
+	s, err := New(mail.Config{Path: path})
 	if err != nil {
 		t.Fatalf("opening: %v", err)
 	}
@@ -26,7 +28,7 @@ func newStore(t *testing.T) (*Store, string) {
 
 func send(t *testing.T, s *Store, to, from int64, text string) {
 	t.Helper()
-	if err := s.Send(Message{To: to, From: from, Sent: time.Unix(1_700_000_000, 0), Text: text}); err != nil {
+	if err := s.Send(mail.Message{To: to, From: from, Sent: time.Unix(1_700_000_000, 0), Text: text}); err != nil {
 		t.Fatalf("sending: %v", err)
 	}
 }
@@ -143,7 +145,7 @@ func TestMailSurvivesReopening(t *testing.T) {
 	s, path := newStore(t)
 	send(t, s, 42, 1, "still here?")
 
-	again, err := New(path, false)
+	again, err := New(mail.Config{Path: path})
 	if err != nil {
 		t.Fatalf("reopening: %v", err)
 	}
@@ -156,10 +158,33 @@ func TestMailSurvivesReopening(t *testing.T) {
 	}
 }
 
+// All is non-destructive: everything is still there afterwards, and in the
+// same oldest-first order Receive would deliver it in.
+func TestAllDoesNotDrainTheMailbox(t *testing.T) {
+	s, _ := newStore(t)
+	send(t, s, 1, 2, "first")
+	send(t, s, 3, 2, "second")
+	send(t, s, 1, 2, "third")
+
+	all := s.All()
+	if len(all) != 3 {
+		t.Fatalf("All returned %d messages, want 3", len(all))
+	}
+
+	// Nothing was freed: HasMail and Receive still see everything.
+	if !s.HasMail(1) || !s.HasMail(3) {
+		t.Error("All() removed mail it only should have read")
+	}
+	got, ok, err := s.Receive(1)
+	if err != nil || !ok || got.Text != "first" {
+		t.Errorf("Receive after All() gave %+v, %v, %v", got, ok, err)
+	}
+}
+
 func TestNonsenseIsRefused(t *testing.T) {
 	s, _ := newStore(t)
 
-	for _, m := range []Message{
+	for _, m := range []mail.Message{
 		{To: -1, From: 1, Text: "x"},
 		{To: 1, From: -1, Text: "x"},
 		{To: 1, From: 2, Text: ""},
@@ -179,11 +204,11 @@ func TestReceivingNothing(t *testing.T) {
 
 func TestAReadOnlyStoreRefusesToWrite(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "plrmail")
-	s, err := New(path, true)
+	s, err := New(mail.Config{Path: path, ReadOnly: true})
 	if err != nil {
 		t.Fatalf("opening: %v", err)
 	}
-	if err := s.Send(Message{To: 1, From: 2, Text: "x"}); err == nil {
+	if err := s.Send(mail.Message{To: 1, From: 2, Text: "x"}); err == nil {
 		t.Error("a read-only store wrote mail")
 	}
 }

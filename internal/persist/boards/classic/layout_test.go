@@ -4,7 +4,7 @@
 // (Copyright (C) 1990, 1991). Use of this file is governed by the CircleMUD
 // and DikuMUD licenses; see LICENSE. Non-commercial use only.
 
-package boards
+package classic
 
 import (
 	"bufio"
@@ -30,7 +30,7 @@ func TestBoardLayoutMatchesA32BitBuildOfTheC(t *testing.T) {
 		t.Skip("gcc not found; skipping the 32-bit board layout check (ilp32)")
 	}
 
-	src, err := filepath.Abs(filepath.Join("..", "..", "..", "reference", "tools", "boardlayout.c"))
+	src, err := filepath.Abs(filepath.Join("..", "..", "..", "..", "reference", "tools", "boardlayout.c"))
 	if err != nil {
 		t.Fatal(err)
 	}

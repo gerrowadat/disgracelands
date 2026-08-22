@@ -174,17 +174,17 @@ func applyRentFile(doc *playerDoc, f *player.RentFile) {
 		Gold:       f.Gold,
 		Bank:       f.Bank,
 	}
-	doc.Inventory = make([]objInstanceDoc, 0, len(f.Objects))
+	doc.Inventory = make([]ObjInstanceDoc, 0, len(f.Objects))
 	for _, obj := range f.Objects {
-		doc.Inventory = append(doc.Inventory, objInstanceDocFrom(obj))
+		doc.Inventory = append(doc.Inventory, ObjInstanceDocFrom(obj))
 	}
 }
 
-func objInstanceDocFrom(st player.StoredObject) objInstanceDoc {
+func ObjInstanceDocFrom(st player.StoredObject) ObjInstanceDoc {
 	extra, extraRaw := game.NameBits(st.ExtraFlags, game.NativeItemExtraFlagNames())
 	perm, permRaw := game.NameBits(st.PermAffect, game.NativeAffectFlagNames())
 
-	od := objInstanceDoc{
+	od := ObjInstanceDoc{
 		Vnum:   int32(st.Vnum),
 		Values: st.Values[:],
 		Flags:  extra, FlagsRaw: uint64(extraRaw),
@@ -198,10 +198,10 @@ func objInstanceDocFrom(st player.StoredObject) objInstanceDoc {
 			continue
 		}
 		location, _ := game.NameByValue(a.Location, game.NativeApplyTypeNames())
-		od.Affects = append(od.Affects, objAffectDoc{Location: location, Modifier: a.Modifier})
+		od.Affects = append(od.Affects, ObjAffectDoc{Location: location, Modifier: a.Modifier})
 	}
 	for _, inner := range st.Contains {
-		od.Contains = append(od.Contains, objInstanceDocFrom(inner))
+		od.Contains = append(od.Contains, ObjInstanceDocFrom(inner))
 	}
 	return od
 }

@@ -140,7 +140,18 @@ from the world on the world goroutine and saves afterwards, off it — so
 `srv.WaitForWrites()` is the barrier for anything written by a background
 save: it waits for every counted write goroutine to finish. Prefer it to
 polling with `eventually` when what you are waiting for is a file this server
-wrote.
+wrote — but only once something has already synchronized with the world
+goroutine first (`waitForLogout`, `inWorld`, or the like). Calling it right
+after a socket-level `c.expect(...)` is itself a race: the world goroutine's
+`background()` call (the `s.writes.Add(1)`) and the client noticing the
+command's reply have no ordering relationship, so the test's own
+`WaitForWrites()` can race that `Add(1)` — `sync.WaitGroup`'s own documented
+unsafe case, "Add with the counter at zero, concurrent with Wait", and the
+`-race` detector finds it exactly as reliably as any other data race (found
+while adding a board format slow enough — a YAML marshal versus a raw byte
+encode — to make the window wide enough to hit; the same call shape had been
+sitting in `wizset_test.go` unnoticed). Reach for `eventually` polling the
+state directly when there is no cheaper barrier to synchronize on first.
 
 **Every background write must go through `Server.background`.** A bare
 `go func()` that writes into a test's `t.TempDir()` outlives the test, and

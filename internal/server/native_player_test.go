@@ -29,7 +29,7 @@ func TestRentingUnderNativeKeepsTheRingInTheBag(t *testing.T) {
 	}
 	t.Cleanup(func() { _ = store.Close() })
 
-	srv, _ := newTestServerWith(t, store, store)
+	srv, _ := newTestServerWith(t, store, store, nil, nil, nil, nil)
 	addr := listening(t, srv)
 
 	c := dialClient(t, addr)

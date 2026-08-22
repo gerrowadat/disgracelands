@@ -7,10 +7,17 @@
 package server
 
 import (
+	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/gerrowadat/disgracelands/internal/game"
+	"github.com/gerrowadat/disgracelands/internal/persist/boards"
+	boardsnative "github.com/gerrowadat/disgracelands/internal/persist/boards/native"
+	"github.com/gerrowadat/disgracelands/internal/persist/player"
+	"github.com/gerrowadat/disgracelands/internal/persist/player/ascii"
+	"github.com/gerrowadat/disgracelands/internal/persist/player/binary"
 )
 
 // The bulletin board, end to end.
@@ -86,6 +93,71 @@ func TestWritingReadingAndRemovingAMessage(t *testing.T) {
 
 	// An emptied board leaves no file at all.
 	if _, err := srv.boards.Load(game.Boards[0].File); err == nil {
+		t.Error("emptying the board left the file behind")
+	}
+}
+
+// The same fixture as TestWritingReadingAndRemovingAMessage, on native --
+// proving the live write/read/remove path actually reaches boards/native's
+// Store, not just its own isolated round-trip test.
+func TestWritingReadingAndRemovingAMessageUnderNative(t *testing.T) {
+	boardStore, err := boardsnative.New(boards.Config{Dir: filepath.Join(t.TempDir(), "state")})
+	if err != nil {
+		t.Fatal(err)
+	}
+	store, err := ascii.New(player.Config{Dir: filepath.Join(t.TempDir(), "pfiles")})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = store.Close() })
+	objects, err := binary.NewObjectStore(player.Config{Dir: filepath.Join(t.TempDir(), "plrobjs-lib")})
+	if err != nil {
+		t.Fatal(err)
+	}
+	srv, _ := newTestServerWith(t, store, objects, nil, boardStore, nil, nil)
+	c := dialClient(t, listening(t, srv))
+	c.create("Poster", "penandink", "m", "m")
+	atBoard(t, srv, "Poster")
+
+	c.send("write a first post")
+	c.expect("Write your message.  Terminate with a @ on a new line.")
+	c.send("Hello everybody.")
+	c.send("@")
+	c.settle()
+
+	c.send("look board")
+	c.expect("There are 1 messages on the board.")
+	c.expect("(Poster)")
+
+	// SaveBoard backgrounds each save independently (internal/server/
+	// boards.go), with no ordering guarantee against any other in-flight
+	// one — Server.WaitForWrites is racy to call here (its WaitGroup Add
+	// happens on the world goroutine while a command is still being
+	// processed, which is the exact "Add concurrent with Wait" pattern
+	// sync.WaitGroup documents as unsafe; the race detector agrees). Poll
+	// instead, the same eventually() pattern mail_test.go/wizops_test.go
+	// already use for backgrounded state.
+	var msgs []boards.Message
+	if !eventually(5*time.Second, func() bool {
+		var loadErr error
+		msgs, loadErr = srv.boards.Load(game.Boards[0].File)
+		return loadErr == nil && len(msgs) == 1
+	}) {
+		t.Fatalf("the board file never gained the one post; last read: %+v", msgs)
+	}
+	if !strings.Contains(msgs[0].Heading, "a first post") {
+		t.Errorf("the board file holds %+v, want the one post", msgs)
+	}
+	if msgs[0].Body != "Hello everybody.\r\n" {
+		t.Errorf("the message body is %q, want CRLF-joined text", msgs[0].Body)
+	}
+
+	c.send("remove 1")
+	c.expect("Message removed.")
+	if !eventually(5*time.Second, func() bool {
+		_, err := srv.boards.Load(game.Boards[0].File)
+		return err != nil
+	}) {
 		t.Error("emptying the board left the file behind")
 	}
 }

@@ -44,6 +44,14 @@ import (
 	"github.com/gerrowadat/disgracelands/internal/server"
 
 	// Register the formats the server can be configured to use.
+	_ "github.com/gerrowadat/disgracelands/internal/persist/bans/classic"
+	_ "github.com/gerrowadat/disgracelands/internal/persist/bans/native"
+	_ "github.com/gerrowadat/disgracelands/internal/persist/boards/classic"
+	_ "github.com/gerrowadat/disgracelands/internal/persist/boards/native"
+	_ "github.com/gerrowadat/disgracelands/internal/persist/houses/classic"
+	_ "github.com/gerrowadat/disgracelands/internal/persist/houses/native"
+	_ "github.com/gerrowadat/disgracelands/internal/persist/mail/classic"
+	_ "github.com/gerrowadat/disgracelands/internal/persist/mail/native"
 	_ "github.com/gerrowadat/disgracelands/internal/persist/player/ascii"
 	_ "github.com/gerrowadat/disgracelands/internal/persist/player/native"
 	_ "github.com/gerrowadat/disgracelands/internal/persist/world/classic"
@@ -187,28 +195,50 @@ func run(args []string) error {
 		}
 	}
 
-	// The bulletin boards, beside the player data in the etc directory.
-	boardStore, err := boards.New(filepath.Join(cfg.LibDir, "etc"), false)
+	// The bulletin boards: beside the player data in the etc directory under
+	// classic, or state/boards.yaml under native.
+	boardDir := filepath.Join(cfg.LibDir, "etc")
+	if cfg.StateFormat == "native" {
+		boardDir = filepath.Join(cfg.LibDir, "state")
+	}
+	boardStore, err := boards.Open(cfg.StateFormat, boards.Config{Dir: boardDir})
 	if err != nil {
 		return err
 	}
 
-	// The mud mail file, likewise.
-	mailStore, err := mail.New(filepath.Join(cfg.LibDir, "etc", "plrmail"), false)
+	// The mud mail file: classic's block-allocator file, or
+	// state/mail.yaml under native.
+	mailPath := filepath.Join(cfg.LibDir, "etc", "plrmail")
+	if cfg.StateFormat == "native" {
+		mailPath = filepath.Join(cfg.LibDir, "state")
+	}
+	mailStore, err := mail.Open(cfg.StateFormat, mail.Config{Path: mailPath})
 	if err != nil {
 		return err
 	}
 
-	// The house control file and the per-house object files.
-	houseStore, err := houses.New(
-		filepath.Join(cfg.LibDir, "etc", "hcontrol"),
-		filepath.Join(cfg.LibDir, "house"), false)
+	// The house control file and the per-house object files: classic's two
+	// separate paths, or state/houses.yaml (everything folded in) under
+	// native.
+	houseCfg := houses.Config{
+		ControlPath: filepath.Join(cfg.LibDir, "etc", "hcontrol"),
+		ObjectDir:   filepath.Join(cfg.LibDir, "house"),
+	}
+	if cfg.StateFormat == "native" {
+		houseCfg = houses.Config{ObjectDir: filepath.Join(cfg.LibDir, "state")}
+	}
+	houseStore, err := houses.Open(cfg.StateFormat, houseCfg)
 	if err != nil {
 		return err
 	}
 
-	// The site ban list — the one archive file that is plain text.
-	banStore, err := bans.New(filepath.Join(cfg.LibDir, "etc", "badsites"), false)
+	// The site ban list — the one archive file that is plain text, under
+	// classic; a state/bans.yaml file under native.
+	banPath := filepath.Join(cfg.LibDir, "etc", "badsites")
+	if cfg.StateFormat == "native" {
+		banPath = filepath.Join(cfg.LibDir, "state")
+	}
+	banStore, err := bans.Open(cfg.StateFormat, bans.Config{Path: banPath})
 	if err != nil {
 		return err
 	}

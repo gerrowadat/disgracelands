@@ -62,14 +62,14 @@ type Server struct {
 	objects player.ObjectStore
 	// boards holds the bulletin board files. Nil disables boards, which is
 	// what a test world without them gets.
-	boards *boards.Store
+	boards boards.Store
 	// mail is the mud mail file. Nil disables the mail system, which is what
 	// the C's `no_mail` global does when the file goes wrong.
-	mail *mail.Store
+	mail mail.Store
 	// houses is the player housing files. Nil disables housing.
-	houses *houses.Store
+	houses houses.Store
 	// bans is the site ban list. Nil disables banning.
-	bans   *bans.Store
+	bans   bans.Store
 	auth   auth.Verifier
 	text   *Text
 	logger *slog.Logger
@@ -113,10 +113,10 @@ type Options struct {
 	Engine   *engine.Engine
 	Players  player.Store
 	Objects  player.ObjectStore
-	Boards   *boards.Store
-	Mail     *mail.Store
-	Houses   *houses.Store
-	Bans     *bans.Store
+	Boards   boards.Store
+	Mail     mail.Store
+	Houses   houses.Store
+	Bans     bans.Store
 	Auth     auth.Verifier
 	Text     *Text
 	Logger   *slog.Logger

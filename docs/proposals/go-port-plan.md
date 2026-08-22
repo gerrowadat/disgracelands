@@ -410,15 +410,22 @@ password nobody remembers with no way back in. It applies the same rule the
 menu does and refuses any format that cannot hold an argon2id hash. See
 `docs/deviations.md`.
 
-### 5.6 The rest of the player-adjacent state
+### 5.6 The rest of the player-adjacent state ✅
 
-`data/plrobjs` (rent/crash files, `objsave.c`), `data/plralias`,
-`data/house/` + `data/etc/hcontrol`, `data/etc/board.*`, and the mail system
-each get the same treatment: a small interface, a default implementation
-matching today's on-disk format, in `internal/persist/`. They are smaller
-and less interesting than the playerfile but they're the reason a
-"just swap the playerfile" plan doesn't actually let you move a MUD
-anywhere — all of it has to move together.
+`data/plrobjs` (rent/crash files, `objsave.c`), `data/house/` +
+`data/etc/hcontrol`, `data/etc/board.*`, and the mail system each got the
+same treatment: a small interface, a default implementation matching
+today's on-disk format, in `internal/persist/`. They are smaller and less
+interesting than the playerfile but they're the reason a "just swap the
+playerfile" plan doesn't actually let you move a MUD anywhere — all of it
+has to move together. See §5.7 for rent/crash (folded into the playerfile
+itself, not a separate interface) and §5.8 for bans/boards/mail/houses.
+
+`data/plralias` did not get this treatment, and was never going to: no
+archived alias data exists anywhere to have a format for, and §5.7
+explains where the `alias` command's own persistence ended up instead
+(folded into the same file the roster is in, for both `ascii` and
+`native`).
 
 ### 5.7 `native` — a second `Store`/`ObjectStore`, landed during Phase 5
 
@@ -446,6 +453,32 @@ rather than a side effect of the format landing: `binary`/`ascii` are
 unchanged, byte for byte, and a test proves it stays that way. See
 `data-format.md`'s §11 table and its updated §8/§12 for exactly what
 shipped against what that section originally sketched.
+
+### 5.8 Bans, boards, mail, houses — pluggable, `native` added, landed during Phase 5
+
+`docs/proposals/data-format.md` §9's four small struct-dump-or-block-file
+formats — `internal/persist/bans`, `boards`, `mail`, `houses` — are now
+each what §5.6 always meant by "a small interface": a `Store`
+(`Register`/`Open`/`Formats`, the same registry shape as `world`/`player`),
+the existing implementation moved unchanged into its own `classic`
+subpackage, and a `native` implementation added beside it. One flag,
+`--state-format`, selects for all four together, since in practice they
+always move as one directory. `dlctl state import`/`fmt` convert and
+canonicalise.
+
+Houses needed one real design decision the others didn't: its object
+files (the same `obj_file_elem` record the rent files use) were passed
+around as raw bytes before, encoded and decoded by `internal/server/
+houses.go` itself. That moved *into* each format — `houses.Store`'s
+`LoadObjects`/`SaveObjects` now speak `[]player.StoredObject` directly, so
+`native` can build its contents from the same `player/native` schema §8's
+players work already built, rather than reinventing it or working around
+raw bytes it cannot format as YAML. See `data-format.md`'s §9 and §11
+step 6a for exactly what shipped, including the one genuine behavioural
+difference `native` has from `classic` there (an orphaned house's
+contents do not survive a control-record removal the way a classic
+`<vnum>.house` file quietly does, because there is no longer a separate
+file for an orphan to hide in).
 
 ---
 
@@ -520,8 +553,10 @@ half should land before Phase 6's OLC writeback rather than after, so that
 (`internal/persist/world/native/`) is a second registered `world.Source`/
 `world.Sink`, `--world-format=native` boots the server, and `dlctl world
 import`/`fmt` convert and canonicalise it. `classic` stays the default and
-the parity oracle; players and the rest of `lib/`'s formats (data-format.md
-§11 steps 5–6) are not attempted. See that document's §11 table for exactly
+the parity oracle; players (§5.7/§5.8 above) and step 6a's four small
+state formats have since landed too — the rest of `lib/`'s formats
+(data-format.md §11 step 6b) are not attempted. See that document's §11
+table for exactly
 what landed and its §12 for what the round-trip fuzz testing found that
 this plan didn't anticipate — CRLF, and two real limits in the YAML library
 used to write it.

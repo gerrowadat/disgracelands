@@ -7,11 +7,16 @@
 package server
 
 import (
+	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/gerrowadat/disgracelands/internal/game"
 	"github.com/gerrowadat/disgracelands/internal/persist/bans"
+	bansnative "github.com/gerrowadat/disgracelands/internal/persist/bans/native"
+	"github.com/gerrowadat/disgracelands/internal/persist/player"
+	"github.com/gerrowadat/disgracelands/internal/persist/player/ascii"
+	"github.com/gerrowadat/disgracelands/internal/persist/player/binary"
 )
 
 // `ban`, `unban` and `show`, end to end.
@@ -73,6 +78,38 @@ func TestABannedSiteIsRefused(t *testing.T) {
 
 	// The test listener is on the loopback, so banning it bans everybody —
 	// which is exactly what makes it testable.
+	god.send("ban all 127.0.0.1")
+	god.expect("Site banned.")
+
+	turned := dialClient(t, addr)
+	turned.expect("By what name do you wish to be known?")
+	turned.send("Hopeful")
+	turned.expect("You are not welcome here.")
+}
+
+// The same fixture as TestABannedSiteIsRefused, but on native — proving the
+// live path actually reaches bans/native's Store, not just its own
+// isolated round-trip test.
+func TestABannedSiteIsRefusedUnderNative(t *testing.T) {
+	banStore, err := bansnative.New(bans.Config{Path: filepath.Join(t.TempDir(), "state")})
+	if err != nil {
+		t.Fatal(err)
+	}
+	store, err := ascii.New(player.Config{Dir: filepath.Join(t.TempDir(), "pfiles")})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = store.Close() })
+	objects, err := binary.NewObjectStore(player.Config{Dir: filepath.Join(t.TempDir(), "plrobjs-lib")})
+	if err != nil {
+		t.Fatal(err)
+	}
+	srv, _ := newTestServerWith(t, store, objects, banStore, nil, nil, nil)
+	addr := listening(t, srv)
+
+	god := dialClient(t, addr)
+	god.create("Warden", "nobodycomesin", "m", "w")
+
 	god.send("ban all 127.0.0.1")
 	god.expect("Site banned.")
 

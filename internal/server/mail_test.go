@@ -7,11 +7,17 @@
 package server
 
 import (
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/gerrowadat/disgracelands/internal/game"
+	"github.com/gerrowadat/disgracelands/internal/persist/mail"
+	mailnative "github.com/gerrowadat/disgracelands/internal/persist/mail/native"
+	"github.com/gerrowadat/disgracelands/internal/persist/player"
+	"github.com/gerrowadat/disgracelands/internal/persist/player/ascii"
+	"github.com/gerrowadat/disgracelands/internal/persist/player/binary"
 )
 
 // The post office, end to end.
@@ -116,6 +122,61 @@ func TestSendingAndReceivingMail(t *testing.T) {
 
 	back.send("check")
 	back.expect("Sorry, you don't have any mail waiting.")
+}
+
+// The same fixture as TestSendingAndReceivingMail, on native — proving the
+// live send/receive path actually reaches mail/native's Store.
+func TestSendingAndReceivingMailUnderNative(t *testing.T) {
+	mailStore, err := mailnative.New(mail.Config{Path: filepath.Join(t.TempDir(), "state")})
+	if err != nil {
+		t.Fatal(err)
+	}
+	store, err := ascii.New(player.Config{Dir: filepath.Join(t.TempDir(), "pfiles")})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = store.Close() })
+	objects, err := binary.NewObjectStore(player.Config{Dir: filepath.Join(t.TempDir(), "plrobjs-lib")})
+	if err != nil {
+		t.Fatal(err)
+	}
+	srv, _ := newTestServerWith(t, store, objects, nil, nil, mailStore, nil)
+	addr := listening(t, srv)
+
+	first := dialClient(t, addr)
+	first.create("Sender", "postagepaid", "m", "m")
+
+	second := dialClient(t, addr)
+	second.create("Recipient", "waitingfor", "m", "m")
+	recipientID := idOf(t, srv, "Recipient")
+	second.send("quit")
+	second.expect("Goodbye")
+	second.close()
+	waitForLogout(t, srv, "Recipient")
+
+	withPostmaster(t, srv, "Sender")
+	setGold(t, srv, "Sender", 1000)
+
+	first.send("mail Recipient")
+	first.expect("I'll take 150 coins for the stamp.")
+	first.expect("Write your message, use @ on a new line when done.")
+	first.send("Come back, all is forgiven.")
+	first.send("@")
+
+	if !eventually(5*time.Second, func() bool { return srv.mail.HasMail(recipientID) }) {
+		t.Fatal("the message never reached the mail file")
+	}
+
+	back := dialClient(t, addr)
+	back.login("Recipient", "waitingfor")
+	withPostmaster(t, srv, "Recipient")
+
+	back.send("check")
+	back.expect("You have mail waiting.")
+	back.send("receive")
+	back.expect("gives you a piece of mail.")
+	back.send("read letter")
+	back.expect("Come back, all is forgiven.")
 }
 
 func TestMailToNobody(t *testing.T) {

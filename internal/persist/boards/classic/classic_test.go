@@ -4,17 +4,19 @@
 // (Copyright (C) 1990, 1991). Use of this file is governed by the CircleMUD
 // and DikuMUD licenses; see LICENSE. Non-commercial use only.
 
-package boards
+package classic
 
 import (
 	"errors"
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/gerrowadat/disgracelands/internal/persist/boards"
 )
 
-func sample() []Message {
-	return []Message{
+func sample() []boards.Message {
+	return []boards.Message{
 		{Heading: "Aug 20 2026 (Zod)         :: the first post", Level: 34, Body: "Hello.\r\n"},
 		{Heading: "Aug 20 2026 (Welmar)      :: a reply", Level: 10, Body: "Hello yourself.\r\n"},
 		// A message with no body at all: the C stores message_len 0 and
@@ -86,12 +88,12 @@ func TestAZeroHeadingLengthIsCorruption(t *testing.T) {
 
 func TestTheStoreWritesAndReadsAndRemoves(t *testing.T) {
 	dir := t.TempDir()
-	s, err := New(dir, false)
+	s, err := New(boards.Config{Dir: dir})
 	if err != nil {
 		t.Fatalf("opening: %v", err)
 	}
 
-	if _, err := s.Load("board.mort"); !errors.Is(err, ErrNotFound) {
+	if _, err := s.Load("board.mort"); !errors.Is(err, boards.ErrNotFound) {
 		t.Errorf("loading a board with no file gave %v, want ErrNotFound", err)
 	}
 
@@ -117,7 +119,7 @@ func TestTheStoreWritesAndReadsAndRemoves(t *testing.T) {
 }
 
 func TestAReadOnlyStoreRefusesToWrite(t *testing.T) {
-	s, err := New(t.TempDir(), true)
+	s, err := New(boards.Config{Dir: t.TempDir(), ReadOnly: true})
 	if err != nil {
 		t.Fatalf("opening: %v", err)
 	}

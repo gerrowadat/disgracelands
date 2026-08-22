@@ -237,14 +237,14 @@ func rentFileFromDoc(doc *playerDoc) (f *player.RentFile, unknown []string, ok b
 		Bank:       doc.Rent.Bank,
 	}
 	for _, od := range doc.Inventory {
-		st, storedUnknown := storedObjectFromDoc(od)
+		st, storedUnknown := StoredObjectFromDoc(od)
 		unknown = append(unknown, storedUnknown...)
 		f.Objects = append(f.Objects, st)
 	}
 	return f, unknown, true
 }
 
-func storedObjectFromDoc(od objInstanceDoc) (player.StoredObject, []string) {
+func StoredObjectFromDoc(od ObjInstanceDoc) (player.StoredObject, []string) {
 	var unknown []string
 	extra, extraUnknown := game.ParseBitNames(od.Flags, game.NativeItemExtraFlagNames())
 	for _, name := range extraUnknown {
@@ -272,7 +272,7 @@ func storedObjectFromDoc(od objInstanceDoc) (player.StoredObject, []string) {
 		st.Affects = append(st.Affects, game.ObjAffect{Location: location, Modifier: ad.Modifier})
 	}
 	for _, inner := range od.Contains {
-		innerSt, innerUnknown := storedObjectFromDoc(inner)
+		innerSt, innerUnknown := StoredObjectFromDoc(inner)
 		unknown = append(unknown, innerUnknown...)
 		st.Contains = append(st.Contains, innerSt)
 	}

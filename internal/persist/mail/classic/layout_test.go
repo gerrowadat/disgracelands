@@ -4,7 +4,7 @@
 // (Copyright (C) 1990, 1991). Use of this file is governed by the CircleMUD
 // and DikuMUD licenses; see LICENSE. Non-commercial use only.
 
-package mail
+package classic
 
 import (
 	"bufio"
@@ -30,7 +30,7 @@ func TestMailLayoutMatchesA32BitBuildOfTheC(t *testing.T) {
 		t.Skip("gcc not found; skipping the 32-bit mail layout check (ilp32)")
 	}
 
-	src, err := filepath.Abs(filepath.Join("..", "..", "..", "reference", "tools", "maillayout.c"))
+	src, err := filepath.Abs(filepath.Join("..", "..", "..", "..", "reference", "tools", "maillayout.c"))
 	if err != nil {
 		t.Fatal(err)
 	}

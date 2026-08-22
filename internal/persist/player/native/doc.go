@@ -73,7 +73,7 @@ type playerDoc struct {
 	// happens would be describing a behaviour this server does not have; a
 	// flat Inventory list describes exactly what actually comes back.
 	Rent      *rentDoc         `yaml:"rent,omitempty"`
-	Inventory []objInstanceDoc `yaml:"inventory,omitempty"`
+	Inventory []ObjInstanceDoc `yaml:"inventory,omitempty"`
 }
 
 type identityDoc struct {
@@ -199,9 +199,15 @@ type rentDoc struct {
 	Bank int32 `yaml:"bank,omitempty"`
 }
 
-// objInstanceDoc is one player.StoredObject: a vnum plus only what differs
-// from the prototype, per §8's "object instances are deltas".
-type objInstanceDoc struct {
+// ObjInstanceDoc is one player.StoredObject: a vnum plus only what differs
+// from the prototype, per §8's "object instances are deltas". Exported
+// (along with ObjAffectDoc, ObjInstanceDocFrom and StoredObjectFromDoc in
+// reader.go/writer.go) so internal/persist/houses/native can reuse the same
+// schema for a house's crash-saved contents — §9 calls this "the shared
+// object-instance schema used by corpses, house crash files and anything
+// else that has to persist an object," and a player's inventory is where it
+// was built first, not the only place it belongs.
+type ObjInstanceDoc struct {
 	Vnum          int32            `yaml:"vnum"`
 	Values        []int32          `yaml:"values,omitempty"`
 	Flags         []string         `yaml:"flags,omitempty"`
@@ -210,11 +216,11 @@ type objInstanceDoc struct {
 	Timer         int32            `yaml:"timer,omitempty"`
 	PermAffect    []string         `yaml:"perm_affect,omitempty"`
 	PermAffectRaw uint64           `yaml:"perm_affect_raw,omitempty"`
-	Affects       []objAffectDoc   `yaml:"affects,omitempty"`
-	Contains      []objInstanceDoc `yaml:"contains,omitempty"`
+	Affects       []ObjAffectDoc   `yaml:"affects,omitempty"`
+	Contains      []ObjInstanceDoc `yaml:"contains,omitempty"`
 }
 
-type objAffectDoc struct {
+type ObjAffectDoc struct {
 	Location string `yaml:"location"`
 	Modifier int32  `yaml:"modifier,omitempty"`
 }

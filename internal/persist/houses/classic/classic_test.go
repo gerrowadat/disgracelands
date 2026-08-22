@@ -4,32 +4,35 @@
 // (Copyright (C) 1990, 1991). Use of this file is governed by the CircleMUD
 // and DikuMUD licenses; see LICENSE. Non-commercial use only.
 
-package houses
+package classic
 
 import (
 	"os"
 	"path/filepath"
 	"testing"
 	"time"
+
+	"github.com/gerrowadat/disgracelands/internal/persist/houses"
+	"github.com/gerrowadat/disgracelands/internal/persist/player"
 )
 
 func newStore(t *testing.T) (*Store, string) {
 	t.Helper()
 	dir := t.TempDir()
-	s, err := New(filepath.Join(dir, "hcontrol"), filepath.Join(dir, "house"), false)
+	s, err := New(houses.Config{ControlPath: filepath.Join(dir, "hcontrol"), ObjectDir: filepath.Join(dir, "house")})
 	if err != nil {
 		t.Fatalf("opening: %v", err)
 	}
 	return s, dir
 }
 
-func sample() []House {
-	return []House{
+func sample() []houses.House {
+	return []houses.House{
 		{
 			Vnum: 3200, Atrium: 3201, ExitNum: 2,
 			BuiltOn:     time.Unix(1_000_000_000, 0).UTC(),
 			LastPayment: time.Unix(1_700_000_000, 0).UTC(),
-			Mode:        ModePrivate,
+			Mode:        houses.ModePrivate,
 			Owner:       7,
 			Guests:      []int64{11, 12, 13},
 		},
@@ -96,19 +99,19 @@ func TestTheControlFileIsAnArrayOfRecords(t *testing.T) {
 // past the end of the record.
 func TestTooManyGuestsAreTruncated(t *testing.T) {
 	s, _ := newStore(t)
-	h := House{Vnum: 1, Owner: 1}
-	for i := 0; i < MaxGuests+5; i++ {
+	h := houses.House{Vnum: 1, Owner: 1}
+	for i := 0; i < houses.MaxGuests+5; i++ {
 		h.Guests = append(h.Guests, int64(100+i))
 	}
-	if err := s.Save([]House{h}); err != nil {
+	if err := s.Save([]houses.House{h}); err != nil {
 		t.Fatalf("saving: %v", err)
 	}
 	got, err := s.Load()
 	if err != nil {
 		t.Fatalf("loading: %v", err)
 	}
-	if len(got[0].Guests) != MaxGuests {
-		t.Errorf("read %d guests, want %d", len(got[0].Guests), MaxGuests)
+	if len(got[0].Guests) != houses.MaxGuests {
+		t.Errorf("read %d guests, want %d", len(got[0].Guests), houses.MaxGuests)
 	}
 }
 
@@ -126,11 +129,14 @@ func TestAMissingControlFileIsNoHouses(t *testing.T) {
 func TestHouseObjectFiles(t *testing.T) {
 	s, _ := newStore(t)
 
-	if b, err := s.LoadObjects(3200); err != nil || b != nil {
-		t.Errorf("loading an empty house gave %d bytes, %v", len(b), err)
+	if objs, err := s.LoadObjects(3200); err != nil || objs != nil {
+		t.Errorf("loading an empty house gave %d objects, %v", len(objs), err)
 	}
 
-	contents := []byte("not really an obj_file_elem, but bytes are bytes")
+	contents := []player.StoredObject{
+		{Vnum: 3009, Weight: 1},
+		{Vnum: 3010, Weight: 2, ExtraFlags: 1},
+	}
 	if err := s.SaveObjects(3200, contents); err != nil {
 		t.Fatalf("saving: %v", err)
 	}
@@ -138,8 +144,13 @@ func TestHouseObjectFiles(t *testing.T) {
 	if err != nil {
 		t.Fatalf("loading: %v", err)
 	}
-	if string(got) != string(contents) {
-		t.Errorf("read back %q", got)
+	if len(got) != len(contents) {
+		t.Fatalf("read %d objects, want %d", len(got), len(contents))
+	}
+	for i := range contents {
+		if got[i].Vnum != contents[i].Vnum || got[i].Weight != contents[i].Weight {
+			t.Errorf("object %d round-tripped as %+v, want %+v", i, got[i], contents[i])
+		}
 	}
 
 	// An emptied house leaves no file, which is what House_crashsave of an
@@ -147,7 +158,7 @@ func TestHouseObjectFiles(t *testing.T) {
 	if err := s.SaveObjects(3200, nil); err != nil {
 		t.Fatalf("emptying: %v", err)
 	}
-	if _, err := os.Stat(s.ObjectFile(3200)); !os.IsNotExist(err) {
+	if _, err := os.Stat(s.objectFile(3200)); !os.IsNotExist(err) {
 		t.Error("emptying a house left the file behind")
 	}
 
@@ -158,14 +169,14 @@ func TestHouseObjectFiles(t *testing.T) {
 
 func TestAReadOnlyStoreRefusesToWrite(t *testing.T) {
 	dir := t.TempDir()
-	s, err := New(filepath.Join(dir, "hcontrol"), filepath.Join(dir, "house"), true)
+	s, err := New(houses.Config{ControlPath: filepath.Join(dir, "hcontrol"), ObjectDir: filepath.Join(dir, "house"), ReadOnly: true})
 	if err != nil {
 		t.Fatalf("opening: %v", err)
 	}
 	if err := s.Save(sample()); err == nil {
 		t.Error("a read-only store wrote the control file")
 	}
-	if err := s.SaveObjects(1, []byte("x")); err == nil {
+	if err := s.SaveObjects(1, []player.StoredObject{{Vnum: 1}}); err == nil {
 		t.Error("a read-only store wrote a house file")
 	}
 }

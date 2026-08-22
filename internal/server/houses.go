@@ -13,7 +13,6 @@ import (
 	"github.com/gerrowadat/disgracelands/internal/game"
 	"github.com/gerrowadat/disgracelands/internal/persist/houses"
 	"github.com/gerrowadat/disgracelands/internal/persist/player"
-	"github.com/gerrowadat/disgracelands/internal/persist/player/binary"
 	"github.com/gerrowadat/disgracelands/internal/session"
 )
 
@@ -116,18 +115,12 @@ func findLoaded(houses []*game.House, vnum game.RoomVnum) *game.House {
 
 // loadHouseObjects is House_load: put a house's contents back in the room.
 func (s *Server) loadHouseObjects(w *game.Live, vnum game.RoomVnum) int {
-	b, err := s.houses.LoadObjects(int32(vnum))
+	stored, err := s.houses.LoadObjects(int32(vnum))
 	if err != nil {
 		s.logger.Error("reading a house file", "house", vnum, "error", err)
 		return 0
 	}
-	if len(b) == 0 {
-		return 0
-	}
-
-	stored, err := binary.DecodeStoredObjects(b)
-	if err != nil {
-		s.logger.Error("reading a house file", "house", vnum, "error", err)
+	if len(stored) == 0 {
 		return 0
 	}
 
@@ -182,13 +175,8 @@ func (k *houseKeeper) SaveHouse(w *game.Live, vnum game.RoomVnum) {
 	s := k.s
 	stored := houseObjects(nil, w.RoomObjects(vnum))
 
-	b, err := binary.EncodeStoredObjects(stored)
-	if err != nil {
-		s.logger.Error("encoding a house file", "house", vnum, "error", err)
-		return
-	}
 	s.background(func() {
-		if err := s.houses.SaveObjects(int32(vnum), b); err != nil {
+		if err := s.houses.SaveObjects(int32(vnum), stored); err != nil {
 			s.logger.Error("writing a house file", "house", vnum, "error", err)
 		}
 	})
@@ -256,7 +244,7 @@ func (s *Server) SaveChangedHouses(ctx context.Context) {
 	}
 	type pending struct {
 		vnum game.RoomVnum
-		data []byte
+		objs []player.StoredObject
 	}
 	var work []pending
 
@@ -266,12 +254,7 @@ func (s *Server) SaveChangedHouses(ctx context.Context) {
 			if room == nil || !room.Flags.Has(game.RoomHouseCrash) {
 				continue
 			}
-			b, err := binary.EncodeStoredObjects(houseObjects(nil, w.RoomObjects(h.Vnum)))
-			if err != nil {
-				s.logger.Error("encoding a house file", "house", h.Vnum, "error", err)
-				continue
-			}
-			work = append(work, pending{vnum: h.Vnum, data: b})
+			work = append(work, pending{vnum: h.Vnum, objs: houseObjects(nil, w.RoomObjects(h.Vnum))})
 			room.Flags = room.Flags.Clear(game.RoomHouseCrash)
 		}
 	}); err != nil {
@@ -280,7 +263,7 @@ func (s *Server) SaveChangedHouses(ctx context.Context) {
 	}
 
 	for _, p := range work {
-		if err := s.houses.SaveObjects(int32(p.vnum), p.data); err != nil {
+		if err := s.houses.SaveObjects(int32(p.vnum), p.objs); err != nil {
 			s.logger.Error("writing a house file", "house", p.vnum, "error", err)
 		}
 	}

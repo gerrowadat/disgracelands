@@ -7,11 +7,16 @@
 package server
 
 import (
+	"path/filepath"
 	"testing"
 	"time"
 
 	"github.com/gerrowadat/disgracelands/internal/game"
 	"github.com/gerrowadat/disgracelands/internal/persist/houses"
+	housesnative "github.com/gerrowadat/disgracelands/internal/persist/houses/native"
+	"github.com/gerrowadat/disgracelands/internal/persist/player"
+	"github.com/gerrowadat/disgracelands/internal/persist/player/ascii"
+	"github.com/gerrowadat/disgracelands/internal/persist/player/binary"
 )
 
 // Player housing, end to end.
@@ -264,6 +269,57 @@ func TestWhatYouLeaveInYourHouseStaysThere(t *testing.T) {
 	})
 	if dirty {
 		t.Error("saving the house left it marked as changed")
+	}
+}
+
+// The same fixture as TestWhatYouLeaveInYourHouseStaysThere, on native --
+// proving the live build/drop/crash-save path actually reaches
+// houses/native's Store.
+func TestWhatYouLeaveInYourHouseStaysThereUnderNative(t *testing.T) {
+	houseStore, err := housesnative.New(houses.Config{ObjectDir: filepath.Join(t.TempDir(), "state")})
+	if err != nil {
+		t.Fatal(err)
+	}
+	store, err := ascii.New(player.Config{Dir: filepath.Join(t.TempDir(), "pfiles")})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = store.Close() })
+	objects, err := binary.NewObjectStore(player.Config{Dir: filepath.Join(t.TempDir(), "plrobjs-lib")})
+	if err != nil {
+		t.Fatal(err)
+	}
+	srv, _ := newTestServerWith(t, store, objects, nil, nil, nil, houseStore)
+	c := dialClient(t, listening(t, srv))
+	c.create("Hoarder", "keepitsafe", "m", "m")
+	c.send("hcontrol build 3020 north Hoarder")
+	c.expect("House built.")
+
+	moveTo(t, srv, "Hoarder", HouseRoom)
+	inWorld(t, srv, func(w *game.Live) {
+		who := w.Find("Hoarder")
+		sword := w.NewObject(testSwordVnum)
+		if who == nil || sword == nil {
+			t.Error("could not set up a sword")
+			return
+		}
+		w.ObjectToChar(sword, who)
+	})
+
+	c.send("drop sword")
+	c.expect("You drop a long sword.")
+
+	srv.SaveChangedHouses(t.Context())
+
+	objs, err := srv.houses.LoadObjects(int32(HouseRoom))
+	if err != nil {
+		t.Fatalf("reading the house file: %v", err)
+	}
+	if len(objs) == 0 {
+		t.Fatal("the house file is empty")
+	}
+	if objs[0].Vnum != game.ObjVnum(testSwordVnum) {
+		t.Errorf("the house holds vnum %d, want the sword (%d)", objs[0].Vnum, testSwordVnum)
 	}
 }
 

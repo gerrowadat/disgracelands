@@ -42,6 +42,11 @@ type Config struct {
 	// Pluggable format selection (docs/proposals/go-port-plan.md §5, §6).
 	PlayerFormat string
 	WorldFormat  string
+	// StateFormat covers boards, mail, houses and bans together
+	// (docs/proposals/data-format.md §9, step 6a) — one flag, because they
+	// are one directory in practice and there is no reason to convert one
+	// without the others.
+	StateFormat string
 
 	// Listeners. An empty address means the listener is disabled.
 	TelnetAddr  string
@@ -125,6 +130,7 @@ var (
 	knownPlayerFormats  = []string{"ascii", "binary", "native"}
 	serverPlayerFormats = []string{"ascii", "native"}
 	knownWorldFormats   = []string{"classic", "native"}
+	knownStateFormats   = []string{"classic", "native"}
 	knownLogFormats     = []string{"text", "json"}
 )
 
@@ -137,6 +143,7 @@ func Default() Config {
 		LibDir:               "data",
 		PlayerFormat:         "ascii",
 		WorldFormat:          "classic",
+		StateFormat:          "classic",
 		TelnetAddr:           "",
 		TelnetsAddr:          ":4443",
 		WSAddr:               "",
@@ -256,6 +263,7 @@ func Load(args []string, lookupEnv func(string) (string, bool), out io.Writer) (
 	str("player-format", "Player-file format the server runs on: "+strings.Join(serverPlayerFormats, ", ")+
 		" (the tooling also reads and writes: "+strings.Join(knownPlayerFormats, ", ")+")", &cfg.PlayerFormat)
 	str("world-format", "World-file format: "+strings.Join(knownWorldFormats, ", "), &cfg.WorldFormat)
+	str("state-format", "Boards/mail/houses/bans format: "+strings.Join(knownStateFormats, ", "), &cfg.StateFormat)
 
 	str("listen-telnet", "Plaintext telnet listen address (empty = disabled)", &cfg.TelnetAddr)
 	str("listen-telnets", "TLS telnet listen address (empty = disabled)", &cfg.TelnetsAddr)
@@ -388,6 +396,9 @@ func (c *Config) Validate() error {
 	}
 	if !contains(knownWorldFormats, c.WorldFormat) {
 		return fmt.Errorf("--world-format: unknown format %q (have: %s)", c.WorldFormat, strings.Join(knownWorldFormats, ", "))
+	}
+	if !contains(knownStateFormats, c.StateFormat) {
+		return fmt.Errorf("--state-format: unknown format %q (have: %s)", c.StateFormat, strings.Join(knownStateFormats, ", "))
 	}
 	if !contains(knownLogFormats, c.LogFormat) {
 		return fmt.Errorf("--log-format: unknown format %q (have: %s)", c.LogFormat, strings.Join(knownLogFormats, ", "))
