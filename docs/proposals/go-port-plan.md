@@ -1125,9 +1125,9 @@ except build.*
 
 **Met, with the tail named rather than waved at.** Every slice below is built,
 including the three mechanisms that were never slices at all and had to be
-found. 293 of the C's 318 commands answer. Of the 25 that do not, eight are the
+found. 294 of the C's 318 commands answer. Of the 24 that do not, eight are the
 OasisOLC and text editors that belong to Phase 6 by design, and the other
-seventeen are listed one by one under "What is not in it" — none of them a
+sixteen are listed one by one under "What is not in it" — none of them a
 subsystem, none of them blocking anything, all of them an afternoon.
 
 **Counted rather than remembered, and the earlier figures here were wrong.**
@@ -1137,8 +1137,8 @@ is not typeable — so **318 commands**. 105 of them are `do_action`, and the
 shipped socials file fills 104 of those (it also carries a `you` entry with no
 table slot, which the C drops with a log and so does this port).
 
-**293 of the 318 are implemented**: 189 in `internal/session/commands.go` plus
-the 104 socials. **Every slice below is built.** The 25 left are listed under
+**294 of the 318 are implemented**: 190 in `internal/session/commands.go` plus
+the 104 socials. **Every slice below is built.** The 24 left are listed under
 "What is not in it" — the OLC editors that belong to Phase 6, and a scattering
 of small commands that never had a slice of their own.
 
@@ -1156,7 +1156,7 @@ it.
 |---|---|---|
 | **5a. Special procedures ✅** | The seam, the 205-row assignment table, and ten of the C's specials: guild, guild_guard, puff, fido, janitor, cityguard, snake, magic_user, thief, dump. `practice` is a guildmaster's again. What is left needs other subsystems — shopkeepers need shops, the postmaster needs mail, bankers need banking — or belongs to the archived world. `assign_kings_castle` is a zone-sized script and is untouched. | `spec_procs.c`, `castle.c`, `spec_assign.c` |
 | **5b. Communication ✅** | `say` (and `'`), `tell`, `reply`, `whisper`, `ask`, `shout`, `holler`, `gossip`, `grats`, `auction`, `gsay`/`gtell`, `qsay`, and the seven channel toggles. `emote`, `write`, `page` and the immortal channels are not: `emote` is `do_echo` and goes with the immortal commands, and `write` needs the boards. | `act.comm.c` |
-| **5c. Socials ✅** | `do_action`, the socials file, and `act()` itself — the `$n`/`$N` substitution every message in the game is written in, which the port had been faking with `%s` per audience. Settles a dozen command-table prefixes that were placeholders: `f` is `fart`, `ti` is `tickle`, `cl` is `clap`. `alias` is not done. | `act.social.c`, `comm.c` |
+| **5c. Socials ✅** | `do_action`, the socials file, and `act()` itself — the `$n`/`$N` substitution every message in the game is written in, which the port had been faking with `%s` per audience. Settles a dozen command-table prefixes that were placeholders: `f` is `fart`, `ti` is `tickle`, `cl` is `clap`. (`alias` landed later, with the native player format — §5.7.) | `act.social.c`, `comm.c` |
 | **5d. Information and preferences ✅** | `commands`, `socials`, `diagnose`, `gold`, `levels`, `where`, `whoami`, `wizlist`, `immlist`, the canned-text commands (`motd`, `imotd`, `news`, `info`, `policy`, `handbook`, `version`, `clear`), the `PRF_*` toggles, `display`/`prompt`, `title`, `wimpy`, `save`, `report`, `split`, `toggle`, `visible`. Not done: `color` (nothing emits colour yet), `uptime` and `users` (immortal, 5i). | `act.informative.c`, `act.other.c` |
 | **5e-i. Magic items and the last of do_drop ✅** | `use`, `quaff`, `recite` and `mag_objectmagic` — wands, staves, scrolls and potions, and with them everything above `MAX_SPELLS` including `identify`. Plus `junk` and `donate`. | `spell_parser.c`, `act.item.c` |
 | **5e-ii. Objects carried across a reboot ✅** | `Crash_load`/`Crash_save`: rent, the object save files, and the menu's choice 1 telling a player what they lost. A new persistence format and its own `Store`. Renting at an inn moves to 5f with the rest of the specprocs. | `objsave.c` |
@@ -1182,7 +1182,7 @@ it.
 
 ### What is not in it
 
-The 25 commands of the 318 that nothing answers to yet. Everything here is a gap rather than a decision,
+The 24 commands of the 318 that nothing answers to yet. Everything here is a gap rather than a decision,
 so it is in `docs/deviations.md` under "gaps still to fill" rather than as a
 deviation.
 
@@ -1332,7 +1332,7 @@ because a command with no slice is a command nobody schedules.
 | `do_gen_write` | `bug`, `idea`, `typo` (interpreter.c:247, :342, :520) — one function appending a timestamped line to a file, with a `-` prefix check and a size cap. |
 | Aliases | `:` for emote (interpreter.c:286) and `take` for get (:503). The C's two deliberate stumps, `qui` and `shutdow`, are built. |
 | Immortal odds and ends | `users` (:528), `wizhelp` (:553, `do_commands` with `SCMD_WIZHELP`), `skillset` (:469), `reload` (:428), `qecho` (:419), `page` (:398). |
-| Mortal odds and ends | `color` (:258) — the `PRF_COLOR` bits are stored and `set color` works, but nothing emits colour, so the command has nothing to switch; `insult` (:346); `hop` (:337), the one `do_action` slot the shipped socials file does not fill; and `alias` (:226), which needs `plralias/` and is the only one of these with a format behind it. |
+| Mortal odds and ends | `color` (:258) — the `PRF_COLOR` bits are stored and `set color` works, but nothing emits colour, so the command has nothing to switch; `insult` (:346); `hop` (:337), the one `do_action` slot the shipped socials file does not fill. `alias` (:226) is built — landed with the native player format, `data-format.md` §11 step 5, along with `perform_alias`'s full substitution grammar. |
 | `mudlog`'s in-game half | `syslog` sets `PRF_LOG1`/`PRF_LOG2` and nothing reads them: the `wizvis` attribute on a log record (`internal/obs/log.go`) has no consumer, so gods cannot watch the log from in-game. Wanted whenever the syslog levels are meant to mean something. |
 
 **Phase 6 — Building tools.** OasisOLC equivalent, `Sink` writeback,
