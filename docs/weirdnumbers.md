@@ -727,6 +727,31 @@ than a million.
 
 ## Naming things
 
+### `do_users` hides nobody, because it asks the wrong character
+
+```c
+if (GET_INVIS_LEV(ch) > GET_LEVEL(ch))
+  continue;
+```
+
+`ch` is the person *typing* `users`, on both sides. It reads as "skip anybody
+whose invisibility level is above my own", which is what the surrounding checks
+do — but the subject of the loop is `tch`, and this line never mentions it.
+
+As written it can never fire: `set <name> invis` clamps the level to the
+character's own (act.wizard.c), so `GET_INVIS_LEV(ch) <= GET_LEVEL(ch)` always
+holds. A dead check, one identifier away from working.
+
+It matters less than it looks, because the *listing* line below it does test
+`CAN_SEE(ch, d->character)` and that catches invisible players properly. The
+dead line would have hidden them from the count as well as the list.
+
+Recorded before `users` is ported, so that whoever does it reproduces the dead
+check rather than quietly fixing it — or fixes it deliberately and writes the
+deviation down.
+
+*Source*: `act.informative.c:1316`.
+
 ### `isname` is a whole-word match, and reads like a prefix one
 
 ```c
