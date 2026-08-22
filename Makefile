@@ -212,6 +212,59 @@ parity: ## Check the Go and C world loaders agree (builds the C server; slow)
 license: ## Check the CircleMUD/DikuMUD license obligations
 	./scripts/license-check.sh
 
+# `make check` is an approximation of CI assembled by hand, and an
+# approximation drifts: it does not run the actions, the 32-bit steps or the
+# container build, and it cannot notice a workflow change at all. These
+# targets run .github/workflows/go.yml itself, in containers, via act. They
+# need Docker. See docs/developer.md for what they do and do not reproduce.
+ACT_VERSION ?= v0.2.89
+
+# Same reasoning as GOLANGCI_VERSION above: fetch the pinned version rather
+# than skip. `act` is a single Go binary, so `go run` is a fine way to get it.
+ACT = $(shell command -v act 2>/dev/null || echo "$(GO) run github.com/nektos/act@$(ACT_VERSION)")
+
+.PHONY: ci
+ci: ## Run the whole GitHub Actions workflow locally, in containers (needs Docker; slow)
+	$(ACT)
+
+.PHONY: ci-job
+ci-job: ## Run one CI job: make ci-job JOB=test (test|parity|license|lint|container)
+	@test -n "$(JOB)" || { echo "usage: make ci-job JOB=<name>; try 'make ci-list'"; exit 1; }
+	$(ACT) -j $(JOB)
+
+.PHONY: ci-list
+ci-list: ## List the jobs `make ci` would run
+	$(ACT) --list
+
+# act's default event is `push`, and the test job's 32-bit gate short-circuits
+# on "not a pull request" -- so `make ci` always runs the ILP32 and shop-price
+# checks in full. This target is the other half: it synthesises a
+# pull_request event so the path filter in that gate actually gets evaluated,
+# which is the only way to test the regex before pushing. CLAUDE.md's warning
+# is that a file missing from it does not fail, it silently stops checking.
+#
+#   make ci-pr                      # against origin/main
+#   make ci-pr BASE=HEAD~3          # against something else
+CI_PR_EVENT = $(OUT)/act-pull-request.json
+BASE ?= origin/main
+
+.PHONY: ci-pr
+ci-pr: ## Run the test job as a pull_request, to exercise the 32-bit path filter
+	@mkdir -p $(OUT)
+	@base=$$(git rev-parse $(BASE)) && \
+	  printf '{"pull_request":{"base":{"sha":"%s"}}}\n' "$$base" > $(CI_PR_EVENT) && \
+	  echo "pull_request base: $(BASE) ($$base)"
+	$(ACT) pull_request -j test -e $(CI_PR_EVENT)
+
+# .actrc passes --reuse, so the job containers survive between runs and carry
+# their caches with them. That is the difference between a second run taking
+# seconds and taking minutes, and it is also how a run goes stale: if a job
+# starts failing for no reason you can see, throw the containers away first.
+.PHONY: ci-clean
+ci-clean: ## Remove the containers act reuses between runs
+	@ids=$$(docker ps -aq --filter "name=act-"); \
+	  if [ -n "$$ids" ]; then docker rm -f $$ids; else echo "no act containers"; fi
+
 ##@ Data and tooling
 
 .PHONY: world-lint

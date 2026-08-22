@@ -58,6 +58,14 @@ data/house/*
 !data/house/.gitkeep
 data/.acme/
 
+# act (`make ci`) reads secrets and variables from these by default. .actrc
+# itself is tracked -- it holds the runner image and nothing sensitive -- but
+# a .secrets file exists to hold a real GITHUB_TOKEN, so it must never be
+# committable. See docs/developer.md.
+.secrets
+.vars
+.env.act
+
 # editor/OS cruft
 *~
 .DS_Store

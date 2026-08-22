@@ -1,0 +1,23 @@
+# Defaults for `act` (https://github.com/nektos/act), which runs the workflows
+# in .github/workflows/ locally in containers. See docs/developer.md.
+#
+# act's own default image for ubuntu-latest is `node:16-buster-slim`, which has
+# no sudo, no apt worth the name and no git. Every job here needs at least a
+# real distribution, and the test job runs `sudo apt-get install gcc-multilib`,
+# so the medium `catthehacker` image is the smallest one that works. It is
+# about 1GB and is pulled once.
+-P ubuntu-latest=catthehacker/ubuntu:act-latest
+
+# Reuse the container between runs rather than building it from scratch each
+# time. This is what makes a second run of a job take seconds instead of
+# minutes: the Go module cache, the apt lists and the toolchain setup-go
+# downloads all survive. `make ci-clean` throws them away when that goes stale.
+--reuse
+
+# Do not set GITHUB_TOKEN to "" here to quieten the warnings. act uses that
+# token to `git clone` the actions themselves, and an empty one is worse than
+# an absent one: it turns anonymous cloning into a failed password
+# authentication, and `container` dies fetching docker/build-push-action. If
+# GitHub starts rate-limiting the clones, pass a real one for the run instead:
+#
+#     act -j container -s GITHUB_TOKEN="$(gh auth token)"

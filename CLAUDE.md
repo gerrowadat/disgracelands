@@ -188,6 +188,12 @@ a path filter in the `ilp32` step: if you add a reference tool or a source
 file that feeds the binary layouts, add it to that regex or your layout check
 silently will not run.
 
+That is testable rather than something to get right by inspection. `make ci`
+runs the whole workflow locally in containers via `act`, and `make ci-pr`
+runs the test job as a *pull request* so the path filter is actually
+evaluated — check both branches of it, not just the one you expect. See
+`docs/developer.md`.
+
 The licence check (`scripts/license-check.sh`) is not decorative: CircleMUD's
 licence is non-commercial and requires credits intact and the creators named
 in the greeting.

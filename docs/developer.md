@@ -190,7 +190,8 @@ Format check, `go build`, `go vet`, `golangci-lint` (skipped with a note if
 it is not installed), `go test -race`, world lint, and the license check.
 Green here does not guarantee CI is green, but red here guarantees it is not.
 
-Four things CI does that `make check` does not:
+Four things CI does that `make check` does not — all of which you can also
+just run, workflow and all, with `make ci` (see below):
 
 - **World parity** — `make parity`. Builds the C server and diffs the world
   each loader holds. It needs a C toolchain and about a minute, which is why
@@ -213,6 +214,94 @@ Four things CI does that `make check` does not:
 single game goroutine (`docs/proposals/go-port-plan.md` §3.1), and the whole
 safety argument for that design rests on nothing else touching world state —
 which only the race detector can actually check.
+
+## Running CI itself, locally
+
+`make check` is a hand-assembled approximation of CI, and the list above is
+what it approximates *away*. Approximations drift, and this one cannot notice
+a change to the workflow at all.
+
+```sh
+make ci                    # every job, in containers
+make ci-job JOB=test       # one job: test | parity | license | lint | container
+make ci-list               # what `make ci` would run
+make ci-clean              # throw away the reused containers
+```
+
+This runs `.github/workflows/go.yml` itself with
+[`act`](https://github.com/nektos/act), which starts a container per job and
+executes the real steps and the real actions. It needs Docker. If `act` is
+not on your `PATH` the Makefile fetches the pinned version with `go run`, the
+same way `make lint` handles `golangci-lint`.
+
+Defaults live in `.actrc`, which is tracked. The runner image is
+`catthehacker/ubuntu:act-latest` — act's own default for `ubuntu-latest` is a
+Node slim image with no `sudo` and no `apt`, and the test job installs
+`gcc-multilib`. It is about 1GB and is pulled once.
+
+`--reuse` is on, so job containers survive between runs and keep their Go
+module cache, their apt lists and whatever `setup-go` downloaded. That is the
+difference between a second run taking seconds and taking minutes. It is also
+how a run goes stale: **if a job starts failing for no reason you can see, run
+`make ci-clean` before believing it.**
+
+### What this reproduces, and what it does not
+
+Worth knowing before you trust a green run:
+
+- **`actions/checkout` copies your working tree, it does not clone.** act
+  `docker cp`s the directory in, uncommitted changes and all. Usually what you
+  want locally; it does mean a green `make ci` says nothing about whether you
+  remembered to `git add`.
+- **The 32-bit checks always run.** act's default event is `push`, and the
+  test job's gate short-circuits on "not a pull request". So `make ci-job
+  JOB=test` runs the ILP32 layout and shop-price checks in full — including on
+  a change where a real PR would skip them — without `gcc-multilib` on your
+  host. This is the cheapest way to run those checks locally.
+- **Artifact upload does not work**, and does not need to. The container job
+  logs `Unable to get the ACTIONS_RUNTIME_TOKEN`; that is the build-summary
+  upload, and the build and the image it produces are unaffected.
+
+### Testing the 32-bit path filter
+
+The gate that decides whether the 32-bit checks run is a regex over changed
+paths, and `CLAUDE.md` gives the reason to be careful with it: a file missing
+from that regex does not fail the build, it silently stops checking. That
+branch only executes for a `pull_request`, so:
+
+```sh
+make ci-pr                 # as a PR against origin/main
+make ci-pr BASE=HEAD~5     # against something else
+```
+
+which synthesises a `pull_request` event with the right base SHA and runs the
+test job under it. Watch for the line the gate prints:
+
+```
+32-bit checks: running (the change touches the 32-bit layout or price checks, or their inputs)
+32-bit checks: skipping (nothing in this change can affect the ILP32 layout or the shop prices)
+```
+
+If you add a reference tool or a source file that feeds the binary layouts,
+extend the regex and then check it with `make ci-pr` — both branches, not just
+the one you expect.
+
+### Secrets
+
+Do not put `GITHUB_TOKEN=""` in `.actrc` to quieten the warnings. act uses
+that token to `git clone` the actions themselves, and an empty one is worse
+than an absent one: it turns anonymous cloning into a failed password
+authentication, and the container job dies fetching
+`docker/build-push-action`. Nothing in these workflows needs API access. If
+the clones ever start getting rate-limited, pass a real token for the run
+rather than storing one:
+
+```sh
+act -j container -s GITHUB_TOKEN="$(gh auth token)"
+```
+
+`.secrets`, `.vars` and `.env.act` — the files act reads secrets from by
+default — are in `.gitignore` for the obvious reason.
 
 ## Porting a command
 
@@ -318,6 +407,8 @@ one thing, and the mistakes it catches all look right.
 | `make roster` | The characters in the player directory. |
 | `make ctl ARGS="pfile dump --name=Someone"` | Any `dlctl` command. |
 | `make docker` / `make compose-up` / `make compose-down` | The container image and the local stack. |
+| `make ci` / `make ci-job JOB=…` / `make ci-pr` | The GitHub Actions workflow, locally, in containers. |
+| `make ci-list` / `make ci-clean` | What `make ci` would run; discard its reused containers. |
 | `make clean` | Removes `out/`: binaries, scratch data directory, dev certificate. |
 
 ## Where things are
