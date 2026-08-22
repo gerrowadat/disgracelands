@@ -17,6 +17,11 @@ import (
 // fighting back.
 func TestCastingADamageSpell(t *testing.T) {
 	srv, _ := newTestServer(t)
+	// The real archive: magic missile's own registered message
+	// (skill_message, via SkillDamage) is what a cast prints now, the
+	// same table kick/bash/backstab already draw from — see
+	// docs/proposals/data-format.md §11 6c-ii/6c-iii.
+	loadRealFightMessages(t, srv)
 	c := dialClient(t, listening(t, srv))
 	c.create("Zod", "swordfish", "m", "m")
 
@@ -25,7 +30,11 @@ func TestCastingADamageSpell(t *testing.T) {
 	inWorld(t, srv, func(w *game.Live) { before = dog.Record.Points.Hit })
 
 	c.send("cast 'magic missile' dog")
-	c.expect("You blast a large dog with magic missile.")
+	// The real archive's Magic Missile hit line (data/misc/messages) —
+	// magic missile always deals damage (game.SpellDamage has no miss
+	// chance of its own), so the deterministic test RNG always lands on
+	// the hit block, never miss or die, against a dog with this much HP.
+	c.expect("You watch with selfpride as your magic missile hits a large dog!")
 
 	inWorld(t, srv, func(w *game.Live) {
 		if dog.Record.Points.Hit >= before {
@@ -40,6 +49,7 @@ func TestCastingADamageSpell(t *testing.T) {
 // TestCastingCostsMana, and a caster without enough is refused.
 func TestCastingCostsMana(t *testing.T) {
 	srv, _ := newTestServer(t)
+	loadRealFightMessages(t, srv)
 	addr := listening(t, srv)
 
 	// A mortal: an immortal casts free (the C exempts them from the mana
@@ -70,7 +80,7 @@ func TestCastingCostsMana(t *testing.T) {
 	inWorld(t, srv, func(w *game.Live) { before = caster.Record.Points.Mana })
 
 	c.send("cast 'magic missile' dog")
-	c.expectAny("You blast", "lost your concentration")
+	c.expectAny("magic missile", "lost your concentration")
 
 	inWorld(t, srv, func(w *game.Live) {
 		if caster.Record.Points.Mana >= before {

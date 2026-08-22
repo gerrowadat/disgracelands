@@ -182,9 +182,11 @@ func (s *Server) actToRoomExcept(w *game.Live, exclude1, exclude2 *game.Characte
 
 // Damage implements session.Violence: everything damage() does apart from the
 // messages, which the command that caused it prints in its own words. Kick,
-// bash and backstab moved to SkillDamage once they got a real message of
-// their own to send instead; a spell still calling this is the reason it
-// stays exported rather than folding into SkillDamage entirely.
+// bash, backstab and every spell all moved to SkillDamage once they got a
+// real message of their own to send instead; the two callers left —
+// slay's raw_kill and quitting while mortally wounded — print their own
+// message and want no other, which is why this stays exported rather
+// than folding entirely into SkillDamage.
 //
 // It exists because until now every command that could hurt somebody applied
 // the damage itself — a kick, a bash, a spell — and none of them handled what
@@ -206,9 +208,11 @@ func (s *Server) Damage(w *game.Live, attacker, victim *game.Character, amount i
 
 // SkillDamage implements session.Violence: Damage plus the messaging
 // damage() gives every non-weapon attack (fight.c:854's `!IS_WEAPON`
-// branch) — kick, bash, backstab today; every spell is still its own
-// future pass. amount 0 is a miss, the same "not a separate code path"
-// rule the ordinary weapon swing already follows: do_kick/do_bash/
+// branch) — kick, bash, backstab, and every offensive spell, whose own
+// mag_damage ends with `return (damage(ch, victim, dam, spellnum))`
+// (magic.c:294), the identical dispatch with the spell number standing
+// in for a skill's. amount 0 is a miss, the same "not a separate code
+// path" rule the ordinary weapon swing already follows: do_kick/do_bash/
 // do_backstab all call damage(ch, vict, 0, SKILL_*) for one
 // (act.offensive.c), not a bespoke miss branch of their own.
 func (s *Server) SkillDamage(w *game.Live, attacker, victim *game.Character, amount, skillType int32) int32 {
@@ -263,9 +267,13 @@ func (s *Server) refusedByPeace(w *game.Live, attacker, victim *game.Character) 
 //
 // onDamaged, if not nil, runs at the exact point damage() itself calls
 // dam_message/skill_message — right after update_pos, before the
-// position-announcement text. Only s.hit passes one: every other caller
-// (kick, bash, spells, via Damage) prints its own message elsewhere and
-// leaves this nil, unaffected by anything a weapon-swing message does.
+// position-announcement text. s.hit and SkillDamage both pass one now —
+// every non-weapon attacker (kick, bash, backstab, every spell) goes
+// through SkillDamage's own hook, the same skill_message call whichever
+// of them it is. The two remaining Damage (nil onDamaged) callers, slay
+// and quitting while mortally wounded, already print their own message
+// and call Damage purely to finish the kill with no attacker — neither
+// wants anything skill_message would send.
 func (s *Server) applyDamage(w *game.Live, attacker, victim *game.Character, dam int32, onDamaged func()) {
 	victim.Record.Points.Hit -= dam
 

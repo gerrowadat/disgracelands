@@ -295,6 +295,38 @@ func TestSkillDamageAgainstTheRealArchive(t *testing.T) {
 	}
 }
 
+// A spell number is just another skillType to SkillDamage — mag_damage's
+// own C ends with `return (damage(ch, victim, dam, spellnum))`
+// (magic.c:294), the identical dispatch a skill's number goes through.
+// Magic Missile has a real data/misc/messages entry; Ouchie, one of the
+// two local joke spells (spell.go's own naming), does not — proving the
+// registered/unregistered split holds for spell numbers exactly as it
+// does for SkillKick/SkillBash/SkillBackstab, not by inspection but by
+// running both through the real archive.
+func TestSkillDamageTreatsSpellNumbersLikeSkillNumbers(t *testing.T) {
+	srv, _ := newTestServer(t)
+	attacker, attackerClient := place(t, srv, fighterRecord("Zod", 30, 500), MortalStartRoom)
+	victim, _ := place(t, srv, fighterRecord("Welmar", 5, 200), MortalStartRoom)
+	loadRealFightMessages(t, srv)
+
+	inWorld(t, srv, func(w *game.Live) {
+		victim.Position = game.PosFighting
+		srv.SkillDamage(w, attacker, victim, 5, game.SpellMagicMissile)
+	})
+	if len(attackerClient.lines) == 0 {
+		t.Error("SkillDamage(SpellMagicMissile) with a real registered entry said nothing")
+	}
+
+	attackerClient.lines = nil
+	inWorld(t, srv, func(w *game.Live) {
+		victim.Position = game.PosFighting
+		srv.SkillDamage(w, attacker, victim, 5, game.SpellOuchie)
+	})
+	if len(attackerClient.lines) != 0 {
+		t.Errorf("SkillDamage(SpellOuchie), unregistered, said %v, want silence", attackerClient.lines)
+	}
+}
+
 // No dam_message fallback exists for a non-weapon attack: nothing
 // registered means genuine silence, not compiled text.
 func TestSkillDamageIsSilentWithNothingRegistered(t *testing.T) {

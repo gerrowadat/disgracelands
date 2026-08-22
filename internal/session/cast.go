@@ -377,8 +377,14 @@ func (c *Context) spellDamage(info game.SpellInfo, number int32, victim *game.Ch
 	// pays out. damage() starts the fight whatever the spell's violent flag
 	// says — the flag decides whether it may be cast at all in a peaceful
 	// room, not whether being blasted is provocation.
-	dealt := c.Violence.Damage(c.World, c.Character, target, damage)
-
-	c.Send("You blast %s with %s. [%d]\r\n", target.Name, info.Name, dealt)
-	target.Tell("%s blasts you with %s. [%d]\r\n", c.Character.Name, info.Name, dealt)
+	//
+	// SkillDamage, not Damage: mag_damage's own C ends with
+	// `return (damage(ch, victim, dam, spellnum))` (magic.c:294) — the same
+	// damage() dispatch do_kick/do_bash/do_backstab already go through, with
+	// the spell number as the attack type. A spell number is always below
+	// TypeHit, so damage()'s IS_WEAPON check sends it down the non-weapon
+	// path: skill_message alone, no fallback to dam_message, silence for
+	// anything unregistered — exactly what SkillDamage already does. There
+	// is no message of this function's own left to print.
+	c.Violence.SkillDamage(c.World, c.Character, target, damage, number)
 }
