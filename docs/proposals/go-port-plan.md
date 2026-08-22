@@ -5,9 +5,9 @@ pluggable player- and world-file formats, and packaged as a normal modern
 service (flags, env vars, structured logs, containers) rather than a
 2002-era autoconf tree driven by `autorun`.
 
-This is a design/sequencing document. **Phases 0–4 (§10) are built and
-Phase 5 is all but finished** — one slice of it is left, `remort`, and the
-gaps outside the slices are listed with it. Phases 6 and 7 are still a plan.
+This is a design/sequencing document. **Phases 0–5 (§10) are built** — every
+slice of Phase 5 included — with a tail of small commands outside the slices
+listed under it. Phases 6 and 7 are still a plan.
 Each built phase carries a retrospective in §10 saying what actually landed
 and where it diverged from what was planned. See `BUILDING.md` for how to
 build and run what exists.
@@ -1092,9 +1092,16 @@ All of these are in `docs/deviations.md` under "gaps still to fill" rather
 than as deviations, because they are not decisions — they are simply not
 built.
 
-**Phase 5 — The rest of the game.** Everything else a player could type in
-2008. *Done when: an archived character can do everything they did then,
+**Phase 5 — The rest of the game. ✅ Done.** Everything else a player could type
+in 2008. *Done when: an archived character can do everything they did then,
 except build.*
+
+**Met, with the tail named rather than waved at.** Every slice below is built,
+including the three mechanisms that were never slices at all and had to be
+found. 291 of the C's 318 commands answer. Of the 27 that do not, eight are the
+OasisOLC and text editors that belong to Phase 6 by design, and the other
+nineteen are listed one by one under "What is not in it" — none of them a
+subsystem, none of them blocking anything, all of them an afternoon.
 
 **Counted rather than remembered, and the earlier figures here were wrong.**
 `cmd_info[]` holds 319 rows before the `"\n"` sentinel, one of which is
@@ -1103,10 +1110,10 @@ is not typeable — so **318 commands**. 105 of them are `do_action`, and the
 shipped socials file fills 104 of those (it also carries a `you` entry with no
 table slot, which the C drops with a log and so does this port).
 
-**289 of the 318 are implemented**: 185 in `internal/session/commands.go` plus
-the 104 socials. The 29 left are listed under "What is not in it" below — they
-are one remaining slice, the OLC editors that belong to Phase 6, and a
-scattering of small commands that never had a slice of their own.
+**291 of the 318 are implemented**: 187 in `internal/session/commands.go` plus
+the 104 socials. **Every slice below is built.** The 27 left are listed under
+"What is not in it" — the OLC editors that belong to Phase 6, and a scattering
+of small commands that never had a slice of their own.
 
 The slices are listed in dependency order rather than in order of importance:
 the first one unblocks three of the others, and after that the work was
@@ -1139,7 +1146,7 @@ it.
 | **5i-e. `set` ✅** | `do_set` and `perform_set`: fifty-two fields, each with its own level, PC/NPC restriction and range, checked against the C's table by re-parsing it. | `act.wizard.c` |
 | **5i-f. Running the place ✅** | `snoop`, `switch`, `return` — the only commands in the game that reach past the character to the connection — plus `dc`, `wizlock`, `shutdown`, `date`, `uptime`, `last`. | `act.wizard.c` |
 | **5i-g. Bans and `show` ✅** | `ban`, `unban`, the ban file and its enforcement at the name prompt; `show` and its ten fields. `show rent` and `show shops` wait on their own listings. | `ban.c`, `act.wizard.c` |
-| **5i-h. `remort`** | A local addition: a per-character bit vector of borrowed class skills, the `IS_<CLASS>` macros that read it, and `redeem` for a fallen paladin. The last slice of Phase 5. | `act.wizard.c`, `class.c` |
+| **5i-h. `remort` ✅** | A local addition: a per-character bit vector of borrowed class skills, the `IS_<CLASS>` macros that read it, and `redeem` for a fallen paladin. The vector and the macros had been in since Phase 3 — this is the two commands that write them. **The last slice of Phase 5.** | `act.wizard.c`, `class.c` |
 | **5j. The interpreter's own refusals ✅** | `command_interpreter`'s `else if` ladder between finding a command and running it: the frozen check, the switched-immortal check, and `minimum_position` — `cmd_info[]`'s second column, which nothing had been reading. Not a slice when Phase 5 was planned, because it is a property of every command rather than of any one; see below. | `interpreter.c` |
 | **5k. Light and darkness ✅** | `world[].light`, `room_is_dark` and `CAN_SEE_IN_DARK`, and with them `look_at_room` in full: the pitch-black and blindness branches, `PRF_BRIEF`, `PRF_AUTOEXIT`, `PRF_ROOMFLAGS` and the two `<DoC>` room messages. Plus the four preference-based immortal toggles, `holylight` among them, without which nothing could switch the new behaviour on. The half of `CAN_SEE` that is about the room; the half about people is next. | `utils.c`, `handler.c`, `act.informative.c`, `act.other.c` |
 | **5l. Seeing people ✅** | `CAN_SEE` itself and the display half of its call sites: `PERS`/`OBJS` inside `act()`, `list_char_to_char` and `list_one_char` in full, `list_obj_to_char`, `who` and `where`. Invisibility, hiding and the invis level all mean something now. Targeting — `get_char_room_vis` and the rest of `generic_find` — is the other half and is not in it; see below. | `utils.h`, `act.informative.c`, `comm.c` |
@@ -1148,13 +1155,9 @@ it.
 
 ### What is not in it
 
-The 29 commands of the 318 that nothing answers to yet, and the two mechanisms
-that cut across all of them. Everything here is a gap rather than a decision,
+The 27 commands of the 318 that nothing answers to yet. Everything here is a gap rather than a decision,
 so it is in `docs/deviations.md` under "gaps still to fill" rather than as a
 deviation.
-
-**The remaining slice, 5i-h.** `remort` (interpreter.c:432) and `redeem`
-(:431), `do_wizutil`'s eighth branch.
 
 **Phase 6's, and correctly so.** `medit`, `oedit`, `redit`, `sedit`, `zedit`,
 `olc` and `edit` are OasisOLC; `tedit` is the in-game text-file editor.

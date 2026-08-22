@@ -6,7 +6,11 @@
 
 package game
 
-import "github.com/gerrowadat/disgracelands/internal/rng"
+import (
+	"strings"
+
+	"github.com/gerrowadat/disgracelands/internal/rng"
+)
 
 // Classes, matching structs.h:122. The numbers are stored in every player
 // record ever written, so they are the format as much as they are an enum.
@@ -37,6 +41,38 @@ var ClassAbbrevs = map[int32]string{
 	ClassThief:     "Th",
 	ClassWarrior:   "Wa",
 	ClassPaladin:   "Pa",
+}
+
+// ClassShortNames are class.c's `pc_class_snames` (class.c:69), a third table
+// of class names alongside `pc_class_types` and `class_abbrevs`.
+//
+// A local addition, added for `remort`, which is the only thing that reads
+// them — both to match what a god types and to print what a character has
+// become. Note "mage" rather than "Magic User": these are lower-case and
+// short, and `remort bob magic user` does not work.
+var ClassShortNames = map[int32]string{
+	ClassMagicUser: "mage",
+	ClassCleric:    "cleric",
+	ClassThief:     "thief",
+	ClassWarrior:   "warrior",
+	ClassPaladin:   "paladin",
+}
+
+// ClassShortNameOrder is the order pc_class_snames is written in, which is
+// also the order `remort` lists a character's classes in.
+var ClassShortNameOrder = []int32{
+	ClassMagicUser, ClassCleric, ClassThief, ClassWarrior, ClassPaladin,
+}
+
+// ParseShortClassName returns the class a `remort` argument names, matching
+// the C's `strcasecmp` against pc_class_snames — a whole name, not a prefix.
+func ParseShortClassName(word string) (int32, bool) {
+	for _, class := range ClassShortNameOrder {
+		if strings.EqualFold(ClassShortNames[class], word) {
+			return class, true
+		}
+	}
+	return 0, false
 }
 
 // ClassName returns a class's display name.

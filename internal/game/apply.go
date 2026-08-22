@@ -288,3 +288,37 @@ var intApplyLearn = [26]int32{
 	50, 53, 55, 56, 57, 58, // 18-23
 	59, 60, // 24-25
 }
+
+// RemortMask is the bit a class occupies in the remort vector, from class.c's
+// `pc_class_remort_masks`, or 0 for a class with none.
+//
+// Paladin has a mask in the C's table and no `IS_` macro reading it, since
+// paladin is where remorting ends rather than somewhere it passes through — so
+// setting its bit does nothing and `remort` lists nothing new for it. The
+// table is reproduced faithfully all the same; the emptiness is the C's.
+func RemortMask(class int32) Flags {
+	if mask, ok := classRemortMasks[class]; ok {
+		return remortFlags(mask)
+	}
+	return 0
+}
+
+// RemortFlagsOf and SetRemortFlags read and write the record's remort vector
+// as a bitfield.
+//
+// The record stores it as an int32 because that is its width in the player
+// file — one of the `spare` longs `char_file_u` reserves — so the conversion
+// belongs here rather than at every caller.
+func RemortFlagsOf(rec *PlayerRecord) Flags {
+	if rec == nil {
+		return 0
+	}
+	return remortFlags(rec.RemortVector)
+}
+
+// SetRemortFlags writes the vector back.
+func SetRemortFlags(rec *PlayerRecord, f Flags) {
+	if rec != nil {
+		rec.RemortVector = int32(uint32(f)) //nolint:gosec // the same reinterpretation as remortFlags, reversed
+	}
+}

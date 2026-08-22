@@ -47,13 +47,10 @@ renting at an inn and the rent files behind it; bulletin boards, mud mail and
 player housing; and the immortal commands, from `goto` and `stat` through
 `set`, `snoop`, `switch` and the site bans.
 
-**289 of the C's 318 commands answer.** Of the 29 that do not, `remort` and
-`redeem` are the last slice of Phase 5, eight are the OasisOLC editors that
-belong to Phase 6, and the rest is a tail of small things listed command by
-command in the plan's §10. Two mechanisms are still missing that cut across
-every command rather than being any one of them, and they want doing together:
-`CAN_SEE` in the *targeting* path — it filters what you can see but not yet
-what you can name — and `N.thing` targeting.
+**291 of the C's 318 commands answer**, and every slice of Phase 5 is built.
+Of the 27 that do not, eight are the OasisOLC editors that belong to Phase 6
+and the rest is a tail of small things listed command by command in the plan's
+§10.
 
 The two servers load the world identically — every field of all 3,202
 records — and `scripts/world-parity.sh` checks that in CI.

@@ -261,6 +261,15 @@ simply dark, or simply lit, with nothing to say why. Same reasoning as
 `affect_total` above, and the same shape. Rooms hold a handful of people, so
 the cost is nothing.
 
+### Undoing a remort says something rather than nothing
+
+| | |
+|---|---|
+| **C** | `do_remort` builds its confirmation with `snprintf(buf2, ...)` guarded on `undo == 0`, and then calls `send_to_char(buf2, ch)` **unguarded** (act.wizard.c:445–449). There is no `else`. So a god undoing a remort is sent whatever was last in that buffer — which is `buf2`, the argument they just typed, because `newclass` points into it. |
+| **Go** | *"%s is no longer a %s."* |
+| **Why** | Plan §0 puts the `sprintf`-overlap class of bug in the "fix and record" category rather than the "reproduce faithfully" one. This is squarely that: an uninitialised-buffer read whose output is whatever happened to be lying there. The character's own message is the C's and unchanged — only the god's line is invented, because the C has none to reproduce. |
+| **Where** | `doRemort` in `internal/session/remort.go`, `TestRemortUndo`. |
+
 ### Ability tables are indexed with a bound
 
 `advance_level` indexes `con_app[]` and `wis_app[]` with the raw score

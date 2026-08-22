@@ -791,6 +791,30 @@ not the second in whichever list it ends up looking at.
 
 *Source*: `handler.c:590`, `handler.c:1148`.
 
+### Undoing a remort the character never had *grants* it
+
+```c
+if (undo == 1)
+        new_vector = old_vector ^ (int)pc_class_remort_masks[i];
+else
+        new_vector = old_vector | mask;
+```
+
+XOR, not AND-NOT. The guard above it refuses a grant when the bit is already
+set, but it explicitly allows an undo when it is *not* — so `remort bob
+-cleric` on a character who has never been a cleric turns the bit on and tells
+them their clerichood has slipped away. Reproduced.
+
+*Source*: `act.wizard.c:437`.
+
+### `remort` has two spellings of the same failure
+
+The name-not-found message appears twice, one full stop apart: *"...they are
+not logged in."* for the report form and *"...they are not logged in.."* for
+the grant form. Both are in the C, four lines apart, and both are reproduced.
+
+*Source*: `act.wizard.c:373`, `act.wizard.c:394`.
+
 ## Storage and limits
 
 ### Flags are `unsigned long`, and the letter encoding breaks at bit 31

@@ -28,15 +28,12 @@ does, how to configure it, how to run it.
 Building from source is in the top-level **`BUILDING.md`**, which covers
 both the C tree and the Go tree.
 
-> The Go server is at the end of Phase 5, bar one slice. Login and creation,
-> the main menu, a world that resets and mobiles that act, combat, spells,
-> skills, affects, equipment, containers, food and drink, following and
-> grouping; special procedures, the channels and socials, shops, banks, rent,
-> boards, mail, houses, and the immortal commands. 289 of the C's 318 commands
-> answer; `remort` is the slice still open and the plan's §10 lists the other
-> 28 one by one, along with the two mechanisms — visibility in the *targeting*
-> path, and `N.thing` targeting
-> — that belong to every command rather than to any of them.
+> **Every slice of Phase 5 is built.** Login and creation, the main menu, a
+> world that resets and mobiles that act, combat, spells, skills, affects,
+> equipment, containers, food and drink, following and grouping; special
+> procedures, the channels and socials, shops, banks, rent, boards, mail,
+> houses, the immortal commands and remorting. 291 of the C's 318 commands
+> answer, and the plan's §10 lists the other 27 one by one.
 > `configuration.md` and `operations.md` mark which settings are *(inert)*
 > pending later phases.
 

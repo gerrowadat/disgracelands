@@ -180,3 +180,20 @@ func TargetQuestion(info SpellInfo) string {
 	}
 	return "Upon who should the spell be cast?\r\n"
 }
+
+// SpecFlagsOf and SetSpecFlags read and write the paladin state bits, which
+// live in another of the player file's spare longs. `redeem` is the only thing
+// outside this file that touches them.
+func SpecFlagsOf(rec *PlayerRecord) Flags {
+	if rec == nil {
+		return 0
+	}
+	return specFlags(rec.SpecFlags)
+}
+
+// SetSpecFlags writes them back.
+func SetSpecFlags(rec *PlayerRecord, f Flags) {
+	if rec != nil {
+		rec.SpecFlags = specFlagsValue(f)
+	}
+}

@@ -281,6 +281,12 @@ func init() {
 		{Name: "pardon", Help: "Clear somebody's killer and thief flags.", Run: doPardon, CLine: 399, MinLevel: game.LevelGod},
 		{Name: "purge", Help: "Destroy something, or clean out the room.", Run: doPurge, CLine: 416, MinLevel: game.LevelGod},
 		{Name: "reroll", Help: "Roll somebody's abilities again.", Run: doReroll, CLine: 440, MinLevel: game.LevelGreaterGod},
+
+		// The local remort mechanic (interpreter.c:431, :432). `redeem` is a
+		// branch of do_wizutil like the seven above it; `remort` is a command
+		// of its own and needs an implementor.
+		{Name: "redeem", Help: "Restore a fallen paladin.", Run: doRedeem, CLine: 431, MinLevel: game.LevelGreaterGod},
+		{Name: "remort", Help: "Give somebody another class's skills.", Run: doRemort, CLine: 432, MinLevel: game.LevelImplementor},
 		{Name: "restore", Help: "Heal somebody completely.", Run: doRestore, CLine: 442, MinLevel: game.LevelGod},
 		// `mute`, not `squelch` — the subcommand is SCMD_SQUELCH but the word
 		// players and gods type is `mute` (interpreter.c:371). Caught by the
