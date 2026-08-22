@@ -475,6 +475,84 @@ this is *"NPCs use warrior tables according to some book"*.
 
 ---
 
+## Light and darkness
+
+### A lit torch on the floor lights nothing
+
+`world[room].light` is the room's count of light sources, and everything about
+darkness turns on it. What it counts is narrower than the name suggests: it is
+adjusted in exactly five places, and every one of them is about a **light worn
+in `WEAR_LIGHT` by a character who is in the room**.
+
+```
+handler.c:381   char_from_room   -- decrement when the leaver wears one
+handler.c:403   char_to_room     -- increment when the arriver does
+handler.c:539   equip_char       -- increment when one goes into the slot
+handler.c:573   unequip_char     -- decrement when it comes out
+handler.c:832   update_char_objects -- decrement when it burns out
+```
+
+`obj_to_room` and `obj_from_room` (handler.c:681, :698) do not touch it at all.
+So a burning torch dropped on the floor contributes nothing, and **putting your
+torch down plunges the room into darkness while it goes on burning at your
+feet**. Carrying one in your pack is no better: the count is of the slot, not
+of the object.
+
+*Source*: `utils.c:640`, `handler.c:381`.
+
+### -1 hours of fuel is an eternal light, not a dead one
+
+The test for "this light is on" is `GET_OBJ_VAL(obj, 2)` — non-zero, not
+positive. The burnout timer is guarded separately on `> 0`
+(handler.c:823). So value 2 of -1 is a light that is on and can never go out,
+0 is a spent one, and the two readings have to agree or eternal lights either
+stop working or burn down.
+
+*Source*: `handler.c:823`.
+
+### Dusk is dark, and dawn is not
+
+`room_is_dark` treats `SUN_SET` as dark along with `SUN_DARK`, but not
+`SUN_RISE`. Since `weather_and_time` sets `SUN_RISE` at hour 5 and `SUN_SET` at
+hour 20, an outdoor room is lit from 05:00 and dark from 20:00 — the light
+arrives an hour before full daylight and leaves an hour before full night.
+
+*Source*: `utils.c:649`.
+
+### Two different questions about seeing in the dark
+
+There are two macros and they are not the same, which is easy to miss because
+they read alike:
+
+```c
+#define CAN_SEE_IN_DARK(ch) \
+   (AFF_FLAGGED(ch, AFF_INFRAVISION) || (!IS_NPC(ch) && PRF_FLAGGED(ch, PRF_HOLYLIGHT)))
+
+#define LIGHT_OK(sub)	(!AFF_FLAGGED(sub, AFF_BLIND) && \
+   (IS_LIGHT(IN_ROOM(sub)) || AFF_FLAGGED((sub), AFF_INFRAVISION)))
+```
+
+`CAN_SEE_IN_DARK` takes holylight; `LIGHT_OK`, which is what `CAN_SEE` is built
+from, does not — holylight is let in one level up, at `IMM_CAN_SEE`, where it
+bypasses the whole test rather than answering it. `look_at_room` asks the
+first; deciding whether you can see a *person* asks the second. Using either
+one for both jobs is wrong in a way that only shows up for a blind god.
+
+*Source*: `utils.h:348`, `utils.h:426`.
+
+### An implementor cannot see in the dark
+
+`PRF_HOLYLIGHT` is set by `advance_level` (class.c:1920). The first character
+on an empty roster is made level 34 by `init_char` and therefore never runs
+`do_start`, which is the only thing that would call `advance_level` — so **the
+founding implementor has no holylight** and stands in a dark room reading "It
+is pitch black..." like anybody else, until they type `holylight`.
+
+Every god who got there by being *advanced* has it. Only the first one does
+not, and only because of the shortcut that made them.
+
+*Source*: `class.c:1920`, `db.c:2705`.
+
 ## Objects, containers and equipment
 
 ### Armour class and applies are two different mechanisms

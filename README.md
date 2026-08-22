@@ -47,7 +47,7 @@ renting at an inn and the rent files behind it; bulletin boards, mud mail and
 player housing; and the immortal commands, from `goto` and `stat` through
 `set`, `snoop`, `switch` and the site bans.
 
-**285 of the C's 318 commands answer.** Of the 33 that do not, `remort` and
+**289 of the C's 318 commands answer.** Of the 29 that do not, `remort` and
 `redeem` are the last slice of Phase 5, eight are the OasisOLC editors that
 belong to Phase 6, and the rest is a tail of small things listed command by
 command in the plan's §10. Two mechanisms are missing that cut across every

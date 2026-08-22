@@ -542,6 +542,6 @@ func (c *Context) moveTo(who *game.Character, to game.RoomVnum, leaving, arrivin
 	}
 
 	if room := c.World.Room(to); room != nil {
-		who.Tell("%s", roomDescription(c.World, room, who))
+		who.Tell("%s", roomDescription(c.World, room, who, false))
 	}
 }

@@ -4,7 +4,7 @@ The project is a Go port of the Disgracelands server. What to do next is
 mostly "the next phase", and that lives in
 `docs/proposals/go-port-plan.md` §10 — Phases 0–4 are done and **Phase 5 is
 finished bar one slice**, `remort`. Its §10 also lists, command by command,
-the 33 of the C's 318 that nothing answers to yet and the two mechanisms
+the 29 of the C's 318 that nothing answers to yet and the two mechanisms
 missing from all of them.
 
 This file is for the things that are not phases: work on the C server in

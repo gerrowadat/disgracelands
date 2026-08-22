@@ -145,6 +145,10 @@ const (
 	// HouseRoom and AtriumRoom are a house and the room its door opens into.
 	HouseRoom  game.RoomVnum = 3020
 	AtriumRoom game.RoomVnum = 3021
+	// CellarRoom is flagged DARK, for the light and visibility tests. It has
+	// no exits: tests put a character in it directly, so that adding it
+	// changes no other room's `[ Exits: ]` line.
+	CellarRoom game.RoomVnum = 3022
 )
 
 // MageGuildRoom is guild_info's first row: the magic-user guild, whose door
@@ -370,12 +374,17 @@ func testWorld() *game.Live {
 	atriumRoom := &game.RoomDef{
 		Vnum: AtriumRoom, Name: "An Atrium", Description: "An atrium.\r\n",
 	}
+	cellarRoom := &game.RoomDef{
+		Vnum: CellarRoom, Name: "A Pitch Dark Cellar", Description: "A cellar.\r\n",
+		Flags: game.RoomDark,
+	}
 	houseRoom.Exits[game.North] = &game.ExitDef{ToRoom: AtriumRoom}
 	atriumRoom.Exits[game.South] = &game.ExitDef{ToRoom: HouseRoom}
 
 	live := game.NewLive(&game.World{
 		Rooms: []*game.RoomDef{
-			temple, board, guild, donation, shopRoom, boardRoom, houseRoom, atriumRoom,
+			temple, board, guild, donation, shopRoom, boardRoom, houseRoom,
+			atriumRoom, cellarRoom,
 		},
 		Objects: objects,
 		Mobiles: mobiles,

@@ -242,6 +242,25 @@ in exactly one place.
 No saved character is affected: no player has ever practised on this server.
 Had one, the damage would have been silent and permanent.
 
+### The room's light count is counted, not carried
+
+`world[room].light` is a counter the C adjusts in five places — `char_to_room`,
+`char_from_room`, `equip_char`, `unequip_char` and the burnout timer
+(handler.c:381, :403, :539, :573, :832). `Live.LightsIn` counts the room's
+occupants instead, asking each one whether they are wearing a lit light.
+
+The answer is the same: the five adjustments do balance, including the awkward
+cases — a light that burns out is left worn with zero fuel and therefore stops
+being counted by both the counter and the count, and the `IN_ROOM == NOWHERE`
+branches that skip an adjustment are paired with a `char_to_room` that makes
+it later.
+
+Counted rather than carried because a counter that is adjusted from five places
+can drift and a count cannot, and a drifted one is invisible: the room is
+simply dark, or simply lit, with nothing to say why. Same reasoning as
+`affect_total` above, and the same shape. Rooms hold a handful of people, so
+the cost is nothing.
+
 ### Ability tables are indexed with a bound
 
 `advance_level` indexes `con_app[]` and `wis_app[]` with the raw score
@@ -328,14 +347,23 @@ Listed here so they are not mistaken for deliberate differences.
   2.sword` (the second sword) currently reads the whole word as a keyword and
   finds nothing. It belongs with the rest of `generic_find` rather than in any
   one command.
-- **Thirty-three of the C's 318 commands are not implemented**, and the plan's
+- **Twenty-nine of the C's 318 commands are not implemented**, and the plan's
   §10 "What is not in it" lists every one with its `interpreter.c` line. In
   brief: `remort` and `redeem` (the one slice of Phase 5 still open), the eight
-  OasisOLC and `tedit` editors (Phase 6), the six immortal `do_gen_tog`
-  toggles, `bug`/`idea`/`typo`, the aliases `:` and `take`, the C's two
-  deliberate half-spellings `qui` and `shutdow`, and a short tail of
-  `users`, `wizhelp`, `skillset`, `reload`, `qecho`, `page`, `color`,
-  `insult`, `hop` and `alias`.
+  OasisOLC and `tedit` editors (Phase 6), `bug`/`idea`/`typo`, the aliases `:`
+  and `take`, the C's two deliberate half-spellings `qui` and `shutdow`, and a
+  short tail of `users`, `wizhelp`, `skillset`, `reload`, `qecho`, `page`,
+  `color`, `insult`, `hop` and `alias`.
+
+  Two of `do_gen_tog`'s seventeen are among them, and both for the same
+  reason: `slowns` and `trackthru` flip a server-wide **global** rather than a
+  preference (act.other.c:1021, :1028). A global is right in the C, which is
+  one server per process; here the tests build several servers in one, each
+  with its own world goroutine, so a command writing a package-level variable
+  is a race between them rather than a setting. Whichever lands first has to
+  decide where the value lives — most likely on `Live`, beside the world it
+  applies to. `slowns` additionally has nothing behind it: this port does no
+  reverse DNS to slow down.
 
   Two are worth calling out here rather than leaving in a list. **`alias`** is
   the only one with a persistence format behind it — `alias.c` and the

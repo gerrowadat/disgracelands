@@ -58,7 +58,7 @@ mobiles that act, special procedures, the channels and socials, shops, banks,
 renting, boards, mail, houses, and the immortal commands. Characters autosave,
 a linkdead body stays to reconnect to, and it shuts down cleanly on SIGTERM.
 
-285 of the C's 318 commands answer. What is left — `remort`, the OasisOLC
+289 of the C's 318 commands answer. What is left — `remort`, the OasisOLC
 editors, and a tail of small commands, plus `CAN_SEE` and `N.thing` targeting —
 is listed one by one in `docs/proposals/go-port-plan.md` §10.
 

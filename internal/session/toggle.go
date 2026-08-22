@@ -84,7 +84,44 @@ var toggles = map[string]toggle{
 		on:   "Okay, you are part of the Quest!\r\n",
 		off:  "You are no longer part of the Quest.\r\n",
 	},
+
+	// The immortal ones. Same function, same table, and the only difference is
+	// the minimum level on the command-table row — so they belong here rather
+	// than in `wizops.go` with the commands that need a god to do anything.
+	"nohassle": {
+		flag: game.PrefNoHassle,
+		on:   "Nohassle enabled.\r\n",
+		off:  "Nohassle disabled.\r\n",
+	},
+	"nowiz": {
+		flag: game.PrefNoWiz,
+		on:   "You are now deaf to the Wiz-channel.\r\n",
+		off:  "You can now hear the Wiz-channel.\r\n",
+	},
+	"roomflags": {
+		flag: game.PrefRoomFlags,
+		on:   "You will now see the room flags.\r\n",
+		off:  "You will no longer see the room flags.\r\n",
+	},
+	"holylight": {
+		flag: game.PrefHolylight,
+		on:   "HolyLight mode on.\r\n",
+		off:  "HolyLight mode off.\r\n",
+	},
 }
+
+// Two of do_gen_tog's seventeen are still missing, and both for the same
+// reason: they flip a server-wide *global* rather than a preference
+// (act.other.c:1021 and :1028). `slowns` switches reverse-DNS resolution,
+// which this port does not do at all, and `trackthru` switches
+// `game.TrackThroughDoors`, which the breadth-first search already reads.
+//
+// A global is right in the C, which is one server per process. Here the tests
+// build several servers in one, each with its own world goroutine, so a
+// command writing a package-level variable is a race between them rather than
+// a setting. Whichever of the two lands first has to decide where the value
+// lives — most likely on Live, beside the world it applies to. Recorded in
+// docs/deviations.md.
 
 // toggleCommand returns the command for one preference.
 func toggleCommand(name string) func(*Context) error {

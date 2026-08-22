@@ -215,7 +215,9 @@ func doFlee(c *Context) error {
 		c.Send("You flee head over heels.\r\n")
 
 		c.penaliseFlight(wasFighting)
-		return doLook(c)
+		// do_flee's look passes ignore_brief = 0 (act.offensive.c:372), unlike
+		// `look` typed by hand.
+		return lookAtRoom(c, false)
 	}
 
 	c.Send("PANIC!  You couldn't escape!\r\n")

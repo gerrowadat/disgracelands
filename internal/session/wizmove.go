@@ -125,7 +125,7 @@ func doGoto(c *Context) error {
 
 	if room := c.World.Room(location); room != nil {
 		sendRoomInfo(c.Session, room)
-		c.Send("%s", roomDescription(c.World, room, c.Character))
+		c.Send("%s", roomDescription(c.World, room, c.Character, false))
 	}
 	return nil
 }
@@ -254,7 +254,7 @@ func (c *Context) bringHere(victim *game.Character, told string) {
 	announce(c.World, victim.Room, victim, "%s arrives from a puff of smoke.\r\n", victim.Name)
 	victim.Tell(told, c.Character.Name)
 	if room := c.World.Room(victim.Room); room != nil {
-		victim.Tell("%s", roomDescription(c.World, room, victim))
+		victim.Tell("%s", roomDescription(c.World, room, victim, false))
 	}
 }
 
@@ -295,7 +295,7 @@ func doTeleport(c *Context) error {
 	announce(c.World, target, victim, "%s arrives from a puff of smoke.\r\n", victim.Name)
 	victim.Tell("%s has teleported you!\r\n", c.Character.Name)
 	if room := c.World.Room(target); room != nil {
-		victim.Tell("%s", roomDescription(c.World, room, victim))
+		victim.Tell("%s", roomDescription(c.World, room, victim, false))
 	}
 	return nil
 }

@@ -1088,8 +1088,8 @@ is not typeable — so **318 commands**. 105 of them are `do_action`, and the
 shipped socials file fills 104 of those (it also carries a `you` entry with no
 table slot, which the C drops with a log and so does this port).
 
-**285 of the 318 are implemented**: 181 in `internal/session/commands.go` plus
-the 104 socials. The 33 left are listed under "What is not in it" below — they
+**289 of the 318 are implemented**: 185 in `internal/session/commands.go` plus
+the 104 socials. The 29 left are listed under "What is not in it" below — they
 are one remaining slice, the OLC editors that belong to Phase 6, and a
 scattering of small commands that never had a slice of their own.
 
@@ -1126,10 +1126,11 @@ it.
 | **5i-g. Bans and `show` ✅** | `ban`, `unban`, the ban file and its enforcement at the name prompt; `show` and its ten fields. `show rent` and `show shops` wait on their own listings. | `ban.c`, `act.wizard.c` |
 | **5i-h. `remort`** | A local addition: a per-character bit vector of borrowed class skills, the `IS_<CLASS>` macros that read it, and `redeem` for a fallen paladin. The last slice of Phase 5. | `act.wizard.c`, `class.c` |
 | **5j. The interpreter's own refusals ✅** | `command_interpreter`'s `else if` ladder between finding a command and running it: the frozen check, the switched-immortal check, and `minimum_position` — `cmd_info[]`'s second column, which nothing had been reading. Not a slice when Phase 5 was planned, because it is a property of every command rather than of any one; see below. | `interpreter.c` |
+| **5k. Light and darkness ✅** | `world[].light`, `room_is_dark` and `CAN_SEE_IN_DARK`, and with them `look_at_room` in full: the pitch-black and blindness branches, `PRF_BRIEF`, `PRF_AUTOEXIT`, `PRF_ROOMFLAGS` and the two `<DoC>` room messages. Plus the four preference-based immortal toggles, `holylight` among them, without which nothing could switch the new behaviour on. The half of `CAN_SEE` that is about the room; the half about people is next. | `utils.c`, `handler.c`, `act.informative.c`, `act.other.c` |
 
 ### What is not in it
 
-The 33 commands of the 318 that nothing answers to yet, and the two mechanisms
+The 29 commands of the 318 that nothing answers to yet, and the two mechanisms
 that cut across all of them. Everything here is a gap rather than a decision,
 so it is in `docs/deviations.md` under "gaps still to fill" rather than as a
 deviation.
@@ -1147,9 +1148,14 @@ got scheduled.
 - **`N.thing` targeting** (`get_number`, which every command using
   `generic_find` inherits) belongs with the first slice that touches
   `generic_find`.
-- **The `CAN_SEE` visibility rules** — invisibility, hiding, sneaking and
-  infravision all set flags today that nothing reads yet — want a slice of
-  their own, and every command that lists anybody is a consumer.
+- **`CAN_SEE` for people.** Half of this landed as 5k: the room half, which is
+  the light count, `room_is_dark` and `CAN_SEE_IN_DARK`, and which is what
+  `LIGHT_OK` is built on. What is left is the macro itself and its call sites —
+  `INVIS_OK`, the invisibility level, and then teaching `personName` (the one
+  hook `act()` leaves for it), the room's list of people, `who`, `where` and
+  the targeting in `generic_find`. Until then invisibility, hiding and sneaking
+  set flags that nothing consults, so a hidden character is still listed in the
+  room.
 
 There was a third — **minimum position** — and it is now built, as 5j.
 
@@ -1184,6 +1190,35 @@ Two adjacent branches of the same ladder went in with it, both also missing:
 the **frozen** check (interpreter.c:629 — `freeze` set the flag and nothing
 enforced it in the world) and the **switched-immortal** check (:634).
 
+### What 5k changed, and what it caught
+
+The same pattern once more: the thing that was missing was not a command but
+the *state a command reads*.
+
+`room_is_dark` needs `world[room].light`, and nothing here had it — so no room
+was ever dark, `look` never printed *"It is pitch black..."*, and infravision,
+`AFF_BLIND` and holylight were all set correctly by the things that grant them
+and read by nothing. That is `LIGHT_OK`'s whole input, which is why this had to
+come before `CAN_SEE` rather than with it.
+
+Four findings came out of reading it, all in `docs/weirdnumbers.md`. The one
+worth repeating here: **the light count is of lights worn in `WEAR_LIGHT` by
+people in the room, and nothing else.** `obj_to_room` does not touch it, so a
+burning torch dropped on the floor lights nothing and putting your torch down
+puts the room out. A reasonable-looking implementation that counted lit objects
+in the room would be wrong, and wrong in a way no test would catch unless it
+was written to.
+
+Going in after it: `look_at_room` had been ported without four of its gates.
+`PRF_BRIEF` and `PRF_AUTOEXIT` were settable, listed by `toggle`, saved to the
+pfile — and read by nothing, so `brief` and `autoexit` did nothing at all.
+`PRF_ROOMFLAGS` had no command to set it. The exits line listed **closed** exits
+and printed nothing rather than *"None! "* for a room with no way out. And the
+two `<DoC>` room messages, for `ROOM_GOOD_REGEN` and `ROOM_PKILL`, were absent.
+
+The four preference-based immortal toggles went in with it, because `holylight`
+is half of `CAN_SEE_IN_DARK` and there was no way to switch it on.
+
 **And one command whose guards are missing rather than the command.** `quit`
 works, saves and removes the character, but `do_quit`'s own checks
 (act.other.c:99–172) are not there: the `POS_FIGHTING` refusal, the
@@ -1198,7 +1233,7 @@ because a command with no slice is a command nobody schedules.
 
 | | |
 |---|---|
-| The immortal `do_gen_tog` toggles | `holylight`, `nohassle`, `nowiz`, `roomflags`, `slowns`, `trackthru` (interpreter.c:336, :380, :386, :446, :472, :517). The mortal `PRF_*` toggles landed in 5d; these six did not, and the state most of them switch *does* exist — `game.TrackThroughDoors` is read by the BFS, `nohassle` is settable through `set`. |
+| The last two `do_gen_tog` toggles | `slowns` (interpreter.c:472) and `trackthru` (:517). The other fifteen are done. These two flip a server-wide **global** rather than a preference (act.other.c:1021, :1028), which is right in the C — one server per process — and a race here, where the tests build several servers in one. Whichever lands first has to decide where the value lives, most likely on `Live`. `slowns` also has nothing behind it: this port does no reverse DNS. |
 | `do_gen_write` | `bug`, `idea`, `typo` (interpreter.c:247, :342, :520) — one function appending a timestamped line to a file, with a `-` prefix check and a size cap. |
 | Aliases and half-spellings | `:` for emote (interpreter.c:286), `take` for get (:503), and the C's two deliberate stumps, `qui` (:421) and `shutdow` (:463), which exist so that an abbreviation of a dangerous command reaches something that refuses rather than something that acts. |
 | Immortal odds and ends | `users` (:528), `wizhelp` (:553, `do_commands` with `SCMD_WIZHELP`), `skillset` (:469), `reload` (:428), `qecho` (:419), `page` (:398). |

@@ -393,6 +393,15 @@ func init() {
 
 		{Name: "autoexit", Help: "Show the exits after every move.", Run: toggleCommand("autoexit"), CLine: 232},
 		{Name: "brief", Help: "Skip room descriptions you have seen.", Run: toggleCommand("brief"), CLine: 244},
+
+		// The immortal half of do_gen_tog (interpreter.c:336, :380, :386,
+		// :446). All four are LVL_IMMORT, and the level is part of matching —
+		// so `ho` is `hold` for a mortal and still `hold` for a god, because
+		// hold is earlier in the table.
+		{Name: "holylight", Help: "See everything, everywhere.", Run: toggleCommand("holylight"), CLine: 336, MinLevel: game.LevelImmortal},
+		{Name: "nohassle", Help: "Stop mobiles attacking you.", Run: toggleCommand("nohassle"), CLine: 380, MinLevel: game.LevelImmortal},
+		{Name: "nowiz", Help: "Stop hearing the gods' channel.", Run: toggleCommand("nowiz"), CLine: 386, MinLevel: game.LevelImmortal},
+		{Name: "roomflags", Help: "Show each room's vnum and flags.", Run: toggleCommand("roomflags"), CLine: 446, MinLevel: game.LevelImmortal},
 		{Name: "clear", Help: "Clear the screen.", Run: doClearScreen, CLine: 254},
 		{Name: "cls", Help: "Clear the screen.", Run: doClearScreen, CLine: 256},
 		{Name: "commands", Help: "List the commands you can use.", Run: doCommands(false), CLine: 261},
@@ -819,6 +828,14 @@ func doLook(c *Context) error {
 		return c.lookAtTarget(arg)
 	}
 
+	// `look` typed on purpose ignores brief mode, which is what the C's
+	// ignore_brief argument is for. Everywhere else in the whole tree passes
+	// 0: `do_look` at act.informative.c:680 is the only caller that passes 1.
+	return lookAtRoom(c, true)
+}
+
+// lookAtRoom shows the character the room they are in.
+func lookAtRoom(c *Context, ignoreBrief bool) error {
 	room := c.World.Room(c.Character.Room)
 	if room == nil {
 		c.Send("You are nowhere at all. That should not be possible.\r\n")
@@ -826,25 +843,63 @@ func doLook(c *Context) error {
 	}
 
 	sendRoomInfo(c.Session, room)
-	c.Send("%s", roomDescription(c.World, room, c.Character))
+	c.Send("%s", roomDescription(c.World, room, c.Character, ignoreBrief))
 	return nil
 }
 
-// roomDescription is look_at_room's text: the name, the description, the way
-// out, what is lying about and who is here.
+// roomDescription is look_at_room (act.informative.c:413): the name, the
+// description, the way out, what is lying about and who is here.
 //
-// It takes the viewer so it can leave them out of the list of people, and it
-// returns a string rather than sending, because a spell can move somebody
-// else into a room and has to show it to them rather than to the caster.
-func roomDescription(w *game.Live, room *game.RoomDef, viewer *game.Character) string {
+// It takes the viewer so it can leave them out of the list of people, consult
+// their preferences and work out whether they can see at all, and it returns a
+// string rather than sending, because a spell can move somebody else into a
+// room and has to show it to them rather than to the caster.
+//
+// ignoreBrief is the C's argument of the same name: `look` typed by hand shows
+// the description whatever PRF_BRIEF says, and the automatic look on arriving
+// somewhere does not.
+func roomDescription(w *game.Live, room *game.RoomDef, viewer *game.Character, ignoreBrief bool) string {
+	// Darkness first, and blindness after it — the C's order, which decides
+	// which message a blind character standing in the dark gets. They are told
+	// it is pitch black, not that they are blind.
+	//
+	// Note this asks CAN_SEE_IN_DARK, so holylight counts directly here. It is
+	// a different question from LIGHT_OK's, which takes infravision alone.
+	if w.RoomIsDark(room.Vnum) && !game.CanSeeInDark(viewer) {
+		return "It is pitch black...\r\n"
+	}
+	if isBlind(viewer) {
+		return "You see nothing but infinite darkness...\r\n"
+	}
+
 	var b strings.Builder
 
-	fmt.Fprintf(&b, "%s\r\n", room.Name)
-	if room.Description != "" {
+	// An immortal with `roomflags` on gets the vnum and the flags in the
+	// title line.
+	if hasPref(viewer, game.PrefRoomFlags) {
+		fmt.Fprintf(&b, "[%5d] %s [ %s]\r\n",
+			room.Vnum, room.Name, game.SprintBit(room.Flags, game.RoomBitNames()))
+	} else {
+		fmt.Fprintf(&b, "%s\r\n", room.Name)
+	}
+
+	// Brief mode drops the description — but never in a DEATH room, because
+	// that description is the only warning you get.
+	if room.Description != "" &&
+		(ignoreBrief || !hasPref(viewer, game.PrefBrief) || room.Flags.Has(game.RoomDeathTrap)) {
 		b.WriteString(ensureNewline(room.Description))
 	}
-	if exits := exitList(room); exits != "" {
-		fmt.Fprintf(&b, "[ Exits: %s ]\r\n", exits)
+
+	if hasPref(viewer, game.PrefAutoExit) {
+		fmt.Fprintf(&b, "[ Exits: %s]\r\n", autoExits(room))
+	}
+
+	// The two local additions, both `<DoC>` (act.informative.c:444, :452).
+	if room.Flags.Has(game.RoomGoodRegen) {
+		b.WriteString("You feel a soft, warm feeling in your bones.\r\n")
+	}
+	if room.Flags.Has(game.RoomPKill) {
+		b.WriteString("You have entered a [Player Killer] room. Beware!\r\n")
 	}
 
 	for _, obj := range w.RoomObjects(room.Vnum) {
@@ -870,12 +925,44 @@ func roomDescription(w *game.Live, room *game.RoomDef, viewer *game.Character) s
 	return b.String()
 }
 
-func exitList(room *game.RoomDef) string {
-	return strings.Join(exitNames(room, 1), " ")
+// isBlind reports whether AFF_BLIND is set.
+func isBlind(ch *game.Character) bool {
+	return ch != nil && ch.Record != nil && ch.Record.AffectFlags.Has(game.AffectBlind)
 }
 
-// exitNames lists the room's exits, truncated to width characters each. One
-// character is what the `[ Exits: ]` line shows; GMCP wants the whole word.
+// hasPref reports whether a player has a PRF_ bit set. A mobile has none: the
+// C guards every one of these with !IS_NPC, because player_specials is not
+// allocated for a mobile and reading it would be a null dereference.
+func hasPref(ch *game.Character, flag game.Flags) bool {
+	return ch != nil && !ch.IsNPC() && ch.Record != nil && ch.Record.Preferences.Has(flag)
+}
+
+// autoExits is do_auto_exits' list (act.informative.c:358).
+//
+// Two details that are easy to miss and both player-visible: a **closed** exit
+// is not listed, so a shut door hides the way it leads; and a room with no way
+// out at all says "None! " rather than nothing. Each letter is written with a
+// trailing space, which is where the space before the closing bracket comes
+// from.
+func autoExits(room *game.RoomDef) string {
+	var b strings.Builder
+	for dir, e := range room.Exits {
+		if e == nil || e.ToRoom == game.NoRoom || e.State.Has(game.ExitClosed) {
+			continue
+		}
+		fmt.Fprintf(&b, "%c ", game.Direction(dir).String()[0])
+	}
+	if b.Len() == 0 {
+		return "None! "
+	}
+	return b.String()
+}
+
+// exitNames lists the room's exits, truncated to width characters each.
+//
+// This feeds GMCP rather than the `[ Exits: ]` line, and unlike that line it
+// reports closed exits too: a client drawing a map wants to know the door is
+// there.
 func exitNames(room *game.RoomDef, width int) []string {
 	var out []string
 	for dir, e := range room.Exits {
@@ -966,7 +1053,7 @@ func (c *Context) moveCharacter(who *game.Character, dir game.Direction) bool {
 		if who == c.Character {
 			sendRoomInfo(c.Session, room)
 		}
-		who.Tell("%s", roomDescription(c.World, room, who))
+		who.Tell("%s", roomDescription(c.World, room, who, false))
 	}
 
 	c.moveFollowers(who, leaving, dir)
