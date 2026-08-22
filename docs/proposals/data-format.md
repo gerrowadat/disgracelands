@@ -9,11 +9,11 @@ them documented in the same place — with one, and it is a superset of all
 of them: everything they can express, it can express, and it can express
 more.
 
-This is a proposal. Nothing described here is built. It slots in behind
-the format registries that already exist (`internal/persist/world`,
-`internal/persist/player`), as one more registered driver alongside
-`classic`, `ascii` and `binary`, and it becomes the default once it can
-load the world with byte-identical parity against the C server.
+This started as a proposal; the world half of it (§11 steps 1–3) is now
+built — `internal/persist/world/native/`, registered as `native` alongside
+`classic` in the same `internal/persist/world` registry this document always
+said it would slot into. Players and the rest of the state tree (§11 steps
+5–6) are not; see §11 for what landed and what is still a plan.
 
 ---
 
@@ -1345,14 +1345,14 @@ format-neutral and that is the whole reason it exists.
 
 | Step | What lands | Done when |
 |---|---|---|
-| **1. Vocabularies** | Name tables for every flag set, sector, position, item type, apply location and wear slot in `internal/game`, with round-trip tests. | Every bit in the stock world has a name or is reported. |
-| **1b. Colour** | The `{{…}}` parser, the ANSI renderer keyed off `PrefColour1`/`PrefColour2`, the stripper, and a display-width function that the wrapping layer is built on rather than retrofitted to. | The swearing social in §5.3 survives parse → render → strip unescaped and unchanged, and width is counted correctly across every code including `{{sgr:…}}`. |
-| **2. World read** | `native` as a read-only `world.Source`, plus `dlctl world import` from `classic`, including ESC → named-code demotion. | `import` then load produces a parity dump byte-identical to loading `classic` directly. |
-| **3. World write** | `world.Sink`, the canonical writer, `dlctl world fmt`, `dlctl world export`. | `classic → native → classic` round-trips the whole world byte-for-byte — exactly, for the stock world, which has no colour in it; modulo the escape normalisation of §5.5 for anything that does — and `fmt` is idempotent. |
-| **4. Flip the default** | `--world-format=native`, `data/` converted in the repo, `classic` demoted to import-only. | CI runs the parity harness against a converted `data/`. |
-| **5. Players** | `native` player store, `dlctl pfile convert --to=native`, aliases and rent folded in. | An archived roster survives `binary → ascii → native` with every field verified. |
-| **6. The rest** | Boards, mail, houses, reports, socials, messages, help, game config. | `dlctl convert` reports zero `unsupported` files on a real `lib/`. |
-| **7. Retire** | `ascii` and `binary` become `dlctl`-only; `classic` becomes import-only. | The server has one format for everything. |
+| **1. Vocabularies ✅** | Name tables for every flag set, sector, position, item type, apply location and wear slot, in `internal/game/nativenames.go`, with round-trip tests (`nativenames_test.go`) against the C-sourced display tables in `bitnames.go`/`object.go`. | Every bit in the stock world has a name or round-trips via `flags_raw`. |
+| **1b. Colour ✅** | The `{{…}}` parser, ANSI renderer and stripper, keyed off `PrefColour1`/`PrefColour2`, plus `DisplayWidth` — `internal/game/colour.go`. | The swearing social in §5.3 survives parse → render → strip unescaped and unchanged (`colour_test.go`); no wrapping layer exists yet to consume `DisplayWidth`. |
+| **2. World read ✅** | `native` as a `world.Source` (`internal/persist/world/native/`), plus `dlctl world import` from `classic`, including CP1252→UTF-8 transcoding and ESC → named-code demotion. | `dlctl world import` on the real `data/world` produces zero `dlctl world lint --world-format=native` findings, and `dlmud --world-format=native` boots, populates and serves a connection. |
+| **3. World write ✅ (export not yet)** | `world.Sink` (`WriteZone`), the canonical writer (`text.go`'s `Text`/`NestedText`), `dlctl world fmt`. `dlctl world export` (native → classic) is **not built** — it needs a classic-format *writer*, which does not exist in this tree at all yet (`classic` has only ever been a reader). | `classic → native → classic` round-trips byte-identical at the in-memory/parity-dump level for the whole real world (`native/parity_test.go`, 30 zones / 3,202 records) modulo one documented, reported lossy transform (trailing blank lines beyond one, `text.go`'s `TrimsTrailingBlankLines` — see §12); `fmt` is idempotent, verified against the real corpus. |
+| **4. Flip the default** | `--world-format=native`, `data/` converted in the repo, `classic` demoted to import-only. | Not attempted — a decision about `data/` itself, separate from this code landing. `--world-format=native` is available and works today; `classic` stays the default. |
+| **5. Players** | `native` player store, `dlctl pfile convert --to=native`, aliases and rent folded in. | Not attempted. Needs `PlayerRecord`/`player.Store` restructured to fold rent/equipment/aliases into one file first (§8). |
+| **6. The rest** | Boards, mail, houses, reports, socials, messages, help, game config. | Not attempted. |
+| **7. Retire** | `ascii` and `binary` become `dlctl`-only; `classic` becomes import-only. | Not attempted. |
 
 Steps 1–4 are worth doing before **Phase 6** of `go-port-plan.md`, which is
 where OasisOLC and `Sink` writeback land: OLC writes zone files back, and it
@@ -1423,3 +1423,48 @@ one. The player database is a `struct` dump that is ~89% non-printable and
 uses all 256 byte values, so `0x1b` occurs constantly inside integer fields
 and means nothing. Escapes must be counted only in the text fields of a
 parsed record, never over the file's bytes.
+
+**CRLF in multi-line strings — a real, and unavoidable, lossy transform,
+found by the round-trip fuzz test rather than anticipated here.**
+`classic.readString` reproduces `fread_string`'s behaviour of appending
+`"\r\n"` after every line of a multi-line field that does not carry the
+terminating `~`, so a loaded room/mobile/object description is `\r\n`-joined
+in memory — not `\n`-joined the way the file on disk is. YAML block scalars
+cannot represent CRLF as distinct from LF at all: every implementation
+tested normalises every line-break style to `\n` on decode, which is a
+property of the data model, not a library quirk. `native`'s stored form is
+therefore always LF-only (`internal/persist/world/native/text.go`'s
+`ToStored`/`FromStored`), and the `\r\n` is re-derived on the way back into
+a `game.*Def`, exactly the same relationship `classic`'s own file bytes
+(`\n`) already have to its in-memory form (`\r\n`). No data is lost — the
+transform is a straight `strings.ReplaceAll`, lossless in both directions,
+verified against the CRLF fields that are actually in the real corpus (the
+astral-plane and river-zone room descriptions).
+
+**A second, genuinely lossy transform, also found by the fuzz test: "keep"
+chomping.** A string with two or more trailing newlines — a sign or note
+description with a trailing blank line before its closing `~` — cannot
+round-trip through `goccy/go-yaml` v1.19.2's custom-marshaler path at all:
+the library re-parses and re-prints whatever a `BytesMarshaler` returns
+while splicing it into the surrounding document, and its own re-print of a
+literal block node unconditionally strips every trailing newline before
+re-adding exactly one, regardless of what chomping indicator asked for.
+`native` collapses such a string to a single trailing newline on write
+(`text.go`'s `TrimsTrailingBlankLines`) rather than emit a `|+` header the
+library cannot actually honour — the same "reported rather than refused"
+posture §5.5 sets for colour's bold/normal-order normalisation. Real-corpus
+incidence: three room descriptions out of 12,372 strings.
+
+**A third finding, about the indentation indicator itself (§4.6): it is
+only reliable at one nesting depth.** The same re-parse-and-splice
+mechanism shifts a returned literal block by a depth-independent constant
+rather than by an amount proportional to where the field actually lands, so
+a hand-built `|2` header that is correct for a room's own `desc` (always two
+YAML-file columns deep, since `rooms:` is always a top-level list) silently
+mis-decodes for a field nested any deeper — an exit's `desc`, an
+extra-description's `desc`. `native` uses the indicator only where that one
+depth is guaranteed (`Text`, for a room/mobile/object/shop's own top-level
+fields) and falls back to a quoted, escaped scalar for anything nested
+deeper that would need one (`NestedText`) — correct everywhere, at the cost
+of losing block-scalar readability for the rare content (four ASCII-art
+signs in the real corpus) that needs it at that depth.

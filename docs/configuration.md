@@ -38,7 +38,7 @@ files edited in-game. Back it up; mount it as a volume in a container.
 | Flag | Default | Values |
 |---|---|---|
 | `--player-format` | `ascii` | `ascii` |
-| `--world-format` | `classic` | `classic` |
+| `--world-format` | `classic` | `classic`, `native` |
 
 `ascii` is the ascii_pfiles 2.1 one-text-file-per-player format.
 
@@ -50,6 +50,17 @@ in it is fixed-width. It remains fully readable and writable by `dlctl`,
 because conversion needs both directions; it is simply not something a live
 server should be stuck behind. See
 `docs/proposals/go-port-plan.md` §5.2.
+
+Convert an existing roster once:
+
+`native` is the YAML-over-JSON format `docs/proposals/data-format.md`
+describes — one file per zone, read and written directly by the server, no
+conversion step needed to run on it. Convert an existing `classic` world
+directory once:
+
+```sh
+dlctl world import --from-dir=data/world --to-dir=data/world
+```
 
 Convert an existing roster once:
 

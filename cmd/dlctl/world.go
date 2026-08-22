@@ -29,7 +29,7 @@ func worldFlags(fs *flag.FlagSet) (dir, format *string, mini *bool) {
 
 // loadWorld opens the configured source and loads it, returning findings
 // where the source can produce them.
-func loadWorld(ctx context.Context, dir, format string, mini bool, opts world.Options) (*world.Dump, []classic.Warning, error) {
+func loadWorld(ctx context.Context, dir, format string, mini bool, opts world.Options) (*world.Dump, []world.Warning, error) {
 	src, err := world.Open(format, world.Config{Dir: dir, Mini: mini})
 	if err != nil {
 		return nil, nil, err
@@ -37,10 +37,10 @@ func loadWorld(ctx context.Context, dir, format string, mini bool, opts world.Op
 	defer func() { _ = src.Close() }()
 
 	// Findings are format-specific by nature — they name that format's files
-	// and quirks — so only a source that produces them offers them, and this
-	// is a type assertion rather than a method on the Source interface.
-	if cs, ok := src.(*classic.Source); ok {
-		w, warnings, err := cs.LoadWithWarnings(ctx)
+	// and quirks — so only a source that produces them offers them, via the
+	// optional FindingSource interface rather than a method on Source itself.
+	if fs, ok := src.(world.FindingSource); ok {
+		w, warnings, err := fs.LoadWithWarnings(ctx)
 		if err != nil {
 			return nil, warnings, err
 		}
@@ -78,7 +78,7 @@ func cmdWorldLint(args []string) error {
 
 	// Report in severity order, worst first: a boot-blocking error should not
 	// be buried under fifty informational lines.
-	sorted := make([]classic.Warning, len(findings))
+	sorted := make([]world.Warning, len(findings))
 	copy(sorted, findings)
 	sort.SliceStable(sorted, func(i, j int) bool {
 		return sorted[i].Severity > sorted[j].Severity
@@ -89,7 +89,7 @@ func cmdWorldLint(args []string) error {
 		if f.Severity >= 0 && int(f.Severity) < len(counts) {
 			counts[f.Severity]++
 		}
-		if *quiet && f.Severity == classic.Info {
+		if *quiet && f.Severity == world.Info {
 			continue
 		}
 		_, _ = fmt.Fprintf(out, "%s: %s\n", f.Severity, f.Message)
@@ -98,13 +98,13 @@ func cmdWorldLint(args []string) error {
 	_, _ = fmt.Fprintf(out, "\n%d rooms, %d mobiles, %d objects, %d zones\n",
 		dump.Counts.Rooms, dump.Counts.Mobiles, dump.Counts.Objects, dump.Counts.Zones)
 	_, _ = fmt.Fprintf(out, "%d error(s), %d warning(s), %d note(s)\n",
-		counts[classic.Error], counts[classic.Warn], counts[classic.Info])
+		counts[world.Error], counts[world.Warn], counts[world.Info])
 	_ = out.Flush()
 
-	if counts[classic.Error] > 0 {
+	if counts[world.Error] > 0 {
 		return errQuiet
 	}
-	if *strict && counts[classic.Warn] > 0 {
+	if *strict && counts[world.Warn] > 0 {
 		return errQuiet
 	}
 	return nil

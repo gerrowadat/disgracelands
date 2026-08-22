@@ -123,7 +123,7 @@ var (
 	// is fixed-width. See docs/proposals/go-port-plan.md §5.2.
 	knownPlayerFormats  = []string{"ascii", "binary"}
 	serverPlayerFormats = []string{"ascii"}
-	knownWorldFormats   = []string{"classic"}
+	knownWorldFormats   = []string{"classic", "native"}
 	knownLogFormats     = []string{"text", "json"}
 )
 

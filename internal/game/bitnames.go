@@ -182,6 +182,78 @@ var pcClassNames = []string{
 	"Magic User", "Cleric", "Thief", "Warrior", "Paladin",
 }
 
+// NameBits renders f as the names in table, for a format that writes bit
+// names rather than sprintbit's letter-and-space list (the native data
+// format, §4.1 of docs/proposals/data-format.md). Unlike SprintBit, a bit
+// past the end of the table — or one whose table entry is "", marking a
+// slot the C itself never named (constants.c's own "*" placeholders) — is
+// not printed as a name at all: it comes back in raw instead, so a writer
+// can round-trip it as an explicit escape hatch (flags_raw) rather than
+// inventing a name or silently dropping it.
+func NameBits(f Flags, table []string) (names []string, raw Flags) {
+	for bit := 0; bit < 64; bit++ {
+		mask := Flags(1) << uint(bit)
+		if f&mask == 0 {
+			continue
+		}
+		if bit < len(table) && table[bit] != "" {
+			names = append(names, table[bit])
+			continue
+		}
+		raw |= mask
+	}
+	return names, raw
+}
+
+// ParseBitNames is NameBits' inverse: it resolves a list of names against
+// table (case-sensitive; the native format's tables are lower_snake_case by
+// convention and an author who mistypes the case gets the same "unknown
+// name" treatment as any other typo, per §4.1's "an unknown name is an
+// error, not a shrug"). Every name not found in the table is returned in
+// unknown, for the caller to report rather than silently ignore.
+func ParseBitNames(names []string, table []string) (flags Flags, unknown []string) {
+	for _, name := range names {
+		bit := indexOf(table, name)
+		if bit < 0 {
+			unknown = append(unknown, name)
+			continue
+		}
+		flags |= Flags(1) << uint(bit)
+	}
+	return flags, unknown
+}
+
+// NameByValue is SprintType's counterpart for the native format: it looks up
+// a value-keyed table (sectors, positions, item types, ...) and reports
+// whether the value has a name at all, rather than falling back to the
+// display tables' "UNDEFINED" placeholder — an out-of-range value is a
+// load-bearing error for a format with a validator, not something to print
+// and move on from.
+func NameByValue(value int32, table []string) (name string, ok bool) {
+	if value < 0 || int(value) >= len(table) || table[value] == "" {
+		return "", false
+	}
+	return table[value], true
+}
+
+// ValueByName is NameByValue's inverse.
+func ValueByName(name string, table []string) (value int32, ok bool) {
+	i := indexOf(table, name)
+	if i < 0 {
+		return 0, false
+	}
+	return int32(i), true //nolint:gosec // table indices are small
+}
+
+func indexOf(table []string, name string) int {
+	for i, n := range table {
+		if n == name {
+			return i
+		}
+	}
+	return -1
+}
+
 // Accessors, so the session package can print them without the tables
 // becoming part of its vocabulary.
 func RoomBitNames() []string       { return roomBitNames }

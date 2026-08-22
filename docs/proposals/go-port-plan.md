@@ -484,6 +484,21 @@ or to serve an embedded copy of the world in a single-binary demo build.
 Those are the concrete near-term uses; a database-backed world is the
 speculative one and shouldn't drive the design.
 
+### 6.3 `native` — a second `Source`/`Sink`, landed during Phase 5
+
+`docs/proposals/data-format.md` designs a YAML-over-JSON replacement for
+`classic` and the rest of `lib/`'s formats; its own §11 argued the world
+half should land before Phase 6's OLC writeback rather than after, so that
+`Sink` gets implemented once rather than twice. That happened: `native`
+(`internal/persist/world/native/`) is a second registered `world.Source`/
+`world.Sink`, `--world-format=native` boots the server, and `dlctl world
+import`/`fmt` convert and canonicalise it. `classic` stays the default and
+the parity oracle; players and the rest of `lib/`'s formats (data-format.md
+§11 steps 5–6) are not attempted. See that document's §11 table for exactly
+what landed and its §12 for what the round-trip fuzz testing found that
+this plan didn't anticipate — CRLF, and two real limits in the YAML library
+used to write it.
+
 ---
 
 ## 7. Networking

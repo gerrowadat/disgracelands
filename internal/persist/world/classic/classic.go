@@ -70,42 +70,20 @@ func (s *Source) Name() string { return FormatName }
 // Close implements world.Source. Nothing is held open between calls.
 func (s *Source) Close() error { return nil }
 
-// Severity ranks a finding by what it means for someone maintaining the
-// world, not by how hard it was to detect.
-type Severity int
+// Severity and Warning moved to package world so the native format could
+// share the same findings shape (internal/persist/world/findings.go); these
+// are aliases so nothing that referenced classic.Severity/classic.Warning
+// had to change.
+type Severity = world.Severity
 
 const (
-	// Info: the loader did something to the data that the world file does not
-	// say, and someone reading the file would not predict. Not a defect.
-	Info Severity = iota
-	// Warn: the world is playable but something in it does not work — an exit
-	// to nowhere, a reset command referring to a mob that was deleted.
-	Warn
-	// Error: the C server refuses to boot on this, so it must be fixed before
-	// the two servers can be compared at all.
-	Error
+	Info  = world.Info
+	Warn  = world.Warn
+	Error = world.Error
 )
 
-// String returns the severity's lowercase name.
-func (s Severity) String() string {
-	switch s {
-	case Info:
-		return "info"
-	case Warn:
-		return "warn"
-	case Error:
-		return "error"
-	}
-	return "?"
-}
-
 // Warning is one finding from a load.
-type Warning struct {
-	Severity Severity
-	Message  string
-}
-
-func (w Warning) String() string { return w.Severity.String() + ": " + w.Message }
+type Warning = world.Warning
 
 // loader carries the state of one Load call.
 type loader struct {

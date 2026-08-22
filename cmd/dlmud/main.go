@@ -46,6 +46,7 @@ import (
 	// Register the formats the server can be configured to use.
 	_ "github.com/gerrowadat/disgracelands/internal/persist/player/ascii"
 	_ "github.com/gerrowadat/disgracelands/internal/persist/world/classic"
+	_ "github.com/gerrowadat/disgracelands/internal/persist/world/native"
 )
 
 // tlsConfig builds the TLS settings for the telnets listener.

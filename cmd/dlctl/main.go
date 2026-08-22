@@ -64,6 +64,16 @@ var commands = []command{
 		run:     cmdWorldDump,
 	},
 	{
+		name:    "world import",
+		summary: "Convert a classic world directory into native (docs/proposals/data-format.md)",
+		run:     cmdWorldImport,
+	},
+	{
+		name:    "world fmt",
+		summary: "Canonicalise a native world directory in place",
+		run:     cmdWorldFmt,
+	},
+	{
 		name:    "pfile convert",
 		summary: "Convert player data between formats (replaces bin2ascii, with no 32-bit build)",
 		run:     cmdPfileConvert,
