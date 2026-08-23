@@ -17,13 +17,13 @@ import (
 )
 
 // cmdNamesImport converts misc/xnames into config/names.yaml, step 6b of
-// docs/proposals/data-format.md §9 — its own command, separate from `state
+// docs/design/data-format.md §9 — its own command, separate from `state
 // import`, because it lives in a different directory (config/, not
 // state/) and moves independently.
 func cmdNamesImport(args []string) error {
 	fs := flag.NewFlagSet("names import", flag.ContinueOnError)
 	fromPath := fs.String("from-path", "data/misc/xnames", "Source (classic) xnames file")
-	toDir := fs.String("to-dir", "data/config", "Destination (native) directory")
+	toDir := fs.String("to-dir", "data/config", "Destination (yaml) directory")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
@@ -32,8 +32,8 @@ func cmdNamesImport(args []string) error {
 	if err != nil {
 		return fmt.Errorf("reading %s: %w", *fromPath, err)
 	}
-	if err := names.Save("native", *toDir, list); err != nil {
-		return fmt.Errorf("writing %s: %w", filepath.Join(*toDir, names.NativeFile), err)
+	if err := names.Save("yaml", *toDir, list); err != nil {
+		return fmt.Errorf("writing %s: %w", filepath.Join(*toDir, names.YamlFile), err)
 	}
 
 	out := bufio.NewWriter(os.Stdout)
@@ -41,20 +41,20 @@ func cmdNamesImport(args []string) error {
 	return out.Flush()
 }
 
-// cmdNamesFmt canonicalises a native names directory in place.
+// cmdNamesFmt canonicalises a yaml names directory in place.
 func cmdNamesFmt(args []string) error {
 	fs := flag.NewFlagSet("names fmt", flag.ContinueOnError)
-	dir := fs.String("names-dir", "data/config", "Native config directory")
+	dir := fs.String("names-dir", "data/config", "Yaml config directory")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
 
-	list, err := names.Load("native", *dir)
+	list, err := names.Load("yaml", *dir)
 	if err != nil {
-		return fmt.Errorf("reading %s: %w", filepath.Join(*dir, names.NativeFile), err)
+		return fmt.Errorf("reading %s: %w", filepath.Join(*dir, names.YamlFile), err)
 	}
-	if err := names.Save("native", *dir, list); err != nil {
-		return fmt.Errorf("writing %s: %w", filepath.Join(*dir, names.NativeFile), err)
+	if err := names.Save("yaml", *dir, list); err != nil {
+		return fmt.Errorf("writing %s: %w", filepath.Join(*dir, names.YamlFile), err)
 	}
 	return nil
 }

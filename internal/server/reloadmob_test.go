@@ -12,10 +12,10 @@ import (
 
 	"github.com/gerrowadat/disgracelands/internal/game"
 	"github.com/gerrowadat/disgracelands/internal/persist/world"
-	"github.com/gerrowadat/disgracelands/internal/persist/world/native"
+	"github.com/gerrowadat/disgracelands/internal/persist/world/yaml"
 )
 
-// writeReloadableWorld writes a minimal native world directory holding one
+// writeReloadableWorld writes a minimal yaml world directory holding one
 // zone, one room and one mobile at testDogVnum — self-contained scaffolding
 // a reloadmob test can point Server.worldDir at, independent of testWorld()'s
 // own in-memory fixture (which has no on-disk form at all). The mobile's own
@@ -23,7 +23,7 @@ import (
 // straight off rather than writing once and editing.
 func writeReloadableWorld(t *testing.T, dir string, mob *game.MobDef) {
 	t.Helper()
-	// testDogVnum (999) has to fall inside the zone's own range: native
+	// testDogVnum (999) has to fall inside the zone's own range: yaml
 	// writes "every room, mobile, object and shop whose vnum falls in
 	// [Bottom, Top]" into that zone's file (data-format.md §3) — a range
 	// that does not cover it silently drops the mob from the write.
@@ -33,12 +33,12 @@ func writeReloadableWorld(t *testing.T, dir string, mob *game.MobDef) {
 		Rooms:   []*game.RoomDef{{Vnum: 901, Name: "A Room"}},
 		Mobiles: []*game.MobDef{mob},
 	}
-	if err := native.WriteManifest(dir, []native.ManifestEntry{{Vnum: int32(zone.Vnum), Enabled: true}}); err != nil {
+	if err := yaml.WriteManifest(dir, []yaml.ManifestEntry{{Vnum: int32(zone.Vnum), Enabled: true}}); err != nil {
 		t.Fatalf("writing zones.yaml: %v", err)
 	}
-	src, err := native.New(world.Config{Dir: dir})
+	src, err := yaml.New(world.Config{Dir: dir})
 	if err != nil {
-		t.Fatalf("native.New: %v", err)
+		t.Fatalf("yaml.New: %v", err)
 	}
 	defer func() { _ = src.Close() }()
 	if err := src.WriteZone(context.Background(), zone, w); err != nil {
@@ -60,7 +60,7 @@ func TestReloadMobCommandEndToEnd(t *testing.T) {
 		HitDice:  game.Dice{Number: 1, Size: 1, Bonus: 200},
 		Position: int32(game.PosStanding), DefaultPosition: int32(game.PosStanding),
 	})
-	srv.worldFormat, srv.worldDir = "native", dir
+	srv.worldFormat, srv.worldDir = "yaml", dir
 
 	addr := listening(t, srv)
 	god := dialClient(t, addr)
@@ -106,7 +106,7 @@ func TestReloadMobCommandRefusesWhileFighting(t *testing.T) {
 		HitDice:  game.Dice{Number: 1, Size: 1, Bonus: 200},
 		Position: int32(game.PosStanding), DefaultPosition: int32(game.PosStanding),
 	})
-	srv.worldFormat, srv.worldDir = "native", dir
+	srv.worldFormat, srv.worldDir = "yaml", dir
 
 	addr := listening(t, srv)
 	god := dialClient(t, addr)

@@ -147,7 +147,7 @@ func (l *Live) AssignShopkeepers() int {
 //
 // Secondary, like a mobile's or an object's Spec, is preserved across the
 // copy rather than taken from the fresh definition: no loader ever sets
-// it (checked, not assumed — grepping every classic and native loader
+// it (checked, not assumed — grepping every classic and yaml loader
 // turns up nothing), it exists purely as what AssignShopkeepers computed
 // at boot, so a freshly loaded ShopDef always has it blank. Only a real
 // keeper change re-derives it, the same computation AssignShopkeepers

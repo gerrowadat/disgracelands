@@ -41,24 +41,24 @@ func TestLoadClassicMissingFileIsEmptyNotError(t *testing.T) {
 	}
 }
 
-func TestLoadNativeMissingFileIsEmptyNotError(t *testing.T) {
-	got, err := Load("native", t.TempDir())
+func TestLoadYamlMissingFileIsEmptyNotError(t *testing.T) {
+	got, err := Load("yaml", t.TempDir())
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
 	if got != nil {
-		t.Errorf("Load(missing native) = %v, want nil", got)
+		t.Errorf("Load(missing yaml) = %v, want nil", got)
 	}
 }
 
-func TestNativeRoundTrips(t *testing.T) {
+func TestYamlRoundTrips(t *testing.T) {
 	dir := t.TempDir()
 	want := []string{"fuck", "cunt", "shit", "asshole"}
 
-	if err := Save("native", dir, want); err != nil {
+	if err := Save("yaml", dir, want); err != nil {
 		t.Fatalf("Save: %v", err)
 	}
-	got, err := Load("native", dir)
+	got, err := Load("yaml", dir)
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
@@ -67,7 +67,7 @@ func TestNativeRoundTrips(t *testing.T) {
 	}
 }
 
-func TestClassicToNativeImport(t *testing.T) {
+func TestClassicToYamlImport(t *testing.T) {
 	srcDir := t.TempDir()
 	classicPath := filepath.Join(srcDir, "xnames")
 	if err := os.WriteFile(classicPath, []byte("fuck\ncunt\n"), 0o600); err != nil {
@@ -80,13 +80,13 @@ func TestClassicToNativeImport(t *testing.T) {
 	}
 
 	dstDir := t.TempDir()
-	if err := Save("native", dstDir, list); err != nil {
-		t.Fatalf("Save(native): %v", err)
+	if err := Save("yaml", dstDir, list); err != nil {
+		t.Fatalf("Save(yaml): %v", err)
 	}
 
-	got, err := Load("native", dstDir)
+	got, err := Load("yaml", dstDir)
 	if err != nil {
-		t.Fatalf("Load(native): %v", err)
+		t.Fatalf("Load(yaml): %v", err)
 	}
 	if !reflect.DeepEqual(got, list) {
 		t.Errorf("imported = %v, want %v", got, list)

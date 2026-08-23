@@ -96,8 +96,8 @@ func TestAliasCannotAliasAlias(t *testing.T) {
 // section (ascii/codec.go) — added alongside this command, since ascii is
 // the server's own default and an alias that vanished on every relogin
 // would not really be the feature. newTestServer runs on ascii/binary; the
-// native-format equivalent is
-// internal/persist/player/native's own round-trip test, since folding
+// yaml-format equivalent is
+// internal/persist/player/yaml's own round-trip test, since folding
 // aliases into the one file needs no separate codec to prove there.
 func TestAliasSurvivesAQuitAndRelogin(t *testing.T) {
 	srv, _ := newTestServer(t)

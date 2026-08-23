@@ -233,11 +233,11 @@ func WeaponAttackType(wielded *Object) int32 {
 }
 
 // AttackTypeName names a misc/messages record's attack type for the
-// native format, for step 6c's step-and-a-half question: the number
+// yaml format, for step 6c's step-and-a-half question: the number
 // spans two spaces the C never had to name together, because it never
 // wrote either one out symbolically at all. TypeHit and above is a
-// weapon type, named by NativeAttackTypeNames() the same way a weapon's
-// own fourth value already is (internal/persist/world/native/values.go);
+// weapon type, named by YamlAttackTypeNames() the same way a weapon's
+// own fourth value already is (internal/persist/world/yaml/values.go);
 // below it is a spell or skill number, named by SpellNameOrNumber — which
 // already covers SkillBackstab/SkillBash/SkillKick alongside every real
 // spell, since spellTable is one table for both (confirmed: init_spell_
@@ -247,7 +247,7 @@ func WeaponAttackType(wielded *Object) int32 {
 // reused rather than inventing a second one for the other half.
 func AttackTypeName(attackType int32) string {
 	if attackType >= TypeHit {
-		if name, ok := NameByValue(attackType-TypeHit, NativeAttackTypeNames()); ok {
+		if name, ok := NameByValue(attackType-TypeHit, YamlAttackTypeNames()); ok {
 			return name
 		}
 		return "#" + strconv.Itoa(int(attackType))
@@ -261,7 +261,7 @@ func AttackTypeName(attackType int32) string {
 // entries the other already claimed) — before falling back to
 // SpellNumberFromNameOrNumber, which itself already understands "#N".
 func AttackTypeFromName(name string) (int32, bool) {
-	if offset, ok := ValueByName(name, NativeAttackTypeNames()); ok {
+	if offset, ok := ValueByName(name, YamlAttackTypeNames()); ok {
 		return TypeHit + offset, true
 	}
 	return SpellNumberFromNameOrNumber(name)

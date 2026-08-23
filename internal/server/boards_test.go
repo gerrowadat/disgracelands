@@ -14,7 +14,7 @@ import (
 
 	"github.com/gerrowadat/disgracelands/internal/game"
 	"github.com/gerrowadat/disgracelands/internal/persist/boards"
-	boardsnative "github.com/gerrowadat/disgracelands/internal/persist/boards/native"
+	boardsyaml "github.com/gerrowadat/disgracelands/internal/persist/boards/yaml"
 	"github.com/gerrowadat/disgracelands/internal/persist/player"
 	"github.com/gerrowadat/disgracelands/internal/persist/player/ascii"
 	"github.com/gerrowadat/disgracelands/internal/persist/player/binary"
@@ -116,11 +116,11 @@ func TestWritingReadingAndRemovingAMessage(t *testing.T) {
 	}
 }
 
-// The same fixture as TestWritingReadingAndRemovingAMessage, on native --
-// proving the live write/read/remove path actually reaches boards/native's
+// The same fixture as TestWritingReadingAndRemovingAMessage, on yaml --
+// proving the live write/read/remove path actually reaches boards/yaml's
 // Store, not just its own isolated round-trip test.
-func TestWritingReadingAndRemovingAMessageUnderNative(t *testing.T) {
-	boardStore, err := boardsnative.New(boards.Config{Dir: filepath.Join(t.TempDir(), "state")})
+func TestWritingReadingAndRemovingAMessageUnderYaml(t *testing.T) {
+	boardStore, err := boardsyaml.New(boards.Config{Dir: filepath.Join(t.TempDir(), "state")})
 	if err != nil {
 		t.Fatal(err)
 	}

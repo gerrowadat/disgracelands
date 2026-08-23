@@ -13,7 +13,7 @@
 // consults it. So there is no Store interface with Add/Remove methods to
 // design here, only a list to load — and, for `dlctl names import`/`fmt`,
 // to write back out in whichever format was asked for. Small enough that
-// classic and native both live in this one package rather than getting
+// classic and yaml both live in this one package rather than getting
 // their own subpackages and a Register/Open registry the way
 // boards/mail/houses/bans did: there is exactly one shape of data (a list
 // of strings) and no runtime mutation to plug in behind an interface.
@@ -32,9 +32,9 @@ import (
 // ClassicFile is misc/xnames under whatever directory holds it.
 const ClassicFile = "xnames"
 
-// NativeFile is config/names.yaml under whatever directory Load/Save's
-// path names, per docs/proposals/data-format.md §9.
-const NativeFile = "names.yaml"
+// YamlFile is config/names.yaml under whatever directory Load/Save's
+// path names, per docs/design/data-format.md §9.
+const YamlFile = "names.yaml"
 
 // namesSchema is the document's schema tag (data-format.md §10.1).
 const namesSchema = "dl/names@1"
@@ -45,11 +45,11 @@ type doc struct {
 }
 
 // Load reads the disallowed-name list in the given format ("classic" or
-// "native", "" meaning classic). For classic, path is the file itself
-// (.../misc/xnames); for native, path is the directory config/ lives
-// under — the same classic-is-a-file/native-is-a-directory asymmetry
-// bans/boards/mail/houses already have, because a native document always
-// carries a schema tag and a native "file" is really "a directory holding
+// "yaml", "" meaning classic). For classic, path is the file itself
+// (.../misc/xnames); for yaml, path is the directory config/ lives
+// under — the same classic-is-a-file/yaml-is-a-directory asymmetry
+// bans/boards/mail/houses already have, because a yaml document always
+// carries a schema tag and a yaml "file" is really "a directory holding
 // one or more named documents".
 //
 // A missing file is not an error: nobody has configured a list, so
@@ -60,24 +60,24 @@ func Load(format, path string) ([]string, error) {
 	switch format {
 	case "", "classic":
 		return loadClassic(path)
-	case "native":
-		return loadNative(path)
+	case "yaml":
+		return loadYaml(path)
 	default:
 		return nil, fmt.Errorf("names: unknown format %q", format)
 	}
 }
 
-// Save writes the disallowed-name list in the given format. Only native
+// Save writes the disallowed-name list in the given format. Only yaml
 // is implemented: the C never writes xnames at runtime, and building a
 // classic writer nothing needs yet would be exactly the "format before
 // the feature" mistake this whole step's plan is careful to avoid — this
-// exists for `dlctl names import` (classic to native) and `names fmt`
-// (native, canonicalised), neither of which writes classic.
+// exists for `dlctl names import` (classic to yaml) and `names fmt`
+// (yaml, canonicalised), neither of which writes classic.
 func Save(format, path string, list []string) error {
-	if format != "native" {
-		return fmt.Errorf("names: writing %q is not supported (only native)", format)
+	if format != "yaml" {
+		return fmt.Errorf("names: writing %q is not supported (only yaml)", format)
 	}
-	return saveNative(path, list)
+	return saveYaml(path, list)
 }
 
 func loadClassic(path string) ([]string, error) {
@@ -107,8 +107,8 @@ func loadClassic(path string) ([]string, error) {
 	return list, nil
 }
 
-func loadNative(dir string) ([]string, error) {
-	path := filepath.Join(dir, NativeFile)
+func loadYaml(dir string) ([]string, error) {
+	path := filepath.Join(dir, YamlFile)
 	b, err := os.ReadFile(path) //nolint:gosec // operator-configured path
 	if os.IsNotExist(err) {
 		return nil, nil
@@ -123,8 +123,8 @@ func loadNative(dir string) ([]string, error) {
 	return d.Disallowed, nil
 }
 
-func saveNative(dir string, list []string) error {
-	path := filepath.Join(dir, NativeFile)
+func saveYaml(dir string, list []string) error {
+	path := filepath.Join(dir, YamlFile)
 	d := doc{Schema: namesSchema, Disallowed: list}
 	out, err := yaml.MarshalWithOptions(d, yaml.Indent(2))
 	if err != nil {

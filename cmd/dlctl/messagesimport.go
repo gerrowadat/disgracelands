@@ -17,14 +17,14 @@ import (
 )
 
 // cmdMessagesImport converts misc/messages into config/messages.yaml,
-// step 6c of docs/proposals/data-format.md §9 — its own command, separate
+// step 6c of docs/design/data-format.md §9 — its own command, separate
 // from `names import` and `state import`, because --messages-format moves
 // independently of both (see internal/config/config.go's own comment on
 // why it is not folded into either).
 func cmdMessagesImport(args []string) error {
 	fs := flag.NewFlagSet("messages import", flag.ContinueOnError)
 	fromPath := fs.String("from-path", "data/misc/messages", "Source (classic) messages file")
-	toDir := fs.String("to-dir", "data/config", "Destination (native) directory")
+	toDir := fs.String("to-dir", "data/config", "Destination (yaml) directory")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
@@ -33,8 +33,8 @@ func cmdMessagesImport(args []string) error {
 	if err != nil {
 		return fmt.Errorf("reading %s: %w", *fromPath, err)
 	}
-	if err := messages.Save("native", *toDir, records); err != nil {
-		return fmt.Errorf("writing %s: %w", filepath.Join(*toDir, messages.NativeFile), err)
+	if err := messages.Save("yaml", *toDir, records); err != nil {
+		return fmt.Errorf("writing %s: %w", filepath.Join(*toDir, messages.YamlFile), err)
 	}
 
 	out := bufio.NewWriter(os.Stdout)
@@ -42,20 +42,20 @@ func cmdMessagesImport(args []string) error {
 	return out.Flush()
 }
 
-// cmdMessagesFmt canonicalises a native messages directory in place.
+// cmdMessagesFmt canonicalises a yaml messages directory in place.
 func cmdMessagesFmt(args []string) error {
 	fs := flag.NewFlagSet("messages fmt", flag.ContinueOnError)
-	dir := fs.String("messages-dir", "data/config", "Native config directory")
+	dir := fs.String("messages-dir", "data/config", "Yaml config directory")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
 
-	records, err := messages.Load("native", *dir)
+	records, err := messages.Load("yaml", *dir)
 	if err != nil {
-		return fmt.Errorf("reading %s: %w", filepath.Join(*dir, messages.NativeFile), err)
+		return fmt.Errorf("reading %s: %w", filepath.Join(*dir, messages.YamlFile), err)
 	}
-	if err := messages.Save("native", *dir, records); err != nil {
-		return fmt.Errorf("writing %s: %w", filepath.Join(*dir, messages.NativeFile), err)
+	if err := messages.Save("yaml", *dir, records); err != nil {
+		return fmt.Errorf("writing %s: %w", filepath.Join(*dir, messages.YamlFile), err)
 	}
 	return nil
 }

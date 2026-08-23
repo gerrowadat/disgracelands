@@ -425,17 +425,17 @@ itself, not a separate interface) and §5.8 for bans/boards/mail/houses.
 archived alias data exists anywhere to have a format for, and §5.7
 explains where the `alias` command's own persistence ended up instead
 (folded into the same file the roster is in, for both `ascii` and
-`native`).
+`yaml`).
 
-### 5.7 `native` — a second `Store`/`ObjectStore`, landed during Phase 5
+### 5.7 `yaml` — a second `Store`/`ObjectStore`, landed during Phase 5
 
-`docs/proposals/data-format.md` §8's "one player, one file" is now built:
-`native` (`internal/persist/player/native/`) is a second registered
+`docs/design/data-format.md` §8's "one player, one file" is now built:
+`yaml` (`internal/persist/player/yaml/`) is a second registered
 `player.Store`, and also a `player.ObjectStore` — folding §5.6's `plrobjs`
 into the same file as the roster rather than needing a second interface
 implementation, since `ObjectStore` was already separate from `Store` and
 nothing about either needed to change shape to let one type serve both.
-`--player-format=native` boots the server (`cmd/dlmud/main.go` picks the
+`--player-format=yaml` boots the server (`cmd/dlmud/main.go` picks the
 opened `Store` as the `ObjectStore` too when it satisfies that interface,
 falling back to `binary` — §5.6's still-not-pluggable rent files —
 otherwise), and `dlctl pfile import`/`fmt` convert and canonicalise it.
@@ -447,21 +447,21 @@ the `alias` command (§10's "what is not in it" list, `do_alias`/
 there is no archived `plralias` data anywhere to have ported instead, so
 this is new functionality riding the format rather than data recovered by
 it — and rent/crash files stop discarding containment when running on
-`native`, a deliberate, explicitly-scoped deviation
+`yaml`, a deliberate, explicitly-scoped deviation
 (`docs/deviations.md`, "Renting empties your bags and strips your body")
 rather than a side effect of the format landing: `binary`/`ascii` are
 unchanged, byte for byte, and a test proves it stays that way. See
 `data-format.md`'s §11 table and its updated §8/§12 for exactly what
 shipped against what that section originally sketched.
 
-### 5.8 Bans, boards, mail, houses — pluggable, `native` added, landed during Phase 5
+### 5.8 Bans, boards, mail, houses — pluggable, `yaml` added, landed during Phase 5
 
-`docs/proposals/data-format.md` §9's four small struct-dump-or-block-file
+`docs/design/data-format.md` §9's four small struct-dump-or-block-file
 formats — `internal/persist/bans`, `boards`, `mail`, `houses` — are now
 each what §5.6 always meant by "a small interface": a `Store`
 (`Register`/`Open`/`Formats`, the same registry shape as `world`/`player`),
 the existing implementation moved unchanged into its own `classic`
-subpackage, and a `native` implementation added beside it. One flag,
+subpackage, and a `yaml` implementation added beside it. One flag,
 `--state-format`, selects for all four together, since in practice they
 always move as one directory. `dlctl state import`/`fmt` convert and
 canonicalise.
@@ -471,11 +471,11 @@ files (the same `obj_file_elem` record the rent files use) were passed
 around as raw bytes before, encoded and decoded by `internal/server/
 houses.go` itself. That moved *into* each format — `houses.Store`'s
 `LoadObjects`/`SaveObjects` now speak `[]player.StoredObject` directly, so
-`native` can build its contents from the same `player/native` schema §8's
+`yaml` can build its contents from the same `player/yaml` schema §8's
 players work already built, rather than reinventing it or working around
 raw bytes it cannot format as YAML. See `data-format.md`'s §9 and §11
 step 6a for exactly what shipped, including the one genuine behavioural
-difference `native` has from `classic` there (an orphaned house's
+difference `yaml` has from `classic` there (an orphaned house's
 contents do not survive a control-record removal the way a classic
 `<vnum>.house` file quietly does, because there is no longer a separate
 file for an orphan to hide in).
@@ -544,14 +544,14 @@ or to serve an embedded copy of the world in a single-binary demo build.
 Those are the concrete near-term uses; a database-backed world is the
 speculative one and shouldn't drive the design.
 
-### 6.3 `native` — a second `Source`/`Sink`, landed during Phase 5
+### 6.3 `yaml` — a second `Source`/`Sink`, landed during Phase 5
 
-`docs/proposals/data-format.md` designs a YAML-over-JSON replacement for
+`docs/design/data-format.md` designs a YAML-over-JSON replacement for
 `classic` and the rest of `lib/`'s formats; its own §11 argued the world
 half should land before Phase 6's OLC writeback rather than after, so that
-`Sink` gets implemented once rather than twice. That happened: `native`
-(`internal/persist/world/native/`) is a second registered `world.Source`/
-`world.Sink`, `--world-format=native` boots the server, and `dlctl world
+`Sink` gets implemented once rather than twice. That happened: `yaml`
+(`internal/persist/world/yaml/`) is a second registered `world.Source`/
+`world.Sink`, `--world-format=yaml` boots the server, and `dlctl world
 import`/`fmt` convert and canonicalise it. `classic` stays the default and
 the parity oracle; players (§5.7/§5.8 above) and step 6a's four small
 state formats have since landed too — the rest of `lib/`'s formats
@@ -1387,7 +1387,7 @@ nothing for a mobile fighting somebody. All of it is there now.
 (`do_quit`'s own guards were the last of these and are now built — see below.
 `do_gen_write` — `bug`/`idea`/`typo`, interpreter.c:247, :342, :520 — is also
 now built, alongside its `state/reports.yaml` format:
-docs/proposals/data-format.md §11 step 6b.)
+docs/design/data-format.md §11 step 6b.)
 
 **The small things left over.** None is more than an afternoon; they are here
 because a command with no slice is a command nobody schedules.
@@ -1405,7 +1405,7 @@ equivalent — the seven in-game menu editors (`medit`/`oedit`/`redit`/
 `sedit`/`zedit`/`olc`/`edit`) plus `Sink` writeback and the `gen*`
 layer they need. **Decided against, deliberately, not merely deferred**:
 building lets a builder edit `data/world` directly (by hand, or via
-`dlctl world import`/`fmt` into `native`) and bring a change in without
+`dlctl world import`/`fmt` into `yaml`) and bring a change in without
 restarting — `reloadmob` (below) — rather than reproducing a decades-old
 menu-tree UI screen by screen. `Sink`/`WriteZone` already exist (§6.3,
 landed during Phase 5) and are exactly what a real OLC would have saved
@@ -1683,7 +1683,7 @@ functions rather than an arithmetic one.
 
 Two small, genuine differences, both in `docs/deviations.md`: `show rent`
 does not print the rent file's own path, since the player format is
-pluggable and there is no one filesystem path a `native` store necessarily
+pluggable and there is no one filesystem path a `yaml` store necessarily
 has; and `show shops`' detail view does not reproduce
 `handle_detailed_list`'s column-wrapping, since nothing in this port's
 world data has a `Rooms:`/`Produces:`/`Buys:` list long enough for the

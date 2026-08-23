@@ -51,7 +51,7 @@ type Text struct {
 	// same reasoning and the same non-involvement in Reload's swap map.
 	socialsFormat string
 	// helpFormat is text/help's format — classic (index + .hlp files) or
-	// native (help.yaml + one .txt per entry), both under the same
+	// yaml (help.yaml + one .txt per entry), both under the same
 	// directory (internal/persist/help's own package doc explains why).
 	// Unlike messages/socials, help *is* in Reload's swap map (`xhelp`),
 	// so this is read by Reload as well as stored for it.
@@ -119,7 +119,7 @@ const (
 	immlistFile    = "text/immlist"
 	// socialsFile is not text/ — the C's SOCMESS_FILE is lib/misc/socials.
 	socialsFile = "misc/socials"
-	// socialsConfigDir is where config/socials.yaml lives under native —
+	// socialsConfigDir is where config/socials.yaml lives under yaml —
 	// the same config/ directory names.yaml/messages.yaml already share.
 	socialsConfigDir = "config"
 
@@ -131,7 +131,7 @@ const (
 
 	// messagesFile is MESS_FILE (db.h:89): lib/misc/messages.
 	messagesFile = "misc/messages"
-	// messagesConfigDir is where config/messages.yaml lives under native
+	// messagesConfigDir is where config/messages.yaml lives under yaml
 	// — the same config/ directory names.yaml already shares.
 	messagesConfigDir = "config"
 )
@@ -213,10 +213,10 @@ func LoadText(dir, messagesFormat, socialsFormat, helpFormat string) (*Text, err
 	// server without them is a poorer game and still a game. The C exits the
 	// process on a missing socials file, which is a stronger reaction than
 	// this port takes to anything that is not a licence obligation. classic
-	// is a file, native a directory — the same asymmetry messages already
+	// is a file, yaml a directory — the same asymmetry messages already
 	// has, just below.
 	socialsPath := filepath.Join(dir, socialsFile)
-	if socialsFormat == "native" {
+	if socialsFormat == "yaml" {
 		socialsPath = filepath.Join(dir, socialsConfigDir)
 	}
 	socialsList, err := socials.Load(socialsFormat, socialsPath)
@@ -229,7 +229,7 @@ func LoadText(dir, messagesFormat, socialsFormat, helpFormat string) (*Text, err
 	// (db.c:699-817) reads text/help/index, one filename per line, then
 	// load_help (db.c:1701-1734) on each in turn into one shared table,
 	// sorted by hsort (db.c:1739-1747) once loading finishes. classic and
-	// native share the same directory (internal/persist/help's own doc
+	// yaml share the same directory (internal/persist/help's own doc
 	// comment explains why), unlike messages/socials' file-vs-directory
 	// split.
 	helpEntries, err := help.Load(helpFormat, filepath.Join(dir, helpDir))
@@ -239,11 +239,11 @@ func LoadText(dir, messagesFormat, socialsFormat, helpFormat string) (*Text, err
 	t.help = game.NewHelpIndex(helpEntries)
 
 	// misc/messages, the same optional posture as help and socials —
-	// porting load_messages (fight.c:145-193). classic is a file, native
+	// porting load_messages (fight.c:145-193). classic is a file, yaml
 	// a directory — the same asymmetry every other pluggable format in
 	// this tree already has.
 	messagesPath := filepath.Join(dir, messagesFile)
-	if messagesFormat == "native" {
+	if messagesFormat == "yaml" {
 		messagesPath = filepath.Join(dir, messagesConfigDir)
 	}
 	records, err := messages.Load(messagesFormat, messagesPath)

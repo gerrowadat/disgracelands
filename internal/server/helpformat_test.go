@@ -15,7 +15,7 @@ import (
 	"github.com/gerrowadat/disgracelands/internal/persist/help"
 )
 
-// End to end: LoadText(dir, ..., "native") reads text/help/help.yaml plus
+// End to end: LoadText(dir, ..., "yaml") reads text/help/help.yaml plus
 // one .txt file per entry, not text/help/index plus the .hlp files, and
 // the real archive's CIRCLEMUD credits entry — the licence-obligation
 // lookup TestCreditsAndHelpCircleMUD already proves for classic — comes
@@ -23,7 +23,7 @@ import (
 // text.go's own help.Load call, the --help-format flag it is fed from in
 // cmd/dlmud/main.go), not just internal/persist/help's own codec
 // (already covered by its own real-archive round-trip test).
-func TestNativeHelpFormatEndToEnd(t *testing.T) {
+func TestYamlHelpFormatEndToEnd(t *testing.T) {
 	classic, err := help.Load("classic", "../../data/text/help")
 	if err != nil {
 		t.Fatalf("Load(classic): %v", err)
@@ -44,11 +44,11 @@ func TestNativeHelpFormatEndToEnd(t *testing.T) {
 	if err := os.MkdirAll(filepath.Join(dir, helpDir), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if err := help.Save("native", filepath.Join(dir, helpDir), classic); err != nil {
-		t.Fatalf("Save(native): %v", err)
+	if err := help.Save("yaml", filepath.Join(dir, helpDir), classic); err != nil {
+		t.Fatalf("Save(yaml): %v", err)
 	}
 
-	text, err := LoadText(dir, "classic", "classic", "native")
+	text, err := LoadText(dir, "classic", "classic", "yaml")
 	if err != nil {
 		t.Fatalf("LoadText: %v", err)
 	}

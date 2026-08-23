@@ -70,7 +70,7 @@ func (s *Source) Name() string { return FormatName }
 // Close implements world.Source. Nothing is held open between calls.
 func (s *Source) Close() error { return nil }
 
-// Severity and Warning moved to package world so the native format could
+// Severity and Warning moved to package world so the yaml format could
 // share the same findings shape (internal/persist/world/findings.go); these
 // are aliases so nothing that referenced classic.Severity/classic.Warning
 // had to change.

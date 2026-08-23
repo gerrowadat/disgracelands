@@ -9,8 +9,8 @@
 // internal/persist/player, internal/persist/bans, internal/persist/boards
 // and internal/persist/mail use: `classic` (House_save_control's raw struct
 // dump plus the per-room `<vnum>.house` object files, moved to internal/
-// persist/houses/classic without a behaviour change) and `native`
-// (docs/proposals/data-format.md §9's state/houses.yaml).
+// persist/houses/classic without a behaviour change) and `yaml`
+// (docs/design/data-format.md §9's state/houses.yaml).
 //
 // A house's contents are stored in the same object-instance model the rent
 // files use (see internal/persist/player.StoredObject) — §8 calls it "the
@@ -88,11 +88,11 @@ type Store interface {
 // Config is what a factory needs to open a store.
 type Config struct {
 	// ControlPath is the house control file (classic only — house.c's
-	// hcontrol has no counterpart in native, which folds control records
+	// hcontrol has no counterpart in yaml, which folds control records
 	// and contents into the one file ObjectDir names).
 	ControlPath string
 	// ObjectDir is the directory holding the per-room `<vnum>.house` files
-	// (classic), or the native data directory (native).
+	// (classic), or the yaml data directory (yaml).
 	ObjectDir string
 	// ReadOnly opens the store for inspection only.
 	ReadOnly bool

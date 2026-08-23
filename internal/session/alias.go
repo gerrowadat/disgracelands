@@ -16,7 +16,7 @@ import (
 // interpreter.c:693-845.
 //
 // No archived character has ever defined an alias — data/ has no plralias
-// directory at all, so this is a new feature riding along with the native
+// directory at all, so this is a new feature riding along with the yaml
 // player format rather than a port of existing player data (see
 // docs/proposals/go-port-plan.md's players section). The C's own behaviour
 // is still the specification, byte for byte, including the two quirks that

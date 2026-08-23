@@ -17,32 +17,32 @@ import (
 	"github.com/gerrowadat/disgracelands/internal/game"
 	"github.com/gerrowadat/disgracelands/internal/persist/bans"
 	bansclassic "github.com/gerrowadat/disgracelands/internal/persist/bans/classic"
-	bansnative "github.com/gerrowadat/disgracelands/internal/persist/bans/native"
+	bansyaml "github.com/gerrowadat/disgracelands/internal/persist/bans/yaml"
 	"github.com/gerrowadat/disgracelands/internal/persist/boards"
 	boardsclassic "github.com/gerrowadat/disgracelands/internal/persist/boards/classic"
-	boardsnative "github.com/gerrowadat/disgracelands/internal/persist/boards/native"
+	boardsyaml "github.com/gerrowadat/disgracelands/internal/persist/boards/yaml"
 	"github.com/gerrowadat/disgracelands/internal/persist/clock"
 	"github.com/gerrowadat/disgracelands/internal/persist/houses"
 	housesclassic "github.com/gerrowadat/disgracelands/internal/persist/houses/classic"
-	housesnative "github.com/gerrowadat/disgracelands/internal/persist/houses/native"
+	housesyaml "github.com/gerrowadat/disgracelands/internal/persist/houses/yaml"
 	"github.com/gerrowadat/disgracelands/internal/persist/mail"
 	mailclassic "github.com/gerrowadat/disgracelands/internal/persist/mail/classic"
-	mailnative "github.com/gerrowadat/disgracelands/internal/persist/mail/native"
+	mailyaml "github.com/gerrowadat/disgracelands/internal/persist/mail/yaml"
 	"github.com/gerrowadat/disgracelands/internal/persist/reports"
 	reportsclassic "github.com/gerrowadat/disgracelands/internal/persist/reports/classic"
-	reportsnative "github.com/gerrowadat/disgracelands/internal/persist/reports/native"
+	reportsyaml "github.com/gerrowadat/disgracelands/internal/persist/reports/yaml"
 )
 
 // cmdStateImport converts bans, boards, mail, houses, the clock and the
-// bug/idea/typo reports into native together, per step 6a/6b of
-// docs/proposals/data-format.md §9 — one command, since they end up in one
+// bug/idea/typo reports into yaml together, per step 6a/6b of
+// docs/design/data-format.md §9 — one command, since they end up in one
 // directory and there is no reason to convert boards without mail.
 func cmdStateImport(args []string) error {
 	fs := flag.NewFlagSet("state import", flag.ContinueOnError)
 	fromDir := fs.String("from-dir", "data/etc", "Source (classic) directory for bans, boards, mail, the house control file and the clock")
 	fromHouseDir := fs.String("from-house-dir", "data/house", "Source (classic) directory for the per-room house object files")
 	fromMiscDir := fs.String("from-misc-dir", "data/misc", "Source (classic) directory for the bug/idea/typo report files")
-	toDir := fs.String("to-dir", "data/state", "Destination (native) directory")
+	toDir := fs.String("to-dir", "data/state", "Destination (yaml) directory")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
@@ -77,7 +77,7 @@ func importBans(fromDir, toDir string, out *bufio.Writer) error {
 		return err
 	}
 	defer func() { _ = src.Close() }()
-	dst, err := bansnative.New(bans.Config{Path: toDir})
+	dst, err := bansyaml.New(bans.Config{Path: toDir})
 	if err != nil {
 		return err
 	}
@@ -100,7 +100,7 @@ func importBoards(fromDir, toDir string, out *bufio.Writer) error {
 		return err
 	}
 	defer func() { _ = src.Close() }()
-	dst, err := boardsnative.New(boards.Config{Dir: toDir})
+	dst, err := boardsyaml.New(boards.Config{Dir: toDir})
 	if err != nil {
 		return err
 	}
@@ -131,7 +131,7 @@ func importMail(fromDir, toDir string, out *bufio.Writer) error {
 		return err
 	}
 	defer func() { _ = src.Close() }()
-	dst, err := mailnative.New(mail.Config{Path: toDir})
+	dst, err := mailyaml.New(mail.Config{Path: toDir})
 	if err != nil {
 		return err
 	}
@@ -156,7 +156,7 @@ func importHouses(fromDir, fromHouseDir, toDir string, out *bufio.Writer) error 
 		return err
 	}
 	defer func() { _ = src.Close() }()
-	dst, err := housesnative.New(houses.Config{ObjectDir: toDir})
+	dst, err := housesyaml.New(houses.Config{ObjectDir: toDir})
 	if err != nil {
 		return err
 	}
@@ -193,7 +193,7 @@ func importReports(fromMiscDir, toDir string, out *bufio.Writer) error {
 		return err
 	}
 	defer func() { _ = src.Close() }()
-	dst, err := reportsnative.New(reports.Config{Dir: toDir})
+	dst, err := reportsyaml.New(reports.Config{Dir: toDir})
 	if err != nil {
 		return err
 	}
@@ -217,18 +217,18 @@ func importClock(fromDir, toDir string, out *bufio.Writer) error {
 	if err != nil {
 		return err
 	}
-	if err := clock.Save("native", toDir, epoch); err != nil {
+	if err := clock.Save("yaml", toDir, epoch); err != nil {
 		return err
 	}
 	_, _ = fmt.Fprintf(out, "clock: imported epoch %s\n", epoch.Format(time.RFC3339))
 	return nil
 }
 
-// cmdStateFmt canonicalises a native state directory in place: load and
+// cmdStateFmt canonicalises a yaml state directory in place: load and
 // immediately re-save bans, boards, mail and houses.
 func cmdStateFmt(args []string) error {
 	fs := flag.NewFlagSet("state fmt", flag.ContinueOnError)
-	dir := fs.String("state-dir", "data/state", "Native state directory")
+	dir := fs.String("state-dir", "data/state", "Yaml state directory")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
@@ -236,7 +236,7 @@ func cmdStateFmt(args []string) error {
 	out := bufio.NewWriter(os.Stdout)
 	defer func() { _ = out.Flush() }()
 
-	banStore, err := bansnative.New(bans.Config{Path: *dir})
+	banStore, err := bansyaml.New(bans.Config{Path: *dir})
 	if err != nil {
 		return fmt.Errorf("bans: %w", err)
 	}
@@ -244,7 +244,7 @@ func cmdStateFmt(args []string) error {
 		return fmt.Errorf("bans: %w", err)
 	}
 
-	boardStore, err := boardsnative.New(boards.Config{Dir: *dir})
+	boardStore, err := boardsyaml.New(boards.Config{Dir: *dir})
 	if err != nil {
 		return fmt.Errorf("boards: %w", err)
 	}
@@ -261,7 +261,7 @@ func cmdStateFmt(args []string) error {
 		}
 	}
 
-	mailStore, err := mailnative.New(mail.Config{Path: *dir})
+	mailStore, err := mailyaml.New(mail.Config{Path: *dir})
 	if err != nil {
 		return fmt.Errorf("mail: %w", err)
 	}
@@ -269,7 +269,7 @@ func cmdStateFmt(args []string) error {
 		return fmt.Errorf("mail: %w", err)
 	}
 
-	houseStore, err := housesnative.New(houses.Config{ObjectDir: *dir})
+	houseStore, err := housesyaml.New(houses.Config{ObjectDir: *dir})
 	if err != nil {
 		return fmt.Errorf("houses: %w", err)
 	}
@@ -281,7 +281,7 @@ func cmdStateFmt(args []string) error {
 		return fmt.Errorf("houses: %w", err)
 	}
 
-	reportStore, err := reportsnative.New(reports.Config{Dir: *dir})
+	reportStore, err := reportsyaml.New(reports.Config{Dir: *dir})
 	if err != nil {
 		return fmt.Errorf("reports: %w", err)
 	}
@@ -289,11 +289,11 @@ func cmdStateFmt(args []string) error {
 		return fmt.Errorf("reports: %w", err)
 	}
 
-	epoch, err := clock.Load("native", *dir)
+	epoch, err := clock.Load("yaml", *dir)
 	if err != nil {
 		return fmt.Errorf("clock: %w", err)
 	}
-	if err := clock.Save("native", *dir, epoch); err != nil {
+	if err := clock.Save("yaml", *dir, epoch); err != nil {
 		return fmt.Errorf("clock: %w", err)
 	}
 

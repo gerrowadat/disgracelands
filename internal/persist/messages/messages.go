@@ -6,8 +6,8 @@
 
 // Package messages reads and writes the skill_message/dam_message table,
 // misc/messages (db.h's MESS_FILE), porting load_messages (fight.c:145-
-// 193) for classic and docs/proposals/data-format.md §9's
-// config/messages.yaml for native.
+// 193) for classic and docs/design/data-format.md §9's
+// config/messages.yaml for yaml.
 //
 // Like internal/persist/names, this is read-only game data at runtime —
 // nothing in the C ever writes misc/messages while playing — so there is
@@ -28,9 +28,9 @@ import (
 // ClassicFile is misc/messages under whatever directory holds it.
 const ClassicFile = "messages"
 
-// NativeFile is config/messages.yaml under whatever directory Load/Save's
-// path names, per docs/proposals/data-format.md §9.
-const NativeFile = "messages.yaml"
+// YamlFile is config/messages.yaml under whatever directory Load/Save's
+// path names, per docs/design/data-format.md §9.
+const YamlFile = "messages.yaml"
 
 // messagesSchema is the document's schema tag (data-format.md §10.1).
 const messagesSchema = "dl/messages@1"
@@ -61,8 +61,8 @@ type msgSetDoc struct {
 }
 
 // Load reads the fight-message table in the given format ("classic" or
-// "native", "" meaning classic). For classic, path is the file itself
-// (.../misc/messages); for native, path is the directory config/ lives
+// "yaml", "" meaning classic). For classic, path is the file itself
+// (.../misc/messages); for yaml, path is the directory config/ lives
 // under — the same asymmetry internal/persist/names already has.
 //
 // A missing file is not an error: load_messages' own C caller treats a
@@ -75,23 +75,23 @@ func Load(format, path string) ([]game.FightMessage, error) {
 	switch format {
 	case "", "classic":
 		return loadClassic(path)
-	case "native":
-		return loadNative(path)
+	case "yaml":
+		return loadYaml(path)
 	default:
 		return nil, fmt.Errorf("messages: unknown format %q", format)
 	}
 }
 
-// Save writes the fight-message table in the given format. Only native is
+// Save writes the fight-message table in the given format. Only yaml is
 // implemented, for the same reason internal/persist/names.Save only
-// writes native: the C never writes misc/messages at runtime, so a
+// writes yaml: the C never writes misc/messages at runtime, so a
 // classic writer has nothing to serve except `dlctl`, which only ever
-// needs to go classic to native, never back.
+// needs to go classic to yaml, never back.
 func Save(format, path string, records []game.FightMessage) error {
-	if format != "native" {
-		return fmt.Errorf("messages: writing %q is not supported (only native)", format)
+	if format != "yaml" {
+		return fmt.Errorf("messages: writing %q is not supported (only yaml)", format)
 	}
-	return saveNative(path, records)
+	return saveYaml(path, records)
 }
 
 func loadClassic(path string) ([]game.FightMessage, error) {
@@ -111,8 +111,8 @@ func loadClassic(path string) ([]game.FightMessage, error) {
 	return records, nil
 }
 
-func loadNative(dir string) ([]game.FightMessage, error) {
-	path := filepath.Join(dir, NativeFile)
+func loadYaml(dir string) ([]game.FightMessage, error) {
+	path := filepath.Join(dir, YamlFile)
 	b, err := os.ReadFile(path) //nolint:gosec // operator-configured path
 	if os.IsNotExist(err) {
 		return nil, nil
@@ -143,8 +143,8 @@ func loadNative(dir string) ([]game.FightMessage, error) {
 	return records, nil
 }
 
-func saveNative(dir string, records []game.FightMessage) error {
-	path := filepath.Join(dir, NativeFile)
+func saveYaml(dir string, records []game.FightMessage) error {
+	path := filepath.Join(dir, YamlFile)
 	d := doc{Schema: messagesSchema, Messages: make([]recordDoc, 0, len(records))}
 	for _, r := range records {
 		d.Messages = append(d.Messages, recordDoc{

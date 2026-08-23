@@ -36,6 +36,7 @@ import (
 	"github.com/gerrowadat/disgracelands/internal/persist/bans"
 	"github.com/gerrowadat/disgracelands/internal/persist/boards"
 	"github.com/gerrowadat/disgracelands/internal/persist/clock"
+	"github.com/gerrowadat/disgracelands/internal/persist/dataversion"
 	"github.com/gerrowadat/disgracelands/internal/persist/houses"
 	"github.com/gerrowadat/disgracelands/internal/persist/mail"
 	"github.com/gerrowadat/disgracelands/internal/persist/names"
@@ -48,19 +49,19 @@ import (
 
 	// Register the formats the server can be configured to use.
 	_ "github.com/gerrowadat/disgracelands/internal/persist/bans/classic"
-	_ "github.com/gerrowadat/disgracelands/internal/persist/bans/native"
+	_ "github.com/gerrowadat/disgracelands/internal/persist/bans/yaml"
 	_ "github.com/gerrowadat/disgracelands/internal/persist/boards/classic"
-	_ "github.com/gerrowadat/disgracelands/internal/persist/boards/native"
+	_ "github.com/gerrowadat/disgracelands/internal/persist/boards/yaml"
 	_ "github.com/gerrowadat/disgracelands/internal/persist/houses/classic"
-	_ "github.com/gerrowadat/disgracelands/internal/persist/houses/native"
+	_ "github.com/gerrowadat/disgracelands/internal/persist/houses/yaml"
 	_ "github.com/gerrowadat/disgracelands/internal/persist/mail/classic"
-	_ "github.com/gerrowadat/disgracelands/internal/persist/mail/native"
+	_ "github.com/gerrowadat/disgracelands/internal/persist/mail/yaml"
 	_ "github.com/gerrowadat/disgracelands/internal/persist/player/ascii"
-	_ "github.com/gerrowadat/disgracelands/internal/persist/player/native"
+	_ "github.com/gerrowadat/disgracelands/internal/persist/player/yaml"
 	_ "github.com/gerrowadat/disgracelands/internal/persist/reports/classic"
-	_ "github.com/gerrowadat/disgracelands/internal/persist/reports/native"
+	_ "github.com/gerrowadat/disgracelands/internal/persist/reports/yaml"
 	_ "github.com/gerrowadat/disgracelands/internal/persist/world/classic"
-	_ "github.com/gerrowadat/disgracelands/internal/persist/world/native"
+	_ "github.com/gerrowadat/disgracelands/internal/persist/world/yaml"
 )
 
 // tlsConfig builds the TLS settings for the telnets listener.
@@ -130,6 +131,21 @@ func run(args []string) error {
 	)
 	for _, w := range cfg.Warnings() {
 		logger.Warn(w)
+	}
+
+	// The yaml data format's own version stamp (docs/design/
+	// data-format-versioning.md), checked once here rather than per
+	// subsystem: cfg.LibDir is the one directory every format-specific
+	// path (WorldPath, PlayerPath, the state/config/text subdirectories)
+	// is derived from, so one file at its root versions all of them
+	// together. A directory with no stamp — everything predating this
+	// mechanism, and every classic/ascii/binary-only one — checks out
+	// silently; see dataversion.Check's own doc comment for what the
+	// other two outcomes mean.
+	if warning, err := dataversion.Check(cfg.LibDir, dataversion.Current); err != nil {
+		return err
+	} else if warning != "" {
+		logger.Warn(warning)
 	}
 
 	// config.c's runtime-tunable values (game.GameTuning): --config's file
@@ -220,10 +236,10 @@ func run(args []string) error {
 
 	// The mud clock's persisted epoch: etc/time under classic, the same
 	// state/clock.yaml directory the other four state stores share under
-	// native (docs/proposals/data-format.md §9). Applied before anyone can
+	// yaml (docs/design/data-format.md §9). Applied before anyone can
 	// see the clock — BootReset and every command after it read MudTime().
 	clockPath := filepath.Join(cfg.LibDir, "etc", "time")
-	if cfg.StateFormat == "native" {
+	if cfg.StateFormat == "yaml" {
 		clockPath = filepath.Join(cfg.LibDir, "state")
 	}
 	epoch, err := clock.Load(cfg.StateFormat, clockPath)
@@ -243,8 +259,8 @@ func run(args []string) error {
 	defer func() { _ = players.Close() }()
 
 	// The rent files are not pluggable the way the roster is, with one
-	// exception: native folds them into the same file as the roster
-	// (docs/proposals/data-format.md §8, "one player, one file"), so a
+	// exception: yaml folds them into the same file as the roster
+	// (docs/design/data-format.md §8, "one player, one file"), so a
 	// Store that is also an ObjectStore serves both — there is no separate
 	// plrobjs/ to point a second store at. Every other format still uses
 	// `plrobjs/` in the layout the archived files are in, whatever the
@@ -259,9 +275,9 @@ func run(args []string) error {
 	}
 
 	// The bulletin boards: beside the player data in the etc directory under
-	// classic, or state/boards.yaml under native.
+	// classic, or state/boards.yaml under yaml.
 	boardDir := filepath.Join(cfg.LibDir, "etc")
-	if cfg.StateFormat == "native" {
+	if cfg.StateFormat == "yaml" {
 		boardDir = filepath.Join(cfg.LibDir, "state")
 	}
 	boardStore, err := boards.Open(cfg.StateFormat, boards.Config{Dir: boardDir})
@@ -270,9 +286,9 @@ func run(args []string) error {
 	}
 
 	// The mud mail file: classic's block-allocator file, or
-	// state/mail.yaml under native.
+	// state/mail.yaml under yaml.
 	mailPath := filepath.Join(cfg.LibDir, "etc", "plrmail")
-	if cfg.StateFormat == "native" {
+	if cfg.StateFormat == "yaml" {
 		mailPath = filepath.Join(cfg.LibDir, "state")
 	}
 	mailStore, err := mail.Open(cfg.StateFormat, mail.Config{Path: mailPath})
@@ -282,12 +298,12 @@ func run(args []string) error {
 
 	// The house control file and the per-house object files: classic's two
 	// separate paths, or state/houses.yaml (everything folded in) under
-	// native.
+	// yaml.
 	houseCfg := houses.Config{
 		ControlPath: filepath.Join(cfg.LibDir, "etc", "hcontrol"),
 		ObjectDir:   filepath.Join(cfg.LibDir, "house"),
 	}
-	if cfg.StateFormat == "native" {
+	if cfg.StateFormat == "yaml" {
 		houseCfg = houses.Config{ObjectDir: filepath.Join(cfg.LibDir, "state")}
 	}
 	houseStore, err := houses.Open(cfg.StateFormat, houseCfg)
@@ -296,9 +312,9 @@ func run(args []string) error {
 	}
 
 	// The site ban list — the one archive file that is plain text, under
-	// classic; a state/bans.yaml file under native.
+	// classic; a state/bans.yaml file under yaml.
 	banPath := filepath.Join(cfg.LibDir, "etc", "badsites")
-	if cfg.StateFormat == "native" {
+	if cfg.StateFormat == "yaml" {
 		banPath = filepath.Join(cfg.LibDir, "state")
 	}
 	banStore, err := bans.Open(cfg.StateFormat, bans.Config{Path: banPath})
@@ -308,9 +324,9 @@ func run(args []string) error {
 
 	// The bug/idea/typo log: misc/{bugs,ideas,typos} under classic, or the
 	// same state/ directory the other four state stores share under
-	// native.
+	// yaml.
 	reportsDir := filepath.Join(cfg.LibDir, "misc")
-	if cfg.StateFormat == "native" {
+	if cfg.StateFormat == "yaml" {
 		reportsDir = filepath.Join(cfg.LibDir, "state")
 	}
 	reportStore, err := reports.Open(cfg.StateFormat, reports.Config{Dir: reportsDir})
@@ -319,11 +335,11 @@ func run(args []string) error {
 	}
 
 	// The disallowed-name list: misc/xnames under classic, or
-	// config/names.yaml under native. Missing is not an error — see
+	// config/names.yaml under yaml. Missing is not an error — see
 	// names.Load's doc comment — so a server with no list disallows
 	// nothing, matching Valid_Name's own posture.
 	namesPath := filepath.Join(cfg.LibDir, "misc", "xnames")
-	if cfg.NamesFormat == "native" {
+	if cfg.NamesFormat == "yaml" {
 		namesPath = filepath.Join(cfg.LibDir, "config")
 	}
 	disallowedNames, err := names.Load(cfg.NamesFormat, namesPath)

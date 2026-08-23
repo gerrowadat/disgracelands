@@ -96,7 +96,7 @@ const (
 	// otherwise implements — that format predates the `alias` command
 	// landing in this port (docs/deviations.md, "gaps still to fill") and
 	// has no tag for it. Added here so an alias survives a save on the
-	// server's actual default format, not only under native (which folds
+	// server's actual default format, not only under yaml (which folds
 	// aliases into the same file, §8) — the reference ascii reader logs and
 	// skips a tag it does not recognise (this package's own Decode does the
 	// same for anything it doesn't know), so an older ascii_pfiles reader

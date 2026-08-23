@@ -23,7 +23,7 @@ import (
 func TestSaveClockPersistsTheEpoch(t *testing.T) {
 	srv, _ := newTestServer(t)
 	dir := t.TempDir()
-	srv.clockFormat = "native"
+	srv.clockFormat = "yaml"
 	srv.clockPath = dir
 
 	ctx := context.Background()
@@ -38,7 +38,7 @@ func TestSaveClockPersistsTheEpoch(t *testing.T) {
 	srv.saveClock(ctx)
 	srv.WaitForWrites()
 
-	loaded, err := clock.Load("native", dir)
+	loaded, err := clock.Load("yaml", dir)
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
@@ -65,7 +65,7 @@ func TestSaveClockWithNoPathConfiguredIsANoOp(t *testing.T) {
 func TestShutdownSavesTheClock(t *testing.T) {
 	srv, _ := newTestServer(t)
 	dir := t.TempDir()
-	srv.clockFormat = "native"
+	srv.clockFormat = "yaml"
 	srv.clockPath = dir
 
 	ctx := context.Background()
@@ -77,7 +77,7 @@ func TestShutdownSavesTheClock(t *testing.T) {
 	srv.SaveEverything(ctx)
 	srv.WaitForWrites()
 
-	loaded, err := clock.Load("native", dir)
+	loaded, err := clock.Load("yaml", dir)
 	if err != nil {
 		t.Fatalf("Load after shutdown save: %v", err)
 	}

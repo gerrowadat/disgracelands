@@ -20,11 +20,11 @@ import (
 	"github.com/gerrowadat/disgracelands/internal/persist/convert"
 	"github.com/gerrowadat/disgracelands/internal/persist/world"
 	"github.com/gerrowadat/disgracelands/internal/persist/world/classic"
-	"github.com/gerrowadat/disgracelands/internal/persist/world/native"
+	"github.com/gerrowadat/disgracelands/internal/persist/world/yaml"
 )
 
-// cmdWorldImport converts a classic world directory into native, per
-// docs/proposals/data-format.md §11 step 2: `dlctl world import`.
+// cmdWorldImport converts a classic world directory into yaml, per
+// docs/design/data-format.md §11 step 2: `dlctl world import`.
 //
 // It replaces nothing the C server reads — classic stays the parity oracle
 // — and produces a zones.yaml manifest listing every zone the source
@@ -32,7 +32,7 @@ import (
 func cmdWorldImport(args []string) error {
 	fs := flag.NewFlagSet("world import", flag.ContinueOnError)
 	fromDir := fs.String("from-dir", "data/world", "Source (classic) world directory")
-	toDir := fs.String("to-dir", "data/world", "Destination (native) world directory")
+	toDir := fs.String("to-dir", "data/world", "Destination (yaml) world directory")
 	encName := fs.String("encoding", convert.DefaultEncoding,
 		fmt.Sprintf("Source text encoding: %v", encodingNames()))
 	mini := fs.Bool("mini-mud", false, "Use the reduced index.mini file list")
@@ -68,15 +68,15 @@ func cmdWorldImport(args []string) error {
 	if err := os.MkdirAll(*toDir, 0o755); err != nil { //nolint:gosec // world data, not secrets
 		return err
 	}
-	entries := make([]native.ManifestEntry, 0, len(w.Zones))
+	entries := make([]yaml.ManifestEntry, 0, len(w.Zones))
 	for _, z := range w.Zones {
-		entries = append(entries, native.ManifestEntry{Vnum: int32(z.Vnum), Enabled: true})
+		entries = append(entries, yaml.ManifestEntry{Vnum: int32(z.Vnum), Enabled: true})
 	}
-	if err := native.WriteManifest(*toDir, entries); err != nil {
+	if err := yaml.WriteManifest(*toDir, entries); err != nil {
 		return fmt.Errorf("writing zones.yaml: %w", err)
 	}
 
-	nsrc, err := native.New(world.Config{Dir: *toDir})
+	nsrc, err := yaml.New(world.Config{Dir: *toDir})
 	if err != nil {
 		return err
 	}
@@ -96,19 +96,19 @@ func cmdWorldImport(args []string) error {
 	return out.Flush()
 }
 
-// cmdWorldFmt canonicalises a native world directory in place: §11 step 3's
+// cmdWorldFmt canonicalises a yaml world directory in place: §11 step 3's
 // `dlctl world fmt`. Loading and immediately re-writing every zone is
-// idempotent by construction, because native.Source.WriteZone is
+// idempotent by construction, because yaml.Source.WriteZone is
 // deterministic (§10.3) — running this twice in a row produces no further
 // diff.
 func cmdWorldFmt(args []string) error {
 	fs := flag.NewFlagSet("world fmt", flag.ContinueOnError)
-	dir := fs.String("world-dir", "data/world", "Native world data directory")
+	dir := fs.String("world-dir", "data/world", "Yaml world data directory")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
 
-	nsrc, err := native.New(world.Config{Dir: *dir})
+	nsrc, err := yaml.New(world.Config{Dir: *dir})
 	if err != nil {
 		return err
 	}

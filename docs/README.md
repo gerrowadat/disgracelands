@@ -37,12 +37,12 @@ both the C tree and the Go tree.
 > `configuration.md` and `operations.md` mark which settings are *(inert)*
 > pending later phases.
 
-## `docs/proposals/` — the design, and the plan
+## `docs/proposals/` — the plan, still moving
 
-The design decisions and the phase order. Partly a record now: each finished
-phase carries a note of what it actually contained, what it did not, and what
-reading the C changed about the plan. The unfinished phases are still future
-tense and still expected to change.
+The phase order, still future tense for whatever has not landed yet. Partly
+a record now: each finished phase carries a note of what it actually
+contained, what it did not, and what reading the C changed about the plan.
+The unfinished phases are still expected to change.
 
 - **[go-port-plan.md](proposals/go-port-plan.md)** — the design and phasing
   for reimplementing the engine in Go: 64-bit safety, pluggable player- and
@@ -51,12 +51,30 @@ tense and still expected to change.
   each one did and did not contain; Phase 5 is mapped into slices, all but one
   of them finished, with its gaps listed command by command; 6 and 7 are not
   started.
-- **[data-format.md](proposals/data-format.md)** — a single native format
-  for everything in `data/`: the world, players, boards, mail, houses and
-  the game tuning still compiled into `config.c`. Replaces the eight
-  unrelated formats a CircleMUD `lib/` carries, and is a superset of all of
-  them. YAML over a JSON data model, one file per zone, one file per
-  player, vnums unchanged. Nothing here is built.
+
+## `docs/design/` — decisions that landed
+
+A design document moves here from `docs/proposals/` once the thing it
+describes is built rather than planned — present tense, the way `docs/`
+itself is, but explaining *why* the shipped shape is what it is rather than
+just how to run it. Still corrected when reading the C or building the next
+piece finds something the original document got wrong; not rewritten to
+hide that it started as a proposal.
+
+- **[data-format.md](design/data-format.md)** — a single yaml format for
+  everything in `data/`: the world, players, boards, mail, houses and the
+  game tuning still compiled into `config.c`. Replaces the eight unrelated
+  formats a CircleMUD `lib/` carries, and is a superset of all of them. YAML
+  over a JSON data model, one file per zone, one file per player, vnums
+  unchanged. Everything but game configuration and the `classic` export
+  writer is built; §11 tracks the rest.
+- **[data-format-versioning.md](design/data-format-versioning.md)** — the
+  yaml format's own `major.minor.patch` stamp: a major bump refuses to
+  boot, a minor bump is "own risk" and `dlctl data version` reports what
+  changed, a patch bump is silent by construction. Layered on top of
+  data-format.md §10.1's own per-file `schema: dl/<kind>@<major>` tag,
+  which says what shape one file is in rather than what release the whole
+  directory was last written by.
 
 ## `docs/investigations/` — what we found out
 

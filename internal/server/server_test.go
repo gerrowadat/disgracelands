@@ -537,13 +537,13 @@ func newTestServer(t *testing.T) (*Server, player.Store) {
 }
 
 // newTestServerWith is newTestServer's common tail, factored out so a test
-// that needs a different player.Store/player.ObjectStore pair — native's
+// that needs a different player.Store/player.ObjectStore pair — yaml's
 // own alias_test.go-style containment test, chiefly — does not have to
 // duplicate the engine/world/board/mail/house/text wiring to get one.
 //
 // banStore, boardStore and mailStore override the default classic ones when
 // non-nil — the shape this will likely grow for houses too once it is
-// pluggable — see docs/proposals/data-format.md §9 step 6a.
+// pluggable — see docs/design/data-format.md §9 step 6a.
 func newTestServerWith(t *testing.T, store player.Store, objects player.ObjectStore, banStore bans.Store, boardStore boards.Store, mailStore mail.Store, houseStore houses.Store) (*Server, player.Store) {
 	t.Helper()
 

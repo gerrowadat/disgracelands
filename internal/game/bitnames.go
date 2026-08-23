@@ -183,8 +183,8 @@ var pcClassNames = []string{
 }
 
 // NameBits renders f as the names in table, for a format that writes bit
-// names rather than sprintbit's letter-and-space list (the native data
-// format, §4.1 of docs/proposals/data-format.md). Unlike SprintBit, a bit
+// names rather than sprintbit's letter-and-space list (the yaml data
+// format, §4.1 of docs/design/data-format.md). Unlike SprintBit, a bit
 // past the end of the table — or one whose table entry is "", marking a
 // slot the C itself never named (constants.c's own "*" placeholders) — is
 // not printed as a name at all: it comes back in raw instead, so a writer
@@ -206,7 +206,7 @@ func NameBits(f Flags, table []string) (names []string, raw Flags) {
 }
 
 // ParseBitNames is NameBits' inverse: it resolves a list of names against
-// table (case-sensitive; the native format's tables are lower_snake_case by
+// table (case-sensitive; the yaml format's tables are lower_snake_case by
 // convention and an author who mistypes the case gets the same "unknown
 // name" treatment as any other typo, per §4.1's "an unknown name is an
 // error, not a shrug"). Every name not found in the table is returned in
@@ -223,7 +223,7 @@ func ParseBitNames(names []string, table []string) (flags Flags, unknown []strin
 	return flags, unknown
 }
 
-// NameByValue is SprintType's counterpart for the native format: it looks up
+// NameByValue is SprintType's counterpart for the yaml format: it looks up
 // a value-keyed table (sectors, positions, item types, ...) and reports
 // whether the value has a name at all, rather than falling back to the
 // display tables' "UNDEFINED" placeholder — an out-of-range value is a

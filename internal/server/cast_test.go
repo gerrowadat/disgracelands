@@ -20,7 +20,7 @@ func TestCastingADamageSpell(t *testing.T) {
 	// The real archive: magic missile's own registered message
 	// (skill_message, via SkillDamage) is what a cast prints now, the
 	// same table kick/bash/backstab already draw from — see
-	// docs/proposals/data-format.md §11 6c-ii/6c-iii.
+	// docs/design/data-format.md §11 6c-ii/6c-iii.
 	loadRealFightMessages(t, srv)
 	c := dialClient(t, listening(t, srv))
 	c.create("Zod", "swordfish", "m", "m")

@@ -6,8 +6,8 @@
 
 // Package help reads and writes the do_help table: text/help/index plus
 // the .hlp files it lists (db.c's index_boot/load_help) for classic, and
-// docs/proposals/data-format.md §7's one-file-per-entry
-// text/help/help.yaml for native.
+// docs/design/data-format.md §7's one-file-per-entry
+// text/help/help.yaml for yaml.
 //
 // Like internal/persist/messages/names/socials, this is read-only game
 // data at runtime — nothing in the C ever writes the help database while
@@ -15,12 +15,12 @@
 // method to design, only a list to load and (for `dlctl help
 // import`/`fmt`) to write back out.
 //
-// Classic and native share the same directory, unlike messages/socials'
+// Classic and yaml share the same directory, unlike messages/socials'
 // file-vs-directory split: classic is already multi-file (index plus
-// several .hlp files) and the doc's own native path
+// several .hlp files) and the doc's own yaml path
 // (data/text/help/help.yaml) sits beside them. The two formats never
 // read each other's files — classic only opens index and what it lists,
-// native only opens help.yaml and what it lists — so they can coexist in
+// yaml only opens help.yaml and what it lists — so they can coexist in
 // one directory without conflict.
 package help
 
@@ -39,8 +39,8 @@ import (
 // names, for classic.
 const IndexFile = "index"
 
-// NativeFile is help.yaml under the same directory, for native.
-const NativeFile = "help.yaml"
+// YamlFile is help.yaml under the same directory, for yaml.
+const YamlFile = "help.yaml"
 
 // helpSchema is the document's schema tag (data-format.md §10.1).
 const helpSchema = "dl/help@1"
@@ -65,10 +65,10 @@ type entryDoc struct {
 	File string `yaml:"file"`
 }
 
-// Load reads the help table in the given format ("classic" or "native",
+// Load reads the help table in the given format ("classic" or "yaml",
 // "" meaning classic). dir is text/help itself in both cases.
 //
-// A missing index (classic) or help.yaml (native) is not an error: a
+// A missing index (classic) or help.yaml (yaml) is not an error: a
 // server with no help data is a poorer game, not a broken one — the
 // same posture internal/server/text.go already took when it loaded
 // these files directly, which this package now does on its behalf. A
@@ -79,23 +79,23 @@ func Load(format, dir string) ([]game.HelpEntry, error) {
 	switch format {
 	case "", "classic":
 		return loadClassic(dir)
-	case "native":
-		return loadNative(dir)
+	case "yaml":
+		return loadYaml(dir)
 	default:
 		return nil, fmt.Errorf("help: unknown format %q", format)
 	}
 }
 
-// Save writes the help table in the given format. Only native is
+// Save writes the help table in the given format. Only yaml is
 // implemented, for the same reason internal/persist/messages.Save only
-// writes native: the C never writes the help database at runtime, so a
+// writes yaml: the C never writes the help database at runtime, so a
 // classic writer has nothing to serve except `dlctl`, which only ever
-// needs to go classic to native, never back.
+// needs to go classic to yaml, never back.
 func Save(format, dir string, entries []game.HelpEntry) error {
-	if format != "native" {
-		return fmt.Errorf("help: writing %q is not supported (only native)", format)
+	if format != "yaml" {
+		return fmt.Errorf("help: writing %q is not supported (only yaml)", format)
 	}
-	return saveNative(dir, entries)
+	return saveYaml(dir, entries)
 }
 
 func loadClassic(dir string) ([]game.HelpEntry, error) {
@@ -130,8 +130,8 @@ func loadClassic(dir string) ([]game.HelpEntry, error) {
 	return entries, nil
 }
 
-func loadNative(dir string) ([]game.HelpEntry, error) {
-	path := filepath.Join(dir, NativeFile)
+func loadYaml(dir string) ([]game.HelpEntry, error) {
+	path := filepath.Join(dir, YamlFile)
 	b, err := os.ReadFile(path) //nolint:gosec // operator-configured path
 	if os.IsNotExist(err) {
 		return nil, nil
@@ -160,7 +160,7 @@ func loadNative(dir string) ([]game.HelpEntry, error) {
 	return entries, nil
 }
 
-func saveNative(dir string, entries []game.HelpEntry) error {
+func saveYaml(dir string, entries []game.HelpEntry) error {
 	if err := os.MkdirAll(dir, 0o750); err != nil {
 		return fmt.Errorf("writing %s: %w", dir, err)
 	}
@@ -191,9 +191,9 @@ func saveNative(dir string, entries []game.HelpEntry) error {
 
 	out, err := yaml.MarshalWithOptions(d, yaml.Indent(2))
 	if err != nil {
-		return fmt.Errorf("writing %s: %w", filepath.Join(dir, NativeFile), err)
+		return fmt.Errorf("writing %s: %w", filepath.Join(dir, YamlFile), err)
 	}
-	path := filepath.Join(dir, NativeFile)
+	path := filepath.Join(dir, YamlFile)
 	tmp := path + ".tmp"
 	if err := os.WriteFile(tmp, out, 0o600); err != nil {
 		return fmt.Errorf("writing %s: %w", path, err)

@@ -111,8 +111,8 @@ func helpLine(sc *bufio.Scanner) (line string, ok bool, err error) {
 	return strings.TrimRight(sc.Text(), "\r"), true, nil
 }
 
-// HelpSlug names a help entry for the native format's one-file-per-entry
-// layout (docs/proposals/data-format.md §7): every keyword joined by a
+// HelpSlug names a help entry for the yaml format's one-file-per-entry
+// layout (docs/design/data-format.md §7): every keyword joined by a
 // space, lowercased, with every run of characters outside [a-z0-9]
 // collapsed to one `-` and trimmed from both ends.
 //

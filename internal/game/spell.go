@@ -122,7 +122,7 @@ func SpellNumberByName(name string) (int32, bool) {
 }
 
 // SpellNameOrNumber names a spell/skill number via SpellName, or formats it
-// as "#N" when the table does not cover it — a placeholder the native data
+// as "#N" when the table does not cover it — a placeholder the yaml data
 // format's writers (world and player) can round-trip losslessly for a
 // number nothing names, while still preferring a real name whenever one
 // exists. Shared here rather than duplicated per package, since both need

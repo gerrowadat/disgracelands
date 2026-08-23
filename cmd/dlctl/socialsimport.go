@@ -17,14 +17,14 @@ import (
 )
 
 // cmdSocialsImport converts misc/socials into config/socials.yaml, step 6c
-// of docs/proposals/data-format.md §7 — its own command, separate from
+// of docs/design/data-format.md §7 — its own command, separate from
 // `messages import` and `names import`, because --socials-format moves
 // independently of both (see internal/config/config.go's own comment on
 // why it is not folded into either).
 func cmdSocialsImport(args []string) error {
 	fs := flag.NewFlagSet("socials import", flag.ContinueOnError)
 	fromPath := fs.String("from-path", "data/misc/socials", "Source (classic) socials file")
-	toDir := fs.String("to-dir", "data/config", "Destination (native) directory")
+	toDir := fs.String("to-dir", "data/config", "Destination (yaml) directory")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
@@ -33,8 +33,8 @@ func cmdSocialsImport(args []string) error {
 	if err != nil {
 		return fmt.Errorf("reading %s: %w", *fromPath, err)
 	}
-	if err := socials.Save("native", *toDir, list); err != nil {
-		return fmt.Errorf("writing %s: %w", filepath.Join(*toDir, socials.NativeFile), err)
+	if err := socials.Save("yaml", *toDir, list); err != nil {
+		return fmt.Errorf("writing %s: %w", filepath.Join(*toDir, socials.YamlFile), err)
 	}
 
 	out := bufio.NewWriter(os.Stdout)
@@ -42,20 +42,20 @@ func cmdSocialsImport(args []string) error {
 	return out.Flush()
 }
 
-// cmdSocialsFmt canonicalises a native socials directory in place.
+// cmdSocialsFmt canonicalises a yaml socials directory in place.
 func cmdSocialsFmt(args []string) error {
 	fs := flag.NewFlagSet("socials fmt", flag.ContinueOnError)
-	dir := fs.String("socials-dir", "data/config", "Native config directory")
+	dir := fs.String("socials-dir", "data/config", "Yaml config directory")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
 
-	list, err := socials.Load("native", *dir)
+	list, err := socials.Load("yaml", *dir)
 	if err != nil {
-		return fmt.Errorf("reading %s: %w", filepath.Join(*dir, socials.NativeFile), err)
+		return fmt.Errorf("reading %s: %w", filepath.Join(*dir, socials.YamlFile), err)
 	}
-	if err := socials.Save("native", *dir, list); err != nil {
-		return fmt.Errorf("writing %s: %w", filepath.Join(*dir, socials.NativeFile), err)
+	if err := socials.Save("yaml", *dir, list); err != nil {
+		return fmt.Errorf("writing %s: %w", filepath.Join(*dir, socials.YamlFile), err)
 	}
 	return nil
 }

@@ -6,8 +6,8 @@
 
 // Package socials reads and writes the do_action table, misc/socials (the
 // C's SOCMESS_FILE), porting boot_social_messages (act.social.c:216) for
-// classic and docs/proposals/data-format.md §7's config/socials.yaml for
-// native.
+// classic and docs/design/data-format.md §7's config/socials.yaml for
+// yaml.
 //
 // Like internal/persist/messages and internal/persist/names, this is
 // read-only game data at runtime — nothing in the C ever writes
@@ -29,9 +29,9 @@ import (
 // ClassicFile is misc/socials under whatever directory holds it.
 const ClassicFile = "socials"
 
-// NativeFile is config/socials.yaml under whatever directory Load/Save's
-// path names, per docs/proposals/data-format.md §7.
-const NativeFile = "socials.yaml"
+// YamlFile is config/socials.yaml under whatever directory Load/Save's
+// path names, per docs/design/data-format.md §7.
+const YamlFile = "socials.yaml"
 
 // socialsSchema is the document's schema tag (data-format.md §10.1).
 const socialsSchema = "dl/socials@1"
@@ -47,7 +47,7 @@ type recordDoc struct {
 	// there is no "#" spelling for either — so neither is omitempty,
 	// matching messages.go's AttackType field for the same reason.
 	Hide bool `yaml:"hide"`
-	// MinVictimPosition is a symbolic name (game.NativePositionNames via
+	// MinVictimPosition is a symbolic name (game.YamlPositionNames via
 	// game.NameByValue/ValueByName), the same table the world format
 	// already uses for a mobile's position/default_position.
 	MinVictimPosition string `yaml:"min_victim_position"`
@@ -84,8 +84,8 @@ type foundDoc struct {
 }
 
 // Load reads the socials table in the given format ("classic" or
-// "native", "" meaning classic). For classic, path is the file itself
-// (.../misc/socials); for native, path is the directory config/ lives
+// "yaml", "" meaning classic). For classic, path is the file itself
+// (.../misc/socials); for yaml, path is the directory config/ lives
 // under — the same asymmetry internal/persist/messages already has.
 //
 // A missing file is not an error: boot_social_messages' own C caller
@@ -98,23 +98,23 @@ func Load(format, path string) ([]game.Social, error) {
 	switch format {
 	case "", "classic":
 		return loadClassic(path)
-	case "native":
-		return loadNative(path)
+	case "yaml":
+		return loadYaml(path)
 	default:
 		return nil, fmt.Errorf("socials: unknown format %q", format)
 	}
 }
 
-// Save writes the socials table in the given format. Only native is
+// Save writes the socials table in the given format. Only yaml is
 // implemented, for the same reason internal/persist/messages.Save only
-// writes native: the C never writes misc/socials at runtime, so a
+// writes yaml: the C never writes misc/socials at runtime, so a
 // classic writer has nothing to serve except `dlctl`, which only ever
-// needs to go classic to native, never back.
+// needs to go classic to yaml, never back.
 func Save(format, path string, list []game.Social) error {
-	if format != "native" {
-		return fmt.Errorf("socials: writing %q is not supported (only native)", format)
+	if format != "yaml" {
+		return fmt.Errorf("socials: writing %q is not supported (only yaml)", format)
 	}
-	return saveNative(path, list)
+	return saveYaml(path, list)
 }
 
 func loadClassic(path string) ([]game.Social, error) {
@@ -134,8 +134,8 @@ func loadClassic(path string) ([]game.Social, error) {
 	return list, nil
 }
 
-func loadNative(dir string) ([]game.Social, error) {
-	path := filepath.Join(dir, NativeFile)
+func loadYaml(dir string) ([]game.Social, error) {
+	path := filepath.Join(dir, YamlFile)
 	b, err := os.ReadFile(path) //nolint:gosec // operator-configured path
 	if os.IsNotExist(err) {
 		return nil, nil
@@ -151,7 +151,7 @@ func loadNative(dir string) ([]game.Social, error) {
 
 	list := make([]game.Social, 0, len(d.Socials))
 	for _, rd := range d.Socials {
-		pos, ok := game.ValueByName(rd.MinVictimPosition, game.NativePositionNames())
+		pos, ok := game.ValueByName(rd.MinVictimPosition, game.YamlPositionNames())
 		if !ok {
 			return nil, fmt.Errorf("%s: %q: unknown min_victim_position %q", path, rd.Command, rd.MinVictimPosition)
 		}
@@ -175,8 +175,8 @@ func loadNative(dir string) ([]game.Social, error) {
 	return list, nil
 }
 
-func saveNative(dir string, list []game.Social) error {
-	path := filepath.Join(dir, NativeFile)
+func saveYaml(dir string, list []game.Social) error {
+	path := filepath.Join(dir, YamlFile)
 	d := doc{Schema: socialsSchema, Socials: make([]recordDoc, 0, len(list))}
 	for _, s := range list {
 		d.Socials = append(d.Socials, recordDoc{
@@ -208,14 +208,14 @@ func saveNative(dir string, list []game.Social) error {
 	return nil
 }
 
-// positionName names a Position for the native format, falling back to
-// "unknown-N" for a value NativePositionNames does not cover — the same
-// fallback internal/persist/world/native's own valueName uses, so an
+// positionName names a Position for the yaml format, falling back to
+// "unknown-N" for a value YamlPositionNames does not cover — the same
+// fallback internal/persist/world/yaml's own valueName uses, so an
 // out-of-range value (which the classic parser cannot actually produce;
 // Position is bounds-checked nowhere in ParseSocials, so this is a belt
 // on top of that braces) writes something legible rather than panicking.
 func positionName(pos game.Position) string {
-	name, ok := game.NameByValue(int32(pos), game.NativePositionNames())
+	name, ok := game.NameByValue(int32(pos), game.YamlPositionNames())
 	if !ok {
 		return fmt.Sprintf("unknown-%d", pos)
 	}

@@ -8,7 +8,7 @@
 // implementations — the same shape internal/persist/world, internal/
 // persist/player, internal/persist/bans and internal/persist/boards use:
 // `classic` (mail.c's block-allocator file, moved to internal/persist/
-// mail/classic without a behaviour change) and `native` (docs/proposals/
+// mail/classic without a behaviour change) and `yaml` (docs/design/
 // data-format.md §9's state/mail.yaml).
 package mail
 
@@ -51,7 +51,7 @@ type Store interface {
 
 // Config is what a factory needs to open a store.
 type Config struct {
-	// Path is the mail file (classic) or data directory (native).
+	// Path is the mail file (classic) or data directory (yaml).
 	Path string
 	// ReadOnly opens the store for inspection only.
 	ReadOnly bool

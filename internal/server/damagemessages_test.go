@@ -346,13 +346,13 @@ func TestSkillDamageIsSilentWithNothingRegistered(t *testing.T) {
 	}
 }
 
-// End to end: LoadText(dir, "native") reads config/messages.yaml, not
+// End to end: LoadText(dir, "yaml") reads config/messages.yaml, not
 // misc/messages, and a kick still resolves a real registered message
 // through it — proving the wiring (internal/server/text.go's own
 // messages.Load call, the --messages-format flag it is fed from in
 // cmd/dlmud/main.go), not just internal/persist/messages' own codec
 // (already covered by its own real-archive round-trip test).
-func TestNativeMessagesFormatEndToEnd(t *testing.T) {
+func TestYamlMessagesFormatEndToEnd(t *testing.T) {
 	classic, err := messages.Load("classic", "../../data/misc/messages")
 	if err != nil {
 		t.Fatalf("Load(classic): %v", err)
@@ -370,16 +370,16 @@ func TestNativeMessagesFormatEndToEnd(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	if err := messages.Save("native", filepath.Join(dir, "config"), classic); err != nil {
-		t.Fatalf("Save(native): %v", err)
+	if err := messages.Save("yaml", filepath.Join(dir, "config"), classic); err != nil {
+		t.Fatalf("Save(yaml): %v", err)
 	}
 
-	text, err := LoadText(dir, "native", "classic", "classic")
+	text, err := LoadText(dir, "yaml", "classic", "classic")
 	if err != nil {
 		t.Fatalf("LoadText: %v", err)
 	}
 
 	if _, ok := text.FightMessages().Pick(game.SkillKick, testRNG()); !ok {
-		t.Error("LoadText(dir, \"native\") found no registered kick message, want the real archive's")
+		t.Error("LoadText(dir, \"yaml\") found no registered kick message, want the real archive's")
 	}
 }

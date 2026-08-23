@@ -28,9 +28,9 @@ import (
 // ClassicFile is etc/time under whatever directory holds it.
 const ClassicFile = "time"
 
-// NativeFile is state/clock.yaml under whatever directory Load/Save's path
-// names, per docs/proposals/data-format.md §9.
-const NativeFile = "clock.yaml"
+// YamlFile is state/clock.yaml under whatever directory Load/Save's path
+// names, per docs/design/data-format.md §9.
+const YamlFile = "clock.yaml"
 
 // clockSchema is the document's schema tag (data-format.md §10.1).
 const clockSchema = "dl/clock@1"
@@ -50,7 +50,7 @@ type doc struct {
 }
 
 // Load reads the epoch mud time is measured forward from, in the given
-// format ("classic" or "native", "" meaning classic). A missing file, an
+// format ("classic" or "yaml", "" meaning classic). A missing file, an
 // unreadable one, or one that holds zero all resolve to DefaultEpoch —
 // reset_time's own fallback, applied uniformly regardless of format since
 // the fallback is a property of "no usable epoch was found", not of
@@ -61,8 +61,8 @@ func Load(format, path string) (time.Time, error) {
 	switch format {
 	case "", "classic":
 		secs, err = loadClassic(path)
-	case "native":
-		secs, err = loadNative(path)
+	case "yaml":
+		secs, err = loadYaml(path)
 	default:
 		return time.Time{}, fmt.Errorf("clock: unknown format %q", format)
 	}
@@ -80,8 +80,8 @@ func Save(format, path string, epoch time.Time) error {
 	switch format {
 	case "", "classic":
 		return saveClassic(path, epoch)
-	case "native":
-		return saveNative(path, epoch)
+	case "yaml":
+		return saveYaml(path, epoch)
 	default:
 		return fmt.Errorf("clock: unknown format %q", format)
 	}
@@ -113,8 +113,8 @@ func saveClassic(path string, epoch time.Time) error {
 	return atomicWrite(path, fmt.Appendf(nil, "%d\n", epoch.Unix()))
 }
 
-func loadNative(dir string) (int64, error) {
-	path := filepath.Join(dir, NativeFile)
+func loadYaml(dir string) (int64, error) {
+	path := filepath.Join(dir, YamlFile)
 	b, err := os.ReadFile(path) //nolint:gosec // operator-configured path
 	if os.IsNotExist(err) {
 		return 0, nil
@@ -136,8 +136,8 @@ func loadNative(dir string) (int64, error) {
 	return t.Unix(), nil
 }
 
-func saveNative(dir string, epoch time.Time) error {
-	path := filepath.Join(dir, NativeFile)
+func saveYaml(dir string, epoch time.Time) error {
+	path := filepath.Join(dir, YamlFile)
 	d := doc{Schema: clockSchema, Epoch: epoch.UTC().Format(time.RFC3339)}
 	out, err := yaml.MarshalWithOptions(d, yaml.Indent(2))
 	if err != nil {

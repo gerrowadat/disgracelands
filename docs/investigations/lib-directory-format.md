@@ -7,11 +7,11 @@ An investigation of the real Disgracelands `lib/` directory as preserved at
 It covers every file in the tree, what writes it, what reads it, and what
 its format actually is as opposed to what the format is supposed to be. The
 addendum in §9 says which parts should reach the Go server's `data/`, in
-what shape, and corrects the places where `docs/proposals/data-format.md`
+what shape, and corrects the places where `docs/design/data-format.md`
 guessed wrong about this data.
 
 Written 2026-08-20. Supersedes nothing; it is the empirical companion to
-`docs/proposals/data-format.md`, which was written against the *stock*
+`docs/design/data-format.md`, which was written against the *stock*
 `lib/` shipped in `data/` and against a partial survey of an archive
 snapshot.
 
@@ -696,7 +696,7 @@ Disgracelands'. `data/text/greetings` says "Your MUD Name Here";
 `data/world` is 1,878 rooms and 30 zones against the archive's 2,981 and 47;
 `data/pfiles` holds `puff`, `filthy` and `captain stolar`.
 
-`docs/proposals/data-format.md` §1 opens "`data/` today is CircleMUD 3.0
+`docs/design/data-format.md` §1 opens "`data/` today is CircleMUD 3.0
 bpl20's `lib/`, unmodified", which is accurate but easy to misread as *the
 archive's* `lib/`. The real world has never been imported. That import — with
 the C-parity result in §0 as its acceptance test — is the single highest-value
@@ -814,7 +814,7 @@ lint` should report overlapping zone ranges and a zone table that is not
 ascending — neither is currently detected, which is why the divergence is
 silent on both sides.
 
-This matters more once `native` exists, because §4.4's structural resets make
+This matters more once `yaml` exists, because §4.4's structural resets make
 "which zone owns this room" a load-time question with a written-down answer,
 and the two loaders would bake different answers into the converted files.
 

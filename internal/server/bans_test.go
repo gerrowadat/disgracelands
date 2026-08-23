@@ -13,7 +13,7 @@ import (
 
 	"github.com/gerrowadat/disgracelands/internal/game"
 	"github.com/gerrowadat/disgracelands/internal/persist/bans"
-	bansnative "github.com/gerrowadat/disgracelands/internal/persist/bans/native"
+	bansyaml "github.com/gerrowadat/disgracelands/internal/persist/bans/yaml"
 	"github.com/gerrowadat/disgracelands/internal/persist/player"
 	"github.com/gerrowadat/disgracelands/internal/persist/player/ascii"
 	"github.com/gerrowadat/disgracelands/internal/persist/player/binary"
@@ -87,11 +87,11 @@ func TestABannedSiteIsRefused(t *testing.T) {
 	turned.expect("You are not welcome here.")
 }
 
-// The same fixture as TestABannedSiteIsRefused, but on native — proving the
-// live path actually reaches bans/native's Store, not just its own
+// The same fixture as TestABannedSiteIsRefused, but on yaml — proving the
+// live path actually reaches bans/yaml's Store, not just its own
 // isolated round-trip test.
-func TestABannedSiteIsRefusedUnderNative(t *testing.T) {
-	banStore, err := bansnative.New(bans.Config{Path: filepath.Join(t.TempDir(), "state")})
+func TestABannedSiteIsRefusedUnderYaml(t *testing.T) {
+	banStore, err := bansyaml.New(bans.Config{Path: filepath.Join(t.TempDir(), "state")})
 	if err != nil {
 		t.Fatal(err)
 	}

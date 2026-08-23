@@ -12,10 +12,10 @@ import (
 
 	"github.com/gerrowadat/disgracelands/internal/game"
 	"github.com/gerrowadat/disgracelands/internal/persist/world"
-	"github.com/gerrowadat/disgracelands/internal/persist/world/native"
+	"github.com/gerrowadat/disgracelands/internal/persist/world/yaml"
 )
 
-// writeReloadableShop writes a minimal native world directory holding one
+// writeReloadableShop writes a minimal yaml world directory holding one
 // zone, one room and one shop at testShopVnum — the shop counterpart to
 // writeReloadableWorld's mobile (reloadmob_test.go). testShopVnum has to
 // fall inside the zone's own range, the same reason writeReloadableWorld
@@ -28,12 +28,12 @@ func writeReloadableShop(t *testing.T, dir string, shop *game.ShopDef) {
 		Rooms: []*game.RoomDef{{Vnum: 9000, Name: "A Room"}},
 		Shops: []*game.ShopDef{shop},
 	}
-	if err := native.WriteManifest(dir, []native.ManifestEntry{{Vnum: int32(zone.Vnum), Enabled: true}}); err != nil {
+	if err := yaml.WriteManifest(dir, []yaml.ManifestEntry{{Vnum: int32(zone.Vnum), Enabled: true}}); err != nil {
 		t.Fatalf("writing zones.yaml: %v", err)
 	}
-	src, err := native.New(world.Config{Dir: dir})
+	src, err := yaml.New(world.Config{Dir: dir})
 	if err != nil {
-		t.Fatalf("native.New: %v", err)
+		t.Fatalf("yaml.New: %v", err)
 	}
 	defer func() { _ = src.Close() }()
 	if err := src.WriteZone(context.Background(), zone, w); err != nil {
@@ -57,7 +57,7 @@ func TestReloadShopCommandEndToEnd(t *testing.T) {
 		ProfitSell: 0.5,
 		Rooms:      []game.RoomVnum{ShopRoom},
 	})
-	srv.worldFormat, srv.worldDir = "native", dir
+	srv.worldFormat, srv.worldDir = "yaml", dir
 
 	addr := listening(t, srv)
 	god := dialClient(t, addr)
@@ -82,7 +82,7 @@ func TestReloadShopCommandUnknownVnumIsRefused(t *testing.T) {
 	srv, _ := newTestServer(t)
 	dir := t.TempDir()
 	writeReloadableShop(t, dir, &game.ShopDef{Vnum: testShopVnum, Keeper: testShopkeeperVnum})
-	srv.worldFormat, srv.worldDir = "native", dir
+	srv.worldFormat, srv.worldDir = "yaml", dir
 
 	addr := listening(t, srv)
 	god := dialClient(t, addr)

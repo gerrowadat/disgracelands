@@ -12,10 +12,10 @@ import (
 
 	"github.com/gerrowadat/disgracelands/internal/game"
 	"github.com/gerrowadat/disgracelands/internal/persist/world"
-	"github.com/gerrowadat/disgracelands/internal/persist/world/native"
+	"github.com/gerrowadat/disgracelands/internal/persist/world/yaml"
 )
 
-// writeReloadableZone writes a native world directory holding testWorld()'s
+// writeReloadableZone writes a yaml world directory holding testWorld()'s
 // own zone 30 (Midgaard, 3000-3099) with room 3001 (MortalStartRoom)
 // changed — the room-level counterpart to writeReloadableWorld's mobile.
 // Zone 30 and room 3001 both already exist in testWorld(), which is what
@@ -25,19 +25,19 @@ func writeReloadableZone(t *testing.T, dir, roomName string) {
 	zone := &game.ZoneDef{Vnum: 30, Name: "Midgaard Reloaded", Bottom: 3000, Top: 3099, Lifespan: 20}
 	w := &game.World{
 		Zones: []*game.ZoneDef{zone},
-		// Zone has to be set explicitly: native.WriteZone files a room
+		// Zone has to be set explicitly: yaml.WriteZone files a room
 		// under the zone this field names, not by re-deriving it from
 		// the vnum range (RoomDef.Zone's own doc comment says the C
 		// sets it at load time the same way; a fresh definition has to
 		// carry it too).
 		Rooms: []*game.RoomDef{{Vnum: 3001, Zone: 30, Name: roomName}},
 	}
-	if err := native.WriteManifest(dir, []native.ManifestEntry{{Vnum: int32(zone.Vnum), Enabled: true}}); err != nil {
+	if err := yaml.WriteManifest(dir, []yaml.ManifestEntry{{Vnum: int32(zone.Vnum), Enabled: true}}); err != nil {
 		t.Fatalf("writing zones.yaml: %v", err)
 	}
-	src, err := native.New(world.Config{Dir: dir})
+	src, err := yaml.New(world.Config{Dir: dir})
 	if err != nil {
-		t.Fatalf("native.New: %v", err)
+		t.Fatalf("yaml.New: %v", err)
 	}
 	defer func() { _ = src.Close() }()
 	if err := src.WriteZone(context.Background(), zone, w); err != nil {
@@ -54,7 +54,7 @@ func TestReloadZoneCommandEndToEnd(t *testing.T) {
 
 	dir := t.TempDir()
 	writeReloadableZone(t, dir, "The Reloaded Temple")
-	srv.worldFormat, srv.worldDir = "native", dir
+	srv.worldFormat, srv.worldDir = "yaml", dir
 
 	addr := listening(t, srv)
 	// The first character on the roster is an implementor and wakes in
@@ -83,7 +83,7 @@ func TestReloadZoneCommandRefusesWithAPlayerPresent(t *testing.T) {
 
 	dir := t.TempDir()
 	writeReloadableZone(t, dir, "The Reloaded Temple")
-	srv.worldFormat, srv.worldDir = "native", dir
+	srv.worldFormat, srv.worldDir = "yaml", dir
 
 	addr := listening(t, srv)
 	god := dialClient(t, addr)

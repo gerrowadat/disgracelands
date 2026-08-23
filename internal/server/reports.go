@@ -37,7 +37,7 @@ func (k *reportKeeper) Write(kind, reporter string, room int32, body string) (bo
 		Kind: reports.Kind(kind), Reporter: reporter, Room: room, Body: body,
 		// A live report is happening now — unlike a report imported from
 		// classic, which genuinely has no recoverable timestamp (see
-		// reports.Report.When and native.Store.Append's own doc comments).
+		// reports.Report.When and yaml.Store.Append's own doc comments).
 		When: time.Now(),
 	})
 }

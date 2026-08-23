@@ -12,7 +12,7 @@ import (
 	"strings"
 )
 
-// Colour markup for the native data format, docs/proposals/data-format.md
+// Colour markup for the yaml data format, docs/design/data-format.md
 // §5. A raw ESC byte cannot appear anywhere in a YAML stream (§5.2), so
 // colour in the data is symbolic: {{red}}, {{bright-red}}, {{/}} for reset,
 // {{sgr:...}} for an arbitrary SGR sequence the named table doesn't cover,

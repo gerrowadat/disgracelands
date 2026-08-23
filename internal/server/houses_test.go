@@ -13,7 +13,7 @@ import (
 
 	"github.com/gerrowadat/disgracelands/internal/game"
 	"github.com/gerrowadat/disgracelands/internal/persist/houses"
-	housesnative "github.com/gerrowadat/disgracelands/internal/persist/houses/native"
+	housesyaml "github.com/gerrowadat/disgracelands/internal/persist/houses/yaml"
 	"github.com/gerrowadat/disgracelands/internal/persist/player"
 	"github.com/gerrowadat/disgracelands/internal/persist/player/ascii"
 	"github.com/gerrowadat/disgracelands/internal/persist/player/binary"
@@ -272,11 +272,11 @@ func TestWhatYouLeaveInYourHouseStaysThere(t *testing.T) {
 	}
 }
 
-// The same fixture as TestWhatYouLeaveInYourHouseStaysThere, on native --
+// The same fixture as TestWhatYouLeaveInYourHouseStaysThere, on yaml --
 // proving the live build/drop/crash-save path actually reaches
-// houses/native's Store.
-func TestWhatYouLeaveInYourHouseStaysThereUnderNative(t *testing.T) {
-	houseStore, err := housesnative.New(houses.Config{ObjectDir: filepath.Join(t.TempDir(), "state")})
+// houses/yaml's Store.
+func TestWhatYouLeaveInYourHouseStaysThereUnderYaml(t *testing.T) {
+	houseStore, err := housesyaml.New(houses.Config{ObjectDir: filepath.Join(t.TempDir(), "state")})
 	if err != nil {
 		t.Fatal(err)
 	}

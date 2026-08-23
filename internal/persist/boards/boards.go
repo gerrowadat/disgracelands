@@ -8,8 +8,8 @@
 // registry of implementations — the same shape internal/persist/world,
 // internal/persist/player and internal/persist/bans use: `classic`
 // (Board_save_board/Board_load_board's raw struct dump, moved to
-// internal/persist/boards/classic without a behaviour change) and `native`
-// (docs/proposals/data-format.md §9's state/boards.yaml).
+// internal/persist/boards/classic without a behaviour change) and `yaml`
+// (docs/design/data-format.md §9's state/boards.yaml).
 //
 // Board *definitions* — which vnum, which levels, which file — are not part
 // of this package: internal/game/board.go's BoardDef table is a hardcoded

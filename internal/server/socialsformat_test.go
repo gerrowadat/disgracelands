@@ -14,13 +14,13 @@ import (
 	"github.com/gerrowadat/disgracelands/internal/persist/socials"
 )
 
-// End to end: LoadText(dir, ..., "native") reads config/socials.yaml, not
+// End to end: LoadText(dir, ..., "yaml") reads config/socials.yaml, not
 // misc/socials, and the real archive's "smile" entry comes back with its
 // real message — proving the wiring (internal/server/text.go's own
 // socials.Load call, the --socials-format flag it is fed from in
 // cmd/dlmud/main.go), not just internal/persist/socials' own codec
 // (already covered by its own real-archive round-trip test).
-func TestNativeSocialsFormatEndToEnd(t *testing.T) {
+func TestYamlSocialsFormatEndToEnd(t *testing.T) {
 	classic, err := socials.Load("classic", "../../data/misc/socials")
 	if err != nil {
 		t.Fatalf("Load(classic): %v", err)
@@ -38,11 +38,11 @@ func TestNativeSocialsFormatEndToEnd(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	if err := socials.Save("native", filepath.Join(dir, "config"), classic); err != nil {
-		t.Fatalf("Save(native): %v", err)
+	if err := socials.Save("yaml", filepath.Join(dir, "config"), classic); err != nil {
+		t.Fatalf("Save(yaml): %v", err)
 	}
 
-	text, err := LoadText(dir, "classic", "native", "classic")
+	text, err := LoadText(dir, "classic", "yaml", "classic")
 	if err != nil {
 		t.Fatalf("LoadText: %v", err)
 	}
@@ -58,6 +58,6 @@ func TestNativeSocialsFormatEndToEnd(t *testing.T) {
 		}
 	}
 	if !found {
-		t.Error(`LoadText(dir, ..., "native") found no "smile" social, want the real archive's`)
+		t.Error(`LoadText(dir, ..., "yaml") found no "smile" social, want the real archive's`)
 	}
 }

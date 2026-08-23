@@ -143,8 +143,8 @@ func TestDemoteANSIUnknownSequenceSurvivesAsSGR(t *testing.T) {
 
 func TestClassicRoundTripSyntheticColour(t *testing.T) {
 	original := "\x1B[31mblood\x1B[0m and \x1B[36mwater\x1B[0m"
-	native := DemoteANSI(original)
-	back := PromoteANSI(native)
+	yaml := DemoteANSI(original)
+	back := PromoteANSI(yaml)
 	if back != original {
 		t.Fatalf("round trip: got %q, want %q", back, original)
 	}

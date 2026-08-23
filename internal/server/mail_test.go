@@ -14,7 +14,7 @@ import (
 
 	"github.com/gerrowadat/disgracelands/internal/game"
 	"github.com/gerrowadat/disgracelands/internal/persist/mail"
-	mailnative "github.com/gerrowadat/disgracelands/internal/persist/mail/native"
+	mailyaml "github.com/gerrowadat/disgracelands/internal/persist/mail/yaml"
 	"github.com/gerrowadat/disgracelands/internal/persist/player"
 	"github.com/gerrowadat/disgracelands/internal/persist/player/ascii"
 	"github.com/gerrowadat/disgracelands/internal/persist/player/binary"
@@ -124,10 +124,10 @@ func TestSendingAndReceivingMail(t *testing.T) {
 	back.expect("Sorry, you don't have any mail waiting.")
 }
 
-// The same fixture as TestSendingAndReceivingMail, on native — proving the
-// live send/receive path actually reaches mail/native's Store.
-func TestSendingAndReceivingMailUnderNative(t *testing.T) {
-	mailStore, err := mailnative.New(mail.Config{Path: filepath.Join(t.TempDir(), "state")})
+// The same fixture as TestSendingAndReceivingMail, on yaml — proving the
+// live send/receive path actually reaches mail/yaml's Store.
+func TestSendingAndReceivingMailUnderYaml(t *testing.T) {
+	mailStore, err := mailyaml.New(mail.Config{Path: filepath.Join(t.TempDir(), "state")})
 	if err != nil {
 		t.Fatal(err)
 	}

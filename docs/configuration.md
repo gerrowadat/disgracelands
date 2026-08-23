@@ -38,24 +38,24 @@ files edited in-game. Back it up; mount it as a volume in a container.
 
 | Flag | Default | Values |
 |---|---|---|
-| `--player-format` | `ascii` | `ascii`, `native` |
-| `--world-format` | `classic` | `classic`, `native` |
-| `--state-format` | `classic` | `classic`, `native` |
-| `--names-format` | `classic` | `classic`, `native` |
-| `--messages-format` | `classic` | `classic`, `native` |
-| `--socials-format` | `classic` | `classic`, `native` |
-| `--help-format` | `classic` | `classic`, `native` |
+| `--player-format` | `ascii` | `ascii`, `yaml` |
+| `--world-format` | `classic` | `classic`, `yaml` |
+| `--state-format` | `classic` | `classic`, `yaml` |
+| `--names-format` | `classic` | `classic`, `yaml` |
+| `--messages-format` | `classic` | `classic`, `yaml` |
+| `--socials-format` | `classic` | `classic`, `yaml` |
+| `--help-format` | `classic` | `classic`, `yaml` |
 
 `ascii` is the ascii_pfiles 2.1 one-text-file-per-player format. `classic`
 is the original CircleMUD `.wld`/`.mob`/`.obj`/`.zon`/`.shp` flat-file world.
 Both are what the archived `data/` is kept in, and both remain the default
 so pointing the server at it needs no conversion step.
 
-`native` is the YAML-over-JSON format `docs/proposals/data-format.md`
+`yaml` is the YAML-over-JSON format `docs/design/data-format.md`
 describes — for the world, one file per zone; for players, one file per
 character, folding in the roster entry and the rent/crash file both (§8) —
 read and written directly by the server, no conversion step needed to run
-on it once converted. `--player-format=native` is also what turns on real
+on it once converted. `--player-format=yaml` is also what turns on real
 container nesting (an item saved inside a bag comes back inside it): every
 other player format's on-disk shape has nowhere to record that, a
 deliberate, documented deviation — see `docs/deviations.md`, "Renting
@@ -74,7 +74,7 @@ dlctl pfile convert --from=binary --from-dir=data/etc \
                     --to=ascii    --to-dir=data/pfiles
 ```
 
-— or into `native`, which also carries over any rent/crash file (read via
+— or into `yaml`, which also carries over any rent/crash file (read via
 `binary`, since rent files are not pluggable the way the roster is — one
 format for them regardless of `--player-format`, matching the C):
 
@@ -84,7 +84,7 @@ dlctl pfile import --from-dir=data/etc --to-dir=data/players
 
 `--state-format` covers bans, boards, mail, player housing, the mud
 clock and the bug/idea/typo reports together — one flag, since they end
-up in one directory (`data/state/` under `native`) and there is no
+up in one directory (`data/state/` under `yaml`) and there is no
 reason to convert boards without mail. Convert an existing set once:
 
 ```sh
@@ -93,7 +93,7 @@ dlctl state import --from-dir=data/etc --from-house-dir=data/house \
 ```
 
 `--names-format` covers the disallowed-name list on its own
-(`misc/xnames` under `classic`, `data/config/names.yaml` under `native`)
+(`misc/xnames` under `classic`, `data/config/names.yaml` under `yaml`)
 — its own flag because `config/` is a different directory than `state/`
 is, not one that happens to move with the five stores above. Convert an
 existing list once:
@@ -104,7 +104,7 @@ dlctl names import --from-path=data/misc/xnames --to-dir=data/config
 
 `--messages-format` covers the `skill_message`/`dam_message` table on its
 own (`misc/messages` under `classic`, `data/config/messages.yaml` under
-`native`) — its own flag for the same reason `--names-format` is: it
+`yaml`) — its own flag for the same reason `--names-format` is: it
 shares `config/` with the disallowed-name list, but the two are otherwise
 unrelated administrative concerns and do not need to move together.
 Convert an existing table once:
@@ -114,7 +114,7 @@ dlctl messages import --from-path=data/misc/messages --to-dir=data/config
 ```
 
 `--socials-format` covers the `do_action` table on its own (`misc/socials`
-under `classic`, `data/config/socials.yaml` under `native`) — its own
+under `classic`, `data/config/socials.yaml` under `yaml`) — its own
 flag for the same reason `--messages-format` is: it shares `config/`
 with the disallowed-name list and the damage-message table, but the
 three are otherwise unrelated administrative concerns and do not need to
@@ -126,7 +126,7 @@ dlctl socials import --from-path=data/misc/socials --to-dir=data/config
 
 `--help-format` covers the help database — `text/help/index` plus the
 `.hlp` files it lists under `classic`, `text/help/help.yaml` plus one
-`.txt` file per entry under `native`. Unlike the three flags above, both
+`.txt` file per entry under `yaml`. Unlike the three flags above, both
 formats live in the *same* directory rather than `misc/` versus
 `config/`: they simply never read each other's files, so a converted
 tree can sit right beside the classic one it came from. Convert an
@@ -149,6 +149,17 @@ server should be stuck behind. See
 See `docs/investigations/ascii-pfile-format.md` for what the ascii format
 contains, and `docs/proposals/go-port-plan.md` §5 for why formats are
 pluggable at all.
+
+### The yaml format's own version
+
+`--lib-dir`'s directory may hold a `.dlversion` stamp — `major.minor.patch`
+for the yaml format packages, not a flag and not per-subsystem; see
+`docs/design/data-format-versioning.md`. If present, `dlmud` checks it once
+at boot: a newer *major* than this build understands is a fatal error before
+anything else opens, a newer *minor* is a logged warning and the server
+starts anyway, and anything else is silent. `dlctl data version --dir=<lib-
+dir>` answers the same question without starting a server, and `--write`
+stamps a directory that predates the mechanism.
 
 An unknown format name is rejected at startup rather than deep inside boot.
 

@@ -18,7 +18,7 @@ import (
 
 // cmdHelpImport converts text/help/index plus the .hlp files it lists
 // into text/help/help.yaml plus one .txt file per entry, step 6c of
-// docs/proposals/data-format.md §7 — its own command, separate from
+// docs/design/data-format.md §7 — its own command, separate from
 // `messages import`/`socials import`/`names import`, because
 // --help-format moves independently of them (see
 // internal/config/config.go's own comment on why). Named "helpdb", not
@@ -27,7 +27,7 @@ import (
 //
 // Unlike those three, --to-dir defaults to the same directory as
 // --from-dir, mirroring `world import`'s own default (data/world for
-// both): classic and native share text/help/ itself, distinguished by
+// both): classic and yaml share text/help/ itself, distinguished by
 // which files are present rather than by directory
 // (internal/persist/help's own package doc explains why), so converting
 // in place leaves index/*.hlp inert beside the new files rather than
@@ -35,7 +35,7 @@ import (
 func cmdHelpImport(args []string) error {
 	fs := flag.NewFlagSet("helpdb import", flag.ContinueOnError)
 	fromDir := fs.String("from-dir", "data/text/help", "Source (classic) help directory")
-	toDir := fs.String("to-dir", "data/text/help", "Destination (native) help directory")
+	toDir := fs.String("to-dir", "data/text/help", "Destination (yaml) help directory")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
@@ -44,8 +44,8 @@ func cmdHelpImport(args []string) error {
 	if err != nil {
 		return fmt.Errorf("reading %s: %w", *fromDir, err)
 	}
-	if err := help.Save("native", *toDir, entries); err != nil {
-		return fmt.Errorf("writing %s: %w", filepath.Join(*toDir, help.NativeFile), err)
+	if err := help.Save("yaml", *toDir, entries); err != nil {
+		return fmt.Errorf("writing %s: %w", filepath.Join(*toDir, help.YamlFile), err)
 	}
 
 	out := bufio.NewWriter(os.Stdout)
@@ -53,20 +53,20 @@ func cmdHelpImport(args []string) error {
 	return out.Flush()
 }
 
-// cmdHelpFmt canonicalises a native help directory in place.
+// cmdHelpFmt canonicalises a yaml help directory in place.
 func cmdHelpFmt(args []string) error {
 	fs := flag.NewFlagSet("helpdb fmt", flag.ContinueOnError)
-	dir := fs.String("help-dir", "data/text/help", "Native help directory")
+	dir := fs.String("help-dir", "data/text/help", "Yaml help directory")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
 
-	entries, err := help.Load("native", *dir)
+	entries, err := help.Load("yaml", *dir)
 	if err != nil {
-		return fmt.Errorf("reading %s: %w", filepath.Join(*dir, help.NativeFile), err)
+		return fmt.Errorf("reading %s: %w", filepath.Join(*dir, help.YamlFile), err)
 	}
-	if err := help.Save("native", *dir, entries); err != nil {
-		return fmt.Errorf("writing %s: %w", filepath.Join(*dir, help.NativeFile), err)
+	if err := help.Save("yaml", *dir, entries); err != nil {
+		return fmt.Errorf("writing %s: %w", filepath.Join(*dir, help.YamlFile), err)
 	}
 	return nil
 }

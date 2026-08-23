@@ -145,7 +145,7 @@ would need its own scoping pass.
 |---|---|
 | **C** | `Crash_listrent`'s first line of output is `fname` — the on-disk path `get_filename` built for this exact rent-file format, e.g. `plrobjs/A-E/tenant.objs`. |
 | **Go** | The listing starts straight from the rent code ("Rent"/"Crash"/"Cryo"/"TimedOut"/"Undef"); no path line at all. |
-| **Why** | The player format is pluggable (`binary`/`ascii`/`native`), each with its own `ObjectStore` and its own idea of where a rent file lives — some of which, `native`'s, may not be a bare filesystem path at all. There is no one path to print without `session.Operator.ShowRent` reaching past the seam into a specific store's internals, which the interface exists to prevent. |
+| **Why** | The player format is pluggable (`binary`/`ascii`/`yaml`), each with its own `ObjectStore` and its own idea of where a rent file lives — some of which, `yaml`'s, may not be a bare filesystem path at all. There is no one path to print without `session.Operator.ShowRent` reaching past the seam into a specific store's internals, which the interface exists to prevent. |
 | **Where** | `internal/session/wizshow.go`'s `showRent`, `internal/server/operator.go`'s `Server.ShowRent`. |
 
 ### `show shops`'s detail view does not wrap long lists
@@ -397,8 +397,8 @@ Listed here so they are not mistaken for deliberate differences.
   **`hop` is not among them**: it is the one `do_action` row the shipped
   socials file does not fill, and `RegisterSocials` gives it a command
   anyway that answers "That action is not supported." — which is what the C
-  does too. `alias` is off this list now — landed with the native player
-  format (step 5 of `docs/proposals/data-format.md`), including
+  does too. `alias` is off this list now — landed with the yaml player
+  format (step 5 of `docs/design/data-format.md`), including
   `perform_alias`'s complex substitution grammar (`;`/`$1`-`$9`/`$*`/`$$`).
   `bug`/`idea`/`typo` are off it too — `do_gen_write` (step 6b), see the
   reports entry below. `tedit` is off it too — Phase 6's first slice, see
@@ -412,7 +412,7 @@ Listed here so they are not mistaken for deliberate differences.
 
   Its persistence is not quite everywhere the roster is, though: an
   alias survives a save under `ascii` (it grew an `Aliases:`-tagged section
-  for exactly this) and `native` (folded into the one file, §8), but
+  for exactly this) and `yaml` (folded into the one file, §8), but
   **`binary` has no `plralias`-equivalent codec at all** — `alias.c`'s
   format is a separate file the C keeps regardless of pfile format, and
   zero archived instances of it exist anywhere in `data/` to build or
@@ -766,24 +766,24 @@ Listed here so they are not mistaken for deliberate differences.
   test (`TestRentingEmptiesYourBags`) asserting it so that nobody "fixes" it
   for those two formats.
 
-  **`native` fixes it, as a deliberate, user-approved deviation (step 5 of
-  `docs/proposals/data-format.md`, scoped explicitly for this).**
+  **`yaml` fixes it, as a deliberate, user-approved deviation (step 5 of
+  `docs/design/data-format.md`, scoped explicitly for this).**
   `internal/server/rent.go`'s object tree was never actually thrown away at
   runtime — `game.Object.Contents` holds real containment the whole time a
   character is in the world — it was only the round trip through storage
   that flattened it. `player.StoredObject` gained a `Contains` field that
   `binary`/`ascii` still always leave empty (their on-disk shape genuinely
   cannot hold it, so those two are unchanged, byte for byte, and the test
-  above proves it), but that `native`'s codec, and `rent.go`'s
+  above proves it), but that `yaml`'s codec, and `rent.go`'s
   `storedTreeFrom`/`restoreOneObject`, populate and honour for real. Running
-  `--player-format=native` is what turns this on —
-  `TestRentingUnderNativeKeepsTheRingInTheBag` is the same fixture as the
-  `ascii`/`binary` test above, quit and logged back in under `native`,
+  `--player-format=yaml` is what turns this on —
+  `TestRentingUnderYamlKeepsTheRingInTheBag` is the same fixture as the
+  `ascii`/`binary` test above, quit and logged back in under `yaml`,
   asserting the opposite outcome. Stock auto-equip (putting worn items back
   *on the body*, the other half of what `USE_AUTOEQ` would have covered) is
   **not** part of this fix — that's a separate deviation nobody has signed
   off on, so worn items still come back loose in inventory under every
-  format, `native` included; see `internal/persist/player/native/doc.go`'s
+  format, `yaml` included; see `internal/persist/player/yaml/doc.go`'s
   package comment for why there is deliberately no `equipment:` section.
 
 - **A dropped link crash-saves.** The C leaves a linkdead body standing and

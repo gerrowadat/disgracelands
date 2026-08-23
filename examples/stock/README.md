@@ -16,7 +16,7 @@ them.
   (sha256 `1cd2cf0268c27dd6e6ae4d996a620bbd56da2552beb434bf372b4c01cd8bb415`)
   — see PR #29 for why `data/` is stock rather than the archive's own world.
 - **`yaml/`** is the same world, converted through this project's own
-  native YAML format (`docs/proposals/data-format.md`), one file per zone
+  yaml format (`docs/design/data-format.md`), one file per zone
   plus `config/`, `state/` and `text/help/help.yaml`.
 
 ## How `yaml/` was produced
@@ -35,7 +35,7 @@ go run ./cmd/dlctl helpdb import   --from-dir=examples/stock/binary/text/help   
 ```
 
 `text/`'s eleven plain-text files (`motd`, `credits`, `greetings`, ...) are
-not a pluggable format — both classic and native read them from the same
+not a pluggable format — both classic and yaml read them from the same
 `text/<name>` path regardless of `--*-format` (`internal/server/text.go`)
 — so they are copied across unchanged rather than converted. `binary/`'s
 own roster, mail, boards, bans and houses are all empty (a fresh stock
@@ -51,9 +51,9 @@ same way nothing checks `data/`'s own single copy against anything.
 
 ```sh
 go run ./cmd/dlctl world lint --world-dir=examples/stock/binary/world --world-format=classic
-go run ./cmd/dlctl world lint --world-dir=examples/stock/yaml/world   --world-format=native
+go run ./cmd/dlctl world lint --world-dir=examples/stock/yaml/world   --world-format=yaml
 go run ./cmd/dlctl world dump --world-dir=examples/stock/binary/world --world-format=classic --out=/tmp/binary.json
-go run ./cmd/dlctl world dump --world-dir=examples/stock/yaml/world   --world-format=native   --out=/tmp/yaml.json
+go run ./cmd/dlctl world dump --world-dir=examples/stock/yaml/world   --world-format=yaml   --out=/tmp/yaml.json
 diff /tmp/binary.json /tmp/yaml.json
 ```
 
@@ -63,7 +63,7 @@ line before its closing `~` (a sign or note with a trailing blank line —
 45 lines out of the world's ~130,000-line dump here) loses that one blank
 line on the way through `goccy/go-yaml`'s literal-block re-print, which
 cannot be made to honour a `|+` "keep" chomping indicator. See
-`docs/proposals/data-format.md` §12, "A second, genuinely lossy transform"
+`docs/design/data-format.md` §12, "A second, genuinely lossy transform"
 for the mechanism — this is the same finding at a larger sample size (the
 real corpus that section cites has 3 such strings out of 12,372; stock's
 own sign/note-heavy zones have more).
@@ -73,9 +73,9 @@ own sign/note-heavy zones have more).
 ```sh
 go run ./cmd/dlmud --lib-dir=examples/stock/binary --listen-telnet=:4000
 go run ./cmd/dlmud --lib-dir=examples/stock/yaml --listen-telnet=:4000 \
-  --world-format=native --state-format=native \
-  --names-format=native --messages-format=native \
-  --socials-format=native --help-format=native
+  --world-format=yaml --state-format=yaml \
+  --names-format=yaml --messages-format=yaml \
+  --socials-format=yaml --help-format=yaml
 ```
 
 `--player-format` is left at its default (`ascii`) in both: there is no

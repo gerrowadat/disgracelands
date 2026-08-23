@@ -7,7 +7,7 @@
 // Package reports defines the pluggable bug/idea/typo report interface and
 // the registry of implementations, the same shape internal/persist/bans
 // (and boards, mail, houses) use: `classic` (do_gen_write's three
-// append-only text logs, act.other.c:867-924) and `native` (docs/proposals/
+// append-only text logs, act.other.c:867-924) and `yaml` (docs/design/
 // data-format.md §9's state/reports.yaml).
 package reports
 
@@ -42,7 +42,7 @@ type Report struct {
 	// classic: asctime's own 6-character slice in that format holds only a
 	// month and day, with no year, so a full timestamp cannot be
 	// reconstructed from it — the same "omitempty, matches classic's
-	// own... case" posture bans/native's When field already takes,
+	// own... case" posture bans/yaml's When field already takes,
 	// reused here rather than inventing a false precision.
 	When time.Time
 }
@@ -68,7 +68,7 @@ type Store interface {
 
 // Config is what a factory needs to open a store.
 type Config struct {
-	// Dir holds classic's three files (bugs/ideas/typos) or native's one
+	// Dir holds classic's three files (bugs/ideas/typos) or yaml's one
 	// reports.yaml.
 	Dir      string
 	ReadOnly bool

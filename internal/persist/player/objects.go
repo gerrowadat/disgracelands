@@ -120,9 +120,9 @@ type StoredObject struct {
 	// — see docs/deviations.md. binary and ascii reproduce that on-disk
 	// shape exactly and this field is always nil for both: their SaveObjects
 	// flattens depth-first the way Crash_save always has, and their
-	// LoadObjects has nothing on disk to populate it from. Only native's
+	// LoadObjects has nothing on disk to populate it from. Only yaml's
 	// codec, and internal/server/rent.go's tree-building/restoring, ever
-	// set or read this — running --player-format=native is what turns real
+	// set or read this — running --player-format=yaml is what turns real
 	// containment on, as a deliberate, format-gated deviation rather than a
 	// change to what ascii/binary have always done.
 	Contains []StoredObject

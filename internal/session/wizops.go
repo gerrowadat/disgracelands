@@ -64,7 +64,7 @@ type Operator interface {
 // switch produces ("Rent"/"Crash"/"Cryo"/"TimedOut"/"Undef") and the vnums
 // the file held, in file order. The rent file's own path is not part of it —
 // unlike the C's single fixed format, this port's player format is pluggable
-// (binary/ascii/native), so there is no one filesystem path to print; see
+// (binary/ascii/yaml), so there is no one filesystem path to print; see
 // docs/deviations.md.
 type RentListing struct {
 	Code  string

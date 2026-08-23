@@ -7,9 +7,9 @@
 // Package bans defines the pluggable site-ban interface and the registry of
 // implementations — the same shape internal/persist/world and
 // internal/persist/player use, applied to the smallest of the "rest of the
-// state" formats (docs/proposals/data-format.md §9): `classic` (ban.c's
+// state" formats (docs/design/data-format.md §9): `classic` (ban.c's
 // four-whitespace-fields-per-line text file, moved to internal/persist/
-// bans/classic without a behaviour change) and `native` (docs/proposals/
+// bans/classic without a behaviour change) and `yaml` (docs/design/
 // data-format.md §9's state/bans.yaml).
 package bans
 
@@ -40,7 +40,7 @@ const (
 // out-of-range answer and is never written to a file.
 var typeNames = []string{"no", "new", "select", "all"}
 
-// String names the type as the classic file spells it — reused by native's
+// String names the type as the classic file spells it — reused by yaml's
 // symbolic `type:` field too, since the names are already exactly the
 // lower_snake_case-free single words §4.1's naming convention wants.
 func (t Type) String() string {
@@ -51,7 +51,7 @@ func (t Type) String() string {
 }
 
 // ParseType reads a type name, as `ban` does from what a god typed, and as
-// native's reader does from a file.
+// yaml's reader does from a file.
 func ParseType(s string) (Type, bool) {
 	for i, name := range typeNames {
 		if strings.EqualFold(s, name) {
@@ -62,7 +62,7 @@ func ParseType(s string) (Type, bool) {
 }
 
 // MaxSiteLength is BANNED_SITE_LENGTH (ban.h), and classic truncates to it.
-// native is not fixed-width and does not need to, but the limit is
+// yaml is not fixed-width and does not need to, but the limit is
 // reported through Capabilities all the same, matching player.Store's
 // posture: a format that cannot hold something says so rather than
 // truncating silently.
@@ -102,7 +102,7 @@ type Store interface {
 
 // Config is what a factory needs to open a store.
 type Config struct {
-	// Path is the ban file (classic) or data directory (native).
+	// Path is the ban file (classic) or data directory (yaml).
 	Path string
 	// ReadOnly opens the store for inspection only.
 	ReadOnly bool

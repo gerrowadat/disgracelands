@@ -49,34 +49,34 @@ type Config struct {
 	PlayerFormat string
 	WorldFormat  string
 	// StateFormat covers boards, mail, houses and bans together
-	// (docs/proposals/data-format.md §9, step 6a) — one flag, because they
+	// (docs/design/data-format.md §9, step 6a) — one flag, because they
 	// are one directory in practice and there is no reason to convert one
 	// without the others.
 	StateFormat string
 	// NamesFormat covers the xnames disallowed-name list
-	// (docs/proposals/data-format.md §9, step 6b) — its own flag rather
-	// than folded into StateFormat, because native's config/names.yaml is
+	// (docs/design/data-format.md §9, step 6b) — its own flag rather
+	// than folded into StateFormat, because yaml's config/names.yaml is
 	// a different directory than state/ is: config/ is where game config,
 	// socials and messages will eventually join it too, whenever each of
 	// those lands.
 	NamesFormat string
 	// MessagesFormat covers the skill_message/dam_message table
-	// (docs/proposals/data-format.md §9, step 6c) — its own flag rather
+	// (docs/design/data-format.md §9, step 6c) — its own flag rather
 	// than sharing NamesFormat's: the two live in the same config/
 	// directory but are otherwise unrelated administrative concerns (a
 	// moderation list versus combat flavour text), the same reasoning
 	// that kept them from sharing StateFormat's "one directory, one
 	// flag" grouping in the first place.
 	MessagesFormat string
-	// SocialsFormat covers the do_action table (docs/proposals/
+	// SocialsFormat covers the do_action table (docs/design/
 	// data-format.md §9, step 6c) — its own flag for the same reason
 	// MessagesFormat is not folded into NamesFormat: config/ groups
 	// several unrelated administrative concerns in one directory, and
 	// each moves on its own schedule.
 	SocialsFormat string
-	// HelpFormat covers text/help (docs/proposals/data-format.md §7) —
+	// HelpFormat covers text/help (docs/design/data-format.md §7) —
 	// its own flag too, though unlike Names/Messages/SocialsFormat it
-	// does not live under config/: classic and native share text/help/
+	// does not live under config/: classic and yaml share text/help/
 	// itself, distinguished by which files are present rather than by
 	// directory.
 	HelpFormat string
@@ -154,20 +154,20 @@ func (c *Config) WorldPath() string {
 // authoritative list is the registry in internal/persist; until those
 // packages exist, this is the list.
 var (
-	// The server runs on ascii, native, or better. The binary format stays
+	// The server runs on ascii, yaml, or better. The binary format stays
 	// readable and writable by the tooling — conversion needs both
 	// directions — but a live server will not start on it: its password
 	// field is eleven bytes, so a modern credential cannot be stored at
 	// all, and every other field is fixed-width. See
-	// docs/proposals/go-port-plan.md §5.2.
-	knownPlayerFormats   = []string{"ascii", "binary", "native"}
-	serverPlayerFormats  = []string{"ascii", "native"}
-	knownWorldFormats    = []string{"classic", "native"}
-	knownStateFormats    = []string{"classic", "native"}
-	knownNamesFormats    = []string{"classic", "native"}
-	knownMessagesFormats = []string{"classic", "native"}
-	knownSocialsFormats  = []string{"classic", "native"}
-	knownHelpFormats     = []string{"classic", "native"}
+	// docs/design/data-format.md §5.2.
+	knownPlayerFormats   = []string{"ascii", "binary", "yaml"}
+	serverPlayerFormats  = []string{"ascii", "yaml"}
+	knownWorldFormats    = []string{"classic", "yaml"}
+	knownStateFormats    = []string{"classic", "yaml"}
+	knownNamesFormats    = []string{"classic", "yaml"}
+	knownMessagesFormats = []string{"classic", "yaml"}
+	knownSocialsFormats  = []string{"classic", "yaml"}
+	knownHelpFormats     = []string{"classic", "yaml"}
 	knownLogFormats      = []string{"text", "json"}
 )
 

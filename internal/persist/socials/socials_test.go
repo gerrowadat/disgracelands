@@ -26,17 +26,17 @@ func TestLoadClassicMissingFileIsEmptyNotError(t *testing.T) {
 	}
 }
 
-func TestLoadNativeMissingFileIsEmptyNotError(t *testing.T) {
-	got, err := Load("native", t.TempDir())
+func TestLoadYamlMissingFileIsEmptyNotError(t *testing.T) {
+	got, err := Load("yaml", t.TempDir())
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
 	if got != nil {
-		t.Errorf("Load(missing native) = %v, want nil", got)
+		t.Errorf("Load(missing yaml) = %v, want nil", got)
 	}
 }
 
-func TestNativeRoundTrips(t *testing.T) {
+func TestYamlRoundTrips(t *testing.T) {
 	dir := t.TempDir()
 	want := []game.Social{
 		{
@@ -67,10 +67,10 @@ func TestNativeRoundTrips(t *testing.T) {
 		},
 	}
 
-	if err := Save("native", dir, want); err != nil {
+	if err := Save("yaml", dir, want); err != nil {
 		t.Fatalf("Save: %v", err)
 	}
-	got, err := Load("native", dir)
+	got, err := Load("yaml", dir)
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
@@ -79,14 +79,14 @@ func TestNativeRoundTrips(t *testing.T) {
 	}
 }
 
-func TestNativeOmitsBlocksTheClassicParserNeverPopulates(t *testing.T) {
+func TestYamlOmitsBlocksTheClassicParserNeverPopulates(t *testing.T) {
 	dir := t.TempDir()
-	if err := Save("native", dir, []game.Social{
+	if err := Save("yaml", dir, []game.Social{
 		{Name: "beg", MinVictimPosition: game.PosStanding, CharNoArg: "You beg."},
 	}); err != nil {
 		t.Fatalf("Save: %v", err)
 	}
-	b, err := os.ReadFile(filepath.Join(dir, NativeFile))
+	b, err := os.ReadFile(filepath.Join(dir, YamlFile))
 	if err != nil {
 		t.Fatalf("reading raw file: %v", err)
 	}
@@ -97,13 +97,13 @@ func TestNativeOmitsBlocksTheClassicParserNeverPopulates(t *testing.T) {
 	}
 }
 
-func TestNativeUnknownPositionIsAnError(t *testing.T) {
+func TestYamlUnknownPositionIsAnError(t *testing.T) {
 	dir := t.TempDir()
 	fixture := "schema: dl/socials@1\nsocials:\n- command: nonsense\n  hide: false\n  min_victim_position: nonsense\n"
-	if err := os.WriteFile(filepath.Join(dir, NativeFile), []byte(fixture), 0o600); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, YamlFile), []byte(fixture), 0o600); err != nil {
 		t.Fatalf("writing fixture: %v", err)
 	}
-	if _, err := Load("native", dir); err == nil {
+	if _, err := Load("yaml", dir); err == nil {
 		t.Error("Load with an unrecognised min_victim_position succeeded, want an error")
 	}
 }
@@ -124,9 +124,9 @@ func TestUnknownFormatIsRefused(t *testing.T) {
 }
 
 // Against the real archive: classic parses it (already covered by
-// game.ParseSocials's own tests), and importing it into native and reading
+// game.ParseSocials's own tests), and importing it into yaml and reading
 // it back produces byte-identical records.
-func TestClassicToNativeImportAgainstTheRealArchive(t *testing.T) {
+func TestClassicToYamlImportAgainstTheRealArchive(t *testing.T) {
 	classic, err := Load("classic", "../../../data/misc/socials")
 	if err != nil {
 		t.Fatalf("Load(classic): %v", err)
@@ -136,14 +136,14 @@ func TestClassicToNativeImportAgainstTheRealArchive(t *testing.T) {
 	}
 
 	dir := t.TempDir()
-	if err := Save("native", dir, classic); err != nil {
-		t.Fatalf("Save(native): %v", err)
+	if err := Save("yaml", dir, classic); err != nil {
+		t.Fatalf("Save(yaml): %v", err)
 	}
-	native, err := Load("native", dir)
+	yaml, err := Load("yaml", dir)
 	if err != nil {
-		t.Fatalf("Load(native): %v", err)
+		t.Fatalf("Load(yaml): %v", err)
 	}
-	if !reflect.DeepEqual(native, classic) {
-		t.Fatalf("native round-trip does not match the classic parse")
+	if !reflect.DeepEqual(yaml, classic) {
+		t.Fatalf("yaml round-trip does not match the classic parse")
 	}
 }

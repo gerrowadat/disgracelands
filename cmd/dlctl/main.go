@@ -54,6 +54,11 @@ var commands = []command{
 		run:     cmdConvert,
 	},
 	{
+		name:    "data version",
+		summary: "Show or check the yaml data format's own version (docs/design/data-format-versioning.md)",
+		run:     cmdDataVersion,
+	},
+	{
 		name:    "parity session",
 		summary: "Play a script against both servers and diff what they say",
 		run:     cmdParitySession,
@@ -70,12 +75,12 @@ var commands = []command{
 	},
 	{
 		name:    "world import",
-		summary: "Convert a classic world directory into native (docs/proposals/data-format.md)",
+		summary: "Convert a classic world directory into yaml (docs/design/data-format.md)",
 		run:     cmdWorldImport,
 	},
 	{
 		name:    "world fmt",
-		summary: "Canonicalise a native world directory in place",
+		summary: "Canonicalise a yaml world directory in place",
 		run:     cmdWorldFmt,
 	},
 	{
@@ -100,52 +105,52 @@ var commands = []command{
 	},
 	{
 		name:    "pfile import",
-		summary: "Convert a player roster into native, folding in rent/crash files (docs/proposals/data-format.md)",
+		summary: "Convert a player roster into yaml, folding in rent/crash files (docs/design/data-format.md)",
 		run:     cmdPfileImport,
 	},
 	{
 		name:    "pfile fmt",
-		summary: "Canonicalise a native player directory in place",
+		summary: "Canonicalise a yaml player directory in place",
 		run:     cmdPfileFmt,
 	},
 	{
 		name:    "state import",
-		summary: "Convert bans, boards, mail, houses, reports and the clock into native together (docs/proposals/data-format.md)",
+		summary: "Convert bans, boards, mail, houses, reports and the clock into yaml together (docs/design/data-format.md)",
 		run:     cmdStateImport,
 	},
 	{
 		name:    "state fmt",
-		summary: "Canonicalise a native state directory in place",
+		summary: "Canonicalise a yaml state directory in place",
 		run:     cmdStateFmt,
 	},
 	{
 		name:    "names import",
-		summary: "Convert misc/xnames into config/names.yaml (docs/proposals/data-format.md)",
+		summary: "Convert misc/xnames into config/names.yaml (docs/design/data-format.md)",
 		run:     cmdNamesImport,
 	},
 	{
 		name:    "names fmt",
-		summary: "Canonicalise a native config/names.yaml in place",
+		summary: "Canonicalise a yaml config/names.yaml in place",
 		run:     cmdNamesFmt,
 	},
 	{
 		name:    "messages import",
-		summary: "Convert misc/messages into config/messages.yaml (docs/proposals/data-format.md)",
+		summary: "Convert misc/messages into config/messages.yaml (docs/design/data-format.md)",
 		run:     cmdMessagesImport,
 	},
 	{
 		name:    "messages fmt",
-		summary: "Canonicalise a native config/messages.yaml in place",
+		summary: "Canonicalise a yaml config/messages.yaml in place",
 		run:     cmdMessagesFmt,
 	},
 	{
 		name:    "socials import",
-		summary: "Convert misc/socials into config/socials.yaml (docs/proposals/data-format.md)",
+		summary: "Convert misc/socials into config/socials.yaml (docs/design/data-format.md)",
 		run:     cmdSocialsImport,
 	},
 	{
 		name:    "socials fmt",
-		summary: "Canonicalise a native config/socials.yaml in place",
+		summary: "Canonicalise a yaml config/socials.yaml in place",
 		run:     cmdSocialsFmt,
 	},
 	{
@@ -157,12 +162,12 @@ var commands = []command{
 		// internal/server/text.go's own Reload doc comment already uses
 		// for this data ("xhelp is the help *database*").
 		name:    "helpdb import",
-		summary: "Convert text/help/index and its .hlp files into text/help/help.yaml (docs/proposals/data-format.md)",
+		summary: "Convert text/help/index and its .hlp files into text/help/help.yaml (docs/design/data-format.md)",
 		run:     cmdHelpImport,
 	},
 	{
 		name:    "helpdb fmt",
-		summary: "Canonicalise a native text/help/help.yaml in place",
+		summary: "Canonicalise a yaml text/help/help.yaml in place",
 		run:     cmdHelpFmt,
 	},
 }

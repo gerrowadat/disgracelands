@@ -111,8 +111,8 @@ func (s *Server) loadObjects(ctx context.Context, c *game.Character) (lost bool,
 // objfile.go). A RentFile those formats produced always has Contains nil at
 // every StoredObject, which is exactly the input that makes restoreOneObject
 // behave that way — it does not need to know which format loaded the file.
-// native is the only format that ever populates Contains (see
-// player.StoredObject's doc comment), and running --player-format=native is
+// yaml is the only format that ever populates Contains (see
+// player.StoredObject's doc comment), and running --player-format=yaml is
 // what turns real containment on: an item whose record has Contains restores
 // *inside* the container rebuilt for it, rather than loose.
 //

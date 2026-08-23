@@ -12,10 +12,10 @@ import (
 
 	"github.com/gerrowadat/disgracelands/internal/game"
 	"github.com/gerrowadat/disgracelands/internal/persist/world"
-	"github.com/gerrowadat/disgracelands/internal/persist/world/native"
+	"github.com/gerrowadat/disgracelands/internal/persist/world/yaml"
 )
 
-// writeReloadableObject writes a minimal native world directory holding one
+// writeReloadableObject writes a minimal yaml world directory holding one
 // zone, one room and one object at testSwordVnum — the object counterpart
 // to writeReloadableWorld's mobile (reloadmob_test.go). testSwordVnum has
 // to fall inside the zone's own range, the same reason writeReloadableWorld
@@ -28,12 +28,12 @@ func writeReloadableObject(t *testing.T, dir string, obj *game.ObjDef) {
 		Rooms:   []*game.RoomDef{{Vnum: 1, Name: "A Room"}},
 		Objects: []*game.ObjDef{obj},
 	}
-	if err := native.WriteManifest(dir, []native.ManifestEntry{{Vnum: int32(zone.Vnum), Enabled: true}}); err != nil {
+	if err := yaml.WriteManifest(dir, []yaml.ManifestEntry{{Vnum: int32(zone.Vnum), Enabled: true}}); err != nil {
 		t.Fatalf("writing zones.yaml: %v", err)
 	}
-	src, err := native.New(world.Config{Dir: dir})
+	src, err := yaml.New(world.Config{Dir: dir})
 	if err != nil {
-		t.Fatalf("native.New: %v", err)
+		t.Fatalf("yaml.New: %v", err)
 	}
 	defer func() { _ = src.Close() }()
 	if err := src.WriteZone(context.Background(), zone, w); err != nil {
@@ -60,7 +60,7 @@ func TestReloadObjCommandEndToEnd(t *testing.T) {
 		Cost:        200,
 		Values:      [game.NumObjValues]int32{0, 3, 8, 3},
 	})
-	srv.worldFormat, srv.worldDir = "native", dir
+	srv.worldFormat, srv.worldDir = "yaml", dir
 
 	addr := listening(t, srv)
 	god := dialClient(t, addr)
@@ -100,7 +100,7 @@ func TestReloadObjCommandUnknownVnumIsRefused(t *testing.T) {
 	srv, _ := newTestServer(t)
 	dir := t.TempDir()
 	writeReloadableObject(t, dir, &game.ObjDef{Vnum: testSwordVnum, ShortDesc: "a long sword"})
-	srv.worldFormat, srv.worldDir = "native", dir
+	srv.worldFormat, srv.worldDir = "yaml", dir
 
 	addr := listening(t, srv)
 	god := dialClient(t, addr)

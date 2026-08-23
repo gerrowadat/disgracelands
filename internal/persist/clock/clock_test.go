@@ -75,24 +75,24 @@ func TestClassicRoundTrips(t *testing.T) {
 	}
 }
 
-func TestNativeLoadMissingFileIsDefaultEpoch(t *testing.T) {
-	got, err := Load("native", t.TempDir())
+func TestYamlLoadMissingFileIsDefaultEpoch(t *testing.T) {
+	got, err := Load("yaml", t.TempDir())
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
 	if got.Unix() != DefaultEpoch {
-		t.Errorf("Load(missing native) = %d, want the default epoch %d", got.Unix(), DefaultEpoch)
+		t.Errorf("Load(missing yaml) = %d, want the default epoch %d", got.Unix(), DefaultEpoch)
 	}
 }
 
-func TestNativeRoundTrips(t *testing.T) {
+func TestYamlRoundTrips(t *testing.T) {
 	dir := t.TempDir()
 	want := time.Date(2001, 3, 14, 12, 0, 0, 0, time.UTC)
 
-	if err := Save("native", dir, want); err != nil {
+	if err := Save("yaml", dir, want); err != nil {
 		t.Fatalf("Save: %v", err)
 	}
-	got, err := Load("native", dir)
+	got, err := Load("yaml", dir)
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
@@ -101,7 +101,7 @@ func TestNativeRoundTrips(t *testing.T) {
 	}
 }
 
-func TestClassicToNativeImport(t *testing.T) {
+func TestClassicToYamlImport(t *testing.T) {
 	classicPath := filepath.Join(t.TempDir(), "time")
 	if err := os.WriteFile(classicPath, []byte("984571200\n"), 0o600); err != nil {
 		t.Fatalf("writing fixture: %v", err)
@@ -113,12 +113,12 @@ func TestClassicToNativeImport(t *testing.T) {
 	}
 
 	dstDir := t.TempDir()
-	if err := Save("native", dstDir, epoch); err != nil {
-		t.Fatalf("Save(native): %v", err)
+	if err := Save("yaml", dstDir, epoch); err != nil {
+		t.Fatalf("Save(yaml): %v", err)
 	}
-	got, err := Load("native", dstDir)
+	got, err := Load("yaml", dstDir)
 	if err != nil {
-		t.Fatalf("Load(native): %v", err)
+		t.Fatalf("Load(yaml): %v", err)
 	}
 	if !got.Equal(epoch) {
 		t.Errorf("imported = %v, want %v", got, epoch)

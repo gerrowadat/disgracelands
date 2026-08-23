@@ -25,8 +25,8 @@ func TestLoadClassicMissingIndexIsEmptyNotError(t *testing.T) {
 	}
 }
 
-func TestLoadNativeMissingHelpYAMLIsEmptyNotError(t *testing.T) {
-	got, err := Load("native", t.TempDir())
+func TestLoadYamlMissingHelpYAMLIsEmptyNotError(t *testing.T) {
+	got, err := Load("yaml", t.TempDir())
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
@@ -35,7 +35,7 @@ func TestLoadNativeMissingHelpYAMLIsEmptyNotError(t *testing.T) {
 	}
 }
 
-func TestNativeRoundTrips(t *testing.T) {
+func TestYamlRoundTrips(t *testing.T) {
 	dir := t.TempDir()
 	want := []game.HelpEntry{
 		{
@@ -50,10 +50,10 @@ func TestNativeRoundTrips(t *testing.T) {
 		},
 	}
 
-	if err := Save("native", dir, want); err != nil {
+	if err := Save("yaml", dir, want); err != nil {
 		t.Fatalf("Save: %v", err)
 	}
-	got, err := Load("native", dir)
+	got, err := Load("yaml", dir)
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
@@ -62,7 +62,7 @@ func TestNativeRoundTrips(t *testing.T) {
 	}
 }
 
-func TestNativeDisambiguatesASlugCollision(t *testing.T) {
+func TestYamlDisambiguatesASlugCollision(t *testing.T) {
 	dir := t.TempDir()
 	// Two different entries whose keyword lines happen to slug the same
 	// way — synthetic, since the real archive has none (see
@@ -73,10 +73,10 @@ func TestNativeDisambiguatesASlugCollision(t *testing.T) {
 		{Keywords: []string{"a-b"}, Body: "A-B\r\n\r\nFirst.\r\n"},
 		{Keywords: []string{"a", "b"}, Body: "A B\r\n\r\nSecond.\r\n"},
 	}
-	if err := Save("native", dir, want); err != nil {
+	if err := Save("yaml", dir, want); err != nil {
 		t.Fatalf("Save: %v", err)
 	}
-	got, err := Load("native", dir)
+	got, err := Load("yaml", dir)
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
@@ -98,13 +98,13 @@ func TestNativeDisambiguatesASlugCollision(t *testing.T) {
 	}
 }
 
-func TestNativeMissingEntryFileIsAnError(t *testing.T) {
+func TestYamlMissingEntryFileIsAnError(t *testing.T) {
 	dir := t.TempDir()
 	fixture := "schema: dl/help@1\nentries:\n- keywords: [ac]\n  file: ac.txt\n"
-	if err := os.WriteFile(filepath.Join(dir, NativeFile), []byte(fixture), 0o600); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, YamlFile), []byte(fixture), 0o600); err != nil {
 		t.Fatalf("writing fixture: %v", err)
 	}
-	if _, err := Load("native", dir); err == nil {
+	if _, err := Load("yaml", dir); err == nil {
 		t.Error("Load with a listed-but-missing entry file succeeded, want an error")
 	}
 }
@@ -135,9 +135,9 @@ func TestUnknownFormatIsRefused(t *testing.T) {
 }
 
 // Against the real archive: classic parses it (already covered by
-// game.ParseHelpFile's own tests), and importing it into native and
+// game.ParseHelpFile's own tests), and importing it into yaml and
 // reading it back produces byte-identical records.
-func TestClassicToNativeImportAgainstTheRealArchive(t *testing.T) {
+func TestClassicToYamlImportAgainstTheRealArchive(t *testing.T) {
 	classic, err := Load("classic", "../../../data/text/help")
 	if err != nil {
 		t.Fatalf("Load(classic): %v", err)
@@ -147,19 +147,19 @@ func TestClassicToNativeImportAgainstTheRealArchive(t *testing.T) {
 	}
 
 	dir := t.TempDir()
-	if err := Save("native", dir, classic); err != nil {
-		t.Fatalf("Save(native): %v", err)
+	if err := Save("yaml", dir, classic); err != nil {
+		t.Fatalf("Save(yaml): %v", err)
 	}
-	native, err := Load("native", dir)
+	yaml, err := Load("yaml", dir)
 	if err != nil {
-		t.Fatalf("Load(native): %v", err)
+		t.Fatalf("Load(yaml): %v", err)
 	}
-	if !reflect.DeepEqual(native, classic) {
-		t.Fatalf("native round-trip does not match the classic parse")
+	if !reflect.DeepEqual(yaml, classic) {
+		t.Fatalf("yaml round-trip does not match the classic parse")
 	}
 }
 
-// dlctl help fmt should be idempotent: running Save on what Load(native)
+// dlctl help fmt should be idempotent: running Save on what Load(yaml)
 // just produced writes byte-identical files.
 func TestFmtIsIdempotent(t *testing.T) {
 	classic, err := Load("classic", "../../../data/text/help")
@@ -168,22 +168,22 @@ func TestFmtIsIdempotent(t *testing.T) {
 	}
 
 	dir := t.TempDir()
-	if err := Save("native", dir, classic); err != nil {
-		t.Fatalf("Save(native) first pass: %v", err)
+	if err := Save("yaml", dir, classic); err != nil {
+		t.Fatalf("Save(yaml) first pass: %v", err)
 	}
-	first, err := os.ReadFile(filepath.Join(dir, NativeFile))
+	first, err := os.ReadFile(filepath.Join(dir, YamlFile))
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	native, err := Load("native", dir)
+	yaml, err := Load("yaml", dir)
 	if err != nil {
-		t.Fatalf("Load(native): %v", err)
+		t.Fatalf("Load(yaml): %v", err)
 	}
-	if err := Save("native", dir, native); err != nil {
-		t.Fatalf("Save(native) second pass: %v", err)
+	if err := Save("yaml", dir, yaml); err != nil {
+		t.Fatalf("Save(yaml) second pass: %v", err)
 	}
-	second, err := os.ReadFile(filepath.Join(dir, NativeFile))
+	second, err := os.ReadFile(filepath.Join(dir, YamlFile))
 	if err != nil {
 		t.Fatal(err)
 	}

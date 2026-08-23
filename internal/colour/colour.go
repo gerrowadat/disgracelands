@@ -13,7 +13,7 @@
 //
 // Here the messages are written once and rendered at the socket, which is
 // where the reader's preference is known. The markup is the one
-// `docs/proposals/data-format.md` §5 already settled on for the native data
+// `docs/design/data-format.md` §5 already settled on for the yaml data
 // format — `{{red}}` … `{{/}}` — so a room name coloured in a world file and a
 // room name coloured by the engine go through the same renderer.
 package colour

@@ -15,7 +15,7 @@ import (
 // Severity ranks a finding by what it means for someone maintaining the
 // world, not by how hard it was to detect.
 //
-// This lived in package classic until the native format needed the same
+// This lived in package classic until the yaml format needed the same
 // "report every problem, don't stop at the first" shape for its own
 // findings — unknown flag names, flags_raw uses, unbalanced colour, a lossy
 // typed-value fallback, a reset chain with no mobile. classic.Severity and
