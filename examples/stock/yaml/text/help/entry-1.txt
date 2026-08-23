@@ -1,0 +1,19 @@
+! ^
+
+Use ! to repeat the last command typed at the keyboard.
+
+Use ^ to replace a string from the last command with a new string.  The
+syntax is the same as in csh: "^old-string^replacement"
+
+Examples:
+
+  > tell rasmusse Hi there, how are you?
+  No-one by that name here.
+
+  > ^rasmusse^rasmussen
+  You tell Rasmussen, 'Hi there, how are you?'
+
+  > ^you^you doing^
+  You tell Rasmussen, 'Hi there, how are you doing?'
+
+See also: ALIAS

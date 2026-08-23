@@ -1,0 +1,13 @@
+GRAB HOLD
+
+Usage: grab <object>
+       hold <object>
+
+For getting a good grip on something; a torch, for example.
+
+Examples:
+
+  > hold torch
+  > grab stone
+
+See also: EQUIPMENT, REMOVE, WEAR, WIELD

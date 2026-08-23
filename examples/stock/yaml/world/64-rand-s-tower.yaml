@@ -1,0 +1,1810 @@
+schema: dl/world@1
+zone:
+  vnum: 64
+  name: Rand's Tower
+  range:
+  - 6400
+  - 6499
+  lifespan: 20
+  reset: empty
+rooms:
+- vnum: 6400
+  name: A Mountain Trail
+  sector: mountains
+  desc: |2
+       This trail leads up, up, up into the mountains.  You
+    hope you don't fall down, because that would hurt, hurt,
+    hurt!  The trail continues to the east, and you can go
+    back down to the small hidden valley to the west.
+  exits:
+    east:
+      to: 6401
+      key: -1
+    west:
+      to: 4078
+      key: -1
+- vnum: 6401
+  name: A Mountain Trail
+  sector: mountains
+  desc: |2
+       You're really high up now.  You can keep going even
+    farther up into the mountains to the east, or go back
+    down to the west.
+  exits:
+    east:
+      to: 6402
+      key: -1
+    west:
+      to: 6400
+      key: -1
+- vnum: 6402
+  name: A Mountain Trail
+  sector: mountains
+  desc: |2
+       Wispy clouds are beginning to surround you now, and
+    your ears pop due to the altitude.  To the east, you see
+    the summit of the mountain, and from the way the nearby
+    mountains are arranged behind it, you believe you're
+    on your way to a big valley.  You can also go down
+    to the west.
+  exits:
+    east:
+      to: 6403
+      key: -1
+    west:
+      to: 6401
+      key: -1
+- vnum: 6403
+  name: Near The Mountain's Peak
+  sector: mountains
+  desc: |2
+       The peak of this mountain is another couple hundred
+    feet above you, but here is where the trail leads down
+    into the valley...  What an odd valley!
+       The valley seems to have been filled up by a hundreds
+    of feet of lava many years ago.  It gives the valley an
+    odd, 'flat' look and darkish ground.  The path leads
+    down east into the valley, and west back to civilization.
+  exits:
+    east:
+      to: 6404
+      key: -1
+    west:
+      to: 6402
+      key: -1
+- vnum: 6404
+  name: The Trail To The Valley
+  sector: mountains
+  desc: |2
+       The trail leads down into the valley, where, by judging
+    by the height of the trees, the lava had cooled tens
+    of decades ago.  Down below you see the path lead into
+    the small forest in the valley, and disappear out of
+    sight.  East leads into the valley, West back to civilization.
+  exits:
+    east:
+      to: 6405
+      key: -1
+    west:
+      to: 6403
+      key: -1
+- vnum: 6405
+  name: In The Valley
+  sector: forest
+  desc: |2
+       The ground has taken on the texture of dirt on the top,
+    but this valley is far too flat and too rocky to disguise
+    the catastrophe that happened here so long ago.  Looking
+    up to the mountains ringing this area, you notice several
+    mountains look as if they had 'exploded', which is strange,
+    considering that they are not volcanos.
+       The path leads into the woods to the east, and back up
+    the mountain to the west.
+  exits:
+    east:
+      to: 6406
+      key: -1
+    west:
+      to: 6404
+      key: -1
+- vnum: 6406
+  name: In A Clearing
+  sector: forest
+  desc: |2
+       You come to a small clearing now, after walking for several
+    minutes through the silent woods.  An odd block sticks up
+    here and there in   the ground... wait a minute.  These
+    stones seem a little too regular, and from the circle 
+    formation and size you could almost swear that they were...
+    crenellations?  Could some sort of building been buried
+    by the lava here?  A rusty ring sticks out of the earth
+    in the center... a trapdoor?  This is almost too good to
+    be true!
+  exits:
+    west:
+      to: 6405
+      key: -1
+    down:
+      to: 6407
+      desc: |
+            An ancient trapdoor, grimed with earth and age.
+      door: regular
+      key: -1
+      keywords: trapdoor trap
+- vnum: 6407
+  name: A Stairwell
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       This small room is the top of a stairwell leading down
+    deep into the tower.  A small trapdoor overhead leaks
+    the light of day around its edges.  To the south is a 
+    wooden door, preserved through the ages by means 
+    unknown.  To the west is a short hall.
+  exits:
+    south:
+      to: 6408
+      door: regular
+      key: -1
+      keywords: door
+    west:
+      to: 6409
+      key: -1
+    up:
+      to: 6406
+      desc: |
+            An ancient trapdoor, grimed with earth and age.
+      door: regular
+      key: -1
+      keywords: trapdoor trap
+    down:
+      to: 6413
+      key: -1
+- vnum: 6408
+  name: A Linen Closet
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       This small room holds many types of linen on shelves 
+    along the walls.  They are undoubtedly preserved by
+    magic against the toil of the ages, since they seem
+    freshly washed and folded.  You wonder what sort of
+    mage could wield so much power to waste on such little
+    things.
+  exits:
+    north:
+      to: 6407
+      door: regular
+      key: -1
+      keywords: door
+  extra_descs:
+  - keywords:
+    - linen
+    - shelf
+    - shelves
+    desc: |
+              White sheets, pillow-cases, etc.  Not really anything that
+              you need, but interesting.
+- vnum: 6409
+  name: A Corridor
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       This is only a clean corridor, that leads back to the 
+    stairwell to the east, and has doors leading to other
+    rooms to the north and south.
+  exits:
+    north:
+      to: 6411
+      door: regular
+      key: -1
+      keywords: door
+    east:
+      to: 6407
+      key: -1
+    south:
+      to: 6410
+      door: regular
+      key: -1
+      keywords: door
+- vnum: 6410
+  name: A Bathroom
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       This is some sort of bathroom, like you've never seen
+    before...  Water appliances leading from nowhere deliver
+    hot and cold running water to basins that drain to...
+    where?  How strange!
+  exits:
+    north:
+      to: 6409
+      door: regular
+      key: -1
+      keywords: door
+- vnum: 6411
+  name: The Master Bedroom
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       This is an opulent room, decorated in silks and gold.
+    There is an ebony desk against one wall, cooled lava rock
+    spilling over its surface from the window it once looked
+    out at.  A nice, spacious closet is filled with clothes
+    just cleaned and pressed.
+  exits:
+    south:
+      to: 6409
+      door: regular
+      key: -1
+      keywords: door
+  extra_descs:
+  - keywords:
+    - closet
+    desc: |
+              Nice clothes, but not your size at all.
+  - keywords:
+    - desk
+    desc: |
+              The desk is basically uninteresting, as are the papers 
+              on top of it...
+- vnum: 6412
+  name: The Library
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       A great mages' library is contained on this floor of 
+    the tower.  You feel you could learn anything you wanted
+    to if you only looked and read long enough.  A door
+    opens up back on the stairwell to the east.
+  exits:
+    east:
+      to: 6413
+      door: regular
+      key: -1
+      keywords: door
+    west:
+      to: 6414
+      desc: |
+            A big bookcase, that looks rather odd.
+      door: regular
+      key: -1
+      keywords: bookcase
+  extra_descs:
+  - keywords:
+    - book
+    - books
+    desc: |
+              There are lots of books about everything here!
+- vnum: 6413
+  name: The Stairwell
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       This stairwell continues up and down, and there is
+    a door to the west.
+  exits:
+    west:
+      to: 6412
+      door: regular
+      key: -1
+      keywords: door
+    up:
+      to: 6407
+      key: -1
+    down:
+      to: 6415
+      key: -1
+- vnum: 6414
+  name: A Hidden Hall
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       This is a small hidden hall with a secret entrance to the
+    library on the north end of the west wall, and a trapdoor 
+    on the south end.
+  exits:
+    east:
+      to: 6412
+      desc: |
+            The backside of a movable bookcase.
+      door: regular
+      key: -1
+      keywords: book bookcase
+    down:
+      to: 6416
+      door: regular
+      key: -1
+      keywords: trapdoor trap
+- vnum: 6415
+  name: A Stairwell
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       This stairwell continues up and down, and there is a door
+    to the west opening up onto this level.
+  exits:
+    west:
+      to: 6417
+      door: regular
+      key: -1
+      keywords: door
+    up:
+      to: 6413
+      key: -1
+    down:
+      to: 6422
+      key: -1
+- vnum: 6416
+  name: The Hidden Treasure Room
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       Jackpot!  A small room filled with treasure chests!  Go get them!
+  exits:
+    up:
+      to: 6414
+      door: regular
+      key: -1
+      keywords: trapdoor trap
+- vnum: 6417
+  name: A Hallway
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       This hall runs through the tower.  There's more hall to
+    the west, and doors to your north and south.  A door to
+    the east leads back to the stairwell.
+  exits:
+    north:
+      to: 6419
+      door: regular
+      key: -1
+      keywords: door
+    east:
+      to: 6415
+      door: regular
+      key: -1
+      keywords: door
+    south:
+      to: 6418
+      door: regular
+      key: -1
+      keywords: door
+    west:
+      to: 6420
+      key: -1
+- vnum: 6418
+  name: A Servant's Room
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       This seems to be a small servant's bedroom, sparsely
+    decorated and outfitted with a bed, nightstand, chair
+    and table, etc.  Nothing real important here.
+  exits:
+    north:
+      to: 6417
+      door: regular
+      key: -1
+      keywords: door
+- vnum: 6419
+  name: A Servant's Room
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       This seems to be a small servant's bedroom, sparsely 
+    decorated and outfitted with a bed, nightstand, chair
+    and table, etc.  Nothing real important here.
+  exits:
+    south:
+      to: 6417
+      door: regular
+      key: -1
+      keywords: door
+- vnum: 6420
+  name: A Hallway
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       This hallway continues to the east, and has a door to 
+    the north.  You could swear that the way this level is
+    arranged... nah, couldn't be.
+  exits:
+    north:
+      to: 6421
+      door: regular
+      key: -1
+      keywords: door
+    east:
+      to: 6417
+      key: -1
+- vnum: 6421
+  name: A Servant's Room
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       This seems to be a small servant's bedroom, sparsely
+    decorated and outfitted with a bed, nightstand, chair
+    and a table, etc.  Nothing real important here.
+  exits:
+    south:
+      to: 6420
+      door: regular
+      key: -1
+      keywords: door
+- vnum: 6422
+  name: The Stairwell
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       This stairwell leads up and down, and there is a big
+    open room to your west.
+  exits:
+    west:
+      to: 6423
+      key: -1
+    up:
+      to: 6415
+      key: -1
+    down:
+      to: 6425
+      key: -1
+- vnum: 6423
+  name: The Dining Hall
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       This is a large dining hall, with a long table that runs
+    down the length of it.  Chairs are set up along the sides
+    to accomodate approximately 10 people.  There are paintings
+    and tapestries on the walls, adding color to the stonework,
+    The cooled lava that had poured in the windows makes the place 
+    seem eerie somehow .  There is a door to the north, and
+    the stairwell is to the east.
+  exits:
+    north:
+      to: 6424
+      door: regular
+      key: -1
+      keywords: door
+    east:
+      to: 6422
+      key: -1
+  extra_descs:
+  - keywords:
+    - tapestry
+    - tapestries
+    - painting
+    - paintings
+    desc: |
+              Many of these show scenes of high magic and heroism.
+              Just like almost every tapestry and painting you've seen.
+- vnum: 6424
+  name: The Kitchen Area
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       This is a well-stocked kitchen, the larders still fresh
+    and full as if by magic.  Perhaps this would be a good
+    place to take a break.
+  exits:
+    south:
+      to: 6423
+      door: regular
+      key: -1
+      keywords: door
+- vnum: 6425
+  name: The Stairwell
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       The stairwell leads up and down here, and there is a hall
+    you can enter to the west.
+  exits:
+    west:
+      to: 6426
+      key: -1
+    up:
+      to: 6422
+      key: -1
+    down:
+      to: 6429
+      key: -1
+- vnum: 6426
+  name: A Hall
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       This area of the tower seems dank and oppressive.  The
+    hall runs north-south, and there is an empty cell to your
+    west.  The stairwell is to your east.
+  exits:
+    north:
+      to: 6427
+      key: -1
+    east:
+      to: 6425
+      key: -1
+    south:
+      to: 6428
+      key: -1
+  extra_descs:
+  - keywords:
+    - cell
+    - cells
+    desc: |
+              It is open, empty, and uninteresting.
+- vnum: 6427
+  name: A Hall
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       This is the northern end of the hall.  There are cells to
+    your right and left, empty and awaiting occupants.
+  exits:
+    south:
+      to: 6426
+      key: -1
+  extra_descs:
+  - keywords:
+    - cell
+    - cells
+    desc: |
+              It is open, empty, and uninteresting.
+- vnum: 6428
+  name: A Hall
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       This is the southern end of the hall.  There are cells to
+    your right and left, empty and awaiting occupants.
+  exits:
+    north:
+      to: 6426
+      key: -1
+  extra_descs:
+  - keywords:
+    - cell
+    - cells
+    desc: |
+              It is open, empty, and uninteresting.
+- vnum: 6429
+  name: A Stairwell
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       The stairwell continues up and down here.  A large room
+    opens up to the west.
+  exits:
+    west:
+      to: 6430
+      key: -1
+    up:
+      to: 6425
+      key: -1
+    down:
+      to: 6431
+      key: -1
+- vnum: 6430
+  name: A Mage's Office
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       A small desk here is cluttered with magically preserved
+    papers and documents.  None seem of value, except perhaps
+    to a historian.  This place seems vaguely uninteresting...
+  exits:
+    east:
+      to: 6429
+      key: -1
+  extra_descs:
+  - keywords:
+    - desk
+    desc: |
+              It is cluttered with all sorts of papers.  Some look
+              half interesting, actually.
+  - keywords:
+    - paper
+    - papers
+    - documents
+    - document
+    desc: |
+              Well, one of the papers relate a story about how the mage
+              of this tower, Rand, angered many kings, and relates how
+              they set his armies on him.  You wonder if the lava
+              outside was a failed attempt to destroy the armies...
+- vnum: 6431
+  name: The Stairwell
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       The stairs go up and down here, and there is a room to the
+    west...
+  exits:
+    west:
+      to: 6432
+      key: -1
+    up:
+      to: 6429
+      key: -1
+    down:
+      to: 6433
+      key: -1
+- vnum: 6432
+  name: A Sitting Room
+  sector: inside
+  flags:
+  - no_mob
+  - indoors
+  desc: |2
+       This is a simply furnished room, with chairs all about.
+    A fireplace is inset into an inner wall, the chimney
+    undoubtedly directed by magic...
+       This would be a nice place to rest awhile...
+  exits:
+    east:
+      to: 6431
+      key: -1
+- vnum: 6433
+  name: The Stairwell
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+        This is where the stairwell finally ends.  There is a hall
+    to your west.
+  exits:
+    west:
+      to: 6434
+      key: -1
+    up:
+      to: 6431
+      key: -1
+- vnum: 6434
+  name: A Hallway
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       This small hallway on the former 'ground floor' ran north-
+    south.  To the east is the stairwell that leads up into 
+    the shadowy recesses of the tower.  To the west is the
+    entrance way to the tower.  The north is completely blocked
+    off by lava, and the way south is still clear.
+  exits:
+    east:
+      to: 6433
+      key: -1
+    south:
+      to: 6437
+      key: -1
+    west:
+      to: 6435
+      key: -1
+- vnum: 6435
+  name: The Entranceway
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       This is a grand chamber with giant double-doors to the
+    west.  To the east is the main floor of the tower.  This
+    room is arranged highly attractively and very impressively,
+    with sculptures and tapistries everywhere.  The doors seem
+    impenetrable... you don't think you'd be able to get through
+    them if you really had to...
+  exits:
+    east:
+      to: 6434
+      key: -1
+    west:
+      to: 6436
+      desc: |
+            These doors seem incredible.  Unfortunately, they're locked.
+      door: regular
+      keywords: door double
+  extra_descs:
+  - keywords:
+    - sculpture
+    - tapestry
+    - sculptures
+    - tapestries
+    desc: |
+              They look nice, but aren't very valuable.
+- vnum: 6436
+  name: The Doorway
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       This was the entrance to the tower.  Now lava has blocked
+    it up completely.  However:
+       It seems when the lava came down a man was outside the
+    doors.  He was blasted into the doors, and died instantly,
+    but his skeleton still clutches a staff in perfect 
+    condition...
+  exits:
+    east:
+      to: 6435
+      desc: |
+            These double doors have the outline of a man blasted into them...
+      door: regular
+      keywords: double doors
+- vnum: 6437
+  name: The Hallway
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+        This is the southern part of the hallway.  There is 
+    a door to the west, barred with gleaming bands of lights.
+    To the north is more hallway.
+  exits:
+    north:
+      to: 6434
+      key: -1
+    west:
+      to: 6438
+      door: regular
+      key: -1
+      keywords: door
+- vnum: 6438
+  name: The Stairs
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       Stairs lead down here into the tower's basement, or you
+    can head east into the main floor of the tower.
+  exits:
+    east:
+      to: 6437
+      door: regular
+      key: -1
+      keywords: door
+    down:
+      to: 6439
+      key: -1
+- vnum: 6439
+  name: The Stairs
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       Stairs lead up here to the main level, or you can go east
+    to the basement of the tower.
+  exits:
+    east:
+      to: 6440
+      key: -1
+    up:
+      to: 6438
+      key: -1
+- vnum: 6440
+  name: An Alcove
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       This alcove leads into a huge room to your north, and
+    to stairs leading down to the east, and stairs going 
+    up to your west.
+  exits:
+    north:
+      to: 6441
+      key: -1
+    east:
+      to: 6442
+      key: -1
+    west:
+      to: 6439
+      key: -1
+- vnum: 6441
+  name: The Laboratory
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       This laboratory has lots of stuff in it.  Beakers,
+    flasks, burners, tongs, mortars and pestles, jars filled
+    with normal things, jars filled with abnormal things, jars
+    filled with things you'd rather not think about...
+    A search could reveal many things...
+  exits:
+    south:
+      to: 6440
+      key: -1
+  extra_descs:
+  - keywords:
+    - mortar
+    - mortars
+    - pestle
+    - pestles
+    - jar
+    - jars
+    desc: |
+              Looks like normal, fragile lab equipment to you.
+  - keywords:
+    - beaker
+    - beakers
+    - flask
+    - flasks
+    - burner
+    - burners
+    - tong
+    - tongs
+    desc: |
+              Looks like normal, fragile lab equipment to you.
+- vnum: 6442
+  name: The Stairs
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       Stairs lead down here to the second level of the basement,
+    or back west to the alcove.
+  exits:
+    west:
+      to: 6440
+      key: -1
+    down:
+      to: 6443
+      key: -1
+- vnum: 6443
+  name: The Stairs
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       Stairs lead up here to the first level of the basement, or
+    you can go east to another big room.
+  exits:
+    east:
+      to: 6444
+      key: -1
+    up:
+      to: 6442
+      key: -1
+- vnum: 6444
+  name: The Summoning Room
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       This room is darkly lit by a giant glowing pentagram in
+    the center of the room.  Bands of force encircle some
+    sort of being trapped inside.  You think that going
+    inside would be an EXTREMELY BAD idea...
+  exits:
+    north:
+      to: 6445
+      key: -1
+    west:
+      to: 6443
+      key: -1
+  extra_descs:
+  - keywords:
+    - being
+    desc: |
+              You can't see it clearly through the energy field of the
+              pentagram, but you sense that whatever it is, it is very,
+              very, very, very angry.
+  - keywords:
+    - pentagram
+    desc: |
+              It is centuries old.  You don't think standing close by
+              would be a good idea.
+- vnum: 6445
+  name: Inside A Pentagram
+  sector: inside
+  flags:
+  - death
+  - indoors
+  desc: |2
+       The small god entrapped by the wizard looks at you with
+    an insane expression.  Four hundred years of imprisonment
+    doesn't do much for one's...
+
+       OOPS!
+
+       He killed you!
+       You are dead, R.I.P.
+  exits:
+    south:
+      to: 6444
+      key: -1
+mobiles:
+- vnum: 6400
+  keywords:
+  - goat
+  - mountain
+  short: the mountain goat
+  long: |
+    A mountain goat nibbles at a piece of grass here.
+  desc: |
+    This goat is acclimated to the rugged terrain of the 
+    mountains.  It looks at you and shies away a little.
+  act:
+  - stay_zone
+  - wimpy
+  affected:
+  - infravision
+  alignment: 0
+  level: 8
+  thac0: 13
+  ac: 3
+  hp: 3d5+95
+  damage: 2d5+1
+  gold: 0
+  exp: 4000
+  position: standing
+  default_position: standing
+  sex: male
+  abilities:
+    bare_hand_attack: 4
+- vnum: 6401
+  keywords:
+  - demon
+  - decay
+  short: the Demon of Decay
+  long: |
+    A cloaked and clawed demon of decay comes at you viciously!
+  desc: |
+    This demon has pure malevolence for anything living.  
+    Oops!  You're living!  I guess that means you!
+  act:
+  - sentinel
+  - aware
+  - aggressive
+  - memory
+  - helper
+  - no_charm
+  - no_summon
+  - no_sleep
+  - no_blind
+  affected:
+  - detect_invis
+  - infravision
+  alignment: -1000
+  level: 12
+  thac0: 9
+  ac: 2
+  hp: 3d5+145
+  damage: 2d7+1
+  gold: 0
+  exp: 10000
+  position: standing
+  default_position: standing
+  sex: neutral
+  abilities:
+    bare_hand_attack: 8
+- vnum: 6402
+  keywords:
+  - book
+  - monster
+  - guardian
+  short: the Book Monster
+  long: |
+    A mound of books rise up into a human shape and tries to hit you!
+  desc: |
+    Ironically enough, the book-monster's head is War and
+    Peace.  Hmm.
+  act:
+  - sentinel
+  - aware
+  - aggressive
+  - memory
+  - helper
+  - no_charm
+  - no_summon
+  - no_sleep
+  - no_bash
+  - no_blind
+  affected:
+  - detect_invis
+  - infravision
+  alignment: 0
+  level: 14
+  thac0: 7
+  ac: 1
+  hp: 1d1+199
+  damage: 2d8+2
+  gold: 0
+  exp: 18000
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 6403
+  keywords:
+  - bad
+  - feeling
+  short: a Bad Feeling
+  long: |
+    A bad feeling chokes your throat.
+  desc: |
+    It resembles a lot of other bad feelings you've had,
+    but a lot more tangible... magic?
+  act:
+  - sentinel
+  - aware
+  - aggressive
+  - memory
+  - helper
+  - no_charm
+  - no_summon
+  - no_sleep
+  - no_bash
+  - no_blind
+  affected:
+  - detect_invis
+  - infravision
+  alignment: 0
+  level: 18
+  thac0: 3
+  ac: 0
+  hp: 1d1+249
+  damage: 3d8
+  gold: 0
+  exp: 40000
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 6404
+  keywords:
+  - nightmare
+  short: Your Worst Nightmare
+  long: |
+    Your worst nightmare coalesces in front of you and attacks!
+  desc: |
+    It looks like you deepest, darkest fears personified.
+    Wait a minute!  It IS your deepest, darkest fears
+    personified!
+  act:
+  - sentinel
+  - aware
+  - aggressive
+  - memory
+  - helper
+  - no_charm
+  - no_summon
+  - no_sleep
+  - no_bash
+  - no_blind
+  affected:
+  - detect_invis
+  - infravision
+  alignment: 0
+  level: 19
+  thac0: 2
+  ac: 0
+  hp: 1d1+299
+  damage: 3d8+2
+  gold: 0
+  exp: 45000
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 6405
+  keywords:
+  - guardian
+  short: the Guardian
+  long: |
+    A guardian guards the door.  It looks at you and attacks!
+  desc: |
+    The guardian guards the door.  That's about all its
+    brain can handle: guarding.
+  act:
+  - sentinel
+  - aware
+  - aggressive
+  - memory
+  - helper
+  - no_charm
+  - no_summon
+  - no_sleep
+  - no_blind
+  affected:
+  - detect_invis
+  - infravision
+  alignment: 0
+  level: 18
+  thac0: 3
+  ac: 0
+  hp: 1d1+249
+  damage: 3d6+2
+  gold: 0
+  exp: 35000
+  position: standing
+  default_position: standing
+  sex: neutral
+  abilities:
+    bare_hand_attack: 9
+objects:
+- vnum: 6400
+  keywords:
+  - dagger
+  - glowing
+  short: a glowing dagger
+  desc: A glowing dagger glows here.
+  type: weapon
+  wear:
+  - take
+  - wield
+  flags:
+  - glow
+  - magic
+  weapon:
+    dice: 1d4
+    damage_type: pierce
+  weight: 1
+  cost: 1000
+  rent: 300
+  affects:
+  - location: hitroll
+    modifier: 3
+- vnum: 6401
+  keywords:
+  - platemail
+  - glowing
+  - plate
+  - mail
+  short: the glowing platemail
+  desc: Some glowing platemail lies in a heap here.
+  type: armor
+  wear:
+  - take
+  - body
+  flags:
+  - glow
+  - magic
+  armor:
+    ac_apply: 15
+  weight: 150
+  cost: 30000
+  rent: 10000
+- vnum: 6402
+  keywords:
+  - agate
+  - gem
+  short: an agate
+  desc: A small gem lies here.
+  type: treasure
+  wear:
+  - take
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 1
+  cost: 5000
+  rent: 500
+- vnum: 6403
+  keywords:
+  - jade
+  - jewel
+  short: a piece of jade
+  desc: A small jewel gleams here.
+  type: treasure
+  wear:
+  - take
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 1
+  cost: 10000
+  rent: 1000
+- vnum: 6404
+  keywords:
+  - sculpture
+  short: a piece of sculpture
+  desc: A nice piece of sculpture is here.
+  type: treasure
+  wear:
+  - take
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 75
+  cost: 20000
+  rent: 2000
+  extra_descs:
+  - keywords:
+    - sculpture
+    desc: |
+              It is of a beautiful woman, straining
+              beneath a heavy weight.  She looks
+              tired, with chiseled tears staining
+              her cheeks.  It makes you sad.
+- vnum: 6405
+  keywords:
+  - vial
+  - dragons
+  - blood
+  short: a vial of dragon's blood
+  desc: A small vial filled with a red fluid lies in the dust here.
+  type: potion
+  wear:
+  - take
+  values:
+  - 7
+  - 39
+  - 39
+  - 39
+  weight: 5
+  cost: 48000
+  rent: 20500
+- vnum: 6406
+  keywords:
+  - amulet
+  short: an amulet
+  desc: An odd looking amulet has been discarded here.
+  type: armor
+  wear:
+  - take
+  - neck
+  flags:
+  - glow
+  - magic
+  armor:
+    ac_apply: 0
+  weight: 3
+  cost: 20000
+  rent: 3000
+  affects:
+  - location: dex
+    modifier: 3
+- vnum: 6407
+  keywords:
+  - pole
+  - tent
+  short: a tent pole
+  desc: A tent pole has been tossed away here.
+  type: wand
+  wear:
+  - take
+  - hold
+  flags:
+  - glow
+  - magic
+  charges:
+    spell: sleep
+    level: 25
+    max: 5
+    remaining: 5
+  weight: 10
+  cost: 25000
+  rent: 5000
+- vnum: 6408
+  keywords:
+  - bag
+  - powder
+  - wealth
+  short: a bag of powder of wealth
+  desc: A small bag filled with powder of wealth lies here.
+  type: money
+  wear:
+  - take
+  flags:
+  - glow
+  - magic
+  values:
+  - 100000
+  - 0
+  - 0
+  - 0
+  weight: 1
+  cost: 100000
+  rent: 0
+- vnum: 6409
+  keywords:
+  - desk
+  short: a desk
+  desc: There is an ebony desk here.
+  type: container
+  container:
+    capacity: 100
+    closeable: true
+    closed: true
+    locked: true
+    key: 0
+  weight: 800
+  cost: 0
+  rent: 0
+- vnum: 6410
+  keywords:
+  - book
+  - chaos
+  short: the Book of Chaos
+  desc: A book with a title written in moving letters rests here.
+  type: wand
+  wear:
+  - take
+  - hold
+  flags:
+  - glow
+  - hum
+  - magic
+  - no_drop
+  charges:
+    spell: fireball
+    level: 20
+    max: 1
+    remaining: 1
+  weight: 25
+  cost: 100000
+  rent: 25000
+- vnum: 6411
+  keywords:
+  - book
+  - elder
+  short: the Book of the Elder
+  desc: A grey-bound book lies here.
+  type: wand
+  wear:
+  - take
+  - hold
+  flags:
+  - glow
+  - hum
+  - magic
+  charges:
+    spell: heal
+    level: 30
+    max: 1
+    remaining: 1
+  weight: 25
+  cost: 300000
+  rent: 50000
+- vnum: 6412
+  keywords:
+  - lens
+  - occluded
+  short: the Occluded Lens
+  desc: A smoky lens about a foot around has been scuffled in the dirt here.
+  type: light
+  wear:
+  - take
+  - hold
+  flags:
+  - glow
+  - magic
+  - no_drop
+  - anti_good
+  - anti_evil
+  light:
+    hours: 0
+  weight: 20
+  cost: 200000
+  rent: 50000
+  affects:
+  - location: max_mana
+    modifier: 20
+  - location: wis
+    modifier: 1
+- vnum: 6413
+  keywords:
+  - mevais
+  - herb
+  - leaf
+  short: a leaf of mevais
+  desc: A small black leaf of a mevais plant lies here, well preserved.
+  type: potion
+  wear:
+  - take
+  values:
+  - 30
+  - 27
+  - 33
+  - 4
+  weight: 1
+  cost: 0
+  rent: 0
+  extra_descs:
+  - keywords:
+    - mevais
+    - herb
+    - leaf
+    desc: |
+              Quaffing this down might provide interesting effects.
+- vnum: 6414
+  keywords:
+  - bottle
+  - peska
+  short: a bottle of peska
+  desc: There is a bottle of a milky fluid here.
+  type: potion
+  wear:
+  - take
+  values:
+  - 30
+  - 28
+  - 3
+  - 1
+  weight: 12
+  cost: 15000
+  rent: 3000
+  extra_descs:
+  - keywords:
+    - bottle
+    - peska
+    desc: |
+              It is a milky concoction, with strange motes floating in it.
+- vnum: 6415
+  keywords:
+  - staff
+  - rand
+  short: Rand's staff
+  desc: There is a metal-shod staff here.
+  type: armor
+  wear:
+  - take
+  - hold
+  flags:
+  - glow
+  - magic
+  - anti_cleric
+  - anti_thief
+  - anti_warrior
+  armor:
+    ac_apply: 8
+  weight: 7
+  cost: 100000
+  rent: 25000
+  affects:
+  - location: max_mana
+    modifier: 5
+  - location: armor
+    modifier: 5
+- vnum: 6416
+  keywords:
+  - chest
+  - wooden
+  short: a wooden chest
+  desc: There is a wooden chest here.
+  type: container
+  container:
+    capacity: 500
+    closeable: true
+    closed: true
+    locked: true
+    key: 0
+  weight: 0
+  cost: 0
+  rent: 0
+- vnum: 6417
+  keywords:
+  - chest
+  - wooden
+  short: a wooden chest
+  desc: There is a wooden chest here.
+  type: container
+  container:
+    capacity: 500
+    closeable: true
+    closed: true
+    locked: true
+    key: 0
+  weight: 0
+  cost: 0
+  rent: 0
+- vnum: 6418
+  keywords:
+  - chest
+  - wooden
+  short: a wooden chest
+  desc: There is a wooden chest here.
+  type: container
+  container:
+    capacity: 500
+    closeable: true
+    closed: true
+    locked: true
+    key: 0
+  weight: 0
+  cost: 0
+  rent: 0
+- vnum: 6419
+  keywords:
+  - basin
+  - water
+  short: a water basin
+  desc: A basin filled with crisp, clean water is here.
+  type: drink_container
+  flags:
+  - glow
+  drink:
+    capacity: 100
+    current: 100
+    liquid: water
+  weight: 100
+  cost: 0
+  rent: 0
+- vnum: 6420
+  keywords:
+  - food
+  short: some food
+  desc: There's some food lying here.
+  type: food
+  wear:
+  - take
+  values:
+  - 8
+  - 0
+  - 0
+  - 0
+  weight: 3
+  cost: 20
+  rent: 10
+  extra_descs:
+  - keywords:
+    - food
+    desc: |
+              It is just random and assorted food.
+              Don't ask questions.  It is only a game.
+resets:
+- mob: 6400
+  room: 6400
+  max: 3
+- mob: 6400
+  room: 6402
+  max: 3
+- mob: 6400
+  room: 6404
+  max: 3
+- mob: 6401
+  room: 6407
+  max: 2
+- mob: 6401
+  room: 6407
+  max: 2
+- mob: 6402
+  room: 6412
+  max: 1
+  then:
+  - give: 6410
+    max: 20
+  - give: 6411
+    max: 20
+- mob: 6403
+  room: 6411
+  max: 1
+- mob: 6405
+  room: 6437
+  max: 1
+- room: 6416
+  object: 6416
+  max: 1
+- mob: 6404
+  room: 6416
+  max: 3
+  then:
+  - put: 6401
+    into: 6416
+    max: 50
+- room: 6416
+  object: 6417
+  max: 1
+- mob: 6404
+  room: 6416
+  max: 3
+  then:
+  - put: 6405
+    into: 6417
+    max: 100
+  - put: 6407
+    into: 6417
+    max: 50
+- room: 6416
+  object: 6418
+  max: 1
+- mob: 6404
+  room: 6416
+  max: 1
+  then:
+  - put: 6406
+    into: 6418
+    max: 100
+  - put: 6408
+    into: 6418
+    max: 1
+  - put: 6412
+    into: 6418
+    max: 10
+- room: 6411
+  remove: 6404
+- room: 6411
+  object: 6404
+  max: 5
+- room: 6411
+  object: 6409
+  max: 1
+- put: 6402
+  into: 6409
+  max: 50
+- put: 6403
+  into: 6409
+  max: 50
+- put: 6400
+  into: 6409
+  max: 50
+- room: 6441
+  remove: 6413
+- room: 6441
+  object: 6413
+  max: 100
+- room: 6441
+  remove: 6414
+- room: 6441
+  object: 6414
+  max: 100
+- room: 6436
+  remove: 6415
+- room: 6436
+  object: 6415
+  max: 10
+- room: 6410
+  remove: 6419
+- room: 6410
+  object: 6419
+  max: 1
+- room: 6424
+  remove: 6420
+- room: 6424
+  object: 6420
+  max: 10
+- room: 6424
+  remove: 6420
+- room: 6424
+  object: 6420
+  max: 10
+- door: 6406
+  dir: down
+  state: closed
+- door: 6407
+  dir: up
+  state: closed
+- door: 6407
+  dir: south
+  state: closed
+- door: 6408
+  dir: north
+  state: closed
+- door: 6409
+  dir: north
+  state: closed
+- door: 6409
+  dir: south
+  state: closed
+- door: 6410
+  dir: north
+  state: closed
+- door: 6411
+  dir: south
+  state: closed
+- door: 6412
+  dir: east
+  state: closed
+- door: 6412
+  dir: west
+  state: closed
+- door: 6413
+  dir: west
+  state: closed
+- door: 6414
+  dir: east
+  state: closed
+- door: 6414
+  dir: down
+  state: closed
+- door: 6415
+  dir: west
+  state: closed
+- door: 6416
+  dir: up
+  state: closed
+- door: 6417
+  dir: north
+  state: closed
+- door: 6417
+  dir: east
+  state: closed
+- door: 6417
+  dir: south
+  state: closed
+- door: 6418
+  dir: north
+  state: closed
+- door: 6419
+  dir: south
+  state: closed
+- door: 6420
+  dir: north
+  state: closed
+- door: 6421
+  dir: south
+  state: closed
+- door: 6423
+  dir: north
+  state: closed
+- door: 6424
+  dir: south
+  state: closed
+- door: 6435
+  dir: west
+  state: locked
+- door: 6436
+  dir: east
+  state: locked
+- door: 6437
+  dir: west
+  state: closed
+- door: 6438
+  dir: east
+  state: closed

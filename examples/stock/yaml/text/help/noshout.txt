@@ -1,0 +1,8 @@
+NOSHOUT
+
+Usage: noshout
+
+NOSHOUT toggles whether or not you hear shouts.  (deaf) will appear after
+your name in the WHO list.
+
+See also: FLAGS, HOLLER, SHOUT, TOGGLE, WHO

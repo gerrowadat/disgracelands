@@ -1,0 +1,2017 @@
+schema: dl/world@1
+zone:
+  vnum: 51
+  name: Drow City
+  range:
+  - 5100
+  - 5199
+  lifespan: 30
+  reset: empty
+rooms:
+- vnum: 5100
+  name: The City Entrance
+  sector: inside
+  flags:
+  - dark
+  - no_mob
+  - indoors
+  desc: |2
+       You are at the entrance to a small underground city.  A great adamantite
+    gate lies open to the west allowing entrance into the city.
+  exits:
+    west:
+      to: 5101
+      desc: |
+            A huge gate opens to the west allowing entrance into the city.
+      door: regular
+      key: -1
+      keywords: gate
+    up:
+      to: 5011
+      desc: |
+            A passageway opens up into a fairly large cave above.
+      key: -1
+  extra_descs:
+  - keywords:
+    - gate
+    desc: |
+              A large adamantite gate with giant spider shaped emblems stands here.
+- vnum: 5101
+  name: A City Street
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You walk along a highly ornate street going north-south.  A large gate
+    lies to the east while a building lies to the west.
+  exits:
+    north:
+      to: 5123
+      key: -1
+    east:
+      to: 5100
+      door: regular
+      key: -1
+      keywords: gate
+    south:
+      to: 5102
+      key: -1
+    west:
+      to: 5122
+      key: -1
+- vnum: 5102
+  name: A City Street
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You walk along a highly ornate city street going north and west.
+  exits:
+    north:
+      to: 5101
+      key: -1
+    west:
+      to: 5103
+      key: -1
+- vnum: 5103
+  name: A City Street
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You walk along a highly ornate city street going east-west.  A large house
+    stands to the south.
+  exits:
+    east:
+      to: 5102
+      key: -1
+    south:
+      to: 5104
+      key: -1
+    west:
+      to: 5106
+      key: -1
+- vnum: 5104
+  name: The 3rd House
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You stand inside the 3rd house of the city; it is fairly well decorated
+    by drow standards having a few statues, murals and such.  A door leads to the 
+    south.
+  exits:
+    north:
+      to: 5103
+      key: -1
+    south:
+      to: 5105
+      door: regular
+      key: -1
+      keywords: door
+- vnum: 5105
+  name: The Throne Room
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       The throne room of the 3rd house is about as decorated as the inner
+    courtyard except with a blood covered altar in the center of the room.
+  exits:
+    north:
+      to: 5104
+      door: regular
+      key: -1
+      keywords: door
+- vnum: 5106
+  name: A City Street
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You walk along a highly ornate city street going east-west.  To the north
+    is a large building.
+  exits:
+    north:
+      to: 5118
+      key: -1
+    east:
+      to: 5103
+      key: -1
+    west:
+      to: 5107
+      key: -1
+- vnum: 5107
+  name: A City Street
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You walk along a highly ornate city street leading north and east.  To the
+    south is an extremely large house.
+  exits:
+    north:
+      to: 5110
+      key: -1
+    east:
+      to: 5106
+      key: -1
+    south:
+      to: 5108
+      key: -1
+- vnum: 5108
+  name: The 2nd House
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You stand inside the 2nd house of the city.  The room is highly decorated
+    with statues of spiders and murals everywhere.
+  exits:
+    north:
+      to: 5107
+      key: -1
+    west:
+      to: 5109
+      door: regular
+      key: -1
+      keywords: door
+- vnum: 5109
+  name: The Throne Room
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       The throne room of the 2nd house is just a little more decorative than
+    the inner courtyard having an altar in the center of the room.
+  exits:
+    east:
+      to: 5108
+      door: regular
+      key: -1
+      keywords: door
+- vnum: 5110
+  name: The Main Gate
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are at the entrance to the 1st house of the city.  A large gate,
+    almost as big and elegant as the one at the entrance to the city, stands
+    here.
+  exits:
+    north:
+      to: 5114
+      key: -1
+    south:
+      to: 5107
+      key: -1
+    west:
+      to: 5111
+      desc: |
+            A large gate lies to the west.
+      door: regular
+      key: -1
+      keywords: gate
+- vnum: 5111
+  name: The 1st House
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You stand in the inner courtyard of the 1st and largest house in the city.
+    The room is extremely large and decorative.  Mural and paintings hang on the 
+    walls depicting some battles and a spider queen.
+  exits:
+    east:
+      to: 5110
+      door: regular
+      key: -1
+      keywords: gate
+    west:
+      to: 5112
+      key: -1
+- vnum: 5112
+  name: The Throne Room
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       The throne room of the 1st house is in one word...awesome.  It is so
+    horrifying it is almost beautiful.
+  exits:
+    north:
+      to: 5113
+      door: regular
+      key: -1
+      keywords: door
+    east:
+      to: 5111
+      key: -1
+- vnum: 5113
+  name: The Main Chamber
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       This is the council chamber for the Matron Mother herself.  A huge table
+    and chairs surrounding it sits in the center of the room.
+  exits:
+    south:
+      to: 5112
+      door: regular
+      key: -1
+      keywords: door
+- vnum: 5114
+  name: A City Street
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You walk along a highly ornate city street leading north-south and east.
+  exits:
+    north:
+      to: 5115
+      key: -1
+    east:
+      to: 5117
+      key: -1
+    south:
+      to: 5110
+      key: -1
+- vnum: 5115
+  name: A City Street
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You walk along a highly ornate city street leading south.  A building is
+    to the west.
+  exits:
+    south:
+      to: 5114
+      key: -1
+    west:
+      to: 5116
+      key: -1
+- vnum: 5116
+  name: The Clerics' Academy
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       This is the most lavish of the academies being that it is for the clerics.
+  exits:
+    east:
+      to: 5115
+      key: -1
+- vnum: 5117
+  name: A City Street
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You walk along a highly ornate city street going east-west.  To the north
+    is a giant temple.
+  exits:
+    north:
+      to: 5119
+      desc: |
+            The entrance to the temple of Lloth is blocked by large ornamental gates.
+      door: regular
+      key: -1
+      keywords: gates gate
+    east:
+      to: 5121
+      key: -1
+    west:
+      to: 5114
+      key: -1
+- vnum: 5118
+  name: The Warriors' Academy
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       This looks more like a barracks than a school.
+  exits:
+    south:
+      to: 5106
+      key: -1
+- vnum: 5119
+  name: The Entrance To The Temple Of Lloth
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       The temple is the largest building in the city.  Even its doors are beyond
+    imagination.  Inside of the temple entrance, the walls are made of gold and 
+    adamantite.
+  exits:
+    south:
+      to: 5117
+      door: regular
+      key: -1
+      keywords: gates gate
+    down:
+      to: 5126
+      key: -1
+- vnum: 5120
+  name: The Mages' Academy
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       The Mages' Academy is fairly well decorated and you can see that the
+    drow prefer magic over physical power greatly.
+  exits:
+    south:
+      to: 5121
+      key: -1
+- vnum: 5121
+  name: A City Street
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You walk along a highly ornate city street going eastward.  To the north
+    is a building.
+  exits:
+    north:
+      to: 5120
+      key: -1
+    east:
+      to: 5123
+      key: -1
+    west:
+      to: 5117
+      key: -1
+- vnum: 5122
+  name: The Slave Chamber
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       The room is in shambles.  Straw is strewn all about the room as beds for
+    the unfortunate creatures who have fallen prey to drow imperialism.
+  exits:
+    east:
+      to: 5101
+      key: -1
+- vnum: 5123
+  name: A City Street
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You walk along a highly ornate city street leading west and south.  To
+    the north is a relatively small house.
+  exits:
+    north:
+      to: 5124
+      door: regular
+      key: -1
+      keywords: gate
+    south:
+      to: 5101
+      key: -1
+    west:
+      to: 5121
+      key: -1
+- vnum: 5124
+  name: The 4th House
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You stand inside the 4th house of the city.  Its inner courtyard is rather 
+    dull by drow standards and rather small as well.
+  exits:
+    east:
+      to: 5125
+      key: -1
+    south:
+      to: 5123
+      door: regular
+      key: -1
+      keywords: gate
+- vnum: 5125
+  name: The Throne Room
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       The throne room is basically similar to the inner courtyard in regards
+    to decor.  there is a small throne behind the altar but that is about it.
+  exits:
+    west:
+      to: 5124
+      key: -1
+- vnum: 5126
+  name: The Entrance Hall
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You stand in the entrance way to the temple which opens up to the north
+    into a large hallway going east and west.  Small statues os spiders line the
+    entrance way's walls.
+  exits:
+    north:
+      to: 5127
+      key: -1
+    up:
+      to: 5119
+      key: -1
+- vnum: 5127
+  name: A Hallway
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are in a long hallway lined with adamantite.  The walls are engraved
+    with pictures of elves and spiders.  The hallway continues east and west.  As
+    you look down the hallway you can make out one or two figures moving away from
+    you.
+    To the north is a obsidian stairway.
+  exits:
+    north:
+      to: 5135
+      key: -1
+    east:
+      to: 5128
+      key: -1
+    south:
+      to: 5126
+      key: -1
+    west:
+      to: 5131
+      key: -1
+- vnum: 5128
+  name: A Long Hallway
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are in a long hallway lined with adamantite.  The walls are engraved
+    with pictures of elves and spiders.  The hallway continues east and west.  As
+    you look down the hallway you can make out one or two figures moving away from
+    you.
+  exits:
+    east:
+      to: 5129
+      key: -1
+    west:
+      to: 5127
+      key: -1
+- vnum: 5129
+  name: A Long Hallway
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are in a long hallway lined with adamantite.  The walls are engraved
+    with pictures of elves and spiders.  The hallway continues east and west.  As
+    you look down the hallway you can make out one or two figures moving away from
+    you.
+    To the north is a door.
+  exits:
+    north:
+      to: 5150
+      door: regular
+      key: -1
+      keywords: door
+    east:
+      to: 5130
+      key: -1
+    west:
+      to: 5128
+      key: -1
+- vnum: 5130
+  name: A Long Hallway
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are in a long hallway lined with adamantite.  The walls are engraved
+    with pictures of elves and spiders.  The hallway continues east and west.  As
+    you look down the hallway you can make out one or two figures moving away from
+    you.
+  exits:
+    east:
+      to: 5134
+      key: -1
+    west:
+      to: 5129
+      key: -1
+- vnum: 5131
+  name: A Long Hallway
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are in a long hallway lined with adamantite.  The walls are engraved
+    with pictures of elves and spiders.  The hallway continues east and west.  As
+    you look down the hallway you can make out one or two figures moving away from
+    you.
+  exits:
+    east:
+      to: 5127
+      key: -1
+    west:
+      to: 5132
+      key: -1
+- vnum: 5132
+  name: A Long Hallway
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are in a long hallway lined with adamantite.  The walls are engraved
+    with pictures of elves and spiders.  The hallway continues east and west.  As
+    you look down the hallway you can make out one or two figures moving away from
+    you.
+    To the south is a door.
+  exits:
+    east:
+      to: 5131
+      key: -1
+    south:
+      to: 5133
+      door: regular
+      key: -1
+      keywords: door
+    west:
+      to: 5134
+      key: -1
+- vnum: 5133
+  name: The Warriors' Barracks
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       The room is a complete mess.  None of the beds are made, clothes and other
+    items have been left all about the room.  Well drow warriors never were known
+    for neatness.
+  exits:
+    north:
+      to: 5131
+      door: regular
+      key: -1
+      keywords: door
+- vnum: 5134
+  name: A Long Hallway
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are in a long hallway lined with adamantite.  The walls are engraved
+    with pictures of elves and spiders.  The hallway continues east and west.  As
+    you look down the hallway you can make out one or two figures moving away from
+    you.
+  exits:
+    east:
+      to: 5132
+      key: -1
+    west:
+      to: 5130
+      key: -1
+- vnum: 5135
+  name: The Grand Stairway
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are standing at the bottom of a giant obsidian and adamantite 
+    stairway.  The edges are trimmed with gold.
+  exits:
+    south:
+      to: 5127
+      key: -1
+    up:
+      to: 5136
+      key: -1
+- vnum: 5136
+  name: The Grand Hallway
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are standing in the middle of a grand hallway.  The walls are 
+    of the purest adamantite with gold trim.  Mosaics line the walls.
+  exits:
+    north:
+      to: 5138
+      key: -1
+    east:
+      to: 5137
+      door: regular
+      key: -1
+      keywords: door
+    down:
+      to: 5135
+      key: -1
+- vnum: 5137
+  name: The Mages' Barracks
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       The mage's living quarters is rather clean with the exception of a few
+    used component containers.  It is rather well decorated as well.  Cots line
+    the floor for the mages to sleep on.  The only door is to the west.
+  exits:
+    west:
+      to: 5136
+      door: regular
+      key: -1
+      keywords: door
+- vnum: 5138
+  name: The Grand Hallway
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are walking down a grand hallway, heavily decorated with adamantite
+    and gold.  To the north the hall goes down a flight of stairs while a door is 
+    to the west.
+  exits:
+    south:
+      to: 5136
+      key: -1
+    west:
+      to: 5139
+      door: regular
+      key: -1
+      keywords: door
+    down:
+      to: 5140
+      key: -1
+- vnum: 5139
+  name: The Clerics' Barracks
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       The bed chamber is brightly decorated with spider shaped statues, murals
+    and the like.  Large beds line the floor making this a comfortable room to
+    live in.
+  exits:
+    east:
+      to: 5138
+      door: regular
+      key: -1
+      keywords: door
+- vnum: 5140
+  name: The Grand Stairway
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are climbing a set of obsidian stairs surrounded by adamantite walls.
+    To the north are a set of large golden doors.
+  exits:
+    north:
+      to: 5141
+      door: regular
+      key: -1
+      keywords: doors door golden gold
+    up:
+      to: 5138
+      key: -1
+- vnum: 5141
+  name: The Main Chamber
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       This is the south side of a large auditorium used for services by the
+    drow priestesses.  In the center is a large sacrificial pit and beyond that
+    is an altar.
+  exits:
+    east:
+      to: 5142
+      key: -1
+    south:
+      to: 5140
+      door: regular
+      key: -1
+      keywords: doors door golden gold
+    west:
+      to: 5144
+      key: -1
+- vnum: 5142
+  name: The Eastern Side Of The Main Chamber
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are on the eastern side of the chamber overlooking the pit.  To the
+    east is a door while to the north is an altar.
+  exits:
+    north:
+      to: 5145
+      key: -1
+    east:
+      to: 5146
+      door: regular
+      key: -1
+      keywords: door
+    south:
+      to: 5141
+      key: -1
+- vnum: 5143
+  name: The Sacrificial Pit
+  sector: inside
+  flags:
+  - death
+  - indoors
+  desc: |2
+       As you climb down into the pit, thousands of spiders cover you, tearing
+    your fragile body to shreds.  
+     
+    Lloth thanks you for your sacrifice.
+- vnum: 5144
+  name: The Western Side Of The Main Chamber
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are on the western side of the main chamber overlooking a sacrificial
+    pit.  To the north is an altar.
+  exits:
+    north:
+      to: 5145
+      key: -1
+    south:
+      to: 5141
+      key: -1
+- vnum: 5145
+  name: The Altar
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are standing in front of a highly and freshly bloodstained altar.  
+    Engraved on the top of the altar is a giant spider with a human head.  Looking 
+    down from the altar you see a large sacrificial pit with thousands of swarming
+    spiders looking for their next meal!
+  exits:
+    north:
+      to: 5148
+      key: -1
+    east:
+      to: 5142
+      key: -1
+    west:
+      to: 5144
+      key: -1
+    down:
+      to: 5143
+      desc: |
+            Thousands of spiders eye you with undisguised hunger.
+      key: -1
+- vnum: 5146
+  name: The Slave Cells
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       This is the main room to the cell chambers for the slaves to be 
+    sacrificed.  You notice there are no guards around.
+  exits:
+    north:
+      to: 5147
+      door: regular
+      key: -1
+      keywords: cell
+    west:
+      to: 5142
+      door: regular
+      key: -1
+      keywords: door
+- vnum: 5147
+  name: The Slave Pen
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       Rotten meat and breads lie about the floor while shackles hang from the 
+    walls.  The room reeks of death.  You almost become nauseous and decide to
+    leave the room since you were obviously too late to save the slave.
+  exits:
+    south:
+      to: 5146
+      door: regular
+      key: -1
+      keywords: cell
+- vnum: 5148
+  name: The Dias
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You stand upon a dias behind the altar.  Above you is a enormous illusion
+    of a female drow turning into a giant spider and back again.  There is a door 
+    to the west.
+  exits:
+    south:
+      to: 5145
+      key: -1
+    west:
+      to: 5149
+      door: pickproof
+      key: 5115
+      keywords: door
+- vnum: 5149
+  name: The Treasury
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       This is obviously only a temporary storage place for the collected 
+    treasure being rather bare.
+  exits:
+    east:
+      to: 5148
+      door: pickproof
+      key: 5115
+      keywords: door
+- vnum: 5150
+  name: The Weaponsmaster's Chamber
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       This one-person bedchamber is very elegant.  The owner must be held in
+    high regard to get this kind of treatment.
+  exits:
+    south:
+      to: 5129
+      door: regular
+      key: -1
+      keywords: door
+mobiles:
+- vnum: 5100
+  keywords:
+  - goblin
+  - slave
+  short: the goblin slave
+  long: |
+    A goblin slave lies here asleep.
+  desc: |
+    The defenseless goblin begs for mercy.
+  act:
+  - sentinel
+  - wimpy
+  alignment: 350
+  level: 1
+  thac0: 20
+  ac: 9
+  hp: 1d11+11
+  damage: 1d5
+  gold: 0
+  exp: 100
+  position: sleeping
+  default_position: sleeping
+  sex: male
+- vnum: 5101
+  keywords:
+  - drow
+  - commoner
+  short: the Drow commoner
+  long: |
+    A drow commoner is here, walking around on guard duty.
+  desc: |
+    I doubt he is the type to give directions.
+  act:
+  - aggressive
+  - stay_zone
+  - memory
+  - helper
+  affected:
+  - detect_invis
+  - infravision
+  alignment: -1000
+  level: 10
+  thac0: 12
+  ac: 0
+  hp: 1d10+130
+  damage: 13d1+3
+  gold: 300
+  exp: 10750
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 5102
+  keywords:
+  - drow
+  - noble
+  - warrior
+  short: the drow warrior
+  long: |
+    A drow warrior stands here guarding his home.
+  desc: |
+    He looks kind of annoyed!
+  act:
+  - sentinel
+  - aggressive
+  - memory
+  - helper
+  affected:
+  - detect_invis
+  - infravision
+  alignment: -1000
+  level: 12
+  thac0: 9
+  ac: 0
+  hp: 1d5+160
+  damage: 14d1+7
+  gold: 1000
+  exp: 15000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 5103
+  keywords:
+  - drow
+  - noble
+  - mage
+  short: the drow mage
+  long: |
+    A drow mage is here protecting his home.
+  desc: |
+    The mage prepares to cast a spell... at you!!
+  act:
+  - spec
+  - sentinel
+  - aggressive
+  - memory
+  - helper
+  affected:
+  - detect_invis
+  - infravision
+  alignment: -1000
+  level: 15
+  thac0: 8
+  ac: 2
+  hp: 1d12+190
+  damage: 8d2+2
+  gold: 2000
+  exp: 21000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 5104
+  keywords:
+  - drow
+  - priestess
+  short: the drow priestess
+  long: |
+    A drow priestess is here shouting orders.
+  desc: |
+    I wouldn't want go get on her bad side!
+  act:
+  - spec
+  - sentinel
+  - aggressive
+  - memory
+  - helper
+  affected:
+  - detect_invis
+  - infravision
+  alignment: -1000
+  level: 17
+  thac0: 5
+  ac: 0
+  hp: 1d11+205
+  damage: 14d1+4
+  gold: 4000
+  exp: 28000
+  position: standing
+  default_position: standing
+  sex: female
+- vnum: 5105
+  keywords:
+  - drow
+  - master
+  short: the drow master
+  long: |
+    A drow master stares at you angrily.
+  desc: |
+    The drow master is ALWAYS ready for a fight.
+  act:
+  - sentinel
+  - aggressive
+  - memory
+  - helper
+  affected:
+  - detect_invis
+  - infravision
+  alignment: -1000
+  level: 21
+  thac0: 0
+  ac: 0
+  hp: 1d12+248
+  damage: 18d1+4
+  gold: 10000
+  exp: 60000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 5106
+  keywords:
+  - drow
+  - weaponsmaster
+  short: the weaponsmaster
+  long: |
+    A drow weaponsmaster is here shadow boxing.
+  desc: |
+    He definitely know his way around in combat.
+  act:
+  - sentinel
+  - aggressive
+  - memory
+  - helper
+  affected:
+  - detect_invis
+  - infravision
+  - no_track
+  alignment: -1000
+  level: 23
+  thac0: 0
+  ac: -2
+  hp: 1d25+405
+  damage: 12d2+4
+  gold: 15000
+  exp: 80000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 5107
+  keywords:
+  - drow
+  - matron
+  - mother
+  short: the Matron Mother
+  long: |
+    The Matron Mother of the house is standing here.
+  desc: |
+    She looks really and truly annoyed that you have found your way here.
+  act:
+  - spec
+  - sentinel
+  - aggressive
+  - memory
+  affected:
+  - detect_invis
+  - sanctuary
+  - infravision
+  - no_track
+  alignment: -1000
+  level: 24
+  thac0: 0
+  ac: -3
+  hp: 1d50+450
+  damage: 15d2+4
+  gold: 30000
+  exp: 130000
+  position: standing
+  default_position: standing
+  sex: female
+- vnum: 5108
+  keywords:
+  - drow
+  - matron
+  - mother
+  short: the Matron Mother
+  long: |
+    The Matron Mother of the first house is waiting for you.
+  desc: |
+    She looks like she is about to rip your head of and eat it.
+  act:
+  - spec
+  - sentinel
+  - aggressive
+  - memory
+  affected:
+  - detect_invis
+  - sanctuary
+  - infravision
+  - no_track
+  alignment: -1000
+  level: 25
+  thac0: 0
+  ac: -4
+  hp: 5d10+350
+  damage: 12d2+24
+  gold: 40000
+  exp: 150000
+  position: standing
+  default_position: standing
+  sex: female
+- vnum: 5109
+  keywords:
+  - drider
+  short: the drider
+  long: |
+    The drider looks at you viciously while it draws its sword.
+  desc: |
+    This half-spider, half-drow creature is a formidable opponent.
+  act:
+  - aggressive
+  - stay_zone
+  - no_charm
+  - no_summon
+  affected:
+  - detect_invis
+  - infravision
+  - no_track
+  alignment: -1000
+  level: 8
+  thac0: 12
+  ac: 2
+  hp: 1d6+195
+  damage: 2d6+2
+  gold: 200
+  exp: 4000
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 5110
+  keywords:
+  - drider
+  short: the drider
+  long: |
+    The drider looks at you viciously while it draws its sword.
+  desc: |
+    This half-spider, half-drow creature is a formidable opponent.
+  act:
+  - sentinel
+  - aggressive
+  - stay_zone
+  - no_charm
+  - no_summon
+  affected:
+  - detect_invis
+  - sanctuary
+  - infravision
+  - no_track
+  alignment: -1000
+  level: 11
+  thac0: 10
+  ac: 0
+  hp: 1d6+295
+  damage: 3d6+8
+  gold: 0
+  exp: 7000
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 5111
+  keywords:
+  - yochlol
+  short: the yochlol
+  long: |
+    A yochlol forms out of a swirling mist...
+  desc: |
+    The yochlol is not in a good mood.
+  act:
+  - sentinel
+  - aware
+  - aggressive
+  - memory
+  - no_charm
+  - no_summon
+  - no_bash
+  - no_blind
+  affected:
+  - detect_invis
+  - sense_life
+  - sanctuary
+  - infravision
+  - no_track
+  alignment: -1000
+  level: 23
+  thac0: 0
+  ac: -6
+  hp: 25d2+450
+  damage: 15d2+30
+  gold: 60000
+  exp: 80000
+  position: standing
+  default_position: standing
+  sex: female
+objects:
+- vnum: 5100
+  keywords:
+  - longsword
+  - commoner
+  short: a commoner's longsword
+  desc: A commoner's longsword made of adamantite has been left here.
+  type: weapon
+  wear:
+  - take
+  - wield
+  flags:
+  - anti_mage
+  weapon:
+    dice: 1d8
+    damage_type: slash
+  weight: 12
+  cost: 1000
+  rent: 500
+  affects:
+  - location: hitroll
+    modifier: 1
+  - location: damroll
+    modifier: 1
+- vnum: 5101
+  keywords:
+  - longsword
+  - noble
+  short: a noble's longsword
+  desc: A drow noble's longsword, made of adamantite, lies here.
+  type: weapon
+  wear:
+  - take
+  - wield
+  flags:
+  - anti_mage
+  weapon:
+    dice: 1d8
+    damage_type: slash
+  weight: 12
+  cost: 1500
+  rent: 800
+  affects:
+  - location: hitroll
+    modifier: 2
+  - location: damroll
+    modifier: 2
+- vnum: 5102
+  keywords:
+  - whip
+  - snake
+  - twoheaded
+  short: a two-headed snake whip
+  desc: A whip with two snakes heads lies here.
+  type: weapon
+  wear:
+  - take
+  - wield
+  flags:
+  - glow
+  - hum
+  weapon:
+    dice: 2d6
+    damage_type: slash
+  weight: 12
+  cost: 1750
+  rent: 1500
+  affects:
+  - location: hitroll
+    modifier: 2
+  - location: damroll
+    modifier: 2
+- vnum: 5103
+  keywords:
+  - whip
+  - snake
+  - threeheaded
+  short: a three-headed snake whip
+  desc: A whip with three snake heads has been left here.
+  type: weapon
+  wear:
+  - take
+  - wield
+  flags:
+  - glow
+  - hum
+  weapon:
+    dice: 2d7
+    damage_type: slash
+  weight: 12
+  cost: 5000
+  rent: 2300
+  affects:
+  - location: hitroll
+    modifier: 2
+  - location: damroll
+    modifier: 2
+- vnum: 5104
+  keywords:
+  - whip
+  - snake
+  - fourheaded
+  short: a four-headed snake whip
+  desc: A whip with four snake heads has been carelessly left here.
+  type: weapon
+  wear:
+  - take
+  - wield
+  flags:
+  - glow
+  - hum
+  weapon:
+    dice: 2d8
+    damage_type: slash
+  weight: 12
+  cost: 10250
+  rent: 4000
+  affects:
+  - location: hitroll
+    modifier: 2
+  - location: damroll
+    modifier: 2
+- vnum: 5105
+  keywords:
+  - longsword
+  - black
+  short: a black longsword
+  desc: A black longsword has been carelessly left here.
+  type: weapon
+  wear:
+  - take
+  - wield
+  flags:
+  - glow
+  - magic
+  - anti_mage
+  weapon:
+    dice: 2d8
+    damage_type: slash
+  weight: 12
+  cost: 10250
+  rent: 4000
+  affects:
+  - location: hitroll
+    modifier: 2
+  - location: damroll
+    modifier: 2
+- vnum: 5106
+  keywords:
+  - whip
+  - snake
+  - fiveheaded
+  short: a five-headed snake whip
+  desc: A whip with 5 snake heads has been carelessly dropped here.
+  type: weapon
+  wear:
+  - take
+  - wield
+  flags:
+  - glow
+  - magic
+  - anti_good
+  weapon:
+    dice: 3d6
+    damage_type: slash
+  weight: 12
+  cost: 12000
+  rent: 4500
+  affects:
+  - location: str
+    modifier: -2
+  - location: int
+    modifier: -2
+- vnum: 5107
+  keywords:
+  - whip
+  - snake
+  - sixheaded
+  short: a six-headed snake whip
+  desc: A whip with six snake heads has been dropped here very carelessly.
+  type: weapon
+  wear:
+  - take
+  - wield
+  flags:
+  - glow
+  - magic
+  - anti_good
+  weapon:
+    dice: 4d5
+    damage_type: slash
+  weight: 12
+  cost: 15000
+  rent: 8000
+  affects:
+  - location: str
+    modifier: -3
+  - location: int
+    modifier: -3
+- vnum: 5108
+  keywords:
+  - bracers
+  - iron
+  short: a pair of bracers
+  desc: A pair of iron bracers has been dropped here.
+  type: armor
+  wear:
+  - take
+  - arms
+  flags:
+  - glow
+  - magic
+  armor:
+    ac_apply: 8
+  weight: 3
+  cost: 2000
+  rent: 1000
+  affects:
+  - location: hitroll
+    modifier: -1
+- vnum: 5109
+  keywords:
+  - gauntlets
+  short: a pair of gauntlets
+  desc: A pair of gauntlets is lying on the ground.
+  type: worn
+  wear:
+  - take
+  - hands
+  flags:
+  - glow
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 2
+  cost: 10000
+  rent: 3000
+  affects:
+  - location: str
+    modifier: 2
+- vnum: 5110
+  keywords:
+  - wand
+  - blue
+  - silver
+  short: a silvery blue wand
+  desc: A silvery blue wand has been dropped in the dirt.
+  type: wand
+  wear:
+  - take
+  - hold
+  flags:
+  - magic
+  charges:
+    spell: lightning bolt
+    level: 10
+    max: 3
+    remaining: 3
+  weight: 1
+  cost: 4000
+  rent: 3000
+- vnum: 5111
+  keywords:
+  - helmet
+  - small
+  short: a small helmet
+  desc: A small helmet lies up against a rock.
+  type: armor
+  wear:
+  - take
+  - head
+  flags:
+  - magic
+  armor:
+    ac_apply: 1
+  weight: 5
+  cost: 6000
+  rent: 3000
+  affects:
+  - location: int
+    modifier: 3
+- vnum: 5112
+  keywords:
+  - ring
+  - ruby
+  short: a small ruby ring
+  desc: A small ruby ring lies in the dirt.
+  type: worn
+  wear:
+  - take
+  - finger
+  flags:
+  - magic
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 1
+  cost: 20000
+  rent: 8000
+  affects:
+  - location: max_hit
+    modifier: 25
+- vnum: 5113
+  keywords:
+  - dagger
+  - sacrificial
+  - spider
+  short: a spider shaped dagger
+  desc: A dagger with spider leg shaped blades lies on the ground.
+  type: weapon
+  wear:
+  - take
+  - wield
+  flags:
+  - magic
+  - anti_good
+  - anti_mage
+  - anti_cleric
+  - anti_warrior
+  weapon:
+    dice: 3d4
+    damage_type: pierce
+  weight: 8
+  cost: 12000
+  rent: 15000
+  affects:
+  - location: hitroll
+    modifier: 3
+  - location: damroll
+    modifier: 3
+- vnum: 5114
+  keywords:
+  - hat
+  - green
+  short: a small bright green hat
+  desc: A small bright green hat lies in the dirt.
+  type: armor
+  wear:
+  - take
+  - head
+  flags:
+  - no_drop
+  armor:
+    ac_apply: 10
+  weight: 1
+  cost: 2000
+  rent: 600
+  affects:
+  - location: age
+    modifier: -15
+  - location: armor
+    modifier: -2
+- vnum: 5115
+  keywords:
+  - key
+  - adamantite
+  short: an adamantite key
+  desc: A key made of a strange metal is lying here.
+  type: key
+  wear:
+  - take
+  - hold
+  flags:
+  - no_rent
+  values:
+  - 5115
+  - 0
+  - 0
+  - 0
+  weight: 1
+  cost: 0
+  rent: 0
+- vnum: 5116
+  keywords:
+  - gold
+  - treasure
+  - coins
+  short: a pile of golden coins
+  desc: A large pile of golden coins is lying here.
+  type: money
+  wear:
+  - take
+  values:
+  - 17645
+  - 0
+  - 0
+  - 0
+  weight: 10
+  cost: 17645
+  rent: 0
+resets:
+- mob: 5100
+  room: 5122
+  max: 15
+- mob: 5100
+  room: 5122
+  max: 15
+- mob: 5100
+  room: 5122
+  max: 15
+- mob: 5100
+  room: 5122
+  max: 15
+- mob: 5100
+  room: 5122
+  max: 15
+- mob: 5100
+  room: 5122
+  max: 15
+- mob: 5100
+  room: 5122
+  max: 15
+- mob: 5100
+  room: 5122
+  max: 15
+- mob: 5101
+  room: 5118
+  max: 10
+  then:
+  - equip: 5100
+    slot: wield
+    max: 50
+- mob: 5101
+  room: 5133
+  max: 10
+  then:
+  - equip: 5100
+    slot: wield
+    max: 50
+- mob: 5102
+  room: 5104
+  max: 4
+  then:
+  - equip: 5101
+    slot: wield
+    max: 12
+- mob: 5102
+  room: 5124
+  max: 4
+  then:
+  - equip: 5101
+    slot: wield
+    max: 12
+- mob: 5102
+  room: 5108
+  max: 4
+  then:
+  - equip: 5101
+    slot: wield
+    max: 12
+- mob: 5102
+  room: 5111
+  max: 4
+  then:
+  - equip: 5101
+    slot: wield
+    max: 12
+- mob: 5103
+  room: 5104
+  max: 4
+  then:
+  - equip: 5102
+    slot: wield
+    max: 12
+- mob: 5103
+  room: 5124
+  max: 4
+  then:
+  - equip: 5102
+    slot: wield
+    max: 12
+- mob: 5103
+  room: 5108
+  max: 4
+  then:
+  - equip: 5102
+    slot: wield
+    max: 12
+- mob: 5103
+  room: 5111
+  max: 4
+  then:
+  - equip: 5102
+    slot: wield
+    max: 12
+- mob: 5104
+  room: 5104
+  max: 4
+  then:
+  - equip: 5103
+    slot: wield
+    max: 12
+- mob: 5104
+  room: 5124
+  max: 4
+  then:
+  - equip: 5103
+    slot: wield
+    max: 12
+- mob: 5104
+  room: 5108
+  max: 4
+  then:
+  - equip: 5103
+    slot: wield
+    max: 12
+- mob: 5104
+  room: 5111
+  max: 4
+  then:
+  - equip: 5103
+    slot: wield
+    max: 12
+- mob: 5105
+  room: 5118
+  max: 3
+  then:
+  - equip: 5105
+    slot: wield
+    max: 3
+  - equip: 5110
+    slot: hold
+    max: 5
+- mob: 5105
+  room: 5120
+  max: 3
+  then:
+  - equip: 5104
+    slot: wield
+    max: 2
+  - equip: 5110
+    slot: hold
+    max: 5
+- mob: 5105
+  room: 5116
+  max: 3
+  then:
+  - equip: 5104
+    slot: wield
+    max: 2
+  - equip: 5110
+    slot: hold
+    max: 5
+- mob: 5106
+  room: 5150
+  max: 2
+  then:
+  - equip: 5105
+    slot: wield
+    max: 2
+  - equip: 5109
+    slot: hands
+    max: 1
+- mob: 5106
+  room: 5101
+  max: 2
+  then:
+  - equip: 5105
+    slot: wield
+    max: 2
+- mob: 5107
+  room: 5125
+  max: 3
+  then:
+  - equip: 5106
+    slot: wield
+    max: 3
+  - give: 5114
+    max: 3
+- mob: 5107
+  room: 5105
+  max: 3
+  then:
+  - equip: 5106
+    slot: wield
+    max: 3
+  - equip: 5111
+    slot: head
+    max: 2
+- mob: 5107
+  room: 5109
+  max: 3
+  then:
+  - equip: 5106
+    slot: wield
+    max: 3
+  - equip: 5108
+    slot: arms
+    max: 2
+- mob: 5108
+  room: 5113
+  max: 1
+  then:
+  - equip: 5107
+    slot: wield
+    max: 1
+  - equip: 5112
+    slot: finger_right
+    max: 1
+- mob: 5109
+  room: 5101
+  max: 6
+- mob: 5109
+  room: 5106
+  max: 6
+- mob: 5109
+  room: 5115
+  max: 6
+- mob: 5109
+  room: 5121
+  max: 6
+- mob: 5110
+  room: 5110
+  max: 2
+- mob: 5110
+  room: 5110
+  max: 2
+- mob: 5111
+  room: 5148
+  max: 1
+  then:
+  - equip: 5113
+    slot: wield
+    max: 1
+  - equip: 5115
+    slot: hold
+    max: 1
+  - room: 5149
+    object: 5116
+    max: 1
+- door: 5100
+  dir: west
+  state: open
+- door: 5101
+  dir: east
+  state: open
+- door: 5104
+  dir: south
+  state: closed
+- door: 5105
+  dir: north
+  state: closed
+- door: 5108
+  dir: west
+  state: closed
+- door: 5109
+  dir: east
+  state: closed
+- door: 5110
+  dir: west
+  state: closed
+- door: 5111
+  dir: east
+  state: closed
+- door: 5112
+  dir: north
+  state: closed
+- door: 5113
+  dir: south
+  state: closed
+- door: 5117
+  dir: north
+  state: closed
+- door: 5119
+  dir: south
+  state: closed
+- door: 5123
+  dir: north
+  state: closed
+- door: 5124
+  dir: south
+  state: closed
+- door: 5129
+  dir: north
+  state: closed
+- door: 5150
+  dir: south
+  state: closed
+- door: 5132
+  dir: south
+  state: closed
+- door: 5133
+  dir: north
+  state: closed
+- door: 5136
+  dir: east
+  state: closed
+- door: 5137
+  dir: west
+  state: closed
+- door: 5138
+  dir: west
+  state: closed
+- door: 5139
+  dir: east
+  state: closed
+- door: 5140
+  dir: north
+  state: closed
+- door: 5141
+  dir: south
+  state: closed
+- door: 5142
+  dir: east
+  state: closed
+- door: 5146
+  dir: west
+  state: closed
+- door: 5146
+  dir: north
+  state: closed
+- door: 5147
+  dir: south
+  state: closed
+- door: 5148
+  dir: west
+  state: locked
+- door: 5149
+  dir: east
+  state: locked

@@ -1,0 +1,5 @@
+WIZHELP
+
+Usage: wizhelp
+
+Gives a list of the special commands available at your level.

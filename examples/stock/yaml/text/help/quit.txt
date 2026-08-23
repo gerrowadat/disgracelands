@@ -1,0 +1,9 @@
+QUIT
+
+When you get tired of playing, you can leave the game by typing 'quit'.
+Note that quitting this way may cause any items you might be carrying to
+simply be left on the ground (Dependant upon how the game is currently
+configured).  If you wish to have your equipment stored, you may have to
+find an inn and pay rent.
+
+See also: INN, OFFER, RENT

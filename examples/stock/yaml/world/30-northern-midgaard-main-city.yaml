@@ -1,0 +1,4782 @@
+schema: dl/world@1
+zone:
+  vnum: 30
+  name: Northern Midgaard Main City
+  range:
+  - 3000
+  - 3099
+  lifespan: 15
+  reset: always
+rooms:
+- vnum: 3000
+  name: The Reading Room
+  sector: inside
+  flags:
+  - no_mob
+  - indoors
+  - peaceful
+  - no_magic
+  desc: |2
+       You are in a small, simple room which is mostly empty, save a few
+    wooden desks and benches.  To the east you hear the bustle of the Temple
+    of Midgaard, a sharp contrast to the relative quiet of this peaceful
+    room.
+  exits:
+    east:
+      to: 3001
+      desc: |
+            You see the Temple of Midgaard.
+      key: -1
+- vnum: 3001
+  name: The Temple Of Midgaard
+  sector: inside
+  flags:
+  - no_mob
+  - indoors
+  - peaceful
+  - no_magic
+  desc: |2
+       You are in the southern end of the temple hall in the Temple of Midgaard.
+    The temple has been constructed from giant marble blocks, eternal in
+    appearance, and most of the walls are covered by ancient wall paintings
+    picturing Gods, Giants and peasants.
+       Large steps lead down through the grand temple gate, descending the huge
+    mound upon which the temple is built and ends on the temple square below.
+    To the west, you see the Reading Room.  The donation room is in a small
+    alcove to your east.
+  exits:
+    north:
+      to: 3054
+      desc: |
+            At the northern end of the temple hall is a statue and a huge altar.
+      key: -1
+    east:
+      to: 3063
+      desc: |
+            In the east, you see a small alcove with a rickety wooden sign which
+            reads "Midgaard Donation Room."
+      key: -1
+    south:
+      to: 3005
+      desc: |
+            You look down the huge stone steps at the temple square below.
+      key: -1
+    west:
+      to: 3000
+      desc: |
+            You see the Reading Room.
+      key: -1
+    down:
+      to: 3005
+      desc: |
+            You see the temple square.
+      key: -1
+- vnum: 3002
+  name: The Clerics' Inner Sanctum
+  sector: inside
+  flags:
+  - no_mob
+  - indoors
+  desc: |2
+       This is the inner sanctum.  A picture of the mighty Thor, is hanging on
+    the wall, just above the altar which is set against the western wall.  A well
+    in the middle of the floor leads down into darkness.  Vile smells waft from
+    the depths.
+  exits:
+    east:
+      to: 3003
+      desc: |
+            You see your favorite place, the bar of divination.
+      key: -1
+    down:
+      to: 7026
+      desc: |
+            You can't see what is down there, it is too dark.  Looks like it would be
+            impossible to climb back up.
+      key: -1
+- vnum: 3003
+  name: The Bar Of Divination
+  sector: inside
+  flags:
+  - no_mob
+  - indoors
+  - no_magic
+  desc: |2
+       The bar is one of the finest in the land, lucky it is members only.  Fine
+    furniture is set all around the room.  A small sign is hanging on the wall.
+  exits:
+    south:
+      to: 3004
+      desc: |
+            You see the entrance.
+      key: -1
+    west:
+      to: 3002
+      desc: |
+            You see the inner sanctum.
+      key: -1
+  extra_descs:
+  - keywords:
+    - sign
+    desc: |
+              The sign reads:
+              Free instructions provided by the waiter:
+
+                 Buy  - Buy something (drinkable) from the waiter.
+                 List - The waiter will show you all the different drinks and
+                        specialties, and tell the price of each.
+- vnum: 3004
+  name: The Entrance To The Clerics' Guild
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       The entrance hall is a small modest room, reflecting the true nature of
+    the Clerics.  The exit leads east to the temple square.  A small entrance to
+    the bar is in the northern wall.
+  exits:
+    north:
+      to: 3003
+      desc: |
+            You see the bar, richly decorated with really stylish furniture.
+      key: -1
+    east:
+      to: 3005
+      desc: |
+            You see the Temple Square.
+      key: -1
+- vnum: 3005
+  name: The Temple Square
+  sector: city
+  desc: |2
+       You are standing on the temple square.  Huge marble steps lead up to the
+    temple gate.  The entrance to the Clerics' Guild is to the west, and the old
+    Grunting Boar Inn, is to the east.  Just south of here you see the market
+    square, the center of Midgaard.
+  exits:
+    north:
+      to: 3001
+      desc: |
+            You see the temple.
+      key: -1
+    east:
+      to: 3006
+      desc: |
+            You see the good old Grunting Boar Inn.
+      key: -1
+    south:
+      to: 3014
+      desc: |
+            You see the Market Square.
+      key: -1
+    west:
+      to: 3004
+      desc: |
+            You see the entrance to the Clerics' Guild.
+      key: -1
+- vnum: 3006
+  name: The Entrance Hall Of The Grunting Boar Inn
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You are standing in the entrance hall of the Grunting Boar Inn.  The hall
+    has been wisely decorated with simple, functional furniture.  The heavy smell
+    of dust and aging paper drifts in from the Post Office to the north.  A small
+    staircase leads up to the reception and the bar is to the east.
+  exits:
+    north:
+      to: 3062
+      desc: |
+            You see the Midgaard Post Office.
+      key: -1
+    east:
+      to: 3007
+      desc: |
+            Surprise!  You see the bar.
+      key: -1
+    west:
+      to: 3005
+      desc: |
+            You see the temple square.
+      key: -1
+    up:
+      to: 3008
+      desc: |
+            You see the reception.
+      key: -1
+- vnum: 3007
+  name: The Grunting Boar
+  sector: inside
+  flags:
+  - indoors
+  - no_magic
+  desc: |2
+       You are standing in the bar.  The bar is set against the northern wall, old
+    archaic writing, carvings and symbols cover its top.  A fireplace is built into
+    the western wall, and through the southeastern windows you can see the temple
+    square.  This place makes you feel like home.
+    A small sign with big letters is fastened to the bar.
+  exits:
+    west:
+      to: 3006
+      desc: |
+            You see the exit to the entrance hall.
+      key: -1
+  extra_descs:
+  - keywords:
+    - writing
+    - carving
+    - carvings
+    - symbols
+    - symbol
+    desc: |
+              Although it is very hard to understand, you think it looks a lot like beer,
+              poems about beer, and small beer-mugs.
+  - keywords:
+    - sign
+    desc: |
+              The sign reads:
+              Free instructions provided by the Grunting Boar Inn.
+
+                 Buy  - Buy something (drinkable) from the bartender.
+                 List - The bartender will show you all the different drinks and
+                        specialties, and tell the price of each.
+- vnum: 3008
+  name: The Reception
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You are standing in the reception.  The staircase leads down to the
+    entrance hall.  An exit to the north leads to the Cryogenic Center.
+    There is a small sign on the counter.
+  exits:
+    north:
+      to: 3064
+      desc: |
+            You see the Cryogenic Center.
+      key: -1
+    down:
+      to: 3006
+      desc: |
+            You see the entrance hall.
+      key: -1
+  extra_descs:
+  - keywords:
+    - sign
+    desc: |
+              Rooms are expensive but good!  You may:
+
+                 Offer - get an offer on a room - Time is in real life days.
+                 Rent  - Rent a room (saves your stuff, and quits the game),
+                         minimum charge is one day.
+
+
+                                        MY WAY OR THE HIGHWAY
+                                           PAY YOUR RENT!
+                              WE WON'T THINK TWICE BEFORE KICKING YOU OUT.
+- vnum: 3009
+  name: The Bakery
+  sector: inside
+  flags:
+  - indoors
+  - no_magic
+  desc: |2
+       You are standing inside the small bakery.  A sweet scent of Danish and
+    fine bread fills the room.  The bread and Danish are arranged in fine order
+    on the shelves, and seem to be of the finest quality.
+    A small sign is on the counter.
+  exits:
+    south:
+      to: 3013
+      desc: |
+            You see the main street.
+      key: -1
+  extra_descs:
+  - keywords:
+    - sign
+    desc: |
+              Free instructions provided by the store:
+
+                 Buy  - Will buy you some bread or pastry.
+                 List - The baker will kindly tell you the price and sort of the bread in
+                        his bakery.
+  - keywords:
+    - danish
+    - pastry
+    desc: |
+              You see that this is truly delicious pastry.  Must be made by a Dane from
+              Denmark (which surely is not the capital of Sweden!).  Former ruler of
+              Scandinavia, England, Northern Germany, Northern France, Russia, Greenland,
+              Iceland, Estonia etc.  etc.
+                 The sight of those large, wholesome chokoladeboller makes your mouth water
+              and your soul sing.
+- vnum: 3010
+  name: The General Store
+  sector: inside
+  flags:
+  - indoors
+  - no_magic
+  desc: |2
+       You are inside the general store.  All sorts of items are stacked on shelves
+    behind the counter, safely out of your reach.
+    A small note hangs on the wall.
+  exits:
+    south:
+      to: 3015
+      desc: |
+            You see the main street.
+      key: -1
+  extra_descs:
+  - keywords:
+    - note
+    desc: |
+              The note reads:
+
+                List  - Show which various items are in the store.
+                Buy   - Buy an item.
+                Value - The shopkeeper will (free of charge) tell how much he will
+                        pay for your item.
+                Sell  - Sell an item.
+- vnum: 3011
+  name: The Weapon Shop
+  sector: inside
+  flags:
+  - indoors
+  - no_magic
+  desc: |2
+       You are inside the weapon shop.  There is a small note on the counter.
+  exits:
+    south:
+      to: 3016
+      desc: |
+            You see the main street.
+      key: -1
+  extra_descs:
+  - keywords:
+    - note
+    desc: |
+              The note reads:
+
+                List  - Show which various items are in the store.
+                Buy   - Buy an item.
+                Value - The shopkeeper will (free of charge) tell how much he will
+                        pay for your item.
+                Sell  - Sell an item.
+- vnum: 3012
+  name: Main Street
+  sector: city
+  desc: |2
+       You are at the end of the main street of Midgaard.  South of here is the
+    entrance to the Guild of Magic Users.  The street continues east towards the
+    market square.  The magic shop is to the north and to the west is the city
+    gate.
+  exits:
+    north:
+      to: 3033
+      desc: |
+            You see the magic shop.
+      key: -1
+    east:
+      to: 3013
+      desc: |
+            You see the main street.
+      key: -1
+    south:
+      to: 3017
+      desc: |
+            You see the entrance to the Guild of Magic Users.
+      key: -1
+    west:
+      to: 3040
+      desc: |
+            You see the city gate.
+      key: -1
+- vnum: 3013
+  name: Main Street
+  sector: city
+  desc: |2
+       You are on the main street passing through the City of Midgaard.  South of
+    here is the entrance to the Armory, and the bakery is to the north.  East of
+    here is the market square.
+  exits:
+    north:
+      to: 3009
+      desc: |
+            You see the bakery.
+      key: -1
+    east:
+      to: 3014
+      desc: |
+            You see the market square.
+      key: -1
+    south:
+      to: 3020
+      desc: |
+            You see the armory.
+      key: -1
+    west:
+      to: 3012
+      desc: |
+            You see the main street.
+      key: -1
+- vnum: 3014
+  name: Market Square
+  sector: city
+  desc: |2
+       You are standing on the market square, the famous Square of Midgaard.
+    A large, peculiar looking statue is standing in the middle of the square.
+    Roads lead in every direction, north to the temple square, south to the
+    common square, east and westbound is the main street.
+  exits:
+    north:
+      to: 3005
+      desc: |
+            You see the temple square.
+      key: -1
+    east:
+      to: 3015
+      desc: |
+            You see the main street.
+      key: -1
+    south:
+      to: 3025
+      desc: |
+            You see the common square.
+      key: -1
+    west:
+      to: 3013
+      desc: |
+            You see the main street.
+      key: -1
+  extra_descs:
+  - keywords:
+    - statue
+    desc: |
+              What you see is the Midgaard Worm, stretching around the Palace of Midgaard.
+- vnum: 3015
+  name: Main Street
+  sector: city
+  desc: |2
+       You are on the main street crossing through town.  To the north is the
+    general store, and the main street continues east.  To the west you see and
+    hear the market place, to the south a small door leads into the Pet Shop.
+  exits:
+    north:
+      to: 3010
+      desc: |
+            You see the general store.
+      key: -1
+    east:
+      to: 3016
+      desc: |
+            You see the main street.
+      key: -1
+    south:
+      to: 3031
+      desc: |
+            You see the Pet Shop.
+      key: -1
+    west:
+      to: 3014
+      desc: |
+            You see the market square.
+      key: -1
+- vnum: 3016
+  name: Main Street
+  sector: city
+  desc: |2
+       The main street, to the north is the weapon shop and to the south is the
+    Guild of Swordsmen.  To the east you leave town and to the west the street
+    leads to the market square.
+  exits:
+    north:
+      to: 3011
+      desc: |
+            You see the weapon shop.
+      key: -1
+    east:
+      to: 3041
+      desc: |
+            You see the city gate.
+      key: -1
+    south:
+      to: 3021
+      desc: |
+            You see the swordsmen's guild.
+      key: -1
+    west:
+      to: 3015
+      desc: |
+            You see the main street leading to the market square.
+      key: -1
+- vnum: 3017
+  name: The Entrance To The Mages' Guild
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       The entrance hall to this guild is a small, poor lighted room.
+  exits:
+    north:
+      to: 3012
+      desc: |
+            You see the main street.
+      key: -1
+    south:
+      to: 3018
+      desc: |
+            You see your favorite place, the Mages' Bar.
+      key: -1
+- vnum: 3018
+  name: The Mages' Bar
+  sector: inside
+  flags:
+  - no_mob
+  - indoors
+  - no_magic
+  desc: |2
+       The bar is one of the weirdest in the land.  Mystical images float around
+    the air.  Illusions of fine furniture appear all around the room.
+  exits:
+    north:
+      to: 3017
+      desc: |
+            You see the lobby.
+      key: -1
+    east:
+      to: 3019
+      desc: |
+            You see the laboratory.
+      key: -1
+- vnum: 3019
+  name: The Mages' Laboratory
+  sector: inside
+  flags:
+  - no_mob
+  - indoors
+  desc: |2
+       This is the Magical Experiments Laboratory.  Dark smoke-stained stones
+    arch over numerous huge oaken tables, most of these cluttered with strange-
+    looking pipes and flasks.  The floor is covered with half-erased pentagrams
+    and even weirder symbols, and a blackboard in a dark corner has only been
+    partially cleaned, some painful-looking letters faintly visible.  A well in
+    the middle of the floor leads down into darkness.  Vile smells waft from the
+    depths.
+  exits:
+    west:
+      to: 3018
+      desc: |
+            You see the bar.
+      key: -1
+    down:
+      to: 7017
+      desc: |
+            You can't see what is down there, it is too dark.  Looks like it would be
+            impossible to climb back up.
+      key: -1
+- vnum: 3020
+  name: The Armory
+  sector: inside
+  flags:
+  - indoors
+  - no_magic
+  desc: |2
+       The armory with all kinds of armors on the walls and in the window.  You
+    see helmets, shields and chain mails.  To the north is the main street.
+    On the wall is a small note.
+  exits:
+    north:
+      to: 3013
+      desc: |
+            You see the main street.
+      key: -1
+  extra_descs:
+  - keywords:
+    - note
+    desc: |
+              You can use these commands for trading:
+
+                value <item>     To get the price of an item in your possession.
+                sell <item>      To sell something.
+                buy <item>       To buy something (provided that the shop has it in store).
+                list             Gives you a listing of the shop's inventory.
+
+                      WE DON'T GIVE CREDIT; WE DON'T EXPECT TO RECEIVE CREDIT!
+                                           NO HAGGLING
+- vnum: 3021
+  name: The Entrance Hall To The Guild Of Swordsmen
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       The entrance hall to the Guild of Swordsmen.  A place where one has to be
+    careful not to say something wrong (or right).  To the east is the bar and to
+    the north is the main street.
+  exits:
+    north:
+      to: 3016
+      desc: |
+            You see the main street.
+      key: -1
+    east:
+      to: 3022
+      desc: |
+            You see the swordsmen's bar, many noises comes from there.
+      key: -1
+- vnum: 3022
+  name: The Bar Of Swordsmen
+  sector: inside
+  flags:
+  - no_mob
+  - indoors
+  - no_magic
+  desc: |2
+       The bar of swordsmen, once upon a time beautifully furnished.  But now the
+    furniture is all around you in small pieces.  To the south is the yard, and
+    to the west is the entrance hall.
+  exits:
+    south:
+      to: 3023
+      desc: |
+            You see the practice yard.
+      key: -1
+    west:
+      to: 3021
+      desc: |
+            You see the entrance hall to the warriors' guild.
+      key: -1
+- vnum: 3023
+  name: The Tournament And Practice Yard
+  sector: inside
+  flags:
+  - no_mob
+  - indoors
+  desc: |2
+       This is the practice yard of the fighters.  To the north is the bar.
+    A well leads down into darkness.
+  exits:
+    north:
+      to: 3022
+      desc: |
+            You see the bar.
+      key: -1
+    down:
+      to: 7048
+      desc: |
+            You can't see what is down there, it is too dark.  Looks like it would be
+            impossible to climb back up.
+      key: -1
+- vnum: 3024
+  name: The Eastern End Of Poor Alley
+  sector: city
+  desc: |2
+       You are at the poor alley.  South of here is the Grubby Inn and to the
+    east you see common square.  The alley continues further west.
+  exits:
+    east:
+      to: 3025
+      desc: |
+            You see the common square.
+      key: -1
+    south:
+      to: 3048
+      desc: |
+            You see the Inn.
+      key: -1
+    west:
+      to: 3044
+      desc: |
+            You see the poor alley.
+      key: -1
+- vnum: 3025
+  name: The Common Square
+  sector: city
+  desc: |2
+       The common square, people pass you, talking to each other.  To the west is
+    the poor alley and to the east is the dark alley.  To the north, this square
+    is connected to the market square.  From the south you notice a nasty smell.
+  exits:
+    north:
+      to: 3014
+      desc: |
+            You see the market square.
+      key: -1
+    east:
+      to: 3026
+      desc: |
+            You see the dark alley.
+      key: -1
+    south:
+      to: 3030
+      desc: |
+            You see the city dump.
+      key: -1
+    west:
+      to: 3024
+      desc: |
+            You see Poor Alley.
+      key: -1
+- vnum: 3026
+  name: The Dark Alley
+  sector: city
+  desc: |2
+       The dark alley, to the west is the common square and to the south is the
+    Guild of Thieves.  The alley continues east.
+  exits:
+    east:
+      to: 3045
+      desc: |
+            The alley continues east.
+      key: -1
+    south:
+      to: 3027
+      desc: |
+            You see the entrance to the thieves' guild.
+      key: -1
+    west:
+      to: 3025
+      desc: |
+            You see the common square.
+      key: -1
+  extra_descs:
+  - keywords:
+    - guild
+    desc: |
+              It is the thieves' guild, don't enter if you care about your health or money.
+- vnum: 3027
+  name: The Entrance Hall To The Guild Of Thieves
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       The entrance hall to the thieves' and assassins' guild.  A place where you
+    can lose both your life and your money, if you are not careful.  To the north
+    is the dark alley and to the east is the thieves' bar.
+  exits:
+    north:
+      to: 3026
+      desc: |
+            You see the alley.
+      key: -1
+    east:
+      to: 3028
+      desc: |
+            You see the thieves bar, where everything disappears.
+      key: -1
+- vnum: 3028
+  name: The Thieves' Bar
+  sector: inside
+  flags:
+  - no_mob
+  - indoors
+  - no_magic
+  desc: |2
+       The bar of the thieves.  Once upon a time this place was beautifully
+    furnished, but now it seems almost empty.  To the south is the yard, and to
+    the west is the entrance hall.
+       (Maybe the furniture has been stolen?!)
+  exits:
+    south:
+      to: 3029
+      desc: |
+            You see the secret yard.
+      key: -1
+    west:
+      to: 3027
+      desc: |
+            You see the entrance hall to the thieves' guild.
+      key: -1
+  extra_descs:
+  - keywords:
+    - furniture
+    desc: |
+              As you look at the furniture, the chair you sit on disappears.
+- vnum: 3029
+  name: The Secret Yard
+  sector: inside
+  flags:
+  - no_mob
+  - indoors
+  desc: |2
+       The secret practice yard of thieves and assassins.  To the north is the
+    bar.  A well leads down into darkness.
+  exits:
+    north:
+      to: 3028
+      desc: |
+            You see the bar.
+      key: -1
+    down:
+      to: 7043
+      desc: |
+            You can't see what is down there, it is too dark.  Looks like it would be
+            impossible to climb back up.
+      key: -1
+- vnum: 3030
+  name: The Dump
+  sector: field
+  flags:
+  - no_mob
+  desc: |2
+       The dump, where the people from the city drop their garbage.  Through the
+    garbage you can see a large junction of pipes, looks like the entrance to the
+    sewer system.  North of here you see the common square.
+  exits:
+    north:
+      to: 3025
+      desc: |
+            You see the common square.
+      key: -1
+    down:
+      to: 7030
+      desc: |
+            You see the sewers.
+      door: pickproof
+      key: 3005
+      keywords: grate
+- vnum: 3031
+  name: The Pet Shop
+  sector: inside
+  flags:
+  - no_mob
+  - indoors
+  - no_magic
+  desc: |2
+       The Pet Shop is a small crowded store, full of cages and animals of
+    various sizes.  There is a sign on the wall.
+  exits:
+    north:
+      to: 3015
+      desc: |
+            You see the main street.
+      key: -1
+  extra_descs:
+  - keywords:
+    - sign
+    desc: |
+              The sign reads:
+
+                Use 'List' to see the available pets.
+                Use 'Buy <pet>' to buy yourself a pet.
+
+                Instructions for having pets:
+
+                You can use 'order <pet> <instructions>' to order your pets around.
+                If you abuse your pet, it will no longer regard you as its master.
+                If you have several pets you may use 'order followers <instructions>'
+
+                You can name the pet you buy with: 'buy <pet> <name>'
+
+               Regards,
+
+               The Shopkeeper
+- vnum: 3032
+  name: Pet Shop Store
+  sector: inside
+  flags:
+  - indoors
+  - godroom
+  desc: |2
+       This  is the small dark room in which the Pet shop keeps his pets.
+    It is vital that this room's virtual number is exactly one larger
+    than the Pet Shop number.
+- vnum: 3033
+  name: The Magic Shop
+  sector: inside
+  flags:
+  - indoors
+  - no_magic
+  desc: |2
+       Behind the counter you see various items, neatly placed in racks,
+    presumably most of them are magic.
+  exits:
+    south:
+      to: 3012
+      desc: |
+            You see the main street.
+      key: -1
+- vnum: 3040
+  name: Inside The West Gate Of Midgaard
+  sector: city
+  desc: |2
+       You are by two small towers that have been built into the city wall and
+    connected with a footbridge across the heavy wooden gate.  Main Street leads
+    east and Wall Road leads south from here.
+  exits:
+    east:
+      to: 3012
+      desc: |
+            You see Main Street.
+      key: -1
+    south:
+      to: 3042
+      desc: |
+            You see the road running along the inner side of the city wall.  You notice
+            that it is called Wall Road.
+      key: -1
+    west:
+      to: 3052
+      desc: |
+            The city gate is to the west.
+      door: regular
+      key: 3112
+      keywords: gate
+  extra_descs:
+  - keywords:
+    - wall
+    desc: |
+              It is built from large grey rocks that have been fastened to each other with
+              some kind of mortar.  It is far too high to climb.
+  - keywords:
+    - tower
+    - towers
+    desc: |
+              Both of the towers are built from large grey rocks that have been fastened to
+              each other with some kind of mortar, just like the city wall.
+  - keywords:
+    - gate
+    desc: |
+              It is a set of very big double doors made from hard wood.  They have been
+              reinforced with large iron bands to make them even more sturdy.  One of the
+              doors is equipped with a very big lock.
+  - keywords:
+    - bridge
+    - footbridge
+    desc: |
+              It is too high up to reach but it looks as if one easily could walk across it
+              from one tower to the other.
+- vnum: 3041
+  name: Inside The East Gate Of Midgaard
+  sector: city
+  desc: |2
+       You are by two small towers that have been built into the city wall and
+    connected with a footbridge across the heavy wooden gate.  Main Street leads
+    west from here.  To the south you see the Water Shop.
+  exits:
+    east:
+      to: 3053
+      desc: |
+            You see the city gate.
+      door: regular
+      key: 3112
+      keywords: gate
+    south:
+      to: 3058
+      desc: |
+            You see the water shop.
+      key: -1
+    west:
+      to: 3016
+      desc: |
+            You see Main Street.
+      key: -1
+  extra_descs:
+  - keywords:
+    - wall
+    desc: |
+              It is built from large grey rocks that have been fastened to each other with
+              some kind of mortar.  It is far too high to climb.
+  - keywords:
+    - tower
+    - towers
+    desc: |
+              Both of the towers are built from large grey rocks that have been fastened to
+              each other with some kind of mortar, just like the city wall.
+  - keywords:
+    - gate
+    desc: |
+              It is a set of very big double doors made from hard wood.  They have been
+              reinforced with large iron bands to make them even more sturdy.  One of the
+              doors is equipped with a very big lock.
+  - keywords:
+    - bridge
+    - footbridge
+    desc: |
+              It is too high up to reach but it looks as if one easily could walk across it
+              from one tower to the other.
+- vnum: 3042
+  name: Wall Road
+  sector: city
+  desc: |2
+       You are walking next to the western city wall.  The road continues further
+    south and the city gate is just north of here.
+  exits:
+    north:
+      to: 3040
+      desc: |
+            You see the city gate.
+      key: -1
+    south:
+      to: 3043
+      desc: |
+            The road continues further south.
+      key: -1
+  extra_descs:
+  - keywords:
+    - wall
+    desc: |
+              It is built from large grey rocks that have been fastened to each other with
+              some kind of mortar.  It is far too high to climb.
+- vnum: 3043
+  name: Wall Road
+  sector: city
+  desc: |2
+       You are walking next to the western city wall.  Wall Road continues further
+    north and south.  A small, poor alley leads east.
+    Some letters have been written on the wall here.
+  exits:
+    north:
+      to: 3042
+      desc: |
+            The road continues further north.
+      key: -1
+    east:
+      to: 3044
+      desc: |
+            Poor Alley leads east.
+      key: -1
+    south:
+      to: 3047
+      desc: |
+            The road continues further south.
+      key: -1
+  extra_descs:
+  - keywords:
+    - wall
+    desc: |
+              It is built from large grey rocks that have been fastened to each other with
+              some kind of mortar.  It is far too high to climb.
+  - keywords:
+    - wall
+    - writing
+    - letters
+    desc: |
+              It says 'Who watches the watchmen?'
+- vnum: 3044
+  name: Poor Alley
+  sector: city
+  desc: |2
+       You are on Poor Alley, which continues further east.  You see the
+    city wall to the west.
+  exits:
+    east:
+      to: 3024
+      desc: |
+            The alley leads east.
+      key: -1
+    west:
+      to: 3043
+      desc: |
+            The alley leads west.
+      key: -1
+- vnum: 3045
+  name: The Dark Alley At The Levee
+  sector: city
+  desc: |2
+       You are standing in the alley which continues east and west.  South of
+    here you see the levee.
+  exits:
+    east:
+      to: 3046
+      desc: |
+            The alley leads east.
+      key: -1
+    south:
+      to: 3049
+      desc: |
+            You see the levee.
+      key: -1
+    west:
+      to: 3026
+      desc: |
+            The alley leads west.
+      key: -1
+- vnum: 3046
+  name: The Eastern End Of The Alley
+  sector: city
+  desc: |2
+       You are standing at the eastern end of the alley, the city wall is just
+    east, blocking any further movement.  A small warehouse is directly south of
+    here.
+  exits:
+    south:
+      to: 3050
+      desc: |
+            You see the warehouse.
+      key: -1
+    west:
+      to: 3045
+      desc: |
+            You see the alley.
+      key: -1
+- vnum: 3047
+  name: Wall Road
+  sector: city
+  desc: |2
+       You are standing on the road next to the western city wall, which
+    continues north.  South of here is a bridge across the river.
+  exits:
+    north:
+      to: 3043
+      desc: |
+            You see the road.
+      key: -1
+    south:
+      to: 3051
+      desc: |
+            You see the bridge.
+      key: -1
+  extra_descs:
+  - keywords:
+    - wall
+    desc: |
+              It is built from large grey rocks that have been fastened to each other with
+              some kind of mortar.  It is far too high to climb.
+- vnum: 3048
+  name: Grubby Inn
+  sector: inside
+  flags:
+  - indoors
+  - no_magic
+  desc: |2
+       You are inside the old Grubby Inn.  This place has not been cleaned for
+    several decades; vile smells make you dizzy.
+  exits:
+    north:
+      to: 3024
+      desc: |
+            You see the alley.
+      key: -1
+- vnum: 3049
+  name: The Levee
+  sector: city
+  flags:
+  - no_magic
+  desc: |2
+       You are at the levee.  South of here you see the river gently flowing west.
+    The river bank is very low making it possible to enter the river.
+  exits:
+    north:
+      to: 3045
+      desc: |
+            You see the alley.
+      key: -1
+    south:
+      to: 3203
+      desc: |
+            You see the river flowing west.
+      key: -1
+- vnum: 3050
+  name: The Deserted Warehouse
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You are inside the warehouse.  The room is decorated with various old
+    items from ships.
+  exits:
+    north:
+      to: 3046
+      desc: |
+            You see the alley.
+      key: -1
+- vnum: 3051
+  name: On The Bridge
+  sector: city
+  desc: |2
+       You are standing on the stone bridge crosses the river.  The bridge is
+    built out from the western city wall and the river flows west through an
+    opening in the wall ten feet below the bridge.
+  exits:
+    north:
+      to: 3047
+      desc: |
+            You see the road.
+      key: -1
+    south:
+      to: 3100
+      desc: |
+            You see the Concourse.
+      key: -1
+  extra_descs:
+  - keywords:
+    - wall
+    desc: |
+              It is built from large grey rocks that have been fastened to each other with
+              some kind of mortar.  It is far too high to climb.
+  - keywords:
+    - opening
+    desc: |
+              You cannot really see it from here as it is somewhere beneath your feet.
+  - keywords:
+    - bridge
+    desc: |
+              It is built from large grey rocks that have been fastened to each other with
+              some kind of mortar, just like the wall.
+- vnum: 3052
+  name: Outside The West Gate Of Midgaard
+  sector: city
+  desc: |2
+       You are by two small towers that have been built into the city wall and
+    connected with a footbridge across the heavy wooden gate.  To the west you
+    can see the edge of a big forest.
+  exits:
+    east:
+      to: 3040
+      desc: |
+            The city gate is to the east.
+      door: regular
+      key: 3112
+      keywords: gate
+    west:
+      to: 6092
+      desc: |
+            The forest edge is to the west.
+      key: -1
+  extra_descs:
+  - keywords:
+    - wall
+    desc: |
+              It is built from large grey rocks that have been fastened to each other with
+              some kind of mortar.  It is far too high to climb.
+  - keywords:
+    - tower
+    - towers
+    desc: |
+              Both of the towers are built from large grey rocks that have been fastened to
+              each other with some kind of mortar, just like the city wall.
+  - keywords:
+    - gate
+    desc: |
+              It is a set of very big double doors made from hard wood.  They have been
+              reinforced with large iron bands to make them even more sturdy.  One of the
+              doors is equipped with a very big lock.
+  - keywords:
+    - bridge
+    - footbridge
+    desc: |
+              It is too high up to reach but it looks as if one easily could walk across it
+              from one tower to the other.
+- vnum: 3053
+  name: Outside The East Gate Of Midgaard
+  sector: city
+  desc: |2
+       You are by two small towers that have been built into the city wall and
+    connected with a footbridge across the heavy wooden gate.  To the east the
+    plains stretch out in the distance.
+  exits:
+    east:
+      to: 3503
+      desc: |
+            You see the plains.
+      key: -1
+    west:
+      to: 3041
+      desc: |
+            You see the city gate.
+      door: regular
+      key: 3112
+      keywords: gate
+  extra_descs:
+  - keywords:
+    - wall
+    desc: |
+              It is built from large grey rocks that have been fastened to each other with
+              some kind of mortar.  It is far too high to climb.
+  - keywords:
+    - tower
+    - towers
+    desc: |
+              Both of the towers are built from large grey rocks that have been fastened to
+              each other with some kind of mortar, just like the city wall.
+  - keywords:
+    - gate
+    desc: |
+              It is a set of very big double doors made from hard wood.  They have been
+              reinforced with large iron bands to make them even more sturdy.  One of the
+              doors is equipped with a very big lock.
+  - keywords:
+    - bridge
+    - footbridge
+    desc: |
+              It is too high up to reach but it looks as if one easily could walk across it
+              from one tower to the other.
+- vnum: 3054
+  name: By The Temple Altar
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You are by the temple altar in the northern end of the Temple of
+    Midgaard.  A huge altar made from white polished marble is standing
+    in front of you and behind it is a ten foot tall sitting statue of
+    Odin, the King of the Gods.
+       To the north, steps lead out the back of the temple towards the
+    countryside.
+  exits:
+    north:
+      to: 3059
+      desc: |
+            You see the vast Midgaard countryside.
+      key: -1
+    south:
+      to: 3001
+      desc: |
+            You see the southern end of the temple.
+      key: -1
+  extra_descs:
+  - keywords:
+    - statue
+    - odin
+    - king
+    - god
+    desc: |
+              The statue represents the one-eyed Odin sitting on a his throne.  He has
+              long, grey hair and beard and a strict look on his face.  On top of the
+              throne, just above his shoulders, his two ravens Hugin and Munin are sitting
+              and at his feet are his wolves Gere and Freke.
+  - keywords:
+    - altar
+    desc: |
+              Even though the altar is more than ten feet long it appears to be made from
+              a single block of white virgin marble.
+- vnum: 3055
+  name: Odin's Store
+  sector: inside
+  flags:
+  - indoors
+  - private
+  desc: |2
+       This is the small dark room in which Odin keeps the player items that he
+    takes care of.  It is vital that this room's virtual number is exactly one
+    larger than the room by the temple altar.
+- vnum: 3058
+  name: Ye Olde Water Shoppe
+  sector: inside
+  flags:
+  - indoors
+  - no_magic
+  desc: |2
+       You are standing in the center of a small wooden shop whose walls are
+    covered with racks upon racks of water jugs.  Several large barrels with
+    spigots are stacked in the corner.
+  exits:
+    north:
+      to: 3041
+      desc: |
+            You see the East Gate.
+      key: -1
+- vnum: 3059
+  name: Behind The Temple Altar
+  sector: city
+  desc: |2
+       You are on a dirt path leading away from the Temple Altar which is south
+    of here.  To the north, the path continues through the lush contryside of
+    Midgaard towards the Dragonhelm Mountains far off to the north.
+  exits:
+    north:
+      to: 3060
+      desc: |
+            You see the lush, green countryside of Midgaard.
+      key: -1
+    south:
+      to: 3054
+      desc: |
+            You see the Temple Altar.
+      key: -1
+- vnum: 3060
+  name: The Great Field Of Midgaard
+  sector: city
+  desc: |2
+       You are walking on a wide dirt path through the lush, green, fresh
+    Midgaard countryside.  You can see to the horizon to the north, east,
+    and west; the busy city of Midgaard lies to the south.  All around you
+    is healthy green grass and an occasional large oak tree.  The sun feels
+    wonderful on your face and a pleasant wind blows through your hair.  Birds
+    chirp quietly to themselves and you can smell the faint scent of flowers
+    and freshly cut grass.  You feel like you could lie down in the grass and
+    stay here forever, surrounded by powerful beauty in all directions.
+       The path you are on continues north through the field and south back
+    to Midgaard.
+  exits:
+    north:
+      to: 3061
+      desc: |
+            You see more of the path through the Great Field.
+      key: -1
+    south:
+      to: 3059
+      desc: |
+            You see the path which goes back to Midgaard.
+      key: -1
+- vnum: 3061
+  name: The Great Field Of Midgaard
+  sector: city
+  flags:
+  - no_mob
+  desc: |2
+       You are walking on a wide dirt path through the lush, green, fresh
+    Midgaard countryside.  You can see to the horizon to the north, east,
+    and west; the busy city of Midgaard lies to the south.  All around you
+    is healthy green grass and an occasional large oak tree.  The sun feels
+    wonderful on your face and a pleasant wind blows through your hair.  Birds
+    chirp quietly to themselves and you can smell the faint scent of flowers
+    and freshly cut grass.  You feel like you could lie down in the grass and
+    stay here forever, surrounded by powerful beauty in all directions.
+       There is a strange structure on the eastern side of the path.  A small
+    dirt path splits off of the main path and leads off to the west.
+  exits:
+    north:
+      to: 3065
+      desc: |
+            The path continues northwards bringing you ever closer to the Dragonhelm
+            Mountains.
+      key: -1
+    east:
+      to: 18600
+      desc: |
+            There is a strange structure to the east on the edge of the trail.
+      key: -1
+    south:
+      to: 3060
+      desc: |
+            You see more of the Field.
+      key: -1
+    west:
+      to: 3066
+      desc: |
+            There is a strange path leading towards a rusty gate to the west.
+      key: -1
+- vnum: 3062
+  name: The Post Office
+  sector: city
+  flags:
+  - indoors
+  - peaceful
+  - no_magic
+  desc: |2
+       You are in the central post office for Midgaard.  Piles of assorted mail
+    lay untouched in the corners, collecting cobwebs.  Several large crates have
+    been pried open by curious customs agents, and are now stacked along the west
+    wall, hiding plenty of 'WANTED' posters.
+    There is a sign posted on the wall here.
+  exits:
+    south:
+      to: 3006
+      desc: |
+            You see the entrance to the Grunting Boar Inn and Tavern.
+      key: -1
+  extra_descs:
+  - keywords:
+    - WANTED
+    - posters
+    - poster
+    - wall
+    desc: |
+              Faces of various known Killers and Thieves can barely be seen behind the
+              crates on the west wall.  Some of them look quite familar, sorta like that
+              guy who you saw in the Reception a minute ago... but then again, they are
+              rather hard to see past the crates.
+  - keywords:
+    - crates
+    - opened
+    - large
+    desc: |
+              As you know, it is illegal to send contraband items through the Midgaard
+              Mail.  The customs agents use this as a great excuse to seize liquor,
+              rare spices, and just about anything they might find useful or profitable.
+  - keywords:
+    - cobwebs
+    desc: |
+              They seem to cover everything here, even the Postmaster himself.
+  - keywords:
+    - letters
+    - envelopes
+    - assorted
+    desc: |
+              Envelopes of all sizes are heaped into hugh piles around the room.  As you
+              look closer, you see a letter that you had posted a full week ago, laying
+              unnoticed and slightly rat-chewed towards the bottom of the pile.
+  - keywords:
+    - sign
+    desc: |
+              **********************************************************
+              *     							 *
+              *    Mail Instructions:                                  *
+              *							 *
+              *      To send a note to someone:                        *
+              *         MAIL <playername>				 *
+              *     							 *
+              *      To see if you have any mail:                      *
+              *         CHECK						 *
+              *							 *
+              *      To get the Postmaster to give you your mail:      *
+              *         RECEIVE					 *
+              *							 *
+              *         Stamps cost 150 coins per letter               *
+              *         Type 'HELP MAIL' for more info                 *
+              **********************************************************
+- vnum: 3063
+  name: The Midgaard Donation Room
+  sector: city
+  flags:
+  - no_mob
+  - indoors
+  - peaceful
+  desc: |2
+       You are in a small, undecorated room just off of the main temple.  There
+    are a couple of small wooden benches here where people occasionally sit
+    while they wait for items to appear.  The temple is to the west.
+  exits:
+    west:
+      to: 3001
+      desc: |
+            The busy temple is back west.
+      key: -1
+- vnum: 3064
+  name: The Cryogenic Center
+  sector: city
+  flags:
+  - indoors
+  desc: |2
+       You are standing in an impossible white sterile room with cylindrical
+    body-length canisters lined up against the walls.  The Reception is to the
+    south.
+  exits:
+    south:
+      to: 3008
+      desc: |
+            The Reception is to the south.
+      key: -1
+- vnum: 3065
+  name: The Great Field Of Midgaard
+  sector: field
+  desc: |2
+       You are walking on a wide dirt path through the lush, green, fresh
+    Midgaard countryside.  You can see to the horizon to the north, east,
+    and west; the busy city of Midgaard lies to the south.  All around you
+    is healthy green grass and an occasional large oak tree.  The sun feels
+    wonderful on your face and a pleasant wind blows through your hair.  Birds
+    chirp quietly to themselves and you can smell the faint scent of flowers
+    and freshly cut grass.  You feel like you could lie down in the grass and
+    stay here forever, surrounded by powerful beauty in all directions.
+       The way north appears to be blocked by a large plot device and you cannot
+    see any way around it.
+  exits:
+    north:
+      to: -1
+      desc: |
+            Unfortunately the way north is blocked by a large plot device and there
+            does not seem to be any way around it.
+      key: -1
+    south:
+      to: 3061
+      desc: |
+            The path continues through the field to the south past an odd structure
+            on the eastern side of the path.
+      key: -1
+  extra_descs:
+  - keywords:
+    - plot
+    - device
+    desc: |
+              What more is a plot device than something to block a certain direction
+              for reasons beyond your comprehension.
+- vnum: 3066
+  name: The Dirt Path
+  sector: field
+  desc: |2
+       You are walking along a narrow dirt path through the lush, green,
+    fresh Midgaard countryside.  You can see to the horizon to the north
+    and east; the busy city of Midgaard lies to the south.  All around
+    you is healthy green grass and an occasional large oak tree.  The sun
+    feels wonderful on your face and a pleasant wind blows through your
+    hair.  Birds chirp quietly to themselves and you can smell the faint
+    scent of flowers and freshly cut grass.  You feel like you could lie
+    down in the grass and stay here forever, surrounded by powerful beauty
+    in all directions.
+       There is a large rusty gate sitting in a stone archway just to the
+    west.
+  exits:
+    east:
+      to: 3061
+      desc: |
+            The path meets up with a larger path just to the east.
+      key: -1
+    west:
+      to: 3600
+      desc: |
+            There is a large rusty gate just to the west.
+      key: -1
+mobiles:
+- vnum: 3000
+  keywords:
+  - wizard
+  short: the wizard
+  long: |
+    A wizard walks around behind the counter, talking to himself.
+  desc: |
+    The wizard looks old and senile, and yet he looks like a very powerful
+    wizard.  He is equipped with fine clothing, and is wearing many fine
+    rings and bracelets.
+  act:
+  - spec
+  - sentinel
+  - memory
+  - no_charm
+  - no_summon
+  affected:
+  - detect_invis
+  alignment: 900
+  level: 33
+  thac0: 2
+  ac: 2
+  hp: 1d1+30000
+  damage: 2d8+18
+  gold: 30000
+  exp: 160000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 3001
+  keywords:
+  - baker
+  short: the baker
+  long: |
+    The baker looks at you calmly, wiping flour from his face with one hand.
+  desc: |
+    A fat, nice looking baker.  But you can see that he has many scars on his
+    body.
+  act:
+  - spec
+  - sentinel
+  - memory
+  - no_charm
+  - no_summon
+  affected:
+  - detect_invis
+  alignment: 900
+  level: 33
+  thac0: 0
+  ac: -10
+  hp: 1d1+30000
+  damage: 2d8+18
+  gold: 100
+  exp: 160000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 3002
+  keywords:
+  - grocer
+  short: the grocer
+  long: |
+    A grocer stands at the counter, with a slightly impatient look on his face.
+  desc: |
+    A tall grocer, who moves two 200 pounds bag of flour around on his shoulders.
+  act:
+  - spec
+  - sentinel
+  - memory
+  - no_charm
+  - no_summon
+  affected:
+  - detect_invis
+  alignment: 900
+  level: 33
+  thac0: 0
+  ac: -10
+  hp: 1d1+30000
+  damage: 2d8+18
+  gold: 30000
+  exp: 160000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 3003
+  keywords:
+  - weaponsmith
+  short: the weaponsmith
+  long: |
+    A weaponsmith is standing here.
+  desc: |
+    He is a young weaponsmith, who still has lots to learn but he is still
+    eager to sell you his latest implements of carnage and destruction.
+  act:
+  - spec
+  - sentinel
+  - memory
+  - no_charm
+  - no_summon
+  affected:
+  - detect_invis
+  alignment: 900
+  level: 33
+  thac0: 0
+  ac: -10
+  hp: 1d1+30000
+  damage: 2d8+18
+  gold: 30000
+  exp: 160000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 3004
+  keywords:
+  - armourer
+  short: the armourer
+  long: |
+    An armourer stands here displaying his new (and previously owned) armours.
+  desc: |
+    An old but very strong armourer.  He has made more suits of armour in his
+    life than you have ever seen.
+  act:
+  - spec
+  - sentinel
+  - memory
+  - no_charm
+  - no_summon
+  affected:
+  - detect_invis
+  alignment: 900
+  level: 33
+  thac0: 0
+  ac: -10
+  hp: 1d1+30000
+  damage: 2d8+18
+  gold: 28500
+  exp: 160000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 3005
+  keywords:
+  - receptionist
+  short: the receptionist
+  long: |
+    A receptionist is standing behind the counter here, smiling at you.
+  desc: |
+    You notice a tired look in her face.  She looks like she isn't paid well
+    enough to put up with any crap from mud players with attitudes.
+  act:
+  - spec
+  - sentinel
+  - aware
+  - memory
+  - no_charm
+  - no_summon
+  - no_sleep
+  affected:
+  - detect_invis
+  - sense_life
+  - no_track
+  alignment: 900
+  level: 33
+  thac0: 0
+  ac: -10
+  hp: 1d1+30000
+  damage: 2d8+32
+  gold: 0
+  exp: 0
+  position: standing
+  default_position: standing
+  sex: female
+- vnum: 3006
+  keywords:
+  - captain
+  - stolar
+  short: Captain Stolar
+  long: |
+    A retired captain stands here, selling boats.
+  desc: |
+    This captain has eaten more sharks than you have killed peas.
+  act:
+  - spec
+  - sentinel
+  - memory
+  - no_charm
+  - no_summon
+  affected:
+  - detect_invis
+  alignment: 900
+  level: 33
+  thac0: 2
+  ac: 2
+  hp: 1d1+30000
+  damage: 2d8+12
+  gold: 2000
+  exp: 160000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 3007
+  keywords:
+  - sailor
+  short: the sailor
+  long: |
+    A sailor stands here, waiting to help you.
+  desc: |
+    He looks like a strong, fit sailor.
+  act:
+  - sentinel
+  - memory
+  - no_charm
+  - no_summon
+  alignment: 900
+  level: 33
+  thac0: 0
+  ac: -10
+  hp: 1d1+30000
+  damage: 2d8+12
+  gold: 2000
+  exp: 160000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 3008
+  keywords:
+  - uncle
+  - juan
+  short: Uncle Juan
+  long: |
+    Uncle Juan is here ready to take your order.
+  desc: |
+    He looks like he may or may not have a green card.
+  act:
+  - spec
+  - sentinel
+  - memory
+  - no_charm
+  - no_summon
+  alignment: 900
+  level: 33
+  thac0: 0
+  ac: -10
+  hp: 1d1+30000
+  damage: 2d8+18
+  gold: 2000
+  exp: 160000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 3009
+  keywords:
+  - wally
+  - watermaster
+  short: Wally the Watermaster
+  long: |
+    Wally the Watermaster is standing behind the counter.
+  desc: |
+    Wally is a bit pudgy but looks very strong.  He has a glass of Midgaard
+    Natural Spring Water in his hand.  When he notices you, he proudly
+    displays his fine collection of contemporary waters.
+  act:
+  - spec
+  - sentinel
+  - memory
+  - no_charm
+  - no_summon
+  affected:
+  - detect_invis
+  alignment: 800
+  level: 33
+  thac0: 0
+  ac: -10
+  hp: 1d1+30000
+  damage: 1d8+18
+  gold: 1000
+  exp: 160000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 3010
+  keywords:
+  - postmaster
+  - post
+  - master
+  short: the postmaster
+  long: |
+    The head postmaster is standing here, waiting to help you with your mail.
+  desc: |
+    The Postmaster seems like a happy old man, though a bit sluggish.  He
+    worries about the reputation of the MMS (Midgaard Mail Service), as many
+    people seem to think that it is slow.  Perhaps if he were to brush the
+    cobwebs from his uniform it would help to make a better impression.
+  act:
+  - spec
+  - sentinel
+  - memory
+  - no_charm
+  - no_summon
+  - no_sleep
+  - no_blind
+  affected:
+  - detect_invis
+  - no_track
+  alignment: 1000
+  level: 33
+  thac0: 0
+  ac: -10
+  hp: 1d1+30000
+  damage: 1d8+18
+  gold: 2000
+  exp: 0
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 3020
+  keywords:
+  - guildmaster
+  - master
+  - mage
+  short: the mages' guildmaster
+  long: |
+    Your guildmaster is studying a spellbook while preparing to cast a spell.
+  desc: |
+    Even though your guildmaster looks old and tired, you can clearly see the
+    vast amount of knowledge she possesses.  She is wearing fine magic clothing,
+    and you notice that she is surrounded by a blue shimmering aura.
+  act:
+  - spec
+  - sentinel
+  - aware
+  - memory
+  - no_charm
+  - no_summon
+  - no_sleep
+  affected:
+  - detect_invis
+  - sanctuary
+  alignment: 1000
+  level: 34
+  thac0: 0
+  ac: -10
+  hp: 6d10+640
+  damage: 1d8+24
+  gold: 18794
+  exp: 100000
+  position: standing
+  default_position: standing
+  sex: female
+- vnum: 3021
+  keywords:
+  - guildmaster
+  - master
+  - priest
+  short: the priests' guildmaster
+  long: |
+    Your guildmaster is prayer to your God here.
+  desc: |
+    You are in no doubt that this guildmaster is truly close to your God; he
+    has a peaceful, loving look.  You notice that he is surrounded by a white
+    aura.
+  act:
+  - spec
+  - sentinel
+  - aware
+  - memory
+  - no_charm
+  - no_summon
+  - no_sleep
+  affected:
+  - detect_invis
+  - sanctuary
+  alignment: 1000
+  level: 34
+  thac0: 0
+  ac: -10
+  hp: 6d10+640
+  damage: 1d8+24
+  gold: 18794
+  exp: 100000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 3022
+  keywords:
+  - guildmaster
+  - master
+  - beggar
+  - thief
+  short: the thieves' guildmaster
+  long: |
+    A beggar is sitting here, could she be a guildmaster?
+  desc: |
+    You realize that whenever your guildmaster moves, you fail to notice it -
+    the way of the true thief.  She is to be dressed in poor clothing, having
+    the appearance of a beggar.
+  act:
+  - spec
+  - sentinel
+  - aware
+  - memory
+  - no_charm
+  - no_summon
+  - no_sleep
+  affected:
+  - detect_invis
+  - sanctuary
+  alignment: 1000
+  level: 34
+  thac0: 0
+  ac: -10
+  hp: 6d10+640
+  damage: 1d8+34
+  gold: 18794
+  exp: 100000
+  position: standing
+  default_position: standing
+  sex: female
+- vnum: 3023
+  keywords:
+  - guildmaster
+  - master
+  short: the fighters' guildmaster
+  long: |
+    Your guildmaster is standing here sharpening an axe.
+  desc: |
+    This is your master. Big and strong with bulging muscles. Several scars
+    across his body proves that he was using arms before you were born. He
+    has a calm look on his face.
+  act:
+  - spec
+  - sentinel
+  - aware
+  - memory
+  - no_charm
+  - no_summon
+  - no_sleep
+  alignment: 1000
+  level: 34
+  thac0: 0
+  ac: -10
+  hp: 6d10+740
+  damage: 1d8+34
+  gold: 18794
+  exp: 100000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 3024
+  keywords:
+  - sorcerer
+  short: the sorcerer
+  long: |
+    A sorcerer is guarding the entrance.
+  desc: |
+    He is an experienced mage who has specialized in the field of Combat Magic.
+    He is here to guard the Mage's Guild and his superior knowledge of offensive
+    as well as defensive spells make him a deadly opponent.
+  act:
+  - spec
+  - sentinel
+  - memory
+  - no_charm
+  - no_summon
+  - no_sleep
+  affected:
+  - detect_invis
+  - sanctuary
+  alignment: 900
+  level: 33
+  thac0: 0
+  ac: -5
+  hp: 6d10+990
+  damage: 1d8+22
+  gold: 2000
+  exp: 60000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 3025
+  keywords:
+  - knight
+  - templar
+  short: the knight templar
+  long: |
+    A knight templar is guarding the entrance.
+  desc: |
+    He is a specially trained warrior belonging to the military order of the
+    Faith.  His duty is to protect the faithful from persecution and infidel
+    attacks and his religious devotion combined with his superior skill makes
+    him a deadly opponent.
+  act:
+  - spec
+  - sentinel
+  - memory
+  - no_charm
+  - no_summon
+  - no_sleep
+  affected:
+  - detect_invis
+  - sanctuary
+  alignment: 1000
+  level: 33
+  thac0: 0
+  ac: -5
+  hp: 6d10+990
+  damage: 1d8+22
+  gold: 2000
+  exp: 160000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 3026
+  keywords:
+  - assassin
+  short: the assassin
+  long: |
+    An assassin is guarding the entrance.
+  desc: |
+    He is a thief who has specialized in killing others as effectively as
+    possible, using all sorts of weapons.  His superior knowledge of how
+    and where to use them combined with his extraordinary stealth makes
+    him a deadly opponent.
+  act:
+  - spec
+  - sentinel
+  - memory
+  - no_charm
+  - no_summon
+  - no_sleep
+  affected:
+  - detect_invis
+  - sense_life
+  - sanctuary
+  - sneak
+  - hide
+  alignment: 400
+  level: 33
+  thac0: 0
+  ac: -10
+  hp: 6d10+990
+  damage: 1d8+25
+  gold: 2000
+  exp: 160000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 3027
+  keywords:
+  - knight
+  short: the knight
+  long: |
+    A knight is guarding the entrance.
+  desc: |
+    He is an expert warrior who has attained knighthood through countless
+    chivalrous deeds.  His duty is to protect the Guild of Swordsmen and his
+    extreme skill combined with his experience in warfare makes him a deadly
+    opponent.
+  act:
+  - spec
+  - sentinel
+  - memory
+  - no_charm
+  - no_summon
+  - no_sleep
+  affected:
+  - detect_invis
+  - sanctuary
+  alignment: 800
+  level: 33
+  thac0: 0
+  ac: -8
+  hp: 6d10+990
+  damage: 1d8+40
+  gold: 2000
+  exp: 160000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 3040
+  keywords:
+  - bartender
+  short: the bartender
+  long: |
+    A bartender watches you calmly, while he skillfully mixes a drink.
+  desc: |
+    A tired looking Bartender who hates trouble in his bar.
+  act:
+  - sentinel
+  - no_charm
+  - no_summon
+  alignment: 900
+  level: 24
+  thac0: 2
+  ac: 2
+  hp: 6d10+390
+  damage: 1d8+12
+  gold: 2000
+  exp: 80000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 3041
+  keywords:
+  - waiter
+  short: the waiter
+  long: |
+    A waiter is going around from one place to another.
+  desc: |
+    A tired looking waiter.
+  act:
+  - sentinel
+  - no_charm
+  - no_summon
+  alignment: 900
+  level: 23
+  thac0: 2
+  ac: 2
+  hp: 6d10+390
+  damage: 1d8+12
+  gold: 2000
+  exp: 80000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 3042
+  keywords:
+  - waiter
+  short: the waiter
+  long: |
+    A man now leads a quiet, peaceful life as a waiter is standing here.
+  desc: |
+    This man was obviously a famous sorcerer in his younger days as you
+    instantly recognize his face.
+  act:
+  - sentinel
+  - no_charm
+  - no_summon
+  alignment: 600
+  level: 23
+  thac0: 1
+  ac: 2
+  hp: 6d10+390
+  damage: 1d8+12
+  gold: 2000
+  exp: 80000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 3043
+  keywords:
+  - waiter
+  short: the waiter
+  long: |
+    A waiter who seems to have reached contact with his God is standing here.
+  desc: |
+    This waiter almost makes you feel like you should drop to your knees
+    and begin to worship your God.  Naaah.
+  act:
+  - sentinel
+  - no_charm
+  - no_summon
+  alignment: 600
+  level: 23
+  thac0: 1
+  ac: 2
+  hp: 6d10+390
+  damage: 1d8+12
+  gold: 2000
+  exp: 80000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 3044
+  keywords:
+  - waiter
+  short: the waiter
+  long: |
+    A waiter who knows where all his customers keep their money is standing here.
+  desc: |
+    Hmmm... wonder where he got that coin he is playing with.
+  act:
+  - sentinel
+  - no_charm
+  - no_summon
+  alignment: 600
+  level: 23
+  thac0: 1
+  ac: 2
+  hp: 6d10+390
+  damage: 1d8+12
+  gold: 2000
+  exp: 80000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 3045
+  keywords:
+  - waiter
+  short: the waiter
+  long: |
+    A waiter is here.
+  desc: |
+    This guy looks like he could easily kill you while still carrying
+    quite a few firebreathers.
+  act:
+  - sentinel
+  - no_charm
+  - no_summon
+  alignment: 600
+  level: 23
+  thac0: 1
+  ac: 2
+  hp: 6d10+390
+  damage: 1d8+12
+  gold: 2000
+  exp: 80000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 3046
+  keywords:
+  - filthy
+  short: Filthy
+  long: |
+    Filthy is standing here, eager to serve you a special drink.
+  desc: |
+    Filthy looks real, ehm, dirty.  He likes to keep his customers happy,
+    but do not mess with him or else he'll get upset.
+  act:
+  - sentinel
+  - aware
+  - memory
+  - no_charm
+  - no_summon
+  affected:
+  - detect_invis
+  alignment: 600
+  level: 33
+  thac0: 1
+  ac: -10
+  hp: 1d1+30000
+  damage: 1d8+22
+  gold: 2000
+  exp: 80000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 3059
+  keywords:
+  - keeper
+  - peacekeeper
+  short: the Peacekeeper
+  long: |
+    A Peacekeeper is standing here, ready to jump in at the first sign of trouble.
+  desc: |
+    He looks very strong and wise.  Looks like he doesn't answer to ANYONE.
+  act:
+  - spec
+  - aware
+  - stay_zone
+  - memory
+  - helper
+  affected:
+  - detect_invis
+  alignment: 1000
+  level: 17
+  thac0: 3
+  ac: 0
+  hp: 5d6+225
+  damage: 3d3+13
+  gold: 2500
+  exp: 30000
+  position: standing
+  default_position: standing
+  sex: male
+  abilities:
+    bare_hand_attack: 10
+- vnum: 3060
+  keywords:
+  - cityguard
+  - guard
+  short: the cityguard
+  long: |
+    A cityguard stands here.
+  desc: |
+    A big, strong, helpful, trustworthy guard.
+  act:
+  - spec
+  - stay_zone
+  - memory
+  - helper
+  affected:
+  - detect_invis
+  alignment: 1000
+  level: 10
+  thac0: 10
+  ac: 1
+  hp: 1d12+123
+  damage: 1d8+5
+  gold: 500
+  exp: 9000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 3061
+  keywords:
+  - janitor
+  short: the janitor
+  long: |
+    A janitor is walking around, cleaning up.
+  desc: |
+    What a tough job he has.
+  act:
+  - spec
+  - stay_zone
+  - memory
+  alignment: 800
+  level: 1
+  thac0: 20
+  ac: 9
+  hp: 2d6+10
+  damage: 1d5
+  gold: 34
+  exp: 100
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 3062
+  keywords:
+  - fido
+  - dog
+  short: the beastly fido
+  long: |
+    A beastly fido is mucking through the garbage looking for food here.
+  desc: |
+    The fido is a small dog that has a foul smell and pieces of rotted meat
+    hanging around his teeth.
+  act:
+  - spec
+  - aggressive
+  - stay_zone
+  - wimpy
+  - no_bash
+  affected:
+  - no_track
+  alignment: -200
+  level: 0
+  thac0: 20
+  ac: 10
+  hp: 1d6+4
+  damage: 1d4
+  gold: 0
+  exp: 25
+  position: standing
+  default_position: standing
+  sex: male
+  abilities:
+    bare_hand_attack: 4
+- vnum: 3063
+  keywords:
+  - mercenary
+  short: the mercenary
+  long: |
+    A mercenary is waiting for a job here.
+  desc: |
+    He looks pretty mean, and you imagine he'd do anything for money.
+  act:
+  - sentinel
+  - memory
+  alignment: -330
+  level: 5
+  thac0: 15
+  ac: 5
+  hp: 2d6+60
+  damage: 1d6+1
+  gold: 87
+  exp: 900
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 3064
+  keywords:
+  - drunk
+  short: the drunk
+  long: |
+    A singing, happy Drunk.
+  desc: |
+    A drunk who seems to be too happy, and to carry too much money.
+  act:
+  - sentinel
+  alignment: 400
+  level: 2
+  thac0: 19
+  ac: 8
+  hp: 2d6+22
+  damage: 1d6
+  gold: 53
+  exp: 200
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 3065
+  keywords:
+  - beggar
+  short: the beggar
+  long: |
+    A beggar is here, asking for a few coins.
+  desc: |
+    The beggar looks like she is fed up with life.
+  act:
+  - sentinel
+  alignment: 400
+  level: 1
+  thac0: 20
+  ac: 9
+  hp: 2d6+10
+  damage: 1d5
+  gold: 0
+  exp: 100
+  position: standing
+  default_position: standing
+  sex: female
+- vnum: 3066
+  keywords:
+  - odif
+  - yltsaeb
+  short: the odif yltsaeb
+  long: |
+    An odif yltsaeb is here, walking backwards.
+  desc: |
+    The odif is a small god that has been reversed by some dog.
+  act:
+  - spec
+  - aggressive
+  - stay_zone
+  - wimpy
+  - no_bash
+  affected:
+  - no_track
+  alignment: -200
+  level: 0
+  thac0: 20
+  ac: 10
+  hp: 1d6+4
+  damage: 1d4
+  gold: 0
+  exp: 25
+  position: standing
+  default_position: standing
+  sex: male
+  abilities:
+    bare_hand_attack: 4
+- vnum: 3067
+  keywords:
+  - cityguard
+  - guard
+  short: the cityguard
+  long: |
+    A cityguard is here, guarding the gate.
+  desc: |
+    A big, strong, helpful, trustworthy guard.
+  act:
+  - spec
+  - sentinel
+  - stay_zone
+  - memory
+  - helper
+  alignment: 1000
+  level: 10
+  thac0: 10
+  ac: 1
+  hp: 1d12+123
+  damage: 1d8+5
+  gold: 500
+  exp: 9000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 3068
+  keywords:
+  - green
+  - gelatinous
+  - blob
+  short: the green gelatinous blob
+  long: |
+    An oozing green gelatinous blob is here, sucking in bits of debris.
+  desc: |
+    A horrid looking thing; it is huge, greenish, and looks like the blob.
+  act:
+  - spec
+  - aware
+  - stay_zone
+  - wimpy
+  - memory
+  - no_charm
+  - no_summon
+  - no_sleep
+  - no_bash
+  - no_blind
+  affected:
+  - detect_invis
+  alignment: 0
+  level: 20
+  thac0: 0
+  ac: 0
+  hp: 1d11+325
+  damage: 3d6+5
+  gold: 1000
+  exp: 40000
+  position: standing
+  default_position: standing
+  sex: neutral
+  abilities:
+    bare_hand_attack: 6
+- vnum: 3089
+  keywords:
+  - pet
+  - shop
+  - boy
+  short: the Pet Shop Boy
+  long: |
+    There is a Pet Shop Boy standing here cuddleing something furry in his hands.
+  desc: |
+    As you look at him, he opens his hands to reveal a rat!
+  act:
+  - sentinel
+  - memory
+  - no_charm
+  - no_summon
+  alignment: 1000
+  level: 10
+  thac0: 10
+  ac: 1
+  hp: 1d1+30000
+  damage: 20d4+10
+  gold: 500
+  exp: 9000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 3090
+  keywords:
+  - kitten
+  short: the kitten
+  long: |
+    A small loyal kitten is here.
+  desc: |
+    The kitten looks like a cute, little, fierce fighter.
+  act:
+  - sentinel
+  - scavenger
+  - no_summon
+  alignment: 0
+  level: 1
+  thac0: 20
+  ac: 9
+  hp: 1d6+11
+  damage: 1d4
+  gold: 0
+  exp: 100
+  position: standing
+  default_position: standing
+  sex: neutral
+  abilities:
+    bare_hand_attack: 8
+- vnum: 3091
+  keywords:
+  - puppy
+  short: the puppy
+  long: |
+    A small loyal puppy is here.
+  desc: |
+    The puppy looks like a cute, little, fierce fighter.
+  act:
+  - sentinel
+  - scavenger
+  - no_summon
+  alignment: 0
+  level: 1
+  thac0: 20
+  ac: 9
+  hp: 1d6+13
+  damage: 1d4
+  gold: 0
+  exp: 125
+  position: standing
+  default_position: standing
+  sex: neutral
+  abilities:
+    bare_hand_attack: 8
+- vnum: 3092
+  keywords:
+  - beagle
+  short: the beagle
+  long: |
+    A small, quick, loyal beagle is here.
+  desc: |
+    The beagle looks like a fierce fighter.
+  act:
+  - sentinel
+  - scavenger
+  - no_summon
+  alignment: 0
+  level: 2
+  thac0: 19
+  ac: 8
+  hp: 1d12+22
+  damage: 1d6
+  gold: 0
+  exp: 200
+  position: standing
+  default_position: standing
+  sex: neutral
+  abilities:
+    bare_hand_attack: 4
+- vnum: 3093
+  keywords:
+  - rottweiler
+  short: the rottweiler
+  long: |
+    A large, loyal rottweiler is here.
+  desc: |
+    The rottweiler looks like a strong, fierce fighter.
+  act:
+  - sentinel
+  - scavenger
+  - no_summon
+  alignment: 0
+  level: 3
+  thac0: 18
+  ac: 7
+  hp: 1d12+35
+  damage: 1d7
+  gold: 0
+  exp: 800
+  position: standing
+  default_position: standing
+  sex: neutral
+  abilities:
+    bare_hand_attack: 4
+- vnum: 3094
+  keywords:
+  - wolf
+  short: the wolf
+  long: |
+    A large, trained wolf is here.
+  desc: |
+    The wolf looks like a strong, fearless fighter.
+  act:
+  - sentinel
+  - scavenger
+  - no_summon
+  alignment: 0
+  level: 4
+  thac0: 17
+  ac: 6
+  hp: 1d12+47
+  damage: 1d8
+  gold: 0
+  exp: 1600
+  position: standing
+  default_position: standing
+  sex: neutral
+  abilities:
+    bare_hand_attack: 4
+- vnum: 3095
+  keywords:
+  - cryogenicist
+  - cryo
+  short: the cryogenicist
+  long: |
+    The cryogenicist is here, playing with a canister of liquid nitrogen.
+  desc: |
+    You notice a tired look in her face.  She looks like she isn't paid well
+    enough to put up with any crap from mud players with attitudes.
+  act:
+  - spec
+  - sentinel
+  - memory
+  - no_charm
+  - no_summon
+  affected:
+  - detect_invis
+  - sense_life
+  - no_track
+  alignment: 900
+  level: 33
+  thac0: 0
+  ac: -10
+  hp: 1d1+30000
+  damage: 2d8+32
+  gold: 0
+  exp: 0
+  position: standing
+  default_position: standing
+  sex: female
+objects:
+- vnum: 3000
+  keywords:
+  - barrel
+  - beer
+  short: a barrel
+  desc: A beer barrel has been left here.
+  type: drink_container
+  wear:
+  - take
+  drink:
+    capacity: 50
+    current: 50
+    liquid: beer
+  weight: 65
+  cost: 300
+  rent: 100
+- vnum: 3001
+  keywords:
+  - bottle
+  - beer
+  short: a bottle
+  desc: A beer bottle has been left here.
+  type: drink_container
+  wear:
+  - take
+  drink:
+    capacity: 8
+    current: 8
+    liquid: beer
+  weight: 10
+  cost: 20
+  rent: 8
+- vnum: 3002
+  keywords:
+  - bottle
+  - dark
+  - ale
+  short: a bottle
+  desc: A dark bottle of ale has been left here.
+  type: drink_container
+  wear:
+  - take
+  drink:
+    capacity: 8
+    current: 8
+    liquid: ale
+  weight: 10
+  cost: 10
+  rent: 3
+- vnum: 3003
+  keywords:
+  - bottle
+  - firebreather
+  short: a firebreather
+  desc: A firebreather has been left here.
+  type: drink_container
+  wear:
+  - take
+  drink:
+    capacity: 8
+    current: 8
+    liquid: firebreather
+  weight: 10
+  cost: 50
+  rent: 17
+- vnum: 3004
+  keywords:
+  - bottle
+  - local
+  short: a bottle
+  desc: A dark bottle has been left here.
+  type: drink_container
+  wear:
+  - take
+  drink:
+    capacity: 8
+    current: 8
+    liquid: local_specialty
+  weight: 10
+  cost: 20
+  rent: 7
+- vnum: 3005
+  keywords:
+  - key
+  - dull
+  - metal
+  short: a key of dull metal
+  desc: A key made of a dull metal is lying on the ground here.
+  type: key
+  wear:
+  - take
+  - hold
+  flags:
+  - no_rent
+  - no_donate
+  - no_sell
+  values:
+  - 3005
+  - 0
+  - 0
+  - 0
+  weight: 1
+  cost: 0
+  rent: 0
+- vnum: 3009
+  keywords:
+  - waybread
+  - bread
+  short: a waybread
+  desc: Some waybread has been put here.
+  type: food
+  wear:
+  - take
+  values:
+  - 24
+  - 0
+  - 0
+  - 0
+  weight: 1
+  cost: 50
+  rent: 50
+  extra_descs:
+  - keywords:
+    - waybread
+    - bread
+    desc: |
+              The waybread is the traditional feed of elves when travelling, they
+              call it lembas.  It is said to refresh the weary traveler greatly.
+- vnum: 3010
+  keywords:
+  - bread
+  - loaf
+  short: a bread
+  desc: A loaf of bread has been left here.
+  type: food
+  wear:
+  - take
+  values:
+  - 12
+  - 0
+  - 0
+  - 0
+  weight: 1
+  cost: 10
+  rent: 10
+- vnum: 3011
+  keywords:
+  - danish
+  - pastry
+  short: a danish pastry
+  desc: A nice looking delicious danish pastry has been placed here.
+  type: food
+  wear:
+  - take
+  values:
+  - 5
+  - 0
+  - 0
+  - 0
+  weight: 1
+  cost: 5
+  rent: 5
+- vnum: 3012
+  keywords:
+  - taco
+  - mexican
+  short: a Mexican taco
+  desc: A tasty looking Mexican taco has been dropped here.
+  type: food
+  wear:
+  - take
+  values:
+  - 15
+  - 0
+  - 0
+  - 0
+  weight: 1
+  cost: 15
+  rent: 15
+- vnum: 3013
+  keywords:
+  - burrito
+  - hot
+  short: a spicy hot burrito
+  desc: A spicy looking burrito has been set here.
+  type: food
+  wear:
+  - take
+  values:
+  - 10
+  - 0
+  - 0
+  - 0
+  weight: 1
+  cost: 10
+  rent: 10
+- vnum: 3014
+  keywords:
+  - nachos
+  - nacho
+  short: some nachos with cheese
+  desc: Some nachos have been left here.
+  type: food
+  wear:
+  - take
+  values:
+  - 5
+  - 0
+  - 0
+  - 0
+  weight: 1
+  cost: 5
+  rent: 5
+  extra_descs:
+  - keywords:
+    - nachos
+    - nacho
+    desc: |
+              They have cheese on them.  Looks like one of Uncle Juan's specials.
+- vnum: 3015
+  keywords:
+  - meat
+  - chunk
+  short: a piece of meat
+  desc: A rather dubious looking piece of meat is on the ground here.
+  type: food
+  wear:
+  - take
+  values:
+  - 14
+  - 0
+  - 0
+  - 0
+  weight: 5
+  cost: 24
+  rent: 10
+  extra_descs:
+  - keywords:
+    - meat
+    - chunk
+    desc: |
+              It isn't so much that the meat looks poisoned or anything, but that you
+              just are not sure of its origins.  You doubt that a hunter would drop a
+              side of venison or rabbit meat... what in the world could this meat have
+              come from, you wonder...
+- vnum: 3020
+  keywords:
+  - dagger
+  short: a dagger
+  desc: A dagger with a long thin blade is here.
+  type: weapon
+  wear:
+  - take
+  - wield
+  flags:
+  - anti_cleric
+  weapon:
+    dice: 1d4
+    damage_type: pierce
+  weight: 1
+  cost: 10
+  rent: 10
+- vnum: 3021
+  keywords:
+  - sword
+  - small
+  short: a small sword
+  desc: A small sword lies here.
+  type: weapon
+  wear:
+  - take
+  - wield
+  flags:
+  - anti_cleric
+  weapon:
+    dice: 1d6
+    damage_type: pierce
+  weight: 3
+  cost: 60
+  rent: 10
+  extra_descs:
+  - keywords:
+    - inscription
+    desc: |
+              It says: 'May this sword be a good companion.'
+  - keywords:
+    - sword
+    - small
+    desc: |
+              The small sword seems to have an inscription of some sort inscription...
+- vnum: 3022
+  keywords:
+  - sword
+  - long
+  short: a long sword
+  desc: A long sword has been left here.
+  type: weapon
+  wear:
+  - take
+  - wield
+  flags:
+  - anti_cleric
+  weapon:
+    dice: 1d8
+    damage_type: slash
+  weight: 8
+  cost: 600
+  rent: 10
+- vnum: 3023
+  keywords:
+  - club
+  - wooden
+  short: a wooden club
+  desc: A simple looking wooden club is here.
+  type: weapon
+  wear:
+  - take
+  - wield
+  weapon:
+    dice: 1d3
+    damage_type: pound
+  weight: 3
+  cost: 12
+  rent: 10
+- vnum: 3024
+  keywords:
+  - warhammer
+  - hammer
+  short: a warhammer
+  desc: A medium sized warhammer is here.
+  type: weapon
+  wear:
+  - take
+  - wield
+  weapon:
+    dice: 1d5
+    damage_type: pound
+  weight: 6
+  cost: 50
+  rent: 10
+- vnum: 3025
+  keywords:
+  - flail
+  - large
+  short: a flail
+  desc: A large flail is here.
+  type: weapon
+  wear:
+  - take
+  - wield
+  weapon:
+    dice: 2d4
+    damage_type: pound
+  weight: 6
+  cost: 625
+  rent: 10
+- vnum: 3030
+  keywords:
+  - torch
+  short: a torch
+  desc: A large torch.
+  type: light
+  wear:
+  - take
+  - body
+  - head
+  - legs
+  - arms
+  - shield
+  - about
+  - waist
+  - wrist
+  - wield
+  light:
+    hours: 24
+  weight: 1
+  cost: 10
+  rent: 10
+- vnum: 3031
+  keywords:
+  - lantern
+  - brass
+  short: a lantern
+  desc: A brass lantern is here.
+  type: light
+  wear:
+  - take
+  - body
+  - head
+  - legs
+  - arms
+  - shield
+  - about
+  - waist
+  - wrist
+  - wield
+  light:
+    hours: 96
+  weight: 1
+  cost: 50
+  rent: 10
+- vnum: 3032
+  keywords:
+  - bag
+  short: a bag
+  desc: A small bag is here.
+  type: container
+  wear:
+  - take
+  - hold
+  container:
+    capacity: 50
+    key: 0
+  weight: 2
+  cost: 20
+  rent: 10
+- vnum: 3033
+  keywords:
+  - box
+  short: a box
+  desc: A small box is here.
+  type: container
+  wear:
+  - take
+  - hold
+  container:
+    capacity: 10
+    key: 0
+  weight: 5
+  cost: 50
+  rent: 10
+- vnum: 3034
+  keywords:
+  - atm
+  - teller
+  - bank
+  - machine
+  short: an automatic teller machine
+  desc: An automatic teller machine has been installed in the wall here.
+  type: other
+  flags:
+  - no_rent
+  - no_donate
+  - no_invis
+  - magic
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 5000
+  cost: 0
+  rent: 0
+  extra_descs:
+  - keywords:
+    - atm
+    - teller
+    - bank
+    - machine
+    desc: |
+              There is a small note on the machine which says:
+
+              To use, type 'BALANCE', 'WITHDRAW <amount>', or 'DEPOSIT <amount>'.
+              Please report any strange occurrences to the bank manager.
+- vnum: 3035
+  keywords:
+  - fountain
+  - water
+  short: the large fountain
+  desc: A large fountain carved from blue-streaked marble is here, bubbling merrily.
+  type: fountain
+  flags:
+  - no_rent
+  - no_donate
+  - no_invis
+  - magic
+  values:
+  - 9999
+  - 9999
+  - 15
+  - 0
+  weight: 9999
+  cost: 0
+  rent: 0
+  extra_descs:
+  - keywords:
+    - marble
+    - blue
+    - streaked
+    desc: |
+              It is a well crafted fountain, carved from a single piece of very beautiful
+              white marble shot through with electric blue streaks that look almost like
+              lightning dancing along the sides of the fountain.  It seems to be enchanted
+              in some manner, as the water level seems to never lower.
+- vnum: 3036
+  keywords:
+  - cashcard
+  - card
+  - atm
+  short: a cashcard
+  desc: A handy dandy cashcard is sitting on the ground here.
+  type: other
+  wear:
+  - take
+  - hold
+  flags:
+  - no_rent
+  - no_donate
+  - no_invis
+  - magic
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 1
+  cost: 10000
+  rent: 10
+  extra_descs:
+  - keywords:
+    - cashcard
+    - card
+    - atm
+    desc: |
+              There is some writing on the back of the card which reads:
+
+              To use, type 'BALANCE', 'WITHDRAW <amount>', or 'DEPOSIT <amount>'.
+              Please report any strange occurrences to the bank manager.
+- vnum: 3037
+  keywords:
+  - candle
+  short: a candle
+  desc: A candle lies here, unlit.
+  type: light
+  wear:
+  - take
+  - hold
+  light:
+    hours: 4
+  weight: 1
+  cost: 5
+  rent: 1
+  extra_descs:
+  - keywords:
+    - candle
+    desc: |
+              A home-made candle, how quaint!
+- vnum: 3038
+  keywords:
+  - nail
+  short: a nail
+  desc: A penny nail lies in the dust.
+  type: weapon
+  wear:
+  - take
+  - wield
+  weapon:
+    dice: 1d1
+    damage_type: pierce
+  weight: 1
+  cost: 5
+  rent: 1
+  extra_descs:
+  - keywords:
+    - nail
+    desc: |
+              Its a common iron nail, used for carpentry work.
+- vnum: 3039
+  keywords:
+  - pot
+  short: a pot
+  desc: A cast-iron pot sits on the ground.
+  type: container
+  wear:
+  - take
+  container:
+    capacity: 10
+    key: 0
+  weight: 10
+  cost: 100
+  rent: 20
+  extra_descs:
+  - keywords:
+    - pot
+    desc: |
+              It is a nice pot.  You could use it, if you ever settled down.
+- vnum: 3040
+  keywords:
+  - plate
+  - breast
+  short: a breast plate
+  desc: A breast plate is lying on the ground.
+  type: armor
+  wear:
+  - take
+  - body
+  armor:
+    ac_apply: 7
+  weight: 100
+  cost: 18000
+  rent: 150
+- vnum: 3041
+  keywords:
+  - shirt
+  - chain
+  - mail
+  short: a chain mail shirt
+  desc: A chain mail shirt is lying on the ground.
+  type: armor
+  wear:
+  - take
+  - body
+  armor:
+    ac_apply: 5
+  weight: 60
+  cost: 2500
+  rent: 50
+- vnum: 3042
+  keywords:
+  - shield
+  - wooden
+  short: a shield
+  desc: A small wooden shield is lying on the ground.
+  type: armor
+  wear:
+  - take
+  - shield
+  armor:
+    ac_apply: 2
+  weight: 3
+  cost: 100
+  rent: 10
+- vnum: 3043
+  keywords:
+  - jacket
+  - soft
+  - leather
+  short: a leather jacket
+  desc: A soft leather jacket is lying on the ground.
+  type: armor
+  wear:
+  - take
+  - body
+  armor:
+    ac_apply: 2
+  weight: 10
+  cost: 200
+  rent: 10
+- vnum: 3044
+  keywords:
+  - jacket
+  - studded
+  - leather
+  short: a studded leather jacket
+  desc: A studded leather jacket is lying on the ground.
+  type: armor
+  wear:
+  - take
+  - body
+  armor:
+    ac_apply: 3
+  weight: 20
+  cost: 500
+  rent: 10
+- vnum: 3045
+  keywords:
+  - jacket
+  - scale
+  - mail
+  short: a scale mail jacket
+  desc: A scale mail jacket is lying on the ground.
+  type: armor
+  wear:
+  - take
+  - body
+  armor:
+    ac_apply: 4
+  weight: 40
+  cost: 1000
+  rent: 10
+- vnum: 3046
+  keywords:
+  - plate
+  - bronze
+  - breast
+  short: a bronze breast plate
+  desc: A bronze breast plate is lying on the ground.
+  type: armor
+  wear:
+  - take
+  - body
+  armor:
+    ac_apply: 6
+  weight: 80
+  cost: 7000
+  rent: 100
+- vnum: 3050
+  keywords:
+  - scroll
+  - identify
+  short: a scroll of identify
+  desc: A scroll has carelessly been left here.
+  type: scroll
+  wear:
+  - take
+  - hold
+  flags:
+  - magic
+  values:
+  - 12
+  - 201
+  - -1
+  - -1
+  weight: 1
+  cost: 2001
+  rent: 10
+  extra_descs:
+  - keywords:
+    - scroll
+    - identify
+    desc: |
+              The scroll has a magic formula drawn upon it:
+
+                   ???
+                  ?   ?
+                     ?
+                    ?
+                    ?
+                    *
+- vnum: 3051
+  keywords:
+  - potion
+  - yellow
+  short: a yellow potion of see invisible
+  desc: A small yellow potion has carelessly been left here.
+  type: potion
+  wear:
+  - take
+  - hold
+  flags:
+  - magic
+  values:
+  - 12
+  - 19
+  - -1
+  - -1
+  weight: 1
+  cost: 400
+  rent: 10
+  extra_descs:
+  - keywords:
+    - potion
+    - yellow
+    desc: |
+              The potion has a small label 'Detect The Invisible'.
+- vnum: 3052
+  keywords:
+  - scroll
+  - recall
+  short: a scroll of recall
+  desc: A scroll has carelessly been left here.
+  type: scroll
+  wear:
+  - take
+  - hold
+  flags:
+  - magic
+  values:
+  - 12
+  - 42
+  - -1
+  - -1
+  weight: 4
+  cost: 2001
+  rent: 10
+  extra_descs:
+  - keywords:
+    - scroll
+    - recall
+    desc: |
+              The scroll has written a formulae of 'Word of Recall' upon it.
+- vnum: 3053
+  keywords:
+  - wand
+  - grey
+  short: a grey wand of invisibility
+  desc: A grey wand has carelessly been left here.
+  type: wand
+  wear:
+  - take
+  - hold
+  flags:
+  - magic
+  charges:
+    spell: invisibility
+    level: 12
+    max: 2
+    remaining: 2
+  weight: 2
+  cost: 4000
+  rent: 100
+  extra_descs:
+  - keywords:
+    - wand
+    - grey
+    desc: |
+              The wand is an old dark grey stick.  You notice a small symbol etched at
+              the base of the wand.  It looks like this:
+
+                   \ /
+                  - O -
+                   / \
+- vnum: 3054
+  keywords:
+  - staff
+  - gnarled
+  short: a gnarled staff
+  desc: A gnarled staff has carelessly been left here.
+  type: staff
+  wear:
+  - take
+  - hold
+  flags:
+  - magic
+  charges:
+    spell: sleep
+    level: 12
+    max: 1
+    remaining: 1
+  weight: 17
+  cost: 7000
+  rent: 5000
+  extra_descs:
+  - keywords:
+    - staff
+    - gnarled
+    desc: |
+              The staff is made of old oak, and is around five feet long. It fits
+              perfectly into your hand. You notice a small symbol etched at the
+              base of the staff, it looks like:
+
+                ZZZZZ
+                   Z
+                  Z
+                 Z
+                ZZZZZ  z   z
+- vnum: 3055
+  keywords:
+  - staff
+  - metal
+  short: a metal staff
+  desc: A metal staff has carelessly been left here.
+  type: staff
+  wear:
+  - take
+  - hold
+  flags:
+  - magic
+  charges:
+    spell: cure critic
+    level: 10
+    max: 8
+    remaining: 8
+  weight: 7
+  cost: 8500
+  rent: 300
+  extra_descs:
+  - keywords:
+    - staff
+    - metal
+    desc: |
+              The staff is made of metals unknown to you.
+- vnum: 3060
+  keywords:
+  - raft
+  short: a raft
+  desc: A raft has been left here.
+  type: boat
+  wear:
+  - take
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 75
+  cost: 400
+  rent: 10
+  extra_descs:
+  - keywords:
+    - raft
+    desc: |
+              The raft looks very primitive.
+- vnum: 3061
+  keywords:
+  - canoe
+  short: a canoe
+  desc: A canoe has been left here.
+  type: boat
+  wear:
+  - take
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 32
+  cost: 1000
+  rent: 100
+  extra_descs:
+  - keywords:
+    - canoe
+    desc: |
+              The canoe is fairly light.
+- vnum: 3070
+  keywords:
+  - gauntlets
+  - bronze
+  short: a pair of bronze gauntlets
+  desc: A pair of bronze gauntlets is lying on the ground.
+  type: armor
+  wear:
+  - take
+  - hands
+  armor:
+    ac_apply: 6
+  weight: 8
+  cost: 1750
+  rent: 100
+- vnum: 3071
+  keywords:
+  - gloves
+  - leather
+  short: a pair of leather gloves
+  desc: A pair of leather gloves is lying on the ground.
+  type: armor
+  wear:
+  - take
+  - hands
+  armor:
+    ac_apply: 3
+  weight: 3
+  cost: 75
+  rent: 10
+- vnum: 3075
+  keywords:
+  - helmet
+  - bronze
+  short: a bronze helmet
+  desc: A bronze helmet is lying on the ground.
+  type: armor
+  wear:
+  - take
+  - head
+  armor:
+    ac_apply: 6
+  weight: 8
+  cost: 3500
+  rent: 100
+- vnum: 3076
+  keywords:
+  - cap
+  - leather
+  short: a leather cap
+  desc: A leather cap is lying on the ground.
+  type: armor
+  wear:
+  - take
+  - head
+  armor:
+    ac_apply: 3
+  weight: 3
+  cost: 150
+  rent: 10
+- vnum: 3080
+  keywords:
+  - leggings
+  - bronze
+  short: a pair of bronze leggings
+  desc: A pair of bronze leggings is lying on the ground.
+  type: armor
+  wear:
+  - take
+  - legs
+  armor:
+    ac_apply: 6
+  weight: 8
+  cost: 3500
+  rent: 100
+- vnum: 3081
+  keywords:
+  - pants
+  - leather
+  short: a pair of leather pants
+  desc: A pair of leather pants is lying on the ground.
+  type: armor
+  wear:
+  - take
+  - legs
+  armor:
+    ac_apply: 3
+  weight: 8
+  cost: 150
+  rent: 10
+- vnum: 3085
+  keywords:
+  - sleeves
+  - bronze
+  short: a pair of bronze sleeves
+  desc: A pair of bronze sleeves is lying on the ground.
+  type: armor
+  wear:
+  - take
+  - arms
+  armor:
+    ac_apply: 6
+  weight: 8
+  cost: 1750
+  rent: 100
+- vnum: 3086
+  keywords:
+  - sleeves
+  - leather
+  short: a pair of leather sleeves
+  desc: A pair of leather sleeves is lying on the ground.
+  type: armor
+  wear:
+  - take
+  - arms
+  armor:
+    ac_apply: 2
+  weight: 4
+  cost: 75
+  rent: 10
+- vnum: 3096
+  keywords:
+  - board
+  - social
+  - bulletin
+  short: a social bulletin board
+  desc: A large, sociable bulletin board is mounted on a wall here.
+  type: trash
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 0
+  cost: 0
+  rent: 0
+  extra_descs:
+  - keywords:
+    - social
+    - bulletin
+    desc: |
+              Use 'look board' to read the board.
+  - keywords:
+    - board
+    desc: |
+              If you can read this, the board is not working.
+- vnum: 3097
+  keywords:
+  - board
+  - frozen
+  - bulletin
+  short: a frozen bulletin board
+  desc: A large bulletin board is here, carved from a block of ice.
+  type: trash
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 0
+  cost: 0
+  rent: 0
+  extra_descs:
+  - keywords:
+    - freeze
+    - bulletin
+    desc: |
+              Use 'look board' to read the board.
+  - keywords:
+    - board
+    desc: |
+              If you can read this, the board is not working.
+- vnum: 3098
+  keywords:
+  - board
+  - holy
+  - bulletin
+  short: a holy bulletin board
+  desc: A large bulletin board is mounted on a wall here.  It glows with a faint aura.
+  type: trash
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 0
+  cost: 0
+  rent: 0
+  extra_descs:
+  - keywords:
+    - holy
+    - bulletin
+    desc: |
+              Use 'look board' to read the board.
+  - keywords:
+    - board
+    desc: |
+              If you can read this, the board is not working.
+- vnum: 3099
+  keywords:
+  - board
+  - bulletin
+  short: a bulletin board
+  desc: A large bulletin board is mounted on a wall here.
+  type: trash
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 0
+  cost: 0
+  rent: 0
+  extra_descs:
+  - keywords:
+    - bulletin
+    desc: |
+              Use 'look board' to read the board.
+  - keywords:
+    - board
+    desc: |
+              If you can read this, the board is not working.
+shops:
+- vnum: 3000
+  keeper: 3000
+  rooms:
+  - 3033
+  sells:
+  - 3050
+  - 3051
+  - 3052
+  - 3053
+  - 3054
+  buys:
+  - type: scroll
+  - type: wand
+  - type: staff
+  - type: potion
+  markup: 1.15
+  markdown: 0.15
+  hours:
+  - - 0
+    - 28
+  flags:
+  - uses_bank
+  refuses:
+  - evil
+  messages:
+    no_such_item_keeper: "%s Sorry, I haven't got exactly that item."
+    no_such_item_player: "%s You don't seem to have that."
+    do_not_buy: "%s I don't buy such items."
+    keeper_broke: "%s That is too expensive for me!"
+    player_broke: "%s You can't afford it!"
+    buy: "%s That'll be %d coins, please."
+    sell: "%s You'll get %d coins for it!"
+- vnum: 3001
+  keeper: 3001
+  rooms:
+  - 3009
+  sells:
+  - 3009
+  - 3010
+  - 3011
+  markup: 1.4
+  markdown: 1.0
+  hours:
+  - - 0
+    - 28
+  flags:
+  - uses_bank
+  messages:
+    no_such_item_keeper: "%s Haven't got that on storage - try list!"
+    no_such_item_player: "%s I don't buy!"
+    do_not_buy: "%s I don't buy!"
+    keeper_broke: "%s I don't buy!"
+    player_broke: "%s If you have no money, you'll have to go!"
+    buy: "%s That'll be %d coins."
+    sell: "%s Oops - %d a minor bug - please report!"
+- vnum: 3002
+  keeper: 3002
+  rooms:
+  - 3010
+  sells:
+  - 3030
+  - 3031
+  - 3032
+  - 3033
+  - 3036
+  buys:
+  - type: light
+  - type: treasure
+  - type: container
+  markup: 1.5
+  markdown: 0.4
+  hours:
+  - - 0
+    - 28
+  flags:
+  - uses_bank
+  messages:
+    no_such_item_keeper: "%s Haven't got that on storage - try list!"
+    no_such_item_player: "%s You don't seem to have that."
+    do_not_buy: "%s I don't buy THAT... Try another shop."
+    keeper_broke: "%s I can't afford such a treasure."
+    player_broke: "%s You can't afford it!"
+    buy: "%s That'll be %d coins, please."
+    sell: "%s You'll get %d coins for it!"
+- vnum: 3003
+  keeper: 3003
+  rooms:
+  - 3011
+  sells:
+  - 3020
+  - 3021
+  - 3022
+  - 3023
+  - 3024
+  - 3025
+  buys:
+  - type: weapon
+  markup: 1.3
+  markdown: 0.4
+  hours:
+  - - 0
+    - 28
+  flags:
+  - uses_bank
+  messages:
+    no_such_item_keeper: "%s I haven't got that kind of a weapon!"
+    no_such_item_player: "%s You don't carry that weapon!"
+    do_not_buy: "%s I only buy weapons."
+    keeper_broke: "%s I can't afford such a great weapon!"
+    player_broke: "%s sorry, but NO CREDIT!"
+    buy: "%s That costs just %d coins."
+    sell: "%s Here, you can have %d coins for that."
+- vnum: 3004
+  keeper: 3004
+  rooms:
+  - 3020
+  sells:
+  - 3040
+  - 3041
+  - 3042
+  - 3043
+  - 3044
+  - 3045
+  - 3046
+  - 3070
+  - 3071
+  - 3075
+  - 3076
+  - 3080
+  - 3081
+  - 3085
+  - 3086
+  buys:
+  - type: armor
+  markup: 1.0
+  markdown: 0.5
+  hours:
+  - - 0
+    - 28
+  flags:
+  - uses_bank
+  messages:
+    no_such_item_keeper: "%s Haven't got that on storage - try list!"
+    no_such_item_player: "%s You don't seem to have that."
+    do_not_buy: "%s I only buy armors.. Go away!"
+    keeper_broke: "%s That is too expensive for me - Try a wizard!"
+    player_broke: "%s You can't afford it!"
+    buy: "%s That'll be %d coins, please."
+    sell: "%s You'll get %d coins for it!"
+- vnum: 3006
+  keeper: 3006
+  rooms:
+  - 3049
+  sells:
+  - 3060
+  - 3061
+  buys:
+  - type: boat
+  markup: 1.2
+  markdown: 0.9
+  hours:
+  - - 6
+    - 22
+  flags:
+  - uses_bank
+  messages:
+    no_such_item_keeper: "%s Sorry pal, I have not got that kind of ship."
+    no_such_item_player: "%s Ok, but let me see it first."
+    do_not_buy: "%s I only trade ships."
+    keeper_broke: "%s I can't afford such a nice ship."
+    player_broke: "%s This ship is too expensive for you."
+    buy: "%s Here is your ship, I'll take %d gold coins."
+    sell: "%s What a fine deal, you get %d gold coins."
+- vnum: 3007
+  keeper: 3007
+  rooms:
+  - 3050
+  markup: 1.0
+  markdown: 1.0
+  hours:
+  - - 0
+    - 28
+  flags:
+  - uses_bank
+  refuses:
+  - good
+  temper: 2
+  messages:
+    no_such_item_keeper: "%s Sorry, you aren't on my list of people I can sell to."
+    no_such_item_player: "%s Sorry, I don't buy from outsiders."
+    do_not_buy: "%s Sorry, I don't buy from outsiders."
+    keeper_broke: "%s Sorry, I don't buy from outsiders."
+    player_broke: "%s Sorry, but here, no money means no goods!"
+    buy: "%s That will be %d coins, please.  Thank you."
+    sell: "%s Oops - %d a minor bug - please report."
+- vnum: 3009
+  keeper: 3009
+  rooms:
+  - 3058
+  sells:
+  - 3102
+  - 3103
+  - 3104
+  markup: 1.0
+  markdown: 1.0
+  hours:
+  - - 0
+    - 28
+  flags:
+  - uses_bank
+  messages:
+    no_such_item_keeper: "%s Sorry, I don't have that -- try list!"
+    no_such_item_player: "%s Sorry, I don't buy waters from outsiders."
+    do_not_buy: "%s Sorry, I don't buy waters from outsiders."
+    keeper_broke: "%s Sorry, I don't buy waters from outsiders."
+    player_broke: "%s Sorry, but here, no money means no water!"
+    buy: "%s That will be %d coins, please.  Thank you."
+    sell: "%s Oops - %d a minor bug - please report."
+- vnum: 3040
+  keeper: 3040
+  rooms:
+  - 3007
+  sells:
+  - 3000
+  - 3001
+  - 3002
+  - 3003
+  - 3004
+  markup: 1.1
+  markdown: 1.0
+  hours:
+  - - 0
+    - 28
+  flags:
+  - uses_bank
+  messages:
+    no_such_item_keeper: "%s It's very noisy in here, what did you say you wanted to buy?"
+    no_such_item_player: "%s I don't buy!"
+    do_not_buy: "%s I don't buy!"
+    keeper_broke: "%s I don't buy!"
+    player_broke: "%s Are you drunk or what?? - NO CREDIT!"
+    buy: "%s That'll be - say %d coins."
+    sell: "%s Oops - %d a minor bug - please report!"
+- vnum: 3042
+  keeper: 3042
+  rooms:
+  - 3018
+  sells:
+  - 3002
+  - 3003
+  markup: 1.0
+  markdown: 1.0
+  hours:
+  - - 0
+    - 28
+  flags:
+  - uses_bank
+  refuses:
+  - cleric
+  - thief
+  - warrior
+  messages:
+    no_such_item_keeper: "%s Haven't got that on storage - try list!"
+    no_such_item_player: "%s I don't buy!"
+    do_not_buy: "%s I don't buy!"
+    keeper_broke: "%s I don't buy!"
+    player_broke: "%s If you have no money, you'll have to go!"
+    buy: "%s That'll be %d coins."
+    sell: "%s Oops - %d a minor bug - please report!"
+- vnum: 3043
+  keeper: 3043
+  rooms:
+  - 3003
+  sells:
+  - 3002
+  - 3004
+  markup: 1.1
+  markdown: 1.0
+  hours:
+  - - 0
+    - 28
+  flags:
+  - uses_bank
+  refuses:
+  - magic_user
+  - thief
+  - warrior
+  messages:
+    no_such_item_keeper: "%s Haven't got that on storage - try list!"
+    no_such_item_player: "%s I don't buy!"
+    do_not_buy: "%s I don't buy!"
+    keeper_broke: "%s I don't buy!"
+    player_broke: "%s If you have no money, you'll have to go!"
+    buy: "%s That'll be %d coins."
+    sell: "%s Oops - %d a minor bug - please report!"
+- vnum: 3044
+  keeper: 3044
+  rooms:
+  - 3028
+  sells:
+  - 3003
+  - 3004
+  markup: 1.7
+  markdown: 1.0
+  hours:
+  - - 0
+    - 28
+  flags:
+  - uses_bank
+  refuses:
+  - magic_user
+  - cleric
+  - warrior
+  messages:
+    no_such_item_keeper: "%s Haven't got that on storage - try list!"
+    no_such_item_player: "%s I don't buy!"
+    do_not_buy: "%s I don't buy!"
+    keeper_broke: "%s I don't buy!"
+    player_broke: "%s If you have no money, you'll have to go!"
+    buy: "%s That'll be %d coins."
+    sell: "%s Oops - %d a minor bug - please report!"
+- vnum: 3045
+  keeper: 3045
+  rooms:
+  - 3022
+  sells:
+  - 3002
+  - 3003
+  - 3004
+  markup: 1.5
+  markdown: 1.0
+  hours:
+  - - 0
+    - 28
+  flags:
+  - uses_bank
+  refuses:
+  - magic_user
+  - cleric
+  - thief
+  messages:
+    no_such_item_keeper: "%s Haven't got that on storage - try list!"
+    no_such_item_player: "%s I don't buy!"
+    do_not_buy: "%s I don't buy!"
+    keeper_broke: "%s I don't buy!"
+    player_broke: "%s If you have no money, you'll have to go!"
+    buy: "%s That'll be %d coins."
+    sell: "%s Oops - %d a minor bug - please report!"
+- vnum: 3046
+  keeper: 3046
+  rooms:
+  - 3048
+  sells:
+  - 3004
+  - 3003
+  markup: 1.0
+  markdown: 1.0
+  hours:
+  - - 0
+    - 28
+  flags:
+  - uses_bank
+  messages:
+    no_such_item_keeper: "%s It's very noisy in here, what did you say you wanted to buy?"
+    no_such_item_player: "%s I don't buy!"
+    do_not_buy: "%s I don't buy!"
+    keeper_broke: "%s I don't buy!"
+    player_broke: "%s Oh, bugger off, NO CREDIT!"
+    buy: "%s That'll be - say %d coins."
+    sell: "%s Oops - %d a minor bug - please report!"
+resets:
+- mob: 3000
+  room: 3033
+  max: 1
+  then:
+  - give: 3050
+    max: 500
+  - give: 3051
+    max: 500
+  - give: 3052
+    max: 500
+  - give: 3053
+    max: 500
+  - give: 3054
+    max: 500
+- mob: 3001
+  room: 3009
+  max: 1
+  then:
+  - give: 3009
+    max: 100
+  - give: 3010
+    max: 100
+  - give: 3011
+    max: 100
+  - equip: 3022
+    slot: wield
+    max: 100
+- mob: 3002
+  room: 3010
+  max: 1
+  then:
+  - give: 3030
+    max: 100
+  - give: 3031
+    max: 100
+  - give: 3032
+    max: 100
+  - give: 3033
+    max: 100
+  - give: 3036
+    max: 100
+  - equip: 3022
+    slot: wield
+    max: 100
+- mob: 3003
+  room: 3011
+  max: 1
+  then:
+  - give: 3020
+    max: 100
+  - give: 3021
+    max: 100
+  - give: 3022
+    max: 100
+  - give: 3023
+    max: 100
+  - give: 3024
+    max: 100
+  - give: 3025
+    max: 100
+  - equip: 3022
+    slot: wield
+    max: 100
+- mob: 3004
+  room: 3020
+  max: 1
+  then:
+  - give: 3040
+    max: 100
+  - give: 3041
+    max: 100
+  - give: 3042
+    max: 100
+  - give: 3043
+    max: 100
+  - give: 3044
+    max: 100
+  - give: 3045
+    max: 100
+  - give: 3046
+    max: 100
+  - give: 3070
+    max: 100
+  - give: 3071
+    max: 100
+  - give: 3075
+    max: 100
+  - give: 3076
+    max: 100
+  - give: 3080
+    max: 100
+  - give: 3081
+    max: 100
+  - give: 3085
+    max: 100
+  - give: 3086
+    max: 100
+  - equip: 3022
+    slot: wield
+    max: 100
+- mob: 3005
+  room: 3008
+  max: 1
+  then:
+  - equip: 3022
+    slot: wield
+    max: 100
+- mob: 3006
+  room: 3049
+  max: 1
+  then:
+  - give: 3060
+    max: 20
+  - give: 3061
+    max: 10
+- mob: 3007
+  room: 3050
+  max: 1
+- mob: 3009
+  room: 3058
+  max: 1
+  then:
+  - give: 3102
+    max: 100
+  - give: 3103
+    max: 100
+  - give: 3104
+    max: 100
+  - give: 6013
+    max: 100
+- mob: 3010
+  room: 3062
+  max: 1
+- mob: 3020
+  room: 3019
+  max: 1
+- mob: 3021
+  room: 3002
+  max: 1
+- mob: 3022
+  room: 3029
+  max: 1
+- mob: 3023
+  room: 3023
+  max: 1
+- mob: 3024
+  room: 3017
+  max: 1
+  then:
+  - equip: 3022
+    slot: wield
+    max: 100
+- mob: 3025
+  room: 3004
+  max: 1
+  then:
+  - equip: 3022
+    slot: wield
+    max: 100
+- mob: 3026
+  room: 3027
+  max: 1
+  then:
+  - equip: 3022
+    slot: wield
+    max: 100
+- mob: 3027
+  room: 3021
+  max: 1
+  then:
+  - equip: 3022
+    slot: wield
+    max: 100
+- mob: 3040
+  room: 3007
+  max: 1
+  then:
+  - give: 3000
+    max: 100
+  - give: 3001
+    max: 100
+  - give: 3002
+    max: 100
+  - give: 3003
+    max: 100
+  - give: 3004
+    max: 100
+  - equip: 3022
+    slot: wield
+    max: 100
+- mob: 3042
+  room: 3018
+  max: 1
+  then:
+  - give: 3002
+    max: 100
+  - give: 3003
+    max: 100
+  - equip: 3020
+    slot: wield
+    max: 100
+- mob: 3043
+  room: 3003
+  max: 1
+  then:
+  - give: 3002
+    max: 100
+  - give: 3004
+    max: 100
+  - equip: 3024
+    slot: wield
+    max: 100
+- mob: 3044
+  room: 3028
+  max: 1
+  then:
+  - give: 3003
+    max: 100
+  - give: 3004
+    max: 100
+  - equip: 3021
+    slot: wield
+    max: 100
+- mob: 3045
+  room: 3022
+  max: 1
+  then:
+  - give: 3002
+    max: 100
+  - give: 3003
+    max: 100
+  - give: 3004
+    max: 100
+  - equip: 3022
+    slot: wield
+    max: 100
+- mob: 3046
+  room: 3048
+  max: 1
+  then:
+  - give: 3003
+    max: 100
+  - give: 3004
+    max: 100
+  - equip: 3022
+    slot: wield
+    max: 100
+- mob: 3059
+  room: 3004
+  max: 5
+- mob: 3059
+  room: 3014
+  max: 5
+- mob: 3059
+  room: 3017
+  max: 5
+- mob: 3059
+  room: 3021
+  max: 5
+- mob: 3059
+  room: 3027
+  max: 5
+- mob: 3060
+  room: 3004
+  max: 10
+  then:
+  - equip: 3022
+    slot: wield
+    max: 100
+- mob: 3060
+  room: 3014
+  max: 10
+  then:
+  - equip: 3022
+    slot: wield
+    max: 100
+- mob: 3060
+  room: 3017
+  max: 10
+  then:
+  - equip: 3022
+    slot: wield
+    max: 100
+- mob: 3060
+  room: 3021
+  max: 10
+  then:
+  - equip: 3022
+    slot: wield
+    max: 100
+- mob: 3060
+  room: 3027
+  max: 10
+  then:
+  - equip: 3022
+    slot: wield
+    max: 100
+- mob: 3061
+  room: 3006
+  max: 5
+- mob: 3062
+  room: 3024
+  max: 15
+  then:
+  - give: 3015
+    max: 30
+- mob: 3062
+  room: 3025
+  max: 15
+  then:
+  - give: 3015
+    max: 30
+- mob: 3062
+  room: 3016
+  max: 15
+  then:
+  - give: 3015
+    max: 30
+- mob: 3062
+  room: 3012
+  max: 15
+  then:
+  - give: 3015
+    max: 30
+- mob: 3063
+  room: 3026
+  max: 5
+  then:
+  - equip: 3021
+    slot: wield
+    max: 100
+- mob: 3064
+  room: 3007
+  max: 3
+- mob: 3065
+  room: 3044
+  max: 2
+  then:
+  - give: 3005
+    max: 1
+- mob: 3065
+  room: 3048
+  max: 2
+- mob: 3066
+  room: 3026
+  max: 1
+  then:
+  - give: 3015
+    max: 30
+- mob: 3067
+  room: 3041
+  max: 10
+  then:
+  - equip: 3022
+    slot: wield
+    max: 100
+- mob: 3067
+  room: 3040
+  max: 10
+  then:
+  - equip: 3022
+    slot: wield
+    max: 100
+- mob: 3068
+  room: 3008
+  max: 4
+- mob: 3068
+  room: 3014
+  max: 4
+- mob: 3089
+  room: 3031
+  max: 1
+- mob: 3090
+  room: 3032
+  max: 1
+- mob: 3091
+  room: 3032
+  max: 1
+- mob: 3092
+  room: 3032
+  max: 1
+- mob: 3093
+  room: 3032
+  max: 1
+- mob: 3094
+  room: 3032
+  max: 1
+- mob: 3095
+  room: 3064
+  max: 1
+  then:
+  - equip: 3022
+    slot: wield
+    max: 100
+- room: 3005
+  remove: 3035
+- room: 3005
+  object: 3035
+  max: 1
+- room: 3001
+  remove: 3034
+- room: 3001
+  object: 3034
+  max: 10
+- room: 3008
+  remove: 3034
+  then:
+  - room: 3008
+    object: 3034
+    max: 10
+- room: 3004
+  remove: 3034
+  then:
+  - room: 3004
+    object: 3034
+    max: 10
+- room: 3017
+  remove: 3034
+  then:
+  - room: 3017
+    object: 3034
+    max: 10
+- room: 3021
+  remove: 3034
+  then:
+  - room: 3021
+    object: 3034
+    max: 10
+- room: 3027
+  remove: 3034
+  then:
+  - room: 3027
+    object: 3034
+    max: 10
+- room: 3000
+  remove: 3099
+- room: 3000
+  object: 3099
+  max: 2
+- room: 3003
+  remove: 3096
+  then:
+  - room: 3003
+    object: 3096
+    max: 5
+- room: 3018
+  remove: 3096
+  then:
+  - room: 3018
+    object: 3096
+    max: 5
+- room: 3022
+  remove: 3096
+  then:
+  - room: 3022
+    object: 3096
+    max: 5
+- room: 3028
+  remove: 3096
+  then:
+  - room: 3028
+    object: 3096
+    max: 5

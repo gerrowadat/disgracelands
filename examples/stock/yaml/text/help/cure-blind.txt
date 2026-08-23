@@ -1,0 +1,9 @@
+"CURE BLIND"
+
+Usage       : cast 'cure blind' <victim>
+Accumulative: No
+Duration    : Instantaneous
+Level       : Cleric level 4.
+
+This spell will cure a person blinded by the "blindness" spell, it
+can not remove blindness caused by for example cursed items.

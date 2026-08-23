@@ -1,0 +1,20 @@
+EMOTE :
+
+Usage: emote <message>
+       : <message>
+
+Show people what you're feeling.  The shorthand is ":".
+
+"emote <string>" will display your name, then the string.
+
+Example:
+
+If your name is "Helt",
+
+  > emote is feeling very sad today.
+
+will display:
+
+Helt is feeling very sad today.
+
+See also: SOCIALS

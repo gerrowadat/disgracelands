@@ -1,0 +1,6 @@
+REPORT
+
+Usage: report
+
+This command sends a report of your current health to the other people in
+your group.

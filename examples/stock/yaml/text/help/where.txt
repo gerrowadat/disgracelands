@@ -1,0 +1,16 @@
+WHERE
+
+Usage: where <monster | player>
+
+Tells you the location of a monster, a player or an object.
+
+Mortals can only "where" monsters or players, and only from their own
+zone.
+
+Immortals may type 'where' without arguments to see where everybody is.
+
+Example:
+
+  > where
+  > where torch
+  > where dragon

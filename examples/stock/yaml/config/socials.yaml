@@ -1,0 +1,1034 @@
+schema: dl/socials@1
+socials:
+- command: accuse
+  hide: false
+  min_victim_position: resting
+  no_arg:
+    char: Accuse who??
+  found:
+    char: You look accusingly at $M.
+    others: $n looks accusingly at $N.
+    victim: $n looks accusingly at you.
+  not_found: Accuse somebody who's not even there??
+  self:
+    char: You accuse yourself.
+    others: $n seems to have a bad conscience.
+- command: applaud
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: Clap, clap, clap.
+    others: $n gives a round of applause.
+- command: beg
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: You beg the gods for mercy.  (No way you're gonna get it! :-))
+    others: The gods fall down laughing at $n's request for mercy.
+  found:
+    char: You desperately try to squeeze a few coins from $M.
+    others: $n begs you for money.  You gratiously let $m peep at your fortune.
+    victim: "$n begs $N for a dime or two -- or twenty!"
+  not_found: Your money-lender seems to be out for the moment.
+  self:
+    char: "How? - begging yourself for money doesn't help."
+- command: bleed
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: You bleed profusely, making an awful mess...
+    others: $n bleeds profusely, making an awful mess...
+- command: blush
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: Your cheeks are burning.
+    others: $n blushes.
+- command: bounce
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: BOIINNNNNNGG!
+    others: $n bounces around.
+- command: bow
+  hide: false
+  min_victim_position: resting
+  no_arg:
+    char: You bow deeply.
+    others: $n bows deeply.
+  found:
+    char: You bow before $M.
+    others: $n bows before $N.
+    victim: $n bows before you.
+  not_found: Who's that?
+  self:
+    char: You kiss your toes.
+    others: $n folds up like a jacknife and kisses $s own toes.
+- command: brb
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: Come back soon!
+    others: $n will be right back!
+- command: burp
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: You burp loudly.
+    others: $n burps loudly.
+- command: cackle
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: You cackle gleefully.
+    others: $n throws back $s head and cackles with insane glee!
+- command: chuckle
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: You chuckle politely.
+    others: $n chuckles politely.
+- command: clap
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: You clap your small hands together.
+    others: $n shows $s approval by clapping $s small hands together.
+- command: comb
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: "You comb your hair -- perfect."
+    others: $n combs $s hair, what a dashing specimen!
+  found:
+    char: "You patiently untangle $N's hair -- what a mess!"
+    others: $n tries patiently to untangle $N's hair.
+    victim: $n pulls your hair in an attempt to comb it.
+  not_found: That person is not here.
+  self:
+    char: You pull your hair, but it will not be combed.
+    others: $n tries to comb $s tangled hair.
+- command: comfort
+  hide: false
+  min_victim_position: resting
+  no_arg:
+    char: Do you feel uncomfortable?
+  found:
+    char: You comfort $M.
+    others: $n comforts $N.
+    victim: $n comforts you.
+  not_found: Comfort who?
+  self:
+    char: You make a vain attempt to comfort yourself.
+- command: cough
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: Yuck, try to cover your mouth next time!
+    others: $n coughs loudly.
+- command: cringe
+  hide: true
+  min_victim_position: dead
+  no_arg:
+    char: You cringe in terror.
+    others: $n cringes in terror!
+  found:
+    char: You cringe away from $M.
+    others: $n cringes away from $N in mortal terror.
+    victim: $n cringes away from you.
+  not_found: I don't see anyone by that name here.. what are you afraid of?
+  self:
+    char: I beg your pardon?
+- command: cry
+  hide: false
+  min_victim_position: resting
+  no_arg:
+    char: Waaaaah..
+    others: $n bursts into tears.
+  found:
+    char: You cry on $S shoulder.
+    others: $n cries on $N's shoulder.
+    victim: $n cries on your shoulder.
+  not_found: Who's that?
+  self:
+    char: You cry to yourself.
+    others: $n sobs quietly to $mself.
+- command: cuddle
+  hide: true
+  min_victim_position: resting
+  no_arg:
+    char: Who do you feel like cuddling today?
+  found:
+    char: You cuddle $M.
+    others: $n cuddles $N.
+    victim: $n cuddles you.
+  not_found: They aren't here.
+  self:
+    char: You must feel very cuddly indeed.  :)
+- command: curse
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: You swear loudly for a long time.
+    others: "$n swears: #@*\"*&^$$%@*&!!!!!!"
+- command: curtsey
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: You curtsey to your audience.
+    others: $n curtseys gracefully.
+- command: dance
+  hide: true
+  min_victim_position: standing
+  no_arg:
+    char: Feels silly, doesn't it?
+    others: $n tries to dance breakdance but nearly breaks $s neck!
+  found:
+    char: You lead $M to the dancefloor.
+    others: $n sends $N across the dancefloor.
+    victim: $n sends you across the dancefloor.
+  not_found: Eh, WHO?
+  self:
+    char: You skip and dance around by yourself.
+    others: $n skips a light Fandango.
+- command: daydream
+  hide: true
+  min_victim_position: dead
+  no_arg:
+    char: You dream of better times.
+    others: $n looks absent-minded, $s eyes staring into space.
+- command: drool
+  hide: true
+  min_victim_position: dead
+  no_arg:
+    char: You start to drool.
+    others: $n starts to drool.
+  found:
+    char: You drool all over $N.
+    others: $n drools all over $N.
+    victim: $n drools all over you.
+  not_found: Pardon??
+  self:
+    char: Sure, go ahead and drool...yuk!
+    others: $n drools on $mself.  What a sight.
+- command: embrace
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: You reach but come away empty.  :(
+    others: $n reaches out for an embrace, but no one is there.
+  found:
+    char: You embrace $M warmly.
+    others: $n embraces $N warmly.
+    victim: $n embraces you warmly.
+  not_found: Alas, your embracee is not here.
+  self:
+    char: "You embrace yourself??  "
+    others: $n wraps his arms around himself for a warm self-embrace.
+- command: fart
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: Where are your manners?
+    others: $n lets off a real rip-roarer!
+- command: flip
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: You flip head over heels.
+    others: $n flips head over heels.
+- command: flirt
+  hide: true
+  min_victim_position: resting
+  no_arg:
+    char: You flirt outrageously.
+    others: $n flirts outragously.
+  found:
+    char: You flirt outrageously with $N.
+    others: $n flirts outrageously with $N.
+    victim: $n flirts outrageously with you.
+  not_found: Sorry, your dearly beloved is not around.
+  self:
+    char: You flirt with yourself.  Must look stupid.
+    others: $n thinks $e is the most wonderful person in the world.
+- command: fondle
+  hide: false
+  min_victim_position: resting
+  no_arg:
+    char: Who needs to be fondled?
+  found:
+    char: You fondly fondle $M.
+    others: $n fondly fondles $N.
+    victim: $n fondly fondles you.
+  not_found: You fondly try to fondle someone not in the room, but who cares.
+  self:
+    char: You fondly fondle yourself, feels funny doesn't it?
+    others: "$n fondly fondles $mself -- this is going too far!!"
+- command: french
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: French whom??
+  found:
+    char: You give $N a long and passionate kiss, it seems to take forever...
+    others: $n kisses $N passionately.
+    victim: $n gives you a long and passionate kiss, it seems to take forever...
+  not_found: Your heart is filled with despair as that person is not here.
+  self:
+    char: You gather yourself in your arms and try to kiss yourself.
+    others: $n makes an attempt at kissing $mself.
+- command: frown
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: What's bothering you?
+    others: $n frowns.
+- command: fume
+  hide: true
+  min_victim_position: resting
+  no_arg:
+    char: Take it easy now!  Count to ten, very slowly.
+    others: $n grits $s teeth and fumes with rage.
+  found:
+    char: You stare at $M, fuming.
+    others: $n stares at $N, fuming with rage.
+    victim: $n stares at you, fuming with rage!
+  not_found: Fume away.. they ain't here.
+  self:
+    char: "That's right - hate yourself!"
+    others: $n clenches $s fists and stomps his feet, fuming with anger.
+- command: gasp
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: You gasp in astonishment.
+    others: $n gasps in astonishment.
+- command: giggle
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: You giggle.
+    others: $n giggles.
+- command: glare
+  hide: false
+  min_victim_position: resting
+  no_arg:
+    char: You glare at nothing in particular.
+    others: $n glares around $m.
+  found:
+    char: You glare icily at $M.
+    others: $n glares at $N.
+    victim: $n glares icily at you, you feel cold to your bones.
+  not_found: You try to glare at somebody who is not present.
+  self:
+    char: You glare icily at your feet, they are suddenly very cold.
+    others: $n glares at $s feet, what is bothering $m?
+- command: greet
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: Greet Who?
+  found:
+    char: You greet $m with a light kiss on his cheek.
+    others: $n greets $N with a light kiss on its cheek.
+    victim: $n greets you with a light kiss on your cheek.
+  not_found: "Please -- try someone who is here?"
+  self:
+    char: So, you've finally discovered yourself!
+    others: $n greets $mself.. $e always was a strange one.
+- command: grin
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: You grin evilly.
+    others: $n grins evilly.
+- command: groan
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: You groan loudly.
+    others: $n groans loudly.
+- command: grope
+  hide: false
+  min_victim_position: resting
+  no_arg:
+    char: Whom do you wish to grope??
+  found:
+    char: Well, what sort of noise do you expect here?
+    others: $n gropes $N.
+    victim: $n gropes you.
+  not_found: Try someone who's here.
+  self:
+    char: "You grope yourself -- YUCK."
+    others: "$n gropes $mself -- YUCK."
+- command: grovel
+  hide: true
+  min_victim_position: dead
+  no_arg:
+    char: You grovel in the dirt.
+    others: $n grovels in the dirt.
+  found:
+    char: You grovel before $M
+    others: $n grovels in the dirt before $N.
+    victim: $n grovels in the dirt before you.
+  not_found: Who?
+  self:
+    char: That seems a little silly to me..
+- command: growl
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: Grrrrrrrrrr...
+    others: $n growls.
+- command: hiccup
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: "*HIC*"
+    others: $n hiccups.
+- command: hug
+  hide: true
+  min_victim_position: resting
+  no_arg:
+    char: Hug who?
+  found:
+    char: You hug $M.
+    others: $n hugs $N.
+    victim: $n hugs you.
+  not_found: Sorry, friend, I can't see that person here.
+  self:
+    char: You hug yourself.
+    others: $n hugs $mself.
+- command: kiss
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: Isn't there someone you want to kiss?
+  found:
+    char: You kiss $M.
+    others: $n kisses $N.
+    victim: $n kisses you.
+  not_found: Never around when required.
+  self:
+    char: All the lonely people :(
+- command: laugh
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: You fall down laughing.
+    others: $n falls down laughing.
+- command: lick
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: You lick your mouth and smile.
+    others: $n licks $s mouth and smiles.
+  found:
+    char: You lick $M.
+    others: $n licks $N.
+    victim: $n licks you.
+  not_found: Lick away, nobody's here with that name.
+  self:
+    char: You lick yourself.
+    others: "$n licks $mself -- YUCK."
+- command: love
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: You love the whole world.
+    others: $n loves everybody in the world.
+  found:
+    char: You tell your true feelings to $N.
+    others: $n whispers softly to $N.
+    victim: $n whispers to you sweet words of love.
+  not_found: Alas, your love is not present...
+  self:
+    char: Well, we already know you love yourself (lucky someone does!)
+    others: $n loves $mself, can you believe it?
+- command: massage
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: Massage what, thin air?
+  found:
+    char: You gently massage $N's shoulders.
+    others: $n massages $N's shoulders.
+    victim: $n gently massages your shoulders...ahhhhhhhhhh...
+  not_found: You can only massage someone in the same room as you.
+  self:
+    char: You practise yoga as you try to massage yourself.
+    others: $n gives a show on yoga-positions, trying to massage $mself.
+- command: moan
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: You start to moan.
+    others: $n starts moaning.
+- command: nibble
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: Nibble on who?
+  found:
+    char: You nibble on $N's ear.
+    others: $n nibbles on $N's ear.
+    victim: $n nibbles on your ear.
+  not_found: Sorry, not here, better go back to dreaming about it.
+  self:
+    char: You nibble on your OWN ear???????????????????
+    others: $n nibbles on $s OWN ear (I wonder how it is done!!).
+- command: nod
+  hide: true
+  min_victim_position: dead
+  no_arg:
+    char: You nod solemnly.
+    others: $n nods solemnly.
+- command: nudge
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: Nudge?  Nudge???  The HELL you say!!!!
+  found:
+    char: You nudge $M with your elbow.
+    others: $n nudges $N suggestively with $s elbow.
+    victim: $n nudges you suggestively.  You two have an understanding.
+  not_found: Eh?  That person isn't here, you know.
+  self:
+    char: Well, just nudge yourself, but how do you get your elbow in that position?
+    others: $n nudges $mself with $s elbows, making $m look like a large chicken.
+- command: nuzzle
+  hide: true
+  min_victim_position: resting
+  no_arg:
+    char: Nuzzle who??
+  found:
+    char: You nuzzle $S neck softly.
+    others: $n softly nuzzles $N's neck.
+    victim: $n softly nuzzles your neck.
+  not_found: No.. they aren't here..
+  self:
+    char: I'm sorry, friend, but that's impossible.
+- command: pat
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: Pat who??
+  found:
+    char: You pat $N on $S head.
+    others: $n pats $N on $S head.
+    victim: $n pats you on your head.
+  not_found: Who, where, what??
+  self:
+    char: You pat yourself on your head, very reassuring.
+    others: $n pats $mself on the head.
+- command: peer
+  hide: true
+  min_victim_position: dead
+  no_arg:
+    char: You peer around you, uncertain that what you see is actually true.
+    others: $n peers around, looking as if $e has trouble seeing everything clearly.
+- command: point
+  hide: true
+  min_victim_position: dead
+  no_arg:
+    char: You point whereto?
+    others: $n points in all directions, seemingly confused.
+  found:
+    char: "You point at $M -- $E DOES look funny."
+    others: $n muffles a laugh, pointing at $N.
+    victim: $n points at you... how rude!
+  not_found: You must have a VERY long index-finger...
+  self:
+    char: You point at yourself.  Insinuating something?
+    others: $n points at $mself, suggesting that the center of matters is $e.
+- command: poke
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: Poke who??
+  found:
+    char: You poke $M in the ribs.
+    others: $n pokes $N in the ribs.
+    victim: $n pokes you in the ribs.
+  not_found: You can't poke someone who's not here!
+  self:
+    char: You poke yourself in the ribs, feeling very silly.
+    others: $n pokes $mself in the ribs, looking very sheepish.
+- command: ponder
+  hide: true
+  min_victim_position: dead
+  no_arg:
+    char: You ponder over matters as they appear to you at this moment.
+    others: $n sinks deeply into $s own thoughts.
+- command: pout
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: Ah, don't take it so hard.
+    others: $n pouts.
+- command: pray
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: You feel righteous, and maybe a little foolish.
+    others: $n begs and grovels to the powers that be.
+  found:
+    char: You crawl in the dust before $M.
+    others: $n falls down and grovels in the dirt before $N.
+    victim: $n kisses the dirt at your feet.
+  not_found: No such person around; your prayers vanish into the endless voids.
+  self:
+    char: Talk about narcissism...
+    others: $n performs some strange yoga-exercises and mumbles a prayer to $mself.
+- command: puke
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: You puke.
+    others: $n pukes.
+  found:
+    char: You puke on $M.
+    others: $n pukes on $N.
+    victim: $n pukes on your clothes!
+  not_found: Once again?
+  self:
+    char: You puke on yourself.
+    others: $n pukes on $s clothes.
+- command: punch
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: Punch the air?  Sure, go ahead, fine by me...
+    others: $n starts shadow-boxing.
+  found:
+    char: You punch $M right in the face!  Yuck, the BLOOD!
+    others: $n punches weakly at $N, missing by miles.
+    victim: $n tries a punch at you but misses by a good quarter-mile...
+  not_found: Punch who?
+  self:
+    char: You punch yourself in the face resulting in your own nose being bloodied.
+    others: $n punches $mself in the face, looking kind of stupid.
+- command: purr
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: MMMMEEEEEEEEOOOOOOOOOWWWWWWWWWWWW.
+    others: $n purrs contentedly.
+- command: roll
+  hide: true
+  min_victim_position: dead
+  no_arg:
+    char: You roll your eyes in disgust.
+    others: $n rolls $s eyes in disgust.
+  found:
+    char: You look at $M and roll your eyes in disgust.
+    others: $n looks at $N in contempt and rolls $s eyes with disgust.
+    victim: $n stares at you and rolls $s eyes in digust.
+  not_found: Um... who?
+  self:
+    char: You roll your eyes, disgusted with your own incompetence.
+    others: $n rolls $s eyes, disgusted with $mself.
+- command: ruffle
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: You've got to ruffle SOMEONE.
+  found:
+    char: You ruffle $N's hair playfully.
+    others: $n ruffles $N's hair playfully.
+    victim: $n ruffles your hair playfully.
+  not_found: Might be a bit difficult.
+  self:
+    char: You ruffle your hair, wondering how far you can go before the rest think you're crazy.
+    others: "$n ruffles $s hair -- weirdo!"
+- command: scream
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: ARRRRRRRRRRGH!!!!!
+    others: $n screams loudly!
+- command: shake
+  hide: false
+  min_victim_position: resting
+  no_arg:
+    char: You shake your head.
+    others: $n shakes $s head.
+  found:
+    char: You shake $S hand.
+    others: $n shakes $N's hand.
+    victim: $n shakes your hand.
+  not_found: Sorry good buddy, but that person doesn't seem to be here.
+  self:
+    char: You are shaken by yourself.
+    others: $n shakes and quivers like a bowlful of jelly.
+- command: shiver
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: Brrrrrrrrr.
+    others: $n shivers uncomfortably.
+- command: shrug
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: You shrug.
+    others: $n shrugs helplessly.
+- command: sigh
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: You sigh.
+    others: $n sighs loudly.
+- command: sing
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: You raise your clear (?) voice towards the sky.
+    others: SEEK SHELTER AT ONCE!  $n has begun to sing.
+- command: slap
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: Normally you slap SOMEBODY.
+  found:
+    char: You slap $N.
+    others: $n slaps $N.
+    victim: You are slapped by $n.
+  not_found: How about slapping someone in the same room as you??
+  self:
+    char: You slap yourself, silly you.
+    others: $n slaps $mself, really strange...
+- command: smile
+  hide: true
+  min_victim_position: dead
+  no_arg:
+    char: You smile happily.
+    others: $n smiles happily.
+  found:
+    char: You smile at $M.
+    others: $n beams a smile at $N.
+    victim: $n smiles at you.
+  not_found: There's no one by that name around.
+  self:
+    char: You smile at yourself.
+    others: $n smiles at $mself.
+- command: smirk
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: You smirk.
+    others: $n smirks.
+- command: snap
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: PRONTO!  You snap your fingers.
+    others: $n snaps $s fingers.
+- command: snarl
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: You snarl like a viscious animal.
+    others: $n snarls like a cornered, viscious animal.
+  found:
+    char: You snarl at $M angrily.  Control yourself!
+    others: $n snarls angrily at $N.  $e$u seems incapable of controlling $mself.
+    victim: $n snarls viciously at you.  $U$s self-control seems to have gone bananas.
+  not_found: Eh?  Who?  Not here, my friend.
+  self:
+    char: You snarl at yourself, obviously suffering from schizophrenia.
+    others: $n snarls at $mself, and suddenly looks very frightened.
+- command: sneeze
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: Gesundheit!
+    others: $n sneezes.
+- command: snicker
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: You snicker softly.
+    others: $n snickers softly.
+- command: sniff
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: You sniff sadly.  *SNIFF*
+    others: $n sniffs sadly.
+- command: snore
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: Zzzzzzzzzzzzzzzzz.
+    others: $n snores loudly.
+- command: snowball
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: Who do you want to throw a snowball at??
+  found:
+    char: You throw a snowball in $N's face.
+    others: $n conjures a snowball from thin air and throws it at $N.
+    victim: $n conjures a snowball from thin air and throws it at you.
+  not_found: You stand with the snowball in your hand because your victim is not here.
+  self:
+    char: You conjure a snowball from thin air and throw it at yourself.
+    others: $n conjures a snowball out of the thin air and throws it at $mself.
+- command: snuggle
+  hide: true
+  min_victim_position: resting
+  no_arg:
+    char: Who?
+  found:
+    char: you snuggle $M.
+    others: $n snuggles up to $N.
+    victim: $n snuggles up to you.
+  not_found: They aren't here.
+  self:
+    char: Hmmm...
+- command: spank
+  hide: false
+  min_victim_position: standing
+  no_arg:
+    char: You spank WHO?  Eh?  How?  Naaah, you'd never.
+    others: $n spanks the thin air with a flat hand.
+  found:
+    char: You spank $M vigorously, long and hard.  Your hand hurts.
+    others: $n spanks $N over $s knee.  It hurts to even watch.
+    victim: $n spanks you long and hard.  You feel like a naughty child.
+  not_found: Are you sure about this?  I mean, that person isn't even here!
+  self:
+    char: Hmm, not likely.
+- command: spit
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: You spit over your left shoulder.
+    others: $n spits over $s left shoulder.
+  found:
+    char: You spit on $M.
+    others: $n spits in $N's face.
+    victim: $n spits in your face.
+  not_found: Can you spit that far?
+  self:
+    char: You drool down your front.
+    others: $n drools down $s front.
+- command: squeeze
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: Where, what, how, WHO???
+  found:
+    char: You squeeze $M fondly.
+    others: $n squeezes $N fondly.
+    victim: $n squeezes you fondly.
+  not_found: Where, what, how, WHO???
+  self:
+    char: "You squeeze yourself -- try to relax a little!"
+    others: $n squeezes $mself.
+- command: stare
+  hide: false
+  min_victim_position: resting
+  no_arg:
+    char: You stare at the sky.
+    others: $n stares at the sky.
+  found:
+    char: You stare dreamily at $N, completely lost in $S eyes..
+    others: $n stares dreamily at $N.
+    victim: $n stares dreamily at you, completely lost in your eyes.
+  not_found: You stare and stare but can't see that person anywhere...
+  self:
+    char: "You stare dreamily at yourself - enough narcissism for now."
+    others: "$n stares dreamily at $mself - NARCISSIST!"
+- command: steam
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: You let out some steam, much to the others' relief (and your own!)
+    others: $n lets out a lot of steam, much to your relief.
+- command: stroke
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: Whose thigh would you like to stroke?
+  found:
+    char: You gently stroke $S inner thigh.
+    others: $n gently strokes $N's inner thigh... hmm...
+    victim: $n gently strokes your inner thigh with feathery touches.
+  not_found: That person is not within reach.
+  self:
+    char: You are about to do something you would rather not be caught doing.
+    others: $n starts to do something disgusting and then stops.
+- command: strut
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: Strut your stuff.
+    others: $n struts proudly.
+- command: sulk
+  hide: true
+  min_victim_position: dead
+  no_arg:
+    char: You sulk.
+    others: $n sulks in the corner.
+- command: tackle
+  hide: false
+  min_victim_position: resting
+  no_arg:
+    char: You tackle the air.  It stands not a chance.
+    others: $n starts running around $mself in a desparate attempt to tackle the air.
+  found:
+    char: You ruthlessly tackle $M to the ground.
+    others: $n ruthlessly tackles $N, pinning $M to the ground.
+    victim: $n suddenly lunges at you and tackles you to the ground!
+  not_found: That person isn't here (luck for them, it would seem...)
+  self:
+    char: Tackle yourself?  Yeah, right....
+    others: $n makes a dextrous move and kicks $s left leg away with $s right.
+- command: tango
+  hide: false
+  min_victim_position: standing
+  no_arg:
+    char: With whom would you like to tango?
+    others: $n puts a rose between $s teeth, but takes out it since noone joins $m.
+  found:
+    char: You put a rose between your teeth and tango with $M seductively.
+    others: $n puts a rose between $s teeth and tangos with $N seductively.
+    victim: $n puts a rose between $s teeth and tangos with you seductively.
+  not_found: That person isn't around.  Better sit this one out.
+  self:
+    char: Feels rather stupid, doesn't it?
+    others: $n puts a rose between $s teeth and tries to tango with $mself.
+- command: taunt
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: "You taunt the nothing in front of you. "
+    others: $n taunts something that seems to be right in front of $m.
+  found:
+    char: You taunt $M, to your own delight.
+    others: $n taunts $N rather insultingly.  $U$n seems to enjoy it tremendously.
+    victim: $n taunts you.  It really hurts your feelings.
+  not_found: Hmmmmmmm.....nope, no one by that name here.
+  self:
+    char: You taunt yourself, almost making you cry...:(
+    others: $n taunts $mself to tears.
+- command: thank
+  hide: false
+  min_victim_position: resting
+  no_arg:
+    char: Thank you too.
+  found:
+    char: You thank $N heartily.
+    others: $n thanks $N heartily.
+    victim: $n thanks you heartily.
+  not_found: No one answers to that name here.
+  self:
+    char: You thank yourself since nobody else wants to!
+    others: $n thanks $mself since you won't.
+- command: think
+  hide: true
+  min_victim_position: dead
+  no_arg:
+    char: You think about life, the universe and everything.
+    others: $n sinks deeply into thought about the meaning of life.
+  found:
+    char: You think about what purpose $E has in relation to your part of life.
+    others: $n stops and thinks about $N, completely lost in thought.
+    victim: Your ears burn as $n thinks about you.. you wonder what about.
+  not_found: You'd better think harder, if you hope to make contact!
+  self:
+    char: You think about yourself (for once).
+    others: $n thinks about $mself for a change.....(?)
+- command: tickle
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: Who do you want to tickle??
+  found:
+    char: You tickle $N.
+    others: $n tickles $N.
+    victim: "$n tickles you - hee hee hee."
+  not_found: Who is that??
+  self:
+    char: You tickle yourself, how funny!
+    others: $n tickles $mself.
+- command: twiddle
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: You patiently twiddle your thumbs.
+    others: $n patiently twiddles $s thumbs.
+- command: wave
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: You wave.
+    others: $n waves happily.
+  found:
+    char: You wave goodbye to $N.
+    others: $n waves goodbye to $N.
+    victim: $n waves goodbye to you.  Have a good journey.
+  not_found: They didn't wait for you to wave goodbye.
+  self:
+    char: Are you going on adventures as well??
+    others: $n waves goodbye to $mself.
+- command: whine
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: You whine pitifully.
+    others: $n whines pitifully about the whole situation.
+- command: whistle
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: You whistle appreciatively.
+    others: $n whistles appreciatively.
+- command: wiggle
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: Your wiggle your bottom.
+    others: $n wiggles $s bottom.
+- command: wink
+  hide: false
+  min_victim_position: resting
+  no_arg:
+    char: Have you got something in your eye?
+    others: $n winks suggestively.
+  found:
+    char: You wink suggestively at $N.
+    others: $n winks at $N.
+    victim: $n winks suggestively at you.
+  not_found: No one with that name is present.
+  self:
+    char: "You wink at yourself?? -- what are you up to?"
+    others: "$n winks at $mself -- something strange is going on..."
+- command: worship
+  hide: false
+  min_victim_position: resting
+  no_arg:
+    char: You find yourself head-down in the dirt, worshipping.
+    others: $n starts worshipping nothing at all.
+  found:
+    char: You fall to your knees and worship $M deeply.
+    others: $n falls to $s knees, worshipping $N with uncanny dedication.
+    victim: $n kneels before you in solemn worship.
+  not_found: Uh.. who?  They're not here, pal.
+  self:
+    char: You seem sure to have found a true deity.....
+    others: $n falls to $s knees and humbly worships $mself.
+- command: yawn
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: "Gosh, will you trade those teeth for mine?? -- you get my glasseyes in the bargain too!"
+    others: $n yawns.
+- command: yodel
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: You start yodelling loudly and rather beautifully in your own ears.
+    others: $n starts a yodelling session that goes right to the bone.

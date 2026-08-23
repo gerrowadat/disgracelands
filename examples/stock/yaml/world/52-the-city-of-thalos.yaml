@@ -1,0 +1,2531 @@
+schema: dl/world@1
+zone:
+  vnum: 52
+  name: The City Of Thalos
+  range:
+  - 5200
+  - 5299
+  lifespan: 15
+  reset: always
+rooms:
+- vnum: 5200
+  name: The Grand Gate Of Thalos
+  sector: city
+  desc: |2
+       You stand in the archway of a gigantic stone archway.  The two
+    steel gates have been forced open and have rusted in place.  A hollow
+    gust of wind blows by you into the deserted, and seemingly destroyed,
+    city.
+  exits:
+    east:
+      to: 5044
+      desc: |
+            The desert sands stretch on for miles and miles.
+      key: -1
+    west:
+      to: 5201
+      desc: |
+            You see devastation everywhere.  Houses lie in ruin and skeletons litter
+            the streets.  You see strange beasts stalking the shadows.
+      key: -1
+- vnum: 5201
+  name: Main Street
+  sector: city
+  desc: |2
+       This was once a magnificent street, but now is in total ruin.  The
+    streets are barren and windswept and the silence is unending.  To the south
+    you see a ruined cottage while north leads into a dark back alley.  Howls
+    and screams echo through the deserted city.
+  exits:
+    north:
+      to: 5239
+      desc: |
+            It seems to be a dark alley.
+      key: -1
+    east:
+      to: 5200
+      desc: |
+            The entrance to the city lies this way.
+      key: -1
+    south:
+      to: 5235
+      desc: |
+            A ruined shack lies to the south.
+      key: -1
+    west:
+      to: 5202
+      desc: |
+            Main Street lies this way.
+      key: -1
+- vnum: 5202
+  name: Main Street
+  sector: city
+  desc: |2
+       This was once a magnificent street, but now is in total ruin.  The
+    streets are barren and windswept and the silence is unending.  On one
+    side is a collapsed house while on the other is the entrance to a large
+    ruined mansion.  Eerie sounds echo within the mansion.  Near the center of 
+    town you see a large domed building, relatively intact.
+  exits:
+    north:
+      to: 5236
+      desc: |
+            The remnants of a store lie this way.
+      key: -1
+    east:
+      to: 5201
+      key: -1
+    south:
+      to: 5232
+      desc: |
+            It looks like what used to be the main building in the city.
+      key: -1
+    west:
+      to: 5203
+      desc: |
+            A withered garden path lies this way.
+      key: -1
+- vnum: 5203
+  name: A Garden Path
+  sector: city
+  desc: |2
+       A circular path surrounds a magnificent domed temple in the center
+    of the city.  Flowers have withered away and the once lush trees are bare.
+    Vines and ivy snake up the sides of the temple and entangle themselves
+    around your feet.  A sudden volley of howls pierces the air.
+  exits:
+    north:
+      to: 5204
+      desc: |
+            The garden path continues around the building.
+      key: -1
+    east:
+      to: 5202
+      desc: |
+            This is the main street leading to the city's entrance.
+      key: -1
+    south:
+      to: 5206
+      desc: |
+            The garden path continues around the building.
+      key: -1
+    west:
+      to: 5250
+      desc: |
+            Inside the temple, small patches of light shoot through each doorway as
+            well as a few holes in the ceiling.
+      key: -1
+- vnum: 5204
+  name: A Garden Path
+  sector: city
+  desc: |2
+       A circular path surrounds a magnificent domed temple in the center
+    of the city.  Flowers have withered away and the once lush trees are bare.
+    Vines and ivy snake up the sides of the temple and entangle themselves
+    around your feet.
+  exits:
+    north:
+      to: 5211
+      desc: |
+            A side street leads of to the northern half of the city.
+      key: -1
+    east:
+      to: 5203
+      desc: |
+            The garden path continues around the building.
+      key: -1
+    south:
+      to: 5250
+      desc: |
+            Inside the temple, small patches of light shoot through each doorway as
+            well as a few holes in the ceiling.
+      key: -1
+    west:
+      to: 5205
+      desc: |
+            The garden path continues around the building.
+      key: -1
+- vnum: 5205
+  name: A Garden Path
+  sector: city
+  desc: |2
+       A circular path surrounds a magnificent domed temple in the center
+    of the city.  Flowers have withered away and the once lush trees are bare.
+    Vines and ivy creep up the sides of the temple and entangle themselves 
+    around your feet.
+  exits:
+    north:
+      to: 5204
+      desc: |
+            The garden path continues around the building.
+      key: -1
+    east:
+      to: 5250
+      desc: |
+            Inside the temple, small patches of light shoot through each doorway as
+            well as a few cracks in the ceiling.
+      key: -1
+    south:
+      to: 5206
+      desc: |
+            The garden path continues around the building.
+      key: -1
+    west:
+      to: 5207
+      desc: |
+            What looks like a market place lies this way.
+      key: -1
+- vnum: 5206
+  name: A Garden Path
+  sector: city
+  desc: |2
+       A circular path surrounds a magnificent domed temple in the center 
+    of the city.  Flowers have withered away and the once lush trees are bare.
+    Vines and ivy creep up the sides of the temple and entangle themselves 
+    around your feet.
+  exits:
+    north:
+      to: 5250
+      desc: |
+            Inside the temple, small patches of light shoot through each doorway as
+            well as a few cracks in the ceiling.
+      key: -1
+    east:
+      to: 5203
+      desc: |
+            The garden path continues around the building.
+      key: -1
+    south:
+      to: 5212
+      desc: |
+            A small side street leads to the southern half of the city.
+      key: -1
+    west:
+      to: 5205
+      desc: |
+            The garden path continues around the building.
+      key: -1
+- vnum: 5207
+  name: The Market Place
+  sector: city
+  desc: |2
+       You stand in the middle of a large square lined on each side with
+    baskets, carts, and stands of all shapes and sizes.  Abandoned, these
+    little shops still contain some of their goods once sold to a demanding
+    public.
+  exits:
+    north:
+      to: 5225
+      desc: |
+            A small table has been toppled over, spilling fine jewellery and gems
+            onto the ground.
+      key: -1
+    east:
+      to: 5205
+      desc: |
+            A small garden path encircles a large domed temple in the center of the 
+            city.
+      key: -1
+    south:
+      to: 5220
+      desc: |
+            Rotted remains of fruits and vegetables lie strewn about.
+      key: -1
+    west:
+      to: 5208
+      desc: |
+            The market place continues.
+      key: -1
+- vnum: 5208
+  name: The Market Place
+  sector: city
+  desc: |2
+       You stand at the end of the market square.  Stands and carts line
+    each side, filled with remnants of fine foods and exquisite goods.
+  exits:
+    north:
+      to: 5222
+      desc: |
+            Tattered carpets and ruined bales of silk sit idly by a run down stand.
+      key: -1
+    east:
+      to: 5207
+      desc: |
+            The center of the market lies this way.
+      key: -1
+    south:
+      to: 5217
+      desc: |
+            From the massive stench, this must have been a meat and poultry stand.
+            It lies totally bare.
+      key: -1
+- vnum: 5209
+  name: A Side Street
+  sector: city
+  desc: |2
+       This small side street leads east and west into back alleys while
+    to the south you see the temple.  The incessant howling tears at your
+    mind.
+  exits:
+    east:
+      to: 5243
+      key: -1
+    south:
+      to: 5210
+      key: -1
+    west:
+      to: 5228
+      key: -1
+- vnum: 5210
+  name: A Side Street
+  sector: city
+  desc: |2
+       You are in the common section of the city.  Ruined buildings made of
+    clay and stone is all the view has to offer.  Most of these homes are 
+    nothing but piles of rubble, but some look almost safe enough to venture
+    into.
+       The street continues north and south and buildings line the street.
+  exits:
+    north:
+      to: 5209
+      key: -1
+    east:
+      to: 5244
+      desc: |
+            A small doorway leads into a partially collapsed house.
+      door: regular
+      key: -1
+    south:
+      to: 5211
+      key: -1
+    west:
+      to: 5226
+      desc: |
+            A small clay dwelling sits here.
+      key: -1
+- vnum: 5211
+  name: A Side Street
+  sector: city
+  desc: |2
+       This small side street leads away from the garden path to the south.
+    Around you stand large piles or rubble where the houses of commoners
+    used to be.  A lone howl makes you worry greatly about your safety here.
+  exits:
+    north:
+      to: 5210
+      key: -1
+    east:
+      to: 5237
+      desc: |
+            An unusually tall dwelling stands looming over you.
+      key: -1
+    south:
+      to: 5204
+      desc: |
+            A garden path circles around the temple.
+      key: -1
+    west:
+      to: 5227
+      desc: |
+            Here lies a small stone house with a thatched roof.
+      key: -1
+- vnum: 5212
+  name: A Side Street
+  sector: city
+  desc: |2
+       This small side street leads south away from the temple into the
+    business section of town.  The destruction that leveled this city was not
+    biased; these important looking buildings have been almost totally
+    destroyed.  There is a hole in the wall of a very large structure to the
+    east.
+  exits:
+    north:
+      to: 5206
+      desc: |
+            A small garden path encircles the temple.
+      key: -1
+    east:
+      to: 5232
+      desc: |
+            This possibly could be the city hall.
+      key: -1
+    south:
+      to: 5213
+      key: -1
+    west:
+      to: 5221
+      desc: |
+            Inside the building you see long pieces of metal, an oven, and some
+            anvils.
+      key: -1
+- vnum: 5213
+  name: A Side Street
+  sector: city
+  desc: |2
+       This small side street is lined with the remains of once great
+    buildings.  To the west is a dark, foreboding structure while to the
+    east lies the entrance to a small tavern.  The street continues north
+    and south.
+  exits:
+    north:
+      to: 5212
+      key: -1
+    east:
+      to: 5230
+      desc: |
+            From the looks of it, this was once a two story abode.  The entire second
+            floor has collapsed leaving a very little part of the bar still free
+            from debris.
+      key: -1
+    south:
+      to: 5214
+      key: -1
+    west:
+      to: 5219
+      desc: |
+            This seems to be the only guild house in the entire city.  Its dark nature
+            makes you wonder about its origins.
+      key: -1
+- vnum: 5214
+  name: A Side Street
+  sector: city
+  desc: |2
+       You are at the end of a long street leading to the center of the city.
+    A long dark alley runs east and west.
+  exits:
+    north:
+      to: 5213
+      key: -1
+    east:
+      to: 5229
+      key: -1
+    west:
+      to: 5218
+      key: -1
+- vnum: 5215
+  name: Under A Ruined Watchtower
+  sector: city
+  desc: |2
+       You stand at the base of a tall watchtower built to protect the city
+    from invaders.  From the looks of things, it did not do a good job.
+  exits:
+    north:
+      to: 5216
+      key: -1
+    east:
+      to: 5218
+      key: -1
+    up:
+      to: 5247
+      key: -1
+- vnum: 5216
+  name: A Back Alley
+  sector: city
+  desc: |2
+       This alley leads to the rear of what used to be a meat stand.  You wince
+    at the stench.  South is one of the city watchtowers.
+  exits:
+    north:
+      to: 5217
+      desc: |
+            You see the back-side of the market place meat stand.
+      key: -1
+    south:
+      to: 5215
+      desc: |
+            A tall watchtower stands a silent vigil over the city.
+      key: -1
+- vnum: 5217
+  name: The Meat Stand
+  sector: city
+  desc: |2
+       A large stand has been set up here with metal hooks and wooden racks
+    in the background.  Hanging on the hooks are very small scraps of meat
+    and other game.  This stand is relatively empty, and a sudden burst of
+    howling and screaming makes you realize why this is so.
+  exits:
+    north:
+      to: 5208
+      desc: |
+            The market place lies this way.
+      key: -1
+    east:
+      to: 5220
+      desc: |
+            This is a cart full of rotted vegetables and fruits.
+      key: -1
+    south:
+      to: 5216
+      key: -1
+- vnum: 5218
+  name: A Back Alley
+  sector: city
+  desc: |2
+       A narrow alley leads east to a wider street and west to one of 
+    the city watchtowers.
+  exits:
+    east:
+      to: 5214
+      desc: |
+            A small side street greets you.
+      key: -1
+    west:
+      to: 5215
+      desc: |
+            A tall watchtower stands a silent vigil over the city.
+      key: -1
+- vnum: 5219
+  name: The Guild House
+  sector: city
+  flags:
+  - indoors
+  desc: |2
+       You are standing in what once was this city's ONLY guild house.
+    Tables and chairs have been smashed and broken weapons lie strewn about
+    the floor as if some massive battle had taken place here.  Draped along 
+    the back wall is a tattered, jet-black banner with the symbol of the
+    Darkside set upon it.
+  exits:
+    east:
+      to: 5213
+      desc: |
+            A small side street runs past the building.
+      key: -1
+- vnum: 5220
+  name: The Produce Stand
+  sector: city
+  desc: |2
+       A large cart sits here carrying rotted fruit and vegetables.  Flies 
+    swarm all about what seems to be the last remaining bits of food left
+    in the city.
+  exits:
+    north:
+      to: 5207
+      desc: |
+            The market place is deserted.
+      key: -1
+    west:
+      to: 5217
+      desc: |
+            A strong stench emanates from the meat stand next to you.
+      key: -1
+- vnum: 5221
+  name: The Smithy
+  sector: city
+  flags:
+  - indoors
+  desc: |2
+       In here you find tools and anvils used to make various weapons
+    and items.  The walls have been stripped clean and only a few incomplete
+    pieces of armor and weaponry are left.
+  exits:
+    east:
+      to: 5212
+      desc: |
+            A small side street runs past the building.
+      key: -1
+- vnum: 5222
+  name: The Tapestry Stand
+  sector: city
+  desc: |2
+       Tattered and torn tapestries and rugs lie heaped in piles.  Fancy
+    robes and various articles of clothing are now just rags.  You stare at 
+    the strange piles for a long time until a piercing howl makes you
+    think these might be beds.
+  exits:
+    north:
+      to: 5223
+      key: -1
+    east:
+      to: 5225
+      desc: |
+            A fine jewellery stand lies in ruin next to you.
+      key: -1
+    south:
+      to: 5208
+      desc: |
+            The market place is deserted.
+      key: -1
+- vnum: 5223
+  name: A Back Alley
+  sector: city
+  desc: |2
+       A narrow alley leads north to one of the city watchtowers while
+    to the south there lies a market stand full of torn clothes and rugs.
+  exits:
+    north:
+      to: 5224
+      desc: |
+            A tall watchtower stands a silent vigil over the city.
+      key: -1
+    south:
+      to: 5222
+      key: -1
+- vnum: 5224
+  name: Under The Watchtower
+  sector: city
+  desc: |2
+       You stand under one of the city watchtowers built to protect
+    the city from invaders.  Obviously, it failed.
+  exits:
+    east:
+      to: 5228
+      key: -1
+    south:
+      to: 5223
+      key: -1
+    up:
+      to: 5246
+      desc: |
+            Above you looms a tall watchtower.
+      key: -1
+- vnum: 5225
+  name: The Jewellery Stand
+  sector: city
+  desc: |2
+       A table has been tipped over, spilling fine jewellery and gems
+    across the market place.  Most of these trinkets are battered and 
+    tarnished and few would have any value anymore.
+  exits:
+    south:
+      to: 5207
+      desc: |
+            The market place is deserted.
+      key: -1
+    west:
+      to: 5222
+      desc: |
+            Next to you is a stand full of ruined clothes and rugs.
+      key: -1
+- vnum: 5226
+  name: A Ruined Clay Dwelling
+  sector: city
+  flags:
+  - indoors
+  desc: |2
+       This was once a very plain house with nothing more than a few chairs
+    and a bed.  A cold fireplace suggests that the city has been abandoned
+    for quite a while.  Almost nothing remains of this humble abode.
+  exits:
+    east:
+      to: 5210
+      desc: |
+            Outside is a small side street.
+      key: -1
+- vnum: 5227
+  name: A Collapsed Stone Dwelling
+  sector: city
+  desc: |2
+       This small house has completely collapsed upon itself leaving piles
+    of debris here and there.  A few rafters still stand with thatched straw
+    hanging down and a hot wind gusts through the hollow dwelling.
+  exits:
+    east:
+      to: 5211
+      desc: |
+            A small side street runs past the house.
+      key: -1
+- vnum: 5228
+  name: A Back Alley
+  sector: city
+  desc: |2
+       A narrow alley leads west to one of the city watchtowers and east to
+    a small side street.
+  exits:
+    east:
+      to: 5209
+      key: -1
+    west:
+      to: 5224
+      key: -1
+- vnum: 5229
+  name: An Abandoned Shop
+  sector: city
+  flags:
+  - indoors
+  desc: |2
+       From the outside this place looks like an ordinary pile of rubble,
+    but inside these cramped quarters you discover what used to be a shop
+    filled with armor, weapons, and various other goods.  A small sign
+    flutters in the wind.
+  exits:
+    west:
+      to: 5214
+      desc: |
+            A small side street runs past the shop.
+      key: -1
+- vnum: 5230
+  name: The Tavern Of The Sun
+  sector: city
+  desc: |2
+       A glorious place in its prime, this tavern now lies in ruin; tables
+    and chairs are broken scattered, bottles and glasses shattered, and
+    a small performance stage crushed.  Musical instruments and personal
+    belongings lie under the rubble, but the people they once belonged to are 
+    not with them.  Looking up you see that the entire second floor and roof 
+    has fallen in, leaving a gaping hole above.
+  exits:
+    west:
+      to: 5213
+      desc: |
+            A small side street runs past the tavern.
+      key: -1
+- vnum: 5231
+  name: The South Wing Of The City Hall
+  sector: city
+  flags:
+  - indoors
+  desc: |2
+       You stand in a large room attached to this end of the hallway which 
+    leads back north to the reception area.  Pedestals and columns have fallen
+    and most of the valuable items have been taken, leaving worthless debris.
+    A few chairs have survived, as well as a large curved desk.  To the east
+    is a vine-covered archway leading out into a private courtyard.
+  exits:
+    north:
+      to: 5232
+      desc: |
+            The long hallway leads back to the main reception area of the city hall.
+      key: -1
+    east:
+      to: 5234
+      key: -1
+- vnum: 5232
+  name: The City Hall
+  sector: city
+  flags:
+  - indoors
+  desc: |2
+       This is the main reception area of Thalos' city hall.  The walls have
+    been charred and scored massively and debris is spread from wall to wall.
+    A large gaping hole in the west wall allows you to see out to one of
+    the city's side streets.  Obviously no one will be seeing you through today.  
+    Hallways lead south and east.
+  exits:
+    north:
+      to: 5202
+      desc: |
+            Main street runs past the city hall.
+      key: -1
+    east:
+      to: 5233
+      desc: |
+            A hallway leads to the east wing of the city hall.
+      key: -1
+    south:
+      to: 5231
+      desc: |
+            A hallway leads to the south wing of the city hall.
+      key: -1
+    west:
+      to: 5212
+      key: -1
+- vnum: 5233
+  name: The East Wing Of The City Hall
+  sector: city
+  flags:
+  - indoors
+  desc: |2
+       Here lies the remnants of a fancy office, possibly the mayor's.  A few
+    withered plants and broken pieces of furniture make this place anything
+    but fancy, though.  The only thing remaining intact here is a large
+    glass cabinet.  A long hallway leads west back to the reception area and
+    an ivy-covered archway leads south into a private courtyard.
+  exits:
+    south:
+      to: 5234
+      key: -1
+    west:
+      to: 5232
+      key: -1
+- vnum: 5234
+  name: The Private Gardens And Courtyard Of Thalos
+  sector: city
+  desc: |2
+       What a shame that this mass destruction also touched this once
+    beautiful place.  The temple's garden path has nothing on this garden.
+    Flowers and trees have been smashed into the ground and lawn benches
+    thrown through walls.  A large marble fountain in the center of the
+    courtyard still stands, though, defying any attempts to destroy its
+    beauty.  Above stands the remnants of one of the watchtowers.  Archways 
+    north and west lead back into the city hall.
+  exits:
+    north:
+      to: 5233
+      key: -1
+    west:
+      to: 5231
+      key: -1
+- vnum: 5235
+  name: A Small Guard House
+  sector: city
+  flags:
+  - indoors
+  desc: |2
+       This was once the barracks for Thalos' Cityguards.  Now just an empty
+    shell, this small shack still stands guarding the entrance both to the
+    city and to the city hall.
+  exits:
+    north:
+      to: 5201
+      desc: |
+            Main street runs by this building.
+      key: -1
+- vnum: 5236
+  name: A Collapsed Home
+  sector: city
+  desc: |2
+       All that's left of this house is a few scattered piles of rubble
+    and a very large blast crater.  Obviously someone or something important 
+    was once housed here.  A shrieking howl chills your blood.
+  exits:
+    south:
+      to: 5202
+      desc: |
+            Main street runs past this ruined home.
+      key: -1
+- vnum: 5237
+  name: A Tall Dwelling
+  sector: city
+  flags:
+  - indoors
+  desc: |2
+       This seems to be the tallest structure remaining in the city.  At
+    one time this could have been an inn of some sort, but now it is just
+    a mess.  The back wall as been completely knocked down revealing an 
+    entrance into another building through yet another collapsed wall.
+    Between the two buildings are a few blast craters and boulders.  An old
+    set of wooden steps leads up to a creaking second floor.
+  exits:
+    east:
+      to: 5238
+      key: -1
+    west:
+      to: 5211
+      desc: |
+            A small side street winds past the dwelling.
+      key: -1
+    up:
+      to: 5245
+      desc: |
+            The stairs and even the entire second floor itself looks very unsafe
+            for travel.  Gusts of wind make them creak and shudder.
+      key: -1
+- vnum: 5238
+  name: A Small Shack
+  sector: city
+  flags:
+  - indoors
+  desc: |2
+       This cramped dwelling could not have housed more than one person.  Now
+    with the back wall missing, it could hold many more.  Looking around you
+    find broken shelves and workbenches with various vials and pouches spilling
+    contents all across the floor.  This was possibly the magic shop of the
+    city.  The doorway to the east is blocked, making the only exit back west.
+  exits:
+    west:
+      to: 5237
+      key: -1
+- vnum: 5239
+  name: A Back Alley
+  sector: city
+  desc: |2
+       A narrow back alley goes south to main street and north towards
+    a watchtower.  A mass of howls catches you of guard.
+  exits:
+    north:
+      to: 5240
+      key: -1
+    south:
+      to: 5201
+      desc: |
+            Main street runs past here.
+      key: -1
+- vnum: 5240
+  name: A Back Alley
+  sector: city
+  desc: |2
+       A narrow back alley leads north to one of the city watchtowers
+    and south towards main street.  To the west is a doorway to a small
+    house blocked by debris.
+  exits:
+    north:
+      to: 5241
+      desc: |
+            A tall watchtower stands a silent vigil over the city.
+      key: -1
+    south:
+      to: 5239
+      key: -1
+- vnum: 5241
+  name: Under A Watchtower
+  sector: city
+  desc: |2
+       You stand under a tall watchtower.  Narrow back alleys lead west and
+    south and a very weak looking ladder leads up into the tower.  Above you,
+    you hear the screams of tens of starving lamias!  Beware!
+  exits:
+    south:
+      to: 5240
+      key: -1
+    west:
+      to: 5243
+      key: -1
+    up:
+      to: 5248
+      desc: |
+            Winds howl high above your head in the tower above.  You hear the screams
+            of tens of howling lamias above you!
+      key: -1
+- vnum: 5242
+  name: A Bath House
+  sector: city
+  flags:
+  - indoors
+  desc: |2
+       This was once the bath house for the commoners of the city.  Hot
+    steamy water still wells up from a hole in the floor.  Obviously there
+    is a hot spring located under the city (making the decision to put
+    a city here seem much more reasonable).  Closer inspection of the water
+    yields a dead body floating around in it, skin melted away from months
+    of floating in there.  The west wall has collapsed revealing another
+    collapsed house.
+  exits:
+    north:
+      to: 5243
+      key: -1
+    west:
+      to: 5244
+      desc: |
+            The wall has collapsed on the adjoining house, creating a new opening
+            in it.
+      key: -1
+- vnum: 5243
+  name: A Back Alley
+  sector: city
+  desc: |2
+       A narrow back alley leads west to a small side street and east to one 
+    of the city watchtowers.  Great amounts of steam issue forth from the
+    building to the south.
+  exits:
+    east:
+      to: 5241
+      desc: |
+            A watchtower stands a silent vigil over the city.
+      key: -1
+    south:
+      to: 5242
+      key: -1
+    west:
+      to: 5209
+      desc: |
+            A side street runs by here.
+      key: -1
+- vnum: 5244
+  name: An Upright House
+  sector: city
+  flags:
+  - indoors
+  desc: |2
+       This home is practically the only one around that is still standing.
+    Except for the massive hole in the east wall, everything else looks
+    intact, including the windows.  Great amounts of steam issue forth from
+    the hole in the east wall.
+  exits:
+    east:
+      to: 5242
+      key: -1
+    west:
+      to: 5210
+      desc: |
+            A small side street runs past the house.
+      key: -1
+- vnum: 5245
+  name: On The Second Floor
+  sector: city
+  flags:
+  - death
+  - indoors
+  desc: |2
+       The minute you step off onto this floor you realize it was a mistake.
+    The old rotted floorboards suddenly give way and you fall down, impaling
+    yourself on jagged boards below.
+- vnum: 5246
+  name: The North-West Watchtower
+  sector: city
+  desc: |2
+       You stand atop one of the city watchtowers.  The view is magnificent
+    from here and you can see all the way to the western mountains.  No wonder
+    this place stood for so long.
+  exits:
+    down:
+      to: 5224
+      desc: |
+            The city lies below.
+      key: -1
+- vnum: 5247
+  name: The South-West Watchtower
+  sector: city
+  desc: |2
+       You stand atop one of the city watchtowers.  The view is magnificent
+    from here and you can see all the way to the western mountains.  To the
+    south the desert stretches to the horizon.  No wonder this place stood
+    for so long.
+  exits:
+    down:
+      to: 5215
+      desc: |
+            The city lies below.
+      key: -1
+- vnum: 5248
+  name: The North-East Watchtower
+  sector: city
+  flags:
+  - no_mob
+  desc: |2
+       You stand atop one of the city watchtowers.  The view is magnificent
+    from here and you the desert sand stretches to the horizon.  No wonder
+    this place stood for so long.  The ladder leading down seems rotted in
+    some places!
+  exits:
+    down:
+      to: 5249
+      desc: |
+            The city lies below... far, far below.
+      key: -1
+- vnum: 5249
+  name: Under A Watchtower
+  sector: city
+  flags:
+  - death
+  - indoors
+  desc: |2
+       As you descend the ladder, the rotted rungs break, sending you quickly
+    to your demise far below on the city street.  Splat.
+- vnum: 5250
+  name: The Temple Of Thalos
+  sector: city
+  flags:
+  - no_mob
+  - indoors
+  - no_magic
+  desc: |2
+       You stand within one of the most holy places in the realm.  This
+    stunning domed temple once housed the city's worshipers en masse.  
+    Unfortunately, it succumbed to the destruction brought on this city.
+    Long benches lie toppled and the altar desecrated.  Large chunks of stone
+    have fallen from the walls and roof, sending sunlight streaming in on
+    you.  A few books lie about, conveying to you a holy message in a
+    strange tongue.  
+         Wind gusts through the four archways and howls and screams can be
+    heard from all parts of the city.
+  exits:
+    north:
+      to: 5204
+      desc: |
+            A side street leads to the northern half of the city.
+      key: -1
+    east:
+      to: 5203
+      desc: |
+            Main street leads out to the main gate of the city.
+      key: -1
+    south:
+      to: 5206
+      desc: |
+            A side street leads to the southern part of the city.
+      key: -1
+    west:
+      to: 5205
+      desc: |
+            The market place lies this way.
+      key: -1
+mobiles:
+- vnum: 5200
+  keywords:
+  - beholder
+  short: the mighty beholder
+  long: |
+    You meet a beholder's deadly gaze!
+  desc: |
+    It has a large central eye that projects an anti-magic ray and ten
+    eyestalks atop the round body which can do anything from charm you
+    to disintegrate you.  Beholders are not known for their personality.
+  act:
+  - spec
+  - sentinel
+  - aggressive
+  - memory
+  - no_charm
+  - no_summon
+  - no_bash
+  affected:
+  - detect_invis
+  - sanctuary
+  - infravision
+  - no_track
+  alignment: -870
+  level: 25
+  thac0: 6
+  ac: 0
+  hp: 1d14+450
+  damage: 6d9+5
+  gold: 28560
+  exp: 134000
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 5201
+  keywords:
+  - lamia
+  - beast
+  short: the lamia
+  long: |
+    A strange lamia stands here waiting for her next meal. 
+  desc: |
+    This is a creature with the upper torso of a beautiful woman, but the lower
+    body of a four-legged beast.  She licks her lips as she looks at you greedily.
+  act:
+  - spec
+  - scavenger
+  - stay_zone
+  - aggr_good
+  alignment: -1000
+  level: 12
+  thac0: 12
+  ac: 3
+  hp: 1d10+120
+  damage: 2d5+1
+  gold: 1500
+  exp: 10500
+  position: standing
+  default_position: standing
+  sex: female
+- vnum: 5202
+  keywords:
+  - mimic
+  - chest
+  short: the mimic
+  long: |
+    A strong chest lies in one corner of the room.
+  desc: |
+    A strong, wooden chest bound with iron straps and a heavy padlock on the
+    front.
+  act:
+  - sentinel
+  - no_bash
+  - no_blind
+  alignment: 10
+  level: 11
+  thac0: 10
+  ac: 1
+  hp: 1d20+130
+  damage: 2d7
+  gold: 0
+  exp: 13000
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 5203
+  keywords:
+  - mimic
+  - boulder
+  - skeleton
+  - skeletons
+  short: the mimic
+  long: |
+    Two skeletons lie crushed under a large boulder.
+  desc: |
+    This large boulder seems to have been dropped here at some point, since
+    there aren't any boulders native to this area.  The two skeletons beneath
+    it are simply that, bones... no rags or anything else appears to be
+    attached to them.
+  act:
+  - sentinel
+  - no_bash
+  - no_blind
+  alignment: -10
+  level: 14
+  thac0: 7
+  ac: 1
+  hp: 3d15+150
+  damage: 3d5+1
+  gold: 0
+  exp: 20000
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 5204
+  keywords:
+  - mimic
+  - floor
+  short: the mimic
+  long: |
+    The stone floor of this house has been ripped apart.
+  desc: |
+    What a mess, you wonder to yourself what could have caused this rampant
+    destruction.
+  act:
+  - sentinel
+  - no_bash
+  - no_blind
+  alignment: -140
+  level: 11
+  thac0: 11
+  ac: 3
+  hp: 2d6+110
+  damage: 2d6
+  gold: 0
+  exp: 10500
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 5205
+  keywords:
+  - mimic
+  - pottery
+  - shards
+  short: the mimic
+  long: |
+    Some broken shards of pottery lie strewn about the floor.
+  desc: |
+    The pottery shards appear to have been part of a large vase at one point,
+    probably before the city fell.
+  act:
+  - sentinel
+  - no_bash
+  - no_blind
+  alignment: 200
+  level: 11
+  thac0: 14
+  ac: 0
+  hp: 1d8+100
+  damage: 2d5+3
+  gold: 0
+  exp: 9800
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 5206
+  keywords:
+  - mimic
+  - planks
+  - wooden
+  short: the mimic
+  long: |
+    A few wooden planks lie stacked on a low shelf.
+  desc: |
+    The fact that these planks still rest on this shelf leads you to believe
+    that someone has been here before you...
+  act:
+  - sentinel
+  - no_bash
+  - no_blind
+  alignment: 0
+  level: 11
+  thac0: 9
+  ac: 0
+  hp: 1d12+110
+  damage: 4d3+1
+  gold: 0
+  exp: 12000
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 5207
+  keywords:
+  - lizard
+  - horned
+  short: the horned lizard
+  long: |
+    A small horned lizard flicks his tongue and slithers away.
+  desc: |
+    A cute little lizard -- that is, if you like reptiles!
+  act:
+  - wimpy
+  alignment: 300
+  level: 3
+  thac0: 17
+  ac: 4
+  hp: 1d14+30
+  damage: 2d4
+  gold: 0
+  exp: 500
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 5208
+  keywords:
+  - golem
+  - stone
+  short: the stone golem
+  long: |
+    In the corner you see a large, stone golem faithfully standing watch.
+  desc: |
+    It is a big chunk of rock that has been magically formed into a giant stone
+    creature.  He stands here still guarding the city.
+  act:
+  - sentinel
+  - aggr_evil
+  - memory
+  - no_charm
+  - no_summon
+  - no_sleep
+  - no_bash
+  - no_blind
+  affected:
+  - detect_invis
+  - sense_life
+  - infravision
+  alignment: 800
+  level: 25
+  thac0: 0
+  ac: -5
+  hp: 6d6+500
+  damage: 4d7+3
+  gold: 4250
+  exp: 145000
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 5209
+  keywords:
+  - lamia
+  - beast
+  short: the lamia
+  long: |
+    A strange lamia stands here waiting for her next meal. 
+  desc: |
+    This is a creature with the upper torso of a beautiful woman, but the lower
+    body of a four-legged beast.  She licks her lips as she looks at you greedily.
+  act:
+  - spec
+  - sentinel
+  - aggressive
+  - stay_zone
+  affected:
+  - sense_life
+  alignment: -500
+  level: 9
+  thac0: 10
+  ac: 3
+  hp: 1d12+120
+  damage: 1d4+5
+  gold: 1500
+  exp: 7000
+  position: standing
+  default_position: standing
+  sex: female
+objects:
+- vnum: 5200
+  keywords:
+  - vest
+  - ringmail
+  short: a ringmail vest
+  desc: A vest made of iron rings lies heaped on the floor.
+  type: armor
+  wear:
+  - take
+  - body
+  flags:
+  - glow
+  - magic
+  armor:
+    ac_apply: 6
+  weight: 60
+  cost: 12000
+  rent: 400
+  affects:
+  - location: armor
+    modifier: -1
+- vnum: 5201
+  keywords:
+  - helm
+  - iron
+  short: an iron helm
+  desc: An iron helm has been left on the ground.
+  type: armor
+  wear:
+  - take
+  - head
+  armor:
+    ac_apply: 7
+  weight: 10
+  cost: 5000
+  rent: 800
+  affects:
+  - location: hitroll
+    modifier: -2
+- vnum: 5202
+  keywords:
+  - gauntlets
+  - iron
+  short: a pair of iron gauntlets
+  desc: A pair of iron gauntlets rests heavily on the ground.
+  type: armor
+  wear:
+  - take
+  - hands
+  armor:
+    ac_apply: 7
+  weight: 10
+  cost: 2200
+  rent: 900
+  affects:
+  - location: hitroll
+    modifier: -3
+  - location: damroll
+    modifier: 1
+- vnum: 5203
+  keywords:
+  - sleeves
+  - iron
+  short: a pair of iron sleeves
+  desc: A set of iron sleeves lies on the ground.
+  type: armor
+  wear:
+  - take
+  - arms
+  armor:
+    ac_apply: 7
+  weight: 10
+  cost: 2450
+  rent: 500
+  affects:
+  - location: hitroll
+    modifier: -4
+  - location: damroll
+    modifier: 2
+- vnum: 5204
+  keywords:
+  - boots
+  - iron
+  short: a pair of iron boots
+  desc: A pair of iron boots has been left here.
+  type: armor
+  wear:
+  - take
+  - feet
+  armor:
+    ac_apply: 4
+  weight: 6
+  cost: 800
+  rent: 200
+  affects:
+  - location: hitroll
+    modifier: -1
+  - location: dex
+    modifier: -2
+- vnum: 5205
+  keywords:
+  - greaves
+  - iron
+  short: a set of iron greaves
+  desc: A set of iron greaves lie here unattended.
+  type: armor
+  wear:
+  - take
+  - legs
+  armor:
+    ac_apply: 7
+  weight: 10
+  cost: 5400
+  rent: 210
+  affects:
+  - location: hitroll
+    modifier: -3
+  - location: dex
+    modifier: -3
+- vnum: 5206
+  keywords:
+  - girth
+  - iron
+  short: an iron girth
+  desc: A small iron girth lies at your feet.
+  type: armor
+  wear:
+  - take
+  - waist
+  armor:
+    ac_apply: 4
+  weight: 6
+  cost: 4200
+  rent: 600
+- vnum: 5207
+  keywords:
+  - plate
+  - breast
+  - iron
+  short: a battered iron breast plate
+  desc: A battered iron breast plate lies here.
+  type: armor
+  wear:
+  - take
+  - body
+  armor:
+    ac_apply: 5
+  weight: 125
+  cost: 13000
+  rent: 150
+  affects:
+  - location: hitroll
+    modifier: -6
+- vnum: 5208
+  keywords:
+  - shield
+  - iron
+  short: a sturdy iron shield
+  desc: A small, but sturdy, iron shield has been left here.
+  type: armor
+  wear:
+  - take
+  - shield
+  flags:
+  - magic
+  - no_drop
+  armor:
+    ac_apply: 5
+  weight: 5
+  cost: 500
+  rent: 1000
+  affects:
+  - location: saving_breath
+    modifier: -2
+  - location: saving_spell
+    modifier: -2
+- vnum: 5210
+  keywords:
+  - potion
+  - black
+  short: a black potion
+  desc: A jet black potion sits upright waiting to be taken.
+  type: potion
+  wear:
+  - take
+  flags:
+  - invisible
+  - magic
+  values:
+  - 16
+  - 4
+  - 36
+  - 39
+  weight: 5
+  cost: 6000
+  rent: 1000
+- vnum: 5211
+  keywords:
+  - potion
+  - orange
+  short: an orange potion
+  desc: A small orange potion lies here.
+  type: potion
+  wear:
+  - take
+  flags:
+  - invisible
+  - magic
+  values:
+  - 20
+  - 44
+  - -1
+  - -1
+  weight: 10
+  cost: 7500
+  rent: 200
+- vnum: 5213
+  keywords:
+  - staff
+  - serpentine
+  short: a green serpentine staff
+  desc: A green serpentine staff has been left here.
+  type: staff
+  wear:
+  - take
+  - hold
+  flags:
+  - invisible
+  - magic
+  charges:
+    spell: earthquake
+    level: 15
+    max: 2
+    remaining: 2
+  weight: 12
+  cost: 6600
+  rent: 300
+- vnum: 5214
+  keywords:
+  - ball
+  - quartz
+  short: a smooth quartz ball
+  desc: A smooth quartz ball lies here gleaming.
+  type: light
+  wear:
+  - take
+  - hold
+  flags:
+  - magic
+  light:
+    hours: 72
+  weight: 30
+  cost: 3050
+  rent: 950
+- vnum: 5215
+  keywords:
+  - scroll
+  - tattered
+  short: a tattered scroll
+  desc: A worn and tattered scroll has been left here.
+  type: scroll
+  wear:
+  - take
+  flags:
+  - magic
+  values:
+  - 24
+  - 24
+  - 44
+  - 4
+  weight: 15
+  cost: 11000
+  rent: 4000
+- vnum: 5216
+  keywords:
+  - scroll
+  - bound
+  short: a bound scroll
+  desc: A bound scroll of detection lies at your feet.
+  type: scroll
+  wear:
+  - take
+  flags:
+  - magic
+  values:
+  - 15
+  - 18
+  - 19
+  - 20
+  weight: 15
+  cost: 4200
+  rent: 100
+- vnum: 5217
+  keywords:
+  - flute
+  - silver
+  short: a silver flute
+  desc: A brilliant silver flute glimmers from beneath a rock.
+  type: staff
+  wear:
+  - take
+  - hold
+  flags:
+  - invisible
+  - magic
+  charges:
+    spell: charm person
+    level: 18
+    max: 2
+    remaining: 2
+  weight: 3
+  cost: 10500
+  rent: 8000
+- vnum: 5218
+  keywords:
+  - talisman
+  - demon
+  short: a demon-faced talisman
+  desc: A demon-faced talisman glares at you angrily.
+  type: armor
+  wear:
+  - take
+  - neck
+  flags:
+  - glow
+  - magic
+  - no_drop
+  armor:
+    ac_apply: 5
+  weight: 11
+  cost: 2500
+  rent: 150
+  affects:
+  - location: str
+    modifier: -10
+  - location: dex
+    modifier: -8
+- vnum: 5219
+  keywords:
+  - venison
+  - chunk
+  short: a chunk of venison
+  desc: A large chunk of venison sits here, ready to be eaten.
+  type: food
+  wear:
+  - take
+  values:
+  - 24
+  - 0
+  - 0
+  - 0
+  weight: 20
+  cost: 100
+  rent: 20
+- vnum: 5220
+  keywords:
+  - fountain
+  - blood
+  - cracked
+  short: a large cracked fountain
+  desc: ""
+  type: fountain
+  values:
+  - 10
+  - 10
+  - 13
+  - 1
+  weight: 15
+  cost: 0
+  rent: 0
+  extra_descs:
+  - keywords:
+    - fountain
+    - blood
+    - cracked
+    desc: |
+              A pool of blood lies in the bottom of the fountain.
+- vnum: 5221
+  keywords:
+  - sword
+  - two-handed
+  short: a two-handed sword
+  desc: A nice two-handed sword hangs on a hook in the wall.
+  type: weapon
+  wear:
+  - take
+  - wield
+  weapon:
+    dice: 3d6
+    damage_type: slash
+  weight: 22
+  cost: 55000
+  rent: 8000
+  affects:
+  - location: hitroll
+    modifier: -3
+  - location: damroll
+    modifier: 4
+- vnum: 5222
+  keywords:
+  - robe
+  - black
+  - silk
+  short: a black silk robe
+  desc: A black silk robe lies heaped in one corner.
+  type: armor
+  wear:
+  - take
+  - about
+  armor:
+    ac_apply: 1
+  weight: 6
+  cost: 1300
+  rent: 500
+- vnum: 5223
+  keywords:
+  - cloak
+  - green
+  short: a dark green cloak
+  desc: A beautiful dark green cloak has been dropped here by someone.
+  type: armor
+  wear:
+  - take
+  - neck
+  flags:
+  - glow
+  - magic
+  armor:
+    ac_apply: 0
+  weight: 12
+  cost: 14500
+  rent: 4000
+  affects:
+  - location: max_hit
+    modifier: 8
+  - location: armor
+    modifier: -5
+- vnum: 5224
+  keywords:
+  - seal
+  - ebony
+  short: an engraved ebony seal
+  desc: A small, engraved ebony seal is here.
+  type: key
+  wear:
+  - take
+  - hold
+  flags:
+  - no_rent
+  values:
+  - 5224
+  - 0
+  - 0
+  - 0
+  weight: 2
+  cost: 0
+  rent: 0
+- vnum: 5225
+  keywords:
+  - desk
+  - curved
+  short: the desk
+  desc: ""
+  type: container
+  container:
+    capacity: 100
+    closeable: true
+    closed: true
+    locked: true
+    key: 5224
+  weight: 0
+  cost: 0
+  rent: 0
+- vnum: 5226
+  keywords:
+  - seal
+  - ivory
+  short: an engraved ivory seal
+  desc: A small, engraved ivory seal lies here.
+  type: key
+  wear:
+  - take
+  - hold
+  flags:
+  - no_rent
+  values:
+  - 5226
+  - 0
+  - 0
+  - 0
+  weight: 2
+  cost: 0
+  rent: 0
+- vnum: 5227
+  keywords:
+  - cabinet
+  - glass
+  short: the glass cabinet
+  desc: ""
+  type: container
+  container:
+    capacity: 500
+    closeable: true
+    closed: true
+    locked: true
+    key: 5226
+  weight: 0
+  cost: 0
+  rent: 0
+- vnum: 5228
+  keywords:
+  - arm
+  - rotted
+  short: a half-rotted arm
+  desc: A half-rotted arm floats lazily past your feet.
+  type: food
+  wear:
+  - take
+  values:
+  - 50
+  - 0
+  - 0
+  - 1
+  weight: 20
+  cost: 0
+  rent: 10
+- vnum: 5230
+  keywords:
+  - stone
+  - pale
+  - blue
+  short: a pale blue stone
+  desc: A pale blue stone sits here.
+  type: treasure
+  wear:
+  - take
+  - hold
+  flags:
+  - no_donate
+  - magic
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 10
+  cost: 5500
+  rent: 600
+  affects:
+  - location: str
+    modifier: 1
+- vnum: 5231
+  keywords:
+  - stone
+  - scarlet
+  - blue
+  short: a scarlet and blue stone
+  desc: A pretty scarlet and blue stone has been dropped here.
+  type: treasure
+  wear:
+  - take
+  - hold
+  flags:
+  - no_donate
+  - magic
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 10
+  cost: 5500
+  rent: 600
+  affects:
+  - location: int
+    modifier: 1
+- vnum: 5232
+  keywords:
+  - stone
+  - blue
+  - incandescent
+  short: an incandescent blue stone
+  desc: A small incandescent blue stone lies here.
+  type: treasure
+  wear:
+  - take
+  - hold
+  flags:
+  - no_donate
+  - magic
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 10
+  cost: 5500
+  rent: 600
+  affects:
+  - location: wis
+    modifier: 1
+- vnum: 5233
+  keywords:
+  - stone
+  - red
+  - deep
+  short: a deep red stone
+  desc: Someone has left a deep red stone here.
+  type: treasure
+  wear:
+  - take
+  - hold
+  flags:
+  - no_donate
+  - magic
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 10
+  cost: 5500
+  rent: 600
+  affects:
+  - location: dex
+    modifier: 1
+- vnum: 5234
+  keywords:
+  - stone
+  - pink
+  short: a pink stone
+  desc: A tiny pink stone lies at your feet.
+  type: treasure
+  wear:
+  - take
+  - hold
+  flags:
+  - no_donate
+  - magic
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 10
+  cost: 5500
+  rent: 600
+  affects:
+  - location: con
+    modifier: 1
+- vnum: 5235
+  keywords:
+  - stone
+  - pearly
+  - white
+  short: a pearly white stone
+  desc: A lovely, pearly white stone has been carelessly left here.
+  type: treasure
+  wear:
+  - take
+  - hold
+  flags:
+  - no_donate
+  - magic
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 10
+  cost: 8700
+  rent: 600
+  affects:
+  - location: max_hit
+    modifier: 1
+- vnum: 5236
+  keywords:
+  - stone
+  - lavender
+  - pale
+  short: a pale lavender stone
+  desc: A beautiful pale lavender stone lies here.
+  type: treasure
+  wear:
+  - take
+  - hold
+  flags:
+  - no_donate
+  - magic
+  - no_drop
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 10
+  cost: 4300
+  rent: 600
+  affects:
+  - location: saving_spell
+    modifier: -2
+- vnum: 5237
+  keywords:
+  - stone
+  - lavender
+  - green
+  short: a lavender and green stone
+  desc: A stunning lavender and green stone rests on the ground.
+  type: treasure
+  wear:
+  - take
+  - hold
+  flags:
+  - no_donate
+  - magic
+  - no_drop
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 10
+  cost: 4700
+  rent: 600
+  affects:
+  - location: saving_spell
+    modifier: -4
+- vnum: 5238
+  keywords:
+  - stone
+  - rose
+  - dusty
+  short: a dusty rose stone
+  desc: A stone is here, sort of a dusty rose color and very pretty.
+  type: treasure
+  wear:
+  - take
+  - hold
+  flags:
+  - no_donate
+  - magic
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 10
+  cost: 9800
+  rent: 600
+  affects:
+  - location: armor
+    modifier: -1
+- vnum: 5239
+  keywords:
+  - stone
+  - grey
+  - dull
+  short: a dull grey stone
+  desc: You can barely make out a dull grey stone on the ground.
+  type: treasure
+  wear:
+  - take
+  - hold
+  flags:
+  - no_donate
+  - magic
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 10
+  cost: 20
+  rent: 200
+- vnum: 5240
+  keywords:
+  - stone
+  - purple
+  - vibrant
+  short: a vibrant purple stone
+  desc: A stunningly vibrant purple stone attracts your attention.
+  type: treasure
+  wear:
+  - take
+  - hold
+  flags:
+  - no_donate
+  - magic
+  - no_drop
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 10
+  cost: 10200
+  rent: 1000
+  affects:
+  - location: max_hit
+    modifier: -50
+- vnum: 5241
+  keywords:
+  - stone
+  - pink
+  - green
+  short: a pink and green stone
+  desc: A bright pink and green stone has been left here.
+  type: treasure
+  wear:
+  - take
+  - hold
+  flags:
+  - no_donate
+  - magic
+  - no_drop
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 10
+  cost: 6600
+  rent: 1000
+  affects:
+  - location: hitroll
+    modifier: -5
+- vnum: 5242
+  keywords:
+  - stone
+  - green
+  - pale
+  short: a pale green stone
+  desc: A pale green stone lies here collecting dust.
+  type: treasure
+  wear:
+  - take
+  - hold
+  flags:
+  - no_donate
+  - magic
+  - no_drop
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 10
+  cost: 7100
+  rent: 1000
+  affects:
+  - location: damroll
+    modifier: -5
+- vnum: 5243
+  keywords:
+  - stone
+  - clear
+  short: a clear stone
+  desc: An odd clear stone lies at your feet.
+  type: treasure
+  wear:
+  - take
+  - hold
+  flags:
+  - no_donate
+  - magic
+  - no_drop
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 10
+  cost: 8900
+  rent: 1000
+  affects:
+  - location: armor
+    modifier: -3
+- vnum: 5244
+  keywords:
+  - stone
+  - iridescent
+  short: an iridescent stone
+  desc: A large iridescent stone has been left here.
+  type: treasure
+  wear:
+  - take
+  - hold
+  flags:
+  - no_donate
+  - magic
+  - no_drop
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 10
+  cost: 3700
+  rent: 1000
+  affects:
+  - location: max_hit
+    modifier: -100
+- vnum: 5250
+  keywords:
+  - mandolin
+  short: a mandolin
+  desc: A mandolin lies against the wall.
+  type: staff
+  wear:
+  - take
+  - hold
+  flags:
+  - magic
+  charges:
+    spell: cure critic
+    level: 13
+    max: 3
+    remaining: 3
+  weight: 20
+  cost: 3000
+  rent: 1500
+- vnum: 5251
+  keywords:
+  - harp
+  - golden
+  short: a golden harp
+  desc: A battered golden harp has been tipped over.
+  type: staff
+  wear:
+  - take
+  - hold
+  flags:
+  - magic
+  charges:
+    spell: call lightning
+    level: 18
+    max: 1
+    remaining: 1
+  weight: 100
+  cost: 2500
+  rent: 800
+resets:
+- mob: 5200
+  room: 5250
+  max: 1
+  then:
+  - equip: 5217
+    slot: hold
+    max: 3
+  - equip: 5208
+    slot: shield
+    max: 3
+  - equip: 5223
+    slot: neck1
+    max: 1
+- mob: 5201
+  room: 5235
+  max: 25
+- mob: 5201
+  room: 5232
+  max: 25
+- mob: 5201
+  room: 5236
+  max: 25
+- mob: 5201
+  room: 5237
+  max: 25
+- mob: 5201
+  room: 5242
+  max: 25
+- mob: 5201
+  room: 5218
+  max: 25
+- mob: 5201
+  room: 5219
+  max: 25
+- mob: 5201
+  room: 5220
+  max: 25
+- mob: 5201
+  room: 5225
+  max: 25
+- mob: 5201
+  room: 5226
+  max: 25
+- mob: 5201
+  room: 5203
+  max: 25
+- mob: 5201
+  room: 5204
+  max: 25
+- mob: 5201
+  room: 5206
+  max: 25
+- mob: 5201
+  room: 5208
+  max: 25
+- mob: 5209
+  room: 5205
+  max: 25
+- mob: 5209
+  room: 5209
+  max: 25
+- mob: 5209
+  room: 5216
+  max: 25
+- mob: 5209
+  room: 5221
+  max: 25
+- mob: 5209
+  room: 5224
+  max: 25
+- mob: 5209
+  room: 5229
+  max: 25
+- mob: 5209
+  room: 5234
+  max: 25
+- mob: 5209
+  room: 5240
+  max: 25
+- mob: 5202
+  room: 5229
+  max: 1
+  then:
+  - equip: 5214
+    slot: hold
+    max: 4
+- mob: 5203
+  room: 5226
+  max: 1
+  then:
+  - give: 5215
+    max: 4
+- mob: 5204
+  room: 5219
+  max: 1
+  then:
+  - give: 5218
+    max: 4
+- mob: 5205
+  room: 5238
+  max: 1
+  then:
+  - equip: 5214
+    slot: hold
+    max: 4
+- mob: 5206
+  room: 5236
+  max: 1
+  then:
+  - equip: 5222
+    slot: about
+    max: 4
+- mob: 5207
+  room: 5232
+  max: 4
+- mob: 5207
+  room: 5217
+  max: 4
+- mob: 5207
+  room: 5227
+  max: 4
+- mob: 5207
+  room: 5244
+  max: 4
+- mob: 5208
+  room: 5247
+  max: 3
+  then:
+  - equip: 5224
+    slot: hold
+    max: 1
+  - equip: 5200
+    slot: body
+    max: 5
+- mob: 5208
+  room: 5246
+  max: 3
+  then:
+  - equip: 5226
+    slot: hold
+    max: 1
+- mob: 5208
+  room: 5248
+  max: 3
+  then:
+  - equip: 5221
+    slot: wield
+    max: 5
+- room: 5231
+  object: 5225
+  max: 1
+  then:
+  - put: 5215
+    into: 5225
+    max: 1
+  - put: 5216
+    into: 5225
+    max: 2
+- room: 5233
+  object: 5227
+  max: 1
+  then:
+  - put: 5201
+    into: 5227
+    max: 1
+  - put: 5202
+    into: 5227
+    max: 1
+  - put: 5203
+    into: 5227
+    max: 1
+  - put: 5204
+    into: 5227
+    max: 1
+  - put: 5205
+    into: 5227
+    max: 1
+  - put: 5206
+    into: 5227
+    max: 1
+- room: 5242
+  remove: 5228
+- room: 5242
+  object: 5228
+  max: 10
+- room: 5217
+  remove: 5219
+- room: 5217
+  object: 5219
+  max: 5
+- room: 5234
+  remove: 5220
+- room: 5234
+  object: 5220
+  max: 1
+- room: 5229
+  remove: 5207
+- room: 5229
+  object: 5207
+  max: 5
+- room: 5238
+  remove: 5210
+- room: 5238
+  object: 5210
+  max: 2
+- room: 5238
+  remove: 5211
+- room: 5238
+  object: 5211
+  max: 2
+- room: 5238
+  remove: 5213
+- room: 5238
+  object: 5213
+  max: 2
+- room: 5230
+  remove: 5250
+- room: 5230
+  object: 5250
+  max: 2
+- room: 5230
+  remove: 5251
+- room: 5230
+  object: 5251
+  max: 2
+- room: 5202
+  object: 5230
+  max: 1
+- room: 5205
+  object: 5231
+  max: 1
+- room: 5208
+  object: 5232
+  max: 1
+- room: 5211
+  object: 5233
+  max: 1
+- room: 5214
+  object: 5234
+  max: 1
+- room: 5217
+  object: 5235
+  max: 1
+- room: 5220
+  object: 5236
+  max: 1
+- room: 5224
+  object: 5237
+  max: 1
+- room: 5227
+  object: 5238
+  max: 1
+- room: 5230
+  object: 5239
+  max: 1
+- room: 5234
+  object: 5240
+  max: 1
+- room: 5238
+  object: 5241
+  max: 1
+- room: 5241
+  object: 5242
+  max: 1
+- room: 5246
+  object: 5243
+  max: 1
+- room: 5250
+  object: 5244
+  max: 1

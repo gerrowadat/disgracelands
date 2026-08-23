@@ -1,0 +1,3726 @@
+schema: dl/world@1
+zone:
+  vnum: 60
+  name: Haon-Dor, Light Forest
+  range:
+  - 6000
+  - 6099
+  lifespan: 13
+  reset: always
+rooms:
+- vnum: 6000
+  name: The Edge Of The Forest
+  sector: field
+  desc: |2
+       You are standing at the end of a dusty road, near the eastern edge of the
+    large forest of Haon-Dor.  To the east you see the road heading back to the
+    walled city, Midgaard, and to the west is a narrow trail leading through the
+    forest.
+  exits:
+    east:
+      to: 6090
+      desc: |
+            To the east a dusty road takes you back to the walls of Midgaard, and its large
+            west gate.
+      key: -1
+    west:
+      to: 6001
+      desc: |
+            You see a narrow forest trail winding westward in between the trees.
+      key: -1
+  extra_descs:
+  - keywords:
+    - tree
+    - trees
+    desc: |
+              The trees are quite tall considering most of them appear to be quite young.
+              On one of the trees, crude letters forming the word 'Haon-Dor' have been
+              carved into the bark.
+  - keywords:
+    - trail
+    desc: |
+              The forest trail winds westwards through the trees.
+- vnum: 6001
+  name: A Trail Through The Light Forest
+  sector: forest
+  desc: |2
+       You are on a trail leading through the forest.  There seems to be a small
+    path leading north into the shadows.  To the east is the forest edge and to
+    the west the trail leads further into the forest.
+  exits:
+    north:
+      to: 6060
+      desc: |
+            You see evidence of a small path leading through a break in the trees to the
+            north.
+      key: -1
+    east:
+      to: 6000
+      desc: |
+            The trail continues eastwards out of the forest.
+      key: -1
+    west:
+      to: 6002
+      desc: |
+            You see the narrow forest trail winding westwards in between the trees.
+      key: -1
+  extra_descs:
+  - keywords:
+    - birds
+    - insects
+    - animals
+    desc: |
+              Very cute little creatures, they seem to enjoy life.
+  - keywords:
+    - tree
+    - trees
+    desc: |
+              The trees here are quite young and fresh.  They seem to accommodate many kinds
+              of birds, insects and other small animals.
+  - keywords:
+    - trail
+    desc: |
+              The forest trail winds east-west through the trees.
+- vnum: 6002
+  name: A Trail Through The Light Forest
+  sector: forest
+  desc: |2
+       You are on a narrow trail winding east and west through the forest.  To the
+    west, the forest gradually becomes more dense.  A small forest path leads off
+    to the south.
+  exits:
+    east:
+      to: 6001
+      desc: |
+            The trail continues eastwards through the young trees.
+      key: -1
+    south:
+      to: 6011
+      desc: |
+            The small path leads south through the young trees.
+      key: -1
+    west:
+      to: 6003
+      desc: |
+            You see the narrow forest trail winding westwards into the dense forest.
+      key: -1
+  extra_descs:
+  - keywords:
+    - tree
+    - trees
+    desc: |
+              The young, slender trees look beautiful, their fresh, green leaves moving
+              lightly in the wind.
+  - keywords:
+    - trail
+    desc: |
+              The forest trail winds east-west through the trees.
+  - keywords:
+    - path
+    - paths
+    desc: |
+              The narrow path is probably used by the animals living in the forest.
+- vnum: 6003
+  name: A Trail Through The Dense Forest
+  sector: forest
+  desc: |2
+       You are on a trail winding east and west through the dense forest.  To
+    the east, the forest gradually seems to become lighter.
+  exits:
+    east:
+      to: 6002
+      desc: |
+            The trail continues eastwards to the younger part of the forest.
+      key: -1
+    west:
+      to: 6004
+      desc: |
+            You see the narrow trail winding westwards through the dense forest.
+      key: -1
+  extra_descs:
+  - keywords:
+    - tree
+    - trees
+    desc: |
+              The dense crowns of the mature trees leave only a fraction of the sky to be
+              seen through the leaves.
+  - keywords:
+    - trail
+    desc: |
+              The forest trail seems almost fragile compared to the massive trunks.
+- vnum: 6004
+  name: A Trail Through The Dense Forest
+  sector: forest
+  desc: |2
+       You are on a trail winding east and west through the dense forest.  To the
+    west, the trees are so huge and their crowns so dense that forest remains in
+    total darkness.  A small path leads south through the trees.
+  exits:
+    east:
+      to: 6003
+      desc: |
+            The trail continues eastwards through the dense forest.
+      key: -1
+    south:
+      to: 6005
+      desc: |
+            The small path leads south through the trees.
+      key: -1
+    west:
+      to: 6100
+      desc: |
+            The narrow trail almost seems to disappear between the enormous trunks.
+      key: -1
+  extra_descs:
+  - keywords:
+    - tree
+    - trees
+    desc: |
+              The crowns of the old trees almost cut out all light.
+  - keywords:
+    - trail
+    desc: |
+              The forest trail seems almost fragile compared to the massive trunks.
+  - keywords:
+    - path
+    - paths
+    desc: |
+              The narrow path is probably used by the animals living in the forest.
+- vnum: 6005
+  name: A Small Path In The Dense Forest
+  sector: forest
+  desc: |2
+       You are on a small path leading through the dense forest.  The crowns of
+    the old trees leave the forest in an unreal twilight illumination.  The path
+    continues north and south.
+  exits:
+    north:
+      to: 6004
+      desc: |
+            The small path leads north through the trees.
+      key: -1
+    south:
+      to: 6006
+      desc: |
+            The small path leads south through the trees.
+      key: -1
+  extra_descs:
+  - keywords:
+    - tree
+    - trees
+    desc: |
+              The trees are mostly old beeches and oaks.
+  - keywords:
+    - path
+    - paths
+    desc: |
+              The narrow path is probably used by the animals living in the forest.
+- vnum: 6006
+  name: A Small Path In The Dense Forest
+  sector: forest
+  desc: |2
+       You are on a small path leading through the dense forest.  The crowns of
+    the old trees leave the forest in an unreal twilight illumination.  The path
+    continues north and east.
+  exits:
+    north:
+      to: 6005
+      desc: |
+            The small path leads north through the trees.
+      key: -1
+    east:
+      to: 6007
+      desc: |
+            The small path leads east through the trees.
+      key: -1
+  extra_descs:
+  - keywords:
+    - tree
+    - trees
+    desc: |
+              The trees are mostly old beeches and oaks.
+  - keywords:
+    - path
+    - paths
+    desc: |
+              The narrow path is probably used by the animals living in the forest.
+- vnum: 6007
+  name: An Intersection In The Dense Forest
+  sector: forest
+  desc: |2
+       You are on a small path leading through the dense forest.  The crowns of
+    the old trees leave the forest in an unreal twilight illumination.  The forest
+    gradually lightens to the east.  Paths lead east, west and south.
+  exits:
+    east:
+      to: 6008
+      desc: |
+            You can barely make out a clearing to the east.
+      key: -1
+    south:
+      to: 6012
+      desc: |
+            The small path leads south through the trees.
+      key: -1
+    west:
+      to: 6006
+      desc: |
+            The small path leads west through the trees.
+      key: -1
+  extra_descs:
+  - keywords:
+    - tree
+    - trees
+    desc: |
+              The trees are mostly old beeches and oaks.
+  - keywords:
+    - path
+    - paths
+    desc: |
+              The narrow path is probably used by the animals living in the forest.
+- vnum: 6008
+  name: The Forest Clearing
+  sector: forest
+  desc: |2
+       You are in a clearing in the forest.  Lots of fresh stumps of varying sizes
+    protrude from the ground and heavy logs are stacked neatly in a big pile
+    supported by stakes set into the ground.  Paths lead north, east and west.
+  exits:
+    north:
+      to: 6011
+      desc: |
+            The small path leads north through the trees.
+      key: -1
+    east:
+      to: 6009
+      desc: |
+            The small path leads east through the trees.
+      key: -1
+    west:
+      to: 6007
+      desc: |
+            The small path leads west through the trees.
+      key: -1
+  extra_descs:
+  - keywords:
+    - tree
+    - trees
+    desc: |
+              The trees are mostly old beeches and oaks.
+  - keywords:
+    - stump
+    - stumps
+    desc: |
+              There are more stumps than logs and some of the stumps are partly covered in
+              moss.
+  - keywords:
+    - stake
+    - stakes
+    desc: |
+              The stakes keep the logs from rolling down.
+  - keywords:
+    - path
+    - paths
+    desc: |
+              The narrow path is probably used by the animals living in the forest.
+  - keywords:
+    - log
+    - logs
+    desc: |
+              Even though the logs have been chopped to shorter pieces, they are quite heavy
+              as they are fresh and still filled with sap.
+- vnum: 6009
+  name: Outside A Small Cabin In The Forest
+  sector: forest
+  desc: |2
+       You are outside a small cabin built entirely from heavy logs.  There is a
+    wooden door to the north and small paths lead west and south through the trees.
+  exits:
+    north:
+      to: 6010
+      desc: |
+            The wooden door is quite sturdy but does not appear to be equipped with a lock.
+      door: regular
+      key: -1
+      keywords: door wooden
+    south:
+      to: 6014
+      desc: |
+            The small path leads south through the dense forest.
+      key: -1
+    west:
+      to: 6008
+      desc: |
+            The small path leads west through the light forest.
+      key: -1
+  extra_descs:
+  - keywords:
+    - tree
+    - trees
+    desc: |
+              The trees are fairly young, not much more than a hundred years or so.
+  - keywords:
+    - path
+    - paths
+    desc: |
+              The path is probably used by the cabin's inhabitants.
+  - keywords:
+    - cabin
+    - logs
+    - log
+    desc: |
+              It looks simple but comfortable and the slender trees make the whole place seem
+              pretty idyllic.  It is a cabin built from wooden logs.
+- vnum: 6010
+  name: Inside The Cabin
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You are inside a small one-room cabin made entirely from heavy logs.
+    It is very sparsely furnished, containing only the most basic housekeeping
+    equipment, such as a bed, a chair and a table.
+  exits:
+    south:
+      to: 6009
+      desc: |
+            The wooden door leads south.
+      door: regular
+      key: -1
+      keywords: door wooden
+  extra_descs:
+  - keywords:
+    - carving
+    - carvings
+    - carved
+    desc: |
+              On the table is carved :
+                                                                /) /)
+                        Danny and Mari, Oct 31, 1991           ( o o )
+                                                                = x =
+                                                               m     m
+                                                            ***(========-
+  - keywords:
+    - table
+    desc: |
+              A heavy table that doesn't even appear to rock.  It seems to have something
+              carved on it.
+  - keywords:
+    - chair
+    desc: |
+              It is made from oak and looks strong and sturdy.
+  - keywords:
+    - bed
+    desc: |
+              It is definitely not the most comfortable bed you have seen in your life.
+- vnum: 6011
+  name: A Small Path Through The Light Forest
+  sector: forest
+  desc: |2
+       You are on a small path leading through the forest.  The trees are tall and
+    slender.  Paths lead north and south.
+  exits:
+    north:
+      to: 6002
+      desc: |
+            The path leads north through the young trees.
+      key: -1
+    south:
+      to: 6008
+      desc: |
+            The path leads south through the young trees.
+      key: -1
+  extra_descs:
+  - keywords:
+    - tree
+    - trees
+    desc: |
+              The trees are fairly young, not much more than a hundred years or so.
+  - keywords:
+    - path
+    - paths
+    desc: |
+              The narrow path is probably used by the animals living in the forest.
+- vnum: 6012
+  name: An Intersection In The Dense Forest
+  sector: forest
+  desc: |2
+       You are on a small path leading through the dense forest.  The crowns of the
+    old trees leave the forest floor in an unreal twilight illumination.  Paths
+    lead north, east and south.
+  exits:
+    north:
+      to: 6007
+      desc: |
+            The small path leads north through the trees.
+      key: -1
+    east:
+      to: 6013
+      desc: |
+            The small path leads east through the trees.
+      key: -1
+    south:
+      to: 6021
+      desc: |
+            The small path leads south through the trees.
+      key: -1
+  extra_descs:
+  - keywords:
+    - tree
+    - trees
+    desc: |
+              The trees are mostly old beeches and oaks.
+  - keywords:
+    - path
+    - paths
+    desc: |
+              The narrow path is probably used by the animals living in the forest.
+- vnum: 6013
+  name: A Small Path In The Dense Forest
+  sector: forest
+  desc: |2
+       You are on a small path leading through the dense forest.  The crowns of
+    the old trees leave the forest in an unreal twilight illumination.  The path
+    continues east and west.
+  exits:
+    east:
+      to: 6014
+      desc: |
+            The small path leads east through the trees.
+      key: -1
+    west:
+      to: 6012
+      desc: |
+            The small path leads west through the trees.
+      key: -1
+  extra_descs:
+  - keywords:
+    - tree
+    - trees
+    desc: |
+              The trees are mostly old beeches and oaks.
+  - keywords:
+    - path
+    - paths
+    desc: |
+              The narrow path is probably used by the animals living in the forest.
+- vnum: 6014
+  name: An Intersection In The Dense Forest
+  sector: forest
+  desc: |2
+       You are on a small path leading through the dense forest.  The forest
+    gradually lightens to the north.  Paths lead north, east and west.
+  exits:
+    north:
+      to: 6009
+      desc: |
+            The path leads north to a lighter part of the forest.
+      key: -1
+    east:
+      to: 6015
+      desc: |
+            The small path leads east through the trees.
+      key: -1
+    west:
+      to: 6013
+      desc: |
+            The small path leads west through the trees.
+      key: -1
+  extra_descs:
+  - keywords:
+    - tree
+    - trees
+    desc: |
+              The crowns of the old trees leave the forest in an unreal twilight
+              illumination.
+  - keywords:
+    - path
+    - paths
+    desc: |
+              The narrow path is probably used by the animals living in the forest.
+- vnum: 6015
+  name: A Small Path In The Dense Forest
+  sector: forest
+  desc: |2
+       You are on a small path leading through the dense forest.  The crowns of
+    the old trees leave the forest in an unreal twilight illumination.  The path
+    continues south and west.
+  exits:
+    south:
+      to: 6016
+      desc: |
+            The small path leads south through the trees.
+      key: -1
+    west:
+      to: 6014
+      desc: |
+            The small path leads west through the trees.
+      key: -1
+  extra_descs:
+  - keywords:
+    - tree
+    - trees
+    desc: |
+              The trees are mostly old beeches and oaks.
+  - keywords:
+    - path
+    - paths
+    desc: |
+              The narrow path is probably used by the animals living in the forest.
+- vnum: 6016
+  name: A Small Path In The Dense Forest
+  sector: forest
+  desc: |2
+       You are on a small path leading through the dense forest.  The crowns of
+    the old trees leave the forest in an unreal twilight illumination.  The path
+    continues north, south and east.
+  exits:
+    north:
+      to: 6015
+      desc: |
+            The small path leads north through the trees.
+      key: -1
+    east:
+      to: 6028
+      desc: |
+            The small path leads east through the trees.
+      key: -1
+    south:
+      to: 6017
+      desc: |
+            The small path leads south through the trees.
+      key: -1
+  extra_descs:
+  - keywords:
+    - tree
+    - trees
+    desc: |
+              The trees are mostly old beeches and oaks.
+  - keywords:
+    - path
+    - paths
+    desc: |
+              The narrow path is probably used by the animals living in the forest.
+- vnum: 6017
+  name: A Small Path In The Dense Forest
+  sector: forest
+  desc: |2
+       You are at a turn on a small path leading through the dense forest.  The
+    forest seems to become lighter to the west.  The path continues north and west.
+  exits:
+    north:
+      to: 6016
+      desc: |
+            The small path leads north through the trees.
+      key: -1
+    west:
+      to: 6018
+      desc: |
+            The small path leads west through the trees to a lighter part of the forest.
+      key: -1
+  extra_descs:
+  - keywords:
+    - up
+    - branches
+    - branch
+    - large
+    desc: |
+              The branch of a large oak stretches out above the path from the east.
+  - keywords:
+    - tree
+    - trees
+    desc: |
+              The crowns of the old trees leave the forest in an unreal twilight
+              illumination.  A large branch looms above you, over the path.
+  - keywords:
+    - path
+    - paths
+    desc: |
+              The narrow path is probably used by the animals living in the forest.
+- vnum: 6018
+  name: An Intersection In The Light Forest
+  sector: forest
+  desc: |2
+       You are on a small path leading through the forest.  A path leads north to
+    a small field and other paths lead east and west into the dense forest.
+  exits:
+    north:
+      to: 6023
+      desc: |
+            The path leads north to a small, grassy field.
+      key: -1
+    east:
+      to: 6017
+      desc: |
+            The path leads east to a dense part of the forest.
+      key: -1
+    west:
+      to: 6019
+      desc: |
+            The path leads west to a dense part of the forest.
+      key: -1
+  extra_descs:
+  - keywords:
+    - tree
+    - trees
+    desc: |
+              The tall trees are young and slender, not much more than a hundred years or so.
+  - keywords:
+    - path
+    - paths
+    desc: |
+              The narrow path is probably used by the animals living in the forest.
+- vnum: 6019
+  name: A Small Path In The Dense Forest
+  sector: forest
+  desc: |2
+       You are on a small path leading through the dense forest.  The forest seems
+    to become lighter to the east.  The path continues north and east.
+  exits:
+    north:
+      to: 6020
+      desc: |
+            The small path leads north through the trees.
+      key: -1
+    east:
+      to: 6018
+      desc: |
+            The small path leads east through the trees to a lighter part of the forest.
+      key: -1
+  extra_descs:
+  - keywords:
+    - tree
+    - trees
+    desc: |
+              The crowns of the old trees leave the forest in an unreal twilight
+              illumination.
+  - keywords:
+    - path
+    - paths
+    desc: |
+              The narrow path is probably used by the animals living in the forest.
+- vnum: 6020
+  name: A Small Path In The Dense Forest
+  sector: forest
+  desc: |2
+       You are on a small path leading through the dense forest.  The crowns of
+    the old trees leave the forest in an unreal twilight illumination.  The path
+    continues south and west.
+  exits:
+    south:
+      to: 6019
+      desc: |
+            The small path leads south through the trees.
+      key: -1
+    west:
+      to: 6021
+      desc: |
+            The small path leads west through the trees.
+      key: -1
+  extra_descs:
+  - keywords:
+    - tree
+    - trees
+    desc: |
+              The trees are mostly old beeches and oaks.
+  - keywords:
+    - path
+    - paths
+    desc: |
+              The narrow path is probably used by the animals living in the forest.
+- vnum: 6021
+  name: A Small Path In The Dense Forest
+  sector: forest
+  desc: |2
+       You are on a small path leading through the dense forest.  To the west
+    you see a dark cave entrance, leading into a small hillside.  The path
+    continues north and east.
+  exits:
+    north:
+      to: 6012
+      desc: |
+            The small path leads north through the trees.
+      key: -1
+    east:
+      to: 6020
+      desc: |
+            The small path leads east through the trees.
+      key: -1
+    west:
+      to: 6022
+      desc: |
+            The cave is very dark.
+      key: -1
+  extra_descs:
+  - keywords:
+    - cave
+    - entrance
+    desc: |
+              The irregular opening is eight feet wide and six feet tall.  An acrid smell
+              emanates from within.
+  - keywords:
+    - tree
+    - trees
+    desc: |
+              The crowns of the old trees leave the forest in an unreal twilight
+              illumination.
+  - keywords:
+    - path
+    - paths
+    desc: |
+              The narrow path is probably used by the animals living in the forest.
+- vnum: 6022
+  name: Inside The Cave
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are in a natural cave.  Various sorts of debris cover the stone floor,
+    emitting a rather unpleasant smell that makes the air thick and hard to
+    breathe.  The only obvious exit is east.
+  exits:
+    east:
+      to: 6021
+      desc: |
+            The cave opening is to the east.
+      key: -1
+  extra_descs:
+  - keywords:
+    - air
+    - smell
+    desc: |
+              Kind of transparent, but quite noticeable nevertheless.
+  - keywords:
+    - cave
+    - walls
+    - floor
+    - stone
+    desc: |
+              Quite uninteresting.
+  - keywords:
+    - debris
+    desc: |
+              It consists mostly of gnawed bones mixed with small pieces of torn fur.
+- vnum: 6023
+  name: A Grassy Field
+  sector: field
+  desc: |2
+       You are in a grass covered field somewhere in the forest.  The tall grass
+    nearly reaches your waist, and the surrounding oaks and beeches form an almost
+    wall-like thicket on the east side of the field.  To the northeast you can see
+    a small lake.  A small path leads south through the trees, and the field opens
+    up to the north and west.
+  exits:
+    north:
+      to: 6026
+      desc: |
+            Wind blowing in from the north carries with it the smell of a newly killed
+            animal, as well as the noise of many birds, which you can see circling there.
+      key: -1
+    east:
+      to: 6024
+      desc: |
+            The ground slopes gently downward to the eastern tree line.
+      key: -1
+    south:
+      to: 6018
+      desc: |
+            The small path leads south in between the trees.
+      key: -1
+  extra_descs:
+  - keywords:
+    - birds
+    - bird
+    - circling
+    desc: |
+              Many carrion birds are circling to the north, you presume they are waiting for
+              their turn to feast on a corpse.
+  - keywords:
+    - tree
+    - trees
+    - thicket
+    desc: |
+              The trees form a close thicket, blocking any exit to the west.
+  - keywords:
+    - path
+    desc: |
+              The narrow path is probably used by the animals living in the forest.
+  - keywords:
+    - grass
+    desc: |
+              The tall grass makes a nice hiding place for animals.
+- vnum: 6024
+  name: The Lower Part Of The Grassy Field
+  sector: field
+  desc: |2
+       You are in a lower part of the grassy field, south of a small lake.  The
+    grass here has been trampled by the many animals coming here for water, leaving
+    the ground covered in tracks of different types.  To the west you see a break
+    in the wall of trees surrounding the field, and to the north is a small lake.
+  exits:
+    north:
+      to: 6025
+      desc: |
+            The animal tracks lead off to the north, and around the lake there.
+      key: -1
+    west:
+      to: 6023
+      desc: |
+            To the south-west you see a break in the tree line, leading back to the
+            forest path.
+      key: -1
+  extra_descs:
+  - keywords:
+    - tree
+    - trees
+    - thicket
+    desc: |
+              The trees form a close thicket, blocking any exit to the south and east.
+  - keywords:
+    - path
+    - trampled
+    desc: |
+              The trampled grass path leads to the lake north of here.
+  - keywords:
+    - grass
+    desc: |
+              The tall grass makes a nice hiding place for animals.
+- vnum: 6025
+  name: Beside The Lake In A Grassy Field
+  sector: field
+  desc: |2
+       The grass stops shortly before the lake, replaced by mud covered in tracks
+    from the local animals.  When you come close many animals scatter into the tall
+    grass and some even into the forest.  To the west you see birds circling in the
+    high in the air, and to the north you see a small lake, surrounded by tall
+    reeds.  The field continues to the south, and the forest blocks passage to the
+    east.
+  exits:
+    north:
+      to: 6027
+      desc: |
+            The lake looks inviting, and you can see some sort of water fowl floating
+            around among the reeds.
+      key: -1
+    south:
+      to: 6024
+      desc: |
+            To the south an animal trail leads of towards a the other side of the lower
+            field.
+      key: -1
+    west:
+      to: 6026
+      desc: |
+            The smell of carrion drifts down to you from higher on the field to the west.
+      key: -1
+  extra_descs:
+  - keywords:
+    - track
+    - tracks
+    - mud
+    desc: |
+              You see tracks of both hooved and other sorts of animals.  Evidence of all
+              sizes of animals is here in the mud, showing just how lively the forest is.
+  - keywords:
+    - birds
+    - bird
+    - circling
+    desc: |
+              Many carrion birds are circling to the west, you presume they are waiting for
+              their turn to feast on a corpse.
+  - keywords:
+    - tree
+    - trees
+    - thicket
+    desc: |
+              The trees form a close thicket, blocking any exit to the north or east.
+  - keywords:
+    - lake
+    desc: |
+              Animals from all around come here to drink.  The lake itself is not very big,
+              but it stretches off to the north from here.
+  - keywords:
+    - grass
+    desc: |
+              The tall grass makes a nice hiding place for animals.
+- vnum: 6026
+  name: The Northern Section Of A Grassy Field
+  sector: field
+  desc: |2
+       As you come close, scavenging animals and birds of all sorts scatter,
+    leaving only the boldest and stupidest encircling the corpse of a large boar.
+    Carrion birds circle overhead, and smaller animals stare out of the tall grass
+    at you.  The grass here has been trampled, and a large area around the corpse
+    is stained by blood.  A trail leads down the sloping field to a lake, and to
+    the south you see the path back to the forest.
+  exits:
+    east:
+      to: 6025
+      desc: |
+            A small lake lies down the sloping field to the east.  Some of the animals
+            that fled from here have gone there, and are watching, waiting for you to
+            leave so they can resume their feasting.
+      key: -1
+    south:
+      to: 6023
+      desc: |
+            The field continues to the south, and you can see the path back to the forest
+            there.
+      key: -1
+  extra_descs:
+  - keywords:
+    - animal
+    - animals
+    - small
+    desc: |
+              Several pairs of eyes peer out at you, urging you to leave.  The just might
+              decide that en masse they could kill you, so you probably don't want to tarry
+              here.
+  - keywords:
+    - birds
+    - circling
+    desc: |
+              Many birds of varying size circle overhead, waiting for you to leave.  You
+              hope they don't decide that you could be a corpse with just a little effort.
+  - keywords:
+    - tree
+    - trees
+    - thicket
+    desc: |
+              The trees form a close thicket, blocking any exit to the north and west.
+  - keywords:
+    - path
+    desc: |
+              The narrow path is probably used by the animals living in the forest.
+  - keywords:
+    - grass
+    desc: |
+              The tall grass makes a nice hiding place for animals.  You see some of the
+              animals you frightened away peeking furtively out at you.
+- vnum: 6027
+  name: On The Lake
+  sector: water_noswim
+  desc: |2
+       You are in the middle of a small lake, fed from a small stream coming
+    through the forest from the northwest.  The water is not that clear, but
+    you can see fish swimming around below you.  The bank is clear to the
+    south, providing a safe place to get back to the field.
+  exits:
+    south:
+      to: 6025
+      desc: |
+            Some animals have gathered on the bank to watch you, curious about what you
+            are doing.
+      key: -1
+  extra_descs:
+  - keywords:
+    - reed
+    - reeds
+    desc: |
+              Reeds grow up around the edges of the lake, providing cover for the small
+              water fowl that live here.
+  - keywords:
+    - tree
+    - trees
+    - thicket
+    desc: |
+              Trees cover the bank on most sides, preventing you from docking there.
+  - keywords:
+    - lake
+    desc: |
+              Animals from all around come here to drink.  The lake itself is not very big,
+              but it stretches off to the north from here.
+  - keywords:
+    - fish
+    desc: |
+              Trout and perhaps a catfish or two swim about below you, totally ignoring
+              your presence.
+- vnum: 6028
+  name: A Small Path In The Dense Forest
+  sector: forest
+  desc: |2
+       You are on a small path leading through the dense forest.  The crowns of
+    the old trees leave the forest in an unreal twilight illumination.  The path
+    continues to the west and south.
+  exits:
+    south:
+      to: 6029
+      key: -1
+    west:
+      to: 6016
+      desc: |
+            The small path leads west through the trees.
+      key: -1
+  extra_descs:
+  - keywords:
+    - tree
+    - trees
+    desc: |
+              The trees are mostly old beeches and oaks.
+  - keywords:
+    - path
+    - paths
+    desc: |
+              The narrow path is probably used by the animals living in the forest.
+- vnum: 6029
+  name: Near A Large Tree In The Dense Forest
+  sector: forest
+  flags:
+  - no_mob
+  desc: |2
+       You are at the end of a small path leading through the dense forest.  The
+    crowns of the old trees leave the forest in an unreal twilight illumination.
+    This rough clearing is dominated by a very large oak tree, probably the
+    largest in this part of the forest.  The path leads back to the north.
+  exits:
+    north:
+      to: 6028
+      key: -1
+    up:
+      to: 6030
+      desc: |
+            You see the lower branches of the towering oak.
+      key: -1
+  extra_descs:
+  - keywords:
+    - top
+    - highest
+    - high
+    desc: |
+              You could probably see most of the forest, and perhaps even the city from the
+              top of the tree... of course, you'd have to deal with whatever that shape is
+              pacing on one of the upper limbs.
+  - keywords:
+    - limb
+    - limbs
+    desc: |
+              They look quite sturdy, certainly capable of holding your weight should you
+              decide to climb up the tree using them.
+  - keywords:
+    - animal
+    - shape
+    desc: |
+              From here it looks vaguely feline, though you could get a much better view
+              from in the tree.  You are not sure if it has seen you yet.
+  - keywords:
+    - large
+    - oak
+    - tree
+    desc: |
+              It has some lower branches that you think you could reach if you stretched.
+              You might even be able to climb all the top, though from here it looks like
+              something else had that idea before you.  There is a faint animal shape pacing
+              on one of the highest branches.
+  - keywords:
+    - trees
+    desc: |
+              The trees are mostly old beeches and oaks, with one large oak off to your
+              right.
+  - keywords:
+    - path
+    - paths
+    desc: |
+              The narrow path is probably used by the animals living in the forest.
+- vnum: 6030
+  name: In The Lower Branches Of A Large Oak
+  sector: mountains
+  desc: |2
+       You are in a huge oak, about one third of the way to the top.  The branches
+    above you block out much of the light, but enough filters through for you to
+    see.  Small animals and birds scatter at your approach, rustling the leaves
+    all about you.  You could easily climb back down to the ground, or continue up
+    the tree.  One large branch juts outward to the west, possibly providing a
+    third choice of exit.
+  exits:
+    west:
+      to: 6031
+      desc: |
+            This limb looks large and strong enough for you to walk most of the way along
+            its length to the west.
+      key: -1
+    up:
+      to: 6032
+      desc: |
+            More large branches spread out from the tree above you.
+      key: -1
+    down:
+      to: 6029
+      desc: |
+            The rough clearing is just a quick climb and jump below you.
+      key: -1
+  extra_descs:
+  - keywords:
+    - top
+    - highest
+    - high
+    desc: |
+              You could probably see most of the forest, and perhaps even the city from the
+              top of the tree... of course, you would have to deal with whatever that shape
+              is that you see pacing on one of the upper limbs.
+  - keywords:
+    - limb
+    - limbs
+    desc: |
+              They look quite sturdy, certainly capable of holding your weight should you
+              decide to climb around in the tree using them.
+  - keywords:
+    - pacing
+    - pace
+    - animal
+    - shape
+    desc: |
+              From here it looks feline.  You still don't think it has noticed you, despite
+              the noise you made while climbing up here.
+  - keywords:
+    - feline
+    desc: |
+              The shape above you moves with definite grace and confidence.  You think that
+              it must be a Bobcat, stalking smaller tree-dwelling animals.
+  - keywords:
+    - animals
+    - bird
+    - birds
+    desc: |
+              A variety of squirrels, chipmunks, and birds make their homes in this and the
+              surrounding trees.  If you look closely you may be able to see some of their
+              rapidly emptying nests.
+  - keywords:
+    - nest
+    - nests
+    desc: |
+              After a short period of looking, you notice a bird's nest on a limb not far
+              above you, and a large squirrel's nest in the crook of a large limb that
+              stretches out towards the west.
+- vnum: 6031
+  name: Out On A Limb In A Large Oak
+  sector: forest
+  flags:
+  - no_mob
+  desc: |2
+       This sturdy branch hangs far out over a path to the west, which you might
+    be able to jump down to.  Several squirrels scamper into hiding as you
+    approach, leaving you alone and swaying slightly with the wind.  To your north
+    you can see a small log cabin through the trees, and to the southeast there
+    seems to be some sort of clearing, with many birds circling above it.
+  exits:
+    east:
+      to: 6030
+      desc: |
+            Back to the east you see the tree trunk.  It is much less precarious there
+            compared to here... perhaps you should go back.
+      key: -1
+    down:
+      to: 6016
+      desc: |
+            Below you is a small path, probably used by the forest animals.  You think
+            that you could jump down with a little effort.
+      key: -1
+  extra_descs:
+  - keywords:
+    - top
+    - highest
+    - high
+    desc: |
+              You could probably see most of the forest, and perhaps even the city from the
+              top of the tree... of course, you would have to deal with whatever that shape
+              is that you see pacing on one of the upper limbs.
+  - keywords:
+    - limb
+    - limbs
+    desc: |
+              The limbs look quite sturdy, certainly capable of holding your weight should
+              you decide to climb around in the tree using them.
+  - keywords:
+    - pacing
+    - pace
+    - animal
+    - shape
+    desc: |
+              From here it looks feline.  You still don't think it has noticed you, despite
+              the noise you made while climbing up here.
+  - keywords:
+    - feline
+    desc: |
+              The shape above you moves with definite grace and confidence.  You think that
+              it must be a Bobcat, stalking smaller tree-dwelling animals.
+  - keywords:
+    - animals
+    - bird
+    - birds
+    desc: |
+              A variety of squirrels, chipmunks, and birds make their homes in this and the
+              surrounding trees.  If you look closely you may be able to see some of their
+              rapidly emptying nests.
+  - keywords:
+    - nest
+    - nests
+    desc: |
+              You notice that several of the squirrels sought refuge in a large nest that is
+              well within your reach.  Looking into the nest, you see two pairs of eyes
+              staring back at you.
+- vnum: 6032
+  name: Midway To The Top Of The Large Oak
+  sector: mountains
+  desc: |2
+       You are in a huge oak, about midway to the top.  The branches above you
+    block out much of the light, but enough filters through for you to see.  A few
+    birds have remained to watch you from the fringe branches, well out of your
+    reach.  Scratches mar the tree here, and torn bark is scattered near you on the
+    branch.  It would seem some large forest cat lives nearby, so you had better be
+    careful!  You can continue a bit farther up the tree, or descend to limbs that
+    don't sway so much.
+  exits:
+    up:
+      to: 6033
+      desc: |
+            Above you the tree narrows farther, but it still looks like you could climb up
+            there.  A feline shape is pacing about above you, trying to get to a large
+            wounded bird.  Perhaps you should try to see what sort of cat this is before
+            you interrupt its hunt... it might eat you instead of the bird.
+      key: -1
+    down:
+      to: 6030
+      key: -1
+  extra_descs:
+  - keywords:
+    - top
+    - highest
+    - high
+    desc: |
+              You could probably see most of the forest, and perhaps even the city from the
+              top of the tree... of course, you would have to deal with whatever that shape
+              is that you see pacing on one of the upper limbs.
+  - keywords:
+    - limb
+    - limbs
+    desc: |
+              They look quite sturdy, certainly capable of holding your weight should you
+              decide to climb around in the tree using them.
+  - keywords:
+    - feline
+    - cat
+    - pacing
+    - pace
+    - shape
+    desc: |
+              It looks like a Bobcat, and it seems quite intent on getting to a large bird
+              that it has wounded.  It has not seen you yet, or perhaps just thinks you are
+              too easy a meal.
+  - keywords:
+    - animal
+    - animals
+    - bird
+    - birds
+    desc: |
+              A variety of squirrels, chipmunks, and birds make their homes in this and the
+              surrounding trees.  If you look closely you may be able to see some of their
+              rapidly emptying nests.
+  - keywords:
+    - nest
+    - nests
+    desc: |
+              A medium sized bird's nest is close to you here, and it looks like it has some
+              nice looking eggs in it too!
+- vnum: 6033
+  name: High In The Large Oak
+  sector: mountains
+  desc: |2
+       The tree top gently sways in the wind, and you think you are as high as
+    you can safely go in the tree.  The limbs here show evidence of a small battle,
+    with ripped bark and loose feathers scattered everywhere.  Looking around, you
+    can see the forest stretching out below you in all directions.  To the east you
+    see Midgaard, and to the south the river runs through a deep chasm.  North and
+    west of here you can see another small village, and on the western horizon you
+    see a large mountain.
+  exits:
+    down:
+      to: 6032
+      desc: |
+            Below you many of the animals you frightened earlier have returned to their
+            various nests and homes.  You can see a small hint of the path far below you
+            through the branches.
+      key: -1
+  extra_descs:
+  - keywords:
+    - river
+    - chasm
+    desc: |
+              To the south you see a river flowing roughly from the northeast to the west.
+              It emerges from a dark opening in the side of a mountain and flows through
+              Midgaard, and on into the forest.  It has eroded a deep chasm in the soft stone
+              under the forest floor, and is not visible for long after it enters the forest
+              proper.
+  - keywords:
+    - mountain
+    - range
+    - northeast
+    desc: |
+              A long mountain range stretches across the horizon to the north and northeast.
+              You have heard rumors of many different sorts of creatures living there,
+              varying from Dwarves and Humans to Ogres and various humanoid creatures.  Some
+              say that evil Dark Elves dwell in the underworld deep below the lands of the
+              Dwarves.  The caves of Moria also are found there, populated by all sorts of
+              evil creatures.
+  - keywords:
+    - around
+    - trees
+    - everywhere
+    - woods
+    - forest
+    desc: |
+              Off to the southwest you can see a grass covered field, and a small lake;
+              nortwest of you is a small cabin and a large pile of wood.  Far to west the
+              treetops form a tight canopy, blocking out almost all sunlight and your view.
+              It is said that large wolves live there.  You've also heard rumors of horrible
+              spiders and drow living there.  You'd be best off leaving that area to more
+              experienced adventurers. 
+- vnum: 6060
+  name: A Shaded Path Through The Forest
+  sector: forest
+  desc: |2
+       You are on a small shaded path leading through the trees.  The forest
+    gradually lightens to the east.  The path continues to the north, and to the
+    south you see the main trail.
+  exits:
+    north:
+      to: 6065
+      desc: |
+            The path winds its way between the trees.
+      key: -1
+    south:
+      to: 6001
+      desc: |
+            Through a break in the tree line you see the main trail that heads back towards
+            Midgaard.
+      key: -1
+  extra_descs:
+  - keywords:
+    - tree
+    - trees
+    desc: |
+              They are mostly young oaks and tall beeches.
+  - keywords:
+    - path
+    - paths
+    - shaded
+    desc: |
+              The shaded path is probably used by the small animals living in the forest.
+- vnum: 6061
+  name: A Shaded Path Through The Forest
+  sector: forest
+  desc: |2
+       You are at a turn on a small shadowed path leading through the forest.  The
+    forest seems to become lighter to the west.  The path continues north and west.
+  exits:
+    north:
+      to: 6066
+      desc: |
+            The path winds its way between the trees.
+      key: -1
+    west:
+      to: 6062
+      desc: |
+            The path winds its way between the trees.
+      key: -1
+  extra_descs:
+  - keywords:
+    - tree
+    - trees
+    desc: |
+              The crowns of the old trees leave the forest in an unreal twilight
+              illumination.  A large branch looms above you, over the path.
+  - keywords:
+    - path
+    - paths
+    - shaded
+    - shadowed
+    desc: |
+              The shadowy path is probably used by the small animals living in the forest.
+- vnum: 6062
+  name: A Shaded Path Through The Dense Forest
+  sector: forest
+  desc: |2
+       You are on a small shaded path leading through the dense forest.  The
+    crowns of the old trees leave the forest floor in an unreal twililght
+    illumination.  To the north you see a small clearing.  Paths lead east and
+    west.
+  exits:
+    north:
+      to: 6067
+      desc: |
+            Through the underbrush you see a small clearing.
+      key: -1
+    east:
+      to: 6061
+      desc: |
+            The path winds its way between the trees.
+      key: -1
+    west:
+      to: 6063
+      desc: |
+            The path winds its way between the trees.
+      key: -1
+  extra_descs:
+  - keywords:
+    - tree
+    - trees
+    desc: |
+              The trees are mostly old beeches and oaks.
+  - keywords:
+    - path
+    - paths
+    - shaded
+    - shadowy
+    desc: |
+              The shaded path is probably used by the small animals living in the forest.
+- vnum: 6063
+  name: A Shaded Path Through The Dense Forest
+  sector: forest
+  desc: |2
+       You are on a small shaded path through the dense forest.  The crowns of
+    the old trees leave the forest in an unreal twilight illumination.  The path
+    continues north and east.
+  exits:
+    north:
+      to: 6068
+      desc: |
+            The path winds its way between the trees.
+      key: -1
+    east:
+      to: 6062
+      desc: |
+            The path winds its way between the trees.
+      key: -1
+  extra_descs:
+  - keywords:
+    - tree
+    - trees
+    desc: |
+              The trees are mostly old beeches and oaks.
+  - keywords:
+    - path
+    - paths
+    - shaded
+    desc: |
+              The shaded path is probably used by the animals living in the forest.
+- vnum: 6064
+  name: A Shadowy Path Through The Dense Forest
+  sector: forest
+  desc: |2
+       You are on a small shadowy path leading through the dense forest.  The
+    crowns of the old trees leave the forest in an unreal twilight illumination.
+    The path continues north and south.
+  exits:
+    north:
+      to: 6069
+      desc: |
+            The path winds its way between the trees.
+      key: -1
+    south:
+      to: 6100
+      desc: |
+            The path winds its way into darkness.
+      key: -1
+  extra_descs:
+  - keywords:
+    - tree
+    - trees
+    desc: |
+              The trees are mostly old beeches and oaks.
+  - keywords:
+    - path
+    - paths
+    - shadowy
+    desc: |
+              The shadowy path is probably used by the animals living in the forest.
+- vnum: 6065
+  name: A Shaded Path Through The Forest
+  sector: forest
+  desc: |2
+       You are at a turn on a small shaded path winding through the trees.  The
+    forest gradually becomes more dense to the west.  The path continues west and
+    south from here.
+  exits:
+    south:
+      to: 6060
+      desc: |
+            Through the trees to the south you can almost see the main trail leading back
+            to Midgaard.
+      key: -1
+    west:
+      to: 6066
+      desc: |
+            The path winds its way between the trees.
+      key: -1
+  extra_descs:
+  - keywords:
+    - tree
+    - trees
+    desc: |
+              The trees are mostly young oaks and tall beeches.
+  - keywords:
+    - path
+    - paths
+    - shaded
+    desc: |
+              The shadowed path is probably used by the small animals living in the forest.
+- vnum: 6066
+  name: A Fork On The Shaded Path Through The Forest
+  sector: forest
+  desc: |2
+       You are at a fork in the small shaded path winding through the trees.  The
+    forest gradually becomes more dense to the west.  The path branches to the
+    north and south here, and also continues to the east.
+  exits:
+    north:
+      to: 6071
+      desc: |
+            The path winds its way between the trees.
+      key: -1
+    east:
+      to: 6065
+      desc: |
+            The path winds its way between the trees.
+      key: -1
+    south:
+      to: 6061
+      desc: |
+            The path winds its way between the trees.
+      key: -1
+  extra_descs:
+  - keywords:
+    - tree
+    - trees
+    desc: |
+              The trees are mostly old beeches and oaks.
+  - keywords:
+    - path
+    - paths
+    - shaded
+    desc: |
+              The shaded path is probably used by the small animals living in the forest.
+- vnum: 6067
+  name: At The Fallen Tree
+  sector: forest
+  desc: |2
+       You are standing in a small clearing, beside a large fallen tree.  A large
+    amount of the tree has already decomposed, but some pieces remain, scattered
+    about the clearing.  Paths border the clearing to the north and south.
+  exits:
+    north:
+      to: 6072
+      desc: |
+            A shaded path winds its way northeast between the trees.
+      key: -1
+    south:
+      to: 6062
+      desc: |
+            A shaded path winds its way east between the trees.
+      key: -1
+  extra_descs:
+  - keywords:
+    - under
+    - animal
+    - den
+    desc: |
+              Under a log you think you see some sort of hole, or animal's den.  Looking
+              closer, you can make out the form of what you believe to be a Badger resting
+              inside of the den.
+  - keywords:
+    - clearing
+    - clear
+    desc: |
+              When the large tree fell it must have brought a few of the smaller trees down
+              with it in order to make a clearing like this.
+  - keywords:
+    - fallen
+    - rotten
+    - decomposed
+    - tree
+    desc: |
+              The tree has mostly rotted away, providing nourishment to many small plants
+              growing here in the clearing.  The few pieces that remain are not all that
+              large, but one log in particular catches your eye and seems to remind you of
+              something.  Under one of these logs would be a great place for an animal to
+              make its den...
+  - keywords:
+    - path
+    - paths
+    desc: |
+              The shaded paths are probably used by the animals living in the forest.
+- vnum: 6068
+  name: An Intersection On The Shaded Path
+  sector: forest
+  desc: |2
+       You are on a small shaded path leading through the dense forest.  The
+    crowns of the old trees leave the forest in an unreal twilight illumination.
+    The path continues north, south, and west.
+  exits:
+    north:
+      to: 6073
+      desc: |
+            The path winds its way between the trees.
+      key: -1
+    south:
+      to: 6063
+      desc: |
+            The path winds its way between the trees.
+      key: -1
+    west:
+      to: 6069
+      desc: |
+            The path winds its way between the trees.
+      key: -1
+  extra_descs:
+  - keywords:
+    - tree
+    - trees
+    desc: |
+              The trees are mostly old beeches and oaks.
+  - keywords:
+    - path
+    - paths
+    - shaded
+    desc: |
+              The shaded path is probably used by the animals living in the forest.
+- vnum: 6069
+  name: A Shadowy Path Through The Dense Forest
+  sector: forest
+  desc: |2
+       You are on a small shadowy path leading through the dense forest.  The
+    crowns of the old trees leave the forest in an unreal twilight illumination.
+    The path continues south and east.
+  exits:
+    east:
+      to: 6068
+      desc: |
+            The path winds its way between the old trees.
+      key: -1
+    south:
+      to: 6064
+      desc: |
+            The path winds its way between the trees.
+      key: -1
+  extra_descs:
+  - keywords:
+    - tree
+    - trees
+    desc: |
+              The trees are mostly old beeches and oaks.
+  - keywords:
+    - path
+    - paths
+    - shaded
+    - shadowy
+    desc: |
+              The shadowy path is probably used by the animals living in the forest.
+- vnum: 6070
+  name: Off Of The Path In The Shaded Forest
+  sector: forest
+  desc: |2
+       You are wandering amongst the trees in the light forest, without the aid
+    of a path or trail.  More sunlight trickles through the treetops here, making
+    your travel a bit easier.  Small animals scurry away as you approach.  You
+    are no longer on a path, so you may go whichever way you please.
+  exits:
+    north:
+      to: 6078
+      desc: |
+            The trees seem to part, exposing a trail into the shade.
+      key: -1
+    east:
+      to: 6070
+      desc: |
+            The trees seem to part, exposing a trail into the shade.
+      key: -1
+    south:
+      to: 6061
+      desc: |
+            The trees seem to part, exposing a trail into the shade.
+      key: -1
+    west:
+      to: 6072
+      desc: |
+            The trees seem to part, exposing a trail into the shade.
+      key: -1
+  extra_descs:
+  - keywords:
+    - tree
+    - trees
+    desc: |
+              The trees are younger here than to those to the west.
+  - keywords:
+    - path
+    - paths
+    desc: |
+              The path is long behind you now... you aren't sure which direction it lies
+              in anymore.
+- vnum: 6071
+  name: A Shaded Path Through The Forest
+  sector: forest
+  desc: |2
+       You are on a small shaded path leading in between the trees.  The forest
+    gradually lightens to the east.  Paths lead west and south, and you think you
+    see a small path leading eastward.
+  exits:
+    east:
+      to: 6070
+      desc: |
+            It looks like a small path begins between two trees to the east, but you
+            aren't quite certain.
+      key: -1
+    south:
+      to: 6066
+      desc: |
+            The path winds its way through the trees to an split in the path.
+      key: -1
+    west:
+      to: 6072
+      desc: |
+            The path winds its way between the trees.
+      key: -1
+  extra_descs:
+  - keywords:
+    - tree
+    - trees
+    desc: |
+              The trees are mostly old beeches and oaks.
+  - keywords:
+    - path
+    - paths
+    - shadowy
+    - shadowed
+    desc: |
+              The shadowy path is probably used by the small animals living in the forest.
+- vnum: 6072
+  name: A Shaded Path Though The Forest
+  sector: forest
+  desc: |2
+       You are on a small shaded path leading between the trees.  The forest
+    gradually becomes more dense to the west.  Paths lead north and east, and you
+    see a small clearing to the south.
+  exits:
+    north:
+      to: 6075
+      desc: |
+            The path winds its way between the trees.
+      key: -1
+    east:
+      to: 6071
+      desc: |
+            The path winds its way between the trees.
+      key: -1
+    south:
+      to: 6067
+      desc: |
+            A lightly traveled path heads southward to a small clearing.
+      key: -1
+  extra_descs:
+  - keywords:
+    - tree
+    - trees
+    desc: |
+              The trees are mostly old beeches and oaks.
+  - keywords:
+    - path
+    - paths
+    - shaded
+    desc: |
+              The shaded path is probably used by the small animals living in the forest.
+- vnum: 6073
+  name: A Shadowy Path Through The Dense Forest
+  sector: hills
+  desc: |2
+       You are on a small shadowy path leading through the dense forest.  To the
+    north the terrain becomes quite hilly and rough.  The crowns of the old trees
+    leave the forest in an unreal twilight illumination.  The path continues north
+    and south.
+  exits:
+    north:
+      to: 6076
+      desc: |
+            The path winds its way into the hills and denser forest.
+      key: -1
+    south:
+      to: 6068
+      desc: |
+            The path winds its way between the trees.
+      key: -1
+  extra_descs:
+  - keywords:
+    - hill
+    - hills
+    - terrain
+    desc: |
+              To the northwest you see hills covered by dense forest.
+  - keywords:
+    - tree
+    - trees
+    desc: |
+              The trees are mostly old beeches and oaks.
+  - keywords:
+    - path
+    - paths
+    - shadowy
+    desc: |
+              The shadowy path is probably used by the animals living in the forest.
+- vnum: 6074
+  name: A Small Trail Through The Forest
+  sector: forest
+  desc: |2
+       You have just left the shaded path, and you are now standing at the head of
+    a very short trail.  It looks like someone begin clearing away the underbrush
+    here, but didn't get finished.  You may leave in any direction, but the path
+    is to the west.
+  exits:
+    north:
+      to: 6074
+      desc: |
+            The trees seem to part, exposing a trail into the shade.
+      key: -1
+    east:
+      to: 6070
+      desc: |
+            The trees seem to part, exposing a trail into the shade.
+      key: -1
+    south:
+      to: 6070
+      desc: |
+            The trees seem to part, exposing a trail into the shade.
+      key: -1
+    west:
+      to: 6075
+      desc: |
+            Through the underbrush you see a small path winding its way northward.
+      key: -1
+  extra_descs:
+  - keywords:
+    - tree
+    - trees
+    desc: |
+              The trees are mostly old beeches and oaks.
+  - keywords:
+    - path
+    - paths
+    desc: |
+              The narrow path is probably used by the animals living in the forest.
+- vnum: 6075
+  name: A Shaded Path Through The Forest
+  sector: forest
+  desc: |2
+       You are on a small shaded path leading between the trees.  The forest
+    gradually becomes more dense to the west, and to the northwest the terrain
+    is quite hilly.  The path continues north and south.  To the east you see a
+    trail winding through the younger section of the forest.
+  exits:
+    north:
+      to: 6078
+      desc: |
+            The path winds its way between the trees.
+      key: -1
+    east:
+      to: 6074
+      desc: |
+            You think you see the beginnings of a small trail through the younger part of
+            the forest.
+      key: -1
+    south:
+      to: 6072
+      desc: |
+            The path winds its way between the trees.
+      key: -1
+  extra_descs:
+  - keywords:
+    - trail
+    desc: |
+              You think you see the beginnings of a small trail to the east, winding through
+              the younger part of the forest.
+  - keywords:
+    - hills
+    - hill
+    - terrain
+    desc: |
+              To the northwest the ground becomes more hilly. You have heard that a halfling
+              village is somewhere in the hills.
+  - keywords:
+    - tree
+    - trees
+    desc: |
+              The trees are mostly old beeches and oaks.
+  - keywords:
+    - path
+    - paths
+    - shaded
+    desc: |
+              The shaded path is probably used by the animals living in the forest.
+- vnum: 6076
+  name: In The Dense Forest Between The Hills
+  sector: hills
+  flags:
+  - no_mob
+  desc: |2
+       You are standing among tightly packed trees between several hills.  You
+    lost track of the path long ago, and now must rely on your instincts to guide
+    you.  The ground is very rough and rocky here, and only the most hardy plants
+    survive.  The crowns of the old trees leave the hills in an unreal twilight
+    illumination.
+  exits:
+    north:
+      to: 6081
+      desc: |
+            All you see are trees and hillsides.
+      key: -1
+    east:
+      to: 6077
+      desc: |
+            All you see are trees and hillsides.
+      key: -1
+    south:
+      to: 6076
+      desc: |
+            All you see are trees and hillsides.
+      key: -1
+    west:
+      to: 6073
+      desc: |
+            All you see are trees and a shadowy path.
+      key: -1
+  extra_descs:
+  - keywords:
+    - hills
+    - hill
+    desc: |
+              Hills rise up all around you, blocking your view of the terrain.
+  - keywords:
+    - tree
+    - trees
+    desc: |
+              The trees are mostly old beeches and oaks.
+  - keywords:
+    - path
+    - paths
+    desc: |
+              The path is probably around here somewhere... if only you had paid more
+              attention.
+- vnum: 6077
+  name: In The Dense Forest Between The Hills
+  sector: hills
+  flags:
+  - no_mob
+  desc: |2
+       You are standing among tightly packed trees between several hills.  You
+    lost track of the path long ago, and now must rely on your instincts to guide
+    you.  The ground is very rough and rocky here, and only the most hardy plants
+    survive.  The crowns of the old trees leave the hills in an unreal twilight
+    illumination.
+  exits:
+    north:
+      to: 6081
+      desc: |
+            All you see are trees and hillsides.
+      key: -1
+    east:
+      to: 6076
+      desc: |
+            All you see are trees and hillsides.
+      key: -1
+    south:
+      to: 6079
+      desc: |
+            All you see are trees and hillsides.
+      key: -1
+    west:
+      to: 6077
+      desc: |
+            All you see are trees and hillsides.
+      key: -1
+  extra_descs:
+  - keywords:
+    - hills
+    - hill
+    desc: |
+              Hills rise up all around you, blocking your view of the terrain.
+  - keywords:
+    - tree
+    - trees
+    desc: |
+              The trees are mostly old beeches and oaks.
+  - keywords:
+    - path
+    - paths
+    desc: |
+              The path is probably around here somewhere...if only you had paid more
+              attention.
+- vnum: 6078
+  name: In The Dense Forest Between The Hills
+  sector: hills
+  desc: |2
+       You are at the end of a small shaded path leading between the trees.  The
+    forest is quite thick here, and the ground is very rough and hilly, halting
+    your progress.  The path lies to the south.
+  exits:
+    south:
+      to: 6075
+      desc: |
+            The path winds its way between the trees.
+      key: -1
+  extra_descs:
+  - keywords:
+    - hills
+    - hill
+    desc: |
+              The terrian is very hilly and rough to the north and west.  You have heard
+              that there is a halfling village somewhere in the hills.
+  - keywords:
+    - tree
+    - trees
+    desc: |
+              The trees are mostly old beeches and oaks.
+  - keywords:
+    - path
+    - paths
+    - shaded
+    desc: |
+              The shaded path is probably used by the animals living in the forest.
+- vnum: 6079
+  name: In The Dense Forest Between The Hills
+  sector: hills
+  flags:
+  - no_mob
+  desc: |2
+       You are standing among tightly packed trees between several hills.  You
+    lost track of the path long ago, and now must rely on your instincts to guide
+    you.  The ground is very rough and rocky here, and only the most hardy plants
+    survive.  The crowns of the old trees leave the hills in an unreal twilight
+    illumination.
+  exits:
+    north:
+      to: 6081
+      desc: |
+            All you see are trees and hillsides.
+      key: -1
+    east:
+      to: 6078
+      desc: |
+            All you see are trees and hillsides.
+      key: -1
+    south:
+      to: 6073
+      desc: |
+            All you see are trees and a shadowy path.
+      key: -1
+    west:
+      to: 6080
+      desc: |
+            All you see are trees and hillsides.
+      key: -1
+  extra_descs:
+  - keywords:
+    - hills
+    - hill
+    desc: |
+              Hills rise up all around you, blocking your view of the terrain.
+  - keywords:
+    - tree
+    - trees
+    desc: |
+              The trees are mostly old beeches and oaks.
+  - keywords:
+    - path
+    - paths
+    desc: |
+              The path is probably around here somewhere...if only you had paid more
+              attention.
+- vnum: 6080
+  name: In The Dense Forest Between The Hills
+  sector: hills
+  flags:
+  - no_mob
+  desc: |2
+       You are standing among tightly packed trees between several hills.  You
+    lost track of the path long ago, and now must rely on your instincts to guide
+    you.  The ground is very rough and rocky here, and only the most hardy plants
+    survive.  The crowns of the old trees leave the hills in an unreal twilight
+    illumination.
+  exits:
+    north:
+      to: 6081
+      desc: |
+            All you see are trees and hillsides.
+      key: -1
+    east:
+      to: 6082
+      desc: |
+            All you see are trees and hillsides.
+      key: -1
+    south:
+      to: 6076
+      desc: |
+            All you see are trees and hillsides.
+      key: -1
+    west:
+      to: 6081
+      desc: |
+            All you see are trees and hillsides.
+      key: -1
+  extra_descs:
+  - keywords:
+    - hills
+    - hill
+    desc: |
+              Hills rise up all around you, blocking your view of the terrain.
+  - keywords:
+    - tree
+    - trees
+    desc: |
+              The trees are mostly old beeches and oaks.
+  - keywords:
+    - path
+    - paths
+    desc: |
+              The path is probably around here somewhere...if only you had paid more
+              attention.
+- vnum: 6081
+  name: In The Dense Forest Between The Hills
+  sector: hills
+  flags:
+  - no_mob
+  desc: |2
+       You are standing among tightly packed trees between several hills.  You
+    lost track of the path long ago, and now must rely on your instincts to guide
+    you.  The ground is very rough and rocky here, and only the most hardy plants
+    survive.  The crowns of the old trees leave the hills in an unreal twilight
+    illumination.
+  exits:
+    north:
+      to: 6078
+      desc: |
+            All you see are trees and hillsides.
+      key: -1
+    east:
+      to: 6077
+      desc: |
+            All you see are trees and hillsides.
+      key: -1
+    south:
+      to: 6076
+      desc: |
+            All you see are trees and hillsides.
+      key: -1
+    west:
+      to: 6073
+      desc: |
+            All you see are trees and a shadowy path.
+      key: -1
+  extra_descs:
+  - keywords:
+    - hills
+    - hill
+    desc: |
+              Hills rise up all around you, blocking your view of the terrain.
+  - keywords:
+    - tree
+    - trees
+    desc: |
+              The trees are mostly old beeches and oaks.
+  - keywords:
+    - path
+    - paths
+    desc: |
+              The path is probably around here somewhere...if only you had paid more
+              attention.
+- vnum: 6082
+  name: In The Dense Forest Between The Hills
+  sector: hills
+  flags:
+  - no_mob
+  desc: |2
+       You are standing among tightly packed trees on a medium sized hill. The
+    dense forest spreads out all around you, and the crowns of the old trees leave
+    the hills in an unreal twilight illumination.
+  exits:
+    north:
+      to: 6081
+      desc: |
+            All you see are trees and hillsides.
+      key: -1
+    east:
+      to: 6079
+      desc: |
+            All you see are trees and hillsides.
+      key: -1
+    south:
+      to: 6076
+      desc: |
+            All you see are trees and hillsides.
+      key: -1
+  extra_descs:
+  - keywords:
+    - hills
+    - hill
+    desc: |
+              Hills rise up all around you, blocking your view of the terrain.
+  - keywords:
+    - tree
+    - trees
+    desc: |
+              The trees are mostly old beeches and oaks.
+- vnum: 6090
+  name: A Road Through The Plains
+  sector: field
+  flags:
+  - no_mob
+  desc: |2
+       You are on a dust covered east-west road through the western plains.  An
+    occasional hunter or adventurer can be seen, heading to or from the forest.
+    To the east is the walled city, Midgaard, and to the west the road ends at
+    the head of a narrow trail into a large forest.
+  exits:
+    east:
+      to: 6091
+      desc: |
+            Far to the east you see the large walls guarding Midgaard.
+      key: -1
+    west:
+      to: 6000
+      desc: |
+            To the west the dusty trail ends, and becomes a narrow trail into the cool
+            shadows of the forest.
+      key: -1
+  extra_descs:
+  - keywords:
+    - road
+    - dust
+    - dusty
+    desc: |
+              The road is well used, and quite dusty.
+  - keywords:
+    - tree
+    - trees
+    - forest
+    desc: |
+              The trees are quite tall considering most of them appear to be quite young.
+  - keywords:
+    - trail
+    desc: |
+              The forest trail winds westwards through the trees.
+- vnum: 6091
+  name: A Road Through The Plains
+  sector: field
+  flags:
+  - no_mob
+  desc: |2
+       You are on a dust covered east-west road through the western plains.  An
+    occasional hunter or adventurer can be seen, heading to or from the forest.
+    To the east is the walled city, Midgaard, and to the west the road continues 
+    towards a large forest.
+  exits:
+    east:
+      to: 6092
+      desc: |
+            Far to the east you see the walls and western gate of Midgaard.
+      key: -1
+    west:
+      to: 6090
+      desc: |
+            You see the large forest, Haon-Dor, stretching out far to the west, and to the
+            northwest you the forest gives way to hills.
+      key: -1
+  extra_descs:
+  - keywords:
+    - road
+    - dust
+    - dusty
+    desc: |
+              The road is well used, and quite dusty.
+  - keywords:
+    - tree
+    - trees
+    desc: |
+              Some small trees grow amongst the underbrush of the plains.  These slowly gain
+              in height as you travel farther westward towards Haon-Dor
+  - keywords:
+    - forest
+    - haondor
+    - haon-dor
+    desc: |
+              The large forest of Haon-Dor spreads out to the west.  Small and large game
+              is plentiful there... as is adventure, and of course, danger!
+- vnum: 6092
+  name: A Road Through The Plains
+  sector: city
+  flags:
+  - no_mob
+  desc: |2
+       You are on a dust covered east-west road crossing the grassy plains between
+    Midgaard the forest of Haon-Dor.  An occasional hunter or adventurer can be 
+    seen, heading to or from the forest.  To the east is the walled city, Midgaard, 
+    and to the west the road continues towards a large forest.
+  exits:
+    east:
+      to: 3052
+      desc: |
+            To the east you see the walls and West Gate of Midgaard.
+      key: -1
+    west:
+      to: 6091
+      desc: |
+            To the west the road continues towards the forest.
+      key: -1
+  extra_descs:
+  - keywords:
+    - road
+    - dust
+    - dusty
+    desc: |
+              The road is well used, and quite dusty.
+  - keywords:
+    - forest
+    desc: |
+              The large forest of Haon-dor spreads out to the west.  Small and large game
+              is plentiful there...as is adventure, and of course, danger!
+mobiles:
+- vnum: 6000
+  keywords:
+  - john
+  - lumberjack
+  short: John the Lumberjack
+  long: |
+    John the Lumberjack is here, looking for some trees to chop down.
+  desc: |
+    He is six feet tall and looks quite strong, muscles bulging under his heavy,
+    chequered shirt.  His features are worn with hard work and his expression is
+    one of a peaceful man leading a simple life.
+  act:
+  - scavenger
+  - stay_zone
+  - memory
+  - helper
+  affected:
+  - sense_life
+  alignment: 370
+  level: 5
+  thac0: 15
+  ac: 6
+  hp: 1d12+60
+  damage: 1d4+3
+  gold: 100
+  exp: 1050
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 6001
+  keywords:
+  - rabbit
+  - small
+  short: the rabbit
+  long: |
+    A small rabbit is foraging in the bushes here.
+  desc: |
+    It is a small, furry creature with long ears and big feet.
+  act:
+  - stay_zone
+  alignment: 0
+  level: 0
+  thac0: 20
+  ac: 6
+  hp: 1d4+1
+  damage: 1d4
+  gold: 0
+  exp: 60
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 6002
+  keywords:
+  - bear
+  - brown
+  short: the brown bear
+  long: |
+    A big, brown, angry-looking bear is here.
+  desc: |
+    The bear is a big, brown, furry animal with very large claws and very sharp
+    teeth.  It doesn't resemble those cute little dolls from toy shops at all.
+  act:
+  - aggressive
+  - stay_zone
+  alignment: -50
+  level: 8
+  thac0: 13
+  ac: 3
+  hp: 1d12+98
+  damage: 2d6+2
+  gold: 0
+  exp: 4000
+  position: sleeping
+  default_position: standing
+  sex: neutral
+- vnum: 6003
+  keywords:
+  - rabbit
+  - ferocious
+  short: the ferocious rabbit
+  long: |
+    A ferocious rabbit is here, glaring hungrily at you.
+  desc: |
+    This small, furry creature with long ears and big feet has been attacked
+    by the dreaded rabbit rabies, a horrible disease that turns helpless and
+    innocent rabbits into ferocious and bloodthirsty monsters.
+  act:
+  - aggressive
+  - stay_zone
+  alignment: -150
+  level: 3
+  thac0: 17
+  ac: 6
+  hp: 1d4+26
+  damage: 1d8
+  gold: 0
+  exp: 350
+  position: sleeping
+  default_position: standing
+  sex: neutral
+- vnum: 6004
+  keywords:
+  - deer
+  - fallow
+  short: the fallow deer
+  long: |
+    A fallow deer is grazing peacefully here.
+  desc: |
+    She is a graceful creature on long, slender legs, and with large, brown eyes
+    looking back at you with an air of watchful interest.
+  act:
+  - stay_zone
+  - wimpy
+  affected:
+  - detect_invis
+  alignment: 350
+  level: 2
+  thac0: 19
+  ac: 5
+  hp: 2d8+8
+  damage: 1d6
+  gold: 0
+  exp: 230
+  position: standing
+  default_position: standing
+  sex: female
+- vnum: 6005
+  keywords:
+  - fox
+  - brown
+  short: the brown fox
+  long: |
+    A brown fox is stalking rabbits through the underbrush here.
+  desc: |
+    It is a large fox with beautiful, red-brown fur and a long, thick bushy tail.
+  act:
+  - stay_zone
+  alignment: -50
+  level: 2
+  thac0: 18
+  ac: 6
+  hp: 1d4+18
+  damage: 1d6
+  gold: 0
+  exp: 225
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 6006
+  keywords:
+  - bird
+  - large
+  short: the bird
+  long: |
+    A large bird with a broken wing has been cornered here.
+  desc: |
+    The bird isn't going to live much longer, by the looks of it.
+  act:
+  - sentinel
+  alignment: 0
+  level: 0
+  thac0: 17
+  ac: 10
+  hp: 2d3+1
+  damage: 1d2+1
+  gold: 0
+  exp: 25
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 6007
+  keywords:
+  - bobcat
+  - cat
+  short: the bobcat
+  long: |
+    A medium sized bobcat is stalking a bird here.
+  desc: |
+    The bobcat has sharp claws and teeth, and will probably eat you instead of
+    the bird if you give it the chance.
+  act:
+  - sentinel
+  - aggressive
+  affected:
+  - detect_invis
+  - infravision
+  alignment: -150
+  level: 5
+  thac0: 15
+  ac: 5
+  hp: 1d12+60
+  damage: 2d4+3
+  gold: 0
+  exp: 1100
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 6008
+  keywords:
+  - sparrow
+  short: the sparrow
+  long: |
+    A sparrow is flapping around by the ground.
+  desc: |
+    The sparrow looks like it is enjoying life.
+  act:
+  - stay_zone
+  alignment: 200
+  level: 0
+  thac0: 20
+  ac: 9
+  hp: 3d3+1
+  damage: 1d4
+  gold: 0
+  exp: 25
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 6009
+  keywords:
+  - robin
+  short: the robin
+  long: |
+    A robin is hopping around looking for bugs to eat.
+  desc: |
+    The robin looks quite intent on finding a bug or worm to eat.
+  act:
+  - stay_zone
+  alignment: 200
+  level: 0
+  thac0: 20
+  ac: 9
+  hp: 3d3+1
+  damage: 1d4
+  gold: 0
+  exp: 25
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 6010
+  keywords:
+  - squirrel
+  short: the squirrel
+  long: |
+    A squirrel is here seeking refuge in its nest.
+  desc: |
+    It peers out of its nest at you anxiously, seeming to plead silently with
+    you to leave it alone.
+  act:
+  - sentinel
+  affected:
+  - sneak
+  - hide
+  alignment: 200
+  level: 1
+  thac0: 20
+  ac: 8
+  hp: 1d7+9
+  damage: 1d5
+  gold: 0
+  exp: 120
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 6011
+  keywords:
+  - badger
+  short: the sleepy badger
+  long: |
+    A furry brown badger is curled up under a log here.
+  desc: |
+    The badger is slowly awakening and peering up at you from its burrow. You
+    know that it won't be moving this slow for long.  Its sharp claws and teeth
+    catch your attention when you consider killing it.
+  act:
+  - sentinel
+  affected:
+  - hide
+  alignment: 50
+  level: 4
+  thac0: 17
+  ac: 5
+  hp: 1d5+48
+  damage: 2d3+2
+  gold: 0
+  exp: 650
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 6012
+  keywords:
+  - grey
+  - squirrel
+  short: the grey squirrel
+  long: |
+    A grey squirrel with a bushy tail is foraging for nuts here.
+  desc: |
+    This happy creature seems to pay you no heed as it goes about its search for
+    nuts among the leaves and twigs on the ground here.
+  act:
+  - stay_zone
+  affected:
+  - sneak
+  alignment: 150
+  level: 2
+  thac0: 19
+  ac: 8
+  hp: 1d12+22
+  damage: 1d6
+  gold: 0
+  exp: 200
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 6013
+  keywords:
+  - chipmunk
+  short: the small chipmunk
+  long: |
+    A small brown-red chipmunk dashes from tree to tree here.
+  desc: |
+    The absolute zenith of hyperactivity, this small rodent seems to never tire
+    of running up, down, and around the trees in this area.  If you could ever
+    catch it, you imagine it would make an easy meal.
+  act:
+  - stay_zone
+  affected:
+  - sneak
+  alignment: 170
+  level: 0
+  thac0: 20
+  ac: 5
+  hp: 2d5+3
+  damage: 1d4
+  gold: 0
+  exp: 40
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 6014
+  keywords:
+  - crow
+  - black
+  - bird
+  short: the large black crow
+  long: |
+    A large black bird flits about here, picking at bits of carrion.
+  desc: |
+    The bird eyes you warily, but continues with its meal.
+  act:
+  - sentinel
+  - scavenger
+  - wimpy
+  alignment: -20
+  level: 2
+  thac0: 19
+  ac: 8
+  hp: 1d12+22
+  damage: 1d5+1
+  gold: 3
+  exp: 200
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 6015
+  keywords:
+  - grotesque
+  - vulture
+  short: the grotesque vulture
+  long: |
+    A grotesque vulture covered in blood and gore is here feeding madly.
+  desc: |
+    It sickens you to even look at this foul bird.  Bits of dried gore stick to
+    its beak, and unidentifiable organs hang from its talons and feathers.  
+    It sees you and attacks, protecting its horrible feast!
+  act:
+  - sentinel
+  - scavenger
+  - aggressive
+  affected:
+  - detect_invis
+  - sanctuary
+  - infravision
+  alignment: -700
+  level: 6
+  thac0: 15
+  ac: 4
+  hp: 1d12+68
+  damage: 2d3+2
+  gold: 14
+  exp: 1750
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 6016
+  keywords:
+  - buck
+  - deer
+  short: the young buck
+  long: |
+    A young 5-point buck is drinking from the lake here.
+  desc: |
+    This young male deer is drinking from the edge of the lake and watching you
+    warily.  His antlers are not full size yet, and will no doubt be quite 
+    impressive in a few years.
+  act:
+  - sentinel
+  - stay_zone
+  affected:
+  - detect_invis
+  alignment: 350
+  level: 4
+  thac0: 17
+  ac: 4
+  hp: 1d12+48
+  damage: 1d5+3
+  gold: 0
+  exp: 750
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 6017
+  keywords:
+  - fish
+  short: the fish
+  long: |
+    A fish is swimming about here.
+  desc: |
+    The fish looks about the right size for a meal.
+  act:
+  - sentinel
+  affected:
+  - waterwalk
+  alignment: 100
+  level: 0
+  thac0: 20
+  ac: 10
+  hp: 2d5
+  damage: 1d3
+  gold: 0
+  exp: 30
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 6018
+  keywords:
+  - duckling
+  short: the duckling
+  long: |
+    A duckling is swimming around in the pond.
+  desc: |
+    The duckling is adorable, it looks most of all like a tiny furball.
+  act:
+  - sentinel
+  alignment: 1000
+  level: 0
+  thac0: 20
+  ac: 10
+  hp: 1d1
+  damage: 1d1
+  gold: 0
+  exp: 1
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 6019
+  keywords:
+  - duck
+  short: the duck
+  long: |
+    A duck is here, quacking happily.
+  desc: |
+    The duck is quite fat.  It looks like it is enjoying life.
+  act:
+  - stay_zone
+  alignment: 1000
+  level: 1
+  thac0: 20
+  ac: 10
+  hp: 2d6+5
+  damage: 1d4
+  gold: 0
+  exp: 75
+  position: standing
+  default_position: standing
+  sex: neutral
+objects:
+- vnum: 6000
+  keywords:
+  - axe
+  - lumber
+  short: a lumber axe
+  desc: A heavy lumber axe lies here.
+  type: weapon
+  wear:
+  - take
+  - wield
+  flags:
+  - no_donate
+  weapon:
+    dice: 2d3
+    damage_type: slash
+  weight: 12
+  cost: 50
+  rent: 15
+  affects:
+  - location: hitroll
+    modifier: 1
+  extra_descs:
+  - keywords:
+    - axe
+    - lumber
+    desc: |
+              It is a heavy axe of the kind lumberjacks use to chop down trees.
+- vnum: 6001
+  keywords:
+  - shirt
+  - chequered
+  short: a chequered shirt
+  desc: A chequered shirt lies here.
+  type: armor
+  wear:
+  - take
+  - body
+  flags:
+  - no_donate
+  armor:
+    ac_apply: 1
+  weight: 2
+  cost: 20
+  rent: 8
+  extra_descs:
+  - keywords:
+    - shirt
+    - chequered
+    desc: |
+              It is an extra large, chequered shirt made from heavy cloth.
+- vnum: 6002
+  keywords:
+  - boots
+  - leather
+  short: a pair of worn leather boots
+  desc: A pair of worn leather boots lies here.
+  type: armor
+  wear:
+  - take
+  - feet
+  flags:
+  - no_donate
+  armor:
+    ac_apply: 2
+  weight: 4
+  cost: 60
+  rent: 10
+  extra_descs:
+  - keywords:
+    - boots
+    desc: |
+              They are fashioned from rough leather that has been oiled frequently to make
+              it stay waterproof.  They look worn but quite functional.
+- vnum: 6003
+  keywords:
+  - fireplace
+  short: a fireplace
+  desc: A fireplace made from stone is set against the east wall.
+  type: container
+  container:
+    capacity: 200
+    key: 0
+  weight: 0
+  cost: 0
+  rent: 0
+  extra_descs:
+  - keywords:
+    - fireplace
+    desc: |
+              It is fashioned from stones of various sizes that have been stacked on top of
+              each other and fastened with mortar.  Its chimney is constructed likewise and
+              leads the smoke out through the low cabin ceiling.
+- vnum: 6004
+  keywords:
+  - lantern
+  - brass
+  - hooded
+  short: a hooded brass lantern
+  desc: A hooded brass lantern has been left here.
+  type: light
+  wear:
+  - take
+  - hold
+  light:
+    hours: 100
+  weight: 4
+  cost: 60
+  rent: 10
+  extra_descs:
+  - keywords:
+    - letters
+    desc: |
+              The letters say:
+
+              Use 'hold lantern' to activate.
+  - keywords:
+    - lantern
+    - brass
+    - hooded
+    desc: |
+              It is a large and robust but somewhat battered oil lantern made from brass,
+              and it is equipped with a handle to make it handy and a hood to protect its
+              flame.  Some letters have been scratched on its bottom.
+- vnum: 6005
+  keywords:
+  - chest
+  - wooden
+  short: a wooden chest
+  desc: A wooden chest stands in the corner.
+  type: container
+  wear:
+  - take
+  container:
+    capacity: 100
+    closeable: true
+    pickproof: true
+    closed: true
+    locked: true
+    key: 6006
+  weight: 20
+  cost: 100
+  rent: 10
+  extra_descs:
+  - keywords:
+    - chest
+    - wooden
+    desc: |
+              It is a robust chest made from short, heavy planks that have been fastened
+              together with tenons.  It is equipped with a simple brass lock.
+- vnum: 6006
+  keywords:
+  - key
+  - brass
+  short: a small brass key
+  desc: A small brass key lies here.
+  type: key
+  wear:
+  - take
+  - hold
+  flags:
+  - no_rent
+  values:
+  - 6006
+  - 0
+  - 0
+  - 0
+  weight: 1
+  cost: 0
+  rent: 0
+  extra_descs:
+  - keywords:
+    - key
+    - brass
+    desc: |
+              It is a small, simple brass key with no inscriptions or marks of any kind.
+- vnum: 6007
+  keywords:
+  - coins
+  - gold
+  short: a heap of gold coins
+  desc: Some gold coins lie piled up in a heap on the floor.
+  type: money
+  wear:
+  - take
+  values:
+  - 127
+  - 0
+  - 0
+  - 0
+  weight: 1
+  cost: 127
+  rent: 0
+  extra_descs:
+  - keywords:
+    - coins
+    - gold
+    desc: |
+              The coins seem to be gold.  They are obviously valuable.
+- vnum: 6010
+  keywords:
+  - blackberries
+  - berries
+  short: some blackberries
+  desc: Some blackberries grow on a bush nearby.
+  type: food
+  wear:
+  - take
+  flags:
+  - no_rent
+  values:
+  - 3
+  - 0
+  - 0
+  - 0
+  weight: 1
+  cost: 0
+  rent: 0
+  extra_descs:
+  - keywords:
+    - blackberries
+    - berries
+    desc: |
+              They look very tasty indeed.
+- vnum: 6011
+  keywords:
+  - mushroom
+  short: a mushroom
+  desc: A small mushroom grows nearby.
+  type: food
+  wear:
+  - take
+  values:
+  - 6
+  - 0
+  - 0
+  - 0
+  weight: 1
+  cost: 10
+  rent: 10
+  extra_descs:
+  - keywords:
+    - mushroom
+    desc: |
+              It looks to be a tasty little thing.
+- vnum: 6012
+  keywords:
+  - sign
+  short: a large sign
+  desc: A large sign mounted on a pole is standing by the roadside.
+  type: other
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 100
+  cost: 0
+  rent: 0
+  extra_descs:
+  - keywords:
+    - sign
+    desc: |
+              It says :-
+
+                                       Haon-Dor
+                                       --------
+
+               This is the Forest of Haon-Dor.  Enter at your own risk.
+                   Please report any strange occurrences to Furry,
+                   as Quifael and Derkhil are currently indisposed.
+  - keywords:
+    - pole
+    desc: |
+              Not the most interesting pole in the world.
+              Better leave it here, though, as it holds the sign in place.
+- vnum: 6013
+  keywords:
+  - barrel
+  - water
+  short: a barrel
+  desc: A water barrel has been left here.
+  type: drink_container
+  wear:
+  - take
+  drink:
+    capacity: 40
+    current: 40
+    liquid: clear_water
+  weight: 45
+  cost: 60
+  rent: 20
+- vnum: 6014
+  keywords:
+  - water
+  - brook
+  short: a small brook
+  desc: A small brook trickles through the forest beside the path.
+  type: fountain
+  values:
+  - 50000
+  - 50000
+  - 15
+  - 0
+  weight: 50005
+  cost: 0
+  rent: 0
+  extra_descs:
+  - keywords:
+    - water
+    - brook
+    desc: |
+              The water looks clean and refreshing.
+- vnum: 6015
+  keywords:
+  - water
+  - lake
+  short: the lake
+  desc: ""
+  type: fountain
+  values:
+  - 50000
+  - 50000
+  - 0
+  - 0
+  weight: 50005
+  cost: 0
+  rent: 0
+- vnum: 6016
+  keywords:
+  - cudgel
+  - oak
+  - oaken
+  - limb
+  short: an oaken cudgel
+  desc: A limb has fallen here.
+  type: weapon
+  wear:
+  - take
+  - wield
+  flags:
+  - magic
+  weapon:
+    dice: 1d7
+    damage_type: pound
+  weight: 16
+  cost: 1
+  rent: 20
+  affects:
+  - location: damroll
+    modifier: 2
+  - location: str
+    modifier: -2
+  extra_descs:
+  - keywords:
+    - cudgel
+    - oak
+    - oaken
+    - limb
+    desc: |
+              The cudgel looks quite sturdy, and would make a nice weapon.
+- vnum: 6017
+  keywords:
+  - corpse
+  - boar
+  short: the corpse of a boar
+  desc: ""
+  type: container
+  container:
+    capacity: 100
+    key: 0
+  weight: 500
+  cost: 1
+  rent: 1
+- vnum: 6018
+  keywords:
+  - slab
+  - meat
+  short: a large slab of meat
+  desc: A large piece of freshly cut boar meat is on the ground here.
+  type: food
+  wear:
+  - take
+  values:
+  - 24
+  - 0
+  - 0
+  - 0
+  weight: 15
+  cost: 40
+  rent: 1
+  extra_descs:
+  - keywords:
+    - slab
+    - meat
+    desc: |
+              It looks quite filling.
+- vnum: 6019
+  keywords:
+  - tusks
+  - pair
+  short: a pair of boar tusks
+  desc: A pair of large boar tusks have been dropped here.
+  type: treasure
+  wear:
+  - take
+  - hold
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 10
+  cost: 60
+  rent: 1
+  extra_descs:
+  - keywords:
+    - tusks
+    - pair
+    desc: |
+              They look like they might be worth something to a craftsman.
+- vnum: 6020
+  keywords:
+  - log
+  - hollow
+  - floating
+  short: a hollow log
+  desc: ""
+  type: boat
+  wear:
+  - take
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 48
+  cost: 2
+  rent: 1
+  extra_descs:
+  - keywords:
+    - log
+    desc: |
+              It looks like it would probably float.
+- vnum: 6021
+  keywords:
+  - nest
+  - bird
+  short: the bird's nest
+  desc: ""
+  type: container
+  container:
+    capacity: 30
+    key: 0
+  weight: 0
+  cost: 0
+  rent: 0
+- vnum: 6022
+  keywords:
+  - egg
+  - blue
+  - robin
+  short: a blue robin's egg
+  desc: A small bluish egg has been left here.
+  type: food
+  wear:
+  - take
+  values:
+  - 6
+  - 0
+  - 0
+  - 0
+  weight: 1
+  cost: 10
+  rent: 0
+  extra_descs:
+  - keywords:
+    - egg
+    - blue
+    - robin
+    desc: |
+              It is small, but food nonetheless.
+- vnum: 6023
+  keywords:
+  - meat
+  - rabbit
+  short: a piece of rabbit meat
+  desc: A large piece of rabbit meat.
+  type: food
+  wear:
+  - take
+  values:
+  - 12
+  - 0
+  - 0
+  - 0
+  weight: 5
+  cost: 29
+  rent: 20
+- vnum: 6024
+  keywords:
+  - meat
+  - deer
+  - venison
+  short: a piece of venison
+  desc: A large piece of venison.
+  type: food
+  wear:
+  - take
+  values:
+  - 24
+  - 0
+  - 0
+  - 0
+  weight: 10
+  cost: 80
+  rent: 20
+resets:
+- mob: 6000
+  room: 6009
+  max: 1
+  then:
+  - equip: 6000
+    slot: wield
+    max: 2
+  - equip: 6001
+    slot: body
+    max: 10
+  - equip: 6002
+    slot: feet
+    max: 20
+- mob: 6001
+  room: 6012
+  max: 6
+  then:
+  - give: 6023
+    max: 10
+- mob: 6001
+  room: 6015
+  max: 6
+  then:
+  - give: 6023
+    max: 10
+- mob: 6001
+  room: 6017
+  max: 6
+  then:
+  - give: 6023
+    max: 10
+- mob: 6001
+  room: 6019
+  max: 6
+  then:
+  - give: 6023
+    max: 10
+- mob: 6002
+  room: 6022
+  max: 1
+- mob: 6004
+  room: 6023
+  max: 1
+  then:
+  - give: 6024
+    max: 4
+- mob: 6005
+  room: 6014
+  max: 4
+- room: 6010
+  object: 6003
+  max: 1
+  then:
+  - put: 6006
+    into: 6003
+    max: 1
+- room: 6010
+  remove: 6004
+- room: 6010
+  object: 6004
+  max: 50
+- room: 6010
+  object: 6005
+  max: 1
+  then:
+  - put: 6007
+    into: 6005
+    max: 1
+- room: 6010
+  remove: 6013
+- room: 6010
+  object: 6013
+  max: 100
+- room: 6023
+  object: 6010
+  max: 1
+- room: 6006
+  remove: 6011
+- room: 6006
+  object: 6011
+  max: 10
+- room: 6013
+  remove: 6011
+- room: 6013
+  object: 6011
+  max: 10
+- room: 6016
+  remove: 6011
+- room: 6016
+  object: 6011
+  max: 10
+- room: 6019
+  remove: 6011
+- room: 6019
+  object: 6011
+  max: 10
+- room: 6065
+  remove: 6011
+- room: 6065
+  object: 6011
+  max: 10
+- room: 6062
+  remove: 6011
+- room: 6062
+  object: 6011
+  max: 10
+- room: 6069
+  remove: 6011
+- room: 6069
+  object: 6011
+  max: 10
+- room: 6078
+  remove: 6011
+- room: 6078
+  object: 6011
+  max: 10
+- room: 6000
+  object: 6012
+  max: 1
+- mob: 6006
+  room: 6033
+  max: 1
+- mob: 6007
+  room: 6033
+  max: 1
+- mob: 6008
+  room: 6005
+  max: 4
+- mob: 6008
+  room: 6013
+  max: 4
+- mob: 6008
+  room: 6062
+  max: 4
+- mob: 6009
+  room: 6032
+  max: 3
+- mob: 6009
+  room: 6066
+  max: 4
+- mob: 6009
+  room: 6013
+  max: 4
+- mob: 6009
+  room: 6016
+  max: 4
+- mob: 6010
+  room: 6030
+  max: 2
+- mob: 6010
+  room: 6030
+  max: 2
+- mob: 6011
+  room: 6067
+  max: 1
+- mob: 6012
+  room: 6003
+  max: 7
+- mob: 6012
+  room: 6007
+  max: 7
+- mob: 6012
+  room: 6028
+  max: 7
+- mob: 6012
+  room: 6032
+  max: 7
+- mob: 6012
+  room: 6030
+  max: 7
+- mob: 6012
+  room: 6064
+  max: 7
+- mob: 6012
+  room: 6075
+  max: 7
+- mob: 6013
+  room: 6030
+  max: 4
+- mob: 6013
+  room: 6021
+  max: 4
+- mob: 6013
+  room: 6067
+  max: 4
+- mob: 6013
+  room: 6061
+  max: 4
+- mob: 6014
+  room: 6026
+  max: 4
+- mob: 6014
+  room: 6026
+  max: 4
+- mob: 6014
+  room: 6026
+  max: 4
+- mob: 6014
+  room: 6027
+  max: 4
+- mob: 6015
+  room: 6026
+  max: 1
+- mob: 6016
+  room: 6025
+  max: 1
+  then:
+  - give: 6024
+    max: 4
+- mob: 6017
+  room: 6027
+  max: 3
+- mob: 6017
+  room: 6027
+  max: 3
+- mob: 6017
+  room: 6027
+  max: 3
+- mob: 6018
+  room: 6027
+  max: 2
+- mob: 6018
+  room: 6027
+  max: 2
+- mob: 6019
+  room: 6027
+  max: 2
+- mob: 6019
+  room: 6027
+  max: 2
+- mob: 6001
+  room: 6068
+  max: 11
+  then:
+  - give: 6023
+    max: 16
+- mob: 6001
+  room: 6062
+  max: 11
+  then:
+  - give: 6023
+    max: 16
+- mob: 6001
+  room: 6071
+  max: 11
+  then:
+  - give: 6023
+    max: 16
+- mob: 6001
+  room: 6070
+  max: 11
+  then:
+  - give: 6023
+    max: 16
+- mob: 6001
+  room: 6060
+  max: 11
+  then:
+  - give: 6023
+    max: 16
+- mob: 6005
+  room: 6069
+  max: 8
+- mob: 6005
+  room: 6074
+  max: 8
+- mob: 6005
+  room: 6060
+  max: 8
+- room: 6006
+  remove: 6014
+- room: 6007
+  remove: 6014
+- room: 6008
+  remove: 6014
+- room: 6013
+  remove: 6014
+- room: 6014
+  remove: 6014
+- room: 6006
+  object: 6014
+  max: 5
+- room: 6007
+  object: 6014
+  max: 5
+- room: 6008
+  object: 6014
+  max: 5
+- room: 6013
+  object: 6014
+  max: 5
+- room: 6014
+  object: 6014
+  max: 5
+- room: 6025
+  remove: 6015
+- room: 6025
+  object: 6015
+  max: 2
+- room: 6025
+  remove: 6015
+- room: 6027
+  object: 6015
+  max: 2
+- room: 6033
+  object: 6016
+  max: 1
+- room: 6026
+  object: 6017
+  max: 1
+  then:
+  - put: 6018
+    into: 6017
+    max: 1
+  - put: 6019
+    into: 6017
+    max: 1
+- room: 6067
+  object: 6020
+  max: 1
+- room: 6032
+  object: 6021
+  max: 1
+  then:
+  - put: 6022
+    into: 6021
+    max: 3
+  - put: 6022
+    into: 6021
+    max: 3
+  - put: 6022
+    into: 6021
+    max: 3
+- door: 6009
+  dir: north
+  state: closed
+- door: 6010
+  dir: south
+  state: closed

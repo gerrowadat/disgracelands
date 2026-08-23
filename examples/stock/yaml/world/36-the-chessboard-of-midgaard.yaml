@@ -1,0 +1,2677 @@
+schema: dl/world@1
+zone:
+  vnum: 36
+  name: The Chessboard of Midgaard
+  range:
+  - 3600
+  - 3699
+  lifespan: 10
+  reset: empty
+rooms:
+- vnum: 3600
+  name: The Great Chessboard Of Midgaard
+  sector: city
+  flags:
+  - no_mob
+  desc: |2
+       You stand in the archway of the Chessboard of Midgaard.  The giant
+    wooden gate is rusted open.
+       A narrow dirt path leads eastwards into the thick grass and the
+    chessboard opens up to the west.
+  exits:
+    east:
+      to: 3066
+      desc: |
+            A dirt path leads away through the great field north of Midgaard.
+      key: -1
+    west:
+      to: 3632
+      desc: |
+            The huge chessboard opens up to the west.
+      key: -1
+- vnum: 3601
+  name: A White Square
+  sector: city
+  desc: |2
+       You are standing on a white marble square.  This is usually the home
+    of the Black Queen's Rook.
+  exits:
+    east:
+      to: 3602
+      desc: |
+            A black square lies to the east.
+      key: -1
+    south:
+      to: 3609
+      desc: |
+            A black square lies to the south.
+      key: -1
+- vnum: 3602
+  name: A Black Square
+  sector: city
+  desc: |2
+       You are standing on a black marble square.  This is usually the home
+    of the Black Queen's Knight.
+  exits:
+    east:
+      to: 3603
+      desc: |
+            A white square lies to the east.
+      key: -1
+    south:
+      to: 3610
+      desc: |
+            A white square lies to the south.
+      key: -1
+    west:
+      to: 3601
+      desc: |
+            A white square lies to the west.
+      key: -1
+- vnum: 3603
+  name: A White Square
+  sector: city
+  desc: |2
+       You are standing on a white marble square.  This is usually the home
+    of the Black Queen's Bishop.
+  exits:
+    east:
+      to: 3604
+      desc: |
+            A black square lies to the east.
+      key: -1
+    south:
+      to: 3611
+      desc: |
+            A black square lies to the south.
+      key: -1
+    west:
+      to: 3602
+      desc: |
+            A black square lies to the west.
+      key: -1
+- vnum: 3604
+  name: A Black Square
+  sector: city
+  desc: |2
+       You are standing on a black marble square.  This is usually the home
+    of the Black Queen.
+  exits:
+    east:
+      to: 3605
+      desc: |
+            A white square lies to the east.
+      key: -1
+    south:
+      to: 3612
+      desc: |
+            A white square lies to the south.
+      key: -1
+    west:
+      to: 3603
+      desc: |
+            A white square lies to the west.
+      key: -1
+    down:
+      to: 3665
+      door: pickproof
+      key: 3614
+      keywords: marble square
+- vnum: 3605
+  name: A White Square
+  sector: city
+  desc: |2
+       You are standing on a white marble square.  This is usually the home
+    of the Black King.
+  exits:
+    east:
+      to: 3606
+      desc: |
+            A black square lies to the east.
+      key: -1
+    south:
+      to: 3613
+      desc: |
+            A black square lies to the south.
+      key: -1
+    west:
+      to: 3604
+      desc: |
+            A black square lies to the west.
+      key: -1
+- vnum: 3606
+  name: A Black Square
+  sector: city
+  desc: |2
+       You are standing on a black marble square.  This is usually the home
+    of the Black King's Bishop.
+  exits:
+    east:
+      to: 3607
+      desc: |
+            A white square lies to the east.
+      key: -1
+    south:
+      to: 3614
+      desc: |
+            A white square lies to the south.
+      key: -1
+    west:
+      to: 3605
+      desc: |
+            A white square lies to the west.
+      key: -1
+- vnum: 3607
+  name: A White Square
+  sector: city
+  desc: |2
+       You are standing on a white marble square.  This is usually the home
+    of the Black King's Knight.
+  exits:
+    east:
+      to: 3608
+      desc: |
+            A black square lies to the east.
+      key: -1
+    south:
+      to: 3615
+      desc: |
+            A black square lies to the south.
+      key: -1
+    west:
+      to: 3606
+      desc: |
+            A black square lies to the west.
+      key: -1
+- vnum: 3608
+  name: A Black Square
+  sector: city
+  desc: |2
+       You are standing on a black marble square.  This is usually the home
+    of the Black King's Rook.
+  exits:
+    south:
+      to: 3616
+      desc: |
+            A white square lies to the south.
+      key: -1
+    west:
+      to: 3607
+      desc: |
+            A white square lies to the west.
+      key: -1
+- vnum: 3609
+  name: A Black Square
+  sector: city
+  desc: |2
+       You are standing on a black marble square.  This is usually the home
+    of one of the Black Queen's Pawns.
+  exits:
+    north:
+      to: 3601
+      desc: |
+            A white square lies to the north.
+      key: -1
+    east:
+      to: 3610
+      desc: |
+            A white square lies to the east.
+      key: -1
+    south:
+      to: 3617
+      desc: |
+            A white square lies to the south.
+      key: -1
+- vnum: 3610
+  name: A White Square
+  sector: city
+  desc: |2
+       You are standing on a white marble square.  This is usually the home
+    of one of the Black Queen's Pawns.
+  exits:
+    north:
+      to: 3602
+      desc: |
+            A black square lies to the north.
+      key: -1
+    east:
+      to: 3611
+      desc: |
+            A black square lies to the east.
+      key: -1
+    south:
+      to: 3618
+      desc: |
+            A black square lies to the south.
+      key: -1
+    west:
+      to: 3609
+      desc: |
+            A black square lies to the west.
+      key: -1
+- vnum: 3611
+  name: A Black Square
+  sector: city
+  desc: |2
+       You are standing on a black marble square.  This is usually the home
+    of one of the Black Queen's Pawns.
+  exits:
+    north:
+      to: 3603
+      desc: |
+            A white square lies to the north.
+      key: -1
+    east:
+      to: 3612
+      desc: |
+            A white square lies to the east.
+      key: -1
+    south:
+      to: 3619
+      desc: |
+            A white square lies to the south.
+      key: -1
+    west:
+      to: 3610
+      desc: |
+            A white square lies to the west.
+      key: -1
+- vnum: 3612
+  name: A White Square
+  sector: city
+  desc: |2
+       You are standing on a white marble square.  This is usually the home
+    of one of the Black Queen's Pawns.
+  exits:
+    north:
+      to: 3604
+      desc: |
+            A black square lies to the north.
+      key: -1
+    east:
+      to: 3613
+      desc: |
+            A black square lies to the east.
+      key: -1
+    south:
+      to: 3620
+      desc: |
+            A black square lies to the south.
+      key: -1
+    west:
+      to: 3611
+      desc: |
+            A black square lies to the west.
+      key: -1
+- vnum: 3613
+  name: A Black Square
+  sector: city
+  desc: |2
+       You are standing on a black marble square.  This is usually the home
+    of one of the Black King's Pawns.
+  exits:
+    north:
+      to: 3605
+      desc: |
+            A white square lies to the north.
+      key: -1
+    east:
+      to: 3614
+      desc: |
+            A white square lies to the east.
+      key: -1
+    south:
+      to: 3621
+      desc: |
+            A white square lies to the south.
+      key: -1
+    west:
+      to: 3612
+      desc: |
+            A white square lies to the west.
+      key: -1
+- vnum: 3614
+  name: A White Square
+  sector: city
+  desc: |2
+       You are standing on a white marble square.  This is usually the home
+    of one of the Black King's Pawns.
+  exits:
+    north:
+      to: 3606
+      desc: |
+            A black square lies to the north.
+      key: -1
+    east:
+      to: 3615
+      desc: |
+            A black square lies to the east.
+      key: -1
+    south:
+      to: 3622
+      desc: |
+            A black square lies to the south.
+      key: -1
+    west:
+      to: 3613
+      desc: |
+            A black square lies to the west.
+      key: -1
+- vnum: 3615
+  name: A Black Square
+  sector: city
+  desc: |2
+       You are standing on a black marble square.  This is usually the home
+    of one of the Black King's Pawns.
+  exits:
+    north:
+      to: 3607
+      desc: |
+            A white square lies to the north.
+      key: -1
+    east:
+      to: 3616
+      desc: |
+            A white square lies to the east.
+      key: -1
+    south:
+      to: 3623
+      desc: |
+            A white square lies to the south.
+      key: -1
+    west:
+      to: 3614
+      desc: |
+            A white square lies to the west.
+      key: -1
+- vnum: 3616
+  name: A White Square
+  sector: city
+  desc: |2
+       You are standing on a white marble square.  This is usually the home
+    of one of the Black King's Pawns.
+  exits:
+    north:
+      to: 3608
+      desc: |
+            A black square lies to the north.
+      key: -1
+    south:
+      to: 3624
+      desc: |
+            A black square lies to the south.
+      key: -1
+    west:
+      to: 3615
+      desc: |
+            A black square lies to the west.
+      key: -1
+- vnum: 3617
+  name: A White Square
+  sector: city
+  desc: |2
+       You are standing on a white marble square.
+  exits:
+    north:
+      to: 3609
+      desc: |
+            A black square lies to the north.
+      key: -1
+    east:
+      to: 3618
+      desc: |
+            A black square lies to the east.
+      key: -1
+    south:
+      to: 3625
+      desc: |
+            A black square lies to the south.
+      key: -1
+- vnum: 3618
+  name: A Black Square
+  sector: city
+  desc: |2
+       You are standing on a black marble square.
+  exits:
+    north:
+      to: 3610
+      desc: |
+            A white square lies to the north.
+      key: -1
+    east:
+      to: 3619
+      desc: |
+            A white square lies to the east.
+      key: -1
+    south:
+      to: 3626
+      desc: |
+            A white square lies to the south.
+      key: -1
+    west:
+      to: 3617
+      desc: |
+            A white square lies to the west.
+      key: -1
+- vnum: 3619
+  name: A White Square
+  sector: city
+  desc: |2
+       You are standing on a white marble square.
+  exits:
+    north:
+      to: 3611
+      desc: |
+            A black square lies to the north.
+      key: -1
+    east:
+      to: 3620
+      desc: |
+            A black square lies to the east.
+      key: -1
+    south:
+      to: 3627
+      desc: |
+            A black square lies to the south.
+      key: -1
+    west:
+      to: 3618
+      desc: |
+            A black square lies to the west.
+      key: -1
+- vnum: 3620
+  name: A Black Square
+  sector: city
+  desc: |2
+       You are standing on a black marble square.
+  exits:
+    north:
+      to: 3612
+      desc: |
+            A white square lies to the north.
+      key: -1
+    east:
+      to: 3621
+      desc: |
+            A white square lies to the east.
+      key: -1
+    south:
+      to: 3628
+      desc: |
+            A white square lies to the south.
+      key: -1
+    west:
+      to: 3619
+      desc: |
+            A white square lies to the west.
+      key: -1
+- vnum: 3621
+  name: A White Square
+  sector: city
+  desc: |2
+       You are standing on a white marble square.
+  exits:
+    north:
+      to: 3613
+      desc: |
+            A black square lies to the north.
+      key: -1
+    east:
+      to: 3622
+      desc: |
+            A black square lies to the east.
+      key: -1
+    south:
+      to: 3629
+      desc: |
+            A black square lies to the south.
+      key: -1
+    west:
+      to: 3620
+      desc: |
+            A black square lies to the west.
+      key: -1
+- vnum: 3622
+  name: A Black Square
+  sector: city
+  desc: |2
+       You are standing on a black marble square.
+  exits:
+    north:
+      to: 3614
+      desc: |
+            A white square lies to the north.
+      key: -1
+    east:
+      to: 3623
+      desc: |
+            A white square lies to the east.
+      key: -1
+    south:
+      to: 3630
+      desc: |
+            A white square lies to the south.
+      key: -1
+    west:
+      to: 3621
+      desc: |
+            A white square lies to the west.
+      key: -1
+- vnum: 3623
+  name: A White Square
+  sector: city
+  desc: |2
+       You are standing on a white marble square.
+  exits:
+    north:
+      to: 3615
+      desc: |
+            A black square lies to the north.
+      key: -1
+    east:
+      to: 3624
+      desc: |
+            A black square lies to the east.
+      key: -1
+    south:
+      to: 3631
+      desc: |
+            A black square lies to the south.
+      key: -1
+    west:
+      to: 3622
+      desc: |
+            A black square lies to the west.
+      key: -1
+- vnum: 3624
+  name: A Black Square
+  sector: city
+  desc: |2
+       You are standing on a black marble square.  You can see a rusty gate
+    to the south.
+  exits:
+    north:
+      to: 3616
+      desc: |
+            A white square lies to the north.
+      key: -1
+    south:
+      to: 3632
+      desc: |
+            A white square lies to the south.
+      key: -1
+    west:
+      to: 3623
+      desc: |
+            A white square lies to the west.
+      key: -1
+- vnum: 3625
+  name: A Black Square
+  sector: city
+  desc: |2
+       You are standing on a black marble square.
+  exits:
+    north:
+      to: 3617
+      desc: |
+            A white square lies to the north.
+      key: -1
+    east:
+      to: 3626
+      desc: |
+            A white square lies to the east.
+      key: -1
+    south:
+      to: 3633
+      desc: |
+            A white square lies to the south.
+      key: -1
+- vnum: 3626
+  name: A White Square
+  sector: city
+  desc: |2
+       You are standing on a white marble square.
+  exits:
+    north:
+      to: 3618
+      desc: |
+            A black square lies to the north.
+      key: -1
+    east:
+      to: 3627
+      desc: |
+            A black square lies to the east.
+      key: -1
+    south:
+      to: 3634
+      desc: |
+            A black square lies to the south.
+      key: -1
+    west:
+      to: 3625
+      desc: |
+            A black square lies to the west.
+      key: -1
+- vnum: 3627
+  name: A Black Square
+  sector: city
+  desc: |2
+       You are standing on a black marble square.
+  exits:
+    north:
+      to: 3619
+      desc: |
+            A white square lies to the north.
+      key: -1
+    east:
+      to: 3628
+      desc: |
+            A white square lies to the east.
+      key: -1
+    south:
+      to: 3635
+      desc: |
+            A white square lies to the south.
+      key: -1
+    west:
+      to: 3626
+      desc: |
+            A white square lies to the west.
+      key: -1
+- vnum: 3628
+  name: A White Square
+  sector: city
+  desc: |2
+       You are standing on a white marble square.
+  exits:
+    north:
+      to: 3620
+      desc: |
+            A black square lies to the north.
+      key: -1
+    east:
+      to: 3629
+      desc: |
+            A black square lies to the east.
+      key: -1
+    south:
+      to: 3636
+      desc: |
+            A black square lies to the south.
+      key: -1
+    west:
+      to: 3627
+      desc: |
+            A black square lies to the west.
+      key: -1
+- vnum: 3629
+  name: A Black Square
+  sector: city
+  desc: |2
+       You are standing on a black marble square.
+  exits:
+    north:
+      to: 3621
+      desc: |
+            A white square lies to the north.
+      key: -1
+    east:
+      to: 3630
+      desc: |
+            A white square lies to the east.
+      key: -1
+    south:
+      to: 3637
+      desc: |
+            A white square lies to the south.
+      key: -1
+    west:
+      to: 3628
+      desc: |
+            A white square lies to the west.
+      key: -1
+- vnum: 3630
+  name: A White Square
+  sector: city
+  desc: |2
+       You are standing on a white marble square.
+  exits:
+    north:
+      to: 3622
+      desc: |
+            A black square lies to the north.
+      key: -1
+    east:
+      to: 3631
+      desc: |
+            A black square lies to the east.
+      key: -1
+    south:
+      to: 3638
+      desc: |
+            A black square lies to the south.
+      key: -1
+    west:
+      to: 3629
+      desc: |
+            A black square lies to the west.
+      key: -1
+- vnum: 3631
+  name: A Black Square
+  sector: city
+  desc: |2
+       You are standing on a black marble square.  There is a rusty gate
+    a short distance to the east.
+  exits:
+    north:
+      to: 3623
+      desc: |
+            A white square lies to the north.
+      key: -1
+    east:
+      to: 3632
+      desc: |
+            A white square lies to the east.
+      key: -1
+    south:
+      to: 3639
+      desc: |
+            A white square lies to the south.
+      key: -1
+    west:
+      to: 3630
+      desc: |
+            A white square lies to the west.
+      key: -1
+- vnum: 3632
+  name: A White Square
+  sector: city
+  desc: |2
+       You are standing on a white marble square.  There is a large rusty
+    gate to the east.
+  exits:
+    north:
+      to: 3624
+      desc: |
+            A black square lies to the north.
+      key: -1
+    east:
+      to: 3600
+      desc: |
+            The gate to the chessboard is just to the east.
+      key: -1
+    south:
+      to: 3640
+      desc: |
+            A black square lies to the south.
+      key: -1
+    west:
+      to: 3631
+      desc: |
+            A black square lies to the west.
+      key: -1
+- vnum: 3633
+  name: A White Square
+  sector: city
+  desc: |2
+       You are standing on a white marble square.
+  exits:
+    north:
+      to: 3625
+      desc: |
+            A black square lies to the north.
+      key: -1
+    east:
+      to: 3634
+      desc: |
+            A black square lies to the east.
+      key: -1
+    south:
+      to: 3641
+      desc: |
+            A black square lies to the south.
+      key: -1
+- vnum: 3634
+  name: A Black Square
+  sector: city
+  desc: |2
+       You are standing on a black marble square.
+  exits:
+    north:
+      to: 3626
+      desc: |
+            A white square lies to the north.
+      key: -1
+    east:
+      to: 3635
+      desc: |
+            A white square lies to the east.
+      key: -1
+    south:
+      to: 3642
+      desc: |
+            A white square lies to the south.
+      key: -1
+    west:
+      to: 3633
+      desc: |
+            A white square lies to the west.
+      key: -1
+- vnum: 3635
+  name: A White Square
+  sector: city
+  desc: |2
+       You are standing on a white marble square.
+  exits:
+    north:
+      to: 3627
+      desc: |
+            A black square lies to the north.
+      key: -1
+    east:
+      to: 3636
+      desc: |
+            A black square lies to the east.
+      key: -1
+    south:
+      to: 3643
+      desc: |
+            A black square lies to the south.
+      key: -1
+    west:
+      to: 3634
+      desc: |
+            A black square lies to the west.
+      key: -1
+- vnum: 3636
+  name: A Black Square
+  sector: city
+  desc: |2
+       You are standing on a black marble square.
+  exits:
+    north:
+      to: 3628
+      desc: |
+            A white square lies to the north.
+      key: -1
+    east:
+      to: 3637
+      desc: |
+            A white square lies to the east.
+      key: -1
+    south:
+      to: 3644
+      desc: |
+            A white square lies to the south.
+      key: -1
+    west:
+      to: 3635
+      desc: |
+            A white square lies to the west.
+      key: -1
+- vnum: 3637
+  name: A White Square
+  sector: city
+  desc: |2
+       You are standing on a white marble square.
+  exits:
+    north:
+      to: 3629
+      desc: |
+            A black square lies to the north.
+      key: -1
+    east:
+      to: 3638
+      desc: |
+            A black square lies to the east.
+      key: -1
+    south:
+      to: 3645
+      desc: |
+            A black square lies to the south.
+      key: -1
+    west:
+      to: 3636
+      desc: |
+            A black square lies to the west.
+      key: -1
+- vnum: 3638
+  name: A Black Square
+  sector: city
+  desc: |2
+       You are standing on a black marble square.
+  exits:
+    north:
+      to: 3630
+      desc: |
+            A white square lies to the north.
+      key: -1
+    east:
+      to: 3639
+      desc: |
+            A white square lies to the east.
+      key: -1
+    south:
+      to: 3646
+      desc: |
+            A white square lies to the south.
+      key: -1
+    west:
+      to: 3637
+      desc: |
+            A white square lies to the west.
+      key: -1
+- vnum: 3639
+  name: A White Square
+  sector: city
+  desc: |2
+       You are standing on a white marble square.
+  exits:
+    north:
+      to: 3631
+      desc: |
+            A black square lies to the north.
+      key: -1
+    east:
+      to: 3640
+      desc: |
+            A black square lies to the east.
+      key: -1
+    south:
+      to: 3647
+      desc: |
+            A black square lies to the south.
+      key: -1
+    west:
+      to: 3638
+      desc: |
+            A black square lies to the west.
+      key: -1
+- vnum: 3640
+  name: A Black Square
+  sector: city
+  desc: |2
+       You are standing on a black marble square.  There is a rusty gate
+    to the north.
+  exits:
+    north:
+      to: 3632
+      desc: |
+            A white square lies to the north.
+      key: -1
+    south:
+      to: 3648
+      desc: |
+            A white square lies to the south.
+      key: -1
+    west:
+      to: 3639
+      desc: |
+            A white square lies to the west.
+      key: -1
+- vnum: 3641
+  name: A Black Square
+  sector: city
+  desc: |2
+       You are standing on a black marble square.
+  exits:
+    north:
+      to: 3633
+      desc: |
+            A white square lies to the north.
+      key: -1
+    east:
+      to: 3642
+      desc: |
+            A white square lies to the east.
+      key: -1
+    south:
+      to: 3649
+      desc: |
+            A white square lies to the south.
+      key: -1
+- vnum: 3642
+  name: A White Square
+  sector: city
+  desc: |2
+       You are standing on a white marble square.
+  exits:
+    north:
+      to: 3634
+      desc: |
+            A black square lies to the north.
+      key: -1
+    east:
+      to: 3643
+      desc: |
+            A black square lies to the east.
+      key: -1
+    south:
+      to: 3650
+      desc: |
+            A black square lies to the south.
+      key: -1
+    west:
+      to: 3641
+      desc: |
+            A black square lies to the west.
+      key: -1
+- vnum: 3643
+  name: A Black Square
+  sector: city
+  desc: |2
+       You are standing on a black marble square.
+  exits:
+    north:
+      to: 3635
+      desc: |
+            A white square lies to the north.
+      key: -1
+    east:
+      to: 3644
+      desc: |
+            A white square lies to the east.
+      key: -1
+    south:
+      to: 3651
+      desc: |
+            A white square lies to the south.
+      key: -1
+    west:
+      to: 3642
+      desc: |
+            A white square lies to the west.
+      key: -1
+- vnum: 3644
+  name: A White Square
+  sector: city
+  desc: |2
+       You are standing on a white marble square.
+  exits:
+    north:
+      to: 3636
+      desc: |
+            A black square lies to the north.
+      key: -1
+    east:
+      to: 3645
+      desc: |
+            A black square lies to the east.
+      key: -1
+    south:
+      to: 3652
+      desc: |
+            A black square lies to the south.
+      key: -1
+    west:
+      to: 3643
+      desc: |
+            A black square lies to the west.
+      key: -1
+- vnum: 3645
+  name: A Black Square
+  sector: city
+  desc: |2
+       You are standing on a black marble square.
+  exits:
+    north:
+      to: 3637
+      desc: |
+            A white square lies to the north.
+      key: -1
+    east:
+      to: 3646
+      desc: |
+            A white square lies to the east.
+      key: -1
+    south:
+      to: 3653
+      desc: |
+            A white square lies to the south.
+      key: -1
+    west:
+      to: 3644
+      desc: |
+            A white square lies to the west.
+      key: -1
+- vnum: 3646
+  name: A White Square
+  sector: city
+  desc: |2
+       You are standing on a white marble square.
+  exits:
+    north:
+      to: 3638
+      desc: |
+            A black square lies to the north.
+      key: -1
+    east:
+      to: 3647
+      desc: |
+            A black square lies to the east.
+      key: -1
+    south:
+      to: 3654
+      desc: |
+            A black square lies to the south.
+      key: -1
+    west:
+      to: 3645
+      desc: |
+            A black square lies to the west.
+      key: -1
+- vnum: 3647
+  name: A Black Square
+  sector: city
+  desc: |2
+       You are standing on a black marble square.
+  exits:
+    north:
+      to: 3639
+      desc: |
+            A white square lies to the north.
+      key: -1
+    east:
+      to: 3648
+      desc: |
+            A white square lies to the east.
+      key: -1
+    south:
+      to: 3655
+      desc: |
+            A white square lies to the south.
+      key: -1
+    west:
+      to: 3646
+      desc: |
+            A white square lies to the west.
+      key: -1
+- vnum: 3648
+  name: A White Square
+  sector: city
+  desc: |2
+       You are standing on a white marble square.
+  exits:
+    north:
+      to: 3640
+      desc: |
+            A black square lies to the north.
+      key: -1
+    south:
+      to: 3656
+      desc: |
+            A black square lies to the south.
+      key: -1
+    west:
+      to: 3647
+      desc: |
+            A black square lies to the west.
+      key: -1
+- vnum: 3649
+  name: A White Square
+  sector: city
+  desc: |2
+       You are standing on a white marble square.  This is usually the home
+    of one of the White Queen's Pawns.
+  exits:
+    north:
+      to: 3641
+      desc: |
+            A black square lies to the north.
+      key: -1
+    east:
+      to: 3650
+      desc: |
+            A black square lies to the east.
+      key: -1
+    south:
+      to: 3657
+      desc: |
+            A black square lies to the south.
+      key: -1
+- vnum: 3650
+  name: A Black Square
+  sector: city
+  desc: |2
+       You are standing on a black marble square.  This is usually the home
+    of one of the White Queen's Pawns.
+  exits:
+    north:
+      to: 3642
+      desc: |
+            A white square lies to the north.
+      key: -1
+    east:
+      to: 3651
+      desc: |
+            A white square lies to the east.
+      key: -1
+    south:
+      to: 3658
+      desc: |
+            A white square lies to the south.
+      key: -1
+    west:
+      to: 3649
+      desc: |
+            A white square lies to the west.
+      key: -1
+- vnum: 3651
+  name: A White Square
+  sector: city
+  desc: |2
+       You are standing on a white marble square.  This is usually the home
+    of one of the White Queen's Pawns.
+  exits:
+    north:
+      to: 3643
+      desc: |
+            A black square lies to the north.
+      key: -1
+    east:
+      to: 3652
+      desc: |
+            A black square lies to the east.
+      key: -1
+    south:
+      to: 3659
+      desc: |
+            A black square lies to the south.
+      key: -1
+    west:
+      to: 3650
+      desc: |
+            A black square lies to the west.
+      key: -1
+- vnum: 3652
+  name: A Black Square
+  sector: city
+  desc: |2
+       You are standing on a black marble square.  This is usually the home
+    of one of the White Queen's Pawns.
+  exits:
+    north:
+      to: 3644
+      desc: |
+            A white square lies to the north.
+      key: -1
+    east:
+      to: 3653
+      desc: |
+            A white square lies to the east.
+      key: -1
+    south:
+      to: 3660
+      desc: |
+            A white square lies to the south.
+      key: -1
+    west:
+      to: 3651
+      desc: |
+            A white square lies to the west.
+      key: -1
+- vnum: 3653
+  name: A White Square
+  sector: city
+  desc: |2
+       You are standing on a white marble square.  This is usually the home
+    of one of the White King's Pawns.
+  exits:
+    north:
+      to: 3645
+      desc: |
+            A black square lies to the north.
+      key: -1
+    east:
+      to: 3654
+      desc: |
+            A black square lies to the east.
+      key: -1
+    south:
+      to: 3661
+      desc: |
+            A black square lies to the south.
+      key: -1
+    west:
+      to: 3652
+      desc: |
+            A black square lies to the west.
+      key: -1
+- vnum: 3654
+  name: A Black Square
+  sector: city
+  desc: |2
+       You are standing on a black marble square.  This is usually the home
+    of one of the White King's Pawns.
+  exits:
+    north:
+      to: 3646
+      desc: |
+            A white square lies to the north.
+      key: -1
+    east:
+      to: 3655
+      desc: |
+            A white square lies to the east.
+      key: -1
+    south:
+      to: 3662
+      desc: |
+            A white square lies to the south.
+      key: -1
+    west:
+      to: 3653
+      desc: |
+            A white square lies to the west.
+      key: -1
+- vnum: 3655
+  name: A White Square
+  sector: city
+  desc: |2
+       You are standing on a white marble square.  This is usually the home
+    of one of the White King's Pawns.
+  exits:
+    north:
+      to: 3647
+      desc: |
+            A black square lies to the north.
+      key: -1
+    east:
+      to: 3656
+      desc: |
+            A black square lies to the east.
+      key: -1
+    south:
+      to: 3663
+      desc: |
+            A black square lies to the south.
+      key: -1
+    west:
+      to: 3654
+      desc: |
+            A black square lies to the west.
+      key: -1
+- vnum: 3656
+  name: A Black Square
+  sector: city
+  desc: |2
+       You are standing on a black marble square.  This is usually the home
+    of one of the White King's Pawns.
+  exits:
+    north:
+      to: 3648
+      desc: |
+            A white square lies to the north.
+      key: -1
+    south:
+      to: 3664
+      desc: |
+            A white square lies to the south.
+      key: -1
+    west:
+      to: 3655
+      desc: |
+            A white square lies to the west.
+      key: -1
+- vnum: 3657
+  name: A Black Square
+  sector: city
+  desc: |2
+       You are standing on a black marble square.  This is usually the home
+    of the White Queen's Rook.
+  exits:
+    north:
+      to: 3649
+      desc: |
+            A white square lies to the north.
+      key: -1
+    east:
+      to: 3658
+      desc: |
+            A white square lies to the east.
+      key: -1
+- vnum: 3658
+  name: A White Square
+  sector: city
+  desc: |2
+       You are standing on a white marble square.  This is usually the home
+    of the White Queen's Knight.
+  exits:
+    north:
+      to: 3650
+      desc: |
+            A black square lies to the north.
+      key: -1
+    east:
+      to: 3659
+      desc: |
+            A black square lies to the east.
+      key: -1
+    west:
+      to: 3657
+      desc: |
+            A black square lies to the west.
+      key: -1
+- vnum: 3659
+  name: A Black Square
+  sector: city
+  desc: |2
+       You are standing on a black marble square.  This is usually the home
+    of the White Queen's Bishop.
+  exits:
+    north:
+      to: 3651
+      desc: |
+            A white square lies to the north.
+      key: -1
+    east:
+      to: 3660
+      desc: |
+            A white square lies to the east.
+      key: -1
+    west:
+      to: 3658
+      desc: |
+            A white square lies to the west.
+      key: -1
+- vnum: 3660
+  name: A White Square
+  sector: city
+  desc: |2
+       You are standing on a white marble square.  This is usually the home
+    of the White Queen.
+  exits:
+    north:
+      to: 3652
+      desc: |
+            A black square lies to the north.
+      key: -1
+    east:
+      to: 3661
+      desc: |
+            A black square lies to the east.
+      key: -1
+    west:
+      to: 3659
+      desc: |
+            A black square lies to the west.
+      key: -1
+    down:
+      to: 3666
+      door: pickproof
+      key: 3615
+      keywords: marble square
+- vnum: 3661
+  name: A Black Square
+  sector: city
+  desc: |2
+       You are standing on a black marble square.  This is usually the home
+    of the White King.
+  exits:
+    north:
+      to: 3653
+      desc: |
+            A white square lies to the north.
+      key: -1
+    east:
+      to: 3662
+      desc: |
+            A white square lies to the east.
+      key: -1
+    west:
+      to: 3660
+      desc: |
+            A white square lies to the west.
+      key: -1
+- vnum: 3662
+  name: A White Square
+  sector: city
+  desc: |2
+       You are standing on a white marble square.  This is usually the home
+    of the White King's Bishop.
+  exits:
+    north:
+      to: 3654
+      desc: |
+            A black square lies to the north.
+      key: -1
+    east:
+      to: 3663
+      desc: |
+            A black square lies to the east.
+      key: -1
+    west:
+      to: 3661
+      desc: |
+            A black square lies to the west.
+      key: -1
+- vnum: 3663
+  name: A Black Square
+  sector: city
+  desc: |2
+       You are standing on a black marble square.  This is usually the home
+    of the White King's Knight.
+  exits:
+    north:
+      to: 3655
+      desc: |
+            A white square lies to the north.
+      key: -1
+    east:
+      to: 3664
+      desc: |
+            A white square lies to the east.
+      key: -1
+    west:
+      to: 3662
+      desc: |
+            A white square lies to the west.
+      key: -1
+- vnum: 3664
+  name: A White Square
+  sector: city
+  desc: |2
+       You are standing on a white marble square.  This is usually the home
+    of the White King's Rook.
+  exits:
+    north:
+      to: 3656
+      desc: |
+            A black square lies to the north.
+      key: -1
+    west:
+      to: 3663
+      desc: |
+            A black square lies to the west.
+      key: -1
+- vnum: 3665
+  name: The Black Treasury
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  - private
+  desc: |2
+       You are standing in the treasury of the Black Court.  Hopefully no one 
+    has looted the Crown's treasure.
+  exits:
+    up:
+      to: 3604
+      desc: |
+            A small staircase rises above you.
+      door: pickproof
+      key: 3614
+      keywords: marble square
+- vnum: 3666
+  name: The White Treasury
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  - private
+  desc: |2
+       You are standing in the treasury of the White Court.  Hopefully no one 
+    has looted the Crown's treasure.
+  exits:
+    up:
+      to: 3660
+      desc: |
+            A small staircase rises above you.
+      door: pickproof
+      key: 3615
+      keywords: marble square
+mobiles:
+- vnum: 3600
+  keywords:
+  - black
+  - pawn
+  short: the Pawn of the Black Court
+  long: |
+    You see a pawn standing here waiting for orders.
+  desc: |
+    The Black Pawn looks quite like a small knight without his powerful steed.
+    His armor is shiny and black.  He stands ready to give his life for the
+    Crown.
+  act:
+  - sentinel
+  - scavenger
+  - stay_zone
+  - wimpy
+  affected:
+  - detect_invis
+  alignment: -400
+  level: 6
+  thac0: 2
+  ac: 5
+  hp: 5d4+50
+  damage: 2d4+2
+  gold: 500
+  exp: 1000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 3601
+  keywords:
+  - white
+  - pawn
+  short: the Pawn of the White Court
+  long: |
+    You see a pawn standing here waiting for orders.
+  desc: |
+    The White Pawn looks quite like a small knight without his powerful steed.
+    His armor is spotless and white.  He stands ready to give his life for the
+    Crown.
+  act:
+  - sentinel
+  - scavenger
+  - stay_zone
+  - wimpy
+  affected:
+  - detect_invis
+  alignment: 400
+  level: 6
+  thac0: 2
+  ac: 5
+  hp: 5d4+50
+  damage: 2d4+2
+  gold: 500
+  exp: 1000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 3602
+  keywords:
+  - black
+  - rook
+  - castle
+  short: the Black Rook
+  long: |
+    In the corner you see a large, black, stone castle on wheels.
+  desc: |
+    The Black Rook is a very large man-made tomb on wheels.  Just
+    from the looks of it, it will probably be YOUR tomb.
+  act:
+  - sentinel
+  - no_sleep
+  - no_bash
+  - no_blind
+  affected:
+  - detect_invis
+  alignment: -600
+  level: 27
+  thac0: 11
+  ac: 1
+  hp: 2d6+500
+  damage: 3d8+5
+  gold: 5000
+  exp: 85000
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 3603
+  keywords:
+  - white
+  - rook
+  - castle
+  short: the White Rook
+  long: |
+    In the corner you see a large, white, stone castle on wheels.
+  desc: |
+    The White Rook is a very large man-made tomb on wheels.  Just
+    from the looks of it, it will probably be YOUR tomb.
+  act:
+  - sentinel
+  - no_sleep
+  - no_bash
+  - no_blind
+  affected:
+  - detect_invis
+  alignment: 600
+  level: 27
+  thac0: 11
+  ac: 1
+  hp: 2d6+500
+  damage: 3d8+5
+  gold: 5000
+  exp: 85000
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 3604
+  keywords:
+  - black
+  - knight
+  short: the Black Knight
+  long: |
+    Here stands a magnificent knight of the dark realm.
+  desc: |
+    The Black Knight is here, riding his ebony black war horse.  His eyes
+    flash behind his visor in vengence.
+  act:
+  - sentinel
+  - aggressive
+  affected:
+  - detect_invis
+  alignment: -400
+  level: 18
+  thac0: 8
+  ac: 0
+  hp: 4d8+350
+  damage: 2d8+1
+  gold: 3000
+  exp: 22500
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 3605
+  keywords:
+  - white
+  - knight
+  short: the White Knight
+  long: |
+    Here stands a magnificent knight of the light realm.
+  desc: |
+    The White Knight is here, riding his ivory white war horse.  His eyes
+    gleam behind his visor in joy.
+  act:
+  - sentinel
+  - aggressive
+  affected:
+  - detect_invis
+  alignment: 400
+  level: 18
+  thac0: 8
+  ac: 0
+  hp: 4d8+350
+  damage: 2d8+1
+  gold: 3000
+  exp: 22500
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 3606
+  keywords:
+  - black
+  - bishop
+  - priest
+  short: the Black Bishop
+  long: |
+    A dark priest stands here.
+  desc: |
+    The Black Bishop seems willing to help you straight into your grave so
+    he can bless you properly.
+  act:
+  - sentinel
+  affected:
+  - detect_invis
+  alignment: -500
+  level: 24
+  thac0: 11
+  ac: 1
+  hp: 2d5+350
+  damage: 3d6+13
+  gold: 4000
+  exp: 43500
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 3607
+  keywords:
+  - white
+  - bishop
+  - priest
+  short: the White Bishop
+  long: |
+    A light priest stands here.
+  desc: |
+    The White Bishop seems willing to help you in any possible so that he can
+    attain a higher spirituality.
+  act:
+  - sentinel
+  affected:
+  - detect_invis
+  alignment: 500
+  level: 24
+  thac0: 11
+  ac: 1
+  hp: 2d5+350
+  damage: 3d6+13
+  gold: 4000
+  exp: 43500
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 3608
+  keywords:
+  - black
+  - queen
+  short: the Black Queen
+  long: |
+    The Black Queen stands here.
+  desc: |
+    The Black Queen is a strikingly beautiful woman with pale skin and a
+    mass of dark hair that crowns her head like a black cloud.  If looks
+    could kill, you would already be dead.
+  act:
+  - sentinel
+  - scavenger
+  - aggressive
+  - memory
+  affected:
+  - detect_invis
+  - sanctuary
+  alignment: -750
+  level: 32
+  thac0: 11
+  ac: -3
+  hp: 5d10+900
+  damage: 4d6+13
+  gold: 10000
+  exp: 200000
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 3609
+  keywords:
+  - white
+  - queen
+  short: the White Queen
+  long: |
+    The White Queen stands here.
+  desc: |
+    The White Queen is a stunningly beautiful woman with dark skin and a mass
+    of light hair that frames her head like the sun.  This is surely love at
+    first sight for you.
+  act:
+  - sentinel
+  - scavenger
+  - aggressive
+  - memory
+  affected:
+  - detect_invis
+  - sanctuary
+  alignment: 750
+  level: 32
+  thac0: 11
+  ac: -3
+  hp: 5d10+900
+  damage: 4d6+13
+  gold: 10000
+  exp: 200000
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 3610
+  keywords:
+  - black
+  - king
+  short: the Black King
+  long: |
+    The Black King stands here.
+  desc: |
+    The Black King is a menacing figure.  You can easily understand why he
+    is the king and you are not.
+  act:
+  - sentinel
+  - scavenger
+  - aware
+  - aggressive
+  - memory
+  affected:
+  - detect_invis
+  - sanctuary
+  alignment: -999
+  level: 36
+  thac0: 14
+  ac: -6
+  hp: 10d10+2000
+  damage: 5d8+20
+  gold: 20000
+  exp: 300000
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 3611
+  keywords:
+  - white
+  - king
+  short: the White King
+  long: |
+    The White King stands here.
+  desc: |
+    The White King is a stately figure.  You can easily understand why he
+    is the king and you are not.
+  act:
+  - sentinel
+  - scavenger
+  - aware
+  - aggressive
+  - memory
+  affected:
+  - detect_invis
+  - sanctuary
+  alignment: 999
+  level: 36
+  thac0: 14
+  ac: -6
+  hp: 10d10+2000
+  damage: 5d8+20
+  gold: 20000
+  exp: 300000
+  position: standing
+  default_position: standing
+  sex: neutral
+objects:
+- vnum: 3600
+  keywords:
+  - armour
+  - black
+  - pawn
+  short: some Black Pawn Armour
+  desc: A pile of black armour is here.
+  type: armor
+  wear:
+  - take
+  - body
+  flags:
+  - anti_good
+  armor:
+    ac_apply: 1
+  weight: 13
+  cost: 300
+  rent: 1
+- vnum: 3601
+  keywords:
+  - armour
+  - white
+  - pawn
+  short: some White Pawn Armour
+  desc: A pile of white armour is here.
+  type: armor
+  wear:
+  - take
+  - body
+  flags:
+  - anti_evil
+  armor:
+    ac_apply: 1
+  weight: 13
+  cost: 300
+  rent: 1
+- vnum: 3602
+  keywords:
+  - sword
+  - black
+  - pawn
+  short: a Black Pawn's Sword
+  desc: The sword of a Black Pawn lies here.
+  type: weapon
+  wear:
+  - take
+  - wield
+  flags:
+  - anti_good
+  weapon:
+    dice: 3d4
+    damage_type: slash
+  weight: 10
+  cost: 100
+  rent: 1
+- vnum: 3603
+  keywords:
+  - sword
+  - white
+  - pawn
+  short: a White Pawn's Sword
+  desc: The sword of a White Pawn lies here.
+  type: weapon
+  wear:
+  - take
+  - wield
+  flags:
+  - anti_evil
+  weapon:
+    dice: 3d4
+    damage_type: slash
+  weight: 10
+  cost: 100
+  rent: 1
+- vnum: 3604
+  keywords:
+  - armour
+  - black
+  - rook
+  short: some Black Rook Armour
+  desc: Some armour made from the remains of a black rook lies heaped on the floor.
+  type: armor
+  wear:
+  - take
+  - body
+  flags:
+  - glow
+  - no_drop
+  - anti_good
+  armor:
+    ac_apply: 2
+  weight: 60
+  cost: 17000
+  rent: 5
+  affects:
+  - location: armor
+    modifier: 2
+  - location: con
+    modifier: 1
+- vnum: 3605
+  keywords:
+  - armour
+  - white
+  - rook
+  short: some White Rook Armour
+  desc: Some armour made from the remains of a white rook lies heaped on the floor.
+  type: armor
+  wear:
+  - take
+  - body
+  flags:
+  - glow
+  - magic
+  - anti_evil
+  armor:
+    ac_apply: 2
+  weight: 60
+  cost: 17000
+  rent: 5
+  affects:
+  - location: armor
+    modifier: 2
+  - location: con
+    modifier: 1
+- vnum: 3606
+  keywords:
+  - lance
+  - black
+  - knight
+  short: the Lance of the Black Knight
+  desc: The Lance of the Black Knight lies here, waiting to rust.
+  type: weapon
+  wear:
+  - take
+  - wield
+  flags:
+  - hum
+  - magic
+  - anti_good
+  weapon:
+    dice: 3d6
+    damage_type: crush
+  weight: 18
+  cost: 10000
+  rent: 3
+  affects:
+  - location: damroll
+    modifier: 2
+  - location: saving_breath
+    modifier: 5
+- vnum: 3607
+  keywords:
+  - lance
+  - white
+  - knight
+  short: the Lance of the White Knight
+  desc: The Lance of the White Knight lies here, waiting to rust.
+  type: weapon
+  wear:
+  - take
+  - wield
+  flags:
+  - hum
+  - magic
+  - anti_evil
+  weapon:
+    dice: 3d6
+    damage_type: crush
+  weight: 18
+  cost: 10000
+  rent: 3
+  affects:
+  - location: damroll
+    modifier: 2
+  - location: saving_breath
+    modifier: 5
+- vnum: 3608
+  keywords:
+  - staff
+  - black
+  - bishop
+  short: the Staff of the Black Bishop
+  desc: The Black Bishop's Staff is lying here.
+  type: staff
+  wear:
+  - take
+  - hold
+  flags:
+  - glow
+  - magic
+  - anti_good
+  charges:
+    spell: sanctuary
+    level: 20
+    max: 5
+    remaining: 5
+  weight: 3
+  cost: 20000
+  rent: 6
+- vnum: 3609
+  keywords:
+  - staff
+  - white
+  - bishop
+  short: the Staff of the White Bishop
+  desc: The White Bishop's Staff is lying here.
+  type: staff
+  wear:
+  - take
+  - hold
+  flags:
+  - glow
+  - magic
+  - anti_evil
+  charges:
+    spell: sanctuary
+    level: 20
+    max: 5
+    remaining: 5
+  weight: 3
+  cost: 20000
+  rent: 6
+- vnum: 3610
+  keywords:
+  - crown
+  - black
+  - queen
+  short: the Crown of the Black Queen
+  desc: The Crown of the Black Queen lies here, looking neglected.
+  type: armor
+  wear:
+  - take
+  - head
+  flags:
+  - hum
+  - magic
+  - anti_good
+  armor:
+    ac_apply: 2
+  weight: 4
+  cost: 3000
+  rent: 5
+  affects:
+  - location: int
+    modifier: 1
+  - location: wis
+    modifier: 1
+- vnum: 3611
+  keywords:
+  - crown
+  - white
+  - queen
+  short: the Crown of the White Queen
+  desc: The Crown of the White Queen lies here, looking neglected.
+  type: armor
+  wear:
+  - take
+  - head
+  flags:
+  - hum
+  - magic
+  - anti_evil
+  armor:
+    ac_apply: 2
+  weight: 4
+  cost: 3000
+  rent: 5
+  affects:
+  - location: int
+    modifier: 1
+  - location: wis
+    modifier: 1
+- vnum: 3612
+  keywords:
+  - sceptre
+  - black
+  - king
+  short: the Black King's Sceptre
+  desc: The Sceptre of the Black King lies here, collecting dust.
+  type: treasure
+  wear:
+  - take
+  - hold
+  flags:
+  - hum
+  - invisible
+  - magic
+  - anti_good
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 200
+  cost: 85000
+  rent: 1
+  affects:
+  - location: str
+    modifier: 1
+  - location: hitroll
+    modifier: 1
+- vnum: 3613
+  keywords:
+  - sceptre
+  - white
+  - king
+  short: the White King's Sceptre
+  desc: The Sceptre of the White King lies here, collecting dust.
+  type: treasure
+  wear:
+  - take
+  - hold
+  flags:
+  - hum
+  - invisible
+  - magic
+  - anti_evil
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 300
+  cost: 85000
+  rent: 10
+  affects:
+  - location: str
+    modifier: 1
+  - location: hitroll
+    modifier: 1
+- vnum: 3614
+  keywords:
+  - key
+  - black
+  - treasury
+  short: the Key to the Black Treasury
+  desc: There is a sinister black key lying here.
+  type: key
+  wear:
+  - take
+  - hold
+  flags:
+  - no_rent
+  - no_donate
+  - invisible
+  - no_sell
+  values:
+  - 3614
+  - 0
+  - 0
+  - 0
+  weight: 1
+  cost: 1000
+  rent: 300
+- vnum: 3615
+  keywords:
+  - key
+  - white
+  - treasury
+  short: the Key to the White Treasury
+  desc: There is a bright white key lying here.
+  type: key
+  wear:
+  - take
+  - hold
+  flags:
+  - no_rent
+  - no_donate
+  - invisible
+  - no_sell
+  values:
+  - 3615
+  - 0
+  - 0
+  - 0
+  weight: 1
+  cost: 1000
+  rent: 300
+- vnum: 3616
+  keywords:
+  - coins
+  - gold
+  - black
+  - royal
+  - treasure
+  short: the Black Royal Treasure
+  desc: There are a LOT of coins here.
+  type: money
+  wear:
+  - take
+  values:
+  - 10000
+  - 0
+  - 0
+  - 0
+  weight: 10
+  cost: 10000
+  rent: 0
+- vnum: 3617
+  keywords:
+  - coins
+  - gold
+  - white
+  - royal
+  - treasure
+  short: the White Royal Treasure
+  desc: There are a LOT of coins here.
+  type: money
+  wear:
+  - take
+  values:
+  - 10000
+  - 0
+  - 0
+  - 0
+  weight: 10
+  cost: 10000
+  rent: 0
+resets:
+- mob: 3600
+  room: 3609
+  max: 8
+  then:
+  - equip: 3600
+    slot: body
+    max: 8
+  - equip: 3602
+    slot: wield
+    max: 8
+- mob: 3600
+  room: 3610
+  max: 8
+  then:
+  - equip: 3600
+    slot: body
+    max: 8
+  - equip: 3602
+    slot: wield
+    max: 8
+- mob: 3600
+  room: 3611
+  max: 8
+  then:
+  - equip: 3600
+    slot: body
+    max: 8
+  - equip: 3602
+    slot: wield
+    max: 8
+- mob: 3600
+  room: 3612
+  max: 8
+  then:
+  - equip: 3600
+    slot: body
+    max: 8
+  - equip: 3602
+    slot: wield
+    max: 8
+- mob: 3600
+  room: 3613
+  max: 8
+  then:
+  - equip: 3600
+    slot: body
+    max: 8
+  - equip: 3602
+    slot: wield
+    max: 8
+- mob: 3600
+  room: 3614
+  max: 8
+  then:
+  - equip: 3600
+    slot: body
+    max: 8
+  - equip: 3602
+    slot: wield
+    max: 8
+- mob: 3600
+  room: 3615
+  max: 8
+  then:
+  - equip: 3600
+    slot: body
+    max: 8
+  - equip: 3602
+    slot: wield
+    max: 8
+- mob: 3600
+  room: 3616
+  max: 8
+  then:
+  - equip: 3600
+    slot: body
+    max: 8
+  - equip: 3602
+    slot: wield
+    max: 8
+- mob: 3601
+  room: 3649
+  max: 8
+  then:
+  - equip: 3601
+    slot: body
+    max: 8
+  - equip: 3603
+    slot: wield
+    max: 8
+- mob: 3601
+  room: 3650
+  max: 8
+  then:
+  - equip: 3601
+    slot: body
+    max: 8
+  - equip: 3603
+    slot: wield
+    max: 8
+- mob: 3601
+  room: 3651
+  max: 8
+  then:
+  - equip: 3601
+    slot: body
+    max: 8
+  - equip: 3603
+    slot: wield
+    max: 8
+- mob: 3601
+  room: 3652
+  max: 8
+  then:
+  - equip: 3601
+    slot: body
+    max: 8
+  - equip: 3603
+    slot: wield
+    max: 8
+- mob: 3601
+  room: 3653
+  max: 8
+  then:
+  - equip: 3601
+    slot: body
+    max: 8
+  - equip: 3603
+    slot: wield
+    max: 8
+- mob: 3601
+  room: 3654
+  max: 8
+  then:
+  - equip: 3601
+    slot: body
+    max: 8
+  - equip: 3603
+    slot: wield
+    max: 8
+- mob: 3601
+  room: 3655
+  max: 8
+  then:
+  - equip: 3601
+    slot: body
+    max: 8
+  - equip: 3603
+    slot: wield
+    max: 8
+- mob: 3601
+  room: 3656
+  max: 8
+  then:
+  - equip: 3601
+    slot: body
+    max: 8
+  - equip: 3603
+    slot: wield
+    max: 8
+- mob: 3602
+  room: 3601
+  max: 2
+  then:
+  - equip: 3604
+    slot: body
+    max: 2
+- mob: 3602
+  room: 3608
+  max: 2
+  then:
+  - equip: 3604
+    slot: body
+    max: 2
+- mob: 3603
+  room: 3657
+  max: 2
+  then:
+  - equip: 3605
+    slot: body
+    max: 2
+- mob: 3603
+  room: 3664
+  max: 2
+  then:
+  - equip: 3605
+    slot: body
+    max: 2
+- mob: 3604
+  room: 3602
+  max: 2
+  then:
+  - equip: 3606
+    slot: wield
+    max: 2
+- mob: 3604
+  room: 3607
+  max: 2
+  then:
+  - equip: 3606
+    slot: wield
+    max: 2
+- mob: 3605
+  room: 3658
+  max: 2
+  then:
+  - equip: 3607
+    slot: wield
+    max: 2
+- mob: 3605
+  room: 3663
+  max: 2
+  then:
+  - equip: 3607
+    slot: wield
+    max: 2
+- mob: 3606
+  room: 3603
+  max: 2
+  then:
+  - equip: 3608
+    slot: hold
+    max: 2
+- mob: 3606
+  room: 3606
+  max: 2
+  then:
+  - equip: 3608
+    slot: hold
+    max: 2
+- mob: 3607
+  room: 3659
+  max: 2
+  then:
+  - equip: 3609
+    slot: hold
+    max: 2
+- mob: 3607
+  room: 3662
+  max: 2
+  then:
+  - equip: 3609
+    slot: hold
+    max: 2
+- mob: 3608
+  room: 3604
+  max: 1
+  then:
+  - equip: 3610
+    slot: head
+    max: 1
+- mob: 3609
+  room: 3660
+  max: 1
+  then:
+  - equip: 3611
+    slot: head
+    max: 1
+- mob: 3610
+  room: 3605
+  max: 1
+  then:
+  - equip: 3612
+    slot: hold
+    max: 1
+  - give: 3614
+    max: 1
+- mob: 3611
+  room: 3661
+  max: 1
+  then:
+  - equip: 3613
+    slot: hold
+    max: 1
+  - give: 3615
+    max: 1
+- room: 3665
+  object: 3616
+  max: 1
+- room: 3666
+  object: 3617
+  max: 1
+- door: 3604
+  dir: down
+  state: locked
+- door: 3665
+  dir: up
+  state: locked
+- door: 3660
+  dir: down
+  state: locked
+- door: 3666
+  dir: up
+  state: locked

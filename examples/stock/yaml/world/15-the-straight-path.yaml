@@ -1,0 +1,2033 @@
+schema: dl/world@1
+zone:
+  vnum: 15
+  name: The Straight Path
+  range:
+  - 1500
+  - 1599
+  lifespan: 10
+  reset: always
+rooms:
+- vnum: 1500
+  name: A Road Leading From The Bank
+  sector: hills
+  flags:
+  - no_mob
+  desc: |2
+       You find yourself on a small road leading away from the edge
+    of the River of Lost Souls.  The dark waters of the River can
+    be seen and heard just south of here.  Looking to the east and
+    west, you see only the walls of the rocky cliffs.  Off to the
+    north a strange path seems to lead straight into the depths of
+    the mountain.
+  exits:
+    north:
+      to: 1501
+      desc: |
+            A strange path leads northwards.
+      key: -1
+    south:
+      to: 5619
+      desc: |
+            The River of Lost Souls flows just to the south of here.
+      key: -1
+- vnum: 1501
+  name: A Long Road
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You stand here in spiritual emptiness, beginning a long and dangerous
+    path.  Your honest submission has already been made, but the truth of your
+    heart has yet to be told.  Leave here now, and do not come back until
+    you have grown.
+  exits:
+    north:
+      to: 1502
+      key: -1
+    south:
+      to: 1500
+      key: -1
+- vnum: 1502
+  name: A Long Road
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You stop for a moment, screaming in frustration.  Surely it was that one
+    sin that was avoidable, of all that you regret.  The hitting and the hurting
+    flash briefly before you.  Moments later the pain passes, and the straight
+    path reveals itself before you.
+  exits:
+    north:
+      to: 1503
+      key: -1
+    south:
+      to: 1501
+      key: -1
+- vnum: 1503
+  name: A Long Road
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       The road clears, the fog and pain of the first few steps left behind
+    you.  Despite the sudden clarity, your mind is still haunted, images of
+    an old woman kneeling in prayer, eyes closing, smiling and crying.
+  exits:
+    north:
+      to: 1504
+      key: -1
+    south:
+      to: 1502
+      key: -1
+- vnum: 1504
+  name: A Long Road
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       Looking ahead, you can see that the path you have been following will
+    soon come to an end, but something in the cold and the breeze tells you
+    that that will be only the beginning of the journey.
+  exits:
+    north:
+      to: 1505
+      key: -1
+    south:
+      to: 1503
+      key: -1
+- vnum: 1505
+  name: A Test for the Faithful
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       It is here finally that decisions must be made.  The first one that
+    confronts you is simple enough, to walk in the darkness, or to walk in
+    the light.  Only the depths of your soul can decide, but remember this
+    much: the same truth lies at the end of both paths.
+  exits:
+    up:
+      to: 1507
+      key: -1
+    down:
+      to: 1506
+      key: -1
+- vnum: 1506
+  name: Halls of the Forgotten
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       Even the darkest have a place on the road to the truth.  It is in this
+    place, so empty and forgotten, that God has chosen the worst, and brought
+    them close to Him for one last time.
+  exits:
+    east:
+      to: 1513
+      key: -1
+    west:
+      to: 1508
+      key: -1
+    up:
+      to: 1505
+      key: -1
+- vnum: 1507
+  name: Shahadah
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       It was written once, on an ancient parchment in a curious and flowing
+    script, that there is in fact no god but Allah, and that Muhammad was
+    the last of His Prophets.  With this recognition, all else became empty
+    and meaningless.
+  exits:
+    east:
+      to: 1523
+      key: -1
+    west:
+      to: 1518
+      key: -1
+    down:
+      to: 1505
+      key: -1
+- vnum: 1508
+  name: Earthly Evil
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       Whatever it carries, that rage converts into a weapon.  Wrath supplies
+    all with arms.  When an angry man thirsts for blood anything will serve
+    him for a spear.  Fury turns a stick into a cudgel.
+  exits:
+    north:
+      to: 1509
+      key: -1
+    east:
+      to: 1506
+      key: -1
+- vnum: 1509
+  name: Misguidance
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       Some have been brought here not for what they did, but what they
+    failed to do.  It is these, the poor souls that were presented the
+    fair evidence and rejected it with an honest mind, that deserve our
+    pity the most of all.
+  exits:
+    north:
+      to: 1510
+      key: -1
+    south:
+      to: 1508
+      key: -1
+- vnum: 1510
+  name: Temptation
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       Old tales tell of a conversation between the devil and the Prophet
+    Jesus: the devil offered him a kingdom, vast riches, the temptation of
+    a glorious near-death saved by his angels.  Even this Messenger of God
+    was forced to stop and think.  Imagine how hard it could be for the rest.
+  exits:
+    north:
+      to: 1511
+      key: -1
+    south:
+      to: 1509
+      key: -1
+- vnum: 1511
+  name: Hypocrisy
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       He called the populace to strict religious purity, rigidly enforcing
+    the times of prayer and the most correct forms of the words of the Muezzin.
+    All of this he strengthened by his most impeccable example, shunning all
+    riches and riding in tattered rags through his capital on the back of a
+    donkey.  Despite all this, remember.  Behind closed doors, all men are
+    hypocrites.
+  exits:
+    north:
+      to: 1512
+      key: -1
+    south:
+      to: 1510
+      key: -1
+- vnum: 1512
+  name: Hate
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       There is little in life much easier, and truthfully, little that is a
+    quicker ticket to damnation.  You give brief thanks that you have come to
+    the end of these trials, but your words are drowned out by something
+    much louder, a mechanical preaching that drowns your ears in anger.  You
+    hear a steady, repetitive litany of the same phrase, over and over again:
+    "I go the way history dictates with the blind assurance of a sleep-walker."
+  exits:
+    north:
+      to: 1528
+      key: -1
+    south:
+      to: 1511
+      key: -1
+- vnum: 1513
+  name: Spiritual Danger
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       Some evils are tangible, solid, so evident that they spit you right in
+    the face.  Others are more clever, more subtle, and it is these that present
+    the greatest danger.  Looking down the hall before you, a great fear fills
+    your heart, and a great, heavy longing.
+  exits:
+    north:
+      to: 1514
+      key: -1
+    west:
+      to: 1506
+      key: -1
+- vnum: 1514
+  name: The Fall
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       In the beginning, he was the best, the most beautiful of all the angels,
+    and God's most loved creation.  Look at your own beauty, human, and do what
+    he could not.  Look at your beauty, and learn to kneel!
+  exits:
+    north:
+      to: 1515
+      key: -1
+    south:
+      to: 1513
+      key: -1
+- vnum: 1515
+  name: Temptation
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       Temptation is the IF, the wondering, the second-guessing, the "I will
+    be a better man... if..."  And that if is usually taken, sitting alone,
+    listening to that voice, calling you, offering such an easy way, but such
+    a crooked one.
+  exits:
+    north:
+      to: 1516
+      key: -1
+    south:
+      to: 1514
+      key: -1
+- vnum: 1516
+  name: The Last Day
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       The din of a great battle shakes these halls, the moans of the earth
+    erupting at the shakings of the End Time.  Be ready for that day, be very
+    ready, for if you are not, he will claim you for one of his own.
+  exits:
+    north:
+      to: 1517
+      key: -1
+    south:
+      to: 1515
+      key: -1
+- vnum: 1517
+  name: Flame
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       Undescribable horror and pain, a blackness drowned out only by the
+    burning anguish, the inextinguishable fire coming not from some burning
+    wood or molten lava but from the brightness and pain of the horrible,
+    tortured souls that surround, everywhere you turn.
+  exits:
+    north:
+      to: 1530
+      key: -1
+    south:
+      to: 1516
+      key: -1
+- vnum: 1518
+  name: Earthly Light
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       To slip into evil is easy, but walking this path is the hardest of
+    all.  Even the four you will find here today have strayed from the line
+    at least once in their lives, and there are still some living who curse
+    the very sound of their names.  Despite all this, confront them now, and
+    let their actions serve as your example.
+  exits:
+    north:
+      to: 1519
+      key: -1
+    east:
+      to: 1507
+      key: -1
+- vnum: 1519
+  name: The Light of the Rashidun
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       Many believed that the Prophet would never die, but when the stark
+    evidence of his body confronted them, it soon became necessary to provide
+    for the future.  The four that came after are called the Rashidun, the
+    rightly-guided Caliphs that would spread the word and the light, and with
+    it forge one of history's greatest empires.
+  exits:
+    north:
+      to: 1520
+      key: -1
+    south:
+      to: 1518
+      key: -1
+- vnum: 1520
+  name: The Light of the Rashidun
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       The first Caliphs were chosen by consultation with a noble council
+    of elders, each of whom, hoping to lead the world of Islam alone, voted
+    to elect the one amongst them they thought was the weakest.  Each time,
+    they were wrong.  Each one was more noble, more upright than the one
+    before.
+  exits:
+    north:
+      to: 1521
+      key: -1
+    south:
+      to: 1519
+      key: -1
+- vnum: 1521
+  name: The Light of the Rashidun
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       Every majestic and happy tale must end, usually all too soon, and thus
+    it was with the golden age of the Caliphate.  The Rashidun were pure men,
+    good men, true to the path, but their followers soon began to bicker, and
+    civil war was on the horizon.
+  exits:
+    north:
+      to: 1522
+      key: -1
+    south:
+      to: 1520
+      key: -1
+- vnum: 1522
+  name: The Light of the Rashidun
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       The end of the Rashidun was the beginning of Schism.  The memories
+    of the Prophet and the living example of the Caliphs proved to be
+    insufficient example to the faithful.  Ali died, and some say that
+    with him the Caliphate died too, a martyr, his blood still flowing in
+    the nameless river.
+  exits:
+    north:
+      to: 1531
+      key: -1
+    south:
+      to: 1521
+      key: -1
+- vnum: 1523
+  name: Spritual Reward
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       Behold, Allah is the Provider, the most Generous.  He would not suffer
+    his believers to walk the path of light without guidance.  He provided the
+    Prophets, may peace be upon them, and in the examples of their own growth,
+    we shall find the truth of our own.
+  exits:
+    north:
+      to: 1524
+      key: -1
+    west:
+      to: 1507
+      key: -1
+- vnum: 1524
+  name: Creation
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       In the creation of the heavens and the earth, and in the alternation of
+    night and day, there are signs for men of sense; those that remember Allah
+    say: "Lord, You have not created this in vain!"
+  exits:
+    north:
+      to: 1525
+      key: -1
+    south:
+      to: 1523
+      key: -1
+- vnum: 1525
+  name: Revelation
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       The Angel Gabriel came to him and said: "Read!"  He replied: "But I
+    cannot!"  The order was repeated three times, until the Angel himself
+    said: "Read, in the name of your Lord who created man from clots of blood.
+    Praise be to God, Lord of the Universe."
+  exits:
+    north:
+      to: 1526
+      key: -1
+    south:
+      to: 1524
+      key: -1
+- vnum: 1526
+  name: Conversion
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       Unbelievers, I do not worship what you worship, nor do you worship
+    what I worship.  I shall never worship what you worship, nor will you
+    ever worship what I worship.  You have your own religion, and I have
+    mine.
+  exits:
+    north:
+      to: 1527
+      key: -1
+    south:
+      to: 1525
+      key: -1
+- vnum: 1527
+  name: Deliverance
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       The balance had been made, the soul placed in readiness, and the final
+    measurement taken.  For those that have come this far, surely this is the
+    day of immortality!
+  exits:
+    north:
+      to: 1533
+      key: -1
+    south:
+      to: 1526
+      key: -1
+- vnum: 1528
+  name: Repentance
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       God forgives those who commit evil in ignorance, for He is all-knowing
+    and wise.  But He will not forgive those who do evil, and when death comes
+    to them, say: "Now we repent!"  For those We have prepared a woeful scourge.
+  exits:
+    east:
+      to: 1529
+      key: -1
+    south:
+      to: 1512
+      key: -1
+    up:
+      to: 1534
+      key: -1
+- vnum: 1529
+  name: Pilgrimage
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       It is incumbent upon all Muslims to make the pilgrimage to Mecca once
+    in their lifetime, if they are able, and for those unfortunate enough to
+    follow the lives of the lower evils, such a pilgrimage with an open and
+    contrite heart shall absolve them of all.
+  exits:
+    east:
+      to: 1530
+      key: -1
+    west:
+      to: 1528
+      key: -1
+    up:
+      to: 1535
+      key: -1
+- vnum: 1530
+  name: Intercession
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       It is written that no one may intercede with God on behalf of another.
+    No prayers from another may save the soul of a doomed man; his only hope
+    is prayers of his own.
+  exits:
+    south:
+      to: 1517
+      key: -1
+    west:
+      to: 1529
+      key: -1
+    up:
+      to: 1536
+      key: -1
+- vnum: 1531
+  name: The Upper Reaches
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You have traveled the righteous path, and you have faced the examples
+    of the true models of the Prophet.  Only the final journey awaits you;
+    live like this and you shall live forever.
+  exits:
+    east:
+      to: 1532
+      key: -1
+    south:
+      to: 1522
+      key: -1
+    down:
+      to: 1534
+      key: -1
+- vnum: 1532
+  name: The Upper Reaches
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       When the records of men's deeds are laid open, and heaven is stripped
+    bare; when Hell burns fiercely and Paradise is brought near: then each
+    soul shall know what it has done.
+  exits:
+    east:
+      to: 1533
+      key: -1
+    west:
+      to: 1531
+      key: -1
+    down:
+      to: 1535
+      key: -1
+- vnum: 1533
+  name: The Upper Reaches
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You have traveled the righteous path, and your own journey has
+    imitated the evolution of the most perfect soul.  Only one final
+    path awaits you; die as the one in the room before, and your death
+    will mean nothing.
+  exits:
+    south:
+      to: 1527
+      key: -1
+    west:
+      to: 1532
+      key: -1
+    down:
+      to: 1536
+      key: -1
+- vnum: 1534
+  name: The Final Facing
+  sector: inside
+  flags:
+  - no_mob
+  - indoors
+  desc: |2
+       The last of the darkness lies behind you; only the straight path
+    remains.  Go forth with a clean heart.  Only the penitent shall find
+    what they seek.
+  exits:
+    east:
+      to: 1535
+      key: -1
+    up:
+      to: 1531
+      key: -1
+    down:
+      to: 1528
+      key: -1
+- vnum: 1535
+  name: The Final Facing
+  sector: inside
+  flags:
+  - no_mob
+  - indoors
+  desc: |2
+       The last of the darkness lies behind you; only the straight path
+    remains.  Go forth with a clean heart.  Only the penitent shall find
+    what they seek.
+  exits:
+    north:
+      to: 1537
+      key: -1
+    east:
+      to: 1536
+      key: -1
+    west:
+      to: 1534
+      key: -1
+    up:
+      to: 1532
+      key: -1
+    down:
+      to: 1529
+      key: -1
+- vnum: 1536
+  name: The Final Facing
+  sector: inside
+  flags:
+  - no_mob
+  - indoors
+  desc: |2
+       The last of the darkness lies behind you; only the straight path
+    remains.  Go forth with a clean heart.  Only the penitent shall find
+    what they seek.
+  exits:
+    west:
+      to: 1535
+      key: -1
+    up:
+      to: 1533
+      key: -1
+    down:
+      to: 1530
+      key: -1
+- vnum: 1537
+  name: A Straight Path
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       The Compassionate, the Merciful, Sovereign of the Day of Judgment!
+    You alone we worship, and to You alone we turn for help.  Guide us to
+    the Straight Path, the path of those whom You have favored, not of
+    those who have gone astray.
+  exits:
+    north:
+      to: 1538
+      key: -1
+    south:
+      to: 1535
+      key: -1
+- vnum: 1538
+  name: Progression
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       Were We worn out by the First Creation?  Yet they are in doubt about
+    a new creation.  WE created man.  We know the promptings of his soul,
+    and are closer to him than his jugular vein.
+  exits:
+    north:
+      to: 1539
+      key: -1
+    south:
+      to: 1537
+      key: -1
+- vnum: 1539
+  name: Judgment
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       Undoubtedly the shortest path is the straightest one.  Only one more
+    step awaits before a final decision is made and a home given to you for
+    all eternity.
+  exits:
+    north:
+      to: 1540
+      key: -1
+    south:
+      to: 1538
+      key: -1
+- vnum: 1540
+  name: The Utmost Throne
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You have come at last to the resting place of the most holy.  Startling
+    crystal clarity of vision has been granted to you; seven guardians rim
+    the periphery of the throne and all is bathed in a warm and clean light.
+    It is here that the final choice is to be made, and no defiance of yours
+    can change the outcome.
+  exits:
+    south:
+      to: 1539
+      key: -1
+mobiles:
+- vnum: 1500
+  keywords:
+  - allah
+  - god
+  - yahweh
+  short: Allah
+  long: |
+    You resist the urge to avert your eyes from the sight of the one true God.
+  desc: |
+    The sight is for each man a different, a mirror into the true nature of
+    each person's body and soul.  At first a proud, bitter old man, but just
+    as easily a gentle extended hand, a smile, and gardens... gardens.
+  act:
+  - sentinel
+  - aware
+  - aggr_evil
+  - memory
+  - no_charm
+  - no_summon
+  - no_sleep
+  - no_bash
+  - no_blind
+  affected:
+  - sanctuary
+  alignment: 1000
+  level: 30
+  thac0: -10
+  ac: -10
+  hp: 1d1+2999
+  damage: 8d8+9
+  gold: 0
+  exp: 400000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 1501
+  keywords:
+  - michael
+  - angel
+  - archangel
+  short: Michael
+  long: |
+    The archangel Michael turns and begins to look you over.
+  desc: |
+    At first you see nothing but a bright and comforting glow; then the
+    image sharpens suddenly, and you see a face, eyes, hands, but then
+    that too fades, and you see nothing.
+  act:
+  - sentinel
+  - memory
+  affected:
+  - sanctuary
+  alignment: 1000
+  level: 29
+  thac0: -6
+  ac: -7
+  hp: 1d100+1900
+  damage: 6d7+7
+  gold: 0
+  exp: 280000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 1502
+  keywords:
+  - gabriel
+  - angel
+  - archangel
+  short: Gabriel
+  long: |
+    The archangel Gabriel smiles, and begins to tell you something.
+  desc: |
+    Known as the Messenger, it is this angel that has brought the Divine Word
+    to the chosen prophets, and in turn brought the Seal of the Prophets on a
+    miraculous journey to the holy city of Jerusalem.
+  act:
+  - sentinel
+  - memory
+  affected:
+  - sanctuary
+  alignment: 1000
+  level: 29
+  thac0: -6
+  ac: -7
+  hp: 1d100+1900
+  damage: 6d7+7
+  gold: 0
+  exp: 280000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 1503
+  keywords:
+  - raphael
+  - angel
+  - archangel
+  short: Raphael
+  long: |
+    The archangel Raphael looks up and frowns at you in disapproval.
+  desc: |
+    It is impossible to get a solid glance at the archangel.  He is nothing
+    that is human, and with a mere whisper, he dispels every image that you
+    attempt to create in your mind.
+  act:
+  - sentinel
+  - memory
+  affected:
+  - sanctuary
+  alignment: 1000
+  level: 29
+  thac0: -6
+  ac: -7
+  hp: 1d100+1900
+  damage: 6d7+7
+  gold: 0
+  exp: 280000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 1504
+  keywords:
+  - uriel
+  - angel
+  - archangel
+  short: Uriel
+  long: |
+    Uriel, the angel of darkness, stands here guarding the way forward.
+  desc: |
+    After the Fall of the bringer of light, the Lord had need for the
+    service of a fourth, and it was this angel, Uriel, that rose to the
+    highest ranks.
+  act:
+  - sentinel
+  - memory
+  affected:
+  - sanctuary
+  alignment: 1000
+  level: 29
+  thac0: -6
+  ac: -7
+  hp: 1d100+1900
+  damage: 6d7+7
+  gold: 0
+  exp: 280000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 1505
+  keywords:
+  - cherub
+  - cherubin
+  - cherubim
+  short: the cherubin
+  long: |
+    The cherubin of the blazing sword looks at you and begins to chuckle.
+  desc: |
+    The monster before you seems to be nothing more than a baby or young
+    child, wrapped in a glowing white cloth, but as you try to walk past,
+    the beast grins and cackles, drawing its sword and blocking the way.
+  act:
+  - sentinel
+  - aggressive
+  affected:
+  - sanctuary
+  alignment: 0
+  level: 17
+  thac0: 1
+  ac: 0
+  hp: 10d5+260
+  damage: 3d6+4
+  gold: 0
+  exp: 40000
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 1506
+  keywords:
+  - jester
+  short: the jester
+  long: |
+    A mad, drunken jester is sitting here, lost in his deepening stupor.
+  desc: |
+    He is dimly aware of your gaze.  Chuckling softly, you hear him mutter
+    something obscure: dragons, the temple, the falling of great empires.
+    He laughs at you and takes another drink.
+  act:
+  - sentinel
+  alignment: -300
+  level: 13
+  thac0: 6
+  ac: 1
+  hp: 10d2+180
+  damage: 2d8+2
+  gold: 3450
+  exp: 21000
+  position: sitting
+  default_position: sitting
+  sex: male
+- vnum: 1507
+  keywords:
+  - jinn
+  - sprite
+  short: the jinn
+  long: |
+    One of the jinn dances in and out of the air before your eyes, taunting you.
+  desc: |
+    You have heard legends of these creatures, the mischievous little demons
+    said to be trapped in lamps and bottles, capable of granting all kinds of
+    powerful wishes.  To you, it looks like nothing more than an annoying little
+    sprite.
+  act:
+  - scavenger
+  - stay_zone
+  affected:
+  - invisible
+  alignment: 0
+  level: 23
+  thac0: 0
+  ac: -2
+  hp: 25d2+400
+  damage: 3d9+3
+  gold: 0
+  exp: 70000
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 1508
+  keywords:
+  - man
+  - old
+  short: the slumped old man
+  long: |
+    A slumped, shaking old man stands up and begins to yell at the world.
+  desc: |
+    He wears a faded uniform, decorated with honors of his own creation,
+    slackened jaws and pasty white bags sagging under his ugly, hating eyes.
+    A tuft of reckless dark hair scatters across his forehead, and his right
+    hand shakes and shakes.
+  act:
+  - sentinel
+  - aggressive
+  affected:
+  - detect_invis
+  - infravision
+  alignment: -1000
+  level: 26
+  thac0: -4
+  ac: -5
+  hp: 4d10+840
+  damage: 4d9+6
+  gold: 34000
+  exp: 180000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 1509
+  keywords:
+  - caliph
+  - hakim
+  - al-hakim
+  short: al-Hakim
+  long: |
+    The mad Caliph al-Hakim is here, dissecting a young boy.
+  desc: |
+    The darkest skin, and eyes so white.  Covered only in a shoddy woolen
+    tunic, he has not bathed in months nor eaten in days, and yet his smile,
+    so charming.
+  act:
+  - sentinel
+  - aggressive
+  affected:
+  - detect_invis
+  - infravision
+  alignment: -1000
+  level: 26
+  thac0: -4
+  ac: -5
+  hp: 4d10+840
+  damage: 4d9+6
+  gold: 34000
+  exp: 180000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 1510
+  keywords:
+  - judas
+  - escariot
+  - apostle
+  short: Judas Escariot
+  long: |
+    The wayward apostle approaches slowly, extending his arms in a hug.
+  desc: |
+    You see nothing but the sadness of a man who would sell his own God.
+  act:
+  - sentinel
+  - scavenger
+  affected:
+  - detect_invis
+  - infravision
+  alignment: -1000
+  level: 25
+  thac0: -3
+  ac: -4
+  hp: 5d10+650
+  damage: 4d6+5
+  gold: 1
+  exp: 145000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 1511
+  keywords:
+  - pharoah
+  short: Pharoah
+  long: |
+    Pharoah has been sent here in retribution for a lifetime of evils.
+  desc: |
+    Richly clothed and postured in arrogance and love of power, he looks at
+    you with nothing more than a smirk of contempt.
+  act:
+  - sentinel
+  affected:
+  - detect_invis
+  - infravision
+  alignment: -1000
+  level: 25
+  thac0: -3
+  ac: -4
+  hp: 5d10+650
+  damage: 4d6+5
+  gold: 25000
+  exp: 145000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 1512
+  keywords:
+  - abu
+  - bakr
+  - first
+  - caliph
+  short: Abu Bakr
+  long: |
+    Abu Bakr, first of the Rashidun, mourns over the death of the Prophet.
+  desc: |
+    You see a simple man, dressed in dark and unadorned robes, bent over and
+    pensive, reliving the memories of a man he never thought would die.
+  act:
+  - sentinel
+  affected:
+  - detect_invis
+  - infravision
+  alignment: 1000
+  level: 25
+  thac0: -3
+  ac: -4
+  hp: 5d10+650
+  damage: 4d6+5
+  gold: 25000
+  exp: 145000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 1513
+  keywords:
+  - umar
+  - second
+  - caliph
+  short: Umar
+  long: |
+    You see Umar, second of the Rashidun, the successors of the Prophet.
+  desc: |
+    You are amazed at the piety of the man.  He looks at you in sadness,
+    saying: "I do not wish to fight you, but if you refuse the truth of
+    the Word, then I must."
+  act:
+  - sentinel
+  affected:
+  - detect_invis
+  - infravision
+  alignment: 1000
+  level: 25
+  thac0: -3
+  ac: -4
+  hp: 5d10+650
+  damage: 4d6+5
+  gold: 25000
+  exp: 145000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 1514
+  keywords:
+  - uthman
+  - third
+  - caliph
+  short: Uthman
+  long: |
+    The third of the rightly-guided Caliphs, Uthman, stands before you.
+  desc: |
+    He was chosen as leader by a clique of jealous rivals who could agree
+    upon no other.  The memory of the Prophet fading quickly from the minds
+    of the faithful, he could do little, and was in the end killed by his
+    enemies.
+  act:
+  - sentinel
+  - aggressive
+  affected:
+  - detect_invis
+  - infravision
+  alignment: 1000
+  level: 26
+  thac0: -4
+  ac: -5
+  hp: 4d10+840
+  damage: 4d9+6
+  gold: 34000
+  exp: 180000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 1515
+  keywords:
+  - ali
+  - fourth
+  - last
+  - caliph
+  short: Ali
+  long: |
+    You have come before Ali, fourth and last of the Rashidun.
+  desc: |
+    Some view him as the closest to God among all of the Caliphs, the one
+    most deserving of our respect and reverence.  Still others saw him as
+    a schismatic, a heretic, one to be killed and forgotten.  To look at
+    him now is for you to decide for yourself.
+  act:
+  - sentinel
+  - aggressive
+  affected:
+  - detect_invis
+  - infravision
+  alignment: 1000
+  level: 26
+  thac0: -4
+  ac: -5
+  hp: 4d10+840
+  damage: 4d9+6
+  gold: 34000
+  exp: 180000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 1516
+  keywords:
+  - angel
+  - beautiful
+  - iblis
+  short: Iblis
+  long: |
+    You gaze in awe at the most beautiful of all angels, Iblis, the Fallen.
+  desc: |
+    He smiles calmly, and begins to tell you of the time when he would not
+    kneel, would not prostrate himself before the first human beings.  And
+    then he gestures at you, smiling, and conjures an image of all the 
+    temptations that will be yours if you in turn but follow him.
+  act:
+  - sentinel
+  - scavenger
+  - aggressive
+  affected:
+  - detect_invis
+  - infravision
+  alignment: -1000
+  level: 25
+  thac0: -3
+  ac: -4
+  hp: 10d5+650
+  damage: 4d6+5
+  gold: 25000
+  exp: 145000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 1517
+  keywords:
+  - iblis
+  - satan
+  - devil
+  - voice
+  short: the Temptation
+  long: |
+    You pause nervously as a voice whispers at you from over your shoulder.
+  desc: |
+    There is no physical figure attached to the presence that dominates this
+    place, just tormented laughter, moaning, screaming, and begging.
+  act:
+  - sentinel
+  - scavenger
+  - aggressive
+  affected:
+  - detect_invis
+  - infravision
+  alignment: -1000
+  level: 25
+  thac0: -3
+  ac: -4
+  hp: 10d5+650
+  damage: 4d6+5
+  gold: 25000
+  exp: 145000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 1518
+  keywords:
+  - serpent
+  - dragon
+  - devil
+  - iblis
+  short: the raging dragon
+  long: |
+    A raging dragon turns to you in violent lust for your soul.
+  desc: |
+    The serpent of babylon, the aged and violet hued monster that has 
+    watched all of mankind succumb before its power, turns to you as
+    its last victim.
+  act:
+  - sentinel
+  - scavenger
+  - aggressive
+  affected:
+  - detect_invis
+  - infravision
+  alignment: -1000
+  level: 27
+  thac0: -4
+  ac: -5
+  hp: 75d2+825
+  damage: 4d8+5
+  gold: 40000
+  exp: 180000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 1519
+  keywords:
+  - demon
+  - fire
+  short: the demon
+  long: |
+    The hell-fire around you is dominated by a massive, burning demon.
+  desc: |
+    You see nothing but the inexorably red and burning anger of the 
+    lord of the underworld that you fear to be your fate.
+  act:
+  - sentinel
+  - scavenger
+  - aggressive
+  affected:
+  - detect_invis
+  - infravision
+  alignment: -1000
+  level: 27
+  thac0: -4
+  ac: -5
+  hp: 75d2+825
+  damage: 4d8+5
+  gold: 40000
+  exp: 180000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 1520
+  keywords:
+  - baby
+  - innocent
+  short: the innocent baby
+  long: |
+    Lying on the ground wrapped in blankets is the most innocent of babies.
+  desc: |
+    The baby is barely aware of your presence, lost in a sleepy and
+    contented yawn.
+  act:
+  - sentinel
+  affected:
+  - detect_invis
+  - infravision
+  alignment: 1000
+  level: 22
+  thac0: -3
+  ac: -4
+  hp: 5d10+150
+  damage: 4d6+4
+  gold: 20000
+  exp: 145000
+  position: sleeping
+  default_position: sleeping
+  sex: male
+- vnum: 1521
+  keywords:
+  - boy
+  - teenage
+  short: the teenage boy
+  long: |
+    You stop in surprise at the sight of a teenage boy staring off to the distance.
+  desc: |
+    He is young, and has not yet seen the bloodiness of this world.  You follow
+    his gaze and notice that he is gazing in wonderment at the fullness of the
+    moon.
+  act:
+  - sentinel
+  affected:
+  - detect_invis
+  - infravision
+  alignment: 1000
+  level: 24
+  thac0: -3
+  ac: -4
+  hp: 5d10+680
+  damage: 4d6+5
+  gold: 22000
+  exp: 145000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 1522
+  keywords:
+  - man
+  short: the man
+  long: |
+    A middle-aged man is here, kneeling in prayer.
+  desc: |
+    He is tired, the lines of age marking his face, but in his robe, 
+    kneeling, he is the image of perfect contentment.
+  act:
+  - sentinel
+  - memory
+  affected:
+  - detect_invis
+  - infravision
+  alignment: 1000
+  level: 26
+  thac0: -4
+  ac: -5
+  hp: 75d2+820
+  damage: 4d8+5
+  gold: 40000
+  exp: 180000
+  position: resting
+  default_position: resting
+  sex: male
+- vnum: 1523
+  keywords:
+  - soul
+  short: the bodyless soul
+  long: |
+    You are overwhelmed by the presence of a soul that has transcended its body.
+  desc: |
+    You sense certain tastes and smells, the winds through the gardens.
+    Nothing can explain or describe this perfection, this utter bliss.
+  act:
+  - sentinel
+  - aggressive
+  affected:
+  - detect_invis
+  - infravision
+  alignment: 1000
+  level: 28
+  thac0: -4
+  ac: -5
+  hp: 100d2+820
+  damage: 4d8+5
+  gold: 0
+  exp: 190000
+  position: standing
+  default_position: standing
+  sex: male
+objects:
+- vnum: 1500
+  keywords:
+  - scales
+  - justice
+  - scale
+  short: the Scales of Justice
+  desc: Two beautiful plates shaped like scales have been left here.
+  type: other
+  wear:
+  - take
+  - hold
+  flags:
+  - glow
+  - anti_evil
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 10
+  cost: 15000
+  rent: 2200
+  affects:
+  - location: int
+    modifier: 1
+  - location: wis
+    modifier: 2
+  extra_descs:
+  - keywords:
+    - scales
+    - justice
+    - scale
+    desc: |
+              As you look at the scales, you notice that they seem to sway back and forth
+              of their own accord, as if weighing something that is to you still unseen.
+- vnum: 1501
+  keywords:
+  - scroll
+  - parchment
+  short: the Scroll of the Messenger
+  desc: You see a solid and silver-lined scroll resting on the ground.
+  type: other
+  wear:
+  - take
+  - hold
+  flags:
+  - magic
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 1
+  cost: 500
+  rent: 500
+  affects:
+  - location: max_move
+    modifier: 15
+  - location: damroll
+    modifier: -1
+  extra_descs:
+  - keywords:
+    - scroll
+    - parchment
+    desc: |
+              It seems to be some sort of spell designed to transport its user across
+              vast distances, but how to make use of it is impossible to tell.
+- vnum: 1502
+  keywords:
+  - sword
+  - blazing
+  short: a blazing sword
+  desc: You are startled by the sight of a sword that glows as you approach it.
+  type: weapon
+  wear:
+  - take
+  - wield
+  flags:
+  - glow
+  - hum
+  - magic
+  - anti_evil
+  - anti_cleric
+  weapon:
+    dice: 3d4
+    damage_type: pierce
+  weight: 10
+  cost: 5000
+  rent: 900
+  affects:
+  - location: max_hit
+    modifier: -5
+  extra_descs:
+  - keywords:
+    - sword
+    - blazing
+    desc: |
+              The edge of the blade is lined with writing, religious verse apparently, in
+              a fine, silver-laced and flowing script.
+- vnum: 1503
+  keywords:
+  - protector
+  - faithful
+  - shield
+  short: the Protector of the Faithful
+  desc: A weighty looking shield has been abandoned by one unworthy to hold it.
+  type: armor
+  wear:
+  - take
+  - shield
+  flags:
+  - anti_evil
+  - anti_cleric
+  armor:
+    ac_apply: 15
+  weight: 20
+  cost: 5000
+  rent: 1500
+  extra_descs:
+  - keywords:
+    - protector
+    - faithful
+    - shield
+    desc: |
+              It evades your attempts to focus on it, deflecting your gaze as it deflects
+              the weapons that will try to kill you.
+- vnum: 1504
+  keywords:
+  - armband
+  - band
+  - faded
+  short: a faded armband
+  desc: A ragged and faded looking piece of cloth has been left here, forgotten.
+  type: other
+  wear:
+  - take
+  - arms
+  flags:
+  - anti_good
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 0
+  cost: 15
+  rent: 50
+  affects:
+  - location: cha
+    modifier: 2
+  - location: con
+    modifier: -1
+  extra_descs:
+  - keywords:
+    - armband
+    - faded
+    - band
+    desc: |
+              It has some sort of militia insignia on it, perhaps an indication of a rank
+              or award in some military order unknown to you.
+- vnum: 1505
+  keywords:
+  - scimitar
+  - jeweled
+  short: a jeweled scimitar
+  desc: A stunning curved blade glistens on the ground.
+  type: weapon
+  wear:
+  - take
+  - wield
+  flags:
+  - glow
+  - anti_evil
+  - anti_cleric
+  weapon:
+    dice: 7d1
+    damage_type: slash
+  weight: 5
+  cost: 5000
+  rent: 500
+  extra_descs:
+  - keywords:
+    - scimitar
+    - jeweled
+    desc: |
+              The entire rim and edge of the scimitar's handle is bedecked in a gorgeous
+              array of stones and precious metals.
+- vnum: 1506
+  keywords:
+  - ember
+  - charred
+  short: a charred ember
+  desc: You glance briefly at a smouldering ember that rests at your feet.
+  type: light
+  wear:
+  - take
+  - hold
+  flags:
+  - glow
+  - anti_good
+  - anti_cleric
+  - anti_thief
+  - anti_warrior
+  light:
+    hours: -1
+  weight: 0
+  cost: 5
+  rent: 2500
+  affects:
+  - location: hitroll
+    modifier: 2
+  - location: max_mana
+    modifier: 10
+  extra_descs:
+  - keywords:
+    - ember
+    - charred
+    desc: |
+              It glares back at you, almost angrily.
+- vnum: 1507
+  keywords:
+  - ethereal
+  - flame
+  short: an ethereal flame
+  desc: The entire room is aglow from the flame at your feet.
+  type: light
+  wear:
+  - take
+  - hold
+  flags:
+  - glow
+  - anti_good
+  - anti_evil
+  - anti_thief
+  - anti_warrior
+  light:
+    hours: -1
+  weight: 0
+  cost: 5
+  rent: 2500
+  affects:
+  - location: max_mana
+    modifier: 8
+  - location: max_hit
+    modifier: 10
+  extra_descs:
+  - keywords:
+    - ethereal
+    - flame
+    desc: |
+              Even being near it fills you with a peaceful and comforted feeling.
+- vnum: 1508
+  keywords:
+  - key
+  - gates
+  short: the Key to the Gates
+  desc: You have found at last the Key to the Gates of eternity.
+  type: key
+  wear:
+  - take
+  - hold
+  flags:
+  - glow
+  - bless
+  - anti_evil
+  - anti_neutral
+  values:
+  - 1508
+  - 0
+  - 0
+  - 0
+  weight: 0
+  cost: 1000
+  rent: 500
+  affects:
+  - location: int
+    modifier: 2
+  extra_descs:
+  - keywords:
+    - key
+    - gates
+    desc: |
+              There are no gates.  They are inside of you.
+- vnum: 1509
+  keywords:
+  - history
+  - burnt
+  - book
+  short: a burnt history
+  desc: You have found a burnt book, some forgotten history lying on the ground.
+  type: trash
+  wear:
+  - take
+  - hold
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 2
+  cost: 10
+  rent: 500
+  affects:
+  - location: wis
+    modifier: 2
+  extra_descs:
+  - keywords:
+    - history
+    - burnt
+    - book
+    desc: |
+              So this is the jester's joke.  All of our works have turned to dust,
+              and will end in nothing.  It is for this that he laughs.
+- vnum: 1510
+  keywords:
+  - surah
+  - book
+  short: a surah of the book
+  desc: You notice a thin parchment, with flowing script and rich decorative trim.
+  type: light
+  wear:
+  - take
+  - hold
+  flags:
+  - no_donate
+  - anti_evil
+  - anti_neutral
+  - anti_mage
+  - anti_cleric
+  light:
+    hours: -1
+  weight: 0
+  cost: 500
+  rent: 8000
+  affects:
+  - location: hitroll
+    modifier: 3
+  - location: damroll
+    modifier: 3
+  extra_descs:
+  - keywords:
+    - surah
+    - book
+    desc: |
+              Al-Kafirun
+              Say: "Oh ye that reject the Faith, I do not worship what you worship, nor
+              do you worship what I worship.  To you be your Way, and to me mine."
+- vnum: 1511
+  keywords:
+  - forge
+  - unity
+  short: the Forge of Unity
+  desc: It is surely the best of men who has left these gloves to aid you.
+  type: armor
+  wear:
+  - take
+  - hands
+  flags:
+  - bless
+  - anti_evil
+  - anti_neutral
+  - anti_mage
+  - anti_cleric
+  armor:
+    ac_apply: 5
+  weight: 5
+  cost: 12000
+  rent: 4000
+  affects:
+  - location: damroll
+    modifier: 2
+  - location: max_hit
+    modifier: 10
+- vnum: 1512
+  keywords:
+  - ankh
+  short: an Ankh
+  desc: You see a beautiful pendant of ancient and noble craftsmanship.
+  type: worn
+  wear:
+  - take
+  - neck
+  flags:
+  - glow
+  - anti_neutral
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 3
+  cost: 5000
+  rent: 2000
+  affects:
+  - location: max_mana
+    modifier: 10
+  - location: max_mana
+    modifier: 5
+  extra_descs:
+  - keywords:
+    - ankh
+    desc: |
+              It is an even earlier version of the old Christian cross, an oval loop
+              above the crossed arms of white gold.
+- vnum: 1513
+  keywords:
+  - amulet
+  - ra
+  short: the Amulet of Ra
+  desc: You have found a beautiful gleaming disc with a golden image of the sun god.
+  type: worn
+  wear:
+  - take
+  - neck
+  flags:
+  - glow
+  - magic
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 5
+  cost: 7500
+  rent: 1500
+  affects:
+  - location: int
+    modifier: 2
+  - location: wis
+    modifier: 2
+- vnum: 1514
+  keywords:
+  - image
+  - azathoth
+  - graven
+  short: a graven image of Azathoth
+  desc: You frown in disgust at the hideous icon of a false god that you have found.
+  type: light
+  wear:
+  - take
+  - hold
+  flags:
+  - anti_good
+  - anti_neutral
+  - no_sell
+  light:
+    hours: 0
+  weight: 2
+  cost: 1000
+  rent: 500
+  affects:
+  - location: cha
+    modifier: 2
+resets:
+- mob: 1500
+  room: 1540
+  max: 1
+- mob: 1501
+  room: 1533
+  max: 1
+  then:
+  - equip: 1500
+    slot: hold
+    max: 2
+- mob: 1502
+  room: 1531
+  max: 1
+  then:
+  - equip: 1501
+    slot: hold
+    max: 3
+- mob: 1503
+  room: 1530
+  max: 1
+  then:
+  - equip: 1503
+    slot: shield
+    max: 2
+- mob: 1504
+  room: 1528
+  max: 1
+  then:
+  - equip: 1502
+    slot: wield
+    max: 1
+- mob: 1505
+  room: 1501
+  max: 1
+  then:
+  - equip: 1508
+    slot: hold
+    max: 5
+- mob: 1506
+  room: 1505
+  max: 1
+  then:
+  - equip: 1509
+    slot: hold
+    max: 5
+- mob: 1507
+  room: 1509
+  max: 5
+- mob: 1507
+  room: 1516
+  max: 5
+- mob: 1507
+  room: 1521
+  max: 5
+- mob: 1507
+  room: 1524
+  max: 5
+- mob: 1507
+  room: 1539
+  max: 5
+- mob: 1508
+  room: 1512
+  max: 1
+  then:
+  - equip: 1504
+    slot: arms
+    max: 1
+- mob: 1509
+  room: 1511
+  max: 1
+- mob: 1510
+  room: 1510
+  max: 1
+- mob: 1511
+  room: 1509
+  max: 1
+  then:
+  - equip: 1512
+    slot: neck1
+    max: 3
+- mob: 1512
+  room: 1519
+  max: 1
+  then:
+  - equip: 1505
+    slot: wield
+    max: 4
+- mob: 1513
+  room: 1520
+  max: 1
+- mob: 1514
+  room: 1521
+  max: 1
+  then:
+  - equip: 1510
+    slot: light
+    max: 3
+- mob: 1515
+  room: 1522
+  max: 1
+  then:
+  - equip: 1511
+    slot: hands
+    max: 1
+- mob: 1516
+  room: 1514
+  max: 1
+- mob: 1517
+  room: 1515
+  max: 1
+  then:
+  - equip: 1514
+    slot: light
+    max: 1
+- mob: 1518
+  room: 1516
+  max: 1
+  then:
+  - equip: 1513
+    slot: neck1
+    max: 1
+- mob: 1519
+  room: 1517
+  max: 1
+  then:
+  - give: 1506
+    max: 1
+- mob: 1520
+  room: 1524
+  max: 1
+- mob: 1521
+  room: 1525
+  max: 1
+- mob: 1522
+  room: 1526
+  max: 1
+- mob: 1523
+  room: 1527
+  max: 1
+  then:
+  - give: 1507
+    max: 1

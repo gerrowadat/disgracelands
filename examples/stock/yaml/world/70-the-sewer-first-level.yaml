@@ -1,0 +1,2164 @@
+schema: dl/world@1
+zone:
+  vnum: 70
+  name: The Sewer, First Level
+  range:
+  - 7000
+  - 7099
+  lifespan: 15
+  reset: always
+rooms:
+- vnum: 7000
+  name: The Fissure Under The Ledge
+  sector: mountains
+  flags:
+  - dark
+  - no_mob
+  - indoors
+  desc: |2
+       This is a small fissure in the solid rock.  Under you lies the deep dark
+    pool.  The water trickles quietly down from the ledge above you.  The water
+    smells like the water in a sewer.
+  exits:
+    up:
+      to: 7070
+      key: -1
+    down:
+      to: 7100
+      desc: |
+            The water's edge.
+      key: -1
+- vnum: 7001
+  name: The Muddy Sewer
+  sector: mountains
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are standing in mud to your knees.  This is not the kind of place
+    for a picnic.  The muddy sewer stretches further into the south.
+  exits:
+    south:
+      to: 7002
+      desc: |
+            You see the muddy sewer continuing into the darkness to the south.
+      key: -1
+  extra_descs:
+  - keywords:
+    - mud
+    desc: |
+              It is as dark as tar and looks like something out of a toilet, on top of
+              that, the smell is absolutely overwhelming.
+- vnum: 7002
+  name: The Muddy Sewer Junction
+  sector: mountains
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       The muddy sewer stretches into the dark to the south.  It looks as if 
+    no person has ever put his foot here before.  It is too muddy for that
+    anyway.  The sewer leads north, south and east from here.
+  exits:
+    north:
+      to: 7001
+      desc: |
+            The muddy sewer stretches into the dark to the north.
+      key: -1
+    east:
+      to: 7007
+      desc: |
+            East.  The muddy sewer leads into a bend that goes south.
+      key: -1
+    south:
+      to: 7003
+      desc: |
+            South.  The muddy sewer ends in a mudhole that way.
+      key: -1
+  extra_descs:
+  - keywords:
+    - mud
+    desc: |
+              It is as dark as tar and looks like something out of a toilet, on top of
+              that, the smell is absolutely overwhelming.
+- vnum: 7003
+  name: The Mudhole
+  sector: mountains
+  flags:
+  - dark
+  - no_mob
+  - indoors
+  desc: |2
+       You stand in mud all the way up to your thighs and it is not too 
+    comfortable since you are used to a somewhat different environment.
+    The sewer leads to the north of here.  In the middle you can just
+    make out an enormous drainpipe leading down.
+  exits:
+    north:
+      to: 7002
+      desc: |
+            North.  The muddy junction lies in that direction.
+      key: -1
+    down:
+      to: 7101
+      desc: |
+            The muddy drainpipe leads down through the mud, otherwise it is utterly dark.
+      key: -1
+  extra_descs:
+  - keywords:
+    - mud
+    desc: |
+              It is as dark as tar and looks like something out of a toilet, on top of
+              that, the smell is absolutely overwhelming.
+- vnum: 7004
+  name: The Dark Pit
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are standing by the edge of a dark pit that leads down into even
+    deeper darkness.  >BWWAAADDRR< - The smell from down there is unbearable.
+    The sewer stretches into the darkness to the east.
+  exits:
+    east:
+      to: 7009
+      desc: |
+            East.  The sewer leads into the sewer junction.
+      key: -1
+    down:
+      to: 7102
+      desc: |
+            The Dark Pit leads down and down and down... well you can't see the 
+            bottom anyway.  There are bars that could function as a ladder on
+            the side.
+      key: -1
+- vnum: 7005
+  name: The Muddy Sewer
+  sector: hills
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are standing in the middle of a bend of the sewer pipe.  It is very
+    dark around here and the mud is sticking to your legs, not very pleasant.
+    The pipe leads east and south from here.
+  exits:
+    east:
+      to: 7011
+      desc: |
+            East.  The mud stretches on into the darkness.
+      key: -1
+    south:
+      to: 7006
+      desc: |
+            South.  There is even more mud in that direction than where you are now.  
+            Incredible.
+      key: -1
+  extra_descs:
+  - keywords:
+    - mud
+    desc: |
+              It is as dark as tar and looks like something out of a toilet, on top of
+              that, the smell is absolutely overwhelming.
+- vnum: 7006
+  name: The Muddy Sewer
+  sector: mountains
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are standing in something that reminds you very much of porridge,
+    this has the advantage that it is not hot, it is rather cold actually.
+    The pipe bends to the north and east.
+  exits:
+    north:
+      to: 7005
+      desc: |
+            The muddy sewer pipe leads into a bend that goes east.
+      key: -1
+    east:
+      to: 7012
+      desc: |
+            The pipe leads into a bend that goes south.  Interesting, there is mud on
+            the ground there as well.
+      key: -1
+  extra_descs:
+  - keywords:
+    - mud
+    desc: |
+              It is as dark as tar and looks like something out of a toilet, on top of
+              that, the smell is absolutely overwhelming.
+- vnum: 7007
+  name: The Muddy Sewer Bend
+  sector: mountains
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       This isn't your idea of a place to stay too long.  You're in up to
+    your knees in something that resembles mud, but you're not quite sure.
+    The bend in which you stand leads west and south.
+  exits:
+    south:
+      to: 7008
+      desc: |
+            The pipe leads into a intersection that goes south and east.  The floor here 
+            is still covered in mud.
+      key: -1
+    west:
+      to: 7002
+      desc: |
+            The pipe (still filled with mud) leads into a intersection that goes north 
+            and south.  Interesting.
+      key: -1
+  extra_descs:
+  - keywords:
+    - mud
+    desc: |
+              It is as dark as tar and looks like something out of a toilet, on top of
+              that, the smell is absolutely overwhelming.
+- vnum: 7008
+  name: A Muddy Intersection
+  sector: hills
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You have both your feet safely stuck in mud.  It isn't the mud that is
+    wrong it is the smell, the sounds, the total darkness that surrounds you.
+    Everything here is so depressing.  The pipe leads on with a trail of thick
+    mud to the north, east and south.
+  exits:
+    north:
+      to: 7007
+      desc: |
+            North.  The pipe goes into a bend with a load of mud all the way up the walls.
+            The bend leads west.
+      key: -1
+    east:
+      to: 7014
+      desc: |
+            East.  This way looks like a place for the annual mud festival, although the
+            stench wouldn't allow any happiness at all.  The pipe leads into a bend that
+            leads north.
+      key: -1
+    south:
+      to: 7009
+      desc: |
+            South.  There is much less mud in that direction.  Your light doesn't 
+            uncover enough space for you to see much more than that it leads into
+            some sort of junction.
+      key: -1
+  extra_descs:
+  - keywords:
+    - mud
+    desc: |
+              It is as dark as tar and looks like something out of a toilet, on top of
+              that, the smell is absolutely overwhelming.
+- vnum: 7009
+  name: The Sewer Junction
+  sector: forest
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You stand in the middle of a huge junction of sewer pipes right under
+    what you'd think was an air shaft.  The sewer pipes lead to the north,
+    south, east and west.  It look quite impossible to force your way up.
+  exits:
+    north:
+      to: 7008
+      desc: |
+            North.  Mud is the floor basis in that direction.  Yummy.
+      key: -1
+    east:
+      to: 7017
+      desc: |
+            YYEEUUCH!  BOOH!  THAT looks like a nice place for creepy crawlies.
+      key: -1
+    south:
+      to: 7010
+      desc: |
+            South.  This direction looks quite nice actually.  The pipe leads into 
+            a bend that goes east.
+      key: -1
+    west:
+      to: 7004
+      desc: |
+            A few yards ahead - away from this junction - there is a pit leading down,
+            but the smell from there...>PHEWW<.
+      key: -1
+  extra_descs:
+  - keywords:
+    - mud
+    desc: |
+              It is as dark as tar and looks like something out of a toilet, on top of
+              that, the smell is absolutely overwhelming.
+- vnum: 7010
+  name: A Bend In The Sewer Pipe
+  sector: field
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are in a bend in the sewer pipe.  A strong smell seeps in from the
+    north.  The sewer goes north and east.
+  exits:
+    north:
+      to: 7009
+      desc: |
+            North.  You are staring into a huge junction with exits in all directions.
+      key: -1
+    east:
+      to: 7018
+      desc: |
+            East.  The Pipe leads into utter darkness that way.
+      key: -1
+- vnum: 7011
+  name: The Muddy Sewer Pipe
+  sector: mountains
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You have entered a kind of tube intersection that leads south, west
+    and east.  Your legs are covered in mud up to the knees.  REAL yucky!  
+  exits:
+    east:
+      to: 7024
+      desc: |
+            East.  There is less mud in that direction, or that's your impression.
+      key: -1
+    south:
+      to: 7021
+      desc: |
+            That way is lost in darkness, though you sense less mud in that direction,
+            perhaps even a complete end to this sludge that surrounds you.
+      key: -1
+    west:
+      to: 7005
+      desc: |
+            West.  The mud reaches that way too, all the way up the walls.
+      key: -1
+  extra_descs:
+  - keywords:
+    - mud
+    desc: |
+              It is as dark as tar and looks like something out of a toilet, on top of
+              that, the smell is absolutely overwhelming.
+- vnum: 7012
+  name: The Bend In The Muddy Sewer
+  sector: mountains
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       This is not your idea of a holiday.  You stand in mud up to your knees.
+    It is absolutely inconceivable how all this mud could have been placed
+    here.  The pipe leads to the west and south.
+  exits:
+    south:
+      to: 7013
+      desc: |
+            South.  There is even more mud that way, incredible!  Although it looks
+            like an intersection in the sewer system that leads east and south.
+      key: -1
+    west:
+      to: 7006
+      desc: |
+            West.  All you can see, is that the pipe leads into a bend that goes
+            north.  But there is less mud in that direction, however odd that sounds.
+      key: -1
+  extra_descs:
+  - keywords:
+    - mud
+    desc: |
+              It is as dark as tar and looks like something out of a toilet, on top of
+              that, the smell is absolutely overwhelming.
+- vnum: 7013
+  name: A Muddy Intersection
+  sector: mountains
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You wouldn't want to know the true feeling of standing in this mud up to
+    your hips.  >BWAADR<.  All that fills your mind right now is the dream of
+    a hot bath.  This is NOT very clean mud you know, remember you're in the
+    sewer!  The pipes leads north, south and east.
+  exits:
+    north:
+      to: 7012
+      desc: |
+            North.  Sludge and sediment fills this corridor of the sewer that leads
+            into a bend going west.
+      key: -1
+    east:
+      to: 7026
+      desc: |
+            East.  You can see absolutely nothing of interest in that direction (Maybe
+            that is why it is so damn interesting...)  There is no mud in that direction
+            either, GREAT!
+      key: -1
+    south:
+      to: 7014
+      desc: |
+            South.  All you can see is more mud!  Although the pipe goes into a bend
+            leading west.
+      key: -1
+  extra_descs:
+  - keywords:
+    - sediment
+    desc: |
+              It is NOT the kind of matter that would concern you too much, normally, but
+              as you are in the middle of it, it just might become your main concern.
+              REAL YUCKY!
+  - keywords:
+    - mud
+    desc: |
+              It is as dark as tar and looks like something out of a toilet, on top of
+              that, the smell is absolutely overwhelming.
+- vnum: 7014
+  name: The Muddy Sewer
+  sector: mountains
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You stand in a bend of the pipe system of the sewer with mud up to your
+    thighs.  Contemplating a higher level of existence here would be utterly
+    inappropriate, as the smell would keep any intelligent creature from even
+    thinking of anything but getting away from this foul end of the WORLD.
+    The bend goes from north to west.
+  exits:
+    north:
+      to: 7013
+      desc: |
+            North.  Filled with mud, that place looks like an impassable intersection
+            with pipes leading north and east.
+      key: -1
+    west:
+      to: 7008
+      desc: |
+            West.  There is less mud that way, maybe you're on your way out of this foul
+            place.
+      key: -1
+  extra_descs:
+  - keywords:
+    - mud
+    desc: |
+              It is as dark as tar and looks like something out of a toilet, on top of
+              that, the smell is absolutely overwhelming.
+- vnum: 7015
+  name: The Old Well
+  sector: forest
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are standing by an old and worn well from before this century.  The
+    sewer leads to the east from here and the well leads down into darkness.
+    Metal bars implanted in the side of the well lead down as a ladder.
+  exits:
+    east:
+      to: 7028
+      desc: |
+            East.  You see, because of the utter darkness that surround you, absolutely
+            nothing.  Your light isn't of much use for that kind of distance.
+      key: -1
+    down:
+      to: 7105
+      desc: |
+            Down the well there is even less light than up here, so... sorry, you can't
+            see a thing.  There are metal bars in the side leading down into the darkness.
+      key: -1
+  extra_descs:
+  - keywords:
+    - bars
+    desc: |
+              These look like they're pretty slippery, and not very safe, but perhaps safe
+              enough for you to climb down, WITH both hands on them.
+- vnum: 7016
+  name: The Ordinary Bend
+  sector: city
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are in the middle of a bend in the pipe system of the sewer system, 
+    WHAT a place!!!  The pipe leads to the south and the east.
+  exits:
+    east:
+      to: 7021
+      desc: |
+            East.  What a quiet place you've found there.  It is an intersection that has
+            pipeways going north and east.
+      key: -1
+    south:
+      to: 7017
+      desc: |
+            South.  You see nothing at all in that direction it is too dark anyway.
+      key: -1
+- vnum: 7017
+  name: The Sewer Junction
+  sector: city
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are in a junction that leads north, west and south.
+  exits:
+    north:
+      to: 7016
+      desc: |
+            North.  You see a bend.
+      key: -1
+    south:
+      to: 7018
+      desc: |
+            South.  It looks like a pipe junction just like this one.  Only that one
+            leads east and west.
+      key: -1
+    west:
+      to: 7009
+      desc: |
+            West.  There is a junction with four pipelines in that direction.
+      key: -1
+- vnum: 7018
+  name: The Ordinary Junction
+  sector: city
+  flags:
+  - dark
+  - no_mob
+  - indoors
+  desc: |2
+       This looks like an ordinary junction, actually it seems very quiet
+    here.  The pipelines lead west, east and north.
+  exits:
+    north:
+      to: 7017
+      desc: |
+            To the north you can see a junction like this one, leading north and west.
+      key: -1
+    east:
+      to: 7031
+      desc: |
+            To the east there is nothing of particular interest, though there is a 
+            junction with pipelines leading north and east.
+      key: -1
+    west:
+      to: 7010
+      desc: |
+            There is a bend to the west leading north.
+      key: -1
+- vnum: 7021
+  name: A Quiet Pipe Junction
+  sector: city
+  flags:
+  - dark
+  - no_mob
+  - indoors
+  desc: |2
+       This is the kind of place to rest, though the smell could be a LOT
+    better than this.  The sewer goes east, north and west from here.
+  exits:
+    north:
+      to: 7011
+      desc: |
+            In that direction, you can't see anything.  It is just too dark.
+      key: -1
+    east:
+      to: 7029
+      desc: |
+            There is an ordinary junction in the pipe system to the east.
+      key: -1
+    west:
+      to: 7016
+      desc: |
+            West.  There is an ordinary bend leading south into the sewer system in
+            that direction.
+      key: -1
+- vnum: 7022
+  name: The Odd Room With Smooth Walls
+  sector: mountains
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       As you enter you hear a loud click from one of the walls... and you fall
+    and fall and fall...
+    .
+    .
+    .
+    .
+    ... And come to an abrupt end.  THIS is strange indeed.  There is an arched
+    entryway leading down.
+  exits:
+    down:
+      to: 7112
+      desc: |
+            Down.  It is utterly dark that way, though you can make out an intersection
+            of sewer pipes leading west, north and east.
+      key: -1
+- vnum: 7024
+  name: The Sewer
+  sector: city
+  flags:
+  - dark
+  - no_mob
+  - indoors
+  desc: |2
+       You are standing in mud up to your ankles.  This is an intersection with 
+    sewer pipes leading east, south and west.
+  exits:
+    east:
+      to: 7037
+      desc: |
+            To the east there is a peculiar looking round room.
+      key: -1
+    south:
+      to: 7025
+      desc: |
+            To the south there is another intersection with pipes going south and east.
+      key: -1
+    west:
+      to: 7011
+      desc: |
+            To the west there is another intersection like this one, with sewer pipes
+            leading south and west.
+      key: -1
+- vnum: 7025
+  name: Another Intersection
+  sector: city
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You have never seen anything so BORING... This is an intersection with
+    pipes leading north, south and east.
+  exits:
+    north:
+      to: 7024
+      desc: |
+            To the north there is an intersection, where the pipes are leading west and
+            east.  You notice that the floor to the west is covered in mud.
+      key: -1
+    east:
+      to: 7038
+      desc: |
+            East.  You see nothing of interest in that direction, just another 
+            intersection.  This one leads east and south.
+      key: -1
+    south:
+      to: 7026
+      desc: |
+            Another intersection lies to the south.  It leads west and south.
+      key: -1
+- vnum: 7026
+  name: A Junction
+  sector: inside
+  flags:
+  - dark
+  - no_mob
+  - indoors
+  desc: |2
+       This one seems interesting, a big difference from all the other junctions.
+    It seems cleaner than the rest of them.  Weird.  Something that looks like 
+    an air shaft leads upwards, but it looks far too slippery to climb.
+    The pipes lead to the south, west and north.
+  exits:
+    north:
+      to: 7025
+      desc: |
+            North.  You see an intersection there, leading north and east.
+      key: -1
+    south:
+      to: 7028
+      desc: |
+            To the south there is ANOTHER junction leading west and east.
+      key: -1
+    west:
+      to: 7013
+      desc: |
+            To the west you see a load of mud and sediment in the sewer.  That should
+            be an intersection there but you're not quite sure.
+      key: -1
+  extra_descs:
+  - keywords:
+    - mud
+    desc: |
+              It is as dark as tar and looks like something out of a toilet, on top of
+              that, the smell is absolutely overwhelming.
+- vnum: 7028
+  name: The Sewer Junction
+  sector: city
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You stand in a junction of sewer pipes leading north, east and west.
+  exits:
+    north:
+      to: 7026
+      key: -1
+    east:
+      to: 7034
+      desc: |
+            To the east you can see a bend in the pipe going south.
+      key: -1
+    west:
+      to: 7015
+      desc: |
+            To the west you can just make out an old well.
+      key: -1
+- vnum: 7029
+  name: The Triple Junction
+  sector: city
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You stand in the middle of a huge junction of concrete sewer pipes.  The 
+    pipes lead into three different directions: east, south and west.
+  exits:
+    east:
+      to: 7035
+      desc: |
+            East.  You can see a bend in the sewer pipe leading north.
+      key: -1
+    south:
+      to: 7030
+      desc: |
+            To the south there is an ENORMOUS quadruple sewer junction, all lit up by
+            an odd light.
+      key: -1
+    west:
+      to: 7021
+      desc: |
+            To the west you can just make out another junction similar to the one 
+            you are standing in.
+      key: -1
+- vnum: 7030
+  name: The Quadruple Junction Under The Dump
+  sector: city
+  flags:
+  - dark
+  - no_mob
+  - indoors
+  desc: |2
+       You are standing in something that reminds you of an entry to an ant hive.
+    There are enormous concrete pipes leading north, south, east and west.  
+    There is also a metal ladder built into the concrete wall leading up through
+    a layer of garbage.  
+  exits:
+    north:
+      to: 7029
+      desc: |
+            To the north you can see a huge triple junction with sewer pipes leading
+            west and east.
+      key: -1
+    east:
+      to: 7036
+      desc: |
+            East.  You can see a pit in the floor.
+      key: -1
+    south:
+      to: 7031
+      desc: |
+            To the south there is a huge junction with pipes leading east and west.
+      key: -1
+    west:
+      to: 7022
+      desc: |
+            To the west there is an odd looking room with totally smooth walls.
+      key: -1
+    up:
+      to: 3030
+      desc: |
+            Up through the garbage you can just make out what looks like the dump in
+            Midgaard.
+      door: pickproof
+      key: 3005
+  extra_descs:
+  - keywords:
+    - ladder
+    desc: |
+              It looks as if it is made of stainless steel, and it would function
+              as a club of considerable power, but alas... You can't take at all
+              since it is firmly set into the concrete wall.
+- vnum: 7031
+  name: A Triple Junction
+  sector: city
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You stand in a junction with pipes leading west, north and east.
+  exits:
+    north:
+      to: 7030
+      desc: |
+            To the north there is an ENORMOUS quadruple sewer junction, all lit up by
+            an odd light.
+      key: -1
+    east:
+      to: 7044
+      desc: |
+            East.  You can just make out a triple junction leading north and east.
+      key: -1
+    west:
+      to: 7018
+      desc: |
+            West.  You can just make out a triple junction leading north and west.
+      key: -1
+- vnum: 7034
+  name: A Bend In The Sewer Pipe
+  sector: field
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You can look in two directions where the pipe leads: south and west.
+  exits:
+    south:
+      to: 7035
+      desc: |
+            To the south you can see another bend leading west.
+      key: -1
+    west:
+      to: 7028
+      desc: |
+            West.  You can just make out a triple junction leading north and west.
+      key: -1
+- vnum: 7035
+  name: The Sewer Pipe Bend
+  sector: field
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You can look in two different directions where the pipe goes: west and 
+    north.
+  exits:
+    north:
+      to: 7034
+      desc: |
+            North.  You see another bend leading west.
+      key: -1
+    west:
+      to: 7029
+      desc: |
+            You can see another junction although this one is a triple one with pipes
+            going south and west.
+      key: -1
+- vnum: 7036
+  name: The Pit
+  sector: mountains
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You stand in a section of a pipe that leads to a dead end.  In the floor
+    there is a pit leading down.  There are bars set in the side of the pit
+    wall functioning as a ladder.
+  exits:
+    west:
+      to: 7030
+      desc: |
+            West.  You can see a dimly lit quadruple junction with an exit up.
+      key: -1
+    down:
+      to: 7122
+      desc: |
+            Down the pit it is so utterly dark that you can't see a thing.
+      key: -1
+- vnum: 7037
+  name: The Round Room
+  sector: city
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       As you enter the room it starts rotating - at first slowly, then faster
+    and faster - You get totally confused as to where up and down is, but
+    you are certain that the doorway is in the opposite direction of what
+    it was when you entered.  It now leads east.  There is only this one
+    exit.
+  exits:
+    east:
+      to: 7050
+      desc: |
+            You can just make out a smaller room with a chair.
+      key: -1
+- vnum: 7038
+  name: The Three Way Junction
+  sector: city
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are standing in a junction of pipes that lead west, east and south.
+  exits:
+    east:
+      to: 7045
+      desc: |
+            East.  You can make out a dimly lit Guard Room.
+      key: -1
+    south:
+      to: 7039
+      desc: |
+            To the south you can see what looks like a store room.
+      key: -1
+    west:
+      to: 7025
+      desc: |
+            West.  You see another junction similar to this one leading north and south.
+      key: -1
+- vnum: 7039
+  name: The Sewer Store Room
+  sector: city
+  flags:
+  - indoors
+  desc: |2
+       You stand in a small room lit by a single torch set in the wall.  The only 
+    way out of here is to the north.
+  exits:
+    north:
+      to: 7038
+      desc: |
+            To the north you see a pipe junction.
+      key: -1
+- vnum: 7041
+  name: The Shaft
+  sector: city
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are standing by the edge of a deep, dark shaft leading down.  A single
+    ladder is your tool to work your way down if you so wish.  The sewer pipe
+    leads south from here.
+  exits:
+    south:
+      to: 7043
+      desc: |
+            To the south you can see the pipe leading further south into darkness.
+      key: -1
+    down:
+      to: 7123
+      desc: |
+            Down and utter darkness.  There is absolutely nothing to be seen in that 
+            direction.
+      key: -1
+  extra_descs:
+  - keywords:
+    - ladder
+    desc: |
+              Firmly set into the wall of the shaft it is impossible to even move, in your
+              estimate.
+- vnum: 7043
+  name: The Sewer Entrance
+  sector: city
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You stand in the middle of a pipe that leads from north to south.  Above
+    you an air shaft leads up into sunlight.  It seems totally impossible to go
+    up that way.
+  exits:
+    north:
+      to: 7041
+      desc: |
+            To the north you can just make out a huge shaft leading down.
+      key: -1
+    south:
+      to: 7044
+      desc: |
+            To the south you can see a triple junction leading west and east.
+      key: -1
+- vnum: 7044
+  name: The Junction Going Three Ways
+  sector: city
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are in a passageway in the pipes of the sewer system leading north,
+    east and west.
+  exits:
+    north:
+      to: 7043
+      desc: |
+            You see a sewer pipe leading north.
+      key: -1
+    east:
+      to: 7049
+      key: -1
+    west:
+      to: 7031
+      desc: |
+            West.  You see another junction very similar to this one that leads north
+            and west.
+      key: -1
+- vnum: 7045
+  name: The Sewer Room
+  sector: city
+  flags:
+  - indoors
+  desc: |2
+       You are standing in a large room with chairs set in the walls.  You have
+    the feeling of being watched.  To the south there is an entrance to a
+    larger room.  The room is lit by five torches, also set in the walls.  To
+    the west there is a doorway leading out to the sewers.
+  exits:
+    south:
+      to: 7046
+      desc: |
+            You can see an even larger room than this one, filled with light.
+      key: -1
+    west:
+      to: 7038
+      desc: |
+            To the west you can see the sewers.
+      door: pickproof
+      key: -1
+- vnum: 7046
+  name: The Sewer Room
+  sector: city
+  flags:
+  - indoors
+  desc: |2
+       This is a Room with walls that glitters like gold though not quite like
+    it. This is strange as it looks as if the glitter lights the whole room.
+    It looks very bright.  To the south the floor is covered with yucky water.
+    The north leads to a sort of a guard room.
+  exits:
+    north:
+      to: 7045
+      desc: |
+            To the north you can see the guard room.
+      key: -1
+    south:
+      to: 7047
+      desc: |
+            To the south there is nothing but water and an exit leads east from there.
+      key: -1
+- vnum: 7047
+  name: The Pool In The Sewer
+  sector: city
+  flags:
+  - indoors
+  desc: |2
+       You stand in water to your waist.  To the north is the entrance to this
+    room.  A single door leads east.
+  exits:
+    north:
+      to: 7046
+      desc: |
+            To the north you see the entrance to this room.
+      key: -1
+    east:
+      to: 7053
+      desc: |
+            You can see an enormous hall through the doorway.
+      door: regular
+      key: -1
+      keywords: door
+- vnum: 7048
+  name: The Sewers
+  sector: city
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You stand in a dead end of the sewer.  The only way out is south.
+    You can see a shaft leading up but it looks too difficult to go up
+    that way.
+  exits:
+    south:
+      to: 7049
+      key: -1
+- vnum: 7049
+  name: The Junction
+  sector: city
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You stand in a junction leading north, west and east.
+  exits:
+    north:
+      to: 7048
+      key: -1
+    east:
+      to: 7060
+      desc: |
+            Darkness has closed in on that part of the sewer system, you can't see
+            a thing in that direction.
+      key: -1
+    west:
+      to: 7044
+      desc: |
+            West.  You see another junction very similar to this one that leads north
+            and west.
+      key: -1
+- vnum: 7050
+  name: The Small Room
+  sector: city
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       The only thing in this room of interest is a chair, and that appears
+    to have been bolted to the rock floor.  A doorway leads south and another
+    leads east into darkness.
+  exits:
+    east:
+      to: 7055
+      desc: |
+            Utter darkness...
+      key: -1
+    south:
+      to: 7051
+      desc: |
+            You can see a room with a lot of light in it.  You can't make out any details.
+      key: -1
+- vnum: 7051
+  name: The Sewer Pipe
+  sector: city
+  flags:
+  - indoors
+  desc: |2
+       You are in what reminds you of a foul sewer, as if you liked being here!  
+    You can see two exits leading either north or south.
+  exits:
+    north:
+      to: 7050
+      key: -1
+    south:
+      to: 7052
+      desc: |
+            To the south you can see a strange light flowing from there.
+      key: -1
+- vnum: 7052
+  name: The Grand Sewer
+  sector: city
+  flags:
+  - indoors
+  desc: |2
+       You are in a grand sewer pipe.  This stretches toward the south.  It is
+    large indeed!  A doorway leads to the east from here.
+  exits:
+    north:
+      to: 7051
+      desc: |
+            To the north you can see a doorway.
+      key: -1
+    east:
+      to: 7056
+      desc: |
+            You can't see anything in that darkness.
+      key: -1
+    south:
+      to: 7053
+      desc: |
+            In the south end of the pipe the "floor" is completely covered with water.
+      key: -1
+- vnum: 7053
+  name: The South End Of The Grand Pipe
+  sector: city
+  flags:
+  - indoors
+  desc: |2
+       You stand in water to your knees.  A doorway leads west from here.  The
+    pipe stretches north.
+  exits:
+    north:
+      to: 7052
+      desc: |
+            You see a lot of pictures decorating the walls.
+      key: -1
+    west:
+      to: 7047
+      door: regular
+      key: -1
+      keywords: door
+- vnum: 7055
+  name: The Edge Of The Water Sewer
+  sector: forest
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You stand in a room where half of the floor is covered in water.  The
+    water leads east and a doorway leads west.
+  exits:
+    east:
+      to: 7061
+      desc: |
+            You can hardly make out much more than that the next place is in a pipe 
+            with more water.
+      key: -1
+    west:
+      to: 7050
+      key: -1
+  extra_descs:
+  - keywords:
+    - water
+    desc: |
+              It looks dark and murky, and emanates a foul stench.
+- vnum: 7056
+  name: The Dark Hallway
+  sector: city
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You can't see much of this, even with a light.  The hallway goes into a
+    passageway to the south.  A doorway leads west.
+  exits:
+    south:
+      to: 7057
+      desc: |
+            You can see nothing at all because it is completely dark in that direction.
+      key: -1
+    west:
+      to: 7052
+      desc: |
+            You see a lot of light, bright as daylight, but nothing of interest.
+      key: -1
+- vnum: 7057
+  name: The Dark Passageway
+  sector: city
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You can't see anything but the ground where you put your feet.  The 
+    passageway seems to continue south and north.
+  exits:
+    north:
+      to: 7056
+      desc: |
+            You can't see anything in that direction and your light isn't enough to light
+            that far.
+      key: -1
+    south:
+      to: 7058
+      desc: |
+            You can't see anything in that direction and your light isn't enough to light
+            that far.
+      key: -1
+- vnum: 7058
+  name: The Dark Passageway
+  sector: city
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You can't see anything but the ground where you put your feet.  The
+    passageway seems to continue south and north.
+  exits:
+    north:
+      to: 7057
+      desc: |
+            You can't see anything in that direction and your light isn't enough to light
+            that far.
+      key: -1
+    south:
+      to: 7059
+      desc: |
+            You can't see anything in that direction and your light isn't enough to light
+            that far.
+      key: -1
+- vnum: 7059
+  name: The Dark Passageway
+  sector: city
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You can't see anything but the ground where you put your feet.  The
+    passageway seems to continue south and north.
+  exits:
+    north:
+      to: 7058
+      desc: |
+            You can't see anything in that direction and your light isn't enough to light
+            that far.
+      key: -1
+    south:
+      to: 7060
+      desc: |
+            You can't see anything in that direction and your light isn't enough to light
+            that far.
+      key: -1
+- vnum: 7060
+  name: The Dark Passageway
+  sector: city
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You can't see anything but the ground where you put your feet.
+    The passageway seems to continue west and north.  To the east there
+    is water covering the floor and that leads through an arched entry
+    to a watery sewer.
+  exits:
+    north:
+      to: 7059
+      desc: |
+            You can't see anything in that direction and your light isn't enough to light
+            that far.
+      key: -1
+    east:
+      to: 7068
+      desc: |
+            You can't see anything in that direction and your light isn't enough to light
+            that far.
+      key: -1
+    west:
+      to: 7049
+      desc: |
+            You can just make out a triple junction leading north and west.
+      key: -1
+  extra_descs:
+  - keywords:
+    - water
+    desc: |
+              It looks dark and murky, and emanates a foul stench.
+- vnum: 7061
+  name: The Watery Sewer Bend
+  sector: mountains
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You can't see anything but the water you're in up to your hips.  The sewer
+    seems to bend and lead south and west.
+  exits:
+    south:
+      to: 7062
+      desc: |
+            You can't see anything in that direction and your light isn't enough to light
+            that far.
+      key: -1
+    west:
+      to: 7055
+      desc: |
+            You can't see anything in that direction and your light isn't enough to light
+            that far.
+      key: -1
+  extra_descs:
+  - keywords:
+    - water
+    desc: |
+              It looks dark and murky, and emanates a foul stench.
+- vnum: 7062
+  name: The Watery Sewer
+  sector: mountains
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You can't see anything but the water you're in up to your hips.  The sewer
+    seems to lead south and north.
+  exits:
+    north:
+      to: 7061
+      desc: |
+            You can't see anything in that direction and your light isn't enough to light
+            that far.
+      key: -1
+    south:
+      to: 7063
+      desc: |
+            You can't see anything in that direction and your light isn't enough to light
+            that far.
+      key: -1
+  extra_descs:
+  - keywords:
+    - water
+    desc: |
+              It looks dark and murky, and emanates a foul stench.
+- vnum: 7063
+  name: The Watery Sewer
+  sector: mountains
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You can't see anything but the water you're in up to your hips.  The sewer
+    seems to lead south and north.
+  exits:
+    north:
+      to: 7062
+      desc: |
+            You can't see anything in that direction and your light isn't enough to light
+            that far.
+      key: -1
+    south:
+      to: 7064
+      desc: |
+            You can't see anything in that direction and your light isn't enough to light
+            that far.
+      key: -1
+  extra_descs:
+  - keywords:
+    - water
+    desc: |
+              It looks dark and murky, and emanates a foul stench.
+- vnum: 7064
+  name: The Watery Sewer Junction
+  sector: mountains
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You can't see anything but the water you're in up to your hips.  The sewer
+    seems to lead into a junction going south, north and east.
+  exits:
+    north:
+      to: 7063
+      desc: |
+            You can't see anything in that direction and your light isn't enough to light
+            that far.
+      key: -1
+    east:
+      to: 7069
+      desc: |
+            You can't see anything in that direction and your light isn't enough to light
+            that far.
+      key: -1
+    south:
+      to: 7065
+      desc: |
+            You can't see anything in that direction and your light isn't enough to light
+            that far.
+      key: -1
+  extra_descs:
+  - keywords:
+    - water
+    desc: |
+              It looks dark and murky, and emanates a foul stench.
+- vnum: 7065
+  name: The Watery Sewer
+  sector: mountains
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You can't see anything but the water you're in up to your hips.  The sewer
+    seems to lead south and north.
+  exits:
+    north:
+      to: 7064
+      desc: |
+            You can't see anything in that direction and your light isn't enough to light
+            that far.
+      key: -1
+    south:
+      to: 7066
+      desc: |
+            You can't see anything in that direction and your light isn't enough to light
+            that far.
+      key: -1
+  extra_descs:
+  - keywords:
+    - water
+    desc: |
+              It looks dark and murky, and emanates a foul stench.
+- vnum: 7066
+  name: The Watery Sewer Junction
+  sector: mountains
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You can't see anything but the water you're in up to your hips.  The sewer
+    seems to lead into a junction that goes north, south and east.
+  exits:
+    north:
+      to: 7065
+      desc: |
+            You can't see anything in that direction and your light isn't enough to light
+            that far.
+      key: -1
+    east:
+      to: 7070
+      desc: |
+            You can't see anything in that direction and your light isn't enough to light
+            that far.
+      key: -1
+    south:
+      to: 7067
+      desc: |
+            You can't see anything in that direction and your light isn't enough to light
+            that far.
+      key: -1
+  extra_descs:
+  - keywords:
+    - water
+    desc: |
+              It looks dark and murky, and emanates a foul stench.
+- vnum: 7067
+  name: The Watery Sewer
+  sector: mountains
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You can't see anything but the water you're in up to your hips.  The sewer
+    seems to lead south and north.
+  exits:
+    north:
+      to: 7066
+      desc: |
+            You can't see anything in that direction and your light isn't enough to light
+            that far.
+      key: -1
+    south:
+      to: 7068
+      desc: |
+            You can't see anything in that direction and your light isn't enough to light
+            that far.
+      key: -1
+  extra_descs:
+  - keywords:
+    - water
+    desc: |
+              It looks dark and murky, and emanates a foul stench.
+- vnum: 7068
+  name: The Watery Sewer Bend
+  sector: mountains
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You can't see anything but the water you're in up to your hips.  The sewer
+    seems to bend and lead west and north.
+  exits:
+    north:
+      to: 7067
+      desc: |
+            You can't see anything in that direction and your light isn't enough to light
+            that far.
+      key: -1
+    west:
+      to: 7060
+      desc: |
+            You can't see anything in that direction and your light isn't enough to light
+            that far.
+      key: -1
+  extra_descs:
+  - keywords:
+    - water
+    desc: |
+              It looks dark and murky, and emanates a foul stench.
+- vnum: 7069
+  name: A Ledge By A Dark Pool
+  sector: mountains
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You can't see much here but the echo tells you that there is quite a drop
+    down.  You can just make out a huge dark pool out there in the darkness, 
+    mostly because of the trickling of water.  The water from the sewer actually
+    washes over this ledge and makes it quite slippery.  From here it drops, 
+    like a waterfall, into the pool far down.
+  exits:
+    south:
+      to: 7070
+      desc: |
+            You can't see a thing.  It is too dark.
+      key: -1
+    west:
+      to: 7064
+      desc: |
+            You can't see a thing.  It is too dark.
+      key: -1
+  extra_descs:
+  - keywords:
+    - water
+    desc: |
+              It looks dark and murky, and emanates a foul stench.
+- vnum: 7070
+  name: A Ledge By A Dark Pool
+  sector: mountains
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You can't see much here but the echo tells you that there is quite a drop
+    down.  You can just make out a huge dark pool out there in the darkness,
+    mostly because of the trickling of water.  The water from the sewer actually
+    washes over this ledge and makes it quite slippery.  From here it drops,
+    like a waterfall, into the pool far down.  Under you there is a small fissure
+    in the rock.  It seems big enough to contain a few people.
+  exits:
+    north:
+      to: 7069
+      desc: |
+            You can't see a thing.  It is too dark.
+      key: -1
+    west:
+      to: 7066
+      desc: |
+            You can't see a thing.  It is too dark.
+      key: -1
+    down:
+      to: 7000
+      key: -1
+  extra_descs:
+  - keywords:
+    - water
+    desc: |
+              It looks dark and murky, and emanates a foul stench.
+mobiles:
+- vnum: 7000
+  keywords:
+  - mudmonster
+  - mud
+  - monster
+  short: the horrifying Mudmonster
+  long: |
+    A horrifying Mudmonster is slowly evolving from the mud...
+  desc: |
+    It sure looks like something out of a horror movie.  It strongly resembles
+    a huge figure made up from mud alone, and it sure looks like it had human 
+    flesh for breakfast and is strongly intent on having the same for dinner
+    - Perhaps you?
+  act:
+  - stay_zone
+  - no_bash
+  - no_blind
+  affected:
+  - infravision
+  - sneak
+  alignment: -250
+  level: 12
+  thac0: 9
+  ac: 2
+  hp: 4d6+140
+  damage: 2d5+3
+  gold: 100
+  exp: 13000
+  position: sitting
+  default_position: standing
+  sex: neutral
+- vnum: 7001
+  keywords:
+  - bat
+  - small
+  - fierce
+  short: the small bat
+  long: |
+    The small fierce-looking bat is hanging from the ceiling, obviously sleeping.
+  desc: |
+    You have never in your entire life seen such a mean looking small creature,
+    though it looks rather peaceful, hanging there, sleeping.  The thought of 
+    arousing this cruel creature doesn't sit well in your bones.
+  act:
+  - aggressive
+  - stay_zone
+  - no_blind
+  affected:
+  - infravision
+  - sneak
+  alignment: -500
+  level: 1
+  thac0: 20
+  ac: 5
+  hp: 5d2+6
+  damage: 1d5
+  gold: 0
+  exp: 150
+  position: sleeping
+  default_position: standing
+  sex: neutral
+- vnum: 7002
+  keywords:
+  - rat
+  - sewer
+  short: the sewer rat
+  long: |
+    The huge hungry-looking sewer rat sits here.
+  desc: |
+    This creature is fairly large for a rat, but not so big that it could
+    be called a giant rat.  Sewer water drips off of its grey fur as it
+    looks at you with black glistening eyes.
+  act:
+  - aggressive
+  affected:
+  - infravision
+  alignment: -1000
+  level: 5
+  thac0: 16
+  ac: 5
+  hp: 1d12+48
+  damage: 2d4
+  gold: 30
+  exp: 1000
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 7003
+  keywords:
+  - spider
+  - small
+  - hairy
+  short: the small Spider
+  long: |
+    The small hairy Spider is here, busy with its web.
+  desc: |
+    This small spider seems to pay you no attention at all as it builds
+    its intricately designed web.
+  act:
+  - aggressive
+  affected:
+  - infravision
+  - sneak
+  alignment: -700
+  level: 1
+  thac0: 20
+  ac: 3
+  hp: 1d12+8
+  damage: 1d4
+  gold: 1
+  exp: 100
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 7004
+  keywords:
+  - beetle
+  - giant
+  - earth
+  short: the giant earth beetle
+  long: |
+    The giant, mean-looking earth beetle is here.
+  desc: |
+    Now, you've seen beetles, but this one is enormous.  It stretches
+    perhaps two feet from head to tail.  As it notices you, it waves
+    its six legs about and makes some strange skittering noises at you.
+  affected:
+  - infravision
+  alignment: -300
+  level: 8
+  thac0: 13
+  ac: 3
+  hp: 2d10+98
+  damage: 2d4+2
+  gold: 1000
+  exp: 3750
+  position: sleeping
+  default_position: standing
+  sex: neutral
+- vnum: 7005
+  keywords:
+  - maggot
+  - giant
+  short: the maggot
+  long: |
+    The giant maggot is here, simply existing.
+  desc: |
+    This large mound of grotesque flesh is just lying here quivering,
+    almost as if it can sense your warm blood nearby.
+  act:
+  - no_bash
+  - no_blind
+  affected:
+  - infravision
+  alignment: 300
+  level: 3
+  thac0: 17
+  ac: 9
+  hp: 2d5+35
+  damage: 1d7
+  gold: 2
+  exp: 350
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 7006
+  keywords:
+  - snake
+  short: the snake
+  long: |
+    The snake slithers towards you. It looks very mean.
+  desc: |
+    This snake is of a variety that you do not recall seeing recently.
+    It has near black skin with small white diamond shaped spots all
+    over its head and upper body.  A thin green stripe stretches along
+    each side of its body.
+  act:
+  - spec
+  - aggressive
+  affected:
+  - infravision
+  alignment: -500
+  level: 4
+  thac0: 16
+  ac: 7
+  hp: 2d5+40
+  damage: 1d9
+  gold: 1
+  exp: 1000
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 7007
+  keywords:
+  - wanderer
+  - evil
+  short: the evil wanderer
+  long: |
+    The evil wanderer stares at you with a piercing gaze.
+  desc: |
+    The evil wanderer is very thin.  He is dressed in a grey cloak.  He
+    doesn't look like he'd be your first choice as a travelling companion.
+  act:
+  - scavenger
+  - wimpy
+  affected:
+  - sense_life
+  alignment: -1000
+  level: 10
+  thac0: 11
+  ac: 2
+  hp: 4d10+100
+  damage: 2d6+1
+  gold: 300
+  exp: 9500
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 7008
+  keywords:
+  - homunculus
+  - creature
+  short: the creature homunculus
+  long: |
+    The creature homunculus is here, looking at you with an evil look.
+  desc: |
+    The homunculus appears in a man-like form, about eighteen inches tall,
+    has a greenish, reptilian skin, leathery wings, and a batlike mouth,
+    with teeth dripping with a greenish sludge.
+  act:
+  - no_charm
+  - no_summon
+  - no_sleep
+  affected:
+  - detect_invis
+  - sense_life
+  alignment: -780
+  level: 11
+  thac0: 10
+  ac: 1
+  hp: 6d3+130
+  damage: 2d6+2
+  gold: 500
+  exp: 11500
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 7009
+  keywords:
+  - morkoth
+  - shadowy
+  short: the shadowy morkoth
+  long: |
+    The morkoth are standing here, waiting for someone to KILL!
+  desc: |
+    It is a five foot tall, shadow monster.  This has the shape between
+    a human and a rat.  It breaths very heavily while staring at you.
+  act:
+  - spec
+  - aggressive
+  - wimpy
+  affected:
+  - sense_life
+  alignment: -900
+  level: 10
+  thac0: 12
+  ac: 3
+  hp: 1d20+120
+  damage: 2d6
+  gold: 1
+  exp: 9000
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 7010
+  keywords:
+  - chr-eff'n
+  - chreffn
+  short: the evil chr-eff'n
+  long: |
+    The chr-eff'n are crawling here, looking around with its yellow eyes.
+  desc: |
+    The head and torso of a chr-eff'n is copper-covered, with yellow,
+    glowing eyes.  The lower body is in an orange shading.
+  act:
+  - scavenger
+  - wimpy
+  affected:
+  - detect_invis
+  - infravision
+  - sneak
+  alignment: -830
+  level: 12
+  thac0: 9
+  ac: 2
+  hp: 2d26+148
+  damage: 2d7+1
+  gold: 1500
+  exp: 13000
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 7040
+  keywords:
+  - dragon
+  - red
+  short: the red dragon
+  long: |
+    The fierce-looking red dragon stares at you angrily.
+  desc: |
+    The red dragon stares at you, angrily, as it wakes when you arrive.
+    It says 'Oh, human YOU woke me up... Hsssss', while it moves closer,
+    'Can one NEVER sleep in peace... Hssss... '
+  act:
+  - sentinel
+  - aware
+  - aggressive
+  - no_charm
+  - no_summon
+  - no_bash
+  affected:
+  - detect_invis
+  - sanctuary
+  - infravision
+  - no_track
+  alignment: -1000
+  level: 19
+  thac0: 2
+  ac: 0
+  hp: 5d4+230
+  damage: 3d6+3
+  gold: 16842
+  exp: 40000
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 7041
+  keywords:
+  - hag
+  - sea
+  short: the sea hag
+  long: |
+    A sea hag is here, swimming around.
+  desc: |
+    The sea hag is so ghastly looking that you feel the deepest fear:  Big
+    yellow eyes and sharp teeth.  Its ears are very big, and it has small
+    sharp horns.  This beast is obviously a hater of beauty.
+  act:
+  - aggressive
+  affected:
+  - infravision
+  alignment: -800
+  level: 14
+  thac0: 7
+  ac: 1
+  hp: 1d8+172
+  damage: 2d8+1
+  gold: 0
+  exp: 18000
+  position: standing
+  default_position: standing
+  sex: female
+- vnum: 7042
+  keywords:
+  - naga
+  - guardian
+  short: the guardian naga
+  long: |
+    The guardian naga looks kindly at you.
+  desc: |
+    The naga are a snake-liked creature.  She is covered in green-gold scales
+    with silvery triangles along her back.  Her eyes are golden.  She notices
+    that you are staring at her, and she says 'Watch out.  This way leads to
+    some evil creatures.'
+  act:
+  - sentinel
+  affected:
+  - infravision
+  alignment: 700
+  level: 12
+  thac0: 9
+  ac: 2
+  hp: 1d18+148
+  damage: 2d7+1
+  gold: 100
+  exp: 13500
+  position: standing
+  default_position: standing
+  sex: female
+- vnum: 7043
+  keywords:
+  - basilisk
+  - scaled
+  short: the scaled basilisk
+  long: |
+    The scaled basilisk crawls towards you slowly.
+  desc: |
+    The basilisk is a reptilian monster.  It has eight legs, and a strong,
+    toothy jaws.  It is dull brown with yellowish underbelly.  Its eyes are
+    glowing pale green.
+  act:
+  - scavenger
+  affected:
+  - detect_invis
+  - sense_life
+  - infravision
+  alignment: -250
+  level: 13
+  thac0: 11
+  ac: 0
+  hp: 1d12+160
+  damage: 2d7+2
+  gold: 350
+  exp: 16000
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 7044
+  keywords:
+  - lemure
+  - blob
+  short: the lemure
+  long: |
+    The lemure blob slithers towards you for an attack!
+  desc: |
+    This looks like a vaguely human blob.  Big black yellow eyes, and a mouth
+    going a little bit out from the face.  The lemure does not look interested
+    in you at all, but it attacks anyway.  It looks like its mind has been
+    burned out.
+  act:
+  - aggressive
+  - no_charm
+  - no_bash
+  affected:
+  - infravision
+  alignment: -500
+  level: 5
+  thac0: 16
+  ac: 6
+  hp: 3d5+57
+  damage: 2d4
+  gold: 0
+  exp: 1000
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 7045
+  keywords:
+  - jones
+  - cruncher
+  - ettin
+  short: Jones 'cruncher' ettin
+  long: |
+    Jones is standing here glaring at you.
+  desc: |
+    At the first sight you thought Jones was an Orc, but when he came closer you
+    see his second head.  He wears an animal skin dress, filthy and moth eaten. 
+    Jones really stinks...
+  act:
+  - scavenger
+  affected:
+  - infravision
+  alignment: -480
+  level: 10
+  thac0: 11
+  ac: 2
+  hp: 1d5+130
+  damage: 2d6+2
+  gold: 60
+  exp: 11000
+  position: resting
+  default_position: resting
+  sex: male
+- vnum: 7046
+  keywords:
+  - herald
+  - mouse
+  - killer
+  - ettin
+  short: Herald 'the mouse-killer' ettin
+  long: |
+    Herald is standing here looking confused at you.
+  desc: |
+    When you look at Herald, you feel pity.  His clothes are really poor, and
+    one of his heads hangs down.  At the rope around his stomach hangs dead
+    mice and rats.  He does not smell good.
+  act:
+  - scavenger
+  affected:
+  - infravision
+  alignment: 200
+  level: 6
+  thac0: 14
+  ac: 4
+  hp: 3d5+70
+  damage: 1d8
+  gold: 40
+  exp: 1500
+  position: resting
+  default_position: resting
+  sex: male
+resets:
+- mob: 7001
+  room: 7041
+  max: 9
+- mob: 7001
+  room: 7025
+  max: 9
+- mob: 7001
+  room: 7004
+  max: 9
+- mob: 7001
+  room: 7004
+  max: 9
+- mob: 7002
+  room: 7049
+  max: 3
+- mob: 7002
+  room: 7031
+  max: 3
+- mob: 7003
+  room: 7039
+  max: 8
+- mob: 7003
+  room: 7039
+  max: 8
+- mob: 7003
+  room: 7039
+  max: 8
+- mob: 7003
+  room: 7037
+  max: 8
+- mob: 7003
+  room: 7037
+  max: 8
+- mob: 7003
+  room: 7050
+  max: 8
+- door: 7047
+  dir: east
+  state: closed
+- door: 7053
+  dir: west
+  state: closed

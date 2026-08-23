@@ -1,0 +1,15 @@
+THIEF THIEVES
+
+Thieves are known to have very special qualities, that no other class offers.
+Their specialty tends to be in the darker, sneakier art.  Many of these
+qualities can come in handy in many situations, such as picking locks.
+
+You can improve you skills by using the practice command.
+
+Skills available to thieves:
+
+sneak, hide, steal, backstab, pick lock, track
+
+See the help on each skill for more information.
+
+See also: PRACTICE

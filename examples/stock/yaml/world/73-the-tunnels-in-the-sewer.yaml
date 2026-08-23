@@ -1,0 +1,1190 @@
+schema: dl/world@1
+zone:
+  vnum: 73
+  name: The Tunnels In The Sewer
+  range:
+  - 7300
+  - 7399
+  lifespan: 25
+  reset: always
+rooms:
+- vnum: 7300
+  name: Cave Entrance
+  sector: city
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are standing in the cave entrance.  It is very dark down here.  There
+    is writing on the wall.  There is an exit to the north.  A stairway leads up.
+  exits:
+    north:
+      to: 7301
+      desc: |
+            To the north you can see a small tunnel.
+      key: -1
+    up:
+      to: 7102
+      desc: |
+            You can see the stairs going up into darkness.
+      door: pickproof
+      key: -1
+  extra_descs:
+  - keywords:
+    - writing
+    - wall
+    desc: |
+              The writing says 'BEWARE adventurer!'
+- vnum: 7301
+  name: Cave Tunnel
+  sector: city
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are walking in a tunnel.  It is very cold.  You can feel the presence
+    of a living thing... SOMEWHERE.
+  exits:
+    north:
+      to: 7302
+      desc: |
+            To the north you can see the tunnel continuing.
+      key: -1
+    south:
+      to: 7300
+      desc: |
+            To the south tunnel continuing.
+      key: -1
+- vnum: 7302
+  name: Cave Room
+  sector: city
+  flags:
+  - indoors
+  desc: |2
+       You are standing in a room.  It is much cooler now.  The walls are glowing.
+  exits:
+    east:
+      to: 7303
+      desc: |
+            To the east you see the tunnel going downwards.
+      key: -1
+    south:
+      to: 7301
+      desc: |
+            To the south you see a dark cave tunnel.
+      key: -1
+    west:
+      to: 7321
+      key: -1
+- vnum: 7303
+  name: The Cave T-Cross
+  sector: field
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are standing in a mudlike substance.  The smell here is awful, it is
+    rotten.  To the west you can see some light.
+  exits:
+    east:
+      to: 7304
+      desc: |
+            To the east the tunnel still goes downwards.
+      key: -1
+    south:
+      to: 7308
+      key: -1
+    west:
+      to: 7302
+      desc: |
+            You can see some light to the west.
+      key: -1
+  extra_descs:
+  - keywords:
+    - worms
+    desc: |
+              The worms are purple.  They do not look edible.
+  - keywords:
+    - mud
+    desc: |
+              When you examine the mud, you notice small worms crawling around.
+- vnum: 7304
+  name: The Cave Turning-Point
+  sector: field
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       The mud is getting deeper.  You are wondering, 'Would it be an idea to
+    leave, before I disappear?'.  To the south you notice a flat round stone
+    is blocking the way.  To the west you can see mud.
+  exits:
+    south:
+      to: 7305
+      desc: |
+            You can see an opening behind the stone.
+      door: regular
+      key: -1
+      keywords: stone flat round
+    west:
+      to: 7303
+      key: -1
+  extra_descs:
+  - keywords:
+    - flat
+    - round
+    - stone
+    desc: |
+              The stone looks very uninteresting.  BUT as you are about to turn away, you
+              see a strip of light coming through a small hole.  Conclusion: The stone is
+              moveable.
+- vnum: 7305
+  name: The Secret Room
+  sector: city
+  flags:
+  - indoors
+  desc: |2
+       There is dust all over the place.  It looks like nobody has been here
+    for ages.  In the middle of the room you see a socket with a crystal globe.
+    The globe glows with a pulsing light.  To the north you see a stone door.
+    To the south you see a grey block.
+  exits:
+    north:
+      to: 7304
+      desc: |
+            You see a round stone door.
+      door: regular
+      key: -1
+      keywords: door round stone
+    south:
+      to: 7306
+      desc: |
+            You see a grey block.
+      door: regular
+      key: -1
+      keywords: block grey
+  extra_descs:
+  - keywords:
+    - crystal
+    - globe
+    desc: |
+              The crystal globe is glowing with a pulsing light.  It looks like there is
+              smoke inside it.
+  - keywords:
+    - socket
+    desc: |
+              The socket looks like the work of a dwarf.  It is VERY beautiful.
+- vnum: 7306
+  name: The Mudhole
+  sector: water_swim
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are standing in a lot of mud.  The mud goes to your chest.  You feel
+    the presence of something IN the mud.  The only obvious exit is to the west.
+  exits:
+    north:
+      to: 7305
+      desc: |
+            You can see nothing at all.
+      door: regular
+      key: -1
+      keywords: block grey
+    west:
+      to: 7307
+      key: -1
+- vnum: 7307
+  name: A Tunnel
+  sector: mountains
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       The mud goes to your knees.  Otherwise the tunnel looks very normal.
+  exits:
+    north:
+      to: 7308
+      key: -1
+    east:
+      to: 7306
+      desc: |
+            You can see a mudhole.
+      key: -1
+    south:
+      to: 7309
+      key: -1
+- vnum: 7308
+  name: The Long Tunnel
+  sector: city
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       Here there is almost no mud, as you stand at the top of a small rock.  Just
+    beside you there are a sign which says 'WARNING!  The worms are dangerous!'
+  exits:
+    north:
+      to: 7303
+      desc: |
+            You can see a lot of mud... Yuck!
+      key: -1
+    south:
+      to: 7307
+      desc: |
+            The tunnel goes a little downwards.
+      key: -1
+- vnum: 7309
+  name: The Hot Room
+  sector: city
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are very surprised, as this room for a change are hot instead of
+    cold.  To the north it goes downwards into some mud.  There are also an
+    exit to the west.
+  exits:
+    north:
+      to: 7307
+      desc: |
+            You see a lot of mud.
+      key: -1
+    west:
+      to: 7310
+      desc: |
+            You see a entrance to a small room.
+      key: -1
+- vnum: 7310
+  name: The Small Room
+  sector: city
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       As you look around you notice a small statue.  There are exits to the west
+    and to the east.
+  exits:
+    east:
+      to: 7309
+      desc: |
+            It is pitch dark out there.
+      key: -1
+    west:
+      to: 7311
+      desc: |
+            You see a VERY long hallway.
+      key: -1
+  extra_descs:
+  - keywords:
+    - small
+    - statue
+    desc: |
+              This is a statue of a imp, pointing to the west.  The imp looks like a man
+              with horns and a tail.
+- vnum: 7311
+  name: The Stalagmite Cave
+  sector: field
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are standing in a stalagmite cave.  Water is dripping from the walls.
+    It is very cold in here.
+  exits:
+    north:
+      to: 7314
+      key: -1
+    east:
+      to: 7310
+      desc: |
+            You see a long hallway, and some mud.
+      key: -1
+    south:
+      to: 7312
+      key: -1
+  extra_descs:
+  - keywords:
+    - stalagmite
+    desc: |
+              The stalagmites are very tall, and looks very beautiful.
+- vnum: 7312
+  name: The Stalagmite Tunnel
+  sector: city
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You has entered a small tunnel.  Here it is quite dry.  Maybe it would be a
+    good idea to rest here.
+  exits:
+    north:
+      to: 7311
+      desc: |
+            You can see a small cave to the north.
+      key: -1
+    west:
+      to: 7313
+      key: -1
+- vnum: 7313
+  name: The Spongy Room
+  sector: forest
+  flags:
+  - no_mob
+  - indoors
+  desc: |2
+       You definitely do NOT like this area.  It is very dank, and most of the
+    room is wet.
+  exits:
+    east:
+      to: 7312
+      key: -1
+    west:
+      to: 7345
+      key: -1
+- vnum: 7314
+  name: The Stalagmite T-Cross
+  sector: city
+  flags:
+  - no_mob
+  - indoors
+  desc: |2
+       You are standing in a cross.  To the north you can see some light.
+    Otherwise it is dark.
+  exits:
+    north:
+      to: 7317
+      desc: |
+            You see some light ahead.
+      key: -1
+    east:
+      to: 7315
+      key: -1
+    south:
+      to: 7311
+      key: -1
+- vnum: 7315
+  name: The Blind End Room
+  sector: city
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       This room is obviously a blind end.  To the north you see a primitive
+    picture.
+  exits:
+    north:
+      to: 7316
+      desc: |
+            You see a primitive picture of some people dancing around a huge sun.  The
+            sun is about 7 feet in diameter, which shows the size of the picture.
+      door: regular
+      key: -1
+      keywords: sun
+    west:
+      to: 7314
+      key: -1
+  extra_descs:
+  - keywords:
+    - primitive
+    - picture
+    desc: |
+              You see some people dancing around a huge sun.  The sun is about 7 feet in
+              diameter, which shows the size of the picture.
+- vnum: 7316
+  name: The Treasure Room
+  sector: city
+  flags:
+  - dark
+  - indoors
+  - private
+  desc: |2
+       This room is richly ornamented.  The walls have been carved to show
+    people dancing around a moon which is drawn on the floor.  It looks very
+    old, and it is very dusty.  To the south you see the back side of a secret
+    door.
+  exits:
+    south:
+      to: 7315
+      desc: |
+            You can see a picture with some peeple crawling around a huge moon.
+      door: regular
+      key: -1
+      keywords: moon door
+- vnum: 7317
+  name: The Square Lair
+  sector: city
+  flags:
+  - indoors
+  desc: |2
+       You are standing in the south-east part of the lair.  You can see a skeleton
+    lying in the corner.
+  exits:
+    north:
+      to: 7318
+      desc: |
+            Another part of the lair.
+      key: -1
+    south:
+      to: 7314
+      key: -1
+    west:
+      to: 7320
+      desc: |
+            Another part of the lair.
+      key: -1
+  extra_descs:
+  - keywords:
+    - skeleton
+    desc: |
+              It looks like a adventurer who wasn't lucky.  You'd better watch out...
+- vnum: 7318
+  name: The Square Lair
+  sector: city
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are standing in the north-east part of the lair.
+    You see a sign on the wall.
+  exits:
+    east:
+      to: 7321
+      desc: |
+            You see a wooden door.
+      door: regular
+      key: -1
+      keywords: door wooden
+    south:
+      to: 7317
+      desc: |
+            Another part of the lair.
+      key: -1
+    west:
+      to: 7319
+      desc: |
+            Another part of the lair.
+      key: -1
+  extra_descs:
+  - keywords:
+    - sign
+    - wall
+    desc: |
+              The sign says 'Gods of War I call you, my sword is by my side,
+                             I seek a light free from all false pride'
+                                     Reyemle Grug...
+- vnum: 7319
+  name: The Square Lair
+  sector: city
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are standing in the north-west part of the lair.  Here there is another
+    sign.  There is an exit from the lair to the north.
+  exits:
+    north:
+      to: 7322
+      desc: |
+            You see a small tunnel leading north.
+      key: -1
+    east:
+      to: 7318
+      desc: |
+            Another part of the lair.
+      key: -1
+    south:
+      to: 7320
+      desc: |
+            Another part of the lair.
+      key: -1
+  extra_descs:
+  - keywords:
+    - sign
+    desc: |
+              The sign says 'I'm wandering around in a everlasting tale,
+                             seeking the light to regain my pride
+                                         Corama...
+- vnum: 7320
+  name: The Lair End
+  sector: city
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You can see a table in front of you.  It is very dusty.  Five skeletons are
+    sitting around the table.  Exits are north and east.
+  exits:
+    north:
+      to: 7319
+      desc: |
+            The northern part of the lair.
+      key: -1
+    east:
+      to: 7317
+      desc: |
+            The eastern part of the lair.
+      key: -1
+  extra_descs:
+  - keywords:
+    - dragon
+    - statue
+    desc: |
+              It looks like a silver dragon.  It is nailed onto the table.  The dragon sits
+              on a red dragon that looks dead.  But the eyes of the red dragon are glowing,
+              pulsating red.  You feel drained.
+  - keywords:
+    - skeleton
+    - skeletons
+    desc: |
+              They've obviously been killed somehow, but it doesn't look like it was by 
+              sword or club.
+  - keywords:
+    - table
+    desc: |
+              On the table there is dust, in the center there is a small statue of a
+              Dragon sleeping.
+- vnum: 7321
+  name: The East Tunnel
+  sector: city
+  flags:
+  - no_mob
+  - indoors
+  desc: |2
+       You are standing in dark tunnel, the exits are east and west.  To the west
+    you see a wooden door.
+  exits:
+    east:
+      to: 7302
+      desc: |
+            You can see a muddy tunnel.
+      key: -1
+    west:
+      to: 7318
+      desc: |
+            You can see a wooden door.
+      door: regular
+      key: -1
+      keywords: door wooden
+- vnum: 7322
+  name: The North Tunnel
+  sector: city
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are standing in a dark tunnel, it leads upwards.
+  exits:
+    north:
+      to: 7323
+      desc: |
+            The dark tunnel continues.
+      key: -1
+    south:
+      to: 7319
+      desc: |
+            You can see the lair.
+      key: -1
+    west:
+      to: 7336
+      desc: |
+            You can see a cave entrance.
+      key: -1
+- vnum: 7323
+  name: The L-Shaped Room
+  sector: city
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are standing in deep darkness.  To the south there is a small exit.
+    To the east you can see a gaping hole.
+  exits:
+    east:
+      to: 7324
+      key: -1
+    south:
+      to: 7322
+      key: -1
+- vnum: 7324
+  name: The Circular Hall
+  sector: city
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are standing in round hall.  To the north, east and south you can see
+    a stone head hanging on the walls.
+  exits:
+    north:
+      to: 7324
+      desc: |
+            You see a red dragon's head hanging on the wall.
+      door: pickproof
+      keywords: head red
+    east:
+      to: 7325
+      desc: |
+            You see a green dragon's head hanging on the wall.
+      door: regular
+      key: -1
+      keywords: head green
+    south:
+      to: 7324
+      desc: |
+            You see a blue dragon's head hanging on the wall.
+      door: pickproof
+      keywords: head blue
+    west:
+      to: 7323
+      desc: |
+            You see a room far away.
+      key: -1
+  extra_descs:
+  - keywords:
+    - blue
+    desc: |
+              This looks like a good dragon.
+  - keywords:
+    - red
+    desc: |
+              This looks like a neutral dragon.
+  - keywords:
+    - green
+    desc: |
+              This looks like an evil dragon.
+  - keywords:
+    - head
+    - heads
+    desc: |
+              When you study the faces of the heads you see that they are faces of dragons.
+              The face to the north is red, the face to the east is green, and the face to
+              the south is blue.
+- vnum: 7325
+  name: A Dusty Tunnel
+  sector: city
+  flags:
+  - no_mob
+  - indoors
+  desc: |2
+       You are standing in dust.  This place has not been touched for a long time. 
+    Otherwise it is quite boring here, looks like a place to rest!  To the west
+    you see the outline of a door.  A tunnel leads to the east.
+  exits:
+    east:
+      to: 7326
+      desc: |
+            You see a tunnel which leads downwards.  It is quite dark.
+      key: -1
+    west:
+      to: 7324
+      desc: |
+            You can see the outline of a door.  Just like in the description!
+      door: regular
+      key: -1
+      keywords: door
+- vnum: 7326
+  name: The Crossing
+  sector: city
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are standing in a crossing of hallways.  You can leave this place
+    in every direction, except up and down.  In the dust you notice strange
+    footprints.
+  exits:
+    north:
+      to: 7331
+      key: -1
+    east:
+      to: 7330
+      key: -1
+    south:
+      to: 7327
+      key: -1
+    west:
+      to: 7325
+      key: -1
+  extra_descs:
+  - keywords:
+    - footprints
+    - foot
+    desc: |
+              You have never seen this kind of footprint before!
+- vnum: 7327
+  name: The L-Shaped Room
+  sector: field
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are standing in a L-shaped room.  You can hear noises from the long
+    tunnel to the east.  You feel very afraid!
+    A sign is hanging on the wall.
+  exits:
+    north:
+      to: 7326
+      key: -1
+    east:
+      to: 7328
+      key: -1
+  extra_descs:
+  - keywords:
+    - sign
+    desc: |
+              The sign says:
+
+              DANGER!!
+- vnum: 7328
+  name: The Dragon's Lair
+  sector: field
+  flags:
+  - indoors
+  desc: |2
+       You can see burned walls, the floorstones are fiery red.  All kinds
+    of bones are scattered all over the floor.  On the walls you can see
+    some burned shapes.  You smell burnt flesh.  Two creatures are half
+    melted into the floor.
+  exits:
+    north:
+      to: 7329
+      desc: |
+            You can see a long tunnel.
+      key: -1
+    west:
+      to: 7327
+      desc: |
+            You can see nothing but darkness.
+      key: -1
+- vnum: 7329
+  name: The Burnt Room
+  sector: city
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are in a room, which once has at one time been quite burnt.  There
+    is writing on the wall.
+  exits:
+    south:
+      to: 7328
+      desc: |
+            You can see a red glow...
+      key: -1
+    west:
+      to: 7330
+      key: -1
+  extra_descs:
+  - keywords:
+    - writing
+    desc: |
+              The writing says:
+
+                                      DANGER
+- vnum: 7330
+  name: The Windy Tunnel
+  sector: city
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are standing in a tunnel.  Above you, you can feel a breeze.
+  exits:
+    east:
+      to: 7329
+      desc: |
+            It is too dark to tell.
+      key: -1
+    west:
+      to: 7326
+      key: -1
+  extra_descs:
+  - keywords:
+    - breeze
+    desc: |
+              The breeze comes from a hole above you.  NO way to get up there.
+- vnum: 7331
+  name: The Glittering Room
+  sector: city
+  flags:
+  - indoors
+  desc: |2
+       This room is very bright.  On the walls you can see some silver.  Exits
+    are west, east and south.
+  exits:
+    east:
+      to: 7332
+      key: -1
+    south:
+      to: 7326
+      key: -1
+    west:
+      to: 7333
+      key: -1
+  extra_descs:
+  - keywords:
+    - glitter
+    - walls
+    - silver
+    desc: |
+              The glittering silver looks like it is INSIDE the walls.
+- vnum: 7332
+  name: The Secret Passageway
+  sector: city
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You have entered a tiny room.  There is only an exit to the west.
+  exits:
+    west:
+      to: 7331
+      desc: |
+            You can see a light to the west.
+      key: -1
+- vnum: 7333
+  name: The End Of Long Tunnel
+  sector: mountains
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are at a end of a long tunnel.  Right in front of you, you can see a
+    grey mass.  To the east you can see a tremendously long tunnel, but you know
+    that, you were just there.
+  exits:
+    east:
+      to: 7331
+      desc: |
+            A long tunnel.  JUST like in the description!
+      key: -1
+    west:
+      to: 7334
+      desc: |
+            A grey mass is blocking the way.
+      door: regular
+      key: -1
+      keywords: mass grey
+  extra_descs:
+  - keywords:
+    - grey
+    - mass
+    desc: |
+              The mass is nothing but a mass, but it is quite suspicious!
+- vnum: 7334
+  name: The Stair-Room
+  sector: city
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are standing in a small room.  Drawings of faces in pain are on the
+    walls.  You can feel that darkness is ruling the place.  There is one exit:
+    south.
+  exits:
+    south:
+      to: 7335
+      desc: |
+            Nothing but darkness...
+      key: -1
+- vnum: 7335
+  name: A Dark Tunnel
+  sector: city
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are standing in a dark tunnel.  It continues to the north and to the
+    south.  Bones are spread on the floor.
+  exits:
+    north:
+      to: 7334
+      key: -1
+    south:
+      to: 7336
+      key: -1
+  extra_descs:
+  - keywords:
+    - bones
+    - bone
+    desc: |
+              It looks like bones of a human.
+- vnum: 7336
+  name: The Entrance To The Lair
+  sector: field
+  flags:
+  - dark
+  - no_mob
+  - indoors
+  desc: |2
+       The smell here is awful.  To the south you can see some smoke.  A tunnel
+    leads north and east.
+  exits:
+    north:
+      to: 7335
+      key: -1
+    east:
+      to: 7322
+      desc: |
+            A small cave is to the east.
+      key: -1
+    south:
+      to: 7337
+      desc: |
+            The only thing you can see is smoke.
+      key: -1
+- vnum: 7337
+  name: The North-Eastern Part Of The Basilisk's Cave
+  sector: field
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       It is hard to see here because of the smoke.  To the north you can barely
+    see a small tunnel.  Other exits are to the south and to the west.
+  exits:
+    north:
+      to: 7336
+      key: -1
+    south:
+      to: 7338
+      key: -1
+    west:
+      to: 7339
+      key: -1
+- vnum: 7338
+  name: The South-Eastern Part Of The Basilisk's Cave
+  sector: field
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       There is a very small hole in wall from which the smoke is coming from. 
+    Otherwise it is pitch black.  Exits are north and west.
+  exits:
+    north:
+      to: 7337
+      desc: |
+            You can see nothing but smoke.
+      key: -1
+    west:
+      to: 7340
+      desc: |
+            You can see nothing but smoke.
+      key: -1
+  extra_descs:
+  - keywords:
+    - hole
+    - small
+    desc: |
+              It seems to be a small hole, about one foot in diameter.
+- vnum: 7339
+  name: The North-Western Part Of The Basilisk's Cave
+  sector: field
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You can see some hay spread on the floor.  The smell is awful here, and it
+    makes you feel sick.  This place where the Basilisk sleeps.  Watch out...
+    maybe it is not far from here...
+  exits:
+    east:
+      to: 7337
+      key: -1
+    south:
+      to: 7340
+      key: -1
+  extra_descs:
+  - keywords:
+    - hay
+    desc: |
+              The hay is very dirty.  The smell of it makes you feel sick.
+- vnum: 7340
+  name: The South-Western Part Of The Basilisk's Cave
+  sector: mountains
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You can see nothing but smoke.  
+  exits:
+    north:
+      to: 7339
+      key: -1
+    east:
+      to: 7338
+      key: -1
+    south:
+      to: 7341
+      key: -1
+- vnum: 7341
+  name: The Small Cave
+  sector: field
+  flags:
+  - dark
+  - no_mob
+  - indoors
+  desc: |2
+       You are standing in small cave.  You can see some light at the end.  Exits
+    are north and south.
+  exits:
+    north:
+      to: 7340
+      desc: |
+            You can see only smoke.
+      key: -1
+    south:
+      to: 7342
+      desc: |
+            You can see a blue glow.  And you feel a fresh breeze... ahhhh...
+      key: -1
+- vnum: 7342
+  name: The Northern End Of The Pool
+  sector: hills
+  flags:
+  - indoors
+  desc: |2
+       You have wet feet, you are standing in water.  The water looks calm.  You
+    can see that it is a big lake.  Light seeps from the water.
+  exits:
+    north:
+      to: 7341
+      desc: |
+            You can see a small cave.
+      key: -1
+    east:
+      to: 7343
+      desc: |
+            You can see more water.
+      key: -1
+    south:
+      to: 7344
+      desc: |
+            You can see water.
+      key: -1
+- vnum: 7343
+  name: The Pool
+  sector: water_swim
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are swimming in water.  It is getting deep here.  It is also dark in
+    this end.
+  exits:
+    south:
+      to: 7345
+      desc: |
+            You can see some bubbles in the water.
+      key: -1
+    west:
+      to: 7342
+      desc: |
+            You see calm water.
+      key: -1
+- vnum: 7344
+  name: The South End Of The Pool
+  sector: mountains
+  flags:
+  - indoors
+  desc: |2
+       You standing in water up to your neck!  You can only see water.
+  exits:
+    north:
+      to: 7342
+      desc: |
+            You can see calm water.
+      key: -1
+    east:
+      to: 7345
+      desc: |
+            To dark to tell, but you can feel something nearby.
+      key: -1
+- vnum: 7345
+  name: The Pool
+  sector: water_swim
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are swimming in DARKNESS.  You feel something touching your right leg.
+  exits:
+    north:
+      to: 7343
+      desc: |
+            To dark to tell.
+      key: -1
+    east:
+      to: 7313
+      desc: |
+            You can feel a warm breeze.
+      key: -1
+    west:
+      to: 7344
+      key: -1
+resets:
+- mob: 7040
+  room: 7328
+  max: 1
+- mob: 7041
+  room: 7344
+  max: 2
+- mob: 7042
+  room: 7335
+  max: 2
+- mob: 7043
+  room: 7339
+  max: 3
+- mob: 7044
+  room: 7306
+  max: 6
+- mob: 7045
+  room: 7319
+  max: 1
+- mob: 7046
+  room: 7324
+  max: 1
+- mob: 7010
+  room: 7329
+  max: 2
+- door: 7304
+  dir: south
+  state: closed
+- door: 7305
+  dir: north
+  state: closed
+- door: 7305
+  dir: south
+  state: closed
+- door: 7306
+  dir: north
+  state: closed
+- door: 7315
+  dir: north
+  state: closed
+- door: 7316
+  dir: south
+  state: closed
+- door: 7321
+  dir: west
+  state: closed
+- door: 7318
+  dir: east
+  state: closed
+- door: 7324
+  dir: north
+  state: locked
+- door: 7324
+  dir: south
+  state: locked
+- door: 7324
+  dir: east
+  state: closed
+- door: 7325
+  dir: west
+  state: closed
+- door: 7333
+  dir: west
+  state: closed

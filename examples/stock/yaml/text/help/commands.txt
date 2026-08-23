@@ -1,0 +1,9 @@
+COMMANDS
+
+Usage: commands
+
+The COMMANDS command gives a canonical list of all the known verbs.
+
+Each command listed should have help available by typing "HELP <command>".
+
+See also: SOCIAL, SOCIALS

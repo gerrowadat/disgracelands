@@ -1,0 +1,260 @@
+schema: dl/world@1
+zone:
+  vnum: 12
+  name: God Simplex
+  range:
+  - 1200
+  - 1299
+  lifespan: 10
+  reset: always
+rooms:
+- vnum: 1200
+  name: The Meeting Room Of The Gods
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       The meeting room is plain and very simple.  A circular table sits
+    in the middle of the room, lit by some unseen light source.  There
+    are many chairs around the table, all empty.  The Immortal Board Room
+    is to the north.
+  exits:
+    north:
+      to: 1204
+      desc: |
+            The Immortal Board Room can be seen to the north.
+      key: -1
+- vnum: 1201
+  name: The Inn Of The Gods
+  sector: inside
+  flags:
+  - indoors
+  - private
+  desc: |2
+       The Inn of the Gods is a small room, holding only a shelf with many
+    small precious stones on it.  When a God comes to rent his belongings,
+    his essence is stored in the stones.  The Immortal Board Room is to
+    the south.
+  exits:
+    south:
+      to: 1204
+      desc: |
+            The Immortal Board Room can be seen to the south.
+      key: -1
+- vnum: 1202
+  name: The Ice Box Of The Gods
+  sector: inside
+  flags:
+  - indoors
+  - peaceful
+  - soundproof
+  - no_magic
+  desc: |2
+       The Ice Box is for little boys and girls that cannot play nice. Be good
+    and maybe someone will come and get you.
+- vnum: 1203
+  name: The Gods' Mortal Board Room
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       Here the Gods have magically created an exact copy of the mortal board
+    room.  Any God can easily post and read messages from the mortal board room
+    without being seen by any mortals.  The Immortal Board Room is to the west.
+  exits:
+    west:
+      to: 1204
+      desc: |
+            The Immortal Board Room can be seen to the west.
+      key: -1
+- vnum: 1204
+  name: The Immortal Board Room
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       The main hang out of the Gods, the Immortal Board Room is the place to
+    be.  Gods exchange messages here most every day.  The mortal board room is
+    to the east and the meeting room for the gods is to the south.  To the north
+    is the Gods' Inn and to the west is a post office for Gods.  There is a large
+    staircase leading down to the main temple in the city of Midgaard.  In the
+    northeast corner you spot a small staircase leading upwards.
+  exits:
+    north:
+      to: 1201
+      desc: |
+            The Gods' Inn can be seen just to the north.
+      key: -1
+    east:
+      to: 1203
+      desc: |
+            The Mortal Board Room can be seen just to the east.
+      key: -1
+    south:
+      to: 1200
+      desc: |
+            The Gods' Meeting Room is located to the south.
+      key: -1
+    west:
+      to: 1205
+      desc: |
+            The Gods' Post Office is just to the west.
+      key: -1
+    up:
+      to: 1206
+      desc: |
+            There is a small stair in the corner leading up to the social room of
+            the Gods.
+      key: -1
+    down:
+      to: 3001
+      desc: |
+            You see the hustle and bustle of the Temple of Midgaard at the bottom of
+            the stairs.
+      key: -1
+- vnum: 1205
+  name: The Post Office Of The Gods
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       The Post Office Of The Gods is the same as most Post Offices except that
+    it is not as slow.  Even the Postal service knows not to anger the Gods.
+    Piles of junk mail line the walls.  I guess even Gods get on mailing lists.
+    The Immortal Board Room is to the east.
+  exits:
+    east:
+      to: 1204
+      desc: |
+            The Immortal Board Room is just to the east.
+      key: -1
+- vnum: 1206
+  name: The Social Gathering Room
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       This elegantly decorated room has one simple purpose.  To socialize with
+    everyone else around in one central location.
+  exits:
+    down:
+      to: 1204
+      desc: |
+            The Immortal Board Room is just down through the floor.  Funny how you
+            didn't notice that exit before isn't it?
+      key: -1
+mobiles:
+- vnum: 1200
+  keywords:
+  - innkeeper
+  short: the Immortal Innkeeper
+  long: |
+    The Immortal Innkeeper is organizing her books here.
+  desc: |
+    She appears to be having no problem tallying things up.
+  act:
+  - spec
+  - sentinel
+  affected:
+  - no_track
+  alignment: 0
+  level: 30
+  thac0: 0
+  ac: -10
+  hp: 1d49+901
+  damage: 4d8+5
+  gold: 0
+  exp: 0
+  position: standing
+  default_position: standing
+  sex: female
+- vnum: 1201
+  keywords:
+  - postmaster
+  - master
+  - post
+  short: the Immortal Postmaster
+  long: |
+    The Immortal Postmaster is hard at work here.
+  desc: |
+    Scary... a postal worker... working?
+  act:
+  - spec
+  - sentinel
+  affected:
+  - no_track
+  alignment: 0
+  level: 30
+  thac0: 0
+  ac: -10
+  hp: 1d49+901
+  damage: 4d8+5
+  gold: 0
+  exp: 0
+  position: standing
+  default_position: standing
+  sex: female
+- vnum: 1202
+  keywords:
+  - being
+  - amorphous
+  - spirit
+  - wandering
+  short: the wandering spirit
+  long: |
+    A strange amorphous being wanders these halls eternally cleaning.
+  desc: |
+    This spirit, having lived out its days in the mortal world, now
+    works off its final sins by doing menial labour in this realm's
+    purgatory.  In this case, those chores seem to be cleaning up
+    after the immortals of the land.
+  act:
+  - spec
+  - scavenger
+  - stay_zone
+  - no_bash
+  affected:
+  - detect_invis
+  - infravision
+  - no_track
+  - sneak
+  alignment: 0
+  level: 30
+  thac0: 0
+  ac: -10
+  hp: 1d49+901
+  damage: 4d8+5
+  gold: 0
+  exp: 0
+  position: standing
+  default_position: standing
+  sex: neutral
+resets:
+- mob: 1201
+  room: 1205
+  max: 1
+- mob: 1200
+  room: 1201
+  max: 1
+- mob: 1202
+  room: 1201
+  max: 2
+- mob: 1202
+  room: 1200
+  max: 2
+- room: 1206
+  remove: 3096
+- room: 1206
+  object: 3096
+  max: 5
+- room: 1202
+  object: 3097
+  max: 1
+- room: 1204
+  object: 3098
+  max: 1
+- room: 1203
+  remove: 3099
+- room: 1203
+  object: 3099
+  max: 2

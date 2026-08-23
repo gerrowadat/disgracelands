@@ -1,0 +1,13 @@
+CONSIDER
+
+Usage: consider <monster>
+
+This command will compare your Level with the <monsters> level.  You will then
+receive a rough estimate, which is by no means exact.  Consider does not take
+hitpoints/special attacks/damage into account.
+
+Example:
+
+  > consider fido
+
+See also: HIT, KILL

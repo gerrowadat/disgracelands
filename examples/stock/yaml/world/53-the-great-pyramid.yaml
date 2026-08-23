@@ -1,0 +1,3401 @@
+schema: dl/world@1
+zone:
+  vnum: 53
+  name: The Great Pyramid
+  range:
+  - 5300
+  - 5399
+  lifespan: 20
+  reset: always
+rooms:
+- vnum: 5300
+  name: The Great Eastern Desert
+  sector: field
+  desc: |2
+       A vast desert stretches for miles, the sands constantly shifting around
+    you.  Rising out of the sand to the north you see a mighty pyramid.
+  exits:
+    north:
+      to: 5301
+      desc: |
+            The sands of the desert continue onward towards the pyramid.
+      key: -1
+    east:
+      to: 5040
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    south:
+      to: 5050
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    west:
+      to: 5035
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+  extra_descs:
+  - keywords:
+    - pyramid
+    desc: |
+              The massive pyramid rises out of the sand, a monument to long-dead pharoahs.
+- vnum: 5301
+  name: At The Base Of The Pyramid
+  sector: field
+  desc: |2
+       The mighty pyramid towers above you out of the hot desert sands, made
+    from huge blocks of stone that have been coated over with a rough sandy
+    plaster-like substance.  The face of the pyramid is steep, but you think
+    you might be able to climb it.
+  exits:
+    south:
+      to: 5300
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    up:
+      to: 5302
+      desc: |
+            The steep slope of the pyramid rises up before you.
+      key: -1
+  extra_descs:
+  - keywords:
+    - pyramid
+    desc: |
+              You wonder how anyone could have built such a massive thing out in this
+              heat.
+- vnum: 5302
+  name: Climbing The Great Pyramid
+  sector: mountains
+  desc: |2
+       Hot air rises off the sides of the pyramid, and the wind chokes you with
+    a flurry of sand and dust.  So far you have made it halfway up the side.  The
+    walls of the pyramid are quite steep.
+  exits:
+    north:
+      to: 5303
+      desc: |
+            If you are daring you could try to skirt around to the northern side.
+      key: -1
+    south:
+      to: 5304
+      desc: |
+            If you are daring you could try to skirt around to the southern side.
+      key: -1
+    up:
+      to: 5307
+      desc: |
+            It looks too dangerous to try to climb any higher.
+      key: -1
+    down:
+      to: 5301
+      desc: |
+            Far below you are the burning sands of the desert.
+      key: -1
+  extra_descs:
+  - keywords:
+    - pyramid
+    desc: |
+              You wonder how anyone could have built such a massive thing out in this
+              heat.
+- vnum: 5303
+  name: Climbing The Great Pyramid
+  sector: mountains
+  desc: |2
+       Hot air rises off the sides of the pyramid, and the wind chokes you with
+    a flurry of sand and dust.  The walls of the pyramid are quite steep, and
+    you are having trouble keeping from sliding down into the sands below.
+  exits:
+    east:
+      to: 5305
+      desc: |
+            If you are daring you could try to skirt around to the eastern side.
+      key: -1
+    west:
+      to: 5302
+      desc: |
+            If you are daring you could try to skirt around to the western side.
+      key: -1
+    up:
+      to: 5307
+      desc: |
+            It looks too dangerous to try to climb any higher.
+      key: -1
+    down:
+      to: 5307
+      desc: |
+            This side of the pyramid has a dangerous drop before the sandy floor.
+      key: -1
+  extra_descs:
+  - keywords:
+    - pyramid
+    desc: |
+              You wonder how anyone could have built such a massive thing out in this
+              heat.
+- vnum: 5304
+  name: Climbing The Great Pyramid
+  sector: mountains
+  desc: |2
+       Hot air rises off the sides of the pyramid, and the wind chokes you with
+    a flurry of sand and dust.  The walls of the pyramid are quite steep, and
+    you are having trouble keeping from sliding down into the sands below.
+  exits:
+    east:
+      to: 5305
+      desc: |
+            If you are daring you could try to skirt around to the eastern side.
+      key: -1
+    west:
+      to: 5302
+      desc: |
+            If you are daring you could try to skirt around to the western side.
+      key: -1
+    up:
+      to: 5307
+      desc: |
+            It looks too dangerous to try to climb any higher.
+      key: -1
+    down:
+      to: 5307
+      desc: |
+            This side of the pyramid has a dangerous drop before the sandy floor.
+      key: -1
+  extra_descs:
+  - keywords:
+    - pyramid
+    desc: |
+              You wonder how anyone could have built such a massive thing out in this
+              heat.
+- vnum: 5305
+  name: Climbing The Great Pyramid
+  sector: mountains
+  desc: |2
+       Here on the eastern side of the pyramid there is a little more shelter
+    from the heat and wind.  The stone side is not nearly so slippery smooth
+    from the ravages of time, and you think you may be able to even reach the
+    top from here.
+  exits:
+    north:
+      to: 5303
+      desc: |
+            If you are daring you could try to skirt around to the northern side.
+      key: -1
+    south:
+      to: 5304
+      desc: |
+            If you are daring you could try to skirt around to the southern side.
+      key: -1
+    up:
+      to: 5306
+      desc: |
+            You see the apex of the pyramid many yards above you.
+      key: -1
+    down:
+      to: 5307
+      desc: |
+            This side of the pyramid has a dangerous drop before the sandy floor.
+      key: -1
+  extra_descs:
+  - keywords:
+    - pyramid
+    desc: |
+              You wonder how anyone could have built such a massive thing out in this
+              heat.
+- vnum: 5306
+  name: The Apex Of The Great Pyramid
+  sector: city
+  desc: |2
+       Bathed in sweat, you have managed to reach the summit of the great
+    pyramid.  The four sides of the pyramid slope sharply down into the
+    hot sands in all four cardinal directions.
+    A plaque has been set into the sandy stones beneath your feet.
+  exits:
+    north:
+      to: 5307
+      desc: |
+            The north side of the pyramid slopes down into the sands.
+            It looks really dangerous.  I wouldn't go that way.
+      key: -1
+    east:
+      to: 5305
+      desc: |
+            The east side of the pyramid slopes down into the sands.
+      key: -1
+    south:
+      to: 5307
+      desc: |
+            The south side of the pyramid slopes down into the sands.
+            It looks really dangerous.  I wouldn't go that way.
+      key: -1
+    west:
+      to: 5307
+      desc: |
+            The west side of the pyramid slopes down into the sands.
+            It looks really dangerous.  I wouldn't go that way.
+      key: -1
+    down:
+      to: 5308
+      desc: |
+            You see some sandy stones pressed closely together to form a hard surface.
+      door: regular
+      key: -1
+      keywords: stones
+  extra_descs:
+  - keywords:
+    - plaque
+    desc: |
+              The plaque reads:
+
+                                      The Great Pyramid
+
+                              Created by the Andersen work crew.
+  - keywords:
+    - stones
+    desc: |
+              As you look closer you can make out a crack in the center of the stones
+              beneath your feet.  With some effort you might be able to lift that 
+              section up and get inside!
+- vnum: 5307
+  name: On The Dangerous Stones
+  sector: inside
+  flags:
+  - death
+  - indoors
+  desc: |2
+       Here the elements have carved away at the sides of the pyramid quite a 
+    bit.  You aren't so sure of your footing anymore...
+
+    Suddenly the wind picks up, and you lose your balance!
+    You tumble down the side of the pyramid, and fall to your death!
+
+    SPLAT.
+
+    Ouch.
+- vnum: 5308
+  name: A Ladder
+  sector: inside
+  flags:
+  - no_mob
+  - indoors
+  desc: |2
+       You are climbing an ancient ladder that leads down into the depths of
+    the pyramid.  The air around is thick with layers of dust and a strange
+    musty smell.  Above you you see tiny beams of light coming through the
+    stones of the ceiling.
+  exits:
+    up:
+      to: 5306
+      desc: |
+            You see the sandy stones of the ceiling.
+      door: regular
+      key: -1
+      keywords: stones
+    down:
+      to: 5309
+      desc: |
+            You see a small dusty chamber.
+      key: -1
+  extra_descs:
+  - keywords:
+    - stones
+    desc: |
+              As you look closer you can make out a crack in the center of the stones
+              above your head.  With some effort you might be able to lift that section
+              up and get outside!
+- vnum: 5309
+  name: A Musty Chamber
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You are standing in a dank, musty chamber just inside the pyramid. 
+    Footprints and other strange marks are set into the dusty floor here.
+    It would seem that some of the tenants of this monument are still alive.
+    Exits lead in all directions.   The door to the west is covered with
+    inscriptions.
+  exits:
+    north:
+      to: 5312
+      desc: |
+            You see a tiny crawlway raised about three feet off the ground.
+      key: -1
+    east:
+      to: 5339
+      desc: |
+            A dust-covered hallway leads off to the east.
+      key: -1
+    south:
+      to: 5324
+      desc: |
+            You see a small crack in the wall through which you might be able to slide.
+      key: -1
+    west:
+      to: 5310
+      desc: |
+            You see a large stone door, covered in sigils and hieroglyphs.
+      door: regular
+      key: -1
+      keywords: door stone
+    up:
+      to: 5308
+      desc: |
+            A small rickety ladder leads up.
+      key: -1
+  extra_descs:
+  - keywords:
+    - sigils
+    - hieroglyphs
+    - inscriptions
+    - writing
+    desc: |
+              You cannot understand the strange glyphs that cover the door, but most of
+              them seem to depict scenes of fire and massive creatures of apparently
+              tremendous strength.  You have a feeling that the glyphs are serving as a
+              warning.
+  - keywords:
+    - door
+    - stone
+    desc: |
+              The stone door is covered in strange inscriptions and hieroglyphs that warn
+              you not to proceed any further.
+- vnum: 5310
+  name: The Fire Pool
+  sector: inside
+  flags:
+  - no_mob
+  - indoors
+  desc: |2
+       This room is dominated by a massive raised pool that is filled with
+    not water but flames of intense heat.  The multicoloured flames lick out
+    at you, searching for things to burn.  The pool proceeds to the east into
+    a small chamber.
+  exits:
+    east:
+      to: 5309
+      desc: |
+            You see a large stone door.
+      door: regular
+      key: -1
+      keywords: door stone
+    west:
+      to: 5311
+      desc: |
+            You see a small chamber filled with fire.
+      key: -1
+- vnum: 5311
+  name: The Chamber Of The Efreet
+  sector: water_noswim
+  flags:
+  - indoors
+  desc: |2
+       You make your way across the fire pool, and into a small stone chamber.
+    Here the flames are nearly as high as your head, singeing your face and 
+    evaporating your sweat instantaneously.
+  exits:
+    east:
+      to: 5310
+      desc: |
+            The pool of fire ends to the east.
+      key: -1
+- vnum: 5312
+  name: A Tiny Crawlway
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You have to go down onto your hands and knees to fit inside this tiny
+    space.  The crawlway is thick with sand and dust, and markings of the
+    passage of other creatures.
+  exits:
+    north:
+      to: 5313
+      desc: |
+            The crawlway continues to the north.
+      key: -1
+    south:
+      to: 5309
+      desc: |
+            The crawlway ends to the south in a musty chamber.
+      key: -1
+    up:
+      to: 5337
+      desc: |
+            A small hole above your head leads into a dank chamber.
+      key: -1
+- vnum: 5313
+  name: A Tiny Crawlway
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are on your hands and knees, inside a small crawlway that winds
+    through the inside of the pyramid.  The crawlway is thick with sand, dust, 
+    and markings of the passage of other creatures.
+  exits:
+    south:
+      to: 5312
+      desc: |
+            The crawlway continues to the south.
+      key: -1
+    west:
+      to: 5314
+      desc: |
+            The crawlway continues to the west.
+      key: -1
+- vnum: 5314
+  name: A Tiny Crawlway
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are on your hands and knees, inside a small crawlway that winds
+    through the inside of the pyramid.  The crawlway is thick with sand, dust, 
+    and markings of the passage of other creatures.
+  exits:
+    east:
+      to: 5313
+      desc: |
+            The crawlway continues to the east.
+      key: -1
+    west:
+      to: 5315
+      desc: |
+            The crawlway gets a little tighter to the west.
+      key: -1
+- vnum: 5315
+  name: A Tightening In The Crawlway
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       Here you are forced to slide on your belly through a particularly tight
+    section of the crawlway, as the stones of the pyramid close together about
+    you.  Below you is a small, slippery-looking hole that plummets into
+    blackness.
+  exits:
+    east:
+      to: 5314
+      desc: |
+            The crawlway gets a little larger to the east.
+      key: -1
+    south:
+      to: 5316
+      desc: |
+            The crawlway continues to diminish in size to the south.
+      key: -1
+    down:
+      to: 5317
+      desc: |
+            The hole looks very slippery and very dark.
+      key: -1
+- vnum: 5316
+  name: The Crawlway's End
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       The crawlway shrinks away to nothing as the sandy stones of the pyramid
+    close together into a space through which only a snake could fit.   There is
+    barely enough space to turn around and make your way back through the tiny
+    crawlway to the north.
+  exits:
+    north:
+      to: 5315
+      desc: |
+            The crawlway gets a little larger to the north.
+      key: -1
+- vnum: 5317
+  name: A Slippery Hole
+  sector: inside
+  flags:
+  - dark
+  - no_mob
+  - indoors
+  desc: |2
+       The sides of this hole are slippery-smooth.  You lower yourself in, and 
+    proceed to move downward... when suddenly you lose your purchase!
+
+    You fall for what seems like an eternity, and smash into the stones below...
+
+
+
+    Under The Hole
+       You are in a small chamber underneath the slippery hole, far below
+    the pyramid now.   The floor is strewn with bones.  To the south is a
+    small rocky crevasse.
+  exits:
+    south:
+      to: 5319
+      desc: |
+            You see a rocky crevasse that proceeds deep under the pyramid.
+      key: -1
+    up:
+      to: -1
+      desc: |
+            The hole looks far too slippery to climb back up.
+      key: -1
+  extra_descs:
+  - keywords:
+    - bones
+    desc: |
+              The bones have whitened and cracked in the dry air, apparently the remains 
+              of adventurers, thieves, and creatures that did not survive the fall.
+- vnum: 5318
+  name: Under The Hole
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are in a small chamber underneath the slippery hole, far below
+    the pyramid now.   The floor is strewn with bones.  To the south is a
+    small rocky crevasse.
+  exits:
+    south:
+      to: 5319
+      desc: |
+            You see a rocky crevasse that proceeds deep under the pyramid.
+      key: -1
+    up:
+      to: -1
+      desc: |
+            The hole looks far too slippery to climb back up.
+      key: -1
+  extra_descs:
+  - keywords:
+    - bones
+    desc: |
+              The bones have whitened and cracked in the dry air, apparently the remains 
+              of adventurers, thieves, and creatures that did not survive the fall.
+- vnum: 5319
+  name: A Rough Crevasse
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You are now exploring deep within a strange rocky crevasse that plunges
+    down into the rock on which the pyramid was constructed.  To the south you
+    see the flickering light of a fire, and the crevasse proceeds downward.
+  exits:
+    north:
+      to: 5318
+      desc: |
+            You see a small stone chamber littered with bones.
+      key: -1
+    south:
+      to: 5320
+      desc: |
+            You see the flickering light of a small fire.
+      key: -1
+    down:
+      to: 5321
+      desc: |
+            The crevasse continues downward into total darkness.
+      key: -1
+  extra_descs:
+  - keywords:
+    - rough
+    desc: |
+              As you look through the rough terrain, your eyes catch a small glint of light!
+- vnum: 5320
+  name: A Small Fire
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       Here a small fire burns in a nook in the rocks, providing some warmth and
+    comforting light in the cold, dark, dry air.
+    Standing here is a strange-looking old man, who stares at you balefully.
+  exits:
+    north:
+      to: 5319
+      desc: |
+            You see a massive crevasse that plunges into darkness.
+      key: -1
+  extra_descs:
+  - keywords:
+    - man
+    - old
+    desc: |
+              The old man looks like he has been trapped down here far too long, and
+              has begun to lose his mind.  He moves about slowly, cackling to himself.
+
+              He turns to you and shouts, 'nope measse!  nope measse!', then turns 
+              back and stares into the fire.
+
+              'What a strange person,' you think to yourself.
+- vnum: 5321
+  name: Down The Crevasse
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       The crevasse proceeds downward into the dark depths of the earth.
+    The air about you is now cold and quite dry, and your light source
+    gutters in a cool breeze that wafts up from below.
+  exits:
+    up:
+      to: 5319
+      desc: |
+            It is too dark for you to see any further along the crevasse.
+      key: -1
+    down:
+      to: 5322
+      desc: |
+            It is too dark for you to see any further along the crevasse.
+      key: -1
+- vnum: 5322
+  name: At The Crevasse's End
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       Here the crevasse comes to an abrupt end.  A chilling wind howls
+    at your face from a black shape to the south, but the light from your
+    source is too dim to see exactly what it is.
+  exits:
+    south:
+      to: 5323
+      desc: |
+            You see a strange-looking black shape.
+      door: pickproof
+      key: 5323
+      keywords: sesame
+    up:
+      to: 5321
+      desc: |
+            It is too dark for you to see anything along the crevasse.
+      key: -1
+  extra_descs:
+  - keywords:
+    - tiger
+    - head
+    - animal
+    - sesame
+    desc: |
+              You are now certain that the wind is the cold breath of some unearthly
+              giant animal, whose voice rumbles lowly on the breeze, and whose
+              massive jaws could easily swallow you whole.
+
+              You move closer for a better look, when suddenly a pair of eyes flashes.
+              A cold voice echoes: 'SEEK YE THE DIAMOND... IN THE ROUGH...'
+
+              ... Then all is silent.
+  - keywords:
+    - black
+    - shape
+    desc: |
+              Wind howls about your ears like the roar of a tiger.  As your eyes
+              adjust to the light the shape to the south almost seems to take the
+              form of a massive animal head.
+- vnum: 5323
+  name: The Vault Of The Lamp
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       The jaws of the massive stone tiger part wide to reveal a great vault.
+    An arched ceiling lies far above your head... and all about you is a low
+    guttural rumbling noise and a chill wind.
+    Giant heaps of ancient treasure, gold coins, and valuables surround you
+    on all sides.
+  exits:
+    north:
+      to: 5322
+      desc: |
+            Through the jaws of the tiger you see the blackness of the crevasse.
+      door: pickproof
+      key: 5323
+  extra_descs:
+  - keywords:
+    - treasure
+    - gold
+    - coins
+    - valuables
+    desc: |
+              You reach for some of the tasty goodies, when you hear a loud rumbling
+              sound and see a bright flash of light...
+
+              Then the words: 'TAKE ONLY THE LAMP... TOUCH NOTHING ELSE.'
+
+              ... All is silent once again.
+- vnum: 5324
+  name: A Crack In The Wall
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You exhale, and squeeze yourself into the narrow crack in the wall.
+    Dust fills your eyes as you disturb it, and chunks of mortar and stone
+    mixed with a touch of sand fall on you as you scrape your way through.
+  exits:
+    north:
+      to: 5309
+      desc: |
+            You see a musty chamber.
+      key: -1
+    south:
+      to: 5325
+      desc: |
+            You see a tomb.
+      key: -1
+- vnum: 5325
+  name: A Looted Tomb
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+      The floor of this small tomb is littered with the lids of 
+    smashed sarcophagi, bits of treasure dropped by thieves and
+    looters, and corpses pulled from their resting places.
+  exits:
+    north:
+      to: 5324
+      desc: |
+            You see a small crack in the wall through which you might be able to slide.
+      key: -1
+    east:
+      to: 5333
+      desc: |
+            To the east is another tomb.
+      key: -1
+    west:
+      to: 5326
+      desc: |
+            To the west is another tomb.
+      key: -1
+- vnum: 5326
+  name: A Demolished Tomb
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+      This tomb has been utterly destroyed by thieves and looters in search of
+    the treasures of the pharoahs.  Nothing of interest remains in this room,
+    except a large stone coffin that leans against the western wall.
+  exits:
+    east:
+      to: 5325
+      desc: |
+            To the east is another tomb.
+      key: -1
+    west:
+      to: 5327
+      desc: |
+            You see a large stone coffin.
+      door: pickproof
+      key: 5312
+      keywords: coffin lid
+  extra_descs:
+  - keywords:
+    - man
+    - garments
+    - pharoah
+    desc: |
+              As you look closer at the figure sculpted into the stone coffin you notice a
+              small marking carved into its chest.  It looks like a scarab or small beetle
+              would fit into the small space, if properly sized.
+
+              Hmmm.
+  - keywords:
+    - coffin
+    - lid
+    desc: |
+              The coffin is sculpted into the form of a man, standing several heads above
+              you, and clad in the garments of pharoahs.  It has apparently been untouched
+              by the ravages of time and the activities of looters.  Several markings on the 
+              side indicate spots where unsuccessful attempts were made to open the coffin.
+
+              You can't see any way to open it.
+- vnum: 5327
+  name: A Stairway
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You stand now at the head of a stairway that goes down into darkness.
+    The steps and walls are smooth sandy stone, covered with a thick layer
+    of dust.  Some inscriptions are carved into the wall here.
+  exits:
+    east:
+      to: 5326
+      desc: |
+            You see the backside of the coffin lid, featureless stone.
+      door: pickproof
+      key: -1
+      keywords: coffin lid
+    down:
+      to: 5328
+      desc: |
+            It is too dark to see down the stairway.
+      key: -1
+  extra_descs:
+  - keywords:
+    - coffin
+    - lid
+    desc: |
+              On this side the coffin lid is smooth featureless stone.
+  - keywords:
+    - inscriptions
+    desc: |
+              You blow dust away from the inscriptions to read:
+
+              Beware the curse of the mummy.
+- vnum: 5328
+  name: A Stairway
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are on a stairway that disappears into darkness in both directions.
+    The smooth, uneven steps of the stairway have not been travelled in what
+    appears to be centuries.
+  exits:
+    up:
+      to: 5327
+      desc: |
+            It is too dark to see up the stairway.
+      key: -1
+    down:
+      to: 5329
+      desc: |
+            It is too dark to see down the stairway.
+      key: -1
+- vnum: 5329
+  name: A Stairway
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You stand now at the base of the uneven stairway.  The walls, floor,
+    and ceiling of this small landing are covered with strange hieroglyphics.
+  exits:
+    south:
+      to: 5330
+      desc: |
+            You see a seam in the stone wall.
+      door: regular
+      key: -1
+      keywords: stone
+    up:
+      to: 5328
+      desc: |
+            It is too dark to see up the stairway.
+      key: -1
+  extra_descs:
+  - keywords:
+    - walls
+    - floor
+    - ceiling
+    - hieroglyphics
+    desc: |
+              The hieroglyphics are covered with a thick layer of dust.  You clear the
+              dust away with your hand, and find that you cannot comprehend them.
+- vnum: 5330
+  name: The Ancient Hall
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       Here the air is deathly still, motes of dust thickly obscuring your
+    vision.  Several stone statues line the walls of the hall, depicting the 
+    gods of an ancient society.  Strange glyphs and sigils cover the walls, a 
+    peculiar pictorial form of written language that you don't understand.
+       Some steps lead to a raised dais to the south.
+  exits:
+    north:
+      to: 5329
+      desc: |
+            You see a seam in the stone wall.
+      door: regular
+      key: -1
+      keywords: stone
+    south:
+      to: 5331
+      desc: |
+            You see a small raised dais.
+      key: -1
+  extra_descs:
+  - keywords:
+    - writings
+    - glyphs
+    - sigils
+    - hieroglyphics
+    - symbols
+    desc: |
+              You don't understand the meaning of these symbols.
+- vnum: 5331
+  name: A Raised Dais
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are at the southern end of the ancient hall, the dust and darkness
+    absorbing your light so that you cannot see past the steps of the dais.
+    A low pedestal rests here.  You see something written into the face of it.
+  exits:
+    north:
+      to: 5330
+      desc: |
+            You cannot see past the steps of the dais.
+      key: -1
+    down:
+      to: 5332
+      desc: |
+            You see a seam in the stone floor.
+      door: regular
+      key: -1
+      keywords: tomb
+  extra_descs:
+  - keywords:
+    - pedestal
+    - writings
+    desc: |
+              The writings are covered in sand and worn nearly away by the passage
+              of time: 'I am Ramses the Damned, once counselor and aide to the mightiest
+              of pharoahs and queens of this land.  Much time has passed since I last
+              walked the earth.  Disturb my rest at your peril.'
+- vnum: 5332
+  name: The Tomb Of Ramses
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You stand in an empty tomb, a cubicle no more then ten feet to a side.
+  exits:
+    up:
+      to: 5331
+      desc: |
+            That leads back the way you came.
+      door: regular
+      key: -1
+      keywords: tomb
+- vnum: 5333
+  name: A Ransacked Tomb
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+      This tomb has been completely ransacked and destroyed by the actions
+    of pyramid thieves and looters.  The floor is littered with junk.
+  exits:
+    east:
+      to: 5334
+      desc: |
+            To the east is a low-ceilinged tunnel.
+      key: -1
+    west:
+      to: 5325
+      desc: |
+            To the west is another tomb.
+      key: -1
+- vnum: 5334
+  name: A Tunnel
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       The low-ceilinged tunnel runs east-west.
+  exits:
+    east:
+      to: 5335
+      desc: |
+            You cannot see into the darkness of the low tunnel.
+      key: -1
+    west:
+      to: 5333
+      desc: |
+            You see a tomb.
+      key: -1
+- vnum: 5335
+  name: A Fork In The Tunnel
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       Here the tunnel forks off through a gaping hole down in the
+    southern wall, continuing onward to the east and west as well.
+  exits:
+    east:
+      to: 5336
+      desc: |
+            You cannot see into the darkness of the low tunnel.
+      key: -1
+    south:
+      to: -1
+      desc: |
+            The hole is low, at the floor of the southern wall.
+      key: -1
+    west:
+      to: 5334
+      desc: |
+            You cannot see into the darkness of the low tunnel.
+      key: -1
+    down:
+      to: 5346
+      desc: |
+            Through the hole you see rubble and sand.
+      key: -1
+  extra_descs:
+  - keywords:
+    - hole
+    desc: |
+              The hole is low, at the floor of the southern wall.
+- vnum: 5336
+  name: A Tunnel
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       The low-ceilinged tunnel makes a turn to the west and ends
+    to the north as it spills out into a dusty hallway.
+  exits:
+    north:
+      to: 5342
+      desc: |
+            The mouth of the tunnel is stone that has been torn away by looters.
+      key: -1
+    west:
+      to: 5335
+      desc: |
+            You cannot see into the darkness of the low tunnel.
+      key: -1
+- vnum: 5337
+  name: A Dank Chamber
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       This chamber has a dank, dusty, musty smell to it.  Small footprints
+    in the dust betray the recent passage of some sort of creatures.  A hole 
+    in the floor lies to the west and a stairway is to the east.
+  exits:
+    east:
+      to: 5338
+      desc: |
+            You see a spiral stone stairway.
+      key: -1
+    west:
+      to: 5312
+      desc: |
+            You see only blackness through the hole in the floor.
+      key: -1
+- vnum: 5338
+  name: A Spiral Stairway
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       Some dusty, broken stone stairs here spiral slowly in a constricted
+    space down towards a dusty hallway.
+  exits:
+    up:
+      to: 5337
+      desc: |
+            The stairs spiral up into a dank chamber.
+      key: -1
+    down:
+      to: 5341
+      desc: |
+            The stairs spiral down into a dusty hallway.
+      key: -1
+- vnum: 5339
+  name: A Dust-Covered Hallway
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       This hallway is covered with dust that has accumulated over the
+    centuries that the pyramid has stood.  Small markings and footprints
+    in the dust betray the recent passage of others -- perhaps thieves?
+  exits:
+    east:
+      to: 5340
+      desc: |
+            The hallway proceeds to the east towards a strange smell.
+      key: -1
+    west:
+      to: 5309
+      desc: |
+            The hallway proceeds towards the west towards a musty smell.
+      key: -1
+- vnum: 5340
+  name: A Smelly Chamber
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       This small chamber has a sickly putrescent smell to it, the
+    smell of formaldehyde and other ointments used to preserve the
+    corpses of those who died ages ago.
+  exits:
+    east:
+      to: 5341
+      desc: |
+            You see a dusty hallway.
+      key: -1
+    west:
+      to: 5339
+      desc: |
+            You a dusty hallway.
+      key: -1
+- vnum: 5341
+  name: A Dust-Covered Hallway
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       This hallway is covered with a thick, choking dust that rises
+    up to obscure your light source and sting your eyes.  Small marks
+    and footprints in the dust betray the recent passage of others.
+  exits:
+    east:
+      to: 5342
+      desc: |
+            The hallway turns to the north.
+      key: -1
+    west:
+      to: 5340
+      desc: |
+            You smell something peculiar over there.
+      key: -1
+    up:
+      to: 5338
+      desc: |
+            A tightly spiralling stone stairway leads up.
+      key: -1
+- vnum: 5342
+  name: A Turn In The Hallway
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You are standing in an elbow turn in a dust-covered stone hallway,
+    that dead ends to the north and continues on to the west.  To the south
+    the stones of the pyramid have been torn asunder by thieves, making
+    a low-ceilinged tunnel.
+  exits:
+    north:
+      to: 5343
+      desc: |
+            The hallway ends to the north.
+      key: -1
+    south:
+      to: 5336
+      desc: |
+            The tunnel is dark.
+      key: -1
+    west:
+      to: 5341
+      desc: |
+            The dust-covered hallway continues to the west.
+      key: -1
+- vnum: 5343
+  name: A Dead End
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       The dust-covered hallway has come to an abrupt end at a stony,
+    featureless wall.  Here and there are signs of the recent passage
+    of others in the dust.
+  exits:
+    south:
+      to: 5342
+      desc: |
+            The dusty hall continues to the south.
+      key: -1
+    down:
+      to: 5344
+      desc: |
+            The floor is quite dusty, and made of stone.  You see some cracks.
+      door: regular
+      key: -1
+      keywords: floor
+  extra_descs:
+  - keywords:
+    - cracks
+    desc: |
+              The cracks look like you might be able to pull away some pieces of
+              the floor, perhaps even fit your body through the space you make.
+- vnum: 5344
+  name: The Tomb Entrance
+  sector: inside
+  flags:
+  - dark
+  - no_mob
+  - indoors
+  desc: |2
+       You are in a small, dark chamber that has stood undisturbed for
+    many years.  To the north stands a massive stone tomb, which is
+    covered in hieroglyphics and gold-lined carvings that mark it as the
+    final resting place of the mighty pharoahs of this land.
+  exits:
+    north:
+      to: 5345
+      desc: |
+            You see the tomb of the pharoahs.
+      door: regular
+      key: -1
+      keywords: tomb
+    up:
+      to: 5343
+      desc: |
+            The stone ceiling has some cracks in it, through which a dim light streams.
+      door: regular
+      key: -1
+      keywords: ceiling
+  extra_descs:
+  - keywords:
+    - hieroglyphics
+    - carvings
+    desc: |
+              The markings indicate that this tomb is indeed the tomb of the greatest
+              pharoahs of the ancient civilization that built this massive pyramid.
+  - keywords:
+    - tomb
+    desc: |
+              The tomb looks like it has stood for many years, much like the pyramid
+              which encloses it.  It is covered in small hieroglyphics.
+- vnum: 5345
+  name: The Tomb Of The Pharoahs
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       Great golden sarcophogai line the walls of this massive tomb.  It has
+    withstood the passage of time intact, untouched by the hands of thieves
+    and looters.  The treasures taken by the pharoahs to their graves still
+    lie before your feet.
+  exits:
+    south:
+      to: 5344
+      desc: |
+            That way leads back out of the tomb.
+      door: regular
+      key: -1
+      keywords: tomb
+  extra_descs:
+  - keywords:
+    - treasures
+    desc: |
+              The treasures are dusty and fragile, but still seem quite valuable.
+              You decide not to take them out of respect for the ancient dead.
+- vnum: 5346
+  name: A Rubble-Strewn Hallway
+  sector: inside
+  flags:
+  - dark
+  - no_mob
+  - indoors
+  desc: |2
+       This hallway formerly had a beautiful arch to the ceiling, now
+    collapsed under the weight of the slowly settling stones of the
+    pyramid.  Now, a massive pile of rubble leads up into a hole high 
+    in the northern portion of the hallway.  To the south, through the 
+    rubble and fallen stones you see a sandstone crypt.
+  exits:
+    south:
+      to: 5347
+      desc: |
+            You see a sandstone crypt.
+      key: -1
+    up:
+      to: 5335
+      desc: |
+            From here you see only darkness.
+      key: -1
+- vnum: 5347
+  name: A Sandstone Crypt
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       This small crypt is lit by a hole in the wall to the south, through
+    which sand pours from the desert outside.  A hot wind blows in from the
+    desert, drying your skin instantly.  To the east and north the arched
+    hallway continues.
+  exits:
+    north:
+      to: 5346
+      desc: |
+            The arched hallway collapses into rubble shortly to the north.
+      key: -1
+    east:
+      to: 5348
+      desc: |
+            You see a beautifully arched hallway.
+      key: -1
+    south:
+      to: 5353
+      desc: |
+            You see a lot of sand.
+      key: -1
+- vnum: 5348
+  name: An Arched Hall
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       This hallway has a beautiful arch to it, formed painstakingly and
+    exquisitely out of the sandy stones of the pyramid.  The dust that
+    covers most of the rest of the pyramid interior is not present here,
+    scoured away by the blowing of the desert winds that howl about
+    your ears.
+  exits:
+    east:
+      to: 5349
+      desc: |
+            The arched hall proceeds to the east, making a sharp southward turn.
+      key: -1
+    west:
+      to: 5347
+      desc: |
+            The arched hall proceeds into a sandstone crypt.
+      key: -1
+- vnum: 5349
+  name: An Arched Hall
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       This hallway has a beautiful arch to it, formed painstakingly and
+    exquisitely out of the sandy stones of the pyramid.  To the east is
+    a small, golden-coloured crypt, and the hall proceeds to the south
+    and north.
+  exits:
+    north:
+      to: 5348
+      desc: |
+            The arched hall proceeds to the north, making a sharp westward turn.
+      key: -1
+    east:
+      to: 5350
+      desc: |
+            A small golden crypt lies to the east.
+      key: -1
+    south:
+      to: 5351
+      desc: |
+            The arched hall proceeds to the south.
+      key: -1
+- vnum: 5350
+  name: A Golden Crypt
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You stand inside a small crypt with walls and ceiling made of
+    golden bricks that obscure the large sandy stones of the pyramid.
+    Small rugs and tapestries are scattered about the floor here, and
+    they appear to have been used recently.
+  exits:
+    west:
+      to: 5349
+      desc: |
+            You see an arched hall.
+      key: -1
+  extra_descs:
+  - keywords:
+    - bricks
+    desc: |
+              The small golden bricks are very smooth and also quite soft.
+  - keywords:
+    - rug
+    - rugs
+    - tapestry
+    - tapestries
+    desc: |
+              The rugs and tapestries are very fine and worn with age, their colors
+              now faded.  They depict scenes of life in an ancient desert city.
+- vnum: 5351
+  name: An Arched Hall
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       This hallway has a beautiful arch to it, formed painstakingly and
+    exquisitely out of the sandy stones of the pyramid.  The arched
+    hall proceeds to the north and ends to the south in a small vault.
+  exits:
+    north:
+      to: 5349
+      desc: |
+            The arched hall continues to the north.
+      key: -1
+    south:
+      to: 5352
+      desc: |
+            You see a small vault from which a shining light issues.
+      key: -1
+- vnum: 5352
+  name: A Shining Vault
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       The stones of the pyramid here take on a strange, twinkling quality,
+    almost seeming to shine with an internal light.  As you look closer you
+    see tiny glass-like glittery particles within the stones, that reflect
+    the light from your light source so perfectly that they seem to shine.
+  exits:
+    north:
+      to: 5351
+      desc: |
+            You see a hall with a beautifully arched ceiling.
+      key: -1
+  extra_descs:
+  - keywords:
+    - particles
+    - glass
+    desc: |
+              The glassy particles reflect and refract your light source in a myriad
+              of dazzling colours that dance across your eyes and make you giggle.
+- vnum: 5353
+  name: A Massive Sand Dune
+  sector: field
+  flags:
+  - no_mob
+  desc: |2
+       You stand now on a massive sand dune on the southern side of
+    the pyramid.  At the foot of the sand dune to the north you see a
+    small hole where the stones of the pyramid have collapsed.  Not
+    far to the south is a massive roiling sandstorm; the wind from the
+    storm howls and bites at your face even here.
+  exits:
+    north:
+      to: 5347
+      desc: |
+            You see a small hole leading back into the pyramid.
+      key: -1
+    south:
+      to: 5354
+      desc: |
+            You see only a wall of whirling, blowing, dry sand.
+      key: -1
+  extra_descs:
+  - keywords:
+    - sand
+    - dune
+    - sandstorm
+    desc: |
+              The sand is very white, and very sandy.  There sure is a lot of it.
+- vnum: 5354
+  name: A Swirling Sandstorm
+  sector: field
+  desc: |2
+       You are caught in the midst of a massive sandstorm.  Howling winds
+    buffet you from all sides, and the sand tears at your skin, blinding
+    you and choking you.  You have lost all sense of direction.
+  exits:
+    north:
+      to: 5353
+      desc: |
+            You see only a wall of whirling, blowing, dry sand.
+      key: -1
+    east:
+      to: 5354
+      desc: |
+            You see only a wall of whirling, blowing, dry sand.
+      key: -1
+    south:
+      to: 5355
+      desc: |
+            You see only a wall of whirling, blowing, dry sand.
+      key: -1
+    west:
+      to: 5354
+      desc: |
+            You see only a wall of whirling, blowing, dry sand.
+      key: -1
+  extra_descs:
+  - keywords:
+    - sand
+    desc: |
+              Sand is about all you CAN see right now.  Unfortunately, it isn't very
+              interesting sand, only white, dry, and blowing all over the place.
+- vnum: 5355
+  name: A Swirling Sandstorm
+  sector: field
+  desc: |2
+       You are caught in the midst of a massive sandstorm.  Howling winds
+    buffet you from all sides, and the sand tears at your skin, blinding
+    you and choking you.  You have lost all sense of direction.
+  exits:
+    north:
+      to: 5354
+      desc: |
+            You see only a wall of whirling, blowing, dry sand.
+      key: -1
+    east:
+      to: 5355
+      desc: |
+            You see only a wall of whirling, blowing, dry sand.
+      key: -1
+    south:
+      to: 5356
+      desc: |
+            You see only a wall of whirling, blowing, dry sand.
+      key: -1
+    west:
+      to: 5355
+      desc: |
+            You see only a wall of whirling, blowing, dry sand.
+      key: -1
+  extra_descs:
+  - keywords:
+    - sand
+    desc: |
+              Sand is about all you CAN see right now.  Unfortunately, it isn't very
+              interesting sand, only white, dry, and blowing all over the place.
+- vnum: 5356
+  name: A Swirling Sandstorm
+  sector: field
+  desc: |2
+       You are caught in the midst of a massive sandstorm.  Howling winds
+    buffet you from all sides, and the sand tears at your skin, blinding
+    you and choking you.  You have lost all sense of direction.
+  exits:
+    north:
+      to: 5355
+      desc: |
+            You see only a wall of whirling, blowing, dry sand.
+      key: -1
+    east:
+      to: 5356
+      desc: |
+            You see only a wall of whirling, blowing, dry sand.
+      key: -1
+    south:
+      to: 5357
+      desc: |
+            You see only a wall of whirling, blowing, dry sand.
+      key: -1
+    west:
+      to: 5356
+      desc: |
+            You see only a wall of whirling, blowing, dry sand.
+      key: -1
+  extra_descs:
+  - keywords:
+    - sand
+    desc: |
+              Sand is about all you CAN see right now.  Unfortunately, it isn't very
+              interesting sand, only white, dry, and blowing all over the place.
+- vnum: 5357
+  name: A Swirling Sandstorm
+  sector: field
+  desc: |2
+       You are caught in the midst of a massive sandstorm.  Howling winds
+    buffet you from all sides, and the sand tears at your skin, blinding
+    you and choking you.  You have lost all sense of direction.
+  exits:
+    north:
+      to: 5356
+      desc: |
+            You see only a wall of whirling, blowing, dry sand.
+      key: -1
+    east:
+      to: 5357
+      desc: |
+            You see only a wall of whirling, blowing, dry sand.
+      key: -1
+    south:
+      to: 5358
+      desc: |
+            You see only a wall of whirling, blowing, dry sand.
+      key: -1
+    west:
+      to: 5357
+      desc: |
+            You see only a wall of whirling, blowing, dry sand.
+      key: -1
+  extra_descs:
+  - keywords:
+    - sand
+    desc: |
+              Sand is about all you CAN see right now.  Unfortunately, it isn't very
+              interesting sand, only white, dry, and blowing all over the place.
+- vnum: 5358
+  name: A Massive Sand Dune
+  sector: field
+  desc: |2
+       Somehow you managed to make your way through the howling winds
+    of the sandstorm, and clamber up on this sand dune.  You can see the
+    storm to the north of you, and presumably the pyramid is somewhere
+    beyond it.  Nothing but flat, featureless, open dunes of sand lie in
+    every other direction.
+  exits:
+    north:
+      to: 5357
+      desc: |
+            You see only a wall of whirling, blowing, dry sand.
+      key: -1
+    south:
+      to: 5359
+      desc: |
+            On the southern side of the sand dune is a small hole in the sand.
+            For some reason you seem unable to get to it.
+      door: pickproof
+      key: 5317
+      keywords: riddle
+  extra_descs:
+  - keywords:
+    - hieroglyphics
+    - symbols
+    desc: |
+              Like most of the ancient hieroglyphics of this land, the symbols are
+              totally incomprehensible to you.  Perhaps the Sphinx has the answer
+              to this ancient riddle.
+  - keywords:
+    - riddle
+    desc: |
+              A vision forms before your eyes, in glowing hieroglyphic symbols.
+  - keywords:
+    - sand
+    - dune
+    desc: |
+              The sand is very white, and very sandy.  There sure is a lot of it.
+- vnum: 5359
+  name: Through The Hole In The Sand
+  sector: inside
+  flags:
+  - dark
+  - no_mob
+  - indoors
+  desc: |2
+       You squeeze through the small hole in the sand and land in a small
+    white chamber.  Above you is a small hole, reachable by climbing up
+    the small sandy slope down which you slid.
+  exits:
+    up:
+      to: 5358
+      desc: |
+            You see a sand dune.
+      key: -1
+mobiles:
+- vnum: 5300
+  keywords:
+  - asp
+  - snake
+  short: the horrible asp
+  long: |
+    A small, poisonous asp slithers over your feet.
+  desc: |
+    The asp is a small, smooth-scaled snake the color of worn pottery.
+    The poison bite of this snake has felled many a mighty pharoah.
+  act:
+  - spec
+  - aggressive
+  - stay_zone
+  alignment: 0
+  level: 5
+  thac0: 14
+  ac: 8
+  hp: 5d5+50
+  damage: 1d6+1
+  gold: 10
+  exp: 1000
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 5301
+  keywords:
+  - cobra
+  - snake
+  short: the hooded cobra snake
+  long: |
+    A cobra snake rears up and opens its fearsome hood.
+  desc: |
+    The cobra snake waves back and forth before you, its hood displaying brilliant
+    colors designed to serve notice to its prey that it is about to strike.
+  act:
+  - spec
+  - aggressive
+  - stay_zone
+  alignment: 0
+  level: 7
+  thac0: 13
+  ac: 7
+  hp: 7d7+70
+  damage: 2d4+2
+  gold: 25
+  exp: 2000
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 5302
+  keywords:
+  - mongoose
+  short: the wily little mongoose
+  long: |
+    A small mongoose slinks along the ground, hunting snakes.
+  desc: |
+    The mongoose is a wily rodent, a quick hunter of nasty poisonous snakes.
+    She sniffs you and appears to be looking for food in your hand.
+  act:
+  - aggressive
+  - stay_zone
+  affected:
+  - infravision
+  alignment: 10
+  level: 11
+  thac0: 10
+  ac: 6
+  hp: 11d11+110
+  damage: 3d5+3
+  gold: 100
+  exp: 10000
+  position: standing
+  default_position: standing
+  sex: female
+- vnum: 5303
+  keywords:
+  - pyramid
+  - watcher
+  short: the pyramid watcher
+  long: |
+    The pyramid watcher protects the tombs from intruders.
+  desc: |
+    The pyramid watcher has made a pledge to destroy any would-be looters of
+    the tombs of the pharoahs.  He is clad from head to foot in utilitarian
+    sand-colored clothing.
+  act:
+  - sentinel
+  - aware
+  - helper
+  affected:
+  - no_track
+  alignment: 250
+  level: 8
+  thac0: 12
+  ac: 5
+  hp: 8d8+80
+  damage: 2d6+2
+  gold: 200
+  exp: 3750
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 5304
+  keywords:
+  - thief
+  - tomb
+  short: the tomb thief
+  long: |
+    A sneaky tomb thief moves about in search of treasure.
+  desc: |
+    The thief brushes against you briefly, then slinks back into the shadows.
+  act:
+  - spec
+  - stay_zone
+  - wimpy
+  affected:
+  - no_track
+  - sneak
+  - hide
+  alignment: -250
+  level: 10
+  thac0: 10
+  ac: 5
+  hp: 10d10+100
+  damage: 2d6+3
+  gold: 500
+  exp: 9000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 5305
+  keywords:
+  - ali
+  - baba
+  - thief
+  short: Ali Baba
+  long: |
+    Ali Baba is here, hunting for the pharoah's tomb.
+  desc: |
+    You see a tall, full-bearded man with a mischevious glint in his eye.  Ali Baba
+    has made his life from stealing things from others, including many items stolen
+    recently from under the nose of the hapless guardians of this pyramid.  Someday
+    he might get caught, but not today...
+  act:
+  - spec
+  - scavenger
+  - aware
+  - stay_zone
+  - memory
+  affected:
+  - no_track
+  - sneak
+  alignment: -300
+  level: 18
+  thac0: 2
+  ac: 0
+  hp: 18d18+180
+  damage: 3d8+2
+  gold: 1000
+  exp: 30000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 5306
+  keywords:
+  - magic
+  - carpet
+  short: the magic carpet
+  long: |
+    A small woven carpet lies under your feet.
+  desc: |
+    The carpet is simply beautiful, made from intricately woven silken material.  
+    It seems to rise up at the touch of your feet.  Wait, it is rising, a few feet
+    above the ground!  In fact, it seems to be ALIVE!
+  act:
+  - sentinel
+  - aware
+  - memory
+  - no_charm
+  - no_summon
+  - no_sleep
+  - no_bash
+  - no_blind
+  affected:
+  - detect_invis
+  - infravision
+  - no_track
+  alignment: 500
+  level: 9
+  thac0: 11
+  ac: 7
+  hp: 9d9+90
+  damage: 2d5+2
+  gold: 250
+  exp: 6000
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 5307
+  keywords:
+  - mummy
+  - corpse
+  short: the mummy
+  long: |
+    A mummy reaches for you, disturbed by your presence.
+  desc: |
+    You only see the disfigured, rotting features of decaying human flesh,
+    animated by the distempered spirit of a long-deceased person.
+  act:
+  - aggressive
+  - stay_zone
+  - no_charm
+  - no_summon
+  - no_sleep
+  - no_blind
+  affected:
+  - detect_invis
+  - sense_life
+  - infravision
+  - no_track
+  alignment: -600
+  level: 12
+  thac0: 8
+  ac: 4
+  hp: 12d12+120
+  damage: 1d6+6
+  gold: 750
+  exp: 15000
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 5308
+  keywords:
+  - sand
+  - man
+  - sandman
+  short: the sandman
+  long: |
+    A sandman rises up from the desert floor.
+  desc: |
+    The sandman is exactly that -- some sort of strange being formed from the sands
+    of the desert floor.  It seems quite large and strong and at home in the heat
+    and sandy winds.
+  act:
+  - aware
+  - aggressive
+  - stay_zone
+  - memory
+  - no_charm
+  - no_summon
+  - no_sleep
+  - no_blind
+  affected:
+  - detect_invis
+  - infravision
+  - no_track
+  alignment: 0
+  level: 14
+  thac0: 6
+  ac: 2
+  hp: 14d14+140
+  damage: 2d7+4
+  gold: 1500
+  exp: 18000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 5309
+  keywords:
+  - efreeti
+  - efreet
+  short: the efreeti
+  long: |
+    The efreeti stands here, sheathed in a column of fire.
+  desc: |
+    The efreeti is a mighty being formed from living fire.  He gazes down at
+    you with disdain and scorn, arms folded across his mighty chest.
+  act:
+  - spec
+  - sentinel
+  - aware
+  - aggressive
+  - memory
+  - no_charm
+  - no_summon
+  - no_sleep
+  - no_bash
+  - no_blind
+  affected:
+  - detect_invis
+  - infravision
+  - no_track
+  alignment: -600
+  level: 20
+  thac0: 0
+  ac: -1
+  hp: 20d20+200
+  damage: 4d6+4
+  gold: 11000
+  exp: 40000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 5310
+  keywords:
+  - caryatid
+  - column
+  short: the caryatid
+  long: |
+    A sandstone column stands here, carved into a feminine figure.
+  desc: |
+    The column has been carved into a set of four shapely women, each facing
+    outward into the room.  The sandstone of the caryatid is smooth with age,
+    but you can still make out a deadly stone sword in the hands of each figure.
+  act:
+  - sentinel
+  - aware
+  - memory
+  - helper
+  - no_charm
+  - no_summon
+  - no_sleep
+  - no_bash
+  - no_blind
+  affected:
+  - infravision
+  - no_track
+  alignment: 0
+  level: 24
+  thac0: -4
+  ac: -3
+  hp: 24d24+240
+  damage: 4d6+8
+  gold: 35000
+  exp: 100000
+  position: standing
+  default_position: standing
+  sex: female
+- vnum: 5311
+  keywords:
+  - djinn
+  - genie
+  short: the djinn
+  long: |
+    The djinn issues forth from the confines of a small lamp.
+  desc: |
+    The djinn is a mighty being formed from the air itself and frequently
+    imprisoned in a small lamp, used to do the bidding of those who find him.
+    He smiles down at you congenially, arms folded across his blue-tinged 
+    skin, and strokes his goatee.
+  act:
+  - spec
+  - sentinel
+  - aware
+  - memory
+  - no_charm
+  - no_summon
+  - no_sleep
+  - no_bash
+  - no_blind
+  affected:
+  - detect_invis
+  - infravision
+  - no_track
+  alignment: 600
+  level: 28
+  thac0: -8
+  ac: -6
+  hp: 28d28+280
+  damage: 6d6+12
+  gold: 60000
+  exp: 310000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 5312
+  keywords:
+  - hieracosphinx
+  - sphinx
+  short: the hieracosphinx
+  long: |
+    A hieracosphinx looks at you cunningly.
+  desc: |
+    The hieracosphinx are cunning, small, but nasty creatures, having the heads
+    of birds, mighty wingspans, and a full set of four paws to rend their victims
+    to pieces.  They tend to be quite jealous of the sharper wits of their older
+    cousins.
+  act:
+  - aware
+  - aggressive
+  - stay_zone
+  - memory
+  - no_charm
+  - no_summon
+  - no_bash
+  affected:
+  - infravision
+  - no_track
+  alignment: -200
+  level: 15
+  thac0: 5
+  ac: 3
+  hp: 15d15+150
+  damage: 1d10+5
+  gold: 7500
+  exp: 21000
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 5313
+  keywords:
+  - gynosphinx
+  - sphinx
+  short: the gynosphinx
+  long: |
+    A gynosphinx sits here, befuddled by a riddle.
+  desc: |
+    The gynosphinx is a crafty but gentle creature, having the body of a
+    beautiful dark-skinned woman from the waist up, a feathery set of wings
+    and the hind legs of a mighty cat.  Right now she is confused, having 
+    just heard a puzzling riddle from a cousin criosphinx.
+  act:
+  - spec
+  - sentinel
+  - aware
+  - memory
+  - no_charm
+  - no_summon
+  - no_bash
+  affected:
+  - detect_invis
+  - infravision
+  - no_track
+  alignment: 100
+  level: 19
+  thac0: 1
+  ac: 0
+  hp: 19d19+190
+  damage: 2d10+10
+  gold: 10000
+  exp: 35000
+  position: standing
+  default_position: standing
+  sex: female
+- vnum: 5314
+  keywords:
+  - criosphinx
+  - sphinx
+  short: the criosphinx
+  long: |
+    A criosphinx calmly watches you.
+  desc: |
+    The criosphinx is a calm and friendly creature, having the head of a ram atop
+    the body of a well-furred feline with eagle-like wings.  He delights in riddles,
+    and in poking occasional fun at his easily confused lesser cousins.
+  act:
+  - spec
+  - sentinel
+  - aware
+  - memory
+  - no_charm
+  - no_summon
+  - no_bash
+  affected:
+  - detect_invis
+  - infravision
+  - no_track
+  alignment: 300
+  level: 23
+  thac0: -3
+  ac: -2
+  hp: 23d23+230
+  damage: 3d10+15
+  gold: 25000
+  exp: 80000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 5315
+  keywords:
+  - androsphinx
+  - sphinx
+  short: the androsphinx
+  long: |
+    A mighty androsphinx tosses its lion-like mane.
+  desc: |
+    The mighty androsphinx is a huge creature, with the body of a lion whose
+    face  is quite man-like, perhaps even handsome, and a massive pair of feathered
+    wings.  Tales are told of pharoahs that were rendered permanently deaf by the 
+    mighty roar of this sphinx.
+  act:
+  - spec
+  - sentinel
+  - aware
+  - memory
+  - no_charm
+  - no_summon
+  - no_bash
+  affected:
+  - detect_invis
+  - infravision
+  - no_track
+  alignment: 400
+  level: 27
+  thac0: -7
+  ac: -6
+  hp: 27d27+270
+  damage: 4d10+20
+  gold: 50000
+  exp: 200000
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 5316
+  keywords:
+  - great
+  - sphinx
+  short: the great sphinx
+  long: |
+    A mighty sphinx rests here in the sand, dormant now for centuries.
+  desc: |
+    The great sphinx towers tens of feet above you, resting here in a state of 
+    dormancy.  It has become almost indistinguishable from the sand that surrounds
+    it, although you can still make out the features of the handsome face that once
+    advised many rulers.
+  act:
+  - spec
+  - sentinel
+  - aware
+  - memory
+  - no_charm
+  - no_summon
+  - no_sleep
+  - no_bash
+  - no_blind
+  affected:
+  - detect_invis
+  - sanctuary
+  - infravision
+  - no_track
+  alignment: 500
+  level: 41
+  thac0: -21
+  ac: -20
+  hp: 41d41+410
+  damage: 5d10+25
+  gold: 125000
+  exp: 1500000
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 5317
+  keywords:
+  - ramses
+  - mummy
+  short: Ramses the Damned
+  long: |
+    You have awakened the mighty servant to the pharoahs, Ramses.
+  desc: |
+    As your light spills over his face and body, you can see his features
+    begin to fill out, swell, and harden, until an apparently healthy man 
+    stands before you, clad only in the raiments he was left in when he last 
+    slept.  His hair is a soft black, his skin a deep chocolate, and his 
+    tall frame is totally still, his chest not even moving to breathe.
+  act:
+  - spec
+  - sentinel
+  - aware
+  - memory
+  - no_charm
+  - no_summon
+  - no_sleep
+  - no_blind
+  affected:
+  - detect_invis
+  - sanctuary
+  - infravision
+  - no_track
+  alignment: 150
+  level: 38
+  thac0: -18
+  ac: -18
+  hp: 38d38+380
+  damage: 8d5+40
+  gold: 88000
+  exp: 1000000
+  position: standing
+  default_position: standing
+  sex: male
+objects:
+- vnum: 5300
+  keywords:
+  - mace
+  - egyptian
+  short: an egyptian mace
+  desc: A hierogylph-engraved mace has been left here.
+  type: weapon
+  wear:
+  - take
+  - wield
+  weapon:
+    dice: 2d6
+    damage_type: pound
+  weight: 10
+  cost: 800
+  rent: 50
+  extra_descs:
+  - keywords:
+    - mace
+    - egyptian
+    desc: |
+              The mace is formed from solid brass, and engraved in strange hieroglyphs.
+- vnum: 5301
+  keywords:
+  - robe
+  - sand
+  short: some sand-colored robes
+  desc: Sand-colored robes lie here.
+  type: armor
+  wear:
+  - take
+  - about
+  armor:
+    ac_apply: 4
+  weight: 5
+  cost: 500
+  rent: 40
+  extra_descs:
+  - keywords:
+    - robes
+    - sand
+    desc: |
+              The robes are colored a sandy off-white, and are in fact caked and covered
+              with sand as well.  You don't seem to be able to remove all of the sand, no
+              matter how much you try.
+- vnum: 5302
+  keywords:
+  - dirk
+  - obsidian
+  short: an obsidian dirk
+  desc: A flat dirk made of chipped obsidian lies here.
+  type: weapon
+  wear:
+  - take
+  - wield
+  flags:
+  - magic
+  weapon:
+    dice: 3d3
+    damage_type: pierce
+  weight: 8
+  cost: 1000
+  rent: 100
+  affects:
+  - location: dex
+    modifier: 1
+  - location: hitroll
+    modifier: 1
+  extra_descs:
+  - keywords:
+    - dirk
+    - obsidian
+    desc: |
+              The blade of the dirk is black, glassy obsidian, chipped razor sharp.
+- vnum: 5303
+  keywords:
+  - turban
+  - cloth
+  short: a dirty cloth turban
+  desc: A dirty cloth turban has been forgotten here.
+  type: armor
+  wear:
+  - take
+  - head
+  flags:
+  - magic
+  armor:
+    ac_apply: 5
+  weight: 10
+  cost: 1500
+  rent: 250
+  affects:
+  - location: dex
+    modifier: 1
+  - location: max_hit
+    modifier: 5
+  extra_descs:
+  - keywords:
+    - turban
+    - cloth
+    desc: |
+              The turban used to be white cloth, now it is covered with oil and dirt from
+              the head and hair of its previous owner, who must not have bathed much.
+- vnum: 5304
+  keywords:
+  - wrappings
+  - cloth
+  short: some cloth wrappings
+  desc: Long cloth wrappings lie on the ground in a pile.
+  type: armor
+  wear:
+  - take
+  - body
+  armor:
+    ac_apply: 5
+  weight: 15
+  cost: 1250
+  rent: 175
+  extra_descs:
+  - keywords:
+    - wrappings
+    - cloth
+    desc: |
+              The cloth wrappings are old, wrinkled, and stink of embalming fluid.
+- vnum: 5305
+  keywords:
+  - bottle
+  - fluid
+  short: a bottle of embalming fluid
+  desc: A dusty bottle lies here on the ground.
+  type: potion
+  wear:
+  - take
+  values:
+  - 5
+  - 33
+  - -1
+  - -1
+  weight: 5
+  cost: 250
+  rent: 50
+  extra_descs:
+  - keywords:
+    - bottle
+    - fluid
+    desc: |
+              The bottle is dusty and the fluid has a strange sickly-sweet smell to it.
+- vnum: 5306
+  keywords:
+  - jar
+  - formaldehyde
+  short: a jar of formaldehyde
+  desc: A small jar lies here on the ground.
+  type: potion
+  wear:
+  - take
+  values:
+  - 10
+  - 16
+  - -1
+  - -1
+  weight: 6
+  cost: 300
+  rent: 60
+  extra_descs:
+  - keywords:
+    - jar
+    - formaldehyde
+    desc: |
+              The jar is sticky and smells really bad.
+- vnum: 5307
+  keywords:
+  - ball
+  - fire
+  short: a small hot ball of fire
+  desc: A little ball of fire hovers in the air before your eyes.
+  type: light
+  wear:
+  - take
+  - hold
+  flags:
+  - glow
+  - magic
+  - anti_warrior
+  light:
+    hours: -1
+  weight: 10
+  cost: 3500
+  rent: 500
+  affects:
+  - location: max_hit
+    modifier: 10
+  - location: max_move
+    modifier: 50
+  extra_descs:
+  - keywords:
+    - ball
+    - fire
+    desc: |
+              The ball of fire is hot to the touch and very very bright.
+- vnum: 5308
+  keywords:
+  - scimitar
+  - stone
+  short: a stone scimitar
+  desc: A curved scimitar made of stone rests on the ground.
+  type: weapon
+  wear:
+  - take
+  - wield
+  flags:
+  - hum
+  - magic
+  - anti_mage
+  - anti_cleric
+  - anti_thief
+  weapon:
+    dice: 4d3
+    damage_type: slash
+  weight: 18
+  cost: 10000
+  rent: 750
+  affects:
+  - location: hitroll
+    modifier: 2
+  - location: damroll
+    modifier: 3
+  extra_descs:
+  - keywords:
+    - scimitar
+    - stone
+    desc: |
+              The scimitar is formed from solid stone, chipped and carved to perfection,
+              with a sharp, cold blade that is marred only by a few nicks here and there.
+- vnum: 5309
+  keywords:
+  - key
+  - stone
+  short: a stone key
+  desc: A stone key has been dropped here.
+  type: key
+  wear:
+  - take
+  - hold
+  flags:
+  - no_rent
+  values:
+  - 5309
+  - 0
+  - 0
+  - 0
+  weight: 15
+  cost: 0
+  rent: 0
+  extra_descs:
+  - keywords:
+    - key
+    - stone
+    desc: |
+              The key is made from stone, but is otherwise unremarkable.
+- vnum: 5310
+  keywords:
+  - sarcophagus
+  - stone
+  short: a mighty stone sarcophagus
+  desc: A mighty stone sarcophagus lies in the center of the tomb.
+  type: container
+  container:
+    capacity: 500
+    closeable: true
+    pickproof: true
+    closed: true
+    locked: true
+    key: 5309
+  weight: 5000
+  cost: 5000
+  rent: 5000
+  extra_descs:
+  - keywords:
+    - sarcophagus
+    - stone
+    desc: |
+              The sarcophagus is engraved on the sides with the images of pharoahs,
+              great wars fought long ago, mighty pyramids being constructed...
+
+              A raised image atop the sarcophagus is formed in the visage of one of
+              the mighty pharoahs, painted in gold and studded with precious gems.
+
+              You see a small keyhole in the side of the sarcophagus.
+- vnum: 5311
+  keywords:
+  - dust
+  short: some ancient dust
+  desc: A small pile of dust is being scattered by the breeze.
+  type: trash
+  wear:
+  - take
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 1
+  cost: 1
+  rent: 1
+  extra_descs:
+  - keywords:
+    - dust
+    desc: |
+              The dust is old.  As you sift it through your hands you find tiny chips
+              of aged bone inside -- it must be the ancient remains of something.
+- vnum: 5312
+  keywords:
+  - scarab
+  - emerald
+  short: a small emerald scarab
+  desc: A small emerald scarab lies here on the ground.
+  type: key
+  wear:
+  - take
+  - hold
+  flags:
+  - no_rent
+  values:
+  - 5312
+  - 0
+  - 0
+  - 0
+  weight: 5
+  cost: 0
+  rent: 0
+  extra_descs:
+  - keywords:
+    - scarab
+    - emerald
+    desc: |
+              The scarab is intricately detailed, down to the tiny hairs on its
+              insectile legs and the faceting of the emeralds in its eyes.
+- vnum: 5313
+  keywords:
+  - lamp
+  short: the lamp
+  desc: A small, tarnished, battered lamp has been dropped here.
+  type: staff
+  wear:
+  - take
+  - hold
+  flags:
+  - glow
+  - hum
+  - magic
+  - anti_evil
+  charges:
+    spell: waterwalk
+    level: 25
+    max: 5
+    remaining: 5
+  weight: 10
+  cost: 25000
+  rent: 600
+  affects:
+  - location: armor
+    modifier: -5
+  - location: hitroll
+    modifier: 1
+  extra_descs:
+  - keywords:
+    - lamp
+    desc: |
+              The lamp is quite old and tarnished.  You rub at it to get some of the
+              grime off, but it doesn't seem like anybody is home.
+- vnum: 5314
+  keywords:
+  - ankh
+  short: an ankh
+  desc: A small brass ankh has been left here.
+  type: armor
+  wear:
+  - take
+  - hold
+  flags:
+  - bless
+  - anti_evil
+  armor:
+    ac_apply: 7
+  weight: 9
+  cost: 10000
+  rent: 300
+  affects:
+  - location: int
+    modifier: 1
+  - location: wis
+    modifier: 2
+  extra_descs:
+  - keywords:
+    - ankh
+    desc: |
+              The ankh is a small brass symbol of an ancient religion.  It glows
+              with a soft bright light that is soothing to you.
+- vnum: 5315
+  keywords:
+  - book
+  - riddles
+  short: a book of riddles
+  desc: A medium-sized parchment book with well-worn pages lies here.
+  type: scroll
+  wear:
+  - take
+  values:
+  - 21
+  - 201
+  - 20
+  - 22
+  weight: 15
+  cost: 7500
+  rent: 250
+  extra_descs:
+  - keywords:
+    - book
+    - riddles
+    desc: |
+              The book has well-worn pages, containing many befuddling riddles
+              to surprise, confuse, and amuse you.  You find yourself bewildered
+              by its contents and put it down to sort your head out.
+- vnum: 5316
+  keywords:
+  - paw
+  - lion
+  short: a lion's paw
+  desc: The mighty paw of a lion-like creature has been dropped here.
+  type: weapon
+  wear:
+  - take
+  - wield
+  flags:
+  - magic
+  weapon:
+    dice: 1d14
+    damage_type: bludgeon
+  weight: 20
+  cost: 18000
+  rent: 600
+  affects:
+  - location: con
+    modifier: 1
+  - location: hitroll
+    modifier: 4
+  extra_descs:
+  - keywords:
+    - paw
+    - lion
+    desc: |
+              The massive paw has straps on it formed of bronze, so that it will
+              fit snugly over your hand.  As you put it on, it melds with your hand,
+              becoming an extension of your arm.
+- vnum: 5317
+  keywords:
+  - parchment
+  - answer
+  short: the answer
+  desc: A small piece of parchment covered in hieroglyphics lies here.
+  type: key
+  wear:
+  - take
+  - hold
+  flags:
+  - no_rent
+  values:
+  - 5317
+  - 0
+  - 0
+  - 0
+  weight: 1
+  cost: 1
+  rent: 1
+  extra_descs:
+  - keywords:
+    - answer
+    - hieroglyphics
+    - parchment
+    desc: |
+              You cannot decipher the strange hieroglyphics that cover the
+              sheet of parchment.
+- vnum: 5318
+  keywords:
+  - treasure
+  short: the treasure of the sphinx
+  desc: The massive treasure of the sphinx lies here in a big pile.
+  type: money
+  wear:
+  - take
+  values:
+  - 23850
+  - 0
+  - 0
+  - 0
+  weight: 23
+  cost: 23850
+  rent: 0
+  extra_descs:
+  - keywords:
+    - treasure
+    desc: |
+              The treasure is incredibly large, filled with gold coins and valuables, more 
+              wealth than you could ever possibly imagine accumulated in one place.
+- vnum: 5319
+  keywords:
+  - sand
+  - pile
+  short: a pile of sand
+  desc: You see a small pile of sand.
+  type: money
+  wear:
+  - take
+  values:
+  - 12986
+  - 0
+  - 0
+  - 0
+  weight: 12
+  cost: 12986
+  rent: 0
+  extra_descs:
+  - keywords:
+    - sand
+    - pile
+    desc: |
+              You think you see some coins and valuables glinting amongst the grains of
+              sand.
+- vnum: 5320
+  keywords:
+  - curse
+  - mummy
+  short: the curse of the mummy
+  desc: Some fortunate soul has escaped the mummy's curse, for now.
+  type: trash
+  wear:
+  - take
+  - hold
+  flags:
+  - no_rent
+  - no_donate
+  - invisible
+  - magic
+  - no_drop
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 1
+  cost: 500
+  rent: 50
+  affects:
+  - location: max_hit
+    modifier: -50
+  - location: max_move
+    modifier: -100
+  extra_descs:
+  - keywords:
+    - curse
+    - mummy
+    desc: |
+              Rumor has it that whomever disturbs the grave of the mummy shall be 
+              cursed for all eternity, and that the descendents of that person shall
+              likewise be cursed for ten generations to follow.
+- vnum: 5321
+  keywords:
+  - elixir
+  - small
+  - glass
+  short: a small elixir
+  desc: A small glass elixir lies under your feet.
+  type: potion
+  wear:
+  - take
+  flags:
+  - magic
+  values:
+  - 30
+  - 39
+  - 1
+  - 36
+  weight: 2
+  cost: 10000
+  rent: 500
+  extra_descs:
+  - keywords:
+    - elixir
+    - small
+    - glass
+    desc: |
+              The elixir is deceptively small.  Something tells you that its
+              contents are truly quite potent.  Perhaps too potent for ordinary
+              mortals to attempt to consume.
+- vnum: 5322
+  keywords:
+  - mask
+  - golden
+  short: a golden mask
+  desc: A beautiful, intricately detailed mask has been forgotten here.
+  type: armor
+  wear:
+  - take
+  - head
+  flags:
+  - magic
+  armor:
+    ac_apply: 10
+  weight: 10
+  cost: 15000
+  rent: 750
+  affects:
+  - location: max_mana
+    modifier: 25
+  - location: max_hit
+    modifier: 10
+  extra_descs:
+  - keywords:
+    - mask
+    - golden
+    desc: |
+              This beautiful mask was shaped from solid gold and magically enchanted
+              to perfectly fit the face of any who choose to wear it, its golden features
+              and turquoise highlights even moving to match the expressions of the face
+              of the wearer.
+- vnum: 5323
+  keywords:
+  - diamond
+  short: the diamond
+  desc: ""
+  type: trash
+  wear:
+  - take
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 5
+  cost: 0
+  rent: 0
+  extra_descs:
+  - keywords:
+    - diamond
+    desc: |
+              Aha!
+
+              You see a multifaceted gemstone, which strangely reflects no
+              light, making it very hard to see when it lies on the ground.
+- vnum: 5324
+  keywords:
+  - wand
+  - sun
+  - brass
+  - pipe
+  short: a blazing sun wand
+  desc: A small length of brass pipe shines here with its own light.
+  type: wand
+  wear:
+  - take
+  - hold
+  flags:
+  - glow
+  - magic
+  - anti_warrior
+  charges:
+    spell: harm
+    level: 25
+    max: 5
+    remaining: 5
+  weight: 10
+  cost: 25000
+  rent: 1000
+  affects:
+  - location: saving_rod
+    modifier: -5
+  - location: saving_spell
+    modifier: -5
+  extra_descs:
+  - keywords:
+    - wand
+    - sun
+    - brass
+    - pipe
+    desc: |
+              This small brass shaft is a holy weapon used by the ancient people of 
+              this land to defend against the deadliest of foes.  It shines with the 
+              brilliant blazing light of the sun.
+- vnum: 5325
+  keywords:
+  - ring
+  - sandy
+  short: a sandy-coloured ring
+  desc: A small sandy-coloured ring has been carelessly dropped here.
+  type: armor
+  wear:
+  - take
+  - finger
+  flags:
+  - hum
+  - magic
+  armor:
+    ac_apply: 8
+  weight: 5
+  cost: 20000
+  rent: 750
+  affects:
+  - location: int
+    modifier: 1
+  - location: max_mana
+    modifier: 35
+  extra_descs:
+  - keywords:
+    - ring
+    - sandy
+    desc: |
+              The ring is small, smooth, sandy-coloured and unremarkable, save that
+              it gives off a continuous low humming noise that tickles your fingertips.
+- vnum: 5326
+  keywords:
+  - sphinx
+  - golden
+  short: a small golden sphinx
+  desc: A small golden sphinx glints in the light.
+  type: treasure
+  wear:
+  - take
+  - hold
+  flags:
+  - magic
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 5
+  cost: 50000
+  rent: 750
+  affects:
+  - location: wis
+    modifier: 2
+  extra_descs:
+  - keywords:
+    - sphinx
+    - golden
+    desc: |
+              The golden sphinx is incredibly detailed and very small, fitting easily
+              into the palm of your hand.  You can even make out the expression
+              of wisdom and peace on its face.
+- vnum: 5327
+  keywords:
+  - leggings
+  - sphinxian
+  short: a pair of sphinxian leggings
+  desc: Massive leggings formed from the body of a sphinx stand here.
+  type: armor
+  wear:
+  - take
+  - legs
+  flags:
+  - magic
+  - anti_evil
+  armor:
+    ac_apply: 10
+  weight: 20
+  cost: 20000
+  rent: 500
+  affects:
+  - location: str
+    modifier: 3
+  - location: max_move
+    modifier: 80
+  extra_descs:
+  - keywords:
+    - leggings
+    - sphinxian
+    desc: |
+              These magically fashioned leggings impart the strength and stamina
+              of the mightiest of the ancient sphinxes.  You feel ancient power 
+              emanating from them; they seem to be almost alive.
+resets:
+- mob: 5300
+  room: 5302
+  max: 6
+- mob: 5300
+  room: 5305
+  max: 6
+- mob: 5300
+  room: 5313
+  max: 6
+- mob: 5300
+  room: 5340
+  max: 6
+- mob: 5301
+  room: 5303
+  max: 4
+- mob: 5301
+  room: 5341
+  max: 4
+- mob: 5302
+  room: 5306
+  max: 3
+- mob: 5302
+  room: 5316
+  max: 3
+- mob: 5302
+  room: 5326
+  max: 3
+- mob: 5303
+  room: 5309
+  max: 6
+  then:
+  - equip: 5300
+    slot: wield
+    max: 6
+- mob: 5303
+  room: 5309
+  max: 6
+  then:
+  - equip: 5301
+    slot: about
+    max: 10
+- mob: 5303
+  room: 5337
+  max: 6
+  then:
+  - equip: 5300
+    slot: wield
+    max: 6
+- mob: 5303
+  room: 5337
+  max: 6
+  then:
+  - equip: 5301
+    slot: about
+    max: 10
+- mob: 5303
+  room: 5340
+  max: 6
+  then:
+  - equip: 5300
+    slot: wield
+    max: 6
+- mob: 5303
+  room: 5340
+  max: 6
+  then:
+  - equip: 5301
+    slot: about
+    max: 10
+- mob: 5304
+  room: 5325
+  max: 6
+  then:
+  - equip: 5302
+    slot: wield
+    max: 7
+- mob: 5304
+  room: 5326
+  max: 6
+  then:
+  - equip: 5302
+    slot: wield
+    max: 7
+- mob: 5304
+  room: 5333
+  max: 6
+  then:
+  - equip: 5302
+    slot: wield
+    max: 7
+- mob: 5304
+  room: 5334
+  max: 6
+  then:
+  - equip: 5302
+    slot: wield
+    max: 7
+- mob: 5304
+  room: 5335
+  max: 6
+  then:
+  - equip: 5302
+    slot: wield
+    max: 7
+- mob: 5304
+  room: 5342
+  max: 6
+  then:
+  - equip: 5302
+    slot: wield
+    max: 7
+- mob: 5305
+  room: 5343
+  max: 1
+  then:
+  - equip: 5303
+    slot: head
+    max: 4
+  - equip: 5302
+    slot: wield
+    max: 7
+- mob: 5306
+  room: 5323
+  max: 1
+- mob: 5307
+  room: 5325
+  max: 4
+  then:
+  - equip: 5304
+    slot: body
+    max: 5
+  - give: 5306
+    max: 3
+- mob: 5307
+  room: 5325
+  max: 4
+  then:
+  - equip: 5304
+    slot: body
+    max: 5
+  - give: 5305
+    max: 2
+- mob: 5307
+  room: 5337
+  max: 4
+  then:
+  - equip: 5304
+    slot: body
+    max: 5
+- mob: 5307
+  room: 5341
+  max: 4
+  then:
+  - equip: 5304
+    slot: body
+    max: 5
+- mob: 5308
+  room: 5354
+  max: 4
+- mob: 5308
+  room: 5355
+  max: 4
+- mob: 5308
+  room: 5356
+  max: 4
+- mob: 5308
+  room: 5357
+  max: 4
+- mob: 5309
+  room: 5311
+  max: 1
+  then:
+  - equip: 5307
+    slot: hold
+    max: 4
+- mob: 5310
+  room: 5345
+  max: 2
+  then:
+  - equip: 5308
+    slot: wield
+    max: 3
+- mob: 5310
+  room: 5345
+  max: 2
+  then:
+  - equip: 5308
+    slot: wield
+    max: 3
+  - give: 5309
+    max: 1
+- mob: 5311
+  room: 5323
+  max: 1
+  then:
+  - equip: 5313
+    slot: hold
+    max: 4
+- mob: 5312
+  room: 5348
+  max: 3
+- mob: 5312
+  room: 5349
+  max: 3
+- mob: 5312
+  room: 5351
+  max: 3
+- mob: 5313
+  room: 5350
+  max: 2
+- mob: 5313
+  room: 5350
+  max: 2
+  then:
+  - give: 5314
+    max: 2
+- mob: 5314
+  room: 5352
+  max: 2
+- mob: 5314
+  room: 5352
+  max: 2
+  then:
+  - give: 5315
+    max: 2
+- mob: 5315
+  room: 5347
+  max: 1
+  then:
+  - give: 5316
+    max: 2
+- mob: 5316
+  room: 5358
+  max: 1
+  then:
+  - equip: 5317
+    slot: hold
+    max: 1
+- mob: 5317
+  room: 5332
+  max: 1
+  then:
+  - give: 5319
+    max: 1
+  - give: 5320
+    max: 3
+  - give: 5321
+    max: 2
+  - give: 5321
+    max: 2
+  - equip: 5322
+    slot: head
+    max: 1
+  - room: 5359
+    object: 5318
+    max: 1
+  - room: 5359
+    object: 5324
+    max: 1
+  - room: 5359
+    object: 5325
+    max: 1
+  - room: 5359
+    object: 5326
+    max: 1
+  - room: 5359
+    object: 5327
+    max: 1
+- room: 5319
+  object: 5323
+  max: 1
+- room: 5345
+  object: 5310
+  max: 1
+  then:
+  - put: 5311
+    into: 5310
+    max: 2
+  - put: 5312
+    into: 5310
+    max: 1
+- door: 5306
+  dir: down
+  state: closed
+- door: 5308
+  dir: up
+  state: closed
+- door: 5309
+  dir: west
+  state: closed
+- door: 5310
+  dir: east
+  state: closed
+- door: 5322
+  dir: south
+  state: locked
+- door: 5323
+  dir: north
+  state: locked
+- door: 5326
+  dir: west
+  state: locked
+- door: 5327
+  dir: east
+  state: locked
+- door: 5329
+  dir: south
+  state: closed
+- door: 5330
+  dir: north
+  state: closed
+- door: 5331
+  dir: down
+  state: closed
+- door: 5332
+  dir: up
+  state: closed
+- door: 5343
+  dir: down
+  state: closed
+- door: 5344
+  dir: up
+  state: closed
+- door: 5344
+  dir: north
+  state: closed
+- door: 5345
+  dir: south
+  state: closed
+- door: 5358
+  dir: south
+  state: locked

@@ -1,0 +1,15 @@
+PUT
+
+Usage: put <item> <container>
+       put all.<item> <container>
+       put all <container>
+
+For putting items into containers.
+
+Examples:
+
+  > put bread bag
+  > put all.bread bag
+  > put all chest
+
+See also: GET

@@ -1,0 +1,7 @@
+EXAMINE
+
+Usage: examine <thing to examine>
+
+May give you some valuable information about an item or monster.
+
+See also: LOOK

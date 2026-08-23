@@ -1,0 +1,6 @@
+ROOMFLAGS
+
+Usage: roomflags
+
+Toggles a flag which causes the virtual room number and room flags, if any,
+to be displayed next to room names.

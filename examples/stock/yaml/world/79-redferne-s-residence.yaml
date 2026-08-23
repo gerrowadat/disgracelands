@@ -1,0 +1,1460 @@
+schema: dl/world@1
+zone:
+  vnum: 79
+  name: Redferne's Residence
+  range:
+  - 7900
+  - 7999
+  lifespan: 50
+  reset: always
+rooms:
+- vnum: 7900
+  name: Outside Redferne's Residence
+  sector: inside
+  flags:
+  - no_mob
+  - private
+  desc: |2
+       A huge cloud forms the plateau on which you are now standing.  The
+    wind here is absolutely quiet and the sun is shining warmly upon you.
+    From under the cloud you can hear the faint sounds of Midgaard.  Right
+    before you to the north lies the grand Mansion of Naris.
+  exits:
+    north:
+      to: 7901
+      desc: |
+            You see an enormous arched gate leading into this magnificent building.
+      door: pickproof
+      key: 7901
+      keywords: gate huge arched
+    down:
+      to: 7918
+      desc: |
+            You see a Huge Chain that anchors the Mansion of Naris to the ground.
+      key: -1
+- vnum: 7901
+  name: The Southern End Of The Hall
+  sector: inside
+  flags:
+  - no_mob
+  - indoors
+  - private
+  desc: |2
+       You are standing in a vast hall that is dimly lit, but wherever the
+    light comes from, is a mystery.  The walls seem to radiate warmth and
+    give the pleasent feeling of being welcome here.  A large portrait is
+    hanging on one of the walls.  A large wooden staircase leads up into
+    the tower.  To the east there is a high passage away from the hall.
+    This ends shortly after by a tall oak door.  The enormous hall extends
+    further north from here.  To the south you can see a huge, and VERY 
+    heavy-looking iron-wrought door.  It looks like this is the only exit
+    from this magnificent old house.
+  exits:
+    north:
+      to: 7904
+      desc: |
+            The hallway continues that way.  You can see more doorways under the
+            wooden staircase in that direction.
+      key: -1
+    east:
+      to: 7910
+      desc: |
+            You see a tall oak door there.  It looks quite tightly closed to you.
+            On it little runes are chiselled into the wood.
+      door: regular
+      key: -1
+      keywords: door oak tall
+    south:
+      to: 7900
+      desc: |
+            Here you see a REAL door.  It would be more proper to call this a
+            'GATE', rather than a 'door'.  It is really HUGE!  On it hangs a
+            large sign with very large letters spelling:
+
+                            EMERGENCY EXIT
+      door: pickproof
+      key: 7901
+      keywords: gate iron huge
+    west:
+      to: 7902
+      desc: |
+            This looks like a 'door' in the meaning of the word.  The ashen wood
+            is painted in a peculiar yellow color.  Small letters are written
+            with black on it.
+      door: regular
+      key: -1
+      keywords: door ashen ash yellow
+    up:
+      to: 7909
+      desc: |
+            You see the staircase extending upwards into the very high tower.
+            It ends in what seems like a large bedroom up there.
+      key: -1
+  extra_descs:
+  - keywords:
+    - letters
+    desc: |
+              They read:
+
+                              LIBRARY
+  - keywords:
+    - runes
+    desc: |
+              These runes are utterly strange to you, but you are in luck today:
+              Under the runes you can just make out a sentence in Common.  It
+              reads:
+
+              Stay out, if you treasure your life.  That is if you are mortal.
+- vnum: 7902
+  name: Redferne's Library
+  sector: inside
+  flags:
+  - no_mob
+  - indoors
+  - private
+  desc: |2
+       This is truly a magnificent place!  Books and scrolls lie together
+    on every shelf.  A large globe, with the map of the world upon it,
+    stands in the dimly lit north-western corner of the room.  Two large
+    and comfortable looking leather armchairs adorn the center of the
+    library together with a huge oak desk.  Dim light radiates from an
+    enormous crystal chandelier hanging down from the ceiling approximately
+    10 feet off the floor.  To the east there is a great old ashen door.  A
+    large glass window is set in the west wall.
+  exits:
+    east:
+      to: 7901
+      desc: |
+            You can see an old ashen door, painted in a peculiar yellow color.
+      door: regular
+      key: -1
+      keywords: door ash ashen
+  extra_descs:
+  - keywords:
+    - river
+    desc: |
+              You see a large and winding river cut through the landscape, starting at an
+              enormous inland lake, it seeps through Midgaard and finally ends up in the
+              Grand Sea on the west coast of the land.
+  - keywords:
+    - out
+    - outside
+    - beyond
+    desc: |
+              The clouds muster and form the ground on which this entire building is set.
+              Through the thinnest of the clouds you can just make out Midgaard with all
+              of its magnificent activity.
+  - keywords:
+    - window
+    - glass
+    desc: |
+              These windows are really BIG!  They reach from about 20 inches above the
+              floor to approximately 10 inches under the ceiling.  If you try and
+              'look out', you might see what might lie beyond these windows.
+  - keywords:
+    - chairs
+    - leather
+    - armchairs
+    - chair
+    - armchair
+    desc: |
+              These two chairs are exactly alike one another.  They look incredibly
+              comfortable.  They are both made from old leather, and yet they seem
+              so worn that they can be nothing but a perfect place for a long needed
+              rest.
+  - keywords:
+    - midgaard
+    - town
+    - city
+    desc: |
+              You see a small speck with woods on the west from it, plains to the east
+              from it and mountains to the north from it.  To the east of it you can
+              see a thin trail lead to a large castle.  Finally you notice a rather
+              large river pour in from the east and go through Midgaard in the middle.
+  - keywords:
+    - globe
+    - world
+    - map
+    desc: |
+              You see a large world map stretch out on the enormous globe.  It has towns
+              drawn in every spot available for such.  In the middle of the map you can
+              spot a large town with the name 'MIDGAARD' written over it.  The rest is
+              mountains, woods, plains and water.
+- vnum: 7903
+  name: The Artifact Room Of Naris
+  sector: inside
+  flags:
+  - no_mob
+  - indoors
+  - private
+  desc: |2
+       This is gloomy and dark room with only a faint light radiating from the
+    walls.  A bunch of funny-looking items fill the center of the room.  There
+    is no furniture here what-so-ever.  The only way out seems to be west,
+    through the low steel door.
+  exits:
+    west:
+      to: 7910
+      desc: |
+            You see only the back of a safe's steel door.
+      door: pickproof
+      key: 7900
+      keywords: door steel safe
+- vnum: 7904
+  name: The Northern End Of The Hall
+  sector: inside
+  flags:
+  - no_mob
+  - indoors
+  - private
+  desc: |2
+       You are standing in the northern end of the huge hall.  This part is
+    under the grand wooden staircase so the light seems to be a little less
+    bright here, but this doesn't affect your sight at all.  To the north
+    lies the kitchen.  To the south lies the southern end of the hall.  To
+    the east there is a huge metal door.  To the west there is a large
+    aspenwood door.
+  exits:
+    north:
+      to: 7906
+      key: -1
+    east:
+      to: 7913
+      desc: |
+            You see a huge metal door.  From it a foul stench emanates.  The smell is
+            the most awful experience in your entire life.  A thought seeps through this
+            terrible stench and into your mind: 'Monsters', you feel BAD about opening
+            that door.
+      door: pickproof
+      key: -1
+      keywords: door metal huge
+    south:
+      to: 7901
+      desc: |
+            The rest of the hall lies in that direction, and so does the exit.
+      key: -1
+    west:
+      to: 7905
+      desc: |
+            The door has 'SITTING ROOM' written on it.  It is made from Aspenwood and
+            is beautifully carved with small elves as main issue of sculpture.
+      door: regular
+      key: -1
+      keywords: door aspen wood
+- vnum: 7905
+  name: The Sitting Room Of Naris
+  sector: inside
+  flags:
+  - no_mob
+  - indoors
+  - private
+  desc: |2
+       You are standing in the middle of a really comfortable place.  The
+    walls are decorated with paintings of smiling Kings and Queens.  The
+    most attractive picture is one of a Prince in shining armour.  By one
+    of the walls there is an old armchair.  The only exit is through the
+    aspenwood door to the east.
+  exits:
+    east:
+      to: 7904
+      desc: |
+            The door seems to be a very HEAVY door, carved completely from the trunk of
+            an Aspen tree.
+      door: regular
+      key: -1
+      keywords: door aspen heavy
+  extra_descs:
+  - keywords:
+    - chair
+    - armchair
+    desc: |
+              This is truly a wonderful relic of the past.  In it is a large cushion.
+- vnum: 7906
+  name: The Kitchen Of Naris
+  sector: inside
+  flags:
+  - no_mob
+  - indoors
+  - private
+  desc: |2
+       This must be the place of food and drink.  You can hear the faint noise
+    of rats feasting on meat and bread from somewhere undeterminable.  The sound
+    makes you feel the agony of HUNGER.  The only visible exit is south to the
+    Northern end of the hall.
+  exits:
+    north:
+      to: 7907
+      desc: |
+            It is dark in there.  But the sounds from there are unmistakable.  The rats
+            are here for your information.
+      door: regular
+      key: -1
+      keywords: larder wooden cupboard
+    east:
+      to: 7908
+      desc: |
+            You can see the fridge from here.  There are drinks all over the place.
+      door: regular
+      key: -1
+      keywords: fridge
+    south:
+      to: 7904
+      desc: |
+            You can see the northern end of the hall.
+      key: -1
+- vnum: 7907
+  name: The Larder
+  sector: inside
+  flags:
+  - no_mob
+  - indoors
+  - private
+  desc: |2
+       You can see food all over.  Among the heaps of food you notice HUGE rats
+    scuttling around, nibbling pieces off the heaps here and there.
+  exits:
+    south:
+      to: 7906
+      door: regular
+      key: -1
+      keywords: door wooden larder
+- vnum: 7908
+  name: The Fridge
+  sector: inside
+  flags:
+  - no_mob
+  - indoors
+  - private
+  desc: |2
+       This place is LOADED with drink, water and booze.
+  exits:
+    west:
+      to: 7906
+      door: regular
+      key: -1
+      keywords: door fridge
+- vnum: 7909
+  name: On The Stairs
+  sector: inside
+  flags:
+  - no_mob
+  - indoors
+  - private
+  desc: |2
+       You can see up and down the stairway.  It seems to take forever, either
+    going up OR down.  It is just a seemingly insurmountable climb, either way.
+    Up is the bedroom of Redferne, and down leads to the southern end of the
+    hall.
+  exits:
+    up:
+      to: 7911
+      key: -1
+    down:
+      to: 7901
+      key: -1
+- vnum: 7910
+  name: The Treasure Room
+  sector: inside
+  flags:
+  - no_mob
+  - indoors
+  - private
+  desc: |2
+       This place is gloomy.  A HUGE safe is cemented into the west wall.  The
+    only visible exit is west, through the oak door.
+  exits:
+    east:
+      to: 7903
+      door: pickproof
+      key: 7900
+      keywords: safe steel
+    west:
+      to: 7901
+      desc: |
+            You see a tall oak door.
+      door: regular
+      key: -1
+      keywords: door oak tall
+- vnum: 7911
+  name: Redferne's Bedroom
+  sector: inside
+  flags:
+  - no_mob
+  - indoors
+  - private
+  desc: |2
+       This is a snugly set bedroom with all the necessities for a romantic
+    evening.  A large fireplace adorns the east wall, and sizzling away is
+    the wood that is ablaze within.  The bed is enormous, covering at least
+    HALF of this great room.  The room stretches at least 140 feet, so can
+    you imagine the BED?  A large staircase leads down to the hall.  A couple
+    of doors open up to a broad balcony to the south.
+  exits:
+    south:
+      to: 7912
+      desc: |
+            The sun seems to shine out there, warmly and comforting.
+      door: regular
+      key: -1
+      keywords: doors
+    down:
+      to: 7909
+      key: -1
+- vnum: 7912
+  name: Redferne's Balcony
+  sector: inside
+  flags:
+  - no_mob
+  - private
+  desc: |2
+       You see a splendid of the most of this world.  The valleys stretch as
+    far as the eye reaches to the south from here.  Down below you can see
+    the entrance of this magnificent building.  To the north are the doors
+    to Redferne's bedroom.
+  exits:
+    north:
+      to: 7911
+      desc: |
+            You see the comfortable bedroom of Naris.
+      door: regular
+      key: -1
+      keywords: doors
+    down:
+      to: -1
+      desc: |
+            You see the ground on which this castle is set.  Funnily it seems to you
+            that it is no more than clouds.
+      key: -1
+- vnum: 7913
+  name: The Monster Pen
+  sector: inside
+  flags:
+  - indoors
+  - private
+  desc: |2
+       This looks like the cage in which a large carnivore is being kept.
+    Judging by the state the walls are in, this could very well be a large
+    AGGRESSIVE animal.  This makes you pretty insecure, this stating your
+    feeling about the place quite mildly.
+  exits:
+    west:
+      to: 7904
+      desc: |
+            This looks like the only exit from here.
+      door: regular
+      key: -1
+      keywords: door cage metal pen
+- vnum: 7914
+  name: On The Huge Chain
+  sector: mountains
+  flags:
+  - no_mob
+  desc: |2
+       This place has quite a good view over Midgaard.  Your possibilities of
+    movement seem to extend only to the up and down directions.  Unless you
+    want to let go of the secure and seemingly unmovable chain, then those are
+    the directions you should take from here.
+  exits:
+    up:
+      to: 7915
+      desc: |
+            Upwards, you see the chain disappearing into the clouds above.
+      key: -1
+    down:
+      to: 3120
+      desc: |
+            Down below, you see the huge chain anchored to the ground at the Road
+            Crossing of southern Midgaard.
+      key: -1
+- vnum: 7915
+  name: The Chain Where It Is Too Windy
+  sector: mountains
+  flags:
+  - no_mob
+  desc: |2
+       Hanging on to the chain you figure out that there is no way of leaving
+    down from here.  The wind pulls you from left to right and back.  This
+    seems like a totally impossible task.  The ascend is the only way ahead
+    for you.  Otherwise you would risk death by falling to the hard ground
+    below.  DO NOT DESCEND NOW OR YOU WILL SURELY DIE!!!!
+  exits:
+    up:
+      to: 7916
+      desc: |
+            That way seems to be the only way away from here.
+      key: -1
+    down:
+      to: 7920
+      desc: |
+            THAT WAY IS CERTAIN DEATH!!!!  You can see the wind tearing at the chain
+            down below you.  It swings like a furious serpent from side to side!  The
+            descent is ABSOLUTELY out of the QUESTION.  
+      key: -1
+- vnum: 7916
+  name: On The Great Chain Of Naris
+  sector: mountains
+  flags:
+  - no_mob
+  desc: |2
+       You are approximately on the middle of the treacherous Chain.  One false
+    step and death will come and collect you quickly.  The chain leads upwards
+    and down.  No way are you going to descend now... You've only just begun
+    your climb.  Besides it could cost you your life.  Look down and you'll
+    see why.
+  exits:
+    up:
+      to: 7918
+      desc: |
+            There seems to be only one way from here and that's up.
+      key: -1
+    down:
+      to: 7915
+      desc: |
+            The chain down there is swinging wildly back and forth.  Going down there
+            will be pretty risky!
+      key: -1
+- vnum: 7917
+  name: The Chain
+  sector: mountains
+  flags:
+  - no_mob
+  desc: |2
+       As you descend, the chain seems to absorb all weather around it, making
+    it swing less and less in the very powerful wind tearing at it.  The Chain
+    seems to chuckle quietly, and as you descend further you hear a soft whisper
+    originating from within the Chain *ITSELF*.  It says 'Welcome back some
+    other time, stranger.  Your company is always... hmmm... interesting.  God
+    Speed.'  The chain extends further down through the now spreading clouds.
+  exits:
+    up:
+      to: -1
+      desc: |
+            It seems to you that the Chain is dissolving again.  Maybe it is just an 
+            illusion, but still...
+      key: -1
+    down:
+      to: 7914
+      desc: |
+            That way seems safe enough... now.
+      key: -1
+- vnum: 7918
+  name: The Mighty Chain Of Naris
+  sector: mountains
+  flags:
+  - no_mob
+  desc: |2
+       This place truly a splendid view of the WHOLE COUNTRY SIDE!  A magnificent
+    light shines upon you and the way up through the clouds is opened.  Up there
+    you can now see the Mansion of Naris, Residence of the Greater God Redferne.
+    The chain beneath you seems to evaporate in the mustering clouds that
+    surround you by now.
+  exits:
+    up:
+      to: 7900
+      desc: |
+            You see the sunny top of the clouds.  Beyond these, the Mansion towers before
+            your eyes.  Beautiful!!
+      key: -1
+    down:
+      to: 7917
+      desc: |
+            You see nothing but the thick clouds.  They've closed completely around the
+            Chain.
+      key: -1
+- vnum: 7920
+  name: The Free Fall From The Chain
+  sector: inside
+  flags:
+  - death
+  - indoors
+  desc: |2
+       This is probably the third worst place to be in this entire MUD right
+    now.  You fall
+    .  
+    .
+    .
+    and fall
+    .
+    .
+    .
+    and fall
+    .
+    .
+    .
+    and HIT THE GROUND WITH SUCH A *SPLUTCH* that you die horribly, but instantly.
+    Good-bye cruel world.
+  exits:
+    north:
+      to: 7914
+      key: -1
+    east:
+      to: 7915
+      key: -1
+    south:
+      to: 7916
+      key: -1
+    west:
+      to: 7917
+      key: -1
+    up:
+      to: 7918
+      key: -1
+    down:
+      to: 3120
+      key: -1
+mobiles:
+- vnum: 7900
+  keywords:
+  - paladin
+  - grand
+  - knight
+  short: the Grand Knight of Paladins
+  long: |
+    The Grand Knight is standing here, waiting for someone to help.
+  desc: |
+    The Knight is standing here, smiling at you.  He is dressed all in white,
+    blue and silver.  He looks VERY strong, as he stands here, ready to help
+    the innocent.
+  act:
+  - spec
+  - sentinel
+  - scavenger
+  - aggr_evil
+  - memory
+  - no_charm
+  - no_summon
+  affected:
+  - detect_invis
+  - sanctuary
+  - infravision
+  alignment: 1000
+  level: 26
+  thac0: 0
+  ac: -2
+  hp: 10d8+550
+  damage: 2d6+16
+  gold: 31570
+  exp: 170000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 7901
+  keywords:
+  - rat
+  - large
+  short: the large rat
+  long: |
+    There is a large rat here, poking through the foodstuffs lying around.
+  desc: |
+    The large rat is about two feet long from head to tail and has claws the
+    size of your fingers, looking very nasty.  It seems to be quite occupied
+    with all the chewed open foodstuffs lying about the room.
+  act:
+  - sentinel
+  - aggressive
+  affected:
+  - infravision
+  alignment: -800
+  level: 12
+  thac0: 9
+  ac: 2
+  hp: 1d10+150
+  damage: 2d6+2
+  gold: 2513
+  exp: 13000
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 7902
+  keywords:
+  - cleaver
+  short: the Cleaver
+  long: |
+    The Cleaver is here eyeing you hungrily in anticipation of its next meal.
+  desc: |
+    The Cleaver is a huge spidery chittinous creature with four large
+    spindly arms ending in cleaverlike talons that will surely cut you
+    to ribbons.
+  act:
+  - aware
+  - aggressive
+  - stay_zone
+  - memory
+  - no_charm
+  - no_summon
+  - no_sleep
+  - no_bash
+  - no_blind
+  affected:
+  - detect_invis
+  - sanctuary
+  - infravision
+  - no_track
+  alignment: 0
+  level: 20
+  thac0: 3
+  ac: -1
+  hp: 5d8+340
+  damage: 8d4+4
+  gold: 2000
+  exp: 65000
+  position: standing
+  default_position: standing
+  sex: neutral
+objects:
+- vnum: 7900
+  keywords:
+  - key
+  - steel
+  short: a large key
+  desc: A large steel key has been left here.
+  type: key
+  wear:
+  - take
+  - hold
+  flags:
+  - no_rent
+  values:
+  - 7900
+  - 0
+  - 0
+  - 0
+  weight: 2
+  cost: 0
+  rent: 0
+  extra_descs:
+  - keywords:
+    - steel
+    - key
+    desc: |
+              This huge key is made from solid steel.
+- vnum: 7901
+  keywords:
+  - key
+  - copper
+  short: a copper key
+  desc: A copper key has been left on the floor.
+  type: key
+  wear:
+  - take
+  - hold
+  flags:
+  - no_rent
+  values:
+  - 7901
+  - 0
+  - 0
+  - 0
+  weight: 2
+  cost: 0
+  rent: 0
+  extra_descs:
+  - keywords:
+    - copper
+    - key
+    desc: |
+              This little key is made from copper.
+- vnum: 7902
+  keywords:
+  - key
+  - brass
+  short: a small brass key
+  desc: A small brass key lies here.
+  type: key
+  wear:
+  - take
+  - hold
+  flags:
+  - no_rent
+  values:
+  - 7902
+  - 0
+  - 0
+  - 0
+  weight: 1
+  cost: 10
+  rent: 4
+  extra_descs:
+  - keywords:
+    - key
+    - brass
+    desc: |
+              It is a small, simple brass key with no inscriptions or marks of any kind.
+- vnum: 7903
+  keywords:
+  - treasure
+  - coins
+  short: a huge treasure
+  desc: There is a huge treasure here, looking moderately valuable.
+  type: money
+  wear:
+  - take
+  values:
+  - 7734
+  - 0
+  - 0
+  - 0
+  weight: 5
+  cost: 7734
+  rent: 0
+  extra_descs:
+  - keywords:
+    - treasure
+    desc: |
+              This looks like a whole lot of coins, though not as many as you expected.
+- vnum: 7904
+  keywords:
+  - chest
+  - wooden
+  short: a wooden chest
+  desc: A wooden chest stands in the corner.
+  type: container
+  container:
+    capacity: 100
+    closeable: true
+    pickproof: true
+    closed: true
+    locked: true
+    key: 7902
+  weight: 0
+  cost: 0
+  rent: 0
+  extra_descs:
+  - keywords:
+    - chest
+    - wooden
+    desc: |
+              It is a robust chest made from short, heavy planks that have been fastened
+              together with tenons.  It is equipped with a simple brass lock.
+- vnum: 7905
+  keywords:
+  - chest
+  short: a chest
+  desc: A heavy iron chest sits in one corner of the room.
+  type: container
+  flags:
+  - invisible
+  container:
+    capacity: 15
+    closeable: true
+    pickproof: true
+    closed: true
+    locked: true
+    key: 7902
+  weight: 0
+  cost: 0
+  rent: 0
+- vnum: 7906
+  keywords:
+  - dagger
+  - plain
+  - black
+  short: a plain dagger
+  desc: A long black, but very plain, dagger rests here.
+  type: weapon
+  wear:
+  - take
+  - wield
+  flags:
+  - no_donate
+  - invisible
+  - no_drop
+  - anti_cleric
+  weapon:
+    dice: 5d3
+    damage_type: pierce
+  weight: 3
+  cost: 6500
+  rent: 15000
+  affects:
+  - location: hitroll
+    modifier: -3
+  - location: damroll
+    modifier: -1
+- vnum: 7907
+  keywords:
+  - bracelet
+  - spiked
+  short: a large spiked bracelet
+  desc: A large spiked bracelet has been left here.
+  type: worn
+  wear:
+  - take
+  - wrist
+  flags:
+  - magic
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 1
+  cost: 1200
+  rent: 2000
+  affects:
+  - location: armor
+    modifier: -4
+- vnum: 7908
+  keywords:
+  - waybread
+  - bread
+  short: a waybread
+  desc: Some waybread has been put here.
+  type: food
+  wear:
+  - take
+  values:
+  - 24
+  - 0
+  - 0
+  - 0
+  weight: 1
+  cost: 50
+  rent: 50
+  extra_descs:
+  - keywords:
+    - waybread
+    - bread
+    desc: |
+              The waybread is the traditional feed of elves when travelling, they
+              call it lembas.  It is said to refresh the weary traveler greatly.
+- vnum: 7909
+  keywords:
+  - ring
+  - gold
+  - goldring
+  short: a golden ring
+  desc: A shiny goldring has been abandoned here.
+  type: worn
+  wear:
+  - take
+  - finger
+  flags:
+  - no_donate
+  - invisible
+  - anti_mage
+  - anti_warrior
+  - no_sell
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 20
+  cost: 3500
+  rent: 2000
+  affects:
+  - location: int
+    modifier: 2
+- vnum: 7910
+  keywords:
+  - sword
+  - bastard
+  short: a huge bastard sword
+  desc: There is a huge bastard sword here.
+  type: weapon
+  wear:
+  - take
+  - wield
+  flags:
+  - magic
+  - anti_evil
+  - anti_neutral
+  - anti_mage
+  - anti_cleric
+  weapon:
+    dice: 2d8
+    damage_type: slash
+  weight: 18
+  cost: 1700
+  rent: 800
+  affects:
+  - location: damroll
+    modifier: 3
+  extra_descs:
+  - keywords:
+    - bastard
+    - sword
+    desc: |
+              Quite a heavy weapon, with a pure white hilt.
+- vnum: 7911
+  keywords:
+  - helmet
+  - large
+  short: a large helmet
+  desc: There is a large helmet on the floor.
+  type: armor
+  wear:
+  - take
+  - head
+  flags:
+  - magic
+  armor:
+    ac_apply: 7
+  weight: 5
+  cost: 4500
+  rent: 1500
+  extra_descs:
+  - keywords:
+    - large
+    - helmet
+    desc: |
+              This looks like some heavy protection, for the head of course.
+- vnum: 7912
+  keywords:
+  - helmet
+  - chaos
+  short: a chaos helmet
+  desc: On the floor is a grand evil-looking chaos helmet.
+  type: armor
+  wear:
+  - take
+  - head
+  flags:
+  - invisible
+  - magic
+  - anti_good
+  armor:
+    ac_apply: 8
+  weight: 8
+  cost: 2300
+  rent: 1000
+  affects:
+  - location: damroll
+    modifier: 2
+  - location: saving_spell
+    modifier: -2
+  extra_descs:
+  - keywords:
+    - chaos
+    - helmet
+    desc: |
+              This helmet has mounted some mean looking spikes on the front,
+              moreover it looks like good protection.
+- vnum: 7913
+  keywords:
+  - sword
+  - two-handed
+  short: a two-handed sword
+  desc: On the floor rests a enormous two-handed sword.
+  type: weapon
+  wear:
+  - take
+  - wield
+  flags:
+  - magic
+  - anti_good
+  - anti_evil
+  - anti_mage
+  weapon:
+    dice: 3d6
+    damage_type: slash
+  weight: 22
+  cost: 3500
+  rent: 3500
+  affects:
+  - location: armor
+    modifier: 10
+  - location: damroll
+    modifier: 3
+  extra_descs:
+  - keywords:
+    - runes
+    desc: |
+              On the blade you can read 'Flame And Strength United Are My Soul Power'.
+  - keywords:
+    - two-handed
+    - sword
+    desc: |
+              You notice that there has been inscribed some runes and a sort of
+              pattern, which resembles flames running along the edge.
+- vnum: 7914
+  keywords:
+  - plate
+  - breast
+  - silvery
+  - silver
+  short: a silvery breast plate
+  desc: There is a silvery breast plate on the floor.
+  type: armor
+  wear:
+  - take
+  - body
+  flags:
+  - magic
+  - anti_evil
+  - anti_neutral
+  values:
+  - 10
+  - 7000
+  - 0
+  - 0
+  weight: 70
+  cost: 20000
+  rent: 5000
+  extra_descs:
+  - keywords:
+    - plate
+    - breast
+    - silvery
+    - silver
+    desc: |
+              On the breast plate you notice a relief of large rose.  The metal seems
+              to be some kind of silver or platinum.
+- vnum: 7915
+  keywords:
+  - plates
+  - leg
+  - silvery
+  short: some silvery leg plates
+  desc: On the floor you see some leg plates.
+  type: armor
+  wear:
+  - take
+  - legs
+  flags:
+  - magic
+  - anti_evil
+  - anti_neutral
+  values:
+  - 7
+  - 7000
+  - 0
+  - 0
+  weight: 40
+  cost: 12500
+  rent: 5000
+  extra_descs:
+  - keywords:
+    - leg
+    - plates
+    - silvery
+    - silver
+    desc: |
+              They seem to be made from silver or platinum. You see the outline of a
+              rose.
+- vnum: 7916
+  keywords:
+  - gloves
+  - silvery
+  - silver
+  short: a pair of silvery gloves
+  desc: You can see a pair of gloves on the floor.
+  type: armor
+  wear:
+  - take
+  - hands
+  flags:
+  - magic
+  - anti_evil
+  - anti_neutral
+  values:
+  - 5
+  - 7000
+  - 0
+  - 0
+  weight: 14
+  cost: 2500
+  rent: 2000
+  affects:
+  - location: hitroll
+    modifier: 1
+  extra_descs:
+  - keywords:
+    - gloves
+    - silvery
+    - silver
+    desc: |
+              The gloves are made of silver threads.
+- vnum: 7917
+  keywords:
+  - helmet
+  - silvery
+  - silver
+  short: a silvery helmet
+  desc: The silvery helmet lies here.
+  type: armor
+  wear:
+  - take
+  - head
+  flags:
+  - magic
+  - anti_evil
+  - anti_neutral
+  values:
+  - 8
+  - 7000
+  - 0
+  - 0
+  weight: 35
+  cost: 9000
+  rent: 5000
+  extra_descs:
+  - keywords:
+    - helmet
+    - silvery
+    - silver
+    desc: |
+              The helmet is made from platinum or silver and has a white fur brush
+              attached on the top.
+- vnum: 7918
+  keywords:
+  - shield
+  - rose
+  short: the shield of the rose
+  desc: The shield of the rose rests on the floor.
+  type: armor
+  wear:
+  - take
+  - shield
+  flags:
+  - magic
+  - anti_evil
+  - anti_neutral
+  values:
+  - 12
+  - 7000
+  - 0
+  - 0
+  weight: 60
+  cost: 15000
+  rent: 7500
+  extra_descs:
+  - keywords:
+    - inscription
+    desc: |
+              The inscription reads:
+
+              Pax Est Sanctuum
+  - keywords:
+    - shield
+    - rose
+    desc: |
+              On the shield you see a clear and perfect painting of a dark red rose
+              on a white background. You also notice an inscription.
+- vnum: 7919
+  keywords:
+  - boots
+  - heavy
+  - plated
+  short: a pair of heavy plated boots
+  desc: A pair of heavy plated boots stand on the floor.
+  type: armor
+  wear:
+  - take
+  - feet
+  flags:
+  - magic
+  - anti_evil
+  - anti_neutral
+  values:
+  - 5
+  - 7000
+  - 0
+  - 0
+  weight: 40
+  cost: 3500
+  rent: 3500
+  extra_descs:
+  - keywords:
+    - boots
+    - heavy
+    - plated
+    desc: |
+              The boots are made from a silvery metal.
+- vnum: 7920
+  keywords:
+  - plates
+  - arm
+  - silvery
+  - silver
+  short: some silvery arm plates
+  desc: On the floor you see some arm plates.
+  type: armor
+  wear:
+  - take
+  - arms
+  flags:
+  - magic
+  - anti_evil
+  - anti_neutral
+  values:
+  - 7
+  - 7000
+  - 0
+  - 0
+  weight: 40
+  cost: 12500
+  rent: 5000
+  extra_descs:
+  - keywords:
+    - plates
+    - arm
+    - silvery
+    - silver
+    desc: |
+              They seem to be made from silver or platinum.  You see the outline of a
+              rose.
+- vnum: 7921
+  keywords:
+  - barrel
+  - water
+  short: a barrel
+  desc: A water barrel has been left here.
+  type: drink_container
+  wear:
+  - take
+  drink:
+    capacity: 40
+    current: 40
+    liquid: clear_water
+  weight: 45
+  cost: 60
+  rent: 20
+resets:
+- mob: 7900
+  room: 7900
+  max: 1
+  then:
+  - equip: 7901
+    slot: hold
+    max: 4
+  - equip: 7910
+    slot: wield
+    max: 2
+  - equip: 7914
+    slot: body
+    max: 2
+  - equip: 7915
+    slot: legs
+    max: 2
+  - equip: 7916
+    slot: hands
+    max: 2
+  - equip: 7917
+    slot: head
+    max: 2
+  - equip: 7918
+    slot: shield
+    max: 2
+  - equip: 7919
+    slot: feet
+    max: 2
+  - equip: 7920
+    slot: arms
+    max: 2
+- mob: 7901
+  room: 7907
+  max: 2
+  then:
+  - give: 7900
+    max: 1
+- mob: 7901
+  room: 7907
+  max: 2
+- mob: 7902
+  room: 7913
+  max: 1
+  then:
+  - equip: 7907
+    slot: wrist_right
+    max: 6
+  - equip: 7907
+    slot: wrist_left
+    max: 6
+  - equip: 7911
+    slot: head
+    max: 2
+  - give: 7902
+    max: 1
+- room: 7907
+  remove: 7908
+- room: 7907
+  object: 7908
+  max: 40
+- room: 7908
+  remove: 7921
+- room: 7908
+  object: 7921
+  max: 10
+- room: 7903
+  remove: 7904
+- room: 7903
+  object: 7904
+  max: 1
+  then:
+  - put: 7903
+    into: 7904
+    max: 1
+  - put: 7909
+    into: 7904
+    max: 4
+- room: 7913
+  remove: 7905
+  then:
+  - room: 7913
+    object: 7905
+    max: 1
+  - put: 7906
+    into: 7905
+    max: 5
+  - put: 7912
+    into: 7905
+    max: 3
+  - put: 7913
+    into: 7905
+    max: 2
+- door: 7900
+  dir: north
+  state: locked
+- door: 7901
+  dir: south
+  state: locked
+- door: 7901
+  dir: east
+  state: closed
+- door: 7910
+  dir: west
+  state: closed
+- door: 7901
+  dir: west
+  state: closed
+- door: 7902
+  dir: east
+  state: closed
+- door: 7910
+  dir: east
+  state: locked
+- door: 7903
+  dir: west
+  state: locked
+- door: 7904
+  dir: east
+  state: closed
+- door: 7913
+  dir: west
+  state: closed
+- door: 7904
+  dir: west
+  state: closed
+- door: 7905
+  dir: east
+  state: closed
+- door: 7906
+  dir: north
+  state: closed
+- door: 7907
+  dir: south
+  state: closed
+- door: 7906
+  dir: east
+  state: closed
+- door: 7908
+  dir: west
+  state: closed
+- door: 7911
+  dir: south
+  state: closed
+- door: 7912
+  dir: north
+  state: closed

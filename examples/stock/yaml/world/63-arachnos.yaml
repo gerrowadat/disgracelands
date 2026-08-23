@@ -1,0 +1,1546 @@
+schema: dl/world@1
+zone:
+  vnum: 63
+  name: Arachnos
+  range:
+  - 6300
+  - 6399
+  lifespan: 34
+  reset: always
+rooms:
+- vnum: 6301
+  name: The Webbed Entrance
+  sector: city
+  flags:
+  - no_mob
+  desc: |2
+       Sticky, sticky, sticky!  The ground is cluttered with leaves,
+    decayed remains of webbed crickets, beetle, rats, dogs, and even
+    humans.  You begin to wonder about what lies ahead.  The air is
+    damp here, and even the little light that shines through the
+    canopy seems to be absorbed into the webbing.
+  exits:
+    north:
+      to: 6302
+      key: -1
+    south:
+      to: 6132
+      key: -1
+- vnum: 6302
+  name: The Webby Passage
+  sector: field
+  desc: |2
+       You find that footing here is very good, almost too good.  The
+    limbs are coated with cobwebs and seem unusually strong for tree
+    branches.  Paths lead in four directions.  The eastward path goes
+    down a bit.
+  exits:
+    north:
+      to: 6304
+      key: -1
+    east:
+      to: 6305
+      key: -1
+    south:
+      to: 6301
+      key: -1
+    west:
+      to: 6303
+      key: -1
+- vnum: 6303
+  name: The Wasp Hive
+  sector: field
+  desc: |2
+       Drones scuttle about in this room.  The cells on the walls are
+    honeycomb in shape and many of the maggots and wasps you see have
+    fang-marks on their bodies.  You sense some order in their markings.
+  exits:
+    east:
+      to: 6302
+      key: -1
+- vnum: 6304
+  name: The Webby Passage
+  sector: field
+  desc: |2
+       Another webby passage, all sticky and wet.  Tiny ballooning
+    spiders fill the air.  It seems that these young ones are newborns.
+  exits:
+    east:
+      to: 6305
+      key: -1
+    south:
+      to: 6302
+      key: -1
+- vnum: 6305
+  name: Beneath The Busy Path
+  sector: field
+  desc: |2
+       You here the sounds of crawling arachnids above.  The rhythms of
+    the footsteps suggest a primitive order in there movement.  The light
+    seems brighter upwards.
+  exits:
+    west:
+      to: 6304
+      key: -1
+    up:
+      to: 6306
+      key: -1
+- vnum: 6306
+  name: On The Busy Path
+  sector: field
+  desc: |2
+       Spiders, spiders, everywhere!  It is almost ant-like in efficiency
+    with one big difference.  The spiders here are carrying ant-corpses,
+    as well as rats, wolves, and humans.
+  exits:
+    south:
+      to: 6307
+      key: -1
+    down:
+      to: 6305
+      key: -1
+- vnum: 6307
+  name: On The Busy Path
+  sector: field
+  desc: |2
+       Spiders, spiders, everywhere!  It is almost ant-like in efficiency
+    with one big difference.  The spiders here are carrying ant-corpses,
+    as well as cats, wolves, and humans.  
+  exits:
+    north:
+      to: 6306
+      key: -1
+    east:
+      to: 6308
+      key: -1
+- vnum: 6308
+  name: On The Busy Path
+  sector: field
+  desc: |2
+       Spiders, spiders, everywhere!  It is almost ant-like in efficiency
+    with one big difference.  The spiders here are carrying ant-corpses,
+    as well as cats, dogs, and humans.
+  exits:
+    north:
+      to: 6307
+      key: -1
+    east:
+      to: 6306
+      key: -1
+    south:
+      to: 6305
+      key: -1
+    west:
+      to: 6309
+      key: -1
+- vnum: 6309
+  name: A Split In The Path
+  sector: field
+  desc: |2
+       As always, there is a split in the road.  One road is strewn with
+    cricket feelers.  The other is well-kept and suitable for smooth
+    travelling.  The webbing that was prevalent in earlier rooms is almost
+    non-existant now.
+  exits:
+    north:
+      to: 6310
+      key: -1
+    east:
+      to: 6308
+      key: -1
+    south:
+      to: 6320
+      key: -1
+- vnum: 6310
+  name: A Fuzzy Tree Limb
+  sector: field
+  desc: |2
+       You are on a 'fuzzy' tree limb.  Interesting, since the branches
+    seem to have 'hairs' sprouting from its bark.  As you look closer
+    you see millions of aphids covering each limb.
+  exits:
+    south:
+      to: 6309
+      key: -1
+    west:
+      to: 6311
+      key: -1
+- vnum: 6311
+  name: The Tree Trunk
+  sector: field
+  flags:
+  - no_mob
+  desc: |2
+       You feel that you can rest here safely.  There is evidence of
+    webbing here, but it is of a finer quality.
+  exits:
+    east:
+      to: 6310
+      key: -1
+    south:
+      to: 6312
+      key: -1
+- vnum: 6312
+  name: The Tree Lair Entrance
+  sector: field
+  desc: |2
+       It seems the inhabitant of this place does not web her victims,
+    as evidenced by the remains before you.  The area is cluttered with
+    desiccated corpses, apparently bitten but unwebbed, and drained of
+    their life juices.
+  exits:
+    north:
+      to: 6311
+      key: -1
+    west:
+      to: 6313
+      key: -1
+- vnum: 6313
+  name: The Wolf Spider Lair
+  sector: field
+  desc: |2
+       Very dark, as all lairs of spiders are.  Not much of furnishings
+    save an exit.  The wolf spider keeps no corpses here, but rather
+    throws them out at her leisure.
+  exits:
+    east:
+      to: 6312
+      key: -1
+- vnum: 6320
+  name: The Webless Path
+  sector: field
+  desc: |2
+       Strange.  No webbing here.  In fact, no sounds whatsoever.  
+    The path continues northward, where you find that you may have
+    to tightrope your way across a ravine.
+  exits:
+    north:
+      to: 6309
+      key: -1
+    west:
+      to: 6321
+      key: -1
+- vnum: 6321
+  name: Above The Ravine
+  sector: field
+  desc: |2
+       Stranger still.  Your feet get a real firm grip on the spiderline.
+    You are above a deep ravine.  This line connects you between two trees.
+    Below you can see a prismatic web with lots of animal bones caught in it:
+    some bear and small deer bones in fact.  No human skeletons are visible 
+    (yet).
+  exits:
+    east:
+      to: 6320
+      key: -1
+    south:
+      to: 6323
+      key: -1
+    down:
+      to: 6322
+      key: -1
+- vnum: 6322
+  name: The Rainbow Web
+  sector: field
+  desc: |2
+       This is the rainbow web -- each strand, each link, a hue of violently
+    sharp colors and contrasts.  The resident here seems to have a command
+    of light as well.
+  exits:
+    up:
+      to: 6321
+      key: -1
+- vnum: 6323
+  name: The Web Forest
+  sector: field
+  desc: |2
+       The trees here take on a different appearance -- they are not trees
+    anymore, but disjointed make-shift silken made shafts, sticky to the
+    touch, and webby in texture.  This is another world it would appear.
+  exits:
+    north:
+      to: 6321
+      key: -1
+    down:
+      to: 6324
+      key: -1
+- vnum: 6324
+  name: The Slave Pit
+  sector: field
+  desc: |2
+       You have entered the slave pit.  A voice blares in the distance,
+    'Get back to work, maggots!'  Rails upon rails of mined gold and silver
+    clutter the trail beneath you.
+  exits:
+    north:
+      to: 6325
+      key: -1
+    up:
+      to: 6323
+      key: -1
+- vnum: 6325
+  name: The Tether Path
+  sector: field
+  desc: |2
+       Another tether path just like the rest of them.  Surprisingly
+    well-lit by the golden orbs that hang from the sides, you can see
+    the paths become finer and finer in quality.
+  exits:
+    east:
+      to: 6326
+      key: -1
+    west:
+      to: 6324
+      key: -1
+- vnum: 6326
+  name: A Road Crossing
+  sector: field
+  desc: |2
+       Another shifty little strand of webs, almost ethereal in nature.
+  exits:
+    west:
+      to: 6325
+      key: -1
+    up:
+      to: 6327
+      key: -1
+- vnum: 6327
+  name: A Leader Strand
+  sector: field
+  desc: |2
+       This strand is weightier, more sturdy.  It shimmers as you step on
+    it.  You are definitely not in the Midgaardian realms anymore.  Just
+    where you are you can't tell.  It feels like you're moving through
+    ether.  You can still get back down to more surer lands.
+  exits:
+    north:
+      to: 6328
+      key: -1
+    down:
+      to: 6326
+      key: -1
+- vnum: 6328
+  name: The Entrance Of The Ethereal Web
+  sector: field
+  desc: |2
+       You are at the entrance to ethereal web.  Flickering in and out,
+    in and out, each strand reveals a different hue from black to green 
+    to blue.
+  exits:
+    south:
+      to: 6331
+      key: -1
+- vnum: 6330
+  name: The Young Wormkin's Crib
+  sector: field
+  desc: |2
+       A playpen of sorts, with maggots of wasps and other baby
+    vermin lying about.  You feel that humans have been played with
+    here too, and eaten later.  You sense that the maker of this
+    place has an appetite for dragon meat, and uses this room as a
+    breeding area.
+  exits:
+    up:
+      to: 6331
+      key: -1
+- vnum: 6331
+  name: The Base Of The Web
+  sector: field
+  desc: |2
+       Large strands connect at this point.  The node shimmers and
+    flickers within the ether.  You see many flying creatures --
+    insects, pegasi, and dragon wormkins -- navigate the dangerous
+    passages of the web.  Exits go in many directions.
+  exits:
+    north:
+      to: 6330
+      key: -1
+    east:
+      to: 6332
+      key: -1
+    south:
+      to: 6333
+      key: -1
+    west:
+      to: 6334
+      key: -1
+- vnum: 6332
+  name: Through The Trees
+  sector: field
+  desc: |2
+       This part of the web intersects through the branches of some
+    trees.  Various leaves and other debris that the many drones have
+    not picked up yet lie here.
+  exits:
+    east:
+      to: 6331
+      key: -1
+    south:
+      to: 6335
+      key: -1
+    west:
+      to: 6333
+      key: -1
+- vnum: 6333
+  name: Above The Clouds
+  sector: field
+  desc: |2
+       You can see all of Midgaard in this ethereal web.  Many
+    of the larger dragons that do wish to fly seem to fly away
+    from the sticky strands of the web.
+  exits:
+    east:
+      to: 6331
+      key: -1
+    south:
+      to: 6334
+      key: -1
+    west:
+      to: 6335
+      key: -1
+- vnum: 6334
+  name: On A Cloud
+  sector: field
+  desc: |2
+       This cloud is rather thick in consistency.  You suddenly realize
+    this is not a typical cloud, but it might be the nest of an aerial
+    creature.
+  exits:
+    down:
+      to: 6331
+      key: -1
+- vnum: 6335
+  name: A Link In The Ethereal Web
+  sector: field
+  desc: |2
+       This is another link in the ethereal web.  Various creatures seem
+    to get caught (or hypnotized) by its sticky strands.
+  exits:
+    east:
+      to: 6336
+      key: -1
+    west:
+      to: 6331
+      key: -1
+- vnum: 6336
+  name: The Tenuous Strand
+  sector: field
+  desc: |2
+       Very windy here since it goes up into the sky somewhat.  Still, it
+    is safe enough to move around.
+  exits:
+    south:
+      to: 6340
+      key: -1
+    west:
+      to: 6341
+      key: -1
+    down:
+      to: 6331
+      key: -1
+- vnum: 6340
+  name: The Elder Wormkin's Room
+  sector: field
+  desc: |2
+       A more mature wormkin it seems resides here.  Various tomes
+    of arcane lore clutter the area, along with shards of armor and
+    weaponry.
+  exits:
+    down:
+      to: 6331
+      key: -1
+- vnum: 6341
+  name: Another Tree Limb
+  sector: field
+  desc: |2
+       Once again the web crosses another tree limb.  To the side you
+    see the possible entrance to another creature's lair.
+  exits:
+    east:
+      to: 6342
+      key: -1
+    south:
+      to: 6334
+      key: -1
+    west:
+      to: 6345
+      key: -1
+- vnum: 6342
+  name: The Bird Spider's Lair
+  sector: field
+  desc: |2
+       This is a big game hunter among most spiders.  Crushed
+    jewels and weapons suggest the inhabitant must have powerful
+    jaws.  Beware!
+  exits:
+    down:
+      to: 6331
+      key: -1
+- vnum: 6345
+  name: A Link In The Ethereal Web
+  sector: field
+  desc: |2
+       This is another link in the ethereal web.  Various creatures
+    seem to get caught (or hypnotized) by its sticky strands.
+  exits:
+    south:
+      to: 6350
+      key: -1
+    west:
+      to: 6346
+      key: -1
+    up:
+      to: 6345
+      key: -1
+- vnum: 6346
+  name: The Quiet Tree Top
+  sector: field
+  desc: |2
+       This is a quiet tree top.  Downwards you can see a familiar path
+    that may lead back to Midgaard.
+  exits:
+    east:
+      to: 6345
+      key: -1
+    west:
+      to: 6347
+      key: -1
+    down:
+      to: 6132
+      key: -1
+- vnum: 6347
+  name: On The Web
+  sector: field
+  desc: |2
+       RRRRRRRRRRROOOOOOOOOOOOOAAAAAAAAAAAAAARR!  You hear the roar
+    of a powerful beast.  Dragon, you think.  You shiver in your boots
+    as you tiptoe along this section of the web.
+  exits:
+    east:
+      to: 6346
+      key: -1
+    south:
+      to: 6355
+      key: -1
+    down:
+      to: 6331
+      key: -1
+- vnum: 6350
+  name: The Ki-Rin Chamber
+  sector: field
+  desc: |2
+       A wise ki-rin was entrapped here many years ago.  It is from her
+    that the ruler of this realm draws magical strength.
+  exits:
+    north:
+      to: 6347
+      key: -1
+- vnum: 6355
+  name: A Link In The Ethereal Web
+  sector: field
+  desc: |2
+       This is another link in the ethereal web.  Various creatures
+    seem to get caught (or hypnotized) by its sticky strands.  To
+    the north you sense the heavy breathing of a fiery animal.
+  exits:
+    north:
+      to: 6360
+      key: -1
+    south:
+      to: 6365
+      key: -1
+- vnum: 6360
+  name: Yevaud's Lair
+  sector: field
+  desc: |2
+       Yevaud, the Usurper of Midgaard, resides here.  A voice cries
+    out, 'BEWARE, the Usurper of Midgaard lives here!  FLEE while you can!'
+    But even Yevaud has his master... or so you deduce.
+  exits:
+    south:
+      to: 6355
+      key: -1
+- vnum: 6365
+  name: A Link In The Ethereal Web
+  sector: field
+  desc: |2
+       This is another link in the ethereal web.  Various creatures
+    seem to get caught (or hypnotized) by its sticky strands.  A
+    single spider line lies to the north, while ghastly seemings are
+    due southward.  The grim entrance of Arachnos' Lair is downward.
+  exits:
+    north:
+      to: 6371
+      key: -1
+    east:
+      to: 6331
+      key: -1
+    south:
+      to: 6366
+      key: -1
+    down:
+      to: 6390
+      key: -1
+- vnum: 6366
+  name: The Entrance To The Donjonkeep
+  sector: field
+  desc: |2
+       A dark path at the end of the web strand, you see ahead
+    a torch lit chamber where the souls of unavenged adventurers
+    come and gnash their teeth.  The howls and screams of many
+    echo through the hall ways.  You see one definite path ahead.
+  exits:
+    north:
+      to: 6367
+      key: -1
+- vnum: 6367
+  name: The Guardian's Room
+  sector: field
+  desc: |2
+       A chair sits here for a tireless guardian who ensures that no
+    soul escapes.  Other than that, the room is undecorated.
+  exits:
+    north:
+      to: 6368
+      key: -1
+  extra_descs:
+  - keywords:
+    - chair
+    desc: |
+              An ordinary chair, well used, glued to the ground by spiderweb.
+- vnum: 6368
+  name: The Realm Of The Hopeless
+  sector: field
+  desc: |2
+       Here you see many misguided souls who think they still live.
+    They search for those who killed them without warrant, and seek
+    the free souls of living beings to inhabit and perhaps adventure
+    once more.
+  exits:
+    north:
+      to: 6369
+      key: -1
+- vnum: 6369
+  name: The Realm Of The Hopeless
+  sector: field
+  desc: |2
+       Here you see many misguided souls who think they still live.
+    They search for those who killed them without warrant, and seek
+    the free souls of living beings to inhabit and perhaps adventure
+    once more.
+  exits:
+    north:
+      to: 6368
+      key: -1
+    south:
+      to: 6370
+      key: -1
+- vnum: 6370
+  name: The Donjonkeep
+  sector: field
+  desc: |2
+       No souls have ever lived in this place.  The wails of slaves and
+    the howls of wolves are the only way you can describe the sounds you
+    hear.  The walls are thin and wispy.  The only light you receive is
+    the shimmering from the strand of the ethereal web you used to get
+    here.  
+  exits:
+    east:
+      to: 6371
+      key: -1
+- vnum: 6371
+  name: The Single Spider Line
+  sector: field
+  desc: |2
+       A single spider line supports you once more.  As you look across
+    the ether you seen a single shack up ahead with a light in the window.
+    You sense a great evil coming from the north and feel inclined to go
+    back on the ethereal web and take your chances there.
+  exits:
+    north:
+      to: 6331
+      key: -1
+    south:
+      to: 6372
+      key: -1
+- vnum: 6372
+  name: The Single Spider Line
+  sector: field
+  desc: |2
+       A single spider line supports you once more.  The shack comes
+    closer into view and you are even more inclined to go back now.
+  exits:
+    north:
+      to: 6371
+      key: -1
+    south:
+      to: 6373
+      key: -1
+- vnum: 6373
+  name: The Hermit's Corner
+  sector: field
+  desc: |2
+       Here you see evidence of a vagrant's abode.  The shack is to the
+    north, if you dare enter it.  You get the sneaking feeling you should
+    go back now.  The skies above you darken and roar with the laughter
+    of thunder.
+  exits:
+    north:
+      to: 6372
+      key: -1
+    south:
+      to: 6380
+      key: -1
+- vnum: 6380
+  name: Mahatma's Inescapable Trap
+  sector: inside
+  flags:
+  - death
+  - indoors
+  desc: |2
+       Mahatma, that silly thief, is here, and he steals everything you
+    have.  He says 'Here, have a quick trip to the Temple of Midgaard.'
+    He plunges a black dagger into your back...
+- vnum: 6390
+  name: The Entrance To The Arachnos' Lair
+  sector: field
+  desc: |2
+       All strands inevitably lead here, the center of the web, the
+    entrance to Arachnos' Lair.
+  exits:
+    east:
+      to: 6391
+      key: -1
+- vnum: 6391
+  name: The Sticky Chamber
+  sector: field
+  desc: |2
+       You can still bail out since your knees are shaking from the
+    anticipation (or is it fear?).  The sky is clear on this strand of 
+    web, surprisingly unsticky.  The strand does not vibrate like the 
+    others.  A few ballooning spiders pass by, cackling 'You're gonna
+    die, you're gonna fry.  Good bye!'
+  exits:
+    east:
+      to: 6392
+      key: -1
+    down:
+      to: 6331
+      key: -1
+- vnum: 6392
+  name: The Great Door
+  sector: field
+  flags:
+  - indoors
+  desc: |2
+       Before you you see a large, web-like door.  Various designs
+    of ancient runes and names of Midgaard heroes are etched into
+    the webwork.  Perhaps lists of victims?  You can't tell.  
+  exits:
+    north:
+      to: 6399
+      door: pickproof
+      key: 6300
+      keywords: door
+    west:
+      to: 6391
+      key: -1
+- vnum: 6399
+  name: The Lair Of Arachnos
+  sector: field
+  flags:
+  - no_track
+  desc: |2
+       This is the lair of the Empress Spider, Arachnos.  You can
+    see a lavishly adorned rainbow web, her lair allows her to move
+    to any universe she wishes by using her magical strands to the
+    Prime Material Plane.  Coffers upon coffers of gold, magical
+    jewels and gems await.  Unfortunately Arachnos is a baggy spider
+    too, and webs all her treasures to her beautiful silken body.
+  exits:
+    south:
+      to: 6392
+      door: pickproof
+      key: 6300
+      keywords: door
+mobiles:
+- vnum: 6301
+  keywords:
+  - spider
+  - young
+  short: the young spider
+  long: |
+    The young spider is ballooning by you.
+  desc: |
+    He looks freshly hatched and sprightly.  His young fangs are just
+    growing in as of late.
+  act:
+  - scavenger
+  - stay_zone
+  affected:
+  - detect_invis
+  - infravision
+  alignment: 0
+  level: 3
+  thac0: 18
+  ac: 7
+  hp: 1d12+40
+  damage: 1d7
+  gold: 80
+  exp: 350
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 6302
+  keywords:
+  - yevaud
+  - dragon
+  - usurper
+  short: Yevaud
+  long: |
+    Yevaud, the Usurper of Midgaard is here, grinning evilly at you.
+  desc: |
+    Old, scaly, but still with a lot of bite in him left.
+  act:
+  - spec
+  - sentinel
+  - scavenger
+  - aggr_good
+  - aggr_neutral
+  - memory
+  affected:
+  - detect_invis
+  - infravision
+  alignment: -1000
+  level: 24
+  thac0: 0
+  ac: -3
+  hp: 5d4+450
+  damage: 4d7+7
+  gold: 20000
+  exp: 120000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 6303
+  keywords:
+  - spider
+  - wolf
+  short: the wolf spider
+  long: |
+    The wolf spider is here, licking its bloody fangs.
+  desc: |
+    The wolf spider is hairy, very hairy.
+  act:
+  - sentinel
+  - aggressive
+  alignment: -300
+  level: 6
+  thac0: 12
+  ac: 6
+  hp: 3d8+70
+  damage: 2d5+3
+  gold: 1250
+  exp: 6000
+  position: standing
+  default_position: standing
+  sex: female
+- vnum: 6304
+  keywords:
+  - orc
+  short: the orc
+  long: |
+    The orc is stuck in the web and he can't get out.
+  desc: |
+    You notice an evil look in his eyes, but he seems quite drained of life,
+    and all he can do is glare at you while he's stuck in this web.
+  act:
+  - sentinel
+  alignment: -400
+  level: 2
+  thac0: 19
+  ac: 8
+  hp: 2d10+10
+  damage: 2d3
+  gold: 10
+  exp: 300
+  position: sitting
+  default_position: sitting
+  sex: male
+- vnum: 6305
+  keywords:
+  - wasp
+  - queen
+  short: the queen wasp
+  long: |
+    The queen wasp is here, thinking how tasty you look.
+  desc: |
+    You notice a glazed look in her eyes.
+  act:
+  - sentinel
+  - aggressive
+  alignment: -800
+  level: 14
+  thac0: 7
+  ac: 1
+  hp: 1d12+172
+  damage: 2d8+1
+  gold: 2000
+  exp: 18000
+  position: standing
+  default_position: standing
+  sex: female
+- vnum: 6306
+  keywords:
+  - spider
+  - drone
+  short: the drone spider
+  long: |
+    A drone spider walks around doing its master's bidding.
+  desc: |
+    An ordinary drone spider.
+  act:
+  - scavenger
+  - stay_zone
+  alignment: -200
+  level: 6
+  thac0: 14
+  ac: 4
+  hp: 3d8+70
+  damage: 2d4+1
+  gold: 200
+  exp: 1600
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 6307
+  keywords:
+  - spider
+  - ethereal
+  short: the ethereal spider
+  long: |
+    An ethereal spider strides here, traveling to different worlds.
+  desc: |
+    She winks in and out of reality.  It looks like it'd be difficult to hit her
+    without a magical weapon.
+  act:
+  - scavenger
+  - stay_zone
+  affected:
+  - invisible
+  - detect_align
+  - sense_life
+  - waterwalk
+  - sneak
+  alignment: 300
+  level: 13
+  thac0: 9
+  ac: -2
+  hp: 1d12+163
+  damage: 2d4+4
+  gold: 1250
+  exp: 16000
+  position: standing
+  default_position: standing
+  sex: female
+- vnum: 6308
+  keywords:
+  - slave
+  - human
+  short: the slave
+  long: |
+    A human slave of Arachnos works here relentlessly.
+  desc: |
+    The slave does not mind you, but will fight like a warrior if attacked.
+    He serves the spider Empress, Arachnos, though whether it is by choice
+    or because he was beguiled, you are not fully certain.
+  act:
+  - scavenger
+  - stay_zone
+  - memory
+  alignment: -50
+  level: 11
+  thac0: 8
+  ac: 4
+  hp: 1d12+130
+  damage: 2d7+1
+  gold: 1000
+  exp: 13500
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 6309
+  keywords:
+  - quasit
+  short: the quasit
+  long: |
+    A quasit blinks in and out, grinning at you.
+  desc: |
+    Demoniac in nature, but more mischievous.  He twiddles his thumbs
+    and creates a magical treasure!
+  act:
+  - spec
+  - scavenger
+  - stay_zone
+  - wimpy
+  affected:
+  - invisible
+  - detect_invis
+  - sense_life
+  - sneak
+  alignment: -300
+  level: 10
+  thac0: 1
+  ac: -10
+  hp: 1d12+47
+  damage: 1d8
+  gold: 1500
+  exp: 11000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 6310
+  keywords:
+  - spider
+  - bird
+  short: the bird spider
+  long: |
+    The bird spider snaps its powerful jaws.
+  desc: |
+    The Bird Spider has very powerful jaws.
+  act:
+  - sentinel
+  - aggressive
+  affected:
+  - detect_invis
+  - infravision
+  alignment: -800
+  level: 14
+  thac0: 7
+  ac: 1
+  hp: 1d8+100
+  damage: 2d9+2
+  gold: 1750
+  exp: 18000
+  position: standing
+  default_position: standing
+  sex: female
+- vnum: 6311
+  keywords:
+  - hermit
+  short: the hermit
+  long: |
+    The hermit sits here and warns, 'Go back before it is too late!'
+  desc: |
+    A dishevelled veteran warrior in disguise is what he is, but he
+    means well.
+  act:
+  - sentinel
+  - scavenger
+  - memory
+  affected:
+  - detect_invis
+  - infravision
+  alignment: 750
+  level: 7
+  thac0: 13
+  ac: 4
+  hp: 3d10+90
+  damage: 2d5+2
+  gold: 750
+  exp: 2500
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 6312
+  keywords:
+  - donjonkeeper
+  - keeper
+  short: the Donjonkeeper
+  long: |
+    The Donjonkeeper eyes you and wonders how pure your soul is.
+  desc: |
+    He delves deeper into you as you stare at him.  Only those free of taint
+    will be allowed to remain here safely.
+  act:
+  - spec
+  - sentinel
+  - scavenger
+  - aggr_evil
+  - memory
+  affected:
+  - detect_invis
+  - infravision
+  alignment: 1000
+  level: 25
+  thac0: 0
+  ac: -1
+  hp: 1d12+600
+  damage: 2d8+8
+  gold: 16000
+  exp: 125000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 6313
+  keywords:
+  - guardian
+  short: the guardian
+  long: |
+    The guardian is obviously not doing his job.
+  desc: |
+    He looks like a lazy bum who sleeps half the time.
+  act:
+  - aggressive
+  - stay_zone
+  affected:
+  - detect_invis
+  - infravision
+  - sneak
+  alignment: 250
+  level: 17
+  thac0: 4
+  ac: 1
+  hp: 1d12+200
+  damage: 2d8+8
+  gold: 1000
+  exp: 24000
+  position: sleeping
+  default_position: sleeping
+  sex: male
+- vnum: 6314
+  keywords:
+  - arachnos
+  - spider
+  - empress
+  short: Arachnos
+  long: |
+    Arachnos the Empress of Spiders welcomes you with an evil smile.
+  desc: |
+    She is a very attractive spider with an ornate gown.  She tempts you
+    into being one of her many slaves.  She does not possess the venomous
+    fangs of normal spiders, but then, as you realize, she does not need
+    them.
+  act:
+  - spec
+  - sentinel
+  - scavenger
+  - aggr_good
+  - memory
+  - no_charm
+  - no_summon
+  - no_bash
+  affected:
+  - detect_invis
+  - sense_life
+  - sanctuary
+  - infravision
+  - no_track
+  alignment: -1000
+  level: 26
+  thac0: 0
+  ac: -2
+  hp: 6d10+650
+  damage: 1d8+25
+  gold: 30000
+  exp: 155000
+  position: standing
+  default_position: standing
+  sex: female
+- vnum: 6315
+  keywords:
+  - ki-rin
+  short: the Ki-Rin
+  long: |
+    The Ki-Rin smiles good-naturedly to you.
+  desc: |
+    She is the last bastion of good in this realm.  Her mission is to
+    someday free the slaves of the Empress.  She has been trapped here for
+    time eternal, and now the evil power of Arachnos feeds upon her intense
+    magical energies.  She will never give up here fight against evil,
+    though, and will continue her work in whatever manner presents itself.
+  act:
+  - spec
+  - sentinel
+  - scavenger
+  - aggr_evil
+  - memory
+  - no_charm
+  - no_summon
+  affected:
+  - detect_invis
+  - infravision
+  alignment: 1000
+  level: 26
+  thac0: 0
+  ac: -4
+  hp: 10d8+2500
+  damage: 4d4+22
+  gold: 15000
+  exp: 170000
+  position: standing
+  default_position: standing
+  sex: female
+- vnum: 6316
+  keywords:
+  - dragon
+  - wormkin
+  - young
+  short: the young wormkin
+  long: |
+    A wormkin with no teeth plays here.
+  desc: |
+    It is a rather small dragon, and you almost feel sad about killing it.
+  act:
+  - sentinel
+  affected:
+  - detect_invis
+  - infravision
+  alignment: 50
+  level: 9
+  thac0: 12
+  ac: 3
+  hp: 5d4+110
+  damage: 2d5+2
+  gold: 1000
+  exp: 6500
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 6317
+  keywords:
+  - dragon
+  - wormkin
+  - elder
+  short: the elder wormkin
+  long: |
+    A wormkin that has grown a bit stares at you inquisitively.
+  desc: |
+    A medium-sized dragon -- seems it hasn't killed anything yet by itself, 
+    though there is a first time for everything...
+  act:
+  - sentinel
+  affected:
+  - detect_invis
+  - infravision
+  alignment: -300
+  level: 16
+  thac0: 5
+  ac: 1
+  hp: 5d4+210
+  damage: 2d6+4
+  gold: 5000
+  exp: 24000
+  position: standing
+  default_position: standing
+  sex: male
+objects:
+- vnum: 6300
+  keywords:
+  - key
+  - black
+  short: a black key
+  desc: A somewhat plain black key has been left here.
+  type: key
+  wear:
+  - take
+  - hold
+  flags:
+  - no_rent
+  values:
+  - 6300
+  - 0
+  - 0
+  - 0
+  weight: 1
+  cost: 0
+  rent: 0
+- vnum: 6301
+  keywords:
+  - knife
+  - thief
+  short: a very sharp knife
+  desc: A very sharp knife lies here.
+  type: weapon
+  wear:
+  - take
+  - wield
+  flags:
+  - magic
+  - anti_neutral
+  - anti_mage
+  - anti_cleric
+  - anti_warrior
+  weapon:
+    dice: 8d1
+    damage_type: pierce
+  weight: 9
+  cost: 1000
+  rent: 2500
+  affects:
+  - location: dex
+    modifier: 2
+  - location: hitroll
+    modifier: 3
+  extra_descs:
+  - keywords:
+    - knife
+    - thief
+    desc: |
+              A keen knife, very sharp -- you could cut the air in two!
+- vnum: 6302
+  keywords:
+  - hat
+  - wizard
+  short: a wizard's hat
+  desc: A blue wizard's hat lies here.
+  type: armor
+  wear:
+  - take
+  - head
+  flags:
+  - invisible
+  - magic
+  - anti_cleric
+  - anti_thief
+  - anti_warrior
+  armor:
+    ac_apply: 6
+  weight: 5
+  cost: 20000
+  rent: 10000
+  affects:
+  - location: int
+    modifier: 2
+  - location: max_mana
+    modifier: 17
+  extra_descs:
+  - keywords:
+    - hat
+    - wizard
+    desc: |
+              A hat made of blue cloth.  It looks very comfortable.
+- vnum: 6303
+  keywords:
+  - headress
+  - pontiff
+  - ornament
+  - cone
+  - head
+  short: a pontiff's headress
+  desc: A white cone-shaped head ornament with religious symbols lies here.
+  type: armor
+  wear:
+  - take
+  - head
+  flags:
+  - invisible
+  - magic
+  - anti_mage
+  - anti_thief
+  - anti_warrior
+  armor:
+    ac_apply: 6
+  weight: 5
+  cost: 20000
+  rent: 10000
+  affects:
+  - location: wis
+    modifier: 3
+  - location: max_mana
+    modifier: 13
+  extra_descs:
+  - keywords:
+    - headress
+    - pontiff
+    - ornament
+    - cone
+    - head
+    desc: |
+              A starchy headress worn by powerful secular types.
+- vnum: 6304
+  keywords:
+  - visor
+  - black
+  - knight
+  short: a black knight's visor
+  desc: A black visor sits here.
+  type: armor
+  wear:
+  - take
+  - head
+  flags:
+  - invisible
+  - magic
+  - anti_mage
+  - anti_cleric
+  - anti_thief
+  armor:
+    ac_apply: 8
+  weight: 5
+  cost: 20000
+  rent: 10000
+  affects:
+  - location: str
+    modifier: 1
+  - location: con
+    modifier: 2
+  extra_descs:
+  - keywords:
+    - visor
+    - black
+    - knight
+    desc: |
+              A visor that protects the head, good for warriors.
+- vnum: 6305
+  keywords:
+  - potion
+  - thick
+  - white
+  short: a thick white potion
+  desc: A thick white potion has been left here.
+  type: potion
+  wear:
+  - take
+  flags:
+  - magic
+  values:
+  - 25
+  - 15
+  - 35
+  - 19
+  weight: 9
+  cost: 21000
+  rent: 1000
+  extra_descs:
+  - keywords:
+    - potion
+    - thick
+    - white
+    desc: |
+              It is disgusting thick white gunk which looks like liquid web and smells like
+              medicine.
+resets:
+- mob: 6301
+  room: 6301
+  max: 10
+- mob: 6301
+  room: 6306
+  max: 10
+- mob: 6301
+  room: 6306
+  max: 10
+- mob: 6301
+  room: 6304
+  max: 10
+- mob: 6305
+  room: 6303
+  max: 1
+- mob: 6310
+  room: 6342
+  max: 1
+- mob: 6303
+  room: 6313
+  max: 1
+- mob: 6308
+  room: 6308
+  max: 5
+- mob: 6308
+  room: 6308
+  max: 5
+- mob: 6308
+  room: 6308
+  max: 5
+- mob: 6308
+  room: 6308
+  max: 5
+- mob: 6308
+  room: 6308
+  max: 5
+- mob: 6309
+  room: 6327
+  max: 2
+- mob: 6307
+  room: 6335
+  max: 5
+- mob: 6307
+  room: 6333
+  max: 5
+- mob: 6304
+  room: 6332
+  max: 1
+  then:
+  - give: 6300
+    max: 1
+- mob: 6306
+  room: 6321
+  max: 3
+  then:
+  - give: 6305
+    max: 10
+- mob: 6306
+  room: 6331
+  max: 3
+  then:
+  - give: 6305
+    max: 10
+- mob: 6311
+  room: 6373
+  max: 1
+  then:
+  - give: 6302
+    max: 2
+- mob: 6315
+  room: 6350
+  max: 1
+  then:
+  - give: 6109
+    max: 10
+  - give: 6109
+    max: 10
+- mob: 6314
+  room: 6399
+  max: 1
+  then:
+  - give: 6301
+    max: 5
+  - give: 6302
+    max: 2
+  - give: 6303
+    max: 2
+  - give: 6304
+    max: 2
+- mob: 6312
+  room: 6370
+  max: 1
+  then:
+  - give: 6301
+    max: 5
+  - give: 6109
+    max: 10
+- mob: 6313
+  room: 6367
+  max: 1
+- mob: 6306
+  room: 6330
+  max: 3
+- mob: 6302
+  room: 6360
+  max: 1
+  then:
+  - give: 6304
+    max: 2
+  - give: 7203
+    max: 1
+- mob: 6316
+  room: 6330
+  max: 1
+- mob: 6317
+  room: 6340
+  max: 1
+- door: 6392
+  dir: north
+  state: locked
+- door: 6399
+  dir: south
+  state: locked

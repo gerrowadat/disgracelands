@@ -1,0 +1,12 @@
+FOLLOW
+
+Usage: follow <leader>
+
+Use FOLLOW to automatically follow someone else.
+
+Examples:
+
+  > follow ras
+  > follow self
+
+See also: GROUP, SNEAK

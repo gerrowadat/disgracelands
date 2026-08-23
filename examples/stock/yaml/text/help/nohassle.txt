@@ -1,0 +1,5 @@
+NOHASSLE
+
+Usage: nohassle
+
+Toggles a flag to prevent aggressive monsters from attacking.

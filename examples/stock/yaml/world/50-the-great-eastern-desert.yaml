@@ -1,0 +1,2826 @@
+schema: dl/world@1
+zone:
+  vnum: 50
+  name: The Great Eastern Desert
+  range:
+  - 5000
+  - 5099
+  lifespan: 30
+  reset: always
+rooms:
+- vnum: 5001
+  name: A Long Tunnel
+  sector: water_noswim
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You encounter some rapids as you enter this tunnel cut out of
+    the mountains by the river.
+  exits:
+    east:
+      to: 5002
+      key: -1
+    west:
+      to: 3205
+      desc: |
+            There appear to be some bars here, making passage to the west
+            difficult.
+      key: -1
+- vnum: 5002
+  name: A Long Tunnel
+  sector: water_noswim
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       The tunnel branches off north.
+  exits:
+    north:
+      to: 5008
+      key: -1
+    east:
+      to: 5003
+      key: -1
+    west:
+      to: 5001
+      key: -1
+- vnum: 5003
+  name: A Long Tunnel
+  sector: water_noswim
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       The tunnel branches off south.
+  exits:
+    east:
+      to: 5004
+      key: -1
+    south:
+      to: 5017
+      key: -1
+    west:
+      to: 5002
+      key: -1
+- vnum: 5004
+  name: A Tunnel Intersection
+  sector: water_noswim
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       The tunnel branches off to the north and south.
+  exits:
+    north:
+      to: 5643
+      key: -1
+    east:
+      to: 5005
+      key: -1
+    south:
+      to: 5018
+      key: -1
+    west:
+      to: 5003
+      key: -1
+- vnum: 5005
+  name: An Underground Lake
+  sector: water_noswim
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are floating on a jet-black underground lake fed by dripping
+    water and lime from above.  The tunnel continues to the east and the
+    river leads back west.  Leading upwards to the northwest is a roughly
+    hewn hallway.
+  exits:
+    north:
+      to: 5671
+      key: -1
+    east:
+      to: 5006
+      key: -1
+    south:
+      to: 5023
+      key: -1
+    west:
+      to: 5004
+      key: -1
+- vnum: 5006
+  name: A Long Narrow Tunnel
+  sector: mountains
+  flags:
+  - dark
+  - indoors
+  - tunnel
+  desc: |2
+       The tunnel rises sharply to the east.  Another narrow tunnel
+    leads away to the north.
+  exits:
+    north:
+      to: 5016
+      key: -1
+    east:
+      to: 5007
+      key: -1
+    west:
+      to: 5005
+      key: -1
+- vnum: 5007
+  name: A Wide Tunnel
+  sector: mountains
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       The tunnel continues east and west.  To the east the tunnel dives
+    down into a bright light.  A small passage way opens to the north.
+  exits:
+    east:
+      to: 5026
+      key: -1
+    west:
+      to: 5006
+      key: -1
+- vnum: 5008
+  name: The Cave-In
+  sector: mountains
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You stand at the edge of a large pile of rubble created from the last
+    rockslide.
+  exits:
+    south:
+      to: 5002
+      key: -1
+    down:
+      to: 5009
+      desc: |
+            You can easily slide down the rocks without getting hurt.
+      key: -1
+- vnum: 5009
+  name: At The Foot Of The Rubble
+  sector: mountains
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are at the bottom of a large pile of rubble.  A tunnel branches
+    off to the north and east.
+  exits:
+    north:
+      to: 5010
+      key: -1
+    east:
+      to: 5012
+      key: -1
+    up:
+      to: 5008
+      key: -1
+- vnum: 5010
+  name: A Cave Entrance
+  sector: mountains
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You stand in the middle of a large and beautiful cave.  A path leads
+    deeper into the darkness.
+  exits:
+    south:
+      to: 5009
+      key: -1
+    down:
+      to: 5011
+      desc: |
+            You look down into the cave.  Bones are strewn about everywhere.
+      key: -1
+- vnum: 5011
+  name: A Giant Cave
+  sector: mountains
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       This cavern overwhelms you.  The walls and ceiling seem miles away.
+    Bones of previous adventurers lie strewn on the cavern floor.  There is
+    a passage that spirals downwards in the northeast corner of the cavern.
+  exits:
+    up:
+      to: 5010
+      key: -1
+    down:
+      to: 5100
+      desc: |
+            The passageway spirals down into the gloom.
+      key: -1
+- vnum: 5012
+  name: A Narrow Bend
+  sector: mountains
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       The tunnel turns to the south and west.
+  exits:
+    south:
+      to: 5013
+      key: -1
+    west:
+      to: 5009
+      key: -1
+- vnum: 5013
+  name: A Large Cave
+  sector: mountains
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are standing in a large cave.  Many furs are spread out on the floor.
+  exits:
+    north:
+      to: 5012
+      key: -1
+    east:
+      to: 5014
+      key: -1
+- vnum: 5014
+  name: A Damp Hallway
+  sector: mountains
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       The walls here are extremely damp, as well as the floor.
+  exits:
+    east:
+      to: 5015
+      desc: |
+            You hear drops of water.
+      key: -1
+    west:
+      to: 5013
+      key: -1
+- vnum: 5015
+  name: An Underground Pool
+  sector: water_swim
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are wading in a knee deep pool of lime-water.
+  exits:
+    east:
+      to: 5016
+      key: -1
+    west:
+      to: 5014
+      key: -1
+- vnum: 5016
+  name: A Damp Hallway
+  sector: mountains
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       The walls of the tunnel are extremely damp here.  The tunnel
+    leads sharply upwards to the south as it starts to get narrow.
+  exits:
+    south:
+      to: 5006
+      key: -1
+    west:
+      to: 5015
+      desc: |
+            You hear drops of water.
+      key: -1
+- vnum: 5017
+  name: A Narrow Crawlway
+  sector: mountains
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       This crawlway is just big enough for a human to crawl through or a
+    halfling to walk through.
+  exits:
+    north:
+      to: 5003
+      key: -1
+    east:
+      to: 5018
+      key: -1
+    south:
+      to: 5019
+      desc: |
+            You smell the fragrant odor of fungus.
+      key: -1
+- vnum: 5018
+  name: A Large Cavern
+  sector: mountains
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You have entered a very large cavern.  The rock formations would amaze
+    almost any dwarf.
+  exits:
+    north:
+      to: 5004
+      key: -1
+    west:
+      to: 5017
+      key: -1
+- vnum: 5019
+  name: A Fungus Patch
+  sector: mountains
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       As you walk through the fungus patch, you are shot at by many millions of
+    spores.  You can hardly breathe.
+  exits:
+    north:
+      to: 5017
+      key: -1
+    east:
+      to: 5020
+      desc: |
+            The fragrant smell of fungus spores continues to the east.
+      key: -1
+- vnum: 5020
+  name: The Fungus Path
+  sector: mountains
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       As you walk along the path, millions of spores are shot at you.  It is
+    difficult to breathe.
+  exits:
+    south:
+      to: 5021
+      desc: |
+            A giant mushroom temple stands to the south.
+      key: -1
+    west:
+      to: 5019
+      desc: |
+            The fragrant smell of spores continues to the west.
+      key: -1
+- vnum: 5021
+  name: The Fungus Temple
+  sector: mountains
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You find yourself standing inside of a giant mushroom.  The inside
+    is decorated in the fashion of a temple.
+  exits:
+    north:
+      to: 5020
+      key: -1
+    east:
+      to: 5022
+      key: -1
+- vnum: 5022
+  name: A Sloping Passage
+  sector: mountains
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You follow a path sloping down from the fungus temple.
+  exits:
+    north:
+      to: 5023
+      key: -1
+    south:
+      to: 5021
+      key: -1
+- vnum: 5023
+  name: A Sloping Passage
+  sector: mountains
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are on a path that gently slopes up from the underground pool.
+  exits:
+    north:
+      to: 5005
+      desc: |
+            You hear sounds of trickling water.
+      key: -1
+    south:
+      to: 5022
+      key: -1
+- vnum: 5024
+  name: The Great Eastern Desert
+  sector: field
+  desc: |2
+       A vast desert stretches for miles, the sand constantly shifting around
+    you.  A pyramid lies to the east and a snow-capped mountain range to the 
+    west.
+  exits:
+    north:
+      to: 5030
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    east:
+      to: 5034
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    south:
+      to: 5025
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+- vnum: 5025
+  name: The Great Eastern Desert
+  sector: field
+  desc: |2
+       A vast desert stretches for miles, the sands constantly shifting around  
+    you.  A pyramid lies to the east and a snow-capped mountain range to the 
+    west.
+  exits:
+    north:
+      to: 5024
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    east:
+      to: 5031
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    south:
+      to: 5026
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+- vnum: 5026
+  name: The Great Eastern Desert
+  sector: field
+  desc: |2
+       A vast desert stretches for miles, the sands constantly shifting around  
+    you.  A pyramid lies to the east and a snow-capped mountain range to the
+    west.  The hole which you tumbled out of is too high for you to reach.
+  exits:
+    north:
+      to: 5025
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    east:
+      to: 5036
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    south:
+      to: 5027
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+- vnum: 5027
+  name: The Great Eastern Desert
+  sector: field
+  desc: |2
+       A vast desert stretches for miles, the sands constantly shifting around  
+    you.  A pyramid lies to the east and a snow-capped mountain range to the
+    west.
+  exits:
+    north:
+      to: 5026
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    east:
+      to: 5033
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    south:
+      to: 5028
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+- vnum: 5028
+  name: The Great Eastern Desert
+  sector: field
+  desc: |2
+       A vast desert stretches for miles, the sands constantly shifting around  
+    you.  A pyramid lies to the north-east and a snow-capped mountain range to
+    the west.  You spy a narrow dirt trail leading away to the west into the
+    foothills.
+  exits:
+    north:
+      to: 5027
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    east:
+      to: 5033
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    south:
+      to: 5029
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    west:
+      to: 12068
+      desc: |
+            A small dirt trail leads off to the west where it joins a large clay road
+            some distance away.
+      key: -1
+- vnum: 5029
+  name: The Great Eastern Desert
+  sector: field
+  desc: |2
+       A vast desert stretches for miles, the sands constantly shifting around  
+    you.  A pyramid lies to the north-east and a snow-capped mountain range to
+    the west.
+  exits:
+    north:
+      to: 5028
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    east:
+      to: 5037
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    south:
+      to: 5044
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+- vnum: 5030
+  name: A Small Oasis
+  sector: field
+  desc: |2
+       You stand beside a small pool of crystal-blue water bathed in the
+    shade of a few scarce palm trees.  To the north you see a small
+    encampment stopped for the day.
+  exits:
+    north:
+      to: 5056
+      desc: |
+            You see three tents and some camels hitched to a stake.  Shadows moving 
+            across the tents suggest activity.
+      key: -1
+    east:
+      to: 5036
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    south:
+      to: 5032
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    west:
+      to: 5025
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+- vnum: 5031
+  name: The Great Eastern Desert
+  sector: field
+  desc: |2
+       A vast desert stretches for miles, the sands constantly shifting around  
+    you.  A pyramid lies to the east.
+  exits:
+    north:
+      to: 5031
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    east:
+      to: 5031
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    south:
+      to: 5032
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    west:
+      to: 5024
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+- vnum: 5032
+  name: The Great Eastern Desert
+  sector: field
+  desc: |2
+       A vast desert stretches for miles, the sands constantly shifting around  
+    you.  A pyramid lies to the east.
+  exits:
+    north:
+      to: 5035
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    east:
+      to: 5036
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    south:
+      to: 5033
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    west:
+      to: 5032
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+- vnum: 5033
+  name: The Great Eastern Desert
+  sector: field
+  desc: |2
+       A vast desert stretches for miles, the sands constantly shifting around  
+    you.  A pyramid lies to the north-east.
+  exits:
+    north:
+      to: 5037
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    east:
+      to: 5037
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    south:
+      to: 5043
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    west:
+      to: 5028
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+- vnum: 5034
+  name: The Great Eastern Desert
+  sector: field
+  desc: |2
+       A vast desert stretches for miles, the sands constantly shifting around  
+    you.  A pyramid lies to the south-east.
+  exits:
+    north:
+      to: 5038
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    east:
+      to: 5035
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    south:
+      to: 5034
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    west:
+      to: 5035
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+- vnum: 5035
+  name: The Great Eastern Desert
+  sector: field
+  desc: |2
+       A vast desert stretches for miles, the sands constantly shifting around  
+    you.  A pyramid lies to the east, it looks enormous, even from this distance.
+  exits:
+    north:
+      to: 5039
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    east:
+      to: 5300
+      desc: |
+            Even from here, you can sense a great evil residing within the pyramid
+            protruding from the sand to the east.
+      key: -1
+    south:
+      to: 5032
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    west:
+      to: 5034
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+- vnum: 5036
+  name: The Great Eastern Desert
+  sector: field
+  desc: |2
+       A vast desert stretches for miles, the sands constantly shifting around  
+    you.  A pyramid lies to the north-east.
+  exits:
+    north:
+      to: 5035
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    east:
+      to: 5041
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    south:
+      to: 5032
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    west:
+      to: 5030
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+- vnum: 5037
+  name: The Great Eastern Desert
+  sector: field
+  desc: |2
+       A vast desert stretches for miles, the sands constantly shifting around  
+    you.  A pyramid lies to the north-east.
+  exits:
+    north:
+      to: 5048
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    east:
+      to: 5033
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    south:
+      to: 5042
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    west:
+      to: 5033
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+- vnum: 5038
+  name: The Great Eastern Desert
+  sector: field
+  desc: |2
+       A vast desert stretches for miles, the sands constantly shifting around  
+    you.  A pyramid lies to the south.
+  exits:
+    north:
+      to: 5046
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    east:
+      to: 5045
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    south:
+      to: 5040
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    west:
+      to: 5034
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+- vnum: 5039
+  name: The Great Eastern Desert
+  sector: field
+  desc: |2
+       A vast desert stretches for miles, the sands constantly shifting
+    around you.  A pyramid lies to the south.  The gates of a city lie a
+    short distance off to the north.
+  exits:
+    north:
+      to: 5411
+      desc: |
+            Some city gates stand off to the north.
+      key: -1
+    east:
+      to: 5039
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    south:
+      to: 5048
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    west:
+      to: 5039
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+- vnum: 5040
+  name: The Great Eastern Desert
+  sector: field
+  desc: |2
+       A vast desert stretches for miles, the sands constantly shifting around  
+    you.  You are standing near a gigantic pyramid located a couple hundred
+    meters west of you.  From here you can sense the great evil which resides
+    within the massive structure.
+  exits:
+    north:
+      to: 5036
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    east:
+      to: 5049
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    south:
+      to: 5041
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    west:
+      to: 5300
+      desc: |
+            The pyramid can be seen across the sands to the west.
+      key: -1
+- vnum: 5041
+  name: The Great Eastern Desert
+  sector: field
+  desc: |2
+       A vast desert stretches for miles, the sands constantly shifting around  
+    you.  A pyramid lies to the north.
+  exits:
+    north:
+      to: 5040
+      desc: |
+            Even from here, you can sense a great evil residing within the pyramid
+            protruding from the sand to the north.
+      key: -1
+    east:
+      to: 5048
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    south:
+      to: 5041
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    west:
+      to: 5037
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+- vnum: 5042
+  name: The Great Eastern Desert
+  sector: field
+  desc: |2
+       A vast desert stretches for miles, the sands constantly shifting around  
+    you.  A pyramid lies to the north.
+  exits:
+    north:
+      to: 5049
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    east:
+      to: 5055
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    south:
+      to: 5043
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    west:
+      to: 5041
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+- vnum: 5043
+  name: The Great Eastern Desert
+  sector: field
+  desc: |2
+       A vast desert stretches for miles, the sands constantly shifting around  
+    you.  A pyramid lies to the north.
+  exits:
+    north:
+      to: 5042
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    east:
+      to: 5055
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    south:
+      to: 5044
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    west:
+      to: 5033
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+- vnum: 5044
+  name: The Great Eastern Desert
+  sector: field
+  desc: |2
+       A vast desert stretches for miles, the sands constantly shifting around  
+    you.  A pyramid lies to the north and a ruined city to the west.
+  exits:
+    north:
+      to: 5050
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    east:
+      to: 5055
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    south:
+      to: 5029
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    west:
+      to: 5200
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+- vnum: 5045
+  name: The Great Eastern Desert
+  sector: field
+  desc: |2
+       A vast desert stretches for miles, the sands constantly shifting around  
+    you.  A pyramid lies to the south.
+  exits:
+    north:
+      to: 5045
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    east:
+      to: 5052
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    south:
+      to: 5045
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    west:
+      to: 5038
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+- vnum: 5046
+  name: The Great Eastern Desert
+  sector: field
+  desc: |2
+       A vast desert stretches for miles, the sands constantly shifting around  
+    you.  A pyramid lies to the south-west.
+  exits:
+    north:
+      to: 5038
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    east:
+      to: 5047
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    south:
+      to: 5047
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    west:
+      to: 5039
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+- vnum: 5047
+  name: The Great Eastern Desert
+  sector: field
+  desc: |2
+       A vast desert stretches for miles, the sands constantly shifting around  
+    you.  A pyramid lies to the west.
+  exits:
+    north:
+      to: 5046
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    east:
+      to: 5051
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    south:
+      to: 5053
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    west:
+      to: 5040
+      desc: |
+            Even from here, you can sense a great evil residing within the pyramid
+            protruding from the sand to the west.
+      key: -1
+- vnum: 5048
+  name: The Great Eastern Desert
+  sector: field
+  desc: |2
+       A vast desert stretches for miles, the sands constantly shifting around  
+    you.  A pyramid lies to the west.
+  exits:
+    north:
+      to: 5039
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    east:
+      to: 5048
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    south:
+      to: 5053
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    west:
+      to: 5041
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+- vnum: 5049
+  name: The Great Eastern Desert
+  sector: field
+  desc: |2
+       A vast desert stretches for miles, the sands constantly shifting around  
+    you.  A pyramid lies to the north-west.
+  exits:
+    north:
+      to: 5053
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    east:
+      to: 5054
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    south:
+      to: 5050
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    west:
+      to: 5042
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+- vnum: 5050
+  name: The Great Eastern Desert
+  sector: field
+  desc: |2
+       A vast desert stretches for miles, the sands constantly shifting around  
+    you.  A pyramid lies to the north.
+  exits:
+    north:
+      to: 5300
+      desc: |
+            Sand as far as the eye can see... and a pyramid in the distance.
+      key: -1
+    east:
+      to: 5054
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    south:
+      to: 5044
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    west:
+      to: 5042
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+- vnum: 5051
+  name: The Great Eastern Desert
+  sector: field
+  desc: |2
+       A vast desert stretches for miles, the sands constantly shifting around  
+    you.  A pyramid lies to the south-west and a deep canyon to the east.
+  exits:
+    north:
+      to: 5051
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    south:
+      to: 5052
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    west:
+      to: 5047
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+- vnum: 5052
+  name: The Great Eastern Desert
+  sector: field
+  desc: |2
+       A vast desert stretches for miles, the sands constantly shifting around  
+    you.  A pyramid lies to the south-west and a deep canyon to the east.  Just
+    below you can make out a tiny ledge.
+  exits:
+    north:
+      to: 5051
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    south:
+      to: 5053
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    west:
+      to: 5045
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    down:
+      to: 5063
+      key: -1
+- vnum: 5053
+  name: The Great Eastern Desert
+  sector: field
+  desc: |2
+       A vast desert stretches for miles, the sands constantly shifting around  
+    you.  A pyramid lies to the west and a deep canyon to the east.
+  exits:
+    north:
+      to: 5052
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    east:
+      to: 5062
+      desc: |
+            A rickety rope bridge stretches across the canyon... it doesn't look too safe.
+      key: -1
+    south:
+      to: 5054
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    west:
+      to: 5049
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+- vnum: 5054
+  name: The Great Eastern Desert
+  sector: field
+  desc: |2
+       A vast desert stretches for miles, the sands constantly shifting around  
+    you.  A pyramid lies to the west and a deep canyon to the east.
+  exits:
+    north:
+      to: 5053
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    south:
+      to: 5055
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    west:
+      to: 5050
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+- vnum: 5055
+  name: The Great Eastern Desert
+  sector: field
+  desc: |2
+       A vast desert stretches for miles, the sands constantly shifting around  
+    you.  A pyramid lies to the north-west and a deep canyon to the east.
+  exits:
+    north:
+      to: 5054
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    south:
+      to: 5055
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    west:
+      to: 5043
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+- vnum: 5056
+  name: A Nomad Camp
+  sector: field
+  flags:
+  - no_track
+  desc: |2
+       This small group of desert nomads has stopped for the day to rest
+    and refresh themselves beside this beautiful oasis.  Three tents and some
+    camels make up the party.  From within two of the tents you hear muffled
+    voices, obviously surprised at your visit.
+  exits:
+    north:
+      to: 5058
+      desc: |
+            Some camels are tied up to a mass of stakes plugged into the ground.
+      key: -1
+    east:
+      to: 5057
+      desc: |
+            You see inside one of the tents a huddled mass of people, probably slaves.
+      key: -1
+    south:
+      to: 5030
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+    west:
+      to: 5025
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+- vnum: 5057
+  name: Inside A Small Tent
+  sector: field
+  flags:
+  - indoors
+  - no_track
+  desc: |2
+       This is a small and simple tent with few possessions in sight.  Lying
+    here and there are young-looking men and women, possibly slaves to the
+    leader of this band.
+  exits:
+    west:
+      to: 5056
+      desc: |
+            You see the center of the nomad camp.
+      key: -1
+- vnum: 5058
+  name: Beside The Camels
+  sector: field
+  flags:
+  - no_track
+  desc: |2
+       Here stand about ten camels, all hitched to some stakes plugged into 
+    the ground.  To the east you see a small tent while to the north you see a 
+    larger, fancier tent.
+  exits:
+    north:
+      to: 5060
+      desc: |
+            This tent seems to be the temporary abode of the nomad leader.  You make a
+            mental note to visit it before you leave.
+      key: -1
+    east:
+      to: 5059
+      desc: |
+            In this tent there are very large men, all carrying weapons.
+      key: -1
+    south:
+      to: 5056
+      desc: |
+            You see the center of the nomad camp.
+      key: -1
+    west:
+      to: 5024
+      desc: |
+            Sand as far as the eye can see.
+      key: -1
+- vnum: 5059
+  name: The Warriors' Tent
+  sector: field
+  flags:
+  - indoors
+  - no_track
+  desc: |2
+       This tent has a few furnishings, but mainly it holds the band's 
+    protectors.  They all stare at you coldly as you enter.
+  exits:
+    west:
+      to: 5058
+      desc: |
+            Outside you see some peaceful camels.
+      key: -1
+- vnum: 5060
+  name: The Main Tent
+  sector: field
+  flags:
+  - indoors
+  - no_track
+  desc: |2
+       This tent is as lavishly decorated on the inside as it is on the
+    outside.  A fancy carpet lies on the sand and numerous baskets line the
+    walls.
+  exits:
+    east:
+      to: 5061
+      key: -1
+    south:
+      to: 5058
+      desc: |
+            You see some peaceful camels.
+      key: -1
+- vnum: 5061
+  name: The Main Tent
+  sector: field
+  flags:
+  - indoors
+  - no_track
+  desc: |2
+       This is where the leader of this band of nomads resides.  He is 
+    definitely rich as you inspect the tapestries, baskets, and a few
+    paintings as well.
+  exits:
+    west:
+      to: 5060
+      desc: |
+            You see the entrance to this tent.
+      key: -1
+- vnum: 5062
+  name: The Rickety Rope Bridge
+  sector: mountains
+  flags:
+  - death
+  - indoors
+  desc: |2
+       You carefully begin to walk across the bridge, but suddenly the rope
+    breaks and you fall...
+                         ... and fall
+                                and fall
+                                   and fall
+                                        ... to your death on the rocks below.
+  exits:
+    west:
+      to: 5053
+      key: -1
+- vnum: 5063
+  name: The Wind-Swept Ledge
+  sector: mountains
+  desc: |2
+       Being very careful not to lose your balance, you look around and
+    find that this canyon is about a half a kilometer deep.  To the west is
+    a dark cave leading under the desert sands and above you a rope bridge
+    spans the gap.
+  exits:
+    west:
+      to: 5064
+      key: -1
+    up:
+      to: 5052
+      desc: |
+            The desert sands blow down in your face.
+      key: -1
+- vnum: 5064
+  name: The Cave Mouth
+  sector: mountains
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       The air in here is MUCH cooler than outside.  From the west you hear 
+    strange sounds, but can see nothing.  The cave slopes down into the 
+    darkness.
+  exits:
+    east:
+      to: 5063
+      desc: |
+            Outside is lighter and very windy.
+      key: -1
+    west:
+      to: 5065
+      key: -1
+- vnum: 5065
+  name: The Mysterious Lair
+  sector: mountains
+  flags:
+  - dark
+  - indoors
+  - no_track
+  - no_magic
+  desc: |2
+       You have stumbled upon the home of something.  From the treasure
+    haphazardly strewn about and the rotting carcasses, you would guess
+    that this is a dragon's lair.  As to what type, you can't really say.
+    The cave narrows out into a tunnel to the west.
+  exits:
+    east:
+      to: 5064
+      key: -1
+    west:
+      to: 5066
+      key: -1
+- vnum: 5066
+  name: A Wide Tunnel
+  sector: mountains
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       This tunnel seems to go on forever into the darkness.  You carefully
+    feel your way along the walls.
+  exits:
+    east:
+      to: 5065
+      key: -1
+    west:
+      to: 5067
+      key: -1
+- vnum: 5067
+  name: A Narrower Tunnel
+  sector: mountains
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       The tunnel becomes very narrow and you fight to squeeze your way through.
+    The floor seems to level off a little.
+  exits:
+    east:
+      to: 5066
+      key: -1
+    south:
+      to: 5068
+      key: -1
+- vnum: 5068
+  name: A Narrow Crack
+  sector: mountains
+  flags:
+  - dark
+  - indoors
+  - tunnel
+  desc: |2
+       This part of the tunnel is the hardest to move through as the walls
+    move in to meet you.
+  exits:
+    north:
+      to: 5067
+      key: -1
+    west:
+      to: 5069
+      key: -1
+- vnum: 5069
+  name: A Small Cavern
+  sector: mountains
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       It is dark and damp and bats hang from the ceiling.  A narrow crack is
+    in the east wall.  The floor now slopes upwards.
+  exits:
+    east:
+      to: 5068
+      key: -1
+    west:
+      to: 5070
+      key: -1
+- vnum: 5070
+  name: A Small Shaft
+  sector: mountains
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       From within this shaft you can see a narrow hole in the roof just
+    large enough for one person.  Back east is the cavern.
+  exits:
+    east:
+      to: 5069
+      key: -1
+    up:
+      to: 5009
+      key: -1
+mobiles:
+- vnum: 5000
+  keywords:
+  - dervish
+  - raggity
+  short: the dervish
+  long: |
+    A raggity dervish walks on aimlessly.
+  desc: |
+    Dressed in loose fitting rags, this man looks like he could use some rest.
+  act:
+  - scavenger
+  - stay_zone
+  - wimpy
+  affected:
+  - sneak
+  - hide
+  alignment: 900
+  level: 5
+  thac0: 15
+  ac: 5
+  hp: 1d10+60
+  damage: 2d4
+  gold: 70
+  exp: 1000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 5001
+  keywords:
+  - dervish
+  - large
+  short: the dervish
+  long: |
+    A large dervish watches for signs of trouble.
+  desc: |
+    Dressed in loose fitting rags, this man looks like he could use LOTS of
+    rest.
+  act:
+  - aggressive
+  - stay_zone
+  affected:
+  - sneak
+  - hide
+  alignment: 650
+  level: 8
+  thac0: 12
+  ac: 3
+  hp: 2d6+100
+  damage: 2d6+1
+  gold: 150
+  exp: 7000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 5002
+  keywords:
+  - snake
+  - coral
+  short: the coral snake
+  long: |
+    A brightly colored snake slithers along the sands.
+  desc: |
+    This relatively harmless snake has bright alternating bands of red, yellow
+    and black.
+  act:
+  - stay_zone
+  alignment: -10
+  level: 4
+  thac0: 17
+  ac: 4
+  hp: 1d6+40
+  damage: 1d9
+  gold: 0
+  exp: 600
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 5003
+  keywords:
+  - scorpion
+  - small
+  short: the small scorpion
+  long: |
+    A small, red scorpion scuttles away at your approach.
+  desc: |
+    The little tail is mighty dangerous for such a small creature.
+  act:
+  - stay_zone
+  alignment: -50
+  level: 3
+  thac0: 17
+  ac: 1
+  hp: 1d6+40
+  damage: 1d8
+  gold: 0
+  exp: 500
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 5004
+  keywords:
+  - worm
+  - giant
+  - purple
+  short: the sand worm
+  long: |
+    A giant, purple sand worm thrusts up out of the sand and attacks!
+  desc: |
+    He's big, mean, and purple.  Watch out!
+  act:
+  - spec
+  - sentinel
+  - aware
+  - aggressive
+  - memory
+  - no_sleep
+  - no_blind
+  affected:
+  - detect_invis
+  - sense_life
+  - infravision
+  alignment: -300
+  level: 21
+  thac0: 0
+  ac: 3
+  hp: 2d10+320
+  damage: 3d7+14
+  gold: 2540
+  exp: 65000
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 5005
+  keywords:
+  - dragon
+  - brass
+  short: the brass dragon
+  long: |
+    A very large brass dragon steps out of the darkness and says 'Hello.'
+  desc: |
+    Then adds to it, 'Prepare to die, have a nice day!'
+  act:
+  - spec
+  - sentinel
+  - aware
+  - aggressive
+  - no_bash
+  affected:
+  - detect_invis
+  - sanctuary
+  - infravision
+  - no_track
+  alignment: 950
+  level: 20
+  thac0: 1
+  ac: 0
+  hp: 2d6+500
+  damage: 3d6+4
+  gold: 1500
+  exp: 45000
+  position: standing
+  default_position: standing
+  sex: female
+- vnum: 5006
+  keywords:
+  - nomad
+  - leader
+  short: the nomad leader
+  long: |
+    The nomad leader sits silently in prayer.
+  desc: |
+    He is clad in silk robes lined with gold thread. At his side is a large,
+    engraved cutlass.  He has an especially haughty air about him.
+  act:
+  - sentinel
+  - wimpy
+  - memory
+  affected:
+  - detect_invis
+  alignment: 950
+  level: 14
+  thac0: 7
+  ac: 0
+  hp: 2d6+170
+  damage: 2d8+5
+  gold: 1000
+  exp: 18000
+  position: sitting
+  default_position: sitting
+  sex: male
+- vnum: 5007
+  keywords:
+  - nomad
+  - commander
+  short: the nomad commander
+  long: |
+    The nomad commander stands here staring at you suspiciously.
+  desc: |
+    This is the nomad leader's second in command.  His clothes are richly woven
+    of silk and gold thread.  A nasty cutlass hangs at his side.
+  act:
+  - sentinel
+  - wimpy
+  - memory
+  alignment: 900
+  level: 12
+  thac0: 8
+  ac: 1
+  hp: 2d6+135
+  damage: 2d5+3
+  gold: 600
+  exp: 14000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 5008
+  keywords:
+  - nomad
+  - warrior
+  short: the nomad warrior
+  long: |
+    A proud nomad warrior stands here.
+  desc: |
+    This warrior is dressed in typical nomad clothing and looks quite mean.
+  act:
+  - sentinel
+  alignment: 700
+  level: 10
+  thac0: 11
+  ac: 2
+  hp: 1d6+105
+  damage: 2d6+1
+  gold: 300
+  exp: 7000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 5009
+  keywords:
+  - slave
+  - young
+  short: the slave
+  long: |
+    A young slave sits here staring at you with pleading eyes.
+  desc: |
+    She looks quite thin and weak.
+  act:
+  - sentinel
+  - wimpy
+  alignment: 1000
+  level: 3
+  thac0: 18
+  ac: 9
+  hp: 1d4+25
+  damage: 1d5
+  gold: 0
+  exp: 300
+  position: resting
+  default_position: resting
+  sex: female
+- vnum: 5010
+  keywords:
+  - dracolich
+  - lich
+  short: the dracolich
+  long: |
+    A pile of bones rises up to form a skeletal dracolich.
+  desc: |
+    The dracolich is now only bone with pieces of flesh hanging from it.
+    Obviously it no longer fears death.
+  act:
+  - spec
+  - sentinel
+  - aware
+  - aggressive
+  - memory
+  - no_charm
+  - no_summon
+  - no_sleep
+  - no_bash
+  affected:
+  - invisible
+  - detect_invis
+  - sense_life
+  - sanctuary
+  - infravision
+  - no_track
+  alignment: -1000
+  level: 24
+  thac0: 0
+  ac: -6
+  hp: 1d12+520
+  damage: 3d5+35
+  gold: 75000
+  exp: 125000
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 5011
+  keywords:
+  - drider
+  short: the drider
+  long: |
+    The drider looks at you viciously while it draws its sword.
+  desc: |
+    This half-spider, half-drow creature is a formidable opponent.
+  act:
+  - aggressive
+  - stay_zone
+  affected:
+  - detect_invis
+  - infravision
+  - no_track
+  alignment: -1000
+  level: 8
+  thac0: 12
+  ac: 2
+  hp: 1d6+95
+  damage: 2d6+2
+  gold: 200
+  exp: 4000
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 5012
+  keywords:
+  - duergar
+  - dark
+  - dwarf
+  short: the dark dwarf
+  long: |
+    A duergar is here mining precious stones with his pick.
+  desc: |
+    The duergar could probably crush your head as easily as he does those
+    rocks.
+  act:
+  - aggressive
+  - stay_zone
+  affected:
+  - detect_invis
+  - infravision
+  - no_track
+  alignment: -850
+  level: 5
+  thac0: 16
+  ac: 3
+  hp: 1d11+60
+  damage: 2d5+1
+  gold: 170
+  exp: 1250
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 5013
+  keywords:
+  - myconoid
+  short: the myconoid
+  long: |
+    A myconoid lumbers along peacefully.
+  desc: |
+    The myconoid looks something like a giant mushroom (and probably has the
+    same effect).
+  act:
+  - stay_zone
+  - wimpy
+  affected:
+  - detect_invis
+  - infravision
+  alignment: 850
+  level: 6
+  thac0: 15
+  ac: 4
+  hp: 1d12+68
+  damage: 2d7
+  gold: 50
+  exp: 600
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 5014
+  keywords:
+  - myconoid
+  - shaman
+  short: the myconoid shaman
+  long: |
+    A rather large myconoid stands here chanting in a strange tongue.
+  desc: |
+    The shaman shoots spores into the air.
+  act:
+  - spec
+  - scavenger
+  - aggr_evil
+  - memory
+  affected:
+  - detect_invis
+  - sanctuary
+  - infravision
+  alignment: 950
+  level: 14
+  thac0: 7
+  ac: 1
+  hp: 1d12+173
+  damage: 2d7+2
+  gold: 2500
+  exp: 18000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 5015
+  keywords:
+  - dustdigger
+  - oasis
+  short: the dustdigger
+  long: |
+    A small oasis invites you to dive in.
+  desc: |
+    Looking a little closer at this oasis, you begin to wonder why
+    it seems to be moving about...
+  act:
+  - sentinel
+  - scavenger
+  - aggressive
+  - no_bash
+  - no_blind
+  alignment: -200
+  level: 7
+  thac0: 10
+  ac: 1
+  hp: 1d6+85
+  damage: 3d4
+  gold: 450
+  exp: 2250
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 5017
+  keywords:
+  - camel
+  short: the camel
+  long: |
+    A very dangerous creature, a camel, snorts at you.
+  desc: |
+    It is advisable not to mess with this creature.  After all, you
+    have heard many a horror story about experiences with camels.
+    Bad experiences.
+  act:
+  - sentinel
+  - aggressive
+  - no_bash
+  alignment: -351
+  level: 5
+  thac0: 12
+  ac: 6
+  hp: 1d6+60
+  damage: 2d4+3
+  gold: 270
+  exp: 900
+  position: standing
+  default_position: standing
+  sex: neutral
+objects:
+- vnum: 5000
+  keywords:
+  - pick
+  - mining
+  short: a small mining pick
+  desc: A small mining pick made of what appears to be silver lies on the ground.
+  type: weapon
+  wear:
+  - take
+  - wield
+  flags:
+  - anti_good
+  weapon:
+    dice: 1d9
+    damage_type: pierce
+  weight: 3
+  cost: 600
+  rent: 500
+- vnum: 5001
+  keywords:
+  - suit
+  - mail
+  - banded
+  short: a glowing suit of banded mail
+  desc: A glowing suit of banded mail lies on the ground.
+  type: armor
+  wear:
+  - take
+  - body
+  flags:
+  - glow
+  - magic
+  armor:
+    ac_apply: 7
+  weight: 0
+  cost: 75000
+  rent: 20000
+  affects:
+  - location: dex
+    modifier: 2
+  - location: armor
+    modifier: -4
+- vnum: 5002
+  keywords:
+  - halberd
+  short: a halberd
+  desc: A mighty halberd lies against the wall.
+  type: weapon
+  wear:
+  - take
+  - wield
+  flags:
+  - magic
+  - bless
+  weapon:
+    dice: 3d5
+    damage_type: slash
+  weight: 16
+  cost: 12000
+  rent: 10000
+  affects:
+  - location: hitroll
+    modifier: 2
+  - location: damroll
+    modifier: 2
+- vnum: 5003
+  keywords:
+  - amulet
+  - mushroom
+  short: a mushroom amulet
+  desc: A mushroom-shaped amulet lies on the ground.
+  type: armor
+  wear:
+  - take
+  - neck
+  flags:
+  - magic
+  - anti_warrior
+  armor:
+    ac_apply: 0
+  weight: 2
+  cost: 1500
+  rent: 4000
+  affects:
+  - location: con
+    modifier: 2
+- vnum: 5005
+  keywords:
+  - bone
+  - leg
+  short: a large leg bone
+  desc: A large leg bone rests on the ground.
+  type: weapon
+  wear:
+  - take
+  - wield
+  weapon:
+    dice: 1d4
+    damage_type: pound
+  weight: 5
+  cost: 300
+  rent: 60
+- vnum: 5006
+  keywords:
+  - cactus
+  - cup
+  - water
+  short: a small cactus cup
+  desc: A small cactus cup lies on the ground.
+  type: drink_container
+  wear:
+  - take
+  drink:
+    capacity: 5
+    current: 5
+    liquid: water
+  weight: 6
+  cost: 30
+  rent: 5
+- vnum: 5007
+  keywords:
+  - basket
+  - wicker
+  - small
+  short: a small wicker basket
+  desc: A small wicker basket sits on the ground.
+  type: container
+  wear:
+  - take
+  container:
+    capacity: 100
+    closeable: true
+    closed: true
+    key: -1
+  weight: 50
+  cost: 5000
+  rent: 50
+- vnum: 5008
+  keywords:
+  - basket
+  - wicker
+  - small
+  short: a small wicker basket
+  desc: A small wicker basket sits on the ground.
+  type: container
+  wear:
+  - take
+  container:
+    capacity: 100
+    closeable: true
+    closed: true
+    key: -1
+  weight: 50
+  cost: 5000
+  rent: 50
+- vnum: 5009
+  keywords:
+  - basket
+  - wicker
+  - small
+  short: a small wicker basket
+  desc: A small wicker basket sits on the ground.
+  type: container
+  wear:
+  - take
+  container:
+    capacity: 100
+    closeable: true
+    closed: true
+    key: -1
+  weight: 50
+  cost: 5000
+  rent: 50
+- vnum: 5010
+  keywords:
+  - basket
+  - wicker
+  - small
+  short: a small wicker basket
+  desc: A small wicker basket sits on the ground.
+  type: container
+  container:
+    capacity: 100
+    closeable: true
+    closed: true
+    key: -1
+  weight: 50
+  cost: 5000
+  rent: 50
+- vnum: 5011
+  keywords:
+  - rope
+  - coil
+  short: a coil of rope
+  desc: A long coil of rope lies on the ground.
+  type: other
+  wear:
+  - take
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 12
+  cost: 450
+  rent: 45
+- vnum: 5012
+  keywords:
+  - stakes
+  - bundle
+  - bunch
+  short: a bunch of stakes
+  desc: A small bundle of stakes lies here.
+  type: weapon
+  wear:
+  - take
+  - wield
+  weapon:
+    dice: 1d2
+    damage_type: pierce
+  weight: 6
+  cost: 250
+  rent: 30
+- vnum: 5013
+  keywords:
+  - map
+  - tattered
+  - old
+  short: an old, tattered map
+  desc: An old, tattered, and much faded map lies here.
+  type: other
+  wear:
+  - take
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 1
+  cost: 300
+  rent: 20
+- vnum: 5014
+  keywords:
+  - turban
+  - padded
+  short: a thick padded turban
+  desc: A thick padded turban lies here.
+  type: armor
+  wear:
+  - take
+  - head
+  flags:
+  - magic
+  - no_drop
+  armor:
+    ac_apply: 0
+  weight: 15
+  cost: 4300
+  rent: 100
+  affects:
+  - location: armor
+    modifier: 1
+- vnum: 5015
+  keywords:
+  - coins
+  - treasure
+  short: a great pile of treasure
+  desc: A great, gleaming pile of treasure lies at your feet.
+  type: money
+  wear:
+  - take
+  values:
+  - 46270
+  - 0
+  - 0
+  - 0
+  weight: 0
+  cost: 0
+  rent: 0
+- vnum: 5016
+  keywords:
+  - sabre
+  - curved
+  - long
+  short: a long, curved sabre
+  desc: A long, curved sabre stands upright in the ground.
+  type: weapon
+  wear:
+  - take
+  - wield
+  flags:
+  - anti_neutral
+  weapon:
+    dice: 1d8
+    damage_type: slash
+  weight: 7
+  cost: 1050
+  rent: 200
+  affects:
+  - location: hitroll
+    modifier: 2
+- vnum: 5017
+  keywords:
+  - scimitar
+  - curved
+  short: a curved scimitar
+  desc: A curved scimitar lies at your feet.
+  type: weapon
+  wear:
+  - take
+  - wield
+  flags:
+  - anti_neutral
+  weapon:
+    dice: 1d7
+    damage_type: slash
+  weight: 6
+  cost: 600
+  rent: 150
+  affects:
+  - location: hitroll
+    modifier: 1
+- vnum: 5018
+  keywords:
+  - cutlass
+  - pointed
+  - long
+  short: a long, pointed cutlass
+  desc: A long, pointed cutlass lies here.
+  type: weapon
+  wear:
+  - take
+  - wield
+  flags:
+  - anti_neutral
+  weapon:
+    dice: 1d7
+    damage_type: slash
+  weight: 5
+  cost: 550
+  rent: 10
+- vnum: 5019
+  keywords:
+  - potion
+  - pink
+  short: a pink potion
+  desc: A pink potion stands here.
+  type: potion
+  wear:
+  - take
+  values:
+  - 25
+  - 33
+  - 17
+  - -1
+  weight: 6
+  cost: 600
+  rent: 100
+- vnum: 5020
+  keywords:
+  - wand
+  - platinum
+  short: a platinum wand
+  desc: A platinum wand lies here.
+  type: wand
+  wear:
+  - take
+  - hold
+  flags:
+  - hum
+  charges:
+    spell: magic missile
+    level: 30
+    max: 10
+    remaining: 10
+  weight: 8
+  cost: 1900
+  rent: 1000
+- vnum: 5021
+  keywords:
+  - bow
+  - golden
+  short: a golden bow
+  desc: A powerful golden bow lies here.
+  type: weapon
+  wear:
+  - take
+  - wield
+  flags:
+  - glow
+  - hum
+  - invisible
+  - magic
+  - bless
+  - anti_thief
+  weapon:
+    dice: 4d6
+    damage_type: blast
+  weight: 20
+  cost: 150000
+  rent: 20000
+- vnum: 5022
+  keywords:
+  - scroll
+  - encrypted
+  short: an encrypted scroll
+  desc: An encrypted scroll lies at your feet.
+  type: scroll
+  wear:
+  - take
+  values:
+  - 22
+  - 14
+  - 35
+  - 43
+  weight: 7
+  cost: 1500
+  rent: 500
+- vnum: 5023
+  keywords:
+  - chest
+  - iron
+  - bound
+  short: an iron bound chest
+  desc: An iron bound chest with a shiny lock sits here.
+  type: container
+  container:
+    capacity: 200
+    closeable: true
+    closed: true
+    locked: true
+    key: 5024
+  weight: 200
+  cost: 1000
+  rent: 0
+- vnum: 5024
+  keywords:
+  - key
+  - golden
+  short: a golden key
+  desc: A shiny golden key lies here.
+  type: key
+  wear:
+  - take
+  - hold
+  flags:
+  - no_rent
+  values:
+  - 10
+  - 0
+  - 0
+  - 0
+  weight: 1
+  cost: 150
+  rent: 0
+- vnum: 5025
+  keywords:
+  - bracelet
+  - copper
+  short: a copper bracelet
+  desc: A tarnished copper bracelet lies at your feet.
+  type: armor
+  wear:
+  - take
+  - wrist
+  flags:
+  - magic
+  - no_drop
+  armor:
+    ac_apply: -5
+  weight: 10
+  cost: 23000
+  rent: 2500
+  affects:
+  - location: max_hit
+    modifier: 10
+  - location: damroll
+    modifier: -4
+- vnum: 5026
+  keywords:
+  - ruby
+  - gem
+  short: a large ruby
+  desc: A large ruby lies on the ground, collecting dust.
+  type: treasure
+  wear:
+  - take
+  - hold
+  flags:
+  - magic
+  - no_drop
+  values:
+  - 20
+  - 0
+  - 0
+  - 0
+  weight: 9
+  cost: 4000
+  rent: 200
+- vnum: 5027
+  keywords:
+  - diamond
+  - gem
+  short: a glittering diamond
+  desc: A glittering diamond lies at your feet.
+  type: treasure
+  wear:
+  - take
+  - hold
+  flags:
+  - magic
+  values:
+  - 21
+  - 0
+  - 0
+  - 0
+  weight: 10
+  cost: 9500
+  rent: 200
+- vnum: 5028
+  keywords:
+  - sapphire
+  - gem
+  short: a brilliant sapphire
+  desc: A brilliant sapphire lies here, twinkling happily.
+  type: treasure
+  wear:
+  - take
+  - hold
+  flags:
+  - magic
+  values:
+  - 22
+  - 0
+  - 0
+  - 0
+  weight: 7
+  cost: 3500
+  rent: 200
+- vnum: 5029
+  keywords:
+  - lapis
+  - lazuli
+  - blue
+  - gem
+  short: a deep blue lapis lazuli
+  desc: A deep blue lapis lazuli gem lies here.
+  type: treasure
+  wear:
+  - take
+  - hold
+  flags:
+  - magic
+  values:
+  - 24
+  - 0
+  - 0
+  - 0
+  weight: 11
+  cost: 8500
+  rent: 200
+- vnum: 5030
+  keywords:
+  - jewel
+  - tiger
+  short: the Tiger Jewel
+  desc: The Tiger Jewel lies here blazing.
+  type: treasure
+  wear:
+  - take
+  - hold
+  flags:
+  - bless
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 23
+  cost: 43000
+  rent: 1500
+  affects:
+  - location: dex
+    modifier: 1
+- vnum: 5031
+  keywords:
+  - jewel
+  - red-eyed
+  short: the red-eyed jewel
+  desc: The red-eyed jewel glares at you greedily.
+  type: treasure
+  wear:
+  - take
+  - hold
+  flags:
+  - no_drop
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 30
+  cost: 35000
+  rent: 600
+  affects:
+  - location: int
+    modifier: -2
+- vnum: 5032
+  keywords:
+  - emerald
+  - gem
+  - fiery
+  - green
+  short: a fiery green emerald
+  desc: A fiery green emerald sits here.
+  type: treasure
+  wear:
+  - take
+  - hold
+  flags:
+  - magic
+  values:
+  - 23
+  - 0
+  - 0
+  - 0
+  weight: 7
+  cost: 5500
+  rent: 200
+resets:
+- mob: 5015
+  room: 5039
+  max: 3
+- mob: 5015
+  room: 5033
+  max: 3
+- mob: 5015
+  room: 5049
+  max: 3
+- mob: 5017
+  room: 5058
+  max: 1
+- mob: 5000
+  room: 5047
+  max: 5
+  then:
+  - equip: 7211
+    slot: wield
+    max: 25
+- mob: 5000
+  room: 5033
+  max: 5
+  then:
+  - equip: 7211
+    slot: wield
+    max: 25
+- mob: 5001
+  room: 5040
+  max: 8
+  then:
+  - equip: 3022
+    slot: wield
+    max: 25
+- mob: 5002
+  room: 5031
+  max: 5
+- mob: 5003
+  room: 5050
+  max: 5
+- mob: 5004
+  room: 5036
+  max: 1
+  then:
+  - give: 5019
+    max: 10
+  - give: 5020
+    max: 5
+  - give: 5021
+    max: 1
+- mob: 5005
+  room: 5065
+  max: 1
+  then:
+  - give: 5024
+    max: 1
+  - give: 5022
+    max: 10
+- mob: 5006
+  room: 5061
+  max: 1
+  then:
+  - equip: 5016
+    slot: wield
+    max: 10
+- mob: 5007
+  room: 5060
+  max: 1
+  then:
+  - equip: 5017
+    slot: wield
+    max: 15
+- mob: 5008
+  room: 5059
+  max: 5
+  then:
+  - equip: 5018
+    slot: wield
+    max: 25
+- mob: 5009
+  room: 5057
+  max: 10
+- mob: 5010
+  room: 5011
+  max: 1
+  then:
+  - equip: 5001
+    slot: body
+    max: 1
+  - equip: 5002
+    slot: wield
+    max: 1
+- mob: 5011
+  room: 5009
+  max: 3
+  then:
+  - equip: 3022
+    slot: wield
+    max: 50
+- mob: 5012
+  room: 5014
+  max: 3
+  then:
+  - equip: 5000
+    slot: wield
+    max: 15
+- mob: 5013
+  room: 5021
+  max: 4
+- mob: 5014
+  room: 5021
+  max: 1
+  then:
+  - equip: 5003
+    slot: neck1
+    max: 1
+- room: 5011
+  object: 5005
+  max: 1
+- room: 5049
+  remove: 5006
+- room: 5049
+  object: 5006
+  max: 6
+- room: 5031
+  remove: 5006
+- room: 5031
+  object: 5006
+  max: 6
+- room: 5044
+  remove: 5006
+- room: 5044
+  object: 5006
+  max: 6
+- room: 5060
+  object: 5007
+  max: 1
+- put: 5012
+  into: 5007
+  max: 1
+- put: 5011
+  into: 5007
+  max: 1
+- room: 5061
+  object: 5008
+  max: 1
+  then:
+  - put: 5014
+    into: 5008
+    max: 5
+- room: 5061
+  object: 5009
+  max: 1
+- room: 5061
+  object: 5010
+  max: 1
+  then:
+  - put: 5013
+    into: 5010
+    max: 50
+- room: 5070
+  object: 5023
+  max: 1
+  then:
+  - put: 5025
+    into: 5023
+    max: 3
+  - put: 5026
+    into: 5023
+    max: 3
+  - put: 5027
+    into: 5023
+    max: 3
+  - put: 5028
+    into: 5023
+    max: 3
+  - put: 5029
+    into: 5023
+    max: 3
+  - put: 5030
+    into: 5023
+    max: 1
+  - put: 5031
+    into: 5023
+    max: 1
+  - put: 5032
+    into: 5023
+    max: 3
+  - put: 5015
+    into: 5023
+    max: 1

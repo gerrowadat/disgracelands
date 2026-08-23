@@ -1,0 +1,16 @@
+REMOVE
+
+Usage: remove <item>
+       remove all
+       remove all.<keyword>
+
+If you tire of wearing some armor or wielding a weapon.
+
+Examples:
+
+  > remove boots
+  > remove sword
+  > remove all
+  > remove all.bronze
+
+See also: GRAB, HOLD, WEAR, WIELD

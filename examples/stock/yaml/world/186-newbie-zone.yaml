@@ -1,0 +1,1838 @@
+schema: dl/world@1
+zone:
+  vnum: 186
+  name: Newbie Zone
+  range:
+  - 18600
+  - 18699
+  lifespan: 10
+  reset: always
+rooms:
+- vnum: 18600
+  name: The Entrance To The Newbie Zone
+  sector: city
+  flags:
+  - no_mob
+  desc: |2
+       Ahhh... the entrance to the newbie zone!  Just the place you have
+    been looking for.  Well, when you've readied yourself you can enter
+    to the north.
+  exits:
+    north:
+      to: 18601
+      desc: |
+            You see the start of the newbie zone.
+      key: -1
+    west:
+      to: 3061
+      desc: |
+            Back to the road that way... chickening out already?
+      key: -1
+- vnum: 18601
+  name: The Beginning Of The Passage
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You find yourself entering a long corridor.  You can hear the sound
+    of creatures roaming about, but you can't tell where the sound emanates
+    from exactly.
+       Exits lead to the east along the hallway, and south back to the
+    entrance.
+  exits:
+    east:
+      to: 18602
+      desc: |
+            More of the hallway there... how exciting!
+      key: -1
+    south:
+      to: 18600
+      desc: |
+            The entrance to the newbie zone... how dull
+      key: -1
+- vnum: 18602
+  name: The Dirty Hallway
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You continue wandering down the hallway.  Nothing much different here,
+    but you are positive you here noises behind the door to the south, and
+    coming from the east.  The walls are a bit slimy and moldy here... yeech,
+    couldn't they hire someone to clean this place?  What will the newbies
+    think?  Oh well, you can continue along the hallway to the east or west.
+  exits:
+    east:
+      to: 18603
+      desc: |
+            More of the hallway there... how exciting!
+      key: -1
+    south:
+      to: 18606
+      desc: |
+            A small room lies to the south... you hear something moving about inside.
+      door: regular
+      key: -1
+      keywords: door
+    west:
+      to: 18601
+      desc: |
+            More of the hallway there... how exciting!
+      key: -1
+- vnum: 18603
+  name: A Nexus
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       Well... you've reached an intersection of two passages, to the north
+    and east, the passage brightens, while the darker hallway continues to
+    the south.
+  exits:
+    north:
+      to: 18644
+      desc: |
+            A brighter hallway leads off that way.
+      door: regular
+      key: -1
+      keywords: door
+    east:
+      to: 18646
+      desc: |
+            A brighter hallway leads off that way.
+      door: regular
+      key: -1
+      keywords: door
+    south:
+      to: 18607
+      desc: |
+            More of the hallway there... how exciting!
+      key: -1
+    west:
+      to: 18602
+      desc: |
+            More of the hallway there... how exciting!
+      key: -1
+- vnum: 18604
+  name: A Narrow Passage
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       The thin passage is plain and undecorated, but still clean.  It
+    ends abruptly to the south at a small oak door, behind which you here
+    movement...
+  exits:
+    north:
+      to: 18647
+      desc: |
+            A large domed room.
+      key: -1
+    south:
+      to: 18612
+      desc: |
+            A small cluttered room.
+      door: regular
+      key: -1
+      keywords: door
+- vnum: 18605
+  name: The Dark Pit
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       Ick... a dark damp dirty pit.  Even worse, what is that dark damp
+    dirty thing looking at you from the corner?  Ewww... maybe you should
+    go back up where it is a bit safer, unless you think you can tackle
+    that thing in the corner.
+  exits:
+    up:
+      to: 18606
+      desc: |
+            You see a ladder leading up
+      door: regular
+      key: 18608
+      keywords: grate
+- vnum: 18606
+  name: A Small Room
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       Hmmm... this is an interesting little room.  Ack, and there is
+    an interesting little creature staring at you too.  He looks a bit
+    surprised at your intrusion.  You can leave via the doors north or
+    east, or you can stay and annoy him a bit more.  There also appears
+    to be some type of well down here also, but it has a rather secure
+    grate covering it.
+  exits:
+    north:
+      to: 18602
+      desc: |
+            More of the hallway there... how exciting!
+      door: regular
+      key: -1
+      keywords: door
+    east:
+      to: 18607
+      desc: |
+            More of the hallway there... how exciting!
+      door: regular
+      key: -1
+      keywords: door
+    down:
+      to: 18605
+      desc: |
+            A ladder leads down into darkness.
+      door: regular
+      key: 18608
+      keywords: grate
+- vnum: 18607
+  name: More Of The Hallway
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       Oh joy!  More of this annoying passage.  Perhaps there is something
+    more exciting through that door to the west?  Or you can keep searching
+    the hallways to the north or south.
+  exits:
+    north:
+      to: 18603
+      desc: |
+            More of the hallway there... how exciting!
+      key: -1
+    south:
+      to: 18611
+      desc: |
+            More of the hallway there... how exciting!
+      key: -1
+    west:
+      to: 18606
+      door: regular
+      key: -1
+      keywords: door
+- vnum: 18608
+  name: An Open Field By The Great Field
+  sector: inside
+  flags:
+  - no_mob
+  desc: |2
+       Finally, you are in an open field... it is so nice to breathe fresh air
+    again!  You can return to that dank, smelly place to the east, or take the
+    exit to the north which appears to lead into a large field.
+  exits:
+    north:
+      to: 3061
+      desc: |
+            There appears to be a field road to the north.
+      key: -1
+    east:
+      to: 18609
+      desc: |
+            The end of that darn hallway lies back to the east.
+      key: -1
+- vnum: 18609
+  name: The End Of The Passage
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+        Ahhh... at last, the end of the hallway... you can exit into open
+    air to the west,or return to the east and make sure you didn't miss
+    anything.
+  exits:
+    east:
+      to: 18610
+      desc: |
+            More of the hallway there... how exciting!
+      key: -1
+    west:
+      to: 18608
+      desc: |
+            An open field near The Great Field of Midgaard can be seen.
+      key: -1
+- vnum: 18610
+  name: A Brighter Hallway
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       The hallway continues on in a east-west direction... and it seems to
+    be brightening up to the west.
+  exits:
+    east:
+      to: 18611
+      desc: |
+            A corner in the passage lies to the east.
+      key: -1
+    west:
+      to: 18609
+      desc: |
+            More of the hallway there... how exciting!
+      key: -1
+- vnum: 18611
+  name: Another Corner
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       Another corner of the passage, and just as untidy as the rest of
+    this place (maybe more so?).  There is a door to the east though...
+    wonder where that leads?  Oh, and the hallway continues west and
+    north.
+  exits:
+    north:
+      to: 18607
+      desc: |
+            More of the hallway there... how exciting!
+      key: -1
+    east:
+      to: 18612
+      desc: |
+            You peer into a cluttered little room to the east.
+      door: regular
+      key: -1
+      keywords: door
+    west:
+      to: 18610
+      desc: |
+            More of the hallway there... how exciting!
+      key: -1
+- vnum: 18612
+  name: The Alchemist's Room
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       Lots of bottles and flasks lie about this room, but it all looks like
+    worthless clutter.  It appears whatever alchemist has been working here
+    is really very adept at his art.  There are a lot of formulae and spells
+    written on the walls too... couldn't he buy some paper?  There is a door
+    to the north, and also a dark stairway in the corner leading down, with a
+    large sign next to it that you probably should read...
+  exits:
+    north:
+      to: 18604
+      desc: |
+            A nice shiny hallway!
+      door: regular
+      key: -1
+      keywords: door
+    west:
+      to: 18611
+      desc: |
+            A corner in the passage lies to the west.
+      door: regular
+      key: -1
+      keywords: door
+    down:
+      to: 18632
+      desc: |
+            A shadowed stairway leading down.
+      key: -1
+  extra_descs:
+  - keywords:
+    - sign
+    - stairs
+    - stairway
+    desc: |
+              The sign next to the stairs says:
+
+              If you are below level 7 and alone, or below level 4 then bugger off!
+              Or else don't blame me if you die...
+- vnum: 18620
+  name: A Turn In The Passage
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       This corner is much like all the others... except you see a strange
+    glow coming from the south.  Could be an exit... you hope.
+  exits:
+    east:
+      to: 18621
+      desc: |
+            The passage continues east quite a ways.
+      key: -1
+    south:
+      to: 18629
+      desc: |
+            You see an odd red glow from that direction.
+      key: -1
+- vnum: 18621
+  name: A T-Intersection In The Passage
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       This is an intersection of a long east-west passage with a corridor
+    leading south.  The air seems a bit clearer here though, as if you were
+    approaching an exit.
+  exits:
+    east:
+      to: 18622
+      key: -1
+    south:
+      to: 18633
+      key: -1
+    west:
+      to: 18620
+      key: -1
+- vnum: 18622
+  name: Another Corner
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       The passage turns from north to west here.  The walls are still
+    covered with the same disgusting green fungus you have seen all
+    along, and you hear sounds of creatures moving all around you...
+  exits:
+    south:
+      to: 18628
+      key: -1
+    west:
+      to: 18621
+      key: -1
+- vnum: 18623
+  name: A Corner In The Hallway
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You can hear creatures moving all around you... and it is not
+    a comforting sound at all.  The furnishing is nothing to speak of
+    either, plain grey brick walls with green fungus (or something)
+    growing on them.
+  exits:
+    east:
+      to: 18624
+      key: -1
+    south:
+      to: 18627
+      key: -1
+- vnum: 18624
+  name: Another Turn
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       Hmmm... the passage turns south here.  You beginning to realize you
+    can easily lose your bearings if you aren't careful, and you don't think
+    you would like spending too much time here...
+  exits:
+    south:
+      to: 18630
+      key: -1
+    west:
+      to: 18623
+      key: -1
+- vnum: 18625
+  name: A Large Room
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       The passage opens into a large oval room.  There really isn't much of
+    interest here though.
+  exits:
+    east:
+      to: 18626
+      key: -1
+    south:
+      to: 18631
+      key: -1
+- vnum: 18626
+  name: A Long East-West Passage
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       This is a long, narrow passage leading east and west.  The walls are
+    damp and covered with mildew and fungus.  There is a very unhealthy air
+    about this place and you're beginning to want out of here... soon.
+  exits:
+    east:
+      to: 18627
+      key: -1
+    west:
+      to: 18625
+      key: -1
+- vnum: 18627
+  name: A Crossing Of Corridors
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       Here a narrow east-west passage crosses with a wider passage to the
+    north and south.  The air is dank, and has an odor of decay and debris.
+    Not a nice place at all really...
+  exits:
+    north:
+      to: 18623
+      key: -1
+    east:
+      to: 18628
+      key: -1
+    south:
+      to: 18632
+      key: -1
+    west:
+      to: 18626
+      key: -1
+- vnum: 18628
+  name: A Corner Room
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       This room is hardly more than a crossing of passages.  You do sense a
+    slight breeze wafting down the passage to the north though, but it smells
+    altogether bad...
+  exits:
+    north:
+      to: 18622
+      key: -1
+    west:
+      to: 18627
+      key: -1
+- vnum: 18629
+  name: The Red Room
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       It takes you a moment to realize that the red glow here is coming
+    from a round portal on the floor.  It looks almost as if someone had
+    painted a picture of a dirt running through a field on the floor of
+    this room.  Oddly enough, it is so realistic you can feel the wind in
+    the field coming out of the picture.
+  exits:
+    north:
+      to: 18620
+      key: -1
+    east:
+      to: 18630
+      key: -1
+    down:
+      to: 3061
+      key: -1
+  extra_descs:
+  - keywords:
+    - portal
+    - floor
+    desc: |
+              It looks as if you could go down into it... but you can't be sure of where
+              you will end up, or if you can get back.
+- vnum: 18630
+  name: A Branching Passage
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       The north-south passage branches to the east here.  There is a queer red
+    glow coming from that way as well, along with a faint breeze.
+  exits:
+    north:
+      to: 18624
+      key: -1
+    south:
+      to: 18634
+      key: -1
+    west:
+      to: 18629
+      desc: |
+            A very odd red glow emanates from that direction.
+      key: -1
+- vnum: 18631
+  name: A Passage
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       Ick... this place is just disgusting.  You try and stay clear of the
+    walls, but the passage is so narrow you keep bumping them anyway.  You
+    are almost convinced that the fungus coating the walls is grabbing at
+    you too.
+  exits:
+    north:
+      to: 18625
+      key: -1
+    east:
+      to: 18632
+      key: -1
+    south:
+      to: 18638
+      key: -1
+- vnum: 18632
+  name: The Entrance
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       It is dark, dank, disgusting and cold up here.  Plus you here the
+    sounds of creatures all around you... and somehow they don't sound
+    friendly.  It is probably wise to exercise some degree of caution
+    here... no telling what you may run into here.
+  exits:
+    north:
+      to: 18627
+      key: -1
+    south:
+      to: 18635
+      key: -1
+    west:
+      to: 18631
+      key: -1
+    up:
+      to: 18612
+      key: -1
+- vnum: 18633
+  name: Another Corner
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       Well... what is there to say.  More fungus, more weird sounds, and a
+    slight breeze from the north.  Bet you want to sign a lease, don't ya...
+  exits:
+    north:
+      to: 18621
+      key: -1
+    east:
+      to: 18634
+      key: -1
+- vnum: 18634
+  name: An Intersection Of Passages
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       Cold, smelly, and coated with green fungus... just like last week's
+    left-overs.  Furthermore you want nothing to do with either, you just
+    want out right now.
+  exits:
+    north:
+      to: 18630
+      key: -1
+    south:
+      to: 18637
+      key: -1
+    west:
+      to: 18633
+      key: -1
+- vnum: 18635
+  name: A Turn In The Passage
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       This place is just plain nauseating... it certainly smells as if
+    something (or someone) died in here.  You hope you aren't next, but
+    from the sounds you hear all around you, it seems as if something has
+    other ideas about that.
+  exits:
+    north:
+      to: 18632
+      key: -1
+    east:
+      to: 18636
+      key: -1
+- vnum: 18636
+  name: A Branch To The South
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       The east-west passage branches of to the south here.  All around you
+    is the odour of death.  Actually, the mold and fungus on the walls is
+    doing great, but otherwise... well... you don't want to think about what
+    else lives here.
+  exits:
+    east:
+      to: 18637
+      key: -1
+    south:
+      to: 18639
+      key: -1
+    west:
+      to: 18635
+      key: -1
+- vnum: 18637
+  name: Yet Another Corner
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       The passage turns here and heads north.  You sense something up ahead
+    that way, but you aren't sure what.  You aren't sure if you want to know
+    what either at this point.
+  exits:
+    north:
+      to: 18634
+      key: -1
+    west:
+      to: 18636
+      key: -1
+- vnum: 18638
+  name: A Large Room
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You almost stumble as you enter this room... the sudden feeling of no
+    walls on either side of you makes you a bit nervous.  Suddenly you are
+    vulnerable on all sides.  You can't even tell how big a room this is,
+    because it extends to the east farther than you light will reach...
+  exits:
+    north:
+      to: 18631
+      key: -1
+    east:
+      to: 18639
+      desc: |
+            The room extends into shadows...
+      key: -1
+- vnum: 18639
+  name: A Large Room
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       As you enter, you light glints of the wall to the east.  There appears
+    to be words scrawled on the wall, and a crude picture.  To the west the
+    room extends beyond the reach of your light, and the dark shadows make you
+    paranoid... anything could be hiding there.  You are painfully aware of
+    how exposed you are without walls around you.
+  exits:
+    north:
+      to: 18636
+      key: -1
+    west:
+      to: 18638
+      desc: |
+            The room extends as far as (and farther than) you can see...
+      key: -1
+  extra_descs:
+  - keywords:
+    - wall
+    desc: |
+              There is a crude picture of a man with the head of a bull with some writing
+              next to it.
+  - keywords:
+    - writing
+    - words
+    desc: |
+              The writing appears to says 'beware the Minotaur...'
+- vnum: 18640
+  name: The Statue's Room
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       Here, the passage enters a small room.  Exits lead to the east and south,
+    and you notice a wonderful, large (and tastefully done) statue to the north.
+  exits:
+    east:
+      to: 18641
+      desc: |
+            A long hallway, ending in a set of steps.
+      key: -1
+    south:
+      to: 18644
+      desc: |
+            The hall extends to the south where it seems to lighten somewhat.
+      key: -1
+  extra_descs:
+  - keywords:
+    - plaque
+    - nameplate
+    - name
+    desc: |
+              It says:
+
+              Maynard, Death Jester of the Harlequins
+  - keywords:
+    - statue
+    desc: |
+              Upon closer inspection you see that the statue has a small plaque affixed
+              to it.  The face looks remarkably familiar also.
+- vnum: 18641
+  name: The Hallway
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       As you continue wandering down the hallway, you notice banners,
+    pictures, and other fine decorations adorning the walls all along
+    this passage.  It seems very different from the dismal passage where
+    you entered.
+  exits:
+    east:
+      to: 18642
+      desc: |
+            The hallway ends at a grand marble staircase.
+      key: -1
+    west:
+      to: 18640
+      desc: |
+            The passage leads into a small room.
+      key: -1
+- vnum: 18642
+  name: The North Stairs
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       Here, the hall opens into a wide room, with a high domed roof.  Now that
+    that you have come clear of the enclosed passage, you can see that the stair
+    leads upward to an open air balcony overlooking the area.  To the south the
+    room continues, and another stair is visible matching the one in front of
+    you.
+  exits:
+    south:
+      to: 18647
+      desc: |
+            You see another staircase and two passages leading west and south.
+      key: -1
+    west:
+      to: 18641
+      desc: |
+            An entrance to a bright passage.
+      key: -1
+    up:
+      to: 18643
+      desc: |
+            An open air balcony.
+      key: -1
+  extra_descs:
+  - keywords:
+    - staircase
+    - stair
+    - stairs
+    desc: |
+              They are constructed of smooth, beautiful marble
+- vnum: 18643
+  name: The Balcony
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       Here you can look out and observe the world around.  Constructed in a
+    semi-circle around the dome of the room, the balcony allows you to look
+    out in almost any direction.  Wandering to the north end, you can see that
+    the Great Fields north of Midgaard continue off towards the Dragonhelm
+    Mountains to the north.
+  exits:
+    south:
+      to: 18645
+      desc: |
+            The south end of the balcony.
+      key: -1
+    down:
+      to: 18642
+      desc: |
+            Down the stairs to a large, domed room.
+      key: -1
+  extra_descs:
+  - keywords:
+    - staircase
+    - stair
+    - stairs
+    desc: |
+              They are constructed of smooth, beautiful marble
+- vnum: 18644
+  name: A Bright Hallway
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       Wow!  What a change from the dismal passage to the south.  Whoever
+    keeps this room up must really like newbies.  The walls and floor are
+    clean, and tastefully decorated.  You also notice an interesting design
+    on the floor.
+  exits:
+    north:
+      to: 18640
+      desc: |
+            A small room with a statue in it.
+      key: -1
+    south:
+      to: 18603
+      desc: |
+            A intersection of passages.
+      door: regular
+      key: -1
+      keywords: door
+  extra_descs:
+  - keywords:
+    - floor
+    - design
+    desc: |
+              It appears to be the Crest of the Harlequin Guild.
+- vnum: 18645
+  name: The Balcony
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       Here you can look out and observe the world around.  Constructed in a
+    semi-circle around the dome of the room, the balcony allows you to look out
+    in almost any direction.  Wandering to the south end, you can see the great
+    city of Midgaard off to the south-west.
+  exits:
+    north:
+      to: 18643
+      desc: |
+            The north end of the balcony.
+      key: -1
+    down:
+      to: 18647
+      desc: |
+            Back down the south staircase.
+      key: -1
+  extra_descs:
+  - keywords:
+    - staircase
+    - stair
+    - stairs
+    desc: |
+              They are constructed of smooth, beautiful marble.
+- vnum: 18646
+  name: A Bright Hallway
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       Wow!  What a change from the dismal passage to the west.  Whoever keeps
+    this  room up must really like newbies.  The walls and floor are clean, and
+    tastefully decorated.  You also notice an interesting design on the floor.
+  exits:
+    east:
+      to: 18647
+      desc: |
+            The passage opens into a domed room with a grand marble staircase.
+      key: -1
+    west:
+      to: 18603
+      desc: |
+            A dark intersection of passages.
+      door: regular
+      key: -1
+      keywords: door
+  extra_descs:
+  - keywords:
+    - floor
+    - design
+    desc: |
+              It appears to be the crest of the Harlequin Guild.
+- vnum: 18647
+  name: The South Stairs
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       Here, the hall opens into a wide room, with a high domed roof.  Now that
+    that you have come clear of the enclosed passage, you can see that the stair
+    leads upward to an open air balcony overlooking the area.  to the north the
+    room continues, and another stair is visible matching the one in front of
+    you.
+  exits:
+    north:
+      to: 18642
+      desc: |
+            Another stairway is to the north, as well as a passage to the west.
+      key: -1
+    south:
+      to: 18604
+      desc: |
+            A narrow passage to the south, ending in a wood door.
+      key: -1
+    west:
+      to: 18646
+      desc: |
+            Back down the bright hallway.
+      key: -1
+    up:
+      to: 18645
+      desc: |
+            An open air balcony.
+      key: -1
+  extra_descs:
+  - keywords:
+    - staircase
+    - stair
+    - stairs
+    desc: |
+              They are constructed of smooth, beautiful marble.
+mobiles:
+- vnum: 18601
+  keywords:
+  - pitbeast
+  - pit-beast
+  short: the pit beast
+  long: |
+    The big, ugly pit-beast is standing here sizing you up.
+  desc: |
+    Ick... what a disgusting creature!  It is black and green and slimy
+    and it is drooling everywhere... looks mean too.
+  act:
+  - sentinel
+  - scavenger
+  alignment: -750
+  level: 5
+  thac0: 17
+  ac: 5
+  hp: 4d6+42
+  damage: 1d5+1
+  gold: 100
+  exp: 1200
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 18602
+  keywords:
+  - newbie
+  - monster
+  short: the newbie monster
+  long: |
+    The newbie monster stands here looking confused.  Kill him!  Kill him!
+  desc: |
+    What an odd looking little beast.  He looks harmless, but you never can
+    tell.  He is only about 4 feet tall, but he pretty muscular looking...
+    maybe you should ask if he needs help?  Nah... kill him.
+  act:
+  - scavenger
+  - stay_zone
+  alignment: 0
+  level: 2
+  thac0: 19
+  ac: 9
+  hp: 2d4+16
+  damage: 1d4+1
+  gold: 250
+  exp: 400
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 18603
+  keywords:
+  - dragon
+  - baby
+  short: the baby dragon
+  long: |
+    Someone's little pet dragon has gotten loose, and is sniffing about here.
+  desc: |
+    Awwww... how cute!  A little baby dragon.  He's about 3 feet long and you
+    just want to cuddle him to death... no, you really want to kill him to tell
+    the truth.  But, remember, even a little dragon can be a big problem.
+  alignment: 100
+  level: 4
+  thac0: 17
+  ac: 6
+  hp: 1d4+50
+  damage: 1d6+1
+  gold: 0
+  exp: 1000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 18604
+  keywords:
+  - keeper
+  - guard
+  - monster
+  short: the Newbie Guard
+  long: |
+    The Newbie Guard is here wondering where that dragon went.
+  desc: |
+    The Guard also had the job of taking care of the Alchemist's pet dragon,
+    but he doesn't seem to be doing a good job of it.  He looks at you and
+    says, 'Have you seen that dragon?  Master will have my head if I don't find
+    him.'
+  act:
+  - sentinel
+  alignment: 0
+  level: 3
+  thac0: 18
+  ac: 7
+  hp: 2d6+34
+  damage: 1d7
+  gold: 500
+  exp: 800
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 18605
+  keywords:
+  - alchemist
+  - newbie
+  short: the Newbie Alchemist
+  long: |
+    The Newbie Alchemist is here trying to make something.
+  desc: |
+    He is a funny looking, furry little dude.  He looks really busy trying to
+    mix up a batch of something or other.
+  act:
+  - sentinel
+  alignment: 0
+  level: 5
+  thac0: 16
+  ac: 5
+  hp: 4d6+38
+  damage: 2d4
+  gold: 1000
+  exp: 1200
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 18606
+  keywords:
+  - crawler
+  - creepy
+  - bug
+  - thing
+  short: the creepy crawler
+  long: |
+    A creepy little crawling thing is scuttling along the floor at your feet.
+  desc: |
+    Yuck!  If they'd ever clean this place maybe it wouldn't attract vermin
+    like this disgusting, little, six-legged, brown bug.
+  act:
+  - stay_zone
+  alignment: -250
+  level: 1
+  thac0: 20
+  ac: 10
+  hp: 1d4+8
+  damage: 1d4
+  gold: 0
+  exp: 100
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 18607
+  keywords:
+  - newbie
+  - zombie
+  short: the zombiefied newbie
+  long: |
+    A VERY gaunt looking newbie... it looks like a zombie!
+  desc: |
+    This guy has been lost in here too long... it is more zombie than man
+    now.  You would feel sorry for it, but it is moving in to attack!
+  act:
+  - scavenger
+  - aggressive
+  - stay_zone
+  alignment: -500
+  level: 4
+  thac0: 17
+  ac: 5
+  hp: 1d8+46
+  damage: 2d4
+  gold: 300
+  exp: 600
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 18608
+  keywords:
+  - quasit
+  - imp
+  - thing
+  short: the quasit
+  long: |
+    A funny little imp-like thing (a quasit perhaps?) is sneaking about here.
+  desc: |
+    Little green, vaguely humoniod shaped creature, with a long pointed tail.
+    It is hard to say because before you ever get a good look at it, it darts
+    back into the shadows.
+  act:
+  - scavenger
+  - aggressive
+  - stay_zone
+  - wimpy
+  alignment: -800
+  level: 3
+  thac0: 19
+  ac: 7
+  hp: 1d10+30
+  damage: 1d4+1
+  gold: 0
+  exp: 300
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 18609
+  keywords:
+  - minotaur
+  short: the massive Minotaur
+  long: |
+    The Great Minotaur is wondering just what you'll taste like.
+  desc: |
+    A massive man, with the head of a bull.  He looks as strong as bull too,
+    but not nearly as smart.  Actually, now that you consider it... he looks
+    a heck of a lot meaner than any bull you have ever seen... and he is
+    coming this way!
+  act:
+  - stay_zone
+  - aggr_good
+  - aggr_neutral
+  alignment: -1000
+  level: 7
+  thac0: 15
+  ac: 5
+  hp: 3d5+85
+  damage: 2d4+1
+  gold: 1000
+  exp: 3000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 18610
+  keywords:
+  - spectre
+  - ghost
+  short: the dark spectre
+  long: |
+    The dark spectre is lurking in the shadows.
+  desc: |
+    The soul of a long since passed on adventurer... it lurks here waiting for
+    a chance to bring death to any who cross its path.
+  act:
+  - sentinel
+  - stay_zone
+  - memory
+  affected:
+  - invisible
+  - detect_invis
+  - hide
+  alignment: -850
+  level: 6
+  thac0: 16
+  ac: 3
+  hp: 3d5+62
+  damage: 2d4
+  gold: 0
+  exp: 1600
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 18611
+  keywords:
+  - newbie
+  - annoying
+  - jerk
+  short: the annoying newbie
+  long: |
+    A newbie is here annoying the hell out of you.
+  desc: |
+    What a jerk!  He won't shut up, and he keeps making the most irritating
+    comments about everything.  Better silence him with cold, tempered steel
+    MUHAHAHAHAHAHAHAHAHAHA!
+  act:
+  - scavenger
+  - stay_zone
+  alignment: -500
+  level: 2
+  thac0: 18
+  ac: 10
+  hp: 2d4+20
+  damage: 1d3+1
+  gold: 250
+  exp: 500
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 18612
+  keywords:
+  - newbie
+  - clueless
+  - moron
+  short: the clueless newbie
+  long: |
+    A newbie is here looking terribly confused.
+  desc: |
+    What a moron!  Every question that is answered in the help files, he will
+    ask and he will probably ask 2 or 3 times too.  This guy just doesn't get
+    it, best put him out of his misery.
+  act:
+  - scavenger
+  - stay_zone
+  alignment: 0
+  level: 1
+  thac0: 20
+  ac: 10
+  hp: 1d1+19
+  damage: 1d3+1
+  gold: 50
+  exp: 220
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 18613
+  keywords:
+  - newbie
+  - talkative
+  short: the talkative newbie
+  long: |
+    A newbie is here talking a lot.
+  desc: |
+    Well, at least this gal seems pretty cool.  Talks a lot, but she's a
+    friendly, interesting sort.  Seems to have a clue what she's doing also,
+    unlike some others you might see.
+  act:
+  - stay_zone
+  alignment: 100
+  level: 3
+  thac0: 18
+  ac: 8
+  hp: 6d5+22
+  damage: 1d7+1
+  gold: 700
+  exp: 600
+  position: standing
+  default_position: standing
+  sex: female
+- vnum: 18614
+  keywords:
+  - newbie
+  - lost
+  short: the lost newbie
+  long: |
+    A newbie is here wandering about aimlessly.
+  desc: |
+    Hmmm... looks like he has been around a while, but he wandered a little
+    too far from home this time.  Don't think he knows quite where he is,
+    maybe you should help him out?
+  act:
+  - stay_zone
+  alignment: 300
+  level: 4
+  thac0: 17
+  ac: 6
+  hp: 8d5+20
+  damage: 1d6+1
+  gold: 250
+  exp: 500
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 18615
+  keywords:
+  - newbie
+  - smart
+  short: the smart newbie
+  long: |
+    A newbie is here, and he looks quite sure of himself.
+  desc: |
+    Here is a guy who has it all together.  Nice equipment too, must have read
+    the help files, Eh?
+  act:
+  - scavenger
+  - stay_zone
+  alignment: 500
+  level: 5
+  thac0: 15
+  ac: 9
+  hp: 10d5+20
+  damage: 2d3+2
+  gold: 1100
+  exp: 1000
+  position: standing
+  default_position: standing
+  sex: male
+objects:
+- vnum: 18601
+  keywords:
+  - sword
+  - newbie
+  short: a shiny newbie sword
+  desc: A shiny newbie sword is lying here waiting to be possessed.
+  type: weapon
+  wear:
+  - take
+  - wield
+  flags:
+  - glow
+  - magic
+  weapon:
+    dice: 1d5
+    damage_type: slash
+  weight: 4
+  cost: 0
+  rent: 0
+  affects:
+  - location: damroll
+    modifier: 1
+- vnum: 18602
+  keywords:
+  - vest
+  - newbie
+  short: a bright green newbie vest
+  desc: A bright green newbie vest is lying here looking for a body to hug.
+  type: armor
+  wear:
+  - take
+  - body
+  armor:
+    ac_apply: 4
+  weight: 4
+  cost: 0
+  rent: 0
+- vnum: 18603
+  keywords:
+  - helm
+  - helmet
+  - newbie
+  short: a bright newbie helm
+  desc: A bright newbie helm is hoping a loose head will wander by.
+  type: armor
+  wear:
+  - take
+  - head
+  flags:
+  - glow
+  - magic
+  armor:
+    ac_apply: 3
+  weight: 4
+  cost: 0
+  rent: 0
+  affects:
+  - location: con
+    modifier: 1
+- vnum: 18604
+  keywords:
+  - cloak
+  - dark
+  - newbie
+  short: a dark newbie cloak
+  desc: A dark newbie cloak is lying here hoping to smother you.
+  type: armor
+  wear:
+  - take
+  - about
+  flags:
+  - glow
+  - magic
+  armor:
+    ac_apply: 0
+  weight: 2
+  cost: 100
+  rent: 0
+  affects:
+  - location: armor
+    modifier: -3
+  - location: wis
+    modifier: 1
+- vnum: 18605
+  keywords:
+  - ring
+  - signet
+  - newbie
+  short: a newbie signet ring
+  desc: A newbie signet ring is lying in the dust here.
+  type: armor
+  wear:
+  - take
+  - finger
+  flags:
+  - invisible
+  - magic
+  armor:
+    ac_apply: 0
+  weight: 1
+  cost: 500
+  rent: 0
+  affects:
+  - location: armor
+    modifier: -2
+- vnum: 18606
+  keywords:
+  - dagger
+  - newbie
+  short: a shiny newbie dagger
+  desc: A shiny newbie dagger is lying here looking for a back to stab.
+  type: weapon
+  wear:
+  - take
+  - wield
+  - hold
+  flags:
+  - glow
+  - magic
+  weapon:
+    dice: 1d4
+    damage_type: pierce
+  weight: 1
+  cost: 0
+  rent: 0
+  affects:
+  - location: damroll
+    modifier: 1
+- vnum: 18607
+  keywords:
+  - collar
+  - dragon
+  short: a pet dragon collar
+  desc: Someone's pet dragon has escaped and left his collar here.
+  type: armor
+  wear:
+  - take
+  - neck
+  flags:
+  - magic
+  armor:
+    ac_apply: 0
+  weight: 1
+  cost: 0
+  rent: 0
+  affects:
+  - location: hitroll
+    modifier: 1
+  - location: armor
+    modifier: -1
+- vnum: 18608
+  keywords:
+  - key
+  - newbie
+  short: a wee little key
+  desc: A key with the newbie crest on it is here.
+  type: key
+  wear:
+  - take
+  flags:
+  - no_rent
+  values:
+  - 1
+  - 0
+  - 0
+  - 0
+  weight: 1
+  cost: 0
+  rent: 0
+- vnum: 18609
+  keywords:
+  - light
+  - jar
+  short: a brightly glowing jar
+  desc: A jar of glowing fluid wants to brighten your day.
+  type: light
+  wear:
+  - take
+  flags:
+  - glow
+  - magic
+  light:
+    hours: -1
+  weight: 2
+  cost: 0
+  rent: 0
+  affects:
+  - location: saving_spell
+    modifier: -1
+- vnum: 18610
+  keywords:
+  - horns
+  - horn
+  short: the horns of the Minotaur
+  desc: The horns of the great Minotaur lie here.
+  type: armor
+  wear:
+  - take
+  - head
+  flags:
+  - anti_cleric
+  armor:
+    ac_apply: 2
+  weight: 8
+  cost: 100
+  rent: 0
+  affects:
+  - location: str
+    modifier: 1
+- vnum: 18611
+  keywords:
+  - hide
+  - skin
+  short: the smelly hide of the Minotaur
+  desc: The hide of the great Minotaur is lying here.
+  type: worn
+  wear:
+  - take
+  - body
+  - about
+  flags:
+  - anti_cleric
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 6
+  cost: 100
+  rent: 0
+  affects:
+  - location: armor
+    modifier: -6
+  - location: max_hit
+    modifier: 15
+- vnum: 18612
+  keywords:
+  - leggings
+  - newbie
+  short: some cool newbie leggings
+  desc: A pair of neat looking leggings are here.
+  type: armor
+  wear:
+  - take
+  - legs
+  armor:
+    ac_apply: 4
+  weight: 4
+  cost: 200
+  rent: 0
+- vnum: 18613
+  keywords:
+  - sleeves
+  - newbie
+  short: some cool newbie sleeves
+  desc: A set of nifty sleeves is here.
+  type: armor
+  wear:
+  - take
+  - arms
+  armor:
+    ac_apply: 4
+  weight: 3
+  cost: 400
+  rent: 0
+  affects:
+  - location: int
+    modifier: 1
+- vnum: 18614
+  keywords:
+  - mace
+  - newbie
+  short: a glowing newbie mace
+  desc: A finely crafted newbie mace is waiting for a worthy owner.
+  type: weapon
+  wear:
+  - take
+  - wield
+  flags:
+  - glow
+  - magic
+  weapon:
+    dice: 2d6
+    damage_type: pound
+  weight: 8
+  cost: 300
+  rent: 0
+  affects:
+  - location: armor
+    modifier: -2
+resets:
+- mob: 18601
+  room: 18605
+  max: 1
+  then:
+  - equip: 18604
+    slot: about
+    max: 50
+- mob: 18602
+  room: 18600
+  max: 3
+  then:
+  - equip: 18602
+    slot: body
+    max: 99
+- mob: 18602
+  room: 18607
+  max: 3
+  then:
+  - equip: 18606
+    slot: wield
+    max: 99
+- mob: 18611
+  room: 18646
+  max: 1
+  then:
+  - equip: 18606
+    slot: wield
+    max: 99
+- mob: 18612
+  room: 18642
+  max: 1
+- mob: 18613
+  room: 18640
+  max: 1
+  then:
+  - equip: 18602
+    slot: body
+    max: 99
+- mob: 18614
+  room: 18604
+  max: 1
+- mob: 18615
+  room: 18645
+  max: 1
+  then:
+  - equip: 18613
+    slot: arms
+    max: 99
+  - equip: 18612
+    slot: legs
+    max: 99
+  - equip: 18602
+    slot: body
+    max: 99
+  - equip: 18614
+    slot: wield
+    max: 30
+- mob: 18603
+  room: 18602
+  max: 1
+  then:
+  - equip: 18607
+    slot: neck1
+    max: 99
+- mob: 18604
+  room: 18606
+  max: 1
+  then:
+  - equip: 18605
+    slot: finger_right
+    max: 60
+  - give: 18608
+    max: 5
+  - equip: 18603
+    slot: head
+    max: 30
+- mob: 18605
+  room: 18612
+  max: 1
+  then:
+  - give: 18609
+    max: 50
+- mob: 18606
+  room: 18602
+  max: 4
+- mob: 18606
+  room: 18606
+  max: 4
+- mob: 18606
+  room: 18609
+  max: 4
+- mob: 18607
+  room: 18620
+  max: 5
+- mob: 18607
+  room: 18624
+  max: 5
+- mob: 18607
+  room: 18637
+  max: 5
+- mob: 18607
+  room: 18633
+  max: 5
+- mob: 18608
+  room: 18627
+  max: 5
+- mob: 18608
+  room: 18636
+  max: 5
+- mob: 18608
+  room: 18638
+  max: 5
+- mob: 18608
+  room: 18621
+  max: 5
+- mob: 18609
+  room: 18629
+  max: 1
+  then:
+  - equip: 18610
+    slot: head
+    max: 50
+  - equip: 18611
+    slot: body
+    max: 50
+- mob: 18610
+  room: 18639
+  max: 1
+- door: 18602
+  dir: south
+  state: closed
+- door: 18606
+  dir: north
+  state: closed
+- door: 18603
+  dir: north
+  state: closed
+- door: 18644
+  dir: south
+  state: closed
+- door: 18603
+  dir: east
+  state: closed
+- door: 18646
+  dir: west
+  state: closed
+- door: 18604
+  dir: south
+  state: closed
+- door: 18612
+  dir: north
+  state: closed
+- door: 18606
+  dir: down
+  state: locked
+- door: 18605
+  dir: up
+  state: locked
+- door: 18607
+  dir: west
+  state: closed
+- door: 18606
+  dir: east
+  state: closed
+- door: 18611
+  dir: east
+  state: closed
+- door: 18612
+  dir: west
+  state: closed

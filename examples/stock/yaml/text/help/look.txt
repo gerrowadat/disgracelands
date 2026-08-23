@@ -1,0 +1,19 @@
+LOOK
+
+Usage: look
+       look [in | at] [the] <item>
+       look <direction>
+
+For studying your surroundings.
+
+Examples:
+
+  > look                                      
+  > look AT the angel
+  > look IN the bag
+  > look south (May give some information as to what is south)
+
+Note that if you LOOK AT CORPSE you will not see its inventory.
+To see what's inside a container (i.e. a corpse) use LOOK IN <object>.
+
+See also: EXAMINE, GET, READ, TAKE

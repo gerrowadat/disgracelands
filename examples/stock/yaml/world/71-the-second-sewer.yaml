@@ -1,0 +1,850 @@
+schema: dl/world@1
+zone:
+  vnum: 71
+  name: The Second Sewer
+  range:
+  - 7100
+  - 7199
+  lifespan: 20
+  reset: always
+rooms:
+- vnum: 7100
+  name: The Edge Of The Water
+  sector: mountains
+  flags:
+  - dark
+  - no_mob
+  - indoors
+  desc: |2
+       The pool side is dimly lit up by your light.  You can see absolutely
+    nothing else nearby.  The darkness her seems enormously oppressive here.
+    The air is damp and the rock on which you stand is slippery.  The pool
+    seems too dark to make anything clear.  The pool seems to extend to the
+    east.  The rock can be climbed upwards from here.
+  exits:
+    east:
+      to: -1
+      desc: |
+            The pool extends eastwards, but you cannot find enough room to move in that
+            direction.
+      key: -1
+    up:
+      to: 7000
+      key: -1
+- vnum: 7101
+  name: Under The Mudhole
+  sector: mountains
+  flags:
+  - dark
+  - no_mob
+  - indoors
+  desc: |2
+       You stand in a small room with a great big opening in the ceiling.  From
+    this opening there is mud dripping down in large lumps.  >YUCK<.  You can
+    smell the foul stench of the slimy sediment as you try not to get covered
+    by the falling sludge.  To the east there is an entryway leading out from
+    here and it seems absolutely impossible to force the muddy descent.
+  exits:
+    east:
+      to: 7103
+      desc: |
+            East.  You see nothing of interest.
+      key: -1
+  extra_descs:
+  - keywords:
+    - mud
+    desc: |
+              You never saw such disgusting matter before, it nearly makes you puke.
+- vnum: 7102
+  name: Under The Dark Pit
+  sector: city
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       Nice place you found yourself in.  You stand in the middle of a room
+    with only two exits, up and east.  A tall ladder has been left here so
+    that you can climb up through the pit without the use of a rope.
+  exits:
+    east:
+      to: 7104
+      key: -1
+    up:
+      to: 7004
+      desc: |
+            Up.  You can't see a thing up there, it is way too dark.
+      key: -1
+    down:
+      to: 7300
+      door: regular
+      key: -1
+      keywords: trapdoor
+  extra_descs:
+  - keywords:
+    - ladder
+    desc: |
+              This is funny enough a wooden ladder and, after closer inspection, you
+              discover it is magically held to the wall!  You can't, even with your
+              greatest effort, move it at ALL!
+- vnum: 7103
+  name: A Muddy Bend In The Sewer System
+  sector: hills
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are standing in what looks like a bend in the pipe system of the
+    sewer.  The 'floor' is covered completely by mud!  This includes covering
+    your legs up to your knees as well.  The pipe leads west and south.
+  exits:
+    south:
+      to: 7104
+      desc: |
+            To the south there is less mud than here!  It actually seems to end there!
+            You have a felling it would be nice to have your feet free from mud again.
+      key: -1
+    west:
+      to: 7101
+      desc: |
+            You can see a room in which mud drips from the roof onto the floor in 
+            great cakes of sludge.  There doesn't seem to be any exits from that room
+            apart from in you direction.
+      key: -1
+  extra_descs:
+  - keywords:
+    - mud
+    desc: |
+              You never saw such disgusting matter before, it nearly makes you puke.
+- vnum: 7104
+  name: A Junction In The Sewer Pipes
+  sector: city
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You stand in the middle of what looks like a triple junction of pipes
+    going east, west and north.
+  exits:
+    north:
+      to: 7103
+      desc: |
+            You can see a mud area starting in that direction.
+      key: -1
+    east:
+      to: 7112
+      desc: |
+            East.  You can't even make out what it might look like, it is just too dark.
+      key: -1
+    west:
+      to: 7102
+      desc: |
+            West.  There is a room with a ladder leading up.
+      key: -1
+- vnum: 7105
+  name: Down The Old Well
+  sector: mountains
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are dangling on the slippery sides of the old well leading down and
+    up.  The only secure point here is the metal bars that are cemented into the
+    sides, the ones that you cling frantically to so that you don't fall.  Who
+    knows how deep this well is?  The bars lead down and up and nowhere else.
+  exits:
+    up:
+      to: 7015
+      desc: |
+            There is a slight, dim light from above, or maybe it is just your imagination.
+            Anyway it SEEMS darker down here than up there, if that is possible.
+      key: -1
+    down:
+      to: -1
+      desc: |
+            Down there nothing at all can be spotted.  The darkness that engulfs this
+            decent seems utterly impossible in a mortal world.  It is so thick that a 
+            torch down there would be utterly useless... or so it seems to you.  Not 
+            the kind of thing to cheer you up on this voyage, Eh?
+      key: -1
+  extra_descs:
+  - keywords:
+    - bars
+    desc: |
+              These look like they're pretty slippery, and not very safe, but perhaps safe
+              enough for you to climb down, WITH both hands on them.
+- vnum: 7106
+  name: The Northwestern Corner Of The Ledge
+  sector: mountains
+  flags:
+  - dark
+  - no_mob
+  - indoors
+  desc: |2
+       You stand, swaying out from the ledge, with only a couple of inches of
+    safe, solid ledge under your feet.  The ledge continues to the east but not
+    back south.  It seems that the ledge is too narrow to turn on so you'll have
+    to continue forward.
+  exits:
+    east:
+      to: 7113
+      desc: |
+            The ledge continues east.
+      key: -1
+    south:
+      to: 7107
+      desc: |
+            The ledge continues south.
+      key: -1
+    down:
+      to: 7279
+      desc: |
+            The Abyss lies down there.  Who knows what might lurk down there?
+      door: regular
+      key: -1
+      keywords: rock step edge
+  extra_descs:
+  - keywords:
+    - rock
+    desc: |
+              It looks as if it can be opened in a door-like fashion.  Maybe this will lead
+              the way down.
+  - keywords:
+    - step
+    desc: |
+              A small rock sticks out right under it, otherwise the way is DOWN, DOWN, and
+              SPLAT!!!
+  - keywords:
+    - edge
+    - odd-looking
+    desc: |
+              This is truly a weird piece of craftsmanship in your eyes.  The edge seems to
+              form a step leading down, but WHAT a STEP DOWN.  The Abyss opens down there 
+              leading to seemingly total destruction.
+- vnum: 7107
+  name: The Narrow Ledge
+  sector: mountains
+  flags:
+  - dark
+  - no_mob
+  - indoors
+  desc: |2
+       You are in the process of walking all the way around the ledge since
+    there is no way of turning around on this all too narrow path.  There IS
+    another exit from here but that leads right into mid-air and with high
+    probability of a free fall session afterwards.
+  exits:
+    north:
+      to: 7106
+      desc: |
+            North.  The ledge leads into a corner and turns eastward.
+      key: -1
+    east:
+      to: 7190
+      desc: |
+            You stare into mid-air, and right under there is absolutely nothing but 
+            darkness.  You shiver by the thought of falling an utterly unknown distance.
+      key: -1
+    south:
+      to: 7108
+      desc: |
+            South.  The ledge leads further south into utter darkness.
+      key: -1
+- vnum: 7108
+  name: The Narrow Ledge
+  sector: mountains
+  flags:
+  - dark
+  - no_mob
+  - indoors
+  desc: |2
+       You are in the process of walking all the way around the ledge since
+    there is no way of turning around on this all too narrow path.  There IS
+    another exit from here but that leads right into mid-air and with high
+    probability of a free fall session afterwards.
+  exits:
+    north:
+      to: 7107
+      desc: |
+            North.  The ledge leads further north.
+      key: -1
+    east:
+      to: 7190
+      desc: |
+            You stare into mid-air, and right under there is absolutely nothing but
+            darkness.  You shiver by the thought of falling that distance.
+      key: -1
+    south:
+      to: 7109
+      desc: |
+            The ledge continues further south into darkness.
+      key: -1
+- vnum: 7109
+  name: The Narrow Ledge
+  sector: mountains
+  flags:
+  - dark
+  - no_mob
+  - indoors
+  desc: |2
+       You are in the process of walking all the way around the ledge since
+    there is no way of turning around on this all too narrow path.  There IS
+    another exit from here but that leads right into mid-air and with high
+    probability of a free fall session afterwards.
+  exits:
+    north:
+      to: 7108
+      desc: |
+            North.  The ledge leads further north.
+      key: -1
+    east:
+      to: 7190
+      desc: |
+            You stare into mid-air, and right under there is absolutely nothing but
+            darkness.  You shiver by the thought of falling that distance.
+      key: -1
+    south:
+      to: 7110
+      desc: |
+            The ledge continues south into darkness.
+      key: -1
+- vnum: 7110
+  name: The Narrow Ledge
+  sector: mountains
+  flags:
+  - dark
+  - no_mob
+  - indoors
+  desc: |2
+       You are in the process of walking all the way around the ledge since
+    there is no way of turning around on this all too narrow path.  There IS
+    another exit from here but that leads right into mid-air and with high
+    probability of a free fall session afterwards.
+  exits:
+    north:
+      to: 7107
+      desc: |
+            North.  The ledge leads further north.
+      key: -1
+    east:
+      to: 7190
+      desc: |
+            You stare into mid-air, and right under there is absolutely nothing but
+            darkness.  You shiver by the thought of falling that distance.
+      key: -1
+    south:
+      to: 7111
+      desc: |
+            South.  You can just make out the south-western corner of this ledge.
+      key: -1
+- vnum: 7111
+  name: The Southwestern Corner Of The Ledge
+  sector: mountains
+  flags:
+  - dark
+  - no_mob
+  - indoors
+  desc: |2
+       This seems like a ledge that is a little broader than the one just to
+    the north of here.  The ledge seems to lead around some sort of Abyss of
+    total darkness.  The ledge seems to have an odd-looking edge here.
+  exits:
+    north:
+      to: 7110
+      desc: |
+            North.  The ledge leads further north.
+      key: -1
+    east:
+      to: 7115
+      desc: |
+            You see a broad ledge leading eastward.
+      key: -1
+    south:
+      to: 7112
+      desc: |
+            South of here is the exit from the ledge.
+      key: -1
+    down:
+      to: 7279
+      desc: |
+            The Abyss lies down there.  Who knows what might lurk down there?
+      door: regular
+      key: -1
+      keywords: rock step edge
+  extra_descs:
+  - keywords:
+    - rock
+    desc: |
+              It looks as if it can be opened in a door-like fashion.  Maybe this will lead
+              the way down.
+  - keywords:
+    - step
+    desc: |
+              A small rock sticks out right under it, otherwise the way is DOWN, DOWN, and
+              SPLAT!!!
+  - keywords:
+    - edge
+    - odd-looking
+    desc: |
+              This is truly a weird piece of craftsmanship in your eyes.  The edge seems to
+              form a step leading down, but WHAT a STEP DOWN.  The Abyss opens down there 
+              leading to seemingly total destruction.
+- vnum: 7112
+  name: An Odd Intersection
+  sector: city
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You stand in a rather odd intersection of pipes.  The pipes actually
+    don't resemble pipes anymore.  They look more like a real stone tunnel,
+    or a passageway hewn directly into the rock.  The ways from here lead
+    north, east and west.
+  exits:
+    north:
+      to: 7111
+      desc: |
+            North.  You see a ledge to something that looks like an abyss.
+      key: -1
+    east:
+      to: 7122
+      key: -1
+    west:
+      to: 7104
+      key: -1
+- vnum: 7113
+  name: The Narrow Ledge Going East To West
+  sector: mountains
+  flags:
+  - dark
+  - no_mob
+  - indoors
+  desc: |2
+       You are in the process of walking all the way around the ledge since
+    there is no way of turning around on this all too narrow path.  There IS
+    another exit from here but that leads right into mid-air and with high
+    probability of a free fall session afterwards.
+  exits:
+    east:
+      to: 7116
+      desc: |
+            The ledge leads further east.
+      key: -1
+    south:
+      to: 7190
+      desc: |
+            You stare into mid-air, and right under there is absolutely nothing but
+            darkness.  You shiver by the thought of falling that distance.
+      key: -1
+- vnum: 7114
+  name: Mid-Air
+  sector: inside
+  flags:
+  - death
+  - indoors
+  desc: |2
+       You've just stepped into the most unlucky position in the whole of
+    CircleMUD.  The result of such a foolish act should be punished with
+    death, you know.  With an acceleration of approximately 9.82 meters
+    per second squared, you are now descending the Abyss.  What awaits you
+    at the bottom will continue to be a mystery.  Good-bye cruel world.
+  exits:
+    north:
+      to: 7119
+      key: -1
+    east:
+      to: 7118
+      key: -1
+    south:
+      to: 7120
+      key: -1
+    west:
+      to: 7117
+      key: -1
+    up:
+      to: 7115
+      key: -1
+- vnum: 7115
+  name: The Broad Ledge
+  sector: hills
+  flags:
+  - dark
+  - no_mob
+  - indoors
+  desc: |2
+       You are standing on a ledge that seems quite a lot larger than the
+    rest of the ledges.  This one leads to the west and the east, plus it
+    has an exit going to the south.  Though you could jump into mid-air,
+    but it probably wouldn't be such a good idea.  The way south is in
+    utter darkness.
+  exits:
+    north:
+      to: 7114
+      key: -1
+    east:
+      to: 7121
+      key: -1
+    south:
+      to: 7129
+      key: -1
+    west:
+      to: 7111
+      key: -1
+- vnum: 7116
+  name: The Northeastern Corner Of The Ledge
+  sector: mountains
+  flags:
+  - dark
+  - no_mob
+  - indoors
+  desc: |2
+       You stand, swaying out from the ledge, with only a couple of inches of
+    safe, solid ledge under your feet.  The ledge continues to the west and
+    leads south from here into darkness.
+  exits:
+    south:
+      to: 7117
+      key: -1
+    west:
+      to: 7113
+      desc: |
+            The ledge continues west.
+      key: -1
+    down:
+      to: 7280
+      desc: |
+            You can just make out the outline of a trapdoor here in the soil.  The earth
+            is probably there to conceal a secret entrance.  This looks as if it leads
+            down into the seemingly solid rock face of the ledge.
+      door: regular
+      key: -1
+      keywords: trapdoor secret entrance
+  extra_descs:
+  - keywords:
+    - soil
+    - soft
+    - earth
+    desc: |
+              You can just make out the outline of a trapdoor here in the soil.  The earth
+              is probably there to conceal a secret entrance.  This looks as if it leads
+              down into the seemingly solid rock face of the ledge.
+  - keywords:
+    - ground
+    - ledge
+    - rock
+    desc: |
+              The ground here seems a little different from all the other ledges along the
+              Abyss.  There is a kind of soft soil on this ledge, maybe you should look 
+              carefully at this.  It seems to be of some interest.
+- vnum: 7117
+  name: The Narrow Eastern Ledge
+  sector: mountains
+  flags:
+  - dark
+  - no_mob
+  - indoors
+  desc: |2
+       You are in the process of walking all the way around the ledge since
+    there is no way of turning around on this all too narrow path.  There IS
+    another exit from here but that leads right into mid-air and with high
+    probability of a free fall session afterwards.  And THAT is west of here
+    so watch your step.
+  exits:
+    south:
+      to: 7118
+      desc: |
+            The ledge leads further south.
+      key: -1
+    west:
+      to: 7114
+      desc: |
+            You stare into mid-air, and right under there is absolutely nothing but
+            darkness.  You shiver by the thought of falling that distance.
+      key: -1
+- vnum: 7118
+  name: The Narrow Eastern Ledge
+  sector: mountains
+  flags:
+  - dark
+  - no_mob
+  - indoors
+  desc: |2
+       You are in the process of walking all the way around the ledge since
+    there is no way of turning around on this all too narrow path.  There IS
+    another exit from here but that leads right into mid-air and with high
+    probability of a free fall session afterwards.  And THAT is west of here
+    so watch your step.
+  exits:
+    south:
+      to: 7119
+      desc: |
+            The ledge leads further south.
+      key: -1
+    west:
+      to: 7114
+      desc: |
+            You stare into mid-air, and right under there is absolutely nothing but
+            darkness.  You shiver by the thought of falling that distance.
+      key: -1
+- vnum: 7119
+  name: The Narrow Eastern Ledge
+  sector: mountains
+  flags:
+  - dark
+  - no_mob
+  - indoors
+  desc: |2
+       You are in the process of walking all the way around the ledge since
+    there is no way of turning around on this all too narrow path.  There IS
+    another exit from here but that leads right into mid-air and with high
+    probability of a free fall session afterwards.  And THAT is west of here
+    so watch your step.
+  exits:
+    south:
+      to: 7120
+      desc: |
+            The ledge leads further south.
+      key: -1
+    west:
+      to: 7114
+      desc: |
+            You stare into mid-air, and right under there is absolutely nothing but
+            darkness.  You shiver by the thought of falling that distance.
+      key: -1
+- vnum: 7120
+  name: The Narrow Eastern Ledge
+  sector: mountains
+  flags:
+  - dark
+  - no_mob
+  - indoors
+  desc: |2
+       You are in the process of walking all the way around the ledge since
+    there is no way of turning around on this all too narrow path.  There IS
+    another exit from here but that leads right into mid-air and with high
+    probability of a free fall session afterwards.  And THAT is west of here
+    so watch your step.  You also see a small opening to the east.
+  exits:
+    east:
+      to: 7123
+      desc: |
+            East.  You stare into darkness.
+      key: -1
+    south:
+      to: 7121
+      desc: |
+            The ledge leads further south.
+      key: -1
+    west:
+      to: 7114
+      desc: |
+            You stare into mid-air, and right under there is absolutely nothing but
+            darkness.  You shiver by the thought of falling that distance.
+      key: -1
+- vnum: 7121
+  name: The Southeastern Corner Of The Ledge
+  sector: mountains
+  flags:
+  - dark
+  - no_mob
+  - indoors
+  desc: |2
+       This seems like a ledge that is a little broader than the one just to the
+    north of here.  The ledge seems to lead around some sort of abyss of total
+    darkness.
+  exits:
+    north:
+      to: 7120
+      desc: |
+            North of here you can see a ledge.
+      key: -1
+    west:
+      to: 7115
+      desc: |
+            The ledge leads further west.
+      key: -1
+    down:
+      to: 7279
+      desc: |
+            The Abyss lies down there.  Who knows what might lurk down there?
+      door: pickproof
+      key: -1
+      keywords: rock step edge
+  extra_descs:
+  - keywords:
+    - rock
+    desc: |
+              It looks as if it can be opened in a door-like fashion.  Maybe this will lead
+              the way down.
+  - keywords:
+    - step
+    desc: |
+              A small rock sticks out right under it, otherwise the way is DOWN, DOWN, and
+              SPLAT!!!
+  - keywords:
+    - edge
+    - odd-looking
+    desc: |
+              This is truly a weird piece of craftsmanship in your eyes.  The edge seems to
+              form a step leading down, but WHAT a STEP DOWN.  The Abyss opens down there 
+              leading to seemingly total destruction.
+- vnum: 7122
+  name: Under The Pit
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You stand in a completely dark cavern leading west.  The wall looks
+    weird here.
+  exits:
+    west:
+      to: 7112
+      key: -1
+  extra_descs:
+  - keywords:
+    - wall
+    desc: |
+              There is a crack here that looks like it has been made recently.
+- vnum: 7123
+  name: Under The Shaft
+  sector: mountains
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       A ladder leads up from here to the Shaft.  A small opening leads west
+    from here.
+  exits:
+    west:
+      to: 7120
+      desc: |
+            You can see a narrow ledge going north and south.
+      key: -1
+    up:
+      to: 7041
+      desc: |
+            It is too dark up there.
+      key: -1
+- vnum: 7129
+  name: The Sewer Line
+  sector: forest
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are in a narrow part of the sewer.  Down the sewer continues and to
+    the north is the ledge.
+  exits:
+    north:
+      to: 7115
+      desc: |
+            You can see the southern part of the ledge.
+      key: -1
+    down:
+      to: 7221
+      desc: |
+            You look deeper down into the drain.
+      key: -1
+- vnum: 7190
+  name: Mid-Air
+  sector: inside
+  flags:
+  - death
+  - indoors
+  desc: |2
+       You've just stepped into the most unlucky position in the whole of
+    CircleMUD.  The result of such a foolish act should be punished with
+    death, you know.  With an acceleration of approximately 9.82 meters
+    per second squared, you are now descending the Abyss.  What awaits you
+    at the bottom will continue to be a mystery.  Good-bye cruel world.
+  exits:
+    north:
+      to: 7109
+      key: -1
+    east:
+      to: 7108
+      key: -1
+    south:
+      to: 7110
+      key: -1
+    west:
+      to: 7107
+      key: -1
+    up:
+      to: 7113
+      key: -1
+objects:
+- vnum: 7190
+  keywords:
+  - ring
+  - silver
+  short: a glinting silver ring
+  desc: A lovely silver ring has been left here.
+  type: worn
+  wear:
+  - take
+  - finger
+  flags:
+  - magic
+  values:
+  - 0
+  - 0
+  - 10
+  - 0
+  weight: 9
+  cost: 16000
+  rent: 5000
+  affects:
+  - location: armor
+    modifier: -10
+  - location: hitroll
+    modifier: 2
+resets:
+- mob: 7004
+  room: 7102
+  max: 3
+- mob: 7005
+  room: 7112
+  max: 7
+- mob: 7005
+  room: 7112
+  max: 7
+- mob: 7005
+  room: 7122
+  max: 7
+- mob: 7002
+  room: 7104
+  max: 7
+- mob: 7000
+  room: 7103
+  max: 3
+- mob: 7000
+  room: 7103
+  max: 3
+- mob: 7006
+  room: 7113
+  max: 7
+- mob: 7006
+  room: 7122
+  max: 7
+- mob: 7006
+  room: 7122
+  max: 7
+- door: 7106
+  dir: down
+  state: closed
+- door: 7111
+  dir: down
+  state: closed
+- door: 7121
+  dir: down
+  state: closed
+- door: 7279
+  dir: up
+  state: closed
+- door: 7116
+  dir: down
+  state: closed
+- door: 7280
+  dir: up
+  state: closed

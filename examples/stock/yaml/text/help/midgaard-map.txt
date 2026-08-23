@@ -1,0 +1,52 @@
+MIDGAARD MAP
+
+                           Temple Altar
+                                 |
+                                 |
+                    Reading -- Temple -- Donations
+                     Room        of
+                              Midgaard     Post   Reception
+                                 |        Office   /
+                  Cleric         |            |  /
+                  Guild----Temple Square----Grunting---Bar
+                             (Fountain)     Boar Inn
+                 Magic           |
+                 Shop   Bakery   |    Grocer  Weaponsmith
+                   |      |      |       |        |        East
+      <---West-----+------+----Market----+--------+--------Gate--->
+          Gate     |      |    Square    |        |         |
+           |     Mage   Armory   |      Pet    Warrior    Wally's
+         (Wall   Guild           |     Shop     Guild    World of Water
+          Road)                  |
+           |                     |                     Uncle Juans's
+           |                     |                           |
+           +-(Poor-Alley)-+----Square----+(Dark-Alley)-------+
+           |              |      |       |        |          |
+           |            Grubby   |    Thieves    Levee   Warehouse
+           |             Inn     |     Guild      |
+         (Wall                  Dump              |
+          Road)           Sewers/                 |
+           |                                      |
+           |                                   Midgaard
+  <=== [Bridge] =============================== River =============>
+           |
+           |
+           +(Concourse)+------------+-------------+----------+
+           |           |            |             |          |
+           |           +            +----Cafe     +---Penny  |
+           |           |    Park--v |             |   Lane   |
+           |   City    |         +--+--+          |          |
+           |  Guard----+----+----+--o--+-----+----+---City   |
+           |     HQ    |                          |   Hall   |
+           |           +            +--(Emerald)--+          |
+      (Concourse)      |            |                   (Concourse)
+           |           +------(Park-+-Road)-------+          |
+           |                        |             |          |
+           |           +--(Emerald)-+             +---Elm    |
+           |           |                          |  Street  |
+           |           +                          +          |
+           |           |                          |          |
+           +-----------+------(Concourse)---------+----------+
+                                                  |
+                                              Graveyard 
+                                              Entrance

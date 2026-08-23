@@ -1,0 +1,243 @@
+schema: dl/world@1
+zone:
+  vnum: 0
+  name: "Limbo - Internal"
+  range:
+  - 0
+  - 99
+  lifespan: 10
+  reset: always
+rooms:
+- vnum: 0
+  name: The Void
+  sector: city
+  flags:
+  - indoors
+  desc: |2
+       You don't think that you are not floating in nothing.  You can see
+    a strange portal located above you.
+  exits:
+    up:
+      to: 3001
+      desc: |
+            The Temple of Midgaard floats above you.
+      key: -1
+- vnum: 1
+  name: Limbo
+  sector: city
+  flags:
+  - indoors
+  desc: |2
+       You are floating in a formless void, detached from all sensation of physical
+    matter, surrounded by swirling glowing light, which fades into the relative
+    darkness around you without any trace of edges or shadow.
+       There is a "No Tipping" notice pinned to the darkness.
+- vnum: 3
+  name: A Totally Empty Room
+  sector: inside
+  flags:
+  - indoors
+  - private
+  desc: |2
+       The walls are completely bare... nothing at all in the room.
+    How... utterly bizarre and completely weird.  There is a strange
+    portal just above you, and it almost looks as if there is some
+    sort of room above you.
+  exits:
+    up:
+      to: 3048
+      desc: |
+            You notice that the portal above you looks almost like glass,
+            albeit very dirty glass.
+      key: -1
+mobiles:
+- vnum: 1
+  keywords:
+  - Puff
+  - dragon
+  - fractal
+  short: Puff
+  long: |
+    Puff the Fractal Dragon is here, contemplating a higher reality.
+  desc: |
+    Is that some type of differential curve involving some strange, and
+    unknown calculus that she seems to be made out of?
+  act:
+  - spec
+  - no_charm
+  - no_summon
+  - no_sleep
+  - no_bash
+  - no_blind
+  affected:
+  - detect_invis
+  - infravision
+  - no_track
+  alignment: 1000
+  level: 26
+  thac0: 1
+  ac: -1
+  hp: 5d10+550
+  damage: 4d6+3
+  gold: 10000
+  exp: 155000
+  position: standing
+  default_position: standing
+  sex: female
+  abilities:
+    bare_hand_attack: 12
+- vnum: 10
+  keywords:
+  - clone
+  short: the clone
+  long: |
+    A boring old clone is standing here.
+  desc: |
+    This clone is nothing to look at.  No, really, it is quite boring.
+  act:
+  - sentinel
+  alignment: 0
+  level: 1
+  thac0: 0
+  ac: 0
+  hp: 1d1+1
+  damage: 1d1+1
+  gold: 0
+  exp: 0
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 11
+  keywords:
+  - zombie
+  - undead
+  - humanoid
+  short: the zombie
+  long: |
+    A strange humanoid is here.  How odd, its flesh seems to be falling off!
+  desc: |
+    This strange humanoid is moving rather slowly, and appears to be
+    a corpse, a walking corpse!  It must be a zombie or something of
+    the sort.
+  act:
+  - sentinel
+  alignment: 0
+  level: 1
+  thac0: 0
+  ac: 0
+  hp: 1d1+1
+  damage: 1d1+1
+  gold: 0
+  exp: 0
+  position: standing
+  default_position: standing
+  sex: neutral
+  abilities:
+    bare_hand_attack: 7
+- vnum: 19
+  keywords:
+  - aerial
+  - servant
+  - shape
+  short: the aerial servant
+  long: |
+    An amorphous shape is floating in the air.
+  desc: |
+    As you stare at this amorphous shape, it begins to appear to take
+    the shape of a cloud-like humanoid.
+  act:
+  - sentinel
+  alignment: 0
+  level: 1
+  thac0: 0
+  ac: 0
+  hp: 1d1+1
+  damage: 1d1+1
+  gold: 0
+  exp: 0
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 20
+  keywords:
+  - elemental
+  short: the elemental
+  long: |
+    An elemental is standing patiently here.
+  desc: |
+    This creature is the essence of the elements, and appears to be
+    waiting patiently for something to occur.
+  act:
+  - sentinel
+  alignment: 0
+  level: 1
+  thac0: 0
+  ac: 0
+  hp: 1d1+1
+  damage: 1d1+1
+  gold: 0
+  exp: 0
+  position: standing
+  default_position: standing
+  sex: neutral
+objects:
+- vnum: 0
+  keywords:
+  - bug
+  short: a bug
+  desc: |-
+    This object is BAD!  If you see it, there must be a bug in the game.  Please
+    report it immediately using the BUG command.
+  type: trash
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 0
+  cost: 0
+  rent: 0
+- vnum: 1
+  keywords:
+  - wings
+  short: a pair of wings
+  desc: A pair of wings is sitting here.
+  type: armor
+  wear:
+  - take
+  - head
+  armor:
+    ac_apply: 6
+  weight: 0
+  cost: 0
+  rent: 200
+- vnum: 10
+  keywords:
+  - waybread
+  - bread
+  short: a waybread
+  desc: Some waybread has been put here.
+  type: food
+  wear:
+  - take
+  flags:
+  - magic
+  values:
+  - 24
+  - 0
+  - 0
+  - 0
+  weight: 1
+  cost: 50
+  rent: 50
+  extra_descs:
+  - keywords:
+    - waybread
+    - bread
+    desc: |
+              The waybread is the traditional feed of elves when travelling, they
+              call it lembas.  It is said to refresh the weary traveler greatly.
+resets:
+- mob: 1
+  room: 1
+  max: 1

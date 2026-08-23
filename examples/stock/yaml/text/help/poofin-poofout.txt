@@ -1,0 +1,11 @@
+POOFIN POOFOUT
+
+Usage: poofin <message>
+       poofout <message>
+
+Sets the message seen by players when you use GOTO to move to a different
+room.  POOFIN with no argument resets your poofin to the default "appears with
+an ear-splitting bang"; POOFOUT with no argument defaults to "disappears in
+a puff of smoke."
+
+See also: GOTO

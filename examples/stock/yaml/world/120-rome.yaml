@@ -1,0 +1,4832 @@
+schema: dl/world@1
+zone:
+  vnum: 120
+  name: Rome
+  range:
+  - 12000
+  - 12099
+  lifespan: 45
+  reset: always
+rooms:
+- vnum: 12001
+  name: The Judging Booth
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You stand in the midst of a small room with windows on the east and south
+    walls.  These windows provide a complete view of the competition fields.
+    There are several scorecards, pencils and other items that are used by the
+    judges sitting on a table.  The only exit is a trapdoor leading down.
+  exits:
+    down:
+      to: 12002
+      desc: |
+            There is a rickety ladder leading down.
+      door: regular
+      key: 12033
+      keywords: trapdoor
+  extra_descs:
+  - keywords:
+    - pencils
+    - pencil
+    desc: |
+              An ordinary #2 lead pencil.  Judging by the teeth marks on the shaft, the
+              user should see a dentist very soon!
+  - keywords:
+    - scorecards
+    desc: |
+              The cards all have been filled in with the judges evaluations of today's 
+              combatants.  It seems that Sparticus is having a good day.
+- vnum: 12002
+  name: Caesar's Private Box
+  sector: inside
+  flags:
+  - no_mob
+  - indoors
+  desc: |2
+       This is the best view in the house!  You can see gladiators fighting or
+    the chariot races with an unobstructed view.  The seats are upholstered in
+    red velvet and are in top-notch condition.  There is a rickety ladder leading
+    up and a marble staircase leading down.
+  exits:
+    up:
+      to: 12001
+      desc: |
+            You see a rickety ladder with a trapdoor leading up.
+      door: regular
+      key: 12033
+      keywords: trapdoor
+    down:
+      to: 12003
+      desc: |
+            There is a marble staircase leading down.
+      key: -1
+- vnum: 12003
+  name: The West Side Of The Commoner's Seating Area
+  sector: city
+  desc: |2
+       This is the western side commoner's seating area.  There are row upon
+    row of rough wooden benches bolted to the floor.  There is stadium garbage
+    everywhere and the smell makes you want to puke.  Stairs lead up to Caesar's 
+    private box, a small ramp leads down to the playing field and a hallway 
+    leads south.
+  exits:
+    south:
+      to: 12004
+      desc: |
+            You see a small hallway that leads to a larger area.
+      key: -1
+    up:
+      to: 12002
+      desc: |
+            Watch your step!
+      key: -1
+    down:
+      to: 12010
+      desc: |
+            Watch your step!
+      key: -1
+  extra_descs:
+  - keywords:
+    - seats
+    - benches
+    desc: |
+              The benches are made of rough cut lumber that has dried and split over time.
+              You would probably get splinters if sat on them.  The words 'BURT WAS HERE'
+              have been carved into one of the benches with exquisite care.
+- vnum: 12004
+  name: The Southern Commoner's Seats
+  sector: city
+  desc: |2
+       This is the southeastern part of the common seating areas.  The benches
+    here are made of stone and are probably centuries old.  A few scratches on
+    one of the benches catch your eye.  An acrid smell is coming from the east
+    and a tunnel leads off to the north.
+  exits:
+    north:
+      to: 12003
+      desc: |
+            The tunnel looks like it leads to another seating area.
+      key: -1
+    east:
+      to: 12011
+      desc: |
+            There is an acrid smell coming from that direction.
+      key: -1
+  extra_descs:
+  - keywords:
+    - marks
+    - scratches
+    desc: |
+              They look like they form the words "Onivel Cinemod Semaj"  But you could be
+              mistaken.
+- vnum: 12005
+  name: The Abandoned Gate
+  sector: city
+  desc: |2
+       This used to be a gateway to and from western Rome.  There is an iron gate
+    blocking your way and judging by the amount of rust and foliage growing on the
+    bars, it hasn't been open for years.  Looking through the gate at the barren
+    landscape that lies beyond, you can see why.  A dirt road leads off to the 
+    east, and a store is directly south.
+  exits:
+    east:
+      to: 12012
+      desc: |
+            Through the clouds of dust, you can make out a passable road.
+      key: -1
+    south:
+      to: 12006
+      desc: |
+            You can barely make out a storefront through the foliage.
+      key: -1
+    west:
+      to: -1
+      desc: |
+            The gate has been permanently rusted shut and is further secured by a large 
+            chain and padlock.  Don't even bother THINKING about trying to open it.
+      door: pickproof
+      key: -1
+      keywords: gate
+  extra_descs:
+  - keywords:
+    - gate
+    desc: |
+              The gate has been permanently rusted shut and is further secured by a large 
+              chain and padlock.  Don't even bother THINKING about trying to open it.
+- vnum: 12006
+  name: Swords 'R  Us
+  sector: inside
+  flags:
+  - indoors
+  - no_magic
+  desc: |2
+       Welcome to the weaponshop of Titus Andronicus!!  Rare halberds, whips,
+    swords and other instruments of death are proudly displayed on the walls
+    and in gleaming glass cases.  More common weapons are stacked like wood on
+    the floor.  To the north you can barely make out a gate.  There is a very
+    secure looking door to the south.
+  exits:
+    north:
+      to: 12005
+      desc: |
+            You can see a city gate to the north.
+      key: -1
+    south:
+      to: 12007
+      desc: |
+            There is a very secure looking door blocking your progress.  
+      door: pickproof
+      key: 12034
+      keywords: door
+  extra_descs:
+  - keywords:
+    - swords
+    - weapons
+    - armor
+    - halberds
+    - whips
+    desc: |
+              Titus has enough hardware in here to outfit a large army.  Maybe that's why
+              he has a lucrative contract to sell weapons to the Emperor's armies for 
+              outrageous prices.
+- vnum: 12007
+  name: The Back Room
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       If you thought that there were a lot of weapons in the front of the store,
+    you haven't seen anything yet!!  There is barely enough room to walk amongst
+    the crates of armor and swords.  No wonder Rome will stand for a thousand
+    years.  The only exit is through a door to the north.
+  exits:
+    north:
+      to: 12006
+      desc: |
+            Through the piles of weapons, you can see a door leading north to the rest of 
+            the store.
+      door: pickproof
+      key: 12034
+      keywords: door
+  extra_descs:
+  - keywords:
+    - weapons
+    - swords
+    - crates
+    - armor
+    - weapon
+    - sword
+    - crate
+    desc: |
+              There are literally thousands of each.  Take your pick.
+- vnum: 12008
+  name: Peanut Heaven
+  sector: city
+  desc: |2
+       You are now so high up that you begin to feel lightheaded and your nose
+    feels like it is going to start bleeding.  There aren't even benches to sit
+    on here; just bare dirty stone.  The view of the surrounding country is
+    spectacular.  Unfortunately you can barely see the playing field.  There is
+    a set of steps here, leading down.
+  exits:
+    down:
+      to: 12015
+      desc: |
+            Watch your step!
+      key: -1
+  extra_descs:
+  - keywords:
+    - landscape
+    - country
+    desc: |
+              You can see the entire city of Rome from here.  The buildings housing the 
+              Roman government are to the east.  To the south east, off in the distance,
+              is the massive aqueduct and further in that direction lies the Mountain of
+              the Gods.
+- vnum: 12009
+  name: The Practice And Warm-up Area
+  sector: field
+  desc: |2
+       There are many gladiators, chariot drivers and their coaches here, warming
+    up in preparation for the games.  The dust rising from the parched earth makes
+    you want to sneeze.  A short tunnel leads east and the thunder of pounding
+    hooves and the clash of weapons can be heard coming from the south.
+  exits:
+    east:
+      to: 12016
+      desc: |
+            There is a large oval dirt-track in that direction.
+      key: -1
+    south:
+      to: 12010
+      desc: |
+            You can hear the clash of weapons and the thunder of hooves in that
+            direction.
+      key: -1
+  extra_descs:
+  - keywords:
+    - coach
+    - trainer
+    desc: |
+              The coach tell you "Stop bothering my athletes and get lost!"
+  - keywords:
+    - chariot
+    desc: |
+              You see a two wheeled open cart which is obviously meant to be pulled by 
+              horses.  The flaming paint-job and the large '01' stenciled on the side 
+              identify the chariot as belonging to Drucilis 'Lightning-whip' Octavious,
+              a favorite driver of the masses.
+  - keywords:
+    - driver
+    desc: |
+              The driver is too busy changing a wheel on his chariot to notice you.
+  - keywords:
+    - gladiator
+    desc: |
+              He is a big muscular man with lots of armor.  He sizes you up and decides
+              that you aren't worth his time or trouble.
+- vnum: 12010
+  name: The Jousting Arena
+  sector: field
+  flags:
+  - no_mob
+  desc: |2
+       This is a wide open grassy plane... LOOK OUT!!!!  You are almost
+    skewered by a gladiator's lance as he makes his charge.  A practicing
+    area is due north.
+  exits:
+    north:
+      to: 12009
+      desc: |
+            Through a small tunnel you can see athletes stretching and warming up for
+            the games.
+      key: -1
+    up:
+      to: 12003
+      desc: |
+            You see a set of steps leading up into the spectator stands.  
+      key: -1
+  extra_descs:
+  - keywords:
+    - gladiator
+    desc: |
+              He is in the final stages of a charge against his opponent... THUD!  CLANG!
+              CRASH!!!!... judging from the blood and the amount of distance that now
+              separates the gladiators head from the rest of his body, you can safely
+              assume that this was the final combat of his life.
+- vnum: 12011
+  name: The First-Aid Station
+  sector: inside
+  flags:
+  - no_mob
+  - indoors
+  desc: |2
+       This is the place to come to if one is overcome by the heat and gore.
+    (Or if a lion gets loose)  You see a jar of live leeches and other barbaric
+    medical apparati lying about here.  From the west comes the roar of the
+    crowd, and a hall leads east.  The healer will be with you shortly.
+  exits:
+    east:
+      to: 12018
+      desc: |
+            You see hundreds, perhaps thousands of people.
+      key: -1
+    west:
+      to: 12004
+      desc: |
+            Rows of stone bleachers lie to the west.
+      key: -1
+  extra_descs:
+  - keywords:
+    - leech
+    - leeches
+    desc: |
+              DISGUSTING!  Each is about the size of matchbox and very slimy.  You are VERY
+              glad that you have access to a cleric!
+- vnum: 12012
+  name: A Dirt Road
+  sector: field
+  desc: |2
+       You are on a parched and dusty rural road which runs east and west.  There
+    is a structure lying to the south.
+  exits:
+    east:
+      to: 12019
+      desc: |
+            Through the dust, you see a paved road.
+      key: -1
+    south:
+      to: 12013
+      desc: |
+            It is difficult to see through the haze and dust.
+      key: -1
+    west:
+      to: 12005
+      desc: |
+            It is difficult to see through the haze and dust.
+      key: -1
+- vnum: 12013
+  name: The Commoner's House
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You are standing in the main living quarters of a common Roman citizen.
+    The furnishings are sparse and it is warm here.  A putrid odor is coming
+    from the east and passages lead north and south.
+  exits:
+    north:
+      to: 12012
+      desc: |
+            A dusty road lies to the north.
+      key: -1
+    east:
+      to: 12020
+      desc: |
+            What is that smell??!!!  It is enough to make a yak gag!!!
+      key: -1
+    south:
+      to: 12014
+      desc: |
+            You hazard a guess that a bedroom lies in that direction.
+      key: -1
+  extra_descs:
+  - keywords:
+    - furnishings
+    - furniture
+    desc: |
+              The furniture that you see is very simple and plain.  It is made of rough hewn
+              wood and fastened together with nails.  It looks very uncomfortable.
+- vnum: 12014
+  name: The Bedchamber
+  sector: inside
+  flags:
+  - no_mob
+  - indoors
+  desc: |2
+       This is the bedroom.  There is a hard and lumpy bed in the far corner.
+    It looks like the commoner's wife has been shirking her duties lately, as
+    there is a big pile of soiled laundry here.  The only way out is from where
+    you came.
+  exits:
+    north:
+      to: 12013
+      desc: |
+            You see the living quarters to the north.
+      key: -1
+  extra_descs:
+  - keywords:
+    - laundry
+    - wash
+    - clothing
+    desc: |
+              It smells of sweat and is covered with mud.
+- vnum: 12015
+  name: The Noblemans' Box
+  sector: inside
+  desc: |2
+      These are the 'better' seats used primarily by the upper class of Rome.
+    There is a large seating area to the east and a staircase leading up here.
+    The view of the chariot track is pretty good. 
+  exits:
+    east:
+      to: 12022
+      desc: |
+            Rows upon rows of bleachers lie to the east.
+      key: -1
+    up:
+      to: 12008
+      desc: |
+            The stairs look safe enough.
+      key: -1
+- vnum: 12016
+  name: The Race Track
+  sector: field
+  desc: |2
+       This is a hard dirt track about a quarter of a mile long.  There are hoof
+    prints everywhere, and you see a large cloud of dust approaching.  You had
+    better move before you get run over.  A small tunnel leads west, you can see
+    the crowd to the east.  You can hear loud snarls and roars coming from below.
+  exits:
+    west:
+      to: 12009
+      desc: |
+            You see athletes warming up and stretching.
+      key: -1
+    up:
+      to: 12023
+      key: -1
+    down:
+      to: 12017
+      desc: |
+            Do you like lots of live lions that haven't been fed for a few days?
+      key: -1
+- vnum: 12017
+  name: The Lion Pit
+  sector: inside
+  flags:
+  - death
+  - indoors
+  desc: |2
+       As you land at the bottom of this dirt-walled pit, the realization that a
+    pit full of lions is NOT a good thing to be hanging around in.  Several of
+    the gladiators gather around the edge of the pit to watch your demise.  You
+    look around you, and all you see is tawny fur and gaping jaws... it is too
+    late to run, too late to hide.
+       Twelve lions rip you and your belongings into a gory mass of bloodied
+    leather, bronze, and bone.
+
+       What's that old saying? 
+       Cats killed the curious?  Something like that, I'm sure...
+  exits:
+    up:
+      to: 12010
+      key: -1
+    down:
+      to: 12016
+      key: -1
+- vnum: 12018
+  name: The South Entrance To The Coliseum
+  sector: city
+  flags:
+  - no_mob
+  desc: |2
+       You are standing at the south entrance to the Coliseum.  There are
+    citizens of Rome everywhere, apparently in a mad rush to get in.  A
+    statue of Caligula the Mad Emperor overlooks the area.  There are long
+    lines standing to the east, and an acrid smell is coming from the west.
+    A busy road lies to the south.
+  exits:
+    east:
+      to: 12025
+      desc: |
+            The lines are very long and people look impatient.
+      key: -1
+    south:
+      to: 12019
+      desc: |
+            A road lies in that direction.
+      key: -1
+    west:
+      to: 12011
+      desc: |
+            An acrid, almost medicinal smell is coming from that direction.
+      key: -1
+  extra_descs:
+  - keywords:
+    - statue
+    - caligula
+    desc: |
+              A larger than life stone statue of Caligula, the Mad Emperor, looks at you.
+              It looks like it is holding a phallus.  He has got a grin on his face that
+              seems to say 'My horse would like you, I bet...'
+- vnum: 12019
+  name: The Main Highway
+  sector: city
+  desc: |2
+       This is a well built and heavily traveled road running from east to west
+    and there is a large structure built entirely of stone to the north.
+  exits:
+    north:
+      to: 12018
+      desc: |
+            You can hear the roar of a large crowd of people coming from that direction.
+      key: -1
+    east:
+      to: 12026
+      desc: |
+            The highway continues to the east.
+      key: -1
+    west:
+      to: 12012
+      desc: |
+            The highway continues to the west.
+      key: -1
+- vnum: 12020
+  name: The Outhouse
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       PEEEEEEEEEEEEEEEE-YEEEEEWWWWWWWW!!!!!  Boy does it stink in here!!!  You
+    taste bile in your mouth and your eyes begin to water.  As you wipe away your
+    tears, you see that this is a small room, in the far corner of which a hole
+    is dug.  The odor intensifies as you move closer and there is a roll of toilet
+    paper sitting on the ground.  The only exit is to the west and your nose and
+    stomach are strongly suggesting that you use it.
+  exits:
+    west:
+      to: 12013
+      desc: |
+            The living quarters lie in that direction.  Why don't you stop pussyfooting 
+            around and go that way??!!  Please?
+      key: -1
+  extra_descs:
+  - keywords:
+    - roll
+    - paper
+    desc: |
+              Hey!!  This is first-class stuff!! - White Cloud brand with lotion.  The roll
+              is about half-used.
+  - keywords:
+    - hole
+    - toilet
+    desc: |
+              You walk over to the hole and see that there is a large turd floating in a 
+              pool black water about 2 feet below the surface of the ground.  As you lean
+              closer to get a better look, your nose catches a concentrated dose of the 
+              fragrant aroma wafting upwards.  Your stomach decides that it has had enough
+              of this shoddy treatment and you puke until it is empty.
+- vnum: 12021
+  name: The Slave Quarters
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       This is where the slaves sleep.  There are hard boards set out for use
+    as beds and not much else.  The only exit is to the east.
+  exits:
+    east:
+      to: 12027
+      desc: |
+            To the east, a well manicured path winds through the nobleman's estate.
+      key: -1
+- vnum: 12022
+  name: The Common Seating
+  sector: city
+  desc: |2
+       This is where many of the common Roman citizens are seated during the
+    games.  These are the cheapest seats in the house, as glare from the sun
+    is usually a problem during the afternoon.  Like the other common seating
+    areas, this place could stand extensive renovation and a thorough cleaning.
+    This area extends to the south and a much more elegant seating area can be
+    seen to the west.
+  exits:
+    south:
+      to: 12023
+      desc: |
+            The common seating area continues.
+      key: -1
+    west:
+      to: 12015
+      desc: |
+            The seating gets much fancier and elegant in that direction.
+      key: -1
+- vnum: 12023
+  name: The Common Seating
+  sector: city
+  desc: |2
+       This is where many of the common Roman citizens are seated during the
+    games.  Like the other commoners' areas in the coliseum, it could use
+    extensive renovation and cleaning.  This area extends to the north and
+    lots of noise can be heard coming from the south.
+  exits:
+    north:
+      to: 12022
+      desc: |
+            The common seating area continues.
+      key: -1
+    south:
+      to: 12024
+      desc: |
+            You see hundreds, perhaps thousands of people.
+      key: -1
+- vnum: 12024
+  name: The East Entrance To The Coliseum
+  sector: city
+  flags:
+  - no_mob
+  desc: |2
+       You are standing at the east entrance to the Coliseum.  There are people 
+    everywhere, apparently in a mad rush to get in.  A statue of Tiberius, an 
+    Emperor of a time long since passed, stands here looking out over the crowd.  
+    There is a passage to the north, the ticket booth is to the south and a gate 
+    opening to the city lies to the east.
+  exits:
+    north:
+      to: 12023
+      desc: |
+            You see rows upon rows of dilapidated wooden bleachers.
+      key: -1
+    east:
+      to: 12031
+      desc: |
+            Nero Drive lies in that direction.
+      key: -1
+    south:
+      to: 12025
+      desc: |
+            There are VERY long lines standing outside the ticket booth.
+      key: -1
+  extra_descs:
+  - keywords:
+    - statue
+    - tiberius
+    desc: |
+              The statue of Tiberius, made of iron, stands here.
+- vnum: 12025
+  name: The Ticket Booth
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       Long lines are standing here, waiting to buy tickets.  There are three
+    vendors working furiously.  Ticket stubs litter the ground and you can see
+    that the people are getting very impatient.  There is a large, open cashbox
+    here.  Main entrances to the Coliseum are to the north and west.  
+  exits:
+    north:
+      to: 12024
+      desc: |
+            You see hundreds, if not thousands of people.
+      key: -1
+    west:
+      to: 12018
+      desc: |
+            You see hundreds, if not thousands of people.
+      key: -1
+  extra_descs:
+  - keywords:
+    - cashbox
+    desc: |
+              It is a shame that the exchange rate for Roman money is so low.  What amounts
+              to a fortune in Rome isn't even worth one gold coin.  The contents of the box
+              add up to about... well forget it.  It isn't worth your time or trouble to
+              carry it around.
+- vnum: 12026
+  name: A Paved Road
+  sector: city
+  desc: |2
+       You are on a paved road that runs east to west.  You can see an elaborate
+    looking estate to the south and to the north-west, off in the distance, you
+    can see a very large stone structure.
+  exits:
+    east:
+      to: 12033
+      desc: |
+            The road leads off to the east.
+      key: -1
+    south:
+      to: 12027
+      desc: |
+            It looks like a Nobleman's estate.  We are talking RICH nobleman's estate.
+      key: -1
+      keywords: estate house
+    west:
+      to: 12019
+      desc: |
+            The road leads west towards the highway.
+      key: -1
+  extra_descs:
+  - keywords:
+    - structure
+    desc: |
+              That would probably be the Coliseum.  There are a few good matches scheduled
+              for today.
+- vnum: 12027
+  name: A Noble Estate
+  sector: field
+  desc: |2
+       You are on the grounds of a nobleman's estate which is hundreds of times
+    the size and splendor of anything that a common citizen of Rome would ever
+    hope to own.  Everything is lush and green.  The grass is perfectly manicured
+    and the trees are all bearing fruit.  Ornamental plants are in perfectly
+    situated to enhance and adorn the three statues of dedicated to gods Jupiter,
+    Venus and Neptune.  A tranquil path leads east and west, there is a paved road
+    to the north and an extravagant house lies to the south.
+  exits:
+    north:
+      to: 12026
+      desc: |
+            You see a paved road in the distance.
+      key: -1
+    east:
+      to: 12034
+      desc: |
+            The path leads east through the estate.
+      key: -1
+    south:
+      to: 12028
+      desc: |
+            You see an incredible house off in the distance.
+      key: -1
+    west:
+      to: 12021
+      desc: |
+            Off through the trees, you see a small, plain hut.
+      key: -1
+  extra_descs:
+  - keywords:
+    - trees
+    - tree
+    - shrubs
+    - shrub
+    - plants
+    - plant
+    desc: |
+              All of the plants, trees and shrubs are perfectly trimmed, without so much
+              as a dead leaf anywhere to be seen.  You welcome the shade that they give
+              from the harsh sun above.
+  - keywords:
+    - Neptune
+    desc: |
+              The statue of Neptune is made of pure jade and is holding a crystal trident.
+              It is sitting in the center of a small pond which has hundreds of beautiful
+              fish swimming in it.
+  - keywords:
+    - Jupiter
+    desc: |
+              A statue made of pure gold depicts Jupiter sitting on his throne.  The throne
+              looks like it is made of silver.
+  - keywords:
+    - Venus
+    desc: |
+              Venus, the Roman goddess of beauty and knowledge is displayed in a all of her
+              splendor.
+- vnum: 12028
+  name: An Opulent House
+  sector: inside
+  flags:
+  - no_mob
+  - indoors
+  desc: |2
+       You stand in a house, the size and splendor of which almost defies the
+    imagination.  The floor is done with hand crafted marble tile with silver
+    and jeweled inlays.  The light coming through the exquisitely crafted stained
+    glass windows bathes the room in splendor and the furniture looks as though
+    it was made by master craftsmen from all over the empire.  A path through the
+    estate is north of here.
+  exits:
+    north:
+      to: 12027
+      desc: |
+            You see a well manicured path that winds through the estate.
+      key: -1
+  extra_descs:
+  - keywords:
+    - furniture
+    desc: |
+              You hope to eventually be able to own a piece of furniture just like these 
+              someday.  These are only dreams, of course.
+  - keywords:
+    - windows
+    desc: |
+              They are intricate and the scenes that they depict cast honor on several of
+              the gods.
+  - keywords:
+    - floor
+    - tile
+    desc: |
+              Very expensive!  A lot of master craftsmen labored long and hard to produce
+              such a work of art.
+- vnum: 12029
+  name: The Great North Gate
+  sector: city
+  desc: |2
+       This is the northern gateway to the city of Rome.  The huge gate appears
+    to be closed and locked against intrusion.  A large road muddy road runs
+    through the gate and into the countryside.  Nero Drive runs south from here.
+  exits:
+    north:
+      to: -1
+      desc: |
+            The gate is made of solid iron and is well maintained.
+      door: pickproof
+      key: -1
+      keywords: gate
+    south:
+      to: 12030
+      desc: |
+            Nero Drive continues in that direction.
+      key: -1
+  extra_descs:
+  - keywords:
+    - road
+    desc: |
+              The road is wide and very muddy.
+  - keywords:
+    - gate
+    desc: |
+              The gate is made of solid iron and is well maintained.
+- vnum: 12030
+  name: Nero Drive
+  sector: city
+  desc: |2
+       You are walking on a paved road that runs south through the city of Rome.
+    A great gate is directly north of here.  The Roman citizens are very friendly
+    and tip their hats or say hello as you pass.
+  exits:
+    north:
+      to: 12029
+      desc: |
+            To the north, you can see a gate leading out of the city.
+      key: -1
+    south:
+      to: 12031
+      desc: |
+            Nero Drive continues in that direction.
+      key: -1
+    west:
+      to: 12062
+      desc: |
+            You see the bakery of Rome.
+      key: -1
+- vnum: 12031
+  name: Nero Drive
+  sector: city
+  desc: |2
+       You are walking on a great paved road that runs north and south through
+    the city.  People are hurrying from one place to another, but always stop
+    to say hello.  Most of the people are either coming from or going to the
+    town square.  Nero Drive continues to the north, and you can see a large
+    open area to the south.
+  exits:
+    north:
+      to: 12030
+      desc: |
+            Nero drive continues in that direction.
+      key: -1
+    south:
+      to: 12032
+      desc: |
+            It looks like the town square.
+      key: -1
+    west:
+      to: 12024
+      desc: |
+            You see the an opulent estate.
+      key: -1
+- vnum: 12032
+  name: The Town Square
+  sector: city
+  desc: |2
+       You are standing in the middle of a large open area which is the common
+    area of Rome.  During the day, this place is alive with the hustle and
+    bustle of all of the citizens of Rome and everyone in the city is sure to
+    stop by at some time or another.  There are several street vendors peddling
+    their wares and the overall atmosphere is carnival-like in nature.  To the
+    southeast, off in the distance, you can see the aqueduct and the buildings
+    of the Roman government lie to the northwest.  Nero Drive leads north and
+    south from here and Clay Avenue runs east.
+  exits:
+    north:
+      to: 12031
+      desc: |
+            Nero Drive heads in the direction of the northern gate.
+      key: -1
+    east:
+      to: 12039
+      desc: |
+            Nero Drive heads in the direction of the south gate.
+      key: -1
+    south:
+      to: 12033
+      desc: |
+            A street made of hard packed clay runs in that direction towards the
+            aqueduct and buildings of the Roman government.
+      key: -1
+  extra_descs:
+  - keywords:
+    - aqueduct
+    desc: |
+              To the southeast, off in the distance, stands a large stone structure that
+              is used to channel water into the city.
+  - keywords:
+    - vendor
+    - vendors
+    desc: |
+              There are several sidewalk vendors here, selling fresh fruits and vegetables,
+              home baked goods, fine jewelry and other items.  Most of the items for sale
+              are of very high quality.
+- vnum: 12033
+  name: Nero Drive
+  sector: city
+  desc: |2
+       You are walking on a paved road that runs north and south through the
+    city of Rome.  There are many people here, as polite as always.  Most of
+    them are either coming from or going to the town square which lies to the
+    north.  Nero Drive continues to the south.  There is an observation area
+    overlooking the aqueduct to the east and a paved road leads west.
+  exits:
+    north:
+      to: 12032
+      desc: |
+            The town square lies in that direction.
+      key: -1
+    east:
+      to: 12040
+      desc: |
+            The aqueduct and mountain of the gods are in that direction.
+      key: -1
+    south:
+      to: 12034
+      desc: |
+            Nero Drive continues toward the South Gate.
+      key: -1
+    west:
+      to: 12026
+      desc: |
+            A paved road runs west through the city.
+      key: -1
+- vnum: 12034
+  name: Nero Drive
+  sector: city
+  desc: |2
+       This is a busy paved road that runs north through the city.  The people
+    of Rome are very friendly and say hello as you pass.  A gate leading out of
+    the city lies to the south and a small path goes west towards a nobleman's
+    estate.  To the east, off in the distance, lies the great mountain.  It is
+    rumored that the Gods watch over and protect the empire from there.
+  exits:
+    north:
+      to: 12033
+      desc: |
+            Nero Drive leads in that direction.
+      key: -1
+    south:
+      to: 12035
+      desc: |
+            You see many people entering and leaving the city through a large gate in the
+            walls protecting the city.
+      key: -1
+    west:
+      to: 12027
+      desc: |
+            It looks like a nobleman's estate.  We are talking RICH nobleman's estate.
+      key: -1
+- vnum: 12035
+  name: The South Gate
+  sector: city
+  desc: |2
+       This is the southern gateway to the city of Rome.  The bronze gate is
+    closed and locked.  Looking through the bars, you see a heavily traveled
+    road leading out of the city.  Nero Drive starts here and runs north and
+    a wizard's shop lies to the east.
+  exits:
+    north:
+      to: 12034
+      desc: |
+            Nero Drive leads towards the center of town.
+      key: -1
+    east:
+      to: 12042
+      desc: |
+            A small store, from which an occasional detonation can be heard, lies off
+            in that direction.  It appears to be surrounded by a rolling pink mist.
+      key: -1
+    south:
+      to: -1
+      desc: |
+            The gate appears to be closed and locked against intruders.
+      door: pickproof
+      key: -1
+      keywords: gate
+  extra_descs:
+  - keywords:
+    - gate
+    desc: |
+              The gate appears to be closed and locked against intruders.
+- vnum: 12036
+  name: The Emperor's Private Office
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You are standing in the Emperor's private office.  The room is richly
+    furnished with the finest of the loot brought back from conquests of far
+    away lands.  There is a massive, intricately carved desk here, upon which
+    are important documents, decrees and other paperwork involved in running
+    the empire.  On the far wall, there is a marble bookcase that is well
+    stocked with the works of Homer, Plato, Socrates and other wise men.
+    Further, it seems that the current Emperor likes flowers as there are
+    many potted and cut specimens throughout the room.  There is a french
+    door leading to the waiting room and a wooden door to the south.
+  exits:
+    east:
+      to: 12043
+      desc: |
+            Through the door, you see a waiting room.
+      door: pickproof
+      key: 12035
+      keywords: doors french
+    south:
+      to: 12037
+      desc: |
+            The south door leads directly to the senate chambers.
+      door: pickproof
+      key: 12035
+      keywords: door wooden
+  extra_descs:
+  - keywords:
+    - flowers
+    - plants
+    - flower
+    - plant
+    desc: |
+              The plants contribute to a very relaxing atmosphere.  
+  - keywords:
+    - bookcase
+    - books
+    desc: |
+              The books are very old and contain the wisdom of wise men from throughout the
+              entire Roman empire.  They appear to be collecting dust.
+  - keywords:
+    - documents
+    - decrees
+    - paperwork
+    - document
+    - decree
+    - papers
+    - paper
+    desc: |
+              The documents are all written on reed scrolls made in Egypt and have been
+              sealed with wax.  
+  - keywords:
+    - desk
+    desc: |
+              The desk is made of solid walnut and gold inlay.  It is exquisitely carved
+              with superior craftsmanship, the likes of which has rarely been seen.  It
+              was probably brought to Rome from Gaul.
+- vnum: 12037
+  name: The Senate Chambers
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       This is the working room where elected senators from all over the empire
+    gather to advise the Emperor.  An official seal of the Emperor is hanging on
+    the far wall.  There is a wooden door to the north and a bronze door to the
+    east and doublehung door to the south.
+  exits:
+    north:
+      to: 12036
+      desc: |
+            The door is made of thick walnut.
+      door: pickproof
+      key: 12035
+      keywords: door wooden
+    east:
+      to: 12044
+      desc: |
+            The door leads to the foyer.
+      door: regular
+      key: 12036
+      keywords: door bronze
+    south:
+      to: 12038
+      door: regular
+      key: 12037
+      keywords: door doublehung
+- vnum: 12038
+  name: The House Of Commons
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       This is the lower house of the advising body to the Emperor.  Common men
+    from all parts of Rome work here to further assist the senators in advising
+    the Emperor on critical matters of state.  The seal of the Emperor is painted
+    on the far wall.  The only exit is to the north.
+  exits:
+    north:
+      to: 12037
+      desc: |
+            You see that the doublehung door leads to the senate chambers.
+      door: regular
+      key: 12104
+      keywords: door doublehung
+- vnum: 12039
+  name: Clay Avenue
+  sector: city
+  desc: |2
+       You are on a wide well traveled road running east and west through the
+    heart of Rome.  There are large crowds of people to the west and the road
+    continues to the east.  The aqueduct is directly south of here.
+  exits:
+    east:
+      to: 12046
+      desc: |
+            Clay Avenue continues in that direction.
+      key: -1
+    south:
+      to: 12041
+      desc: |
+            You see an entrance to the aqueduct.
+      key: -1
+    west:
+      to: 12032
+      desc: |
+            There are large crowds of people in that direction.
+      key: -1
+  extra_descs:
+  - keywords:
+    - crowds
+    - people
+    desc: |
+              It looks like some kind of bizarre or festival is occurring to the west.
+              There are hundreds of people of all classes shopping, talking or eating.
+- vnum: 12040
+  name: The Observation Lookout
+  sector: city
+  desc: |2
+       You are on a platform overlooking a massive aqueduct.  There is a
+    telescope mounted to the railing that surrounds the area and you can
+    hear the gurgle of water as it is channeled into the city.  Off in
+    the distance, you can see the Mountain of the Gods.
+    There is a sign mounted to the railing and a ramp leads west.
+  exits:
+    west:
+      to: 12033
+      desc: |
+            You can see a busy street in that direction.
+      key: -1
+  extra_descs:
+  - keywords:
+    - sign
+    desc: "     \n         ********************************************\n         *                                          *\n         *      The Roman Aquarian and Mountain     *\n         *            Observation Platform          *\n         *                                          *\n         *      Designed and built by the Froboz    *\n         *           Magic Platform Company         *\n         *                                          *\n         ********************************************\n\n"
+  - keywords:
+    - aqueduct
+    desc: |
+              The aqueduct is a massive stone structure that channels water into Rome from
+              the Mountain of the Gods.  During the rainy season, it is filled to the top.
+              However, due to recent drought, the water level appears to be very low.
+  - keywords:
+    - telescope
+    desc: |
+              If it were operational, it would offer a spectacular view of the Mountain of 
+              the Gods.  Unfortunately, it appears to have been vandalized.
+- vnum: 12041
+  name: The Aqueduct
+  sector: water_swim
+  flags:
+  - no_mob
+  - indoors
+  desc: |2
+       You are in a massive stone structure that has been designed to channel
+    water into the city of Rome.  Due to the recent drought, the water level
+    is low, allowing passage without a boat.  The walls and floor are covered
+    with algae and slime producing treacherous footing conditions.  There are
+    exits to the north, south and east.
+  exits:
+    north:
+      to: 12039
+      desc: |
+            You can see a wide street to the north.
+      key: -1
+    east:
+      to: 12048
+      desc: |
+            You see more aqueduct.
+      key: -1
+    south:
+      to: 12041
+      desc: |
+            You see more aqueduct.
+      key: -1
+    west:
+      to: 12054
+      desc: |
+            You see more aqueduct.
+      key: -1
+  extra_descs:
+  - keywords:
+    - slime
+    - algae
+    desc: |
+              Due to the availability of moisture and nutrients, a green, viscous slime has 
+              grown and covered everything with a slippery coating.  It seems to go out of
+              its way to drip on you.
+- vnum: 12042
+  name: The Mage's Shop
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You are standing in the mage's shop.  Magical ointments, charms and
+    potions are sitting on shelves and behind a glass counter.  There is a
+    dense neon blue fog hugging the floor here, making it impossible to see
+    below your knees.  You suddenly hear mutterings coming from the back
+    room, possibly from...
+    KKKKKAAAAAABBBBOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOMMMMMMMMMMMMMMMM!!!!!!
+    You are deafened by the noise from a tremendous explosion and the
+    concussion from the blast staggers you!  The shopkeeper seems to pay
+    no heed to this. The door to the back room opens and an older man,
+    wearing a pointed hat, whose face is smudged with soot sticks his head
+    out.  'Is everyone alright?  Sorry about that.  I was testing a new
+    spell.  I'll try to give advance notice next time.', he says.  The door
+    then closes.
+  exits:
+    east:
+      to: 12049
+      desc: |
+            The door is reinforced with steel and looks VERY sturdy.  Considering the
+            'test' that you just witnessed, you are glad that it stands between you and
+            whatever is going on in the back room.
+      door: pickproof
+      key: 12038
+      keywords: door
+    west:
+      to: 12035
+      desc: |
+            You see the south gate through the door.
+      key: -1
+  extra_descs:
+  - keywords:
+    - fog
+    - mist
+    desc: |
+              This is some really strange stuff!  You have never seen anything this color
+              before.  Your legs are totally obscured from the knee down.
+- vnum: 12043
+  name: The Waiting Room
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You are standing in a very large room with a high ceiling and there
+    are a few people waiting here to see the Emperor on urgent matters.  The
+    master scheduler tells you to have a seat and sends a page to inform the
+    his highness of your arrival.  There are large doors to the east and west
+    and an exit leads south to the foyer.
+  exits:
+    east:
+      to: 12050
+      desc: |
+            There is a sign on the door that says:  MUNICIPAL COURT OF ROME.  It appears 
+            to be open.
+      key: -1
+    south:
+      to: 12044
+      desc: |
+            The foyer is directly to the south.
+      key: -1
+    west:
+      to: 12036
+      desc: |
+            There is a large door to the west.
+      door: pickproof
+      key: 12035
+      keywords: door
+- vnum: 12044
+  name: The Entrance Foyer
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You have just entered the main government building of the Roman Empire
+    and are standing in a massive room with an elaborately decorated domed roof.
+    There are many people here; messengers and senators being the most numerous.
+    There is a large, ornate door to the west, a hallway leads north and marble
+    stairs that lead out of the building are to the south.
+  exits:
+    north:
+      to: 12043
+      desc: |
+            You see a hallway leading north to what looks like a waiting room.
+      key: -1
+    west:
+      to: 12037
+      desc: |
+            There is a large door to the west that blocks your path.
+      door: regular
+      key: 12036
+      keywords: door
+    down:
+      to: 12045
+      desc: |
+            You see a stairway leading out of the building.
+      key: -1
+- vnum: 12045
+  name: Outside The Capitol Building
+  sector: city
+  desc: |2
+       You stand on white marble steps that lead up and into the Capitol
+    Building.  There are several statues, none of any real significance,
+    at the entrance to the building.  The main entrance to the building
+    is at the top of the steps.
+  exits:
+    up:
+      to: 12044
+      desc: |
+            The steps lead into the Capitol Building.
+      key: -1
+    down:
+      to: 12046
+      desc: |
+            The steps terminate onto Clay Avenue.
+      key: -1
+  extra_descs:
+  - keywords:
+    - statue
+    - statues
+    desc: |
+              There is really nothing noteworthy about them.
+  - keywords:
+    - stairs
+    - stairway
+    - steps
+    desc: |
+              The stairs are immaculately polished and made of white marble.
+- vnum: 12046
+  name: Clay Avenue
+  sector: city
+  desc: |2
+      You are standing on a wide, heavily traveled road that runs east and
+    west through the heart of the city.  There are marble steps leading up.
+    To the south, off in the distance, you can see a large stone structure
+    and a mountain that is partially obscured by the haze.  There is a
+    general store to the north.
+  exits:
+    north:
+      to: 12063
+      desc: |
+            The general store lies in that direction.
+      key: -1
+    east:
+      to: 12051
+      desc: |
+            There is what appears to be a large gate in that direction.
+      key: -1
+    west:
+      to: 12039
+      desc: |
+            Clay Avenue continues.
+      key: -1
+    up:
+      to: 12045
+      desc: |
+            There are some white marble steps leading up.
+      key: -1
+  extra_descs:
+  - keywords:
+    - mountain
+    desc: |
+              Off to the southwest, you can see  a huge mountain that is partially obscured
+              by the haze.  It is rumored that the gods reside there and protect the city.
+  - keywords:
+    - stone
+    - structure
+    - aqueduct
+    desc: |
+              You see a massive stone structure, built several centuries ago, that is used
+              to channel water into the city.
+- vnum: 12047
+  name: The Summit Of The Mountain Of The Gods
+  sector: mountains
+  desc: |2
+       You are at the summit of a very high mountain and are standing above
+    the clouds.  The sun is shining brilliantly here and the clouds below
+    look like balls of cotton.  The path that you have been walking on is
+    damp and the scent of lilac is in the air.
+  exits:
+    down:
+      to: 12052
+      desc: |
+            You see a damp path leading back down the mountain.
+      key: -1
+- vnum: 12048
+  name: The Aqueduct
+  sector: water_swim
+  flags:
+  - indoors
+  desc: |2
+       You are in a massive stone structure that has been designed to channel
+    water into the city of Rome.  Due to the recent drought, the water level
+    is low, allowing passage without a boat.  The walls and floor are covered
+    with algae and slime, producing treacherous footing conditions.  There are
+    exits in all four cardinal directions.
+  exits:
+    north:
+      to: 12057
+      desc: |
+            The aqueduct continues.
+      key: -1
+    east:
+      to: 12041
+      desc: |
+            The aqueduct continues.
+      key: -1
+    south:
+      to: 12041
+      desc: |
+            The aqueduct continues.
+      key: -1
+    west:
+      to: 12048
+      desc: |
+            The aqueduct continues.
+      key: -1
+  extra_descs:
+  - keywords:
+    - slime
+    - algae
+    desc: |
+              Due to the availability of moisture and nutrients, a green viscous slime has
+              grown and covered everything with a slippery coating.  It seems to go out of
+              its way to drip on you.
+- vnum: 12049
+  name: Froboz's Workshop
+  sector: inside
+  flags:
+  - indoors
+  desc: |
+    You are standing in the workshop of Froboz the Great, the most powerful and
+    famous mage that Rome has ever known.  Workbenches line the walls and are
+    covered with various test tubes, beakers, petri dishes and crucibles and
+    there is an odor in here that can best be described as a combination of old
+    sweat socks and burning tires.  The only exit is back through the door
+    through which you came.  In the middle of the room, you see a pile of ashes
+    that looks like it once was a body and Froboz is is busy making adjustments
+    on a new type of magic wand... possibly the one responsible for the explosion
+    a few minutes ago.  He removes a jeweler's loupe from his eye as he turns
+    around.  'How in the name of Merlin did you get in here??!!' he asks.  'Oh,
+    nevermind!  Since you are here, you can serve as witnesses to the final test
+    of the new mages' spell:  "ectowatt".'  With this he makes a magical gesture
+    and a paladin appears.  Crossing his fingers, Froboz waves the wand his
+    direction and what happens next is incredible!  The Paladin is enveloped in
+    what appears to be a small, well contained, thermonuclear explosion.  When
+    the smoke clears you can see that the paladin and all of equipment has been
+    reduced to a large pile of flaming cinders.  Froboz throws his head back and
+    cackles with insane glee.  'Now, my young friends, what can I do for you?',
+    he asks.
+  exits:
+    west:
+      to: 12042
+      desc: |
+            There is a door, reinforced with steel, in that direction.
+      door: pickproof
+      key: 12038
+      keywords: door
+  extra_descs:
+  - keywords:
+    - cinders
+    - ashes
+    - pile
+    desc: |
+              The ashes are a very fine grayish white powder that seems to be the only 
+              worldly remains of Froboz's "test specimens". 
+  - keywords:
+    - workbench
+    - workbenches
+    - tubes
+    - beakers
+    - crucibles
+    - dishes
+    desc: |
+              These are all tools of great power.  You cannot even begin to understand what
+              any of this stuff does.
+- vnum: 12050
+  name: The Courtroom
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You stand inside of a large courtroom in which common civil disputes and 
+    criminal matters are decided.  There is a judge's bench and a witness stand
+    on the far side of the room and a jury's box along side.  The Emperor's seal
+    is prominently displayed on the wall behind the judge's stand, reminding all
+    who enter that he is an extension of his highness.  There is a door, possibly 
+    leading to the judge's chambers, to the east and the waiting room is to the 
+    west.
+  exits:
+    east:
+      to: 12055
+      desc: |
+            The door might lead into the judge's private chambers.
+      door: regular
+      key: 12039
+      keywords: door
+    south:
+      to: 12060
+      desc: |
+            The holding cells lie in that direction.
+      key: -1
+    west:
+      to: 12043
+      desc: |
+            The waiting room lies in that direction.
+      key: -1
+  extra_descs:
+  - keywords:
+    - seal
+    desc: |
+              The seal of the Emperor is mounted above the judge's stand.  
+  - keywords:
+    - bench
+    - stand
+    - box
+    - jury
+    desc: |
+              You see large wooden structures that are designed to separate the judge, jury
+              and witnesses from the rest of the courtroom.  They are made of polished  
+              oak and are strictly functional.
+- vnum: 12051
+  name: The East Gate Of Rome
+  sector: city
+  desc: |2
+       You are standing inside of the eastern gate of Rome.  There are two tall 
+    spires built into the city wall, from which the guards can see the whole 
+    eastern side of the city.  The gate is currently open and to the east, 
+    there is a heavily used road, made of packed clay, that leads out of Rome. 
+    Another road leads westward into the city.
+  exits:
+    east:
+      to: 12064
+      desc: |
+            The clay road heads eastwards.
+      door: regular
+      key: -1
+      keywords: gate
+    west:
+      to: 12046
+      desc: |
+            The clay street leads into the city.
+      key: -1
+  extra_descs:
+  - keywords:
+    - gate
+    desc: |
+              The gate is fabricated from iron and has been designed to keep intruders
+              out of the city.
+  - keywords:
+    - spires
+    - towers
+    desc: |
+              There are two tall spires on either side of the gate and are constantly
+              manned by the city guards.  They are made of stone and stand about 40
+              feet tall. 
+- vnum: 12052
+  name: A Mountain Path
+  sector: mountains
+  desc: |2
+       You stand on a small trail that leads up and down.  It has recently been 
+    raining and there are small puddles everywhere.  You are just below the
+    clouds and the view of the surrounding countryside is breathtaking.  
+  exits:
+    up:
+      to: 12047
+      desc: |
+            The trail leads up and enters the clouds.
+      key: -1
+    down:
+      to: 12056
+      desc: |
+            The trail leads down.
+      key: -1
+  extra_descs:
+  - keywords:
+    - trail
+    desc: |
+              The mountain trail is a little muddy, due to the recent rains.  
+- vnum: 12054
+  name: The Aqueduct
+  sector: water_swim
+  flags:
+  - indoors
+  desc: |2
+       You are in a massive stone structure that has been designed to channel
+    water into the city of Rome.  Due to the recent drought, the water level
+    is low, allowing passage without a boat.  The walls and floor are covered
+    with algae and slime, producing treacherous footing conditions.  There are
+    exits in all four cardinal directions.
+  exits:
+    north:
+      to: 12041
+      desc: |
+            The aqueduct continues.
+      key: -1
+    east:
+      to: 12054
+      desc: |
+            The aqueduct continues.
+      key: -1
+    south:
+      to: 12057
+      desc: |
+            The aqueduct continues.
+      key: -1
+    west:
+      to: 12048
+      desc: |
+            The aqueduct continues.
+      key: -1
+  extra_descs:
+  - keywords:
+    - slime
+    - algae
+    desc: |
+              Due to the availability of moisture and nutrients, a green, viscous slime has
+              grown and covered the everything with a slippery coating.  It seems to go out
+              of its way to drip on you.
+- vnum: 12055
+  name: The Judge's Chambers
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You are in a small room that is filled with legal tombs.  There is a
+    small desk here, literally buried under legal documents.  There is also
+    a small window overlooking the northern part of the city.
+  exits:
+    west:
+      to: 12050
+      desc: |
+            The courtroom lies in that direction.
+      door: regular
+      key: 12039
+      keywords: door
+  extra_descs:
+  - keywords:
+    - papers
+    - documents
+    desc: |
+              There are hundreds of pages of petitions, lawsuits and court orders sitting
+              on the desk.  One particularly interesting case involves a nobleman, a slave
+              and a roll of toilet paper.
+  - keywords:
+    - tombs
+    - books
+    desc: |
+              The books are very large and filled with Roman legal precedent.
+- vnum: 12056
+  name: A Mountain Path
+  sector: mountains
+  desc: |2
+       You are standing on a small trail that leads through a grove of trees.
+    Every thing is lush and green here and it appears to have been raining
+    recently.  'This would be an ideal place for a picnic.' , you think to
+    yourself.
+  exits:
+    up:
+      to: 12052
+      desc: |
+            You see a small trail leading further up the mountain.
+      key: -1
+    down:
+      to: 12059
+      desc: |
+            You see a small trail, leading down.
+      key: -1
+  extra_descs:
+  - keywords:
+    - trail
+    - path
+    desc: |
+              The path is a little muddy, possibly due to a recent thundershower.
+  - keywords:
+    - tree
+    - trees
+    - vegetation
+    desc: |
+              All of the vegetation is lush, green and in full bloom.  You wish that you 
+              could take the time to stop and enjoy it properly.
+- vnum: 12057
+  name: The Aqueduct
+  sector: water_swim
+  flags:
+  - indoors
+  desc: |2
+       You are in a massive stone structure that has been designed to channel
+    water into the city of Rome.  Due to a recent drought, the water level is
+    low, allowing passage without a boat.  The walls and floor are covered
+    with algae and slime, producing treacherous footing conditions.  A valley
+    lies to the south and the other cardinal directions lead further into the
+    aqueduct.
+  exits:
+    north:
+      to: 12054
+      desc: |
+            The aqueduct continues.
+      key: -1
+    east:
+      to: 12054
+      desc: |
+            The aqueduct continues.
+      key: -1
+    south:
+      to: 12058
+      desc: |
+            You see a gorgeous valley.
+      key: -1
+    west:
+      to: 12041
+      desc: |
+            The aqueduct continues....
+      key: -1
+  extra_descs:
+  - keywords:
+    - slime
+    - algae
+    desc: |
+              Due to the availability of moisture and nutrients, a green, viscous slime has
+              grown and covered everything with a slippery coating.  It seems to go out of
+              its way to drip on you.
+- vnum: 12058
+  name: The Valley Of The Gods
+  sector: hills
+  desc: |2
+       You stand in a tranquil valley at the base of a large mountain.  A quiet 
+    stream, with fruit trees growing along its banks, winds its way peacefully
+    through the valley and enters a large stone structure that lies to the west.
+    There are birds singing and every now and then a ripple breaks the surface
+    of the stream.  You can see a path leading through the trees to the up.
+  exits:
+    north:
+      to: 12057
+      desc: |
+            A small path winds its way through the trees.
+      key: -1
+    up:
+      to: 12059
+      desc: |
+            You see a path leading up the mountain.
+      key: -1
+  extra_descs:
+  - keywords:
+    - trees
+    - fruit
+    desc: |
+              The fruit trees, nourished by the fertile ground at the edge of the stream
+              and sustained by the brilliant sunshine, line the banks of the stream and
+              are laden with fruit.
+  - keywords:
+    - fish
+    desc: |
+              A variety of species swims peacefully in the cool, clear water.  
+  - keywords:
+    - stream
+    - brook
+    desc: |
+              A stream of the clearest, cleanest water that you have ever seen winds its
+              way through the valley.
+- vnum: 12059
+  name: A Mountain Path
+  sector: mountains
+  desc: |2
+       You are standing on a path that leads up through a stand of large trees.  
+    Everything is green and it seems like eternal spring - this is Mother Nature
+    at her finest.  It is possible to descend into a tranquil valley from here.
+  exits:
+    up:
+      to: 12056
+      desc: |
+            The path leads further up the mountain.
+      key: -1
+    down:
+      to: 12058
+      desc: |
+            The path widens out into a tranquil valley.
+      key: -1
+  extra_descs:
+  - keywords:
+    - trees
+    desc: |
+              The trees are old and tower hundreds of feet above the ground.  If you stand
+              still and listen carefully, you can hear the birds singing.
+- vnum: 12060
+  name: The Holding Cells
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You are standing in the holding cell area, just off of the cortroom.  Those
+    who are recently convicted of serious crimes are brought here, pending torture
+    and execution.  The courtroom lies to the north and another exit goes east.
+  exits:
+    north:
+      to: 12050
+      desc: |
+            The courtroom lies to the north.
+      key: -1
+    east:
+      to: 12061
+      key: -1
+  extra_descs:
+  - keywords:
+    - cells
+    - cell
+    desc: |
+              You can see small and very cramped cells which are filthy.  You shiver and 
+              vow to never do anything that would cause you to become a resident.
+- vnum: 12061
+  name: The Torture Chamber
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You are standing in a very small room in which there are many tools
+    designed specifically for inflicting pain and suffering.  Some of them
+    are familiar, such as the rack and the iron maidens.  Others, you have
+    never seen before and they make you wonder about the kind of sadistic
+    mind that dreamt them up.  The only exit is to the west.
+  exits:
+    west:
+      to: 12060
+      desc: |
+            The holding cells lie in that direction.
+      key: -1
+- vnum: 12062
+  name: The Roman Bakery
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You are standing in the bakery of Rome and your mouth waters at the
+    delicious aromas wafting from the kitchen.  The only exit is to the east.
+  exits:
+    east:
+      to: 12030
+      key: -1
+- vnum: 12063
+  name: The General Store
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You are standing in the only general store of Rome.  The walls and shelves 
+    are covered with all of the various items required by Roman citizens and 
+    stalwart adventurers.  Clay Avenue lies to the south.
+  exits:
+    south:
+      to: 12046
+      desc: |
+            Clay Avenue lies in that direction.
+      key: -1
+- vnum: 12064
+  name: Before Rome
+  sector: city
+  flags:
+  - indoors
+  desc: |2
+       You travel upon an East-West road wide enough for 30 men to march
+    abreast.  It is packed hard through heavy use.  To the west stands the
+    Gates of Rome inviting you to enter and partake of all the glory and
+    splendor that is Rome.
+  exits:
+    east:
+      to: 12065
+      key: -1
+    west:
+      to: 12051
+      door: regular
+      key: -1
+      keywords: gate
+- vnum: 12065
+  name: Clay Road
+  sector: city
+  flags:
+  - indoors
+  desc: |2
+       You travel upon an East-West road wide enough for 30 men to march
+    abreast.  It is packed hard through heavy use.  To the west, your eyes
+    catch the splendors of a mighty city.
+  exits:
+    east:
+      to: 12066
+      key: -1
+    west:
+      to: 12064
+      key: -1
+- vnum: 12066
+  name: Clay Road
+  sector: city
+  flags:
+  - indoors
+  desc: |2
+       You travel upon an East-West road wide enough for 30 men to march
+    abreast.
+  exits:
+    east:
+      to: 12067
+      key: -1
+    west:
+      to: 12065
+      key: -1
+- vnum: 12067
+  name: The End Of The Clay Road
+  sector: city
+  flags:
+  - indoors
+  desc: |2
+       The mighty clay road turns into lesser, but still well traveled roads
+    here.  You feel a surge run through your body as you look East into the
+    lands that Rome turned into its mighty empire.
+  exits:
+    east:
+      to: 12068
+      desc: |
+            A dirt trail leads towards the desert to the east.
+      key: -1
+    west:
+      to: 12066
+      desc: |
+            The mighty clay road leads off in this direction.
+      key: -1
+- vnum: 12068
+  name: A Small Dirt Trail
+  sector: city
+  flags:
+  - no_mob
+  desc: |2
+       This small dirt path seems to be a joint between a large clay road
+    located a short distance to the west and the expanse of sand which opens
+    up before you to the east.  The clay road appears to lead through the
+    foothills towards the snowcapped mountain chain to the west.  Perhaps
+    there is a city or settlement in that direction.
+       You cannot see any breaks in the horizon of the sand which fills your
+    vision as you look to the east, it seems to stretch forever.
+  exits:
+    east:
+      to: 5028
+      desc: |
+            The expanse of the Great Eastern Desert opens up before you.
+      key: -1
+    west:
+      to: 12067
+      desc: |
+            A large clay road begins a short distance to the west.
+      key: -1
+mobiles:
+- vnum: 12000
+  keywords:
+  - judge
+  - adjudicator
+  short: the adjudicator
+  long: |
+    An adjudicator is watching the games intently.
+  desc: |
+    The adjudicator is a retired gladiator and scars cover all exposed parts of
+    his body.  Although he is getting on in years, he remains healthy and fit.
+  act:
+  - sentinel
+  - memory
+  affected:
+  - sanctuary
+  alignment: 100
+  level: 12
+  thac0: 9
+  ac: 2
+  hp: 3d7+140
+  damage: 1d7+4
+  gold: 2000
+  exp: 13000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 12001
+  keywords:
+  - scorekeeper
+  short: the scorekeeper
+  long: |
+    A scorekeeper has one eye on his stopwatch and the other on a clipboard.
+  desc: |
+    The scorekeeper is a young man of about 25 years of age and is very intently
+    studying his clipboard.
+  act:
+  - sentinel
+  - memory
+  alignment: 100
+  level: 7
+  thac0: 14
+  ac: 4
+  hp: 3d5+80
+  damage: 1d4+3
+  gold: 500
+  exp: 2250
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 12003
+  keywords:
+  - spectator
+  - fan
+  short: the spectator
+  long: |
+    A spectator is here watching the games.
+  desc: |
+    The spectator is filthy, half drunk and screaming his head off.
+  act:
+  - sentinel
+  alignment: -100
+  level: 5
+  thac0: 16
+  ac: 5
+  hp: 2d6+65
+  damage: 2d4
+  gold: 100
+  exp: 900
+  position: sitting
+  default_position: sitting
+  sex: neutral
+- vnum: 12004
+  keywords:
+  - noble
+  - nobleman
+  short: the nobleman
+  long: |
+    A nobleman stands here looking aloof.
+  desc: |
+    The nobleman is dressed in fine clothes and jewelry and has a very snobbish
+    attitude.  While he is getting old and his hair and beard are streaked with
+    gray, he is by no means an easy target.
+  act:
+  - sentinel
+  - wimpy
+  - memory
+  affected:
+  - detect_invis
+  alignment: 500
+  level: 12
+  thac0: 9
+  ac: 2
+  hp: 4d6+140
+  damage: 1d7+5
+  gold: 3500
+  exp: 13000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 12005
+  keywords:
+  - slave
+  short: the slave
+  long: |
+    A slave stands here, wishing that she was free.
+  desc: |
+    A very pretty young woman who was captured instead of being killed when
+    the Roman legions subjugated her land.
+  act:
+  - sentinel
+  alignment: 0
+  level: 3
+  thac0: 18
+  ac: 7
+  hp: 3d6+30
+  damage: 1d7
+  gold: 10
+  exp: 350
+  position: standing
+  default_position: standing
+  sex: female
+- vnum: 12006
+  keywords:
+  - gladiator
+  short: the gladiator
+  long: |
+    There is a gladiator standing here.
+  desc: |
+    A well muscled man who is very heavily armored and armed to the teeth.  He
+    lives for combat.
+  act:
+  - sentinel
+  alignment: -250
+  level: 14
+  thac0: 5
+  ac: 0
+  hp: 4d7+150
+  damage: 1d8+6
+  gold: 700
+  exp: 19500
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 12007
+  keywords:
+  - driver
+  short: the chariot driver
+  long: |
+    There is a chariot driver here.
+  desc: |
+    You see a very slight and small individual whose whole life is centered around
+    nothing but horses and speed.
+  act:
+  - sentinel
+  alignment: 100
+  level: 10
+  thac0: 11
+  ac: 2
+  hp: 3d7+120
+  damage: 2d6+1
+  gold: 1200
+  exp: 9000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 12008
+  keywords:
+  - coach
+  - trainer
+  short: the coach
+  long: |
+    There is a coach standing here, going over last minute strategy.
+  desc: |
+    As you try to look over his shoulder and listen in on his mumbling,
+    he looks up at you and gives you a glare that chills you to the
+    bone.
+  act:
+  - sentinel
+  - memory
+  alignment: 0
+  level: 11
+  thac0: 10
+  ac: 2
+  hp: 4d5+130
+  damage: 2d6+1
+  gold: 500
+  exp: 11000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 12009
+  keywords:
+  - healer
+  short: the healer
+  long: |
+    A healer is standing here.
+  desc: |
+    You see a young man, still learning about magical healing, wearing a white 
+    coat and using a stethoscope.
+  act:
+  - spec
+  - sentinel
+  - aware
+  - memory
+  affected:
+  - detect_invis
+  alignment: 900
+  level: 14
+  thac0: 7
+  ac: 1
+  hp: 2d7+170
+  damage: 1d7+6
+  gold: 1500
+  exp: 18000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 12010
+  keywords:
+  - herbalist
+  - young
+  - lady
+  - beautiful
+  short: the herbalist
+  long: |
+    There is a beautiful young lady here, carrying herbs to help the healer with.
+  desc: |
+    The herbalist is a very beautiful young lady who is about 22 years old.  She 
+    has deep brown eyes and shoulder-length chestnut hair.  Her body is perfectly 
+    proportioned and she stands about 5' 5" tall.
+  act:
+  - sentinel
+  - wimpy
+  - memory
+  affected:
+  - detect_invis
+  alignment: 1000
+  level: 10
+  thac0: 11
+  ac: 2
+  hp: 3d4+110
+  damage: 1d7+4
+  gold: 500
+  exp: 8000
+  position: standing
+  default_position: standing
+  sex: female
+- vnum: 12011
+  keywords:
+  - shopkeeper
+  short: Titus' shopkeeper
+  long: |
+    Titus' shopkeeper is here, minding the store.
+  desc: |
+    The shopkeeper is an older man in his middle to late fifties and looks like
+    he enjoys the quiet life.  There is a long scar running from the edge of his
+    mouth to his right ear, making it look like he is always smiling.
+  act:
+  - sentinel
+  - memory
+  affected:
+  - detect_invis
+  - sanctuary
+  alignment: 750
+  level: 23
+  thac0: 0
+  ac: -2
+  hp: 4d10+400
+  damage: 3d8+12
+  gold: 5000
+  exp: 80000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 12012
+  keywords:
+  - peddler
+  short: the peddler
+  long: |
+    A poor peddler is standing here, trying to support his meager existence.
+  desc: |
+    You see a small, dirty man who doesn't look very healthy.  
+  act:
+  - sentinel
+  - stay_zone
+  - wimpy
+  - no_charm
+  alignment: 250
+  level: 4
+  thac0: 17
+  ac: 6
+  hp: 3d4+40
+  damage: 1d8
+  gold: 100
+  exp: 600
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 12013
+  keywords:
+  - page
+  short: the page
+  long: |
+    A page stands here, waiting to run an errand.
+  desc: |
+    You see a young boy who looks very strong and very fast.  He has the look of
+    a scholar about him.
+  act:
+  - sentinel
+  alignment: 0
+  level: 6
+  thac0: 15
+  ac: 4
+  hp: 3d6+75
+  damage: 2d4+1
+  gold: 0
+  exp: 1600
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 12014
+  keywords:
+  - plaintiff
+  short: the plaintiff
+  long: |
+    The plaintiff stands here, pleading his case.
+  desc: |
+    He looks pitiful.  Absolutely pitiful.
+  act:
+  - sentinel
+  alignment: 0
+  level: 11
+  thac0: 10
+  ac: 2
+  hp: 3d6+140
+  damage: 2d6+3
+  gold: 1000
+  exp: 12000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 12015
+  keywords:
+  - master
+  short: the ticket master
+  long: |
+    A ticket master is here, looking at you expectantly.
+  desc: |
+    He seems to be waiting for you to either buy a ticket or to get out
+    of his way so that he can sell tickets to people that actually want
+    them.
+  act:
+  - sentinel
+  - memory
+  alignment: 100
+  level: 17
+  thac0: 4
+  ac: 1
+  hp: 4d8+210
+  damage: 1d6+11
+  gold: 4000
+  exp: 28000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 12016
+  keywords:
+  - vendor
+  short: the stadium vendor
+  long: |
+    A stadium vendor is walking here, selling overpriced hotdogs and beer.
+  desc: |
+    The vendor is a scruffy looking man who isn't afraid of a fight and looks
+    like he has had just about enough of smart-mouthed spectators.  
+  act:
+  - stay_zone
+  alignment: -150
+  level: 8
+  thac0: 13
+  ac: 3
+  hp: 2d4+13000
+  damage: 2d5+15
+  gold: 500
+  exp: 3700
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 12017
+  keywords:
+  - citizen
+  short: the citizen
+  long: |
+    A citizen of Rome is standing here.
+  desc: |
+    It appears to be your ordinary citizen going about his business.
+  act:
+  - stay_zone
+  - memory
+  alignment: 900
+  level: 5
+  thac0: 16
+  ac: 5
+  hp: 1d4+85
+  damage: 1d8+1
+  gold: 100
+  exp: 1000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 12018
+  keywords:
+  - gateguard
+  - guard
+  short: the gateguard
+  long: |
+    A gateguard stands here, tending the gate.
+  desc: |
+    You see a strong, loyal public defender.
+  act:
+  - spec
+  - sentinel
+  - scavenger
+  - aware
+  - memory
+  alignment: 1000
+  level: 11
+  thac0: 10
+  ac: 2
+  hp: 3d6+130
+  damage: 1d6+5
+  gold: 500
+  exp: 11000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 12019
+  keywords:
+  - soldier
+  short: the soldier
+  long: |
+    A soldier on leave is walking around looking for entertainment.
+  desc: |
+    You see a member of one of the Emperor's elite legions.  He looks VERY strong.
+    You have this vague feeling that his entertainment isn't going to be a very
+    wholesome activity.
+  act:
+  - stay_zone
+  - memory
+  alignment: 300
+  level: 17
+  thac0: 4
+  ac: -1
+  hp: 3d5+220
+  damage: 1d6+9
+  gold: 1281
+  exp: 28000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 12020
+  keywords:
+  - emperor
+  - julius
+  - caesar
+  short: Julius Caesar
+  long: |
+    Julius Caesar, the Emperor of Rome, is sitting here.
+  desc: |
+    You see a man who is dressed in the finest of clothes, has eaten the best of
+    foods and lived in the most opulent palace that Rome has ever known. 
+  act:
+  - spec
+  - sentinel
+  - memory
+  affected:
+  - detect_invis
+  - sanctuary
+  - no_track
+  alignment: 990
+  level: 27
+  thac0: 0
+  ac: -7
+  hp: 10d5+650
+  damage: 3d7+15
+  gold: 24763
+  exp: 150000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 12021
+  keywords:
+  - guard
+  - royal
+  - bodyguard
+  short: the royal bodyguard
+  long: |
+    There is a royal bodyguard here, ready to die for the Emperor, if necessary.
+  desc: |
+    The bodyguard is dressed in the finest of armor and wields only the
+    deadliest of weapons.  He is very strong and would put up one hell
+    of a fight.  He has been trained to be suspicious of all but the
+    most innocent visitors, and likely to take offense of anyone with
+    less than pure intentions.
+  act:
+  - spec
+  - sentinel
+  - aggr_evil
+  - aggr_neutral
+  - memory
+  affected:
+  - detect_invis
+  alignment: 990
+  level: 18
+  thac0: 2
+  ac: 0
+  hp: 3d6+220
+  damage: 1d6+6
+  gold: 5000
+  exp: 35000
+  position: standing
+  default_position: standing
+  sex: male
+  abilities:
+    bare_hand_attack: 6
+    str: 18
+    str_add: 90
+- vnum: 12022
+  keywords:
+  - judge
+  - justice
+  short: the judge
+  long: |
+    A judge is standing here, reading a case.
+  desc: |
+    He seems to be quite interested in the case, perhaps you shouldn't
+    disturb him now, later would probably be a better time.
+  act:
+  - sentinel
+  - memory
+  alignment: 990
+  level: 21
+  thac0: 0
+  ac: -1
+  hp: 20d5+260
+  damage: 1d7+11
+  gold: 5000
+  exp: 50000
+  position: sitting
+  default_position: sitting
+  sex: male
+- vnum: 12023
+  keywords:
+  - master
+  - scheduler
+  short: the master scheduler
+  long: |
+    The master scheduler is here, writing in an appointment book.
+  desc: |
+    As you look at him, he looks up at you and asks, 'Do you have an
+    appointment?'  He waits for a few seconds and then asks, 'Would
+    you like one?'
+  act:
+  - sentinel
+  - memory
+  alignment: 900
+  level: 17
+  thac0: 3
+  ac: 0
+  hp: 4d4+210
+  damage: 1d6+9
+  gold: 3000
+  exp: 28000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 12024
+  keywords:
+  - slimeball
+  - slime
+  - ball
+  - green
+  short: the slimeball
+  long: |
+    A green ball of slime is hanging over you, oozing downward.
+  desc: |
+    There is a green 'ball' of slime oozing from the coating on the walls.
+  act:
+  - sentinel
+  - scavenger
+  - aggressive
+  - no_bash
+  - no_blind
+  affected:
+  - detect_invis
+  - sense_life
+  - infravision
+  alignment: -500
+  level: 12
+  thac0: 9
+  ac: 2
+  hp: 3d4+145
+  damage: 2d6+2
+  gold: 0
+  exp: 13000
+  position: standing
+  default_position: standing
+  sex: neutral
+  abilities:
+    bare_hand_attack: 9
+    int: 1
+- vnum: 12025
+  keywords:
+  - froboz
+  - wizard
+  short: Froboz
+  long: |
+    Froboz the wizard is standing here, working on a new spell.
+  desc: |
+    You see a middle-aged man whose knowledge of magic, both offensive and 
+    defensive, is legendary.  He literally glows with a pink aura.
+  act:
+  - spec
+  - sentinel
+  - aware
+  - memory
+  - no_charm
+  - no_summon
+  affected:
+  - detect_invis
+  - sanctuary
+  alignment: 300
+  level: 23
+  thac0: 0
+  ac: -3
+  hp: 5d10+425
+  damage: 1d8+14
+  gold: 32000
+  exp: 95000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 12026
+  keywords:
+  - titus
+  - andronicus
+  short: Titus Andronicus
+  long: |
+    Titus Andronicus is standing here, polishing a few swords.
+  desc: |
+    As you look at him, he suddenly swings a newly sharpened sword
+    at you!  Watch out!
+  act:
+  - sentinel
+  - aware
+  - aggressive
+  - memory
+  - no_charm
+  - no_summon
+  affected:
+  - detect_invis
+  - sanctuary
+  alignment: 500
+  level: 24
+  thac0: 0
+  ac: -5
+  hp: 1d5+450
+  damage: 1d8+14
+  gold: 31000
+  exp: 85000
+  position: standing
+  default_position: standing
+  sex: male
+  abilities:
+    bare_hand_attack: 3
+- vnum: 12027
+  keywords:
+  - senator
+  short: the senator
+  long: |
+    A senator is here, waiting for debate to begin.
+  desc: |
+    He seems to be quite bored and is playing with the edge of his toga.
+  act:
+  - sentinel
+  - memory
+  alignment: 350
+  level: 10
+  thac0: 11
+  ac: 2
+  hp: 3d5+120
+  damage: 2d6+1
+  gold: 500
+  exp: 9000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 12028
+  keywords:
+  - bailiff
+  short: the bailiff
+  long: |
+    The bailiff stands here, keeping order in the courtroom.
+  desc: |
+    He is a very stern man and insists on absolute quiet in his courtroom
+    unless the judge has given someone permisson to speak.
+  act:
+  - sentinel
+  - memory
+  affected:
+  - detect_invis
+  alignment: 900
+  level: 16
+  thac0: 5
+  ac: 1
+  hp: 1d5+200
+  damage: 2d7+4
+  gold: 1000
+  exp: 24000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 12029
+  keywords:
+  - defendant
+  short: the defendant
+  long: |
+    The defendant stands here, pleading her case.
+  desc: |
+    She looks to be well organized and full of confidence.
+  act:
+  - sentinel
+  - memory
+  alignment: 200
+  level: 11
+  thac0: 9
+  ac: 1
+  hp: 3d6+130
+  damage: 2d7+1
+  gold: 500
+  exp: 11000
+  position: standing
+  default_position: standing
+  sex: female
+- vnum: 12030
+  keywords:
+  - jupiter
+  - king
+  - god
+  short: Jupiter
+  long: |
+    Jupiter, King of the Gods, is watching over his realm here.
+  desc: |
+    He is the strongest of the Gods, and certainly no easy mark!  His powers
+    transcend the plane of the physical, and could easily kill an unprepared
+    mortal.
+  act:
+  - spec
+  - sentinel
+  - aware
+  - aggr_evil
+  - memory
+  - no_charm
+  - no_summon
+  - no_sleep
+  - no_bash
+  - no_blind
+  affected:
+  - detect_invis
+  - sanctuary
+  - infravision
+  - no_track
+  alignment: 1000
+  level: 34
+  thac0: 0
+  ac: -10
+  hp: 20d15+950
+  damage: 8d6+50
+  gold: 250000
+  exp: 550000
+  position: standing
+  default_position: standing
+  sex: male
+  abilities:
+    bare_hand_attack: 10
+    str: 25
+    int: 25
+    wis: 25
+    dex: 25
+    con: 25
+    cha: 25
+- vnum: 12031
+  keywords:
+  - venus
+  - goddess
+  short: Venus
+  long: |
+    Venus, the Goddess of Beauty and Knowledge, is resting here.
+  desc: |
+    Venus is probably one of the most beautiful women you have ever seen
+    if not THE most beautiful.  She is very powerful and tough under that
+    outer image of beauty.
+  act:
+  - spec
+  - sentinel
+  - aware
+  - memory
+  - no_charm
+  - no_summon
+  - no_sleep
+  - no_bash
+  - no_blind
+  affected:
+  - detect_invis
+  - sanctuary
+  - infravision
+  - no_track
+  alignment: 1000
+  level: 28
+  thac0: 0
+  ac: -6
+  hp: 5d10+650
+  damage: 6d6+12
+  gold: 80000
+  exp: 310000
+  position: resting
+  default_position: resting
+  sex: female
+  abilities:
+    bare_hand_attack: 12
+    str: 20
+    int: 20
+    wis: 20
+    dex: 20
+    con: 20
+    cha: 25
+- vnum: 12032
+  keywords:
+  - mars
+  - god
+  short: Mars
+  long: |
+    Mars, the God of War and State, is sitting down here.
+  desc: |
+    Mars is a tall God with burning, hateful eyes and a large scowl on
+    his face.
+  act:
+  - spec
+  - sentinel
+  - aware
+  - memory
+  - no_charm
+  - no_summon
+  - no_sleep
+  - no_bash
+  - no_blind
+  affected:
+  - detect_invis
+  - sanctuary
+  - infravision
+  - no_track
+  alignment: 1000
+  level: 27
+  thac0: 0
+  ac: -9
+  hp: 15d10+630
+  damage: 8d6+14
+  gold: 60000
+  exp: 200000
+  position: sitting
+  default_position: sitting
+  sex: male
+  abilities:
+    bare_hand_attack: 7
+    str: 25
+    int: 20
+    wis: 20
+    dex: 20
+    con: 20
+    cha: 20
+- vnum: 12033
+  keywords:
+  - mercury
+  - messenger
+  - god
+  short: Mercury
+  long: |
+    Mercury, the messenger of the Gods, is standing here.
+  desc: |
+    Mercury is a handsome, youthful God and wears a large grin on his face.
+  act:
+  - sentinel
+  - aware
+  - memory
+  - no_charm
+  - no_summon
+  - no_sleep
+  - no_bash
+  - no_blind
+  affected:
+  - detect_invis
+  - infravision
+  - no_track
+  alignment: 1000
+  level: 26
+  thac0: 0
+  ac: -10
+  hp: 5d10+550
+  damage: 4d6+8
+  gold: 25000
+  exp: 155000
+  position: standing
+  default_position: standing
+  sex: male
+  abilities:
+    bare_hand_attack: 13
+    str: 20
+    int: 20
+    wis: 20
+    dex: 25
+    con: 20
+    cha: 23
+- vnum: 12034
+  keywords:
+  - shopkeeper
+  short: Froboz' shopkeeper
+  long: |
+    Froboz' shopkeeper is here, minding the store.
+  desc: |
+    The shopkeeper is an older man in his middle to late fifties and looks like
+    he enjoys the quiet life.  There is a long scar running from the edge of his
+    mouth to his right ear, making it look like he is always smiling.
+  act:
+  - sentinel
+  - memory
+  - no_charm
+  - no_summon
+  affected:
+  - detect_invis
+  - sanctuary
+  alignment: 650
+  level: 23
+  thac0: 0
+  ac: -2
+  hp: 4d10+400
+  damage: 1d8+14
+  gold: 5000
+  exp: 80000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 12035
+  keywords:
+  - executioner
+  short: the executioner
+  long: |
+    The executioner stands here, waiting to torture some sorry soul.
+  desc: |
+    You see a burly man who is wearing a black hood that obscures his face.  He
+    has a very sadistic attitude and clearly loves his work.
+  act:
+  - sentinel
+  - scavenger
+  - aggressive
+  - no_charm
+  - no_summon
+  affected:
+  - detect_invis
+  alignment: -1000
+  level: 20
+  thac0: 1
+  ac: 0
+  hp: 2d6+260
+  damage: 2d2+14
+  gold: 1000
+  exp: 40000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 12036
+  keywords:
+  - baker
+  short: the baker
+  long: |
+    The baker looks at you calmly, wiping flour from his face with one hand.
+  desc: |
+    A fat, nice looking baker.  But you can see that he has many scars on his
+    body.
+  act:
+  - sentinel
+  - memory
+  affected:
+  - detect_invis
+  alignment: 900
+  level: 33
+  thac0: 0
+  ac: -10
+  hp: 6d10+30000
+  damage: 2d8+22
+  gold: 2000
+  exp: 80000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 12037
+  keywords:
+  - grocer
+  short: the grocer
+  long: |
+    A grocer stands at the counter, with a slightly impatient look on his face.
+  desc: |
+    A tall grocer, who moves two 200 pounds bag of flour around on his shoulders.
+  act:
+  - sentinel
+  - memory
+  affected:
+  - detect_invis
+  alignment: 900
+  level: 33
+  thac0: 0
+  ac: -10
+  hp: 1d1+30000
+  damage: 2d8+22
+  gold: 20000
+  exp: 80000
+  position: standing
+  default_position: standing
+  sex: male
+objects:
+- vnum: 12000
+  keywords:
+  - ring
+  - pewter
+  short: a pewter ring
+  desc: There is a pewter ring lying here.
+  type: worn
+  wear:
+  - take
+  - finger
+  flags:
+  - invisible
+  - magic
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 5
+  cost: 15000
+  rent: 2500
+  affects:
+  - location: max_hit
+    modifier: 10
+  - location: dex
+    modifier: 1
+- vnum: 12001
+  keywords:
+  - belt
+  - bronze
+  short: a bronze belt
+  desc: There is a bronze belt on the ground here.
+  type: armor
+  wear:
+  - take
+  - waist
+  flags:
+  - invisible
+  armor:
+    ac_apply: 4
+  weight: 5
+  cost: 10000
+  rent: 500
+  affects:
+  - location: str
+    modifier: -2
+  - location: hitroll
+    modifier: 1
+- vnum: 12002
+  keywords:
+  - helmet
+  - roman
+  - combat
+  short: a Roman combat helmet
+  desc: A Roman combat helmet has been left here.
+  type: armor
+  wear:
+  - take
+  - head
+  flags:
+  - glow
+  armor:
+    ac_apply: 8
+  weight: 25
+  cost: 12000
+  rent: 8000
+  affects:
+  - location: dex
+    modifier: -2
+  - location: hitroll
+    modifier: 1
+- vnum: 12003
+  keywords:
+  - whistle
+  - coach
+  short: a coach's whistle
+  desc: A coach's whistle has been left here.
+  type: treasure
+  wear:
+  - take
+  - neck
+  flags:
+  - no_drop
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 1
+  cost: 1000
+  rent: 200
+- vnum: 12004
+  keywords:
+  - stethoscope
+  - object
+  short: a stethoscope
+  desc: There is an odd object laying on the ground here.
+  type: worn
+  wear:
+  - take
+  - neck
+  flags:
+  - bless
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 1
+  cost: 15000
+  rent: 2000
+  affects:
+  - location: hitroll
+    modifier: 4
+  - location: damroll
+    modifier: -3
+- vnum: 12005
+  keywords:
+  - hairpin
+  short: a hairpin
+  desc: A woman's hairpin is lying here.
+  type: worn
+  wear:
+  - take
+  - head
+  flags:
+  - bless
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 1
+  cost: 3000
+  rent: 500
+  affects:
+  - location: str
+    modifier: -1
+  - location: int
+    modifier: 1
+- vnum: 12006
+  keywords:
+  - apple
+  short: an apple
+  desc: A delicious looking apple has been left here.
+  type: food
+  wear:
+  - take
+  values:
+  - 4
+  - 0
+  - 0
+  - 0
+  weight: 1
+  cost: 5
+  rent: 5
+- vnum: 12007
+  keywords:
+  - orange
+  short: an orange
+  desc: A sun-ripened orange has been left here.
+  type: food
+  wear:
+  - take
+  values:
+  - 6
+  - 0
+  - 0
+  - 0
+  weight: 1
+  cost: 6
+  rent: 6
+- vnum: 12008
+  keywords:
+  - sandals
+  - leather
+  short: a pair of leather sandals
+  desc: A pair of leather sandals has been dropped here.
+  type: armor
+  wear:
+  - take
+  - feet
+  armor:
+    ac_apply: 2
+  weight: 2
+  cost: 250
+  rent: 41
+- vnum: 12010
+  keywords:
+  - hotdog
+  - frank
+  - dog
+  short: a hotdog
+  desc: A hotdog loaded with chili and onions has been left here.
+  type: food
+  wear:
+  - take
+  values:
+  - 8
+  - 0
+  - 0
+  - 0
+  weight: 1
+  cost: 11
+  rent: 11
+- vnum: 12011
+  keywords:
+  - bracelet
+  - silver
+  - gold
+  short: a silver and gold bracelet
+  desc: A bracelet, made from silver and gold, has been carelessly left here.
+  type: worn
+  wear:
+  - take
+  - wrist
+  flags:
+  - hum
+  - no_drop
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 14
+  cost: 10000
+  rent: 8000
+  affects:
+  - location: max_mana
+    modifier: 25
+  - location: damroll
+    modifier: -3
+- vnum: 12012
+  keywords:
+  - ring
+  - sapphire
+  short: a sapphire ring
+  desc: A sapphire ring has been left here.
+  type: worn
+  wear:
+  - take
+  - finger
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 20
+  cost: 35000
+  rent: 5500
+  affects:
+  - location: hitroll
+    modifier: 2
+  - location: armor
+    modifier: -10
+- vnum: 12013
+  keywords:
+  - pendant
+  - jade
+  short: a jade pendant
+  desc: A beautiful jade pendant has been left here.
+  type: worn
+  wear:
+  - take
+  - neck
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 30
+  cost: 16500
+  rent: 6000
+  affects:
+  - location: int
+    modifier: 1
+  - location: wis
+    modifier: 2
+- vnum: 12014
+  keywords:
+  - robe
+  - froboz
+  short: Froboz' robe
+  desc: Froboz' robe has been dropped here.
+  type: worn
+  wear:
+  - about
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 5
+  cost: 15000
+  rent: 2500
+  affects:
+  - location: armor
+    modifier: -6
+  - location: saving_spell
+    modifier: -4
+- vnum: 12015
+  keywords:
+  - sword
+  - tempered
+  short: a tempered sword
+  desc: A nasty looking tempered sword is lying here.
+  type: weapon
+  wear:
+  - take
+  - wield
+  flags:
+  - hum
+  - anti_mage
+  - anti_cleric
+  weapon:
+    dice: 3d8
+    damage_type: slash
+  weight: 16
+  cost: 15000
+  rent: 5000
+  affects:
+  - location: hitroll
+    modifier: -2
+- vnum: 12016
+  keywords:
+  - sword
+  - quenched
+  short: a quenched sword
+  desc: A very bloody, but quenched, sword has been left here.
+  type: weapon
+  wear:
+  - take
+  - wield
+  - hold
+  flags:
+  - invisible
+  - anti_mage
+  - anti_cleric
+  weapon:
+    dice: 3d5
+    damage_type: slash
+  weight: 14
+  cost: 10000
+  rent: 4000
+- vnum: 12017
+  keywords:
+  - bracers
+  - moorish
+  short: a pair of Moorish bracers
+  desc: A pair of Moorish bracers has been dropped here.
+  type: armor
+  wear:
+  - take
+  - arms
+  flags:
+  - glow
+  armor:
+    ac_apply: 8
+  weight: 15
+  cost: 25000
+  rent: 10000
+  affects:
+  - location: dex
+    modifier: -2
+  - location: damroll
+    modifier: 2
+- vnum: 12018
+  keywords:
+  - plate
+  - breast
+  - roman
+  - combat
+  short: a Roman combat breast plate
+  desc: A piece of military combat plate has been left here.
+  type: armor
+  wear:
+  - take
+  - body
+  flags:
+  - glow
+  armor:
+    ac_apply: 8
+  weight: 135
+  cost: 50000
+  rent: 9500
+  affects:
+  - location: dex
+    modifier: 1
+  - location: hitroll
+    modifier: -2
+- vnum: 12019
+  keywords:
+  - boots
+  - combat
+  short: a pair of Roman combat boots
+  desc: A pair of combat boots have been left here.
+  type: armor
+  wear:
+  - take
+  - feet
+  flags:
+  - glow
+  armor:
+    ac_apply: 8
+  weight: 45
+  cost: 8750
+  rent: 9000
+  affects:
+  - location: str
+    modifier: 2
+  - location: damroll
+    modifier: -1
+- vnum: 12020
+  keywords:
+  - thunderbolt
+  - jupiter
+  short: Jupiter's Thunderbolt
+  desc: Jupiter's Thunderbolt has been left here.
+  type: weapon
+  wear:
+  - take
+  - wield
+  flags:
+  - hum
+  - magic
+  - anti_evil
+  - anti_mage
+  - anti_cleric
+  weapon:
+    dice: 4d6
+    damage_type: crush
+  weight: 22
+  cost: 100000
+  rent: 25000
+  affects:
+  - location: hitroll
+    modifier: 3
+  - location: damroll
+    modifier: 3
+- vnum: 12021
+  keywords:
+  - loincloth
+  - red
+  - mars
+  short: a red loincloth
+  desc: Mars' red loincloth is resting here.
+  type: armor
+  wear:
+  - take
+  - waist
+  flags:
+  - hum
+  - anti_evil
+  armor:
+    ac_apply: 15
+  weight: 30
+  cost: 100000
+  rent: 20000
+  affects:
+  - location: str
+    modifier: 2
+  - location: dex
+    modifier: 2
+- vnum: 12022
+  keywords:
+  - necklace
+  - crystal
+  - venus
+  short: a crystal necklace
+  desc: Someone has left the crystal necklace of knowledge here.
+  type: worn
+  wear:
+  - take
+  - neck
+  flags:
+  - hum
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 35
+  cost: 50000
+  rent: 12000
+  affects:
+  - location: int
+    modifier: 3
+  - location: wis
+    modifier: 2
+- vnum: 12023
+  keywords:
+  - sandals
+  - winged
+  - mercury
+  short: a pair of winged sandals
+  desc: Mercury's winged sandals have been left here.
+  type: armor
+  wear:
+  - take
+  - feet
+  flags:
+  - glow
+  - anti_neutral
+  armor:
+    ac_apply: 8
+  weight: 14
+  cost: 75000
+  rent: 13000
+  affects:
+  - location: dex
+    modifier: 2
+  - location: max_move
+    modifier: 100
+- vnum: 12024
+  keywords:
+  - scroll
+  - dark
+  - grey
+  short: a dark grey scroll
+  desc: A scroll has been carelessly left here.
+  type: scroll
+  wear:
+  - take
+  - hold
+  flags:
+  - invisible
+  - anti_warrior
+  values:
+  - 20
+  - 4
+  - 15
+  - 1
+  weight: 2
+  cost: 5000
+  rent: 2000
+- vnum: 12025
+  keywords:
+  - scroll
+  - ornate
+  short: an ornate scroll
+  desc: An ornate scroll has been left here.
+  type: scroll
+  wear:
+  - take
+  - hold
+  flags:
+  - anti_warrior
+  values:
+  - 18
+  - 10
+  - 10
+  - 16
+  weight: 2
+  cost: 7000
+  rent: 3000
+- vnum: 12026
+  keywords:
+  - scroll
+  - plain
+  short: a plain scroll
+  desc: A plain scroll is lying on the ground.
+  type: scroll
+  wear:
+  - take
+  - hold
+  flags:
+  - anti_warrior
+  values:
+  - 15
+  - 7
+  - 15
+  - 1
+  weight: 2
+  cost: 8000
+  rent: 2200
+- vnum: 12027
+  keywords:
+  - bag
+  - herbs
+  short: a bag of herbs
+  desc: There is a small, sweet-smelling bag here on the ground.
+  type: wand
+  wear:
+  - take
+  - hold
+  flags:
+  - hum
+  charges:
+    spell: remove poison
+    level: 30
+    max: 4
+    remaining: 4
+  weight: 5
+  cost: 15000
+  rent: 2000
+- vnum: 12028
+  keywords:
+  - staff
+  - kodarta
+  short: a Kodarta staff
+  desc: A Kodarta staff has been carelessly left here.
+  type: staff
+  wear:
+  - take
+  - hold
+  charges:
+    spell: cure critic
+    level: 17
+    max: 3
+    remaining: 3
+  weight: 6
+  cost: 35000
+  rent: 4000
+- vnum: 12029
+  keywords:
+  - wand
+  - prototype
+  short: a prototype wand
+  desc: There is a prototype of a new magical wand lying here.
+  type: wand
+  wear:
+  - take
+  - hold
+  flags:
+  - invisible
+  - no_drop
+  - anti_good
+  charges:
+    spell: fireball
+    level: 30
+    max: 4
+    remaining: 3
+  weight: 26
+  cost: 20000
+  rent: 13000
+  affects:
+  - location: hitroll
+    modifier: -3
+  - location: saving_spell
+    modifier: 8
+- vnum: 12030
+  keywords:
+  - flask
+  - potion
+  - blaze
+  - orange
+  short: a flask
+  desc: There is a flask, containing a blaze orange potion, resting here.
+  type: potion
+  wear:
+  - take
+  values:
+  - 9
+  - 4
+  - 17
+  - 33
+  weight: 8
+  cost: 1000
+  rent: 100
+- vnum: 12031
+  keywords:
+  - mace
+  - executioner
+  short: an executioner's mace
+  desc: An executioner's mace is lying here.
+  type: weapon
+  wear:
+  - take
+  - wield
+  flags:
+  - no_drop
+  - anti_mage
+  - anti_thief
+  weapon:
+    dice: 5d1
+    damage_type: pound
+  weight: 13
+  cost: 3000
+  rent: 18
+  affects:
+  - location: dex
+    modifier: -2
+  - location: str
+    modifier: -2
+- vnum: 12032
+  keywords:
+  - mug
+  - beer
+  short: a mug
+  desc: A frosty mug has been left on the ground here.
+  type: drink_container
+  wear:
+  - take
+  drink:
+    capacity: 3
+    current: 3
+    liquid: beer
+  weight: 3
+  cost: 10
+  rent: 5
+- vnum: 12033
+  keywords:
+  - key
+  - rusted
+  short: a rusted key
+  desc: There is a rusted key here.
+  type: key
+  wear:
+  - take
+  flags:
+  - no_rent
+  values:
+  - 12033
+  - 0
+  - 0
+  - 0
+  weight: 1
+  cost: 0
+  rent: 0
+- vnum: 12034
+  keywords:
+  - key
+  - double
+  short: a double sided key
+  desc: A double sided key has been left here.
+  type: key
+  wear:
+  - take
+  flags:
+  - no_rent
+  values:
+  - 12034
+  - 0
+  - 0
+  - 0
+  weight: 10
+  cost: 0
+  rent: 0
+- vnum: 12035
+  keywords:
+  - key
+  - diamond
+  short: a diamond studded key
+  desc: A diamond studded key is sitting on the ground.
+  type: key
+  wear:
+  - take
+  flags:
+  - no_rent
+  values:
+  - 12035
+  - 0
+  - 0
+  - 0
+  weight: 30
+  cost: 0
+  rent: 0
+- vnum: 12036
+  keywords:
+  - key
+  - pearl
+  short: a key with a pearl handle
+  desc: A key with a pearl handle is sitting on the ground.
+  type: key
+  wear:
+  - take
+  flags:
+  - no_rent
+  values:
+  - 12036
+  - 0
+  - 0
+  - 0
+  weight: 10
+  cost: 0
+  rent: 0
+- vnum: 12037
+  keywords:
+  - key
+  - aquamarine
+  short: an aquamarine key
+  desc: There is an aquamarine colored key here.
+  type: key
+  wear:
+  - take
+  flags:
+  - no_rent
+  values:
+  - 12037
+  - 0
+  - 0
+  - 0
+  weight: 10
+  cost: 0
+  rent: 0
+- vnum: 12038
+  keywords:
+  - key
+  - opal
+  short: an opal key
+  desc: An opal key has been left here.
+  type: key
+  wear:
+  - take
+  flags:
+  - no_rent
+  values:
+  - 12038
+  - 0
+  - 0
+  - 0
+  weight: 20
+  cost: 0
+  rent: 0
+- vnum: 12039
+  keywords:
+  - key
+  - steel
+  short: a steel key
+  desc: A steel key is lying on the ground.
+  type: key
+  wear:
+  - take
+  flags:
+  - no_rent
+  values:
+  - 12039
+  - 0
+  - 0
+  - 0
+  weight: 1
+  cost: 0
+  rent: 0
+shops:
+- vnum: 12011
+  keeper: 12011
+  rooms:
+  - 12006
+  sells:
+  - 3020
+  - 3021
+  - 3022
+  - 3023
+  - 3024
+  - 3025
+  - 12008
+  buys:
+  - type: weapon
+  - type: armor
+  markup: 2.25
+  markdown: 0.6
+  hours:
+  - - 0
+    - 28
+  messages:
+    no_such_item_keeper: "%s We are out of that item right now."
+    no_such_item_player: "%s You don't have that.  Stop wasting my time!"
+    do_not_buy: "%s This is a weapon and armour shop!  Go someplace else!"
+    keeper_broke: "%s A fine weapon indeed, but more than I can afford."
+    player_broke: "%s NO CREDIT!"
+    buy: "%s Here you go.  That will be %d coins.  Don't get hurt!"
+    sell: "%s You'll get %d for that."
+- vnum: 12012
+  keeper: 12012
+  rooms:
+  - 12032
+  sells:
+  - 12006
+  - 12007
+  markup: 1.2
+  markdown: 0.6
+  hours:
+  - - 7
+    - 13
+  - - 14
+    - 19
+  temper: 1
+  messages:
+    no_such_item_keeper: "%s I don't have anything like that.  Sorry."
+    no_such_item_player: "%s I don't think you have that."
+    do_not_buy: "%s I don't stock that stuff.  Try another shop."
+    keeper_broke: "%s I can't afford to buy anything, I'm only a poor peddler."
+    player_broke: "%s No cash, no goods!"
+    buy: "%s Here you go.  That'll be... %d coins."
+    sell: "%s Thank-you very much.  Here are your %d coins as payment."
+- vnum: 12016
+  keeper: 12016
+  rooms:
+  - 12003
+  - 12004
+  - 12008
+  - 12015
+  - 12022
+  - 12023
+  markup: 1.6
+  markdown: 0.3
+  hours:
+  - - 9
+    - 17
+  - - 18
+    - 22
+  temper: 1
+  messages:
+    no_such_item_keeper: "%s We don't sell that."
+    no_such_item_player: "%s I don't think you have that."
+    do_not_buy: "%s I don't stock that stuff.  Try another shop."
+    keeper_broke: "%s I can't afford to buy anything, I'm only a poor peddler."
+    player_broke: "%s No cash, no goods!"
+    buy: "%s Here you go.  That'll be... %d coins."
+    sell: "%s Thank-you very much.  Here are your %d coins as payment."
+- vnum: 12034
+  keeper: 12034
+  rooms:
+  - 12042
+  sells:
+  - 3050
+  - 3051
+  - 3052
+  - 3053
+  - 3054
+  - 12030
+  buys:
+  - type: scroll
+  - type: wand
+  markup: 1.85
+  markdown: 0.5
+  hours:
+  - - 8
+    - 18
+  flags:
+  - uses_bank
+  refuses:
+  - thief
+  - warrior
+  temper: 2
+  messages:
+    no_such_item_keeper: "%s We don't carry that item."
+    no_such_item_player: "%s You don't have that."
+    do_not_buy: "%s I can't buy that.  See another shop."
+    keeper_broke: "%s We are low on cash.  Come back later."
+    player_broke: "%s Sorry, but you can't afford that."
+    buy: "%s Here you go.  That will cost you %d."
+    sell: "%s I will give you %d coins for that."
+- vnum: 12036
+  keeper: 12036
+  rooms:
+  - 12062
+  sells:
+  - 3000
+  - 3001
+  - 3009
+  - 3010
+  - 3011
+  - 12006
+  - 12007
+  markup: 1.1
+  markdown: 0.8
+  hours:
+  - - 0
+    - 28
+  flags:
+  - uses_bank
+  temper: 2
+  messages:
+    no_such_item_keeper: "%s We don't have that item in stock right now."
+    no_such_item_player: "%s I don't think you have that item."
+    do_not_buy: "%s Hmmmm... if I was in a good mood, I'd consider it.  But I'm not."
+    keeper_broke: "%s The Emperor's tax collector just came.  I don't have the cash.  Sorry."
+    player_broke: "%s NO CREDIT!  We don't even take the Renaissance Express card!"
+    buy: "%s That will be %d coins.  Enjoy!"
+    sell: "%s You'll get %d coins for that."
+- vnum: 12037
+  keeper: 12037
+  rooms:
+  - 12063
+  sells:
+  - 3030
+  - 3031
+  - 3032
+  - 3033
+  - 3036
+  - 12003
+  markup: 1.75
+  markdown: 0.6
+  hours:
+  - - 6
+    - 20
+  flags:
+  - uses_bank
+  temper: 2
+  messages:
+    no_such_item_keeper: "%s We don't have that item on stock."
+    no_such_item_player: "%s I don't think you have that."
+    do_not_buy: "%s I don't stock that stuff.  Try another shop."
+    keeper_broke: "%s I can't afford it right now.  Come back tomorrow."
+    player_broke: "%s No cash, no goods!"
+    buy: "%s Here you go.  That'll be... %d coins."
+    sell: "%s Thank-you very much.  Here are your %d coins as payment."
+resets:
+- mob: 12000
+  room: 12001
+  max: 3
+  then:
+  - equip: 3022
+    slot: wield
+    max: 100
+  - equip: 3042
+    slot: shield
+    max: 100
+- mob: 12000
+  room: 12001
+  max: 3
+  then:
+  - equip: 3022
+    slot: wield
+    max: 100
+  - equip: 3042
+    slot: shield
+    max: 100
+- mob: 12000
+  room: 12001
+  max: 3
+  then:
+  - equip: 3022
+    slot: wield
+    max: 100
+  - equip: 3042
+    slot: shield
+    max: 100
+- mob: 12001
+  room: 12001
+  max: 1
+  then:
+  - equip: 3021
+    slot: wield
+    max: 100
+  - equip: 3042
+    slot: shield
+    max: 100
+- mob: 12003
+  room: 12003
+  max: 10
+- mob: 12003
+  room: 12004
+  max: 10
+- mob: 12003
+  room: 12008
+  max: 10
+- mob: 12003
+  room: 12022
+  max: 10
+- mob: 12003
+  room: 12023
+  max: 10
+- mob: 12003
+  room: 12003
+  max: 10
+- mob: 12003
+  room: 12004
+  max: 10
+- mob: 12003
+  room: 12008
+  max: 10
+- mob: 12003
+  room: 12022
+  max: 10
+- mob: 12003
+  room: 12023
+  max: 10
+- mob: 12004
+  room: 12002
+  max: 3
+  then:
+  - equip: 3042
+    slot: shield
+    max: 100
+  - equip: 3022
+    slot: wield
+    max: 100
+  - give: 12033
+    max: 1
+- mob: 12004
+  room: 12028
+  max: 3
+  then:
+  - equip: 3022
+    slot: wield
+    max: 100
+  - equip: 12001
+    slot: waist
+    max: 3
+- mob: 12004
+  room: 12043
+  max: 3
+  then:
+  - equip: 3022
+    slot: wield
+    max: 100
+  - equip: 12000
+    slot: finger_right
+    max: 5
+- mob: 12005
+  room: 12021
+  max: 5
+  then:
+  - equip: 3023
+    slot: wield
+    max: 100
+- mob: 12005
+  room: 12021
+  max: 5
+  then:
+  - equip: 3023
+    slot: wield
+    max: 100
+- mob: 12005
+  room: 12021
+  max: 5
+  then:
+  - equip: 3023
+    slot: wield
+    max: 100
+- mob: 12005
+  room: 12006
+  max: 5
+  then:
+  - equip: 3023
+    slot: wield
+    max: 100
+- mob: 12005
+  room: 12049
+  max: 5
+  then:
+  - equip: 3023
+    slot: wield
+    max: 100
+- mob: 12006
+  room: 12010
+  max: 5
+  then:
+  - equip: 3022
+    slot: wield
+    max: 100
+- mob: 12006
+  room: 12010
+  max: 5
+  then:
+  - equip: 3022
+    slot: wield
+    max: 100
+- mob: 12006
+  room: 12010
+  max: 5
+  then:
+  - equip: 3022
+    slot: wield
+    max: 100
+- mob: 12006
+  room: 12009
+  max: 5
+  then:
+  - equip: 3022
+    slot: wield
+    max: 100
+- mob: 12006
+  room: 12009
+  max: 5
+  then:
+  - equip: 3022
+    slot: wield
+    max: 100
+  - equip: 12002
+    slot: head
+    max: 2
+- mob: 12007
+  room: 12016
+  max: 4
+  then:
+  - equip: 3021
+    slot: wield
+    max: 100
+  - equip: 12008
+    slot: feet
+    max: 100
+- mob: 12007
+  room: 12009
+  max: 4
+  then:
+  - equip: 3021
+    slot: wield
+    max: 100
+  - equip: 12008
+    slot: feet
+    max: 100
+- mob: 12007
+  room: 12016
+  max: 4
+  then:
+  - equip: 3021
+    slot: wield
+    max: 100
+  - equip: 12008
+    slot: feet
+    max: 100
+- mob: 12007
+  room: 12016
+  max: 4
+  then:
+  - equip: 3021
+    slot: wield
+    max: 100
+  - equip: 12008
+    slot: feet
+    max: 100
+- mob: 12008
+  room: 12009
+  max: 1
+  then:
+  - equip: 3021
+    slot: wield
+    max: 100
+  - equip: 3043
+    slot: body
+    max: 100
+  - give: 12003
+    max: 100
+- mob: 12009
+  room: 12011
+  max: 1
+  then:
+  - equip: 3022
+    slot: wield
+    max: 100
+  - equip: 3043
+    slot: body
+    max: 100
+  - equip: 3042
+    slot: shield
+    max: 100
+  - equip: 12004
+    slot: neck1
+    max: 6
+  - give: 12028
+    max: 3
+- mob: 12010
+  room: 12011
+  max: 1
+  then:
+  - equip: 3021
+    slot: wield
+    max: 100
+  - equip: 3043
+    slot: body
+    max: 100
+  - equip: 12005
+    slot: head
+    max: 3
+  - give: 12027
+    max: 5
+- mob: 12011
+  room: 12006
+  max: 1
+  then:
+  - give: 3020
+    max: 100
+  - give: 3021
+    max: 100
+  - give: 3022
+    max: 100
+  - give: 3023
+    max: 100
+  - give: 3024
+    max: 100
+  - give: 3025
+    max: 100
+  - give: 12008
+    max: 100
+  - equip: 3022
+    slot: wield
+    max: 100
+  - equip: 12008
+    slot: feet
+    max: 100
+  - give: 12034
+    max: 1
+- mob: 12012
+  room: 12032
+  max: 1
+  then:
+  - equip: 12008
+    slot: feet
+    max: 100
+  - give: 12006
+    max: 100
+  - give: 12007
+    max: 100
+- mob: 12013
+  room: 12043
+  max: 2
+  then:
+  - equip: 3020
+    slot: wield
+    max: 100
+  - equip: 12008
+    slot: feet
+    max: 100
+- mob: 12013
+  room: 12037
+  max: 2
+  then:
+  - equip: 3020
+    slot: wield
+    max: 100
+  - equip: 12008
+    slot: feet
+    max: 100
+- mob: 12014
+  room: 12050
+  max: 1
+  then:
+  - equip: 3022
+    slot: wield
+    max: 100
+  - equip: 12011
+    slot: wrist_left
+    max: 2
+- mob: 12015
+  room: 12025
+  max: 3
+  then:
+  - equip: 3022
+    slot: wield
+    max: 100
+- mob: 12015
+  room: 12025
+  max: 3
+  then:
+  - equip: 3022
+    slot: wield
+    max: 100
+- mob: 12015
+  room: 12025
+  max: 3
+  then:
+  - equip: 12015
+    slot: wield
+    max: 1
+- mob: 12016
+  room: 12004
+  max: 3
+  then:
+  - give: 12010
+    max: 25
+- mob: 12016
+  room: 12008
+  max: 3
+  then:
+  - give: 12010
+    max: 25
+- mob: 12016
+  room: 12023
+  max: 3
+  then:
+  - give: 12010
+    max: 25
+- mob: 12017
+  room: 12012
+  max: 15
+- mob: 12017
+  room: 12032
+  max: 15
+- mob: 12017
+  room: 12021
+  max: 15
+- mob: 12017
+  room: 12031
+  max: 15
+- mob: 12017
+  room: 12018
+  max: 15
+- mob: 12017
+  room: 12032
+  max: 15
+- mob: 12017
+  room: 12045
+  max: 15
+- mob: 12017
+  room: 12034
+  max: 15
+- mob: 12017
+  room: 12039
+  max: 15
+- mob: 12017
+  room: 12040
+  max: 15
+- mob: 12017
+  room: 12046
+  max: 15
+- mob: 12017
+  room: 12033
+  max: 15
+- mob: 12017
+  room: 12019
+  max: 15
+- mob: 12017
+  room: 12024
+  max: 15
+- mob: 12017
+  room: 12013
+  max: 15
+- mob: 12018
+  room: 12051
+  max: 5
+  then:
+  - equip: 3022
+    slot: wield
+    max: 100
+- mob: 12018
+  room: 12029
+  max: 5
+  then:
+  - equip: 3022
+    slot: wield
+    max: 100
+- mob: 12018
+  room: 12035
+  max: 5
+  then:
+  - equip: 3022
+    slot: wield
+    max: 100
+- mob: 12018
+  room: 12051
+  max: 5
+  then:
+  - equip: 3022
+    slot: wield
+    max: 100
+- mob: 12018
+  room: 12005
+  max: 5
+  then:
+  - equip: 3022
+    slot: wield
+    max: 100
+- mob: 12019
+  room: 12006
+  max: 3
+  then:
+  - equip: 3021
+    slot: wield
+    max: 100
+  - equip: 12008
+    slot: feet
+    max: 100
+- mob: 12019
+  room: 12042
+  max: 3
+  then:
+  - equip: 3021
+    slot: wield
+    max: 100
+  - equip: 12019
+    slot: feet
+    max: 2
+- mob: 12019
+  room: 12045
+  max: 3
+  then:
+  - equip: 3021
+    slot: wield
+    max: 100
+  - equip: 12008
+    slot: feet
+    max: 100
+  - equip: 12018
+    slot: body
+    max: 2
+- mob: 12020
+  room: 12036
+  max: 1
+  then:
+  - equip: 3022
+    slot: wield
+    max: 100
+  - equip: 12017
+    slot: arms
+    max: 1
+  - give: 12024
+    max: 7
+- mob: 12021
+  room: 12036
+  max: 2
+  then:
+  - equip: 3022
+    slot: wield
+    max: 100
+  - equip: 3042
+    slot: shield
+    max: 100
+  - equip: 3046
+    slot: body
+    max: 100
+- mob: 12021
+  room: 12036
+  max: 2
+  then:
+  - equip: 3022
+    slot: wield
+    max: 100
+  - equip: 3042
+    slot: shield
+    max: 100
+  - equip: 3046
+    slot: body
+    max: 100
+- mob: 12022
+  room: 12055
+  max: 1
+  then:
+  - equip: 3022
+    slot: wield
+    max: 100
+  - equip: 12012
+    slot: finger_left
+    max: 1
+- mob: 12023
+  room: 12043
+  max: 1
+  then:
+  - equip: 3022
+    slot: wield
+    max: 100
+  - equip: 12008
+    slot: feet
+    max: 100
+  - equip: 12013
+    slot: neck2
+    max: 1
+  - give: 12035
+    max: 1
+  - give: 12036
+    max: 1
+- mob: 12024
+  room: 12041
+  max: 6
+- mob: 12024
+  room: 12048
+  max: 6
+- mob: 12024
+  room: 12054
+  max: 6
+- mob: 12024
+  room: 12057
+  max: 6
+- mob: 12024
+  room: 12054
+  max: 6
+- mob: 12024
+  room: 12057
+  max: 6
+  then:
+  - give: 12030
+    max: 500
+- mob: 12025
+  room: 12049
+  max: 1
+  then:
+  - equip: 3022
+    slot: wield
+    max: 100
+  - equip: 3042
+    slot: shield
+    max: 100
+  - equip: 12014
+    slot: about
+    max: 10
+  - give: 12025
+    max: 10
+  - give: 12026
+    max: 10
+  - give: 12029
+    max: 10
+- mob: 12026
+  room: 12007
+  max: 1
+  then:
+  - equip: 12016
+    slot: hold
+    max: 3
+  - equip: 3022
+    slot: wield
+    max: 100
+  - equip: 3042
+    slot: shield
+    max: 100
+  - equip: 3046
+    slot: body
+    max: 100
+  - equip: 12008
+    slot: feet
+    max: 100
+- mob: 12027
+  room: 12037
+  max: 2
+  then:
+  - equip: 3021
+    slot: wield
+    max: 100
+  - equip: 3044
+    slot: body
+    max: 100
+  - give: 12037
+    max: 1
+- mob: 12027
+  room: 12037
+  max: 2
+  then:
+  - equip: 3021
+    slot: wield
+    max: 100
+  - equip: 3044
+    slot: body
+    max: 100
+  - give: 3050
+    max: 500
+- mob: 12028
+  room: 12050
+  max: 1
+  then:
+  - equip: 3022
+    slot: wield
+    max: 100
+  - equip: 3042
+    slot: shield
+    max: 100
+  - give: 12039
+    max: 1
+- mob: 12029
+  room: 12050
+  max: 1
+  then:
+  - equip: 3024
+    slot: wield
+    max: 100
+  - equip: 3043
+    slot: body
+    max: 100
+- mob: 12030
+  room: 12047
+  max: 1
+  then:
+  - equip: 12020
+    slot: wield
+    max: 1
+- mob: 12031
+  room: 12052
+  max: 1
+  then:
+  - equip: 12022
+    slot: neck1
+    max: 1
+- mob: 12032
+  room: 12056
+  max: 1
+  then:
+  - equip: 12016
+    slot: hold
+    max: 3
+  - equip: 12021
+    slot: waist
+    max: 1
+- mob: 12033
+  room: 12059
+  max: 1
+  then:
+  - equip: 12023
+    slot: feet
+    max: 1
+- mob: 12034
+  room: 12042
+  max: 1
+  then:
+  - give: 3050
+    max: 500
+  - give: 3051
+    max: 500
+  - give: 3052
+    max: 500
+  - give: 3053
+    max: 500
+  - give: 3054
+    max: 500
+  - give: 12030
+    max: 10
+  - equip: 3022
+    slot: wield
+    max: 100
+  - equip: 12008
+    slot: feet
+    max: 100
+  - give: 12038
+    max: 1
+- mob: 12035
+  room: 12061
+  max: 1
+  then:
+  - give: 12031
+    max: 10
+- mob: 12036
+  room: 12062
+  max: 1
+  then:
+  - give: 3000
+    max: 100
+  - give: 3001
+    max: 100
+  - give: 3009
+    max: 100
+  - give: 3010
+    max: 100
+  - give: 3011
+    max: 100
+  - give: 12006
+    max: 100
+  - give: 12007
+    max: 100
+  - equip: 3022
+    slot: wield
+    max: 100
+- mob: 12037
+  room: 12063
+  max: 1
+  then:
+  - give: 3030
+    max: 100
+  - give: 3031
+    max: 100
+  - give: 3032
+    max: 100
+  - give: 3033
+    max: 100
+  - give: 3036
+    max: 100
+  - give: 12003
+    max: 100
+  - equip: 3022
+    slot: wield
+    max: 100
+- door: 12005
+  dir: west
+  state: locked
+- door: 12029
+  dir: north
+  state: locked
+- door: 12035
+  dir: south
+  state: locked
+- door: 12051
+  dir: east
+  state: closed
+- door: 12064
+  dir: west
+  state: closed
+- door: 12001
+  dir: down
+  state: locked
+- door: 12002
+  dir: up
+  state: locked
+- door: 12006
+  dir: south
+  state: locked
+- door: 12007
+  dir: north
+  state: locked
+- door: 12037
+  dir: north
+  state: locked
+- door: 12036
+  dir: south
+  state: locked
+- door: 12037
+  dir: south
+  state: locked
+- door: 12038
+  dir: north
+  state: locked
+- door: 12042
+  dir: east
+  state: locked
+- door: 12049
+  dir: west
+  state: locked
+- door: 12043
+  dir: west
+  state: locked
+- door: 12036
+  dir: east
+  state: locked
+- door: 12044
+  dir: west
+  state: locked
+- door: 12037
+  dir: east
+  state: locked
+- door: 12050
+  dir: east
+  state: locked
+- door: 12055
+  dir: west
+  state: locked

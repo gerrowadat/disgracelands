@@ -1,0 +1,7 @@
+RETURN
+
+Usage: return
+
+RETURN returns you to your regular body if you are switched into a mob.
+
+See also: SWITCH

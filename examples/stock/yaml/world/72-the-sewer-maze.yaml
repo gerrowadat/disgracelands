@@ -1,0 +1,1719 @@
+schema: dl/world@1
+zone:
+  vnum: 72
+  name: The Sewer Maze
+  range:
+  - 7200
+  - 7299
+  lifespan: 25
+  reset: always
+rooms:
+- vnum: 7200
+  name: The Treasury
+  sector: inside
+  flags:
+  - no_mob
+  - indoors
+  desc: |2
+       You are in a small but well equipped treasury.  You can see some writing
+    on the wall.  The ceiling has a funny glow, which enables you to see.  You
+    can get back into the inner lair through the stone door which is east.
+  exits:
+    east:
+      to: 7201
+      desc: |
+            You look back through the opening into the inner lair.
+      door: pickproof
+      key: 7205
+      keywords: door stone
+  extra_descs:
+  - keywords:
+    - writing
+    desc: |
+              You read the number '666'.
+  - keywords:
+    - door
+    - stone
+    desc: |
+              This is a heavy black stone door it looks very solid.
+- vnum: 7201
+  name: The Inner Lair
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are in a octagonal room with smooth purple stone walls.  The floor is 
+    made from black stone.  In the western wall you see a large black stone door.
+  exits:
+    south:
+      to: 7202
+      desc: |
+            You look back through the door into the lair.
+      door: regular
+      key: -1
+      keywords: door wooden
+    west:
+      to: 7200
+      desc: |
+            You see the treasury.
+      door: pickproof
+      key: 7205
+      keywords: door stone
+- vnum: 7202
+  name: The Lair
+  sector: city
+  flags:
+  - indoors
+  desc: |2
+       On the floor you see a lot of human decay, like bones and skulls.  You
+    also see a lot of slime.  On the wall is a torch sitting in its sconce.  To
+    the north is a wooden door.
+  exits:
+    north:
+      to: 7201
+      desc: |
+            You can see the inner lair.
+      door: regular
+      key: -1
+      keywords: door wooden
+    east:
+      to: 7205
+      desc: |
+            You see another part of the lair.
+      key: -1
+    south:
+      to: 7203
+      desc: |
+            You see another part of the lair.
+      key: -1
+  extra_descs:
+  - keywords:
+    - torch
+    - sconce
+    desc: |
+              The torch is bolted to the sconce and the sconce to the wall.
+  - keywords:
+    - slime
+    desc: |
+              The slime is slimy and uninteresting.
+  - keywords:
+    - skull
+    - skulls
+    - bones
+    - decay
+    desc: |
+              On all the skulls you notice that there is a three inch hole in the 
+              forehead.  All the bones are broken and old.
+- vnum: 7203
+  name: The Lair
+  sector: city
+  flags:
+  - indoors
+  desc: |2
+       On the floor you see a lot of human decay, like bones and skulls.  You
+    also see a lot of slime.  On the wall is a torch sitting in its sconce.
+  exits:
+    north:
+      to: 7202
+      desc: |
+            You see another part of the lair.
+      key: -1
+    east:
+      to: 7206
+      desc: |
+            You see another part of the lair.
+      key: -1
+    south:
+      to: 7204
+      desc: |
+            You see another part of the lair.
+      key: -1
+  extra_descs:
+  - keywords:
+    - torch
+    - sconce
+    desc: |
+              The torch is bolted to the sconce and the sconce to the wall.
+  - keywords:
+    - slime
+    desc: |
+              The slime is slimy and uninteresting.
+  - keywords:
+    - skull
+    - skulls
+    - bones
+    - decay
+    desc: |
+              On all the skulls you notice that there is a three inch hole in the 
+              forehead.  All the bones are broken and old.
+- vnum: 7204
+  name: The Lair
+  sector: city
+  flags:
+  - indoors
+  desc: |2
+       On the floor you see a lot of human decay, like bones and skulls.  You
+    also see a lot of slime.  On the wall is a torch sitting in its sconce.
+  exits:
+    north:
+      to: 7203
+      desc: |
+            You see another part of the lair.
+      key: -1
+    east:
+      to: 7207
+      desc: |
+            You see another part of the lair.
+      key: -1
+    south:
+      to: 7208
+      desc: |
+            You see the lair entrance.
+      door: regular
+      key: -1
+      keywords: door wooden
+  extra_descs:
+  - keywords:
+    - torch
+    - sconce
+    desc: |
+              The torch is bolted to the sconce and the sconce to the wall.
+  - keywords:
+    - slime
+    desc: |
+              The slime is slimy and uninteresting.
+  - keywords:
+    - skull
+    - skulls
+    - bones
+    - decay
+    desc: |
+              On all the skulls you notice that there is a three inch hole in the 
+              forehead.  All the bones are broken and old.
+- vnum: 7205
+  name: The Lair
+  sector: city
+  flags:
+  - indoors
+  desc: |2
+       On the floor you see a lot of human decay, like bones and skulls.  You
+    also see a lot of slime.  On the wall is a torch sitting in its sconce.
+  exits:
+    south:
+      to: 7206
+      desc: |
+            You see another part of the lair.
+      key: -1
+    west:
+      to: 7202
+      desc: |
+            You see another part of the lair.
+      key: -1
+  extra_descs:
+  - keywords:
+    - torch
+    - sconce
+    desc: |
+              The torch is bolted to the sconce and the sconce to the wall.
+  - keywords:
+    - slime
+    desc: |
+              The slime is slimy and uninteresting.
+  - keywords:
+    - skull
+    - skulls
+    - bones
+    - decay
+    desc: |
+              On all the skulls you notice that there is a three inch hole in the 
+              forehead.  All the bones are broken and old.
+- vnum: 7206
+  name: The Lair
+  sector: city
+  flags:
+  - no_mob
+  - indoors
+  desc: |2
+       On the floor you see a lot of human decay, like bones and skulls.  You
+    also see a lot of slime.  On the wall is a torch sitting in its sconce.
+  exits:
+    north:
+      to: 7205
+      desc: |
+            You see another part of the lair.
+      key: -1
+    south:
+      to: 7207
+      desc: |
+            You see another part of the lair.
+      key: -1
+    west:
+      to: 7203
+      desc: |
+            You see another part of the lair.
+      key: -1
+  extra_descs:
+  - keywords:
+    - torch
+    - sconce
+    desc: |
+              The torch is bolted to the sconce and the sconce to the wall.
+  - keywords:
+    - slime
+    desc: |
+              The slime is slimy and uninteresting.
+  - keywords:
+    - bones
+    - decay
+    desc: |
+              All the bones are broken and old.
+- vnum: 7207
+  name: The Lair
+  sector: city
+  flags:
+  - indoors
+  desc: |2
+       On the floor you see a lot of human decay, like bones and skulls.  You
+    also see a lot of slime.  On the wall is a torch sitting in its sconce.
+  exits:
+    north:
+      to: 7206
+      desc: |
+            You see another part of the lair.
+      key: -1
+    west:
+      to: 7204
+      desc: |
+            You see another part of the lair.
+      door: regular
+      key: -1
+  extra_descs:
+  - keywords:
+    - torch
+    - sconce
+    desc: |
+              The torch is bolted to the sconce and the sconce to the wall.
+  - keywords:
+    - slime
+    desc: |
+              The slime is slimy and uninteresting.
+  - keywords:
+    - skull
+    - skulls
+    - bones
+    - decay
+    desc: |
+              On all the skulls you notice that there is a three inch hole in the 
+              forehead.  All the bones are broken and old.
+- vnum: 7208
+  name: The Lair Entrance
+  sector: field
+  flags:
+  - dark
+  - no_mob
+  - indoors
+  desc: |2
+       You are in a dry part of the sewer.  To the north is a wooden door,
+    you can see some slime at the lower part of the door.  You also see
+    some skulls and some broken bones.
+  exits:
+    north:
+      to: 7204
+      desc: |
+            You can see the lair.
+      door: regular
+      key: -1
+      keywords: door wooden
+    east:
+      to: 7209
+      desc: |
+            You see a crawlway.
+      key: -1
+  extra_descs:
+  - keywords:
+    - slime
+    desc: |
+              The slime is slimy and uninteresting.
+- vnum: 7209
+  name: The Crawlway
+  sector: forest
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are in a narrow crawlway.  It is rather boring here.
+  exits:
+    east:
+      to: 7210
+      desc: |
+            You see a four-way junction.
+      key: -1
+    west:
+      to: 7208
+      desc: |
+            You see the entrance to a lair.
+      key: -1
+- vnum: 7210
+  name: The Four-Way Junction
+  sector: forest
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are in a sewer junction.  To the north is a small hole, to the west
+    is a narrow crawlway and to the east and south the sewer continues.
+  exits:
+    north:
+      to: 7211
+      desc: |
+            You can see a small cave-like room.
+      key: -1
+    east:
+      to: 7212
+      desc: |
+            You can see a sewer drain.
+      key: -1
+    south:
+      to: 7215
+      desc: |
+            You can see a sewer drain.
+      key: -1
+    west:
+      to: 7209
+      desc: |
+            You can see a narrow crawlway.
+      key: -1
+- vnum: 7211
+  name: The Small Cave
+  sector: forest
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are in a collapsed sewer drain, which now is more like a small cave.
+  exits:
+    south:
+      to: 7210
+      desc: |
+            You look back into the four-way junction.
+      key: -1
+- vnum: 7212
+  name: The Sewer Drain
+  sector: forest
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are in a dry sewer drain which bends to the north.
+  exits:
+    north:
+      to: 7213
+      desc: |
+            You can see the drain continuing north.
+      key: -1
+    west:
+      to: 7210
+      desc: |
+            You can see the four-way junction.
+      key: -1
+- vnum: 7213
+  name: The Sewer Drain
+  sector: forest
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are in a dry sewer drain which bends to the east.
+  exits:
+    east:
+      to: 7214
+      desc: |
+            You can see the drain continuing east.
+      key: -1
+    south:
+      to: 7212
+      desc: |
+            You can see the drain continuing south.
+      key: -1
+- vnum: 7214
+  name: The End Of The Drain
+  sector: forest
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are at the end of the drain around you the sewer has collapsed, the
+    only exit is west.
+  exits:
+    west:
+      to: 7213
+      desc: |
+            You see the sewer drain.
+      key: -1
+- vnum: 7215
+  name: The Half-Wet Drain
+  sector: hills
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are in a sewer drain where the floor is covered with water.  To
+    the north it looks more dry, south however the drain runs down into
+    some water.
+  exits:
+    north:
+      to: 7210
+      desc: |
+            To the north lies a dry four-way junction.
+      key: -1
+    south:
+      to: 7216
+      desc: |
+            To the south you see a sewer drain filled with water.
+      key: -1
+  extra_descs:
+  - keywords:
+    - water
+    desc: |
+              The water is dirty but it looks like you would be able to swim in it.
+- vnum: 7216
+  name: Under Water In The Sewer
+  sector: water_swim
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are swimming in some dirty water and are holding your breath.  You'd
+    better continue onwards before you drown.  It is a good thing that you can
+    hold your light above the water-level.
+  exits:
+    north:
+      to: 7215
+      desc: |
+            It is hard to see, but it looks like the drain runs slightly upwards.
+      key: -1
+    south:
+      to: 7217
+      desc: |
+            It is hard to see, but it looks like the drain runs a little bit upwards.
+      key: -1
+- vnum: 7217
+  name: The Half-Dry Drain
+  sector: hills
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are in a half-dry sewer drain.  To the north the drain runs a little
+    bit downwards into some water to the east you can see a small hole.  To the
+    west you see another drain.
+  exits:
+    north:
+      to: 7216
+      desc: |
+            You see the drain running down into some water.
+      key: -1
+    east:
+      to: 7218
+      desc: |
+            Through the hole you can just make out a very small room.
+      key: -1
+    west:
+      to: 7219
+      desc: |
+            You see a drain running to the west.
+      key: -1
+  extra_descs:
+  - keywords:
+    - hole
+    desc: |
+              Through the hole you can just make out a very small room.
+  - keywords:
+    - water
+    desc: |
+              The water is dirty but it looks like you would be able to swim in it.
+- vnum: 7218
+  name: The Very Small Room
+  sector: forest
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are in a very small room, it is pretty uninteresting.
+  exits:
+    west:
+      to: 7217
+      desc: |
+            Through the little hole you can see a half-dry drain.
+      key: -1
+- vnum: 7219
+  name: A Dry Sewer Drain
+  sector: forest
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are in a dry but dirty sewer drain.  The drain continues east and
+    south.
+  exits:
+    east:
+      to: 7217
+      desc: |
+            You see a half-dry drain.
+      key: -1
+    south:
+      to: 7220
+      desc: |
+            You see another boring sewer drain.
+      key: -1
+- vnum: 7220
+  name: A Boring Drain
+  sector: forest
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are in yet another sewer drain.
+  exits:
+    north:
+      to: 7219
+      desc: |
+            You see a sewer drain continuing to the north.
+      key: -1
+    east:
+      to: 7221
+      desc: |
+            You can see another drain to the east.
+      key: -1
+- vnum: 7221
+  name: The Sewer Drain
+  sector: forest
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are in a sewer drain, there is nothing special in here, except for a 
+    loud echo.
+  exits:
+    east:
+      to: 7222
+      desc: |
+            You can see another sewer drain.
+      key: -1
+    west:
+      to: 7220
+      desc: |
+            You can make out a sewer drain to the west.
+      key: -1
+    up:
+      to: 7129
+      desc: |
+            You can see a sewer line.
+      key: -1
+- vnum: 7222
+  name: The Sewer Drain
+  sector: forest
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are in a drain, with some slimy water on the floor.
+  exits:
+    east:
+      to: 7223
+      desc: |
+            You see a sewer bend.
+      key: -1
+    west:
+      to: 7221
+      desc: |
+            You see a sewer drain.
+      key: -1
+  extra_descs:
+  - keywords:
+    - slimy
+    - water
+    desc: |
+              The water floats to the east from here.
+- vnum: 7223
+  name: The Sewer Bend
+  sector: forest
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You find yourself in an ordinary sewer bend, which bends from west to
+    north.
+  exits:
+    north:
+      to: 7224
+      desc: |
+            You see a sewer drain.
+      key: -1
+    west:
+      to: 7222
+      desc: |
+            You see a sewer drain.
+      key: -1
+- vnum: 7224
+  name: The Sewer Junction
+  sector: forest
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You stand in a junction of three sewer drains.  You see some odd
+    scratches on the pipe wall, as if from a gigantic rat.  North and
+    south the sewer continues as usual, but west it looks a little
+    strange.
+  exits:
+    north:
+      to: 7225
+      desc: |
+            You see nothing but a sewer drain.
+      key: -1
+    south:
+      to: 7223
+      desc: |
+            You see nothing but a sewer drain.
+      key: -1
+    west:
+      to: 7229
+      desc: |
+            You see a strange sewer pipe.
+      key: -1
+- vnum: 7225
+  name: The Sewer
+  sector: forest
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are in a sewer, where the slimy water runs down through a tiny hole.
+    You see some odd scratches on the pipe wall, as from a gigantic rat.  There 
+    is a sewer drain south.
+  exits:
+    south:
+      to: 7224
+      desc: |
+            You see a sewer drain.
+      key: -1
+- vnum: 7229
+  name: The Strange Sewer
+  sector: forest
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are in a very strange sewer indeed, there are some odd scratches on
+    the pipe wall, as from a gigantic rat.  And you can see a lot of organic
+    decay like bones from animals AND humans.  West the drain runs slightly
+    upwards.
+  exits:
+    east:
+      to: 7224
+      desc: |
+            You see a sewer junction.
+      key: -1
+    west:
+      to: 7230
+      desc: |
+            You see a slimy sewer drain.
+      key: -1
+- vnum: 7230
+  name: The Damp Sewer
+  sector: forest
+  flags:
+  - dark
+  - no_mob
+  - indoors
+  desc: |2
+       You are in a sewer drain with a funny damp substance on the floor, in the 
+    substance you see a lot of decay.  You see some odd scratches on the wall,
+    as if from a gigantic rat.  Both to the east and west the pipe seems to run
+    down.
+  exits:
+    east:
+      to: 7229
+      desc: |
+            You see a sewer.
+      key: -1
+    west:
+      to: 7231
+      desc: |
+            You see a sewer.
+      key: -1
+- vnum: 7231
+  name: The Strange Sewer
+  sector: forest
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are in an ordinary sewer except for a lot of scratches on the sewer
+    wall, and a lot of debris on the floor.
+  exits:
+    east:
+      to: 7230
+      desc: |
+            You see a sewer.
+      key: -1
+    west:
+      to: 7232
+      desc: |
+            You see another sewer.
+      key: -1
+  extra_descs:
+  - keywords:
+    - debris
+    desc: |
+              You see a lot of organic decay on the floor.
+- vnum: 7232
+  name: The Sewer
+  sector: forest
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are in a sewer with more scratches on the walls.  And of course a whole
+    lot of decay.  The drain runs east and north.
+  exits:
+    north:
+      to: 7233
+      desc: |
+            You see yet another sewer line.
+      key: -1
+    east:
+      to: 7231
+      desc: |
+            You see a sewer pipe.
+      key: -1
+- vnum: 7233
+  name: The Sewer Drain
+  sector: forest
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You stand in a sewer drain, you are able to see some kind of cave-like
+    room.  You see some odd scratches on the drain wall, as if from a gigantic
+    rat.  The sewer leads south.
+  exits:
+    east:
+      to: 7234
+      desc: |
+            You see a cave-like room.
+      key: -1
+    south:
+      to: 7232
+      desc: |
+            You see a sewer.
+      key: -1
+- vnum: 7234
+  name: The Rat's Lair
+  sector: forest
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are in a little cave.  You are able to see quite a lot of debris on
+    the floor.  There is a sewer drain west of here.
+  exits:
+    west:
+      to: 7233
+      desc: |
+            You see the sewer system that way.
+      key: -1
+- vnum: 7279
+  name: The Wall Of The Abyss
+  sector: mountains
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You hang onto some steps leading down into utter darkness.  There is an
+    exit leading up as well, though you'll have to open the tiny rock again to
+    do so.
+  exits:
+    up:
+      to: 7111
+      door: regular
+      key: -1
+      keywords: rock
+    down:
+      to: 7299
+      key: -1
+- vnum: 7280
+  name: The Entrance
+  sector: city
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are in a very dark room.  You notice that some faces are staring at
+    you from inside the walls.  In the middle of the room there is a small altar.
+    To the north there is a small round door.
+  exits:
+    north:
+      to: 7281
+      desc: |
+            A beam of red light seeps through a hole in the door.
+      door: regular
+      key: -1
+      keywords: door small round
+    up:
+      to: 7116
+      door: regular
+      key: -1
+      keywords: altar secret
+  extra_descs:
+  - keywords:
+    - triangle
+    desc: |
+              The triangle is filled with small symbols.  They seem to be a language
+              you have never seen before.
+  - keywords:
+    - altar
+    desc: |
+              This altar is very special.  Faces appear to be smiling from it.  There
+              is a triangle engraved in the top of it.
+- vnum: 7281
+  name: The Corridor
+  sector: city
+  flags:
+  - indoors
+  desc: |2
+       The corridor is glowing oppressively in a red hue.  You can hear wailing
+    through an open black hole to the east.  To the south there is a round door.
+  exits:
+    east:
+      to: 7282
+      desc: |
+            The hole seems more black than the night.  It is appears to be "eating" the
+            red light around it.
+      key: -1
+    south:
+      to: 7280
+      door: regular
+      key: -1
+      keywords: door small round
+  extra_descs:
+  - keywords:
+    - walls
+    desc: |
+              The walls look alive.
+  - keywords:
+    - red
+    - light
+    desc: |
+              The red light glows from the walls.
+  - keywords:
+    - small
+    - round
+    - door
+    desc: |
+              The door is completely round without a keyhole.
+- vnum: 7282
+  name: The Realm Of Lost Souls
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You are standing in nothing.  All around you there are stars.
+    Sometimes a shadow flies closely by you, wailing very loudly.  To
+    the north there is a small bright hole.  To the west there is a
+    small red hole.
+  exits:
+    north:
+      to: 7283
+      desc: |
+            You look into a very bright hole.
+      key: -1
+    west:
+      to: 7281
+      desc: |
+            You look into a red hole.
+      key: -1
+  extra_descs:
+  - keywords:
+    - shadow
+    desc: |
+              The shadow looks like a man in great pain.
+- vnum: 7283
+  name: The T-Crossing
+  sector: city
+  flags:
+  - dark
+  - no_mob
+  - indoors
+  desc: |2
+       You are in a small hallway.  There are doors to the east and to
+    the west.  To the south there are a black hole.  There is writing
+    in the wall.  Wails can be heard from the south.
+  exits:
+    east:
+      to: 7286
+      desc: |
+            It is too dark to tell.
+      key: -1
+    south:
+      to: 7282
+      desc: |
+            A black hole in the wall.
+      key: -1
+    west:
+      to: 7284
+      desc: |
+            You can see a big fire to the west.  It looks like a unhealthy
+            place to enter!
+      key: -1
+  extra_descs:
+  - keywords:
+    - writing
+    desc: |
+              The writing says 'The one to the east, belongs to the beast.
+              To the west you will surely END your quest!'.
+- vnum: 7284
+  name: The Firedeath
+  sector: city
+  flags:
+  - no_mob
+  - indoors
+  desc: |2
+       This room is very hot.  There are flames surrounding you.  You can
+    see no exits at all!  Skeletons are lying all over the floor.
+  extra_descs:
+  - keywords:
+    - writing
+    - wall
+    desc: |
+              The writing says 'A prayer to the GODS will not be heard, though
+              the only exit is death... Mother, I love you'.
+  - keywords:
+    - skeletons
+    desc: |
+              The skeletons looks like they had suffered the death of hunger.
+              One of them looks like he has written something at the wall.
+- vnum: 7285
+  name: The Torture Room
+  sector: city
+  flags:
+  - indoors
+  desc: |2
+       You are standing in a middle of a square room.  Along the walls skeletons 
+    are hanging in rusty chains.  In the middle of the room there is a big metal 
+    box, covered with dust.  To the south you can just make out a small exit.
+  exits:
+    south:
+      to: 7286
+      desc: |
+            It is too dark to tell.
+      door: regular
+      key: -1
+      keywords: door iron
+  extra_descs:
+  - keywords:
+    - big
+    - metal
+    - box
+    desc: |
+              The metal box is covered with dust.  You notice that it was once filled with
+              coal, as you see some small pieces of it.
+  - keywords:
+    - skeletons
+    desc: |
+              When you look at the skeletons, you can see that they once had been in great 
+              pain.  They are hanging in their arms, and some of them were killed with a
+              sharp instrument.
+- vnum: 7286
+  name: The Hell Yard
+  sector: mountains
+  flags:
+  - no_mob
+  - indoors
+  desc: |2
+       You are standing in a lot of mud.  A disgusting smell surrounds
+    the place, and makes you feel sick.  Small flames sometimes shoot
+    up from the hot mud.  To the west there is a small door.  To the 
+    north you can see an iron door.
+  exits:
+    north:
+      to: 7285
+      desc: |
+            It is too dark to tell.
+      door: regular
+      key: -1
+      keywords: door iron
+    west:
+      to: 7283
+      desc: |
+            It is too dark to tell.
+      key: -1
+- vnum: 7299
+  name: On The Walls Of The Abyss
+  sector: mountains
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are clutching the steps on the wall so that you don't fall to the
+    ground down below.  You cannot see anymore handholds below you and thus
+    this stops your journey down, as the only exit is up.
+  exits:
+    up:
+      to: 7279
+      key: -1
+mobiles:
+- vnum: 7200
+  keywords:
+  - mindflayer
+  - master
+  - mind
+  short: the master mindflayer
+  long: |
+    The master mindflayer is here, looking at you with an evil look.
+  desc: |
+    It is a seven foot tall humanoid dressed in a purple cloak, and swinging a
+    black and purple rod above its head as if it was going to attack you any
+    moment now.  In the middle of its head are four tentacles with sharp points.
+  act:
+  - spec
+  - scavenger
+  - aware
+  - aggressive
+  - memory
+  - helper
+  affected:
+  - detect_invis
+  - sense_life
+  - infravision
+  alignment: -800
+  level: 14
+  thac0: 7
+  ac: 0
+  hp: 1d10+170
+  damage: 3d4+4
+  gold: 0
+  exp: 20000
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 7201
+  keywords:
+  - mindflayer
+  - senior
+  - mind
+  short: the senior mindflayer
+  long: |
+    The senior mindflayer walks around here, looking for something useful.
+  desc: |
+    This is a horrifying monster indeed, 6'6" high.  Dressed in purple and black,
+    and carrying a large mace in its hand.  In the center of its head are four
+    large tentacles with very sharp points.
+  act:
+  - spec
+  - scavenger
+  - aware
+  - aggr_good
+  - aggr_neutral
+  - memory
+  - helper
+  affected:
+  - detect_invis
+  - sense_life
+  - infravision
+  alignment: -600
+  level: 8
+  thac0: 13
+  ac: 2
+  hp: 1d10+100
+  damage: 2d4+3
+  gold: 400
+  exp: 4500
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 7202
+  keywords:
+  - mindflayer
+  - junior
+  - mind
+  short: the junior mindflayer
+  long: |
+    The junior mindflayer is here, watching you carefully from the corner.
+  desc: |
+    This mindflayer is six feet high.  It has a small mace in its belt, and is
+    dressed in purple and black cloth.  It has four small tentacles in the center
+    of its head.
+  act:
+  - spec
+  - scavenger
+  - aware
+  - wimpy
+  - memory
+  - helper
+  affected:
+  - detect_invis
+  - sense_life
+  - infravision
+  alignment: -350
+  level: 6
+  thac0: 15
+  ac: 4
+  hp: 1d10+75
+  damage: 1d4+2
+  gold: 200
+  exp: 1500
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 7203
+  keywords:
+  - wererat
+  - rat
+  short: the ugly wererat
+  long: |
+    An ugly wererat is here, looking at you with a strange flick in his eyes.
+  desc: |
+    The wererat is about four feet tall.  It looks very much like rat, except
+    that it is standing.
+  act:
+  - scavenger
+  - stay_zone
+  - aggr_good
+  - aggr_neutral
+  - memory
+  affected:
+  - infravision
+  alignment: -700
+  level: 6
+  thac0: 15
+  ac: 3
+  hp: 4d6+69
+  damage: 2d4+2
+  gold: 50
+  exp: 1500
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 7204
+  keywords:
+  - rat
+  - gigantic
+  short: the gigantic rat
+  long: |
+    There is a gigantic rat here, looking at you with a hungry look.
+  desc: |
+    The gigantic rat is about ten feet long from head to tail and has claws the
+    size of your head, looking very nasty.
+  act:
+  - sentinel
+  - aggressive
+  affected:
+  - infravision
+  alignment: -800
+  level: 12
+  thac0: 9
+  ac: 2
+  hp: 1d10+150
+  damage: 2d6+2
+  gold: 2513
+  exp: 13000
+  position: standing
+  default_position: standing
+  sex: male
+objects:
+- vnum: 7200
+  keywords:
+  - rod
+  - devil
+  short: the devil rod
+  desc: The mysterious devil rod lies on the floor.
+  type: weapon
+  wear:
+  - take
+  - wield
+  flags:
+  - magic
+  - anti_good
+  weapon:
+    dice: 2d5
+    damage_type: slash
+  weight: 6
+  cost: 16000
+  rent: 800
+  affects:
+  - location: hitroll
+    modifier: 3
+  - location: str
+    modifier: -1
+  extra_descs:
+  - keywords:
+    - devil
+    - rod
+    desc: |
+              This is indeed a mysterious rod.  It is dark black at the base but has four
+              very sharp purple tentacles at the end.
+- vnum: 7201
+  keywords:
+  - mace
+  - large
+  short: the large mace
+  desc: A large mace lies here.
+  type: weapon
+  wear:
+  - take
+  - wield
+  flags:
+  - magic
+  weapon:
+    dice: 1d6
+    damage_type: pound
+  weight: 10
+  cost: 1000
+  rent: 400
+  affects:
+  - location: damroll
+    modifier: 2
+  extra_descs:
+  - keywords:
+    - large
+    - mace
+    desc: |
+              The mace is pretty large with a weight of 10 lbs.  The head is actually four
+              purple tentacles tied together.
+- vnum: 7202
+  keywords:
+  - mace
+  - small
+  short: the small mace
+  desc: A small mace has been left here.
+  type: weapon
+  wear:
+  - take
+  - wield
+  flags:
+  - magic
+  weapon:
+    dice: 1d6
+    damage_type: pound
+  weight: 6
+  cost: 600
+  rent: 200
+  affects:
+  - location: damroll
+    modifier: 1
+  extra_descs:
+  - keywords:
+    - small
+    - mace
+    desc: |
+              This weapon does look like it does a lot of damage, but then you never know.
+              It consists of a black handle and a purple head.
+- vnum: 7203
+  keywords:
+  - cloak
+  - purple
+  short: a purple cloak
+  desc: A purple cloak lies on the floor.
+  type: worn
+  wear:
+  - take
+  - neck
+  flags:
+  - magic
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 20
+  cost: 5000
+  rent: 6000
+  affects:
+  - location: saving_spell
+    modifier: 2
+  - location: armor
+    modifier: -10
+  extra_descs:
+  - keywords:
+    - cloak
+    - purple
+    desc: |
+              This is a very fine made cloak from an unknown material, in a nice purple
+              color.
+- vnum: 7204
+  keywords:
+  - potion
+  - blue
+  - neon
+  short: a neon blue potion
+  desc: A neon blue potion stands on the floor.
+  type: potion
+  wear:
+  - take
+  flags:
+  - magic
+  values:
+  - 14
+  - 6
+  - 15
+  - 16
+  weight: 4
+  cost: 100
+  rent: 1000
+  extra_descs:
+  - keywords:
+    - potion
+    - blue
+    desc: |
+              In the flask is a transparent electric blue liquid.
+- vnum: 7205
+  keywords:
+  - key
+  - black
+  short: a black key
+  desc: A black key has been left on the floor.
+  type: key
+  wear:
+  - take
+  - hold
+  flags:
+  - no_rent
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 2
+  cost: 0
+  rent: 0
+  extra_descs:
+  - keywords:
+    - black
+    - key
+    desc: |
+              This little key is made from a black metal of unknown origin.
+- vnum: 7206
+  keywords:
+  - skull
+  - white
+  short: a strange white skull
+  desc: A strange white skull lies on the floor looking at you.
+  type: armor
+  wear:
+  - take
+  - head
+  flags:
+  - glow
+  - hum
+  - no_drop
+  armor:
+    ac_apply: 1
+  weight: 30
+  cost: 0
+  rent: 250
+  affects:
+  - location: dex
+    modifier: -4
+  extra_descs:
+  - keywords:
+    - writing
+    - text
+    desc: |
+              You read the number '666'.
+  - keywords:
+    - white
+    - skull
+    desc: |
+              The skull has two small horns in the forehead. You notice some writing on
+              the inside.
+- vnum: 7207
+  keywords:
+  - gauntlets
+  - muddy
+  short: a pair of muddy gauntlets
+  desc: A pair of muddy gauntlets have been thrown away here.
+  type: armor
+  wear:
+  - take
+  - hands
+  flags:
+  - magic
+  armor:
+    ac_apply: 6
+  weight: 10
+  cost: 6000
+  rent: 1500
+  affects:
+  - location: str
+    modifier: 1
+  extra_descs:
+  - keywords:
+    - muddy
+    - gauntlets
+    desc: |
+              These gauntlets are muddy indeed, however they look very effective.
+- vnum: 7208
+  keywords:
+  - stick
+  - small
+  short: a small stick
+  desc: A small stick lies here.
+  type: light
+  wear:
+  - take
+  - hold
+  light:
+    hours: -1
+  weight: 4
+  cost: 200
+  rent: 200
+  extra_descs:
+  - keywords:
+    - letters
+    - letter
+    desc: |
+              They read:
+
+              Hold me
+  - keywords:
+    - small
+    - stick
+    desc: |
+              The small stick does not look interesting at all.  But just as you are going
+              to throw it away you notice some small letters.
+- vnum: 7209
+  keywords:
+  - boots
+  - muddy
+  short: a pair of muddy boots
+  desc: A pair of muddy boots has been dropped here.
+  type: armor
+  wear:
+  - take
+  - feet
+  flags:
+  - magic
+  armor:
+    ac_apply: 4
+  weight: 10
+  cost: 75
+  rent: 500
+  affects:
+  - location: max_move
+    modifier: 15
+  extra_descs:
+  - keywords:
+    - boots
+    - muddy
+    desc: |
+              The boots are muddy and they look well worn, but also very comfortable.
+- vnum: 7210
+  keywords:
+  - treasure
+  - coins
+  short: a huge treasure
+  desc: There is a huge treasure here, looking very valuable.
+  type: money
+  wear:
+  - take
+  values:
+  - 6522
+  - 0
+  - 0
+  - 0
+  weight: 5
+  cost: 6522
+  rent: 0
+  extra_descs:
+  - keywords:
+    - treasure
+    - coins
+    desc: |
+              This looks like a whole lot of coins.
+- vnum: 7211
+  keywords:
+  - sword
+  - short
+  short: a short sword
+  desc: A short sword is lying here.
+  type: weapon
+  wear:
+  - take
+  - wield
+  weapon:
+    dice: 2d3
+    damage_type: slash
+  weight: 4
+  cost: 100
+  rent: 300
+  extra_descs:
+  - keywords:
+    - short
+    - sword
+    desc: |
+              This is a very nice little weapon.
+resets:
+- mob: 7200
+  room: 7201
+  max: 1
+  then:
+  - equip: 7200
+    slot: wield
+    max: 1
+  - equip: 7203
+    slot: neck1
+    max: 1
+  - give: 7205
+    max: 1
+  - room: 7200
+    object: 7204
+    max: 6
+  - room: 7200
+    object: 7210
+    max: 1
+- mob: 7201
+  room: 7203
+  max: 1
+  then:
+  - equip: 7201
+    slot: wield
+    max: 4
+- mob: 7202
+  room: 7205
+  max: 2
+  then:
+  - equip: 7202
+    slot: wield
+    max: 8
+- mob: 7202
+  room: 7207
+  max: 2
+  then:
+  - equip: 7202
+    slot: wield
+    max: 8
+- mob: 7203
+  room: 7214
+  max: 10
+  then:
+  - equip: 7211
+    slot: wield
+    max: 16
+- mob: 7203
+  room: 7213
+  max: 10
+  then:
+  - equip: 7211
+    slot: wield
+    max: 16
+- mob: 7203
+  room: 7215
+  max: 10
+  then:
+  - equip: 7211
+    slot: wield
+    max: 16
+- mob: 7203
+  room: 7217
+  max: 10
+  then:
+  - equip: 7211
+    slot: wield
+    max: 16
+- mob: 7203
+  room: 7219
+  max: 10
+- mob: 7203
+  room: 7221
+  max: 10
+- mob: 7203
+  room: 7223
+  max: 10
+- mob: 7203
+  room: 7225
+  max: 10
+- mob: 7203
+  room: 7233
+  max: 10
+- mob: 7203
+  room: 7233
+  max: 10
+- mob: 7204
+  room: 7234
+  max: 1
+- mob: 7002
+  room: 7285
+  max: 5
+- mob: 7002
+  room: 7285
+  max: 5
+  then:
+  - equip: 7190
+    slot: finger_left
+    max: 2
+  - equip: 7209
+    slot: feet
+    max: 4
+  - give: 7208
+    max: 20
+- mob: 7002
+  room: 7285
+  max: 5
+- mob: 7000
+  room: 7286
+  max: 8
+- mob: 7000
+  room: 7286
+  max: 8
+- mob: 7000
+  room: 7281
+  max: 8
+- mob: 7000
+  room: 7281
+  max: 8
+- mob: 7000
+  room: 7280
+  max: 8
+- room: 7206
+  remove: 7206
+- room: 7206
+  object: 7206
+  max: 4
+- room: 7211
+  remove: 7208
+- room: 7211
+  object: 7208
+  max: 20
+- door: 7201
+  dir: west
+  state: locked
+- door: 7200
+  dir: east
+  state: locked
+- door: 7202
+  dir: north
+  state: closed
+- door: 7201
+  dir: south
+  state: closed
+- door: 7208
+  dir: north
+  state: closed
+- door: 7204
+  dir: south
+  state: closed
+- door: 7281
+  dir: south
+  state: closed
+- door: 7280
+  dir: north
+  state: closed
+- door: 7286
+  dir: north
+  state: closed
+- door: 7285
+  dir: south
+  state: closed

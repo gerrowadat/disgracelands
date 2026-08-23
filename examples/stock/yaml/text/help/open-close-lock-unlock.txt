@@ -1,0 +1,14 @@
+OPEN CLOSE LOCK UNLOCK
+
+Usage: open | close | lock | unlock <door> [direction]
+
+To open, close, lock, and unlock doors, of course.
+
+Examples:
+
+  > open portal
+  > lock door
+  > unlock door south
+  > close gate
+
+See also: ENTER, LEAVE

@@ -1,0 +1,3913 @@
+schema: dl/world@1
+zone:
+  vnum: 150
+  name: King Welmar's Castle
+  range:
+  - 15000
+  - 15099
+  lifespan: 120
+  reset: always
+rooms:
+- vnum: 15000
+  name: The King's Road
+  sector: city
+  flags:
+  - no_mob
+  desc: |2
+       You stand at the beginning of the actual King's Road.  The road is wide
+    enough for several horses to ride along side by side with room to spare.
+    The stones which make up the road have been put into place with such skill
+    that the road seems to be perfectly smooth and perfectly straight.
+       You spot a small trail leading to the south through the undergrowth which
+    surrounds the road at this point.
+    A traveller passes by and waves cheerfully at you.
+  exits:
+    east:
+      to: 15001
+      desc: |
+            The King's Road continues in a straight line to the east towards a grand
+            castle.
+      key: -1
+    south:
+      to: 15061
+      desc: |
+            A small overgrown trail leads through the undergrowth to the south.
+      key: -1
+    west:
+      to: 3502
+      desc: |
+            The King's Road thins out a bit into a lane just to the west.
+      key: -1
+  extra_descs:
+  - keywords:
+    - traveller
+    desc: |
+              The traveller smiles cheerfully and calls 'hello' when you greet him,
+              but continues on his way.
+              The traveller is in excellent condition.
+- vnum: 15001
+  name: The King's Road
+  sector: city
+  desc: |2
+       You stand in the center of the great King's Road.  The road is very well
+    built, and goes in a straight line due east-west.
+  exits:
+    east:
+      to: 15002
+      desc: |
+            The King's Road continues in a straight line to the east.
+      key: -1
+    west:
+      to: 15000
+      desc: |
+            You see that the King's Road continues westwards towards a large city.
+      key: -1
+- vnum: 15002
+  name: The King's Road
+  sector: city
+  desc: |2
+       You stand on the King's Road, which leads east and west.  The
+    skill of the builders is apparent, since it is impossible to notice
+    any turn or irregularity in the road.
+  exits:
+    east:
+      to: 15003
+      desc: |
+            You see a castle in the far east.
+      key: -1
+    west:
+      to: 15001
+      desc: |
+            The King's Road continues in a straight line to the west.
+      key: -1
+- vnum: 15003
+  name: On The King's Road Outside A Castle
+  sector: city
+  desc: |2
+       You are standing on the King's Road.  Before you is a large
+    Castle, evidently built not so much for strength as for beauty.
+    It is not totally without defences, though, for it is surrounded
+    by a deep moat, and its windows are just narrow slits for archers
+    to shoot through.  To the north there is a drawbridge across the
+    moat.
+  exits:
+    north:
+      to: 15004
+      desc: |
+            You see the drawbridge.
+      key: -1
+    west:
+      to: 15002
+      desc: |
+            The King's Road continues in a straight line to the west.
+      key: -1
+- vnum: 15004
+  name: On The Drawbridge
+  sector: city
+  flags:
+  - no_mob
+  desc: |2
+       You have arrived at the drawbridge leading into the Castle.  Before
+    you is a huge, double-doored gate.  It seems very strong.  You see some
+    whirls in the moat.
+  exits:
+    north:
+      to: 15007
+      desc: |
+            The gate has huge, but intricately carved hinges.  As the Castle itself,
+            it seems designed not only for strength, but also for beauty.
+      door: regular
+      key: -1
+      keywords: gate door
+    south:
+      to: 15003
+      desc: |
+            You see the King's Road.
+      key: -1
+  extra_descs:
+  - keywords:
+    - whirls
+    - whirl
+    - moat
+    desc: |
+              You can't see much, but it seems that something beneath the surface
+              is creating them.
+- vnum: 15005
+  name: The Kitchen
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You are in the Kitchen.  Lots of helpers hurry to do the Chief Cook's
+    bidding, and there is a wonderful smell that makes you feel very hungry.
+    All around the room, there are shelves with different kinds of cooking 
+    gear stacked on them.  There is an exit to the north, and one to the east;
+    both leading to small passages.
+  exits:
+    north:
+      to: 15010
+      desc: |
+            You see a small, dimly lit passage.
+      key: -1
+    east:
+      to: 15006
+      desc: |
+            You see a small, dimly lit passage.
+      key: -1
+- vnum: 15006
+  name: A Small Passage
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You are standing in a small passage, that is clearly intended mostly
+    for the servants of the Castle.  It is only dimly lit and quite narrow.
+    The passage leads west, and to the east there is a small door.
+  exits:
+    east:
+      to: 15007
+      desc: |
+            The door is small and uninteresting.
+      door: regular
+      key: -1
+      keywords: door small
+    west:
+      to: 15005
+      desc: |
+            You hear clanging of pots, and smell cooking meat.
+      key: -1
+- vnum: 15007
+  name: The Entrance Hall
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You are standing in the impressive Entrance Hall of the Castle.
+    To the north is an exit into the Great Hall.  There is also an exit
+    east, and a small door to the west.
+  exits:
+    north:
+      to: 15012
+      desc: |
+            You see the King's Great Hall.
+      key: -1
+    east:
+      to: 15008
+      desc: |
+            There seems to be a small guard room to the east.
+      key: -1
+    south:
+      to: 15004
+      desc: |
+            To the south, there is a gate, that leads to the Drawbridge.
+      door: regular
+      key: -1
+      keywords: gate
+    west:
+      to: 15006
+      desc: |
+            The door is small and uninteresting.
+      door: regular
+      key: -1
+      keywords: door small
+- vnum: 15008
+  name: The Guard Room
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You are in a small room, evidently meant for guards currently
+    not on duty.  There is only one exit, back to the entrance hall.
+  exits:
+    west:
+      to: 15007
+      desc: |
+            You see the Castle Entrance.
+      key: -1
+- vnum: 15009
+  name: Under The Tower
+  sector: inside
+  flags:
+  - no_mob
+  - indoors
+  desc: |2
+       You are below one the three mighty towers of the Castle.  There are
+    no guards here, and you sense that this part of the Castle is largely
+    unused.  There are stairs going up to the tower, and there is also an
+    exit to the north.
+  exits:
+    north:
+      to: 15014
+      desc: |
+            You see a small, dimly lit passage.
+      key: -1
+    up:
+      to: 15034
+      desc: |
+            The stairs are old, but in good repair. They lead up into the tower.
+      key: -1
+  extra_descs:
+  - keywords:
+    - stairs
+    desc: |
+              The stairs are old, but in good repair. They lead up into the tower.
+- vnum: 15010
+  name: The Small Passage
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You are standing in a small passage, that is clearly intended 
+    mainly for the servants of the Castle.  The passage leads north
+    and south.
+  exits:
+    north:
+      to: 15015
+      desc: |
+            You see a small, dimly lit passage.
+      key: -1
+    south:
+      to: 15005
+      desc: |
+            You hear the clanging of pots, and smell cooking meat.
+      key: -1
+- vnum: 15011
+  name: The Great Hall
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You are standing in the south-west end of the Great Hall. It 
+    is truly vast; the roof is so high above your head, that it seems no
+    closer than the clouds outside.  The roof is beautifully painted, by
+    someone who must have been a true master.  The hall is very large,
+    and could easily seat several hundred people at a banquet.
+  exits:
+    north:
+      to: 15016
+      desc: |
+            You see the King's Great Hall.
+      key: -1
+    east:
+      to: 15012
+      desc: |
+            You see the King's Great Hall.
+      key: -1
+  extra_descs:
+  - keywords:
+    - roof
+    - paintings
+    - paint
+    desc: |
+              The paintings on the roof depict the great heroes and gods.  One of 
+              the gods is fairly heavy-bellied and incredibly hairy, with a massive
+              beard.  Also among them are the great enemies and wrongdoers, such as
+              the evil Goddess Yochlol and the powerful evil Wizard Tharoecon.
+- vnum: 15012
+  name: The Great Hall
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You are standing in the southern end of the Great Hall.  It
+    is truly vast; the roof is so high above your head, that it seems no
+    closer than the clouds outside.  The roof is beautifully painted, by
+    someone who must have been a true master.  The hall is very large,
+    and could easily seat several hundred people at a banquet.  To your
+    north, you see King Welmar's great throne, and to the south is the
+    Castle Entrance.
+  exits:
+    north:
+      to: 15017
+      desc: |
+            You see the part of the Great Hall where the throne is.
+      key: -1
+    east:
+      to: 15013
+      desc: |
+            You see the King's Great Hall.
+      key: -1
+    south:
+      to: 15007
+      desc: |
+            You see the Castle Entrance.
+      key: -1
+    west:
+      to: 15011
+      desc: |
+            You see the King's Great Hall.
+      key: -1
+  extra_descs:
+  - keywords:
+    - roof
+    - paintings
+    - paint
+    desc: |
+              The paintings on the roof depict the great heroes and gods.  One of 
+              the gods is fairly heavy-bellied and incredibly hairy, with a massive
+              beard.  Also among them are the great enemies and wrongdoers, such as
+              the evil Goddess Yochlol and the powerful evil Wizard Tharoecon.
+- vnum: 15013
+  name: The Great Hall
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You are standing in the south-east end of the Great Hall.  It
+    is truly vast; the roof is so high above your head, that it seems no
+    closer than the clouds outside.  The roof is beautifully painted, by
+    someone who must have been a true master.  The hall is very large,
+    and could easily seat several hundred people at a banquet.
+  exits:
+    north:
+      to: 15018
+      desc: |
+            You see the King's Great Hall.
+      key: -1
+    west:
+      to: 15012
+      desc: |
+            You see the King's Great Hall.
+      key: -1
+  extra_descs:
+  - keywords:
+    - roof
+    - paintings
+    - paint
+    desc: |
+              The paintings on the roof depict the great heroes and gods.  One of
+              the gods is fairly heavy-bellied and incredibly hairy, with a massive
+              beard.  Also among them are the great enemies and wrongdoers, such as
+              the evil Goddess Yochlol and the powerful, evil Wizard Tharoecon.
+- vnum: 15014
+  name: A Passage
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You are standing in a passage, that leads north and south.  To the south
+    it leads towards one of towers.
+  exits:
+    north:
+      to: 15019
+      desc: |
+            You see the small passage continue.
+      key: -1
+    south:
+      to: 15009
+      key: -1
+- vnum: 15015
+  name: The Passage
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You are in a passage, that leads north and south. To the east there
+    is an exit to the Great Hall.
+  exits:
+    north:
+      to: 15020
+      desc: |
+            You see the passage continue.
+      key: -1
+    east:
+      to: 15016
+      desc: |
+            You see the King's Great Hall.
+      key: -1
+    south:
+      to: 15010
+      desc: |
+            You see the passage continue.
+      key: -1
+- vnum: 15016
+  name: The Great Hall
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You are standing in the north-west end of the Great Hall.  It 
+    is truly vast; the roof is so high above your head, that it seems no
+    closer than the clouds outside.  The roof is beautifully painted, by
+    someone who must have been a true master.  The hall is very large,
+    and could easily seat several hundred people at a banquet.  To your
+    east, you see King Welmar's great throne, and to the west there is
+    an exit to a passage.
+  exits:
+    east:
+      to: 15017
+      desc: |
+            You see the part of the Great Hall where the throne is.
+      key: -1
+    south:
+      to: 15011
+      desc: |
+            You see the King's Great Hall.
+      key: -1
+    west:
+      to: 15015
+      desc: |
+            You see a passage.
+      key: -1
+  extra_descs:
+  - keywords:
+    - roof
+    - paintings
+    - paint
+    desc: |
+              The paintings on the roof depict the great heroes and gods.  One of
+              the gods is fairly heavy-bellied and incredibly hairy, with a massive
+              beard.  Also among them are the great enemies and wrongdoers, such as
+              the evil Goddess Yochlol and the powerful evil Wizard Tharoecon.
+- vnum: 15017
+  name: By The Throne In The Great Hall
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You are standing by the King's huge ivory throne.  The throne is, to
+    an even greater degree than the Hall itself, a masterpiece.  It is
+    intricately and beautifully carved, and it seems to be made out of a 
+    single block of ivory, though you shiver at the thought of meeting
+    the animal that died to yield a piece of that size.  The Hall continues
+    to the east, west and south.
+  exits:
+    east:
+      to: 15018
+      desc: |
+            You see the King's Great Hall.
+      key: -1
+    south:
+      to: 15012
+      desc: |
+            You see the King's Great Hall.
+      key: -1
+    west:
+      to: 15016
+      desc: |
+            You see the King's Great Hall.
+      key: -1
+  extra_descs:
+  - keywords:
+    - throne
+    - ivory
+    desc: |
+              It is large and very beautiful.  The carvings are mainly of animals and
+              magic beasts.
+  - keywords:
+    - roof
+    - paintings
+    - paint
+    desc: |
+              The paintings on the roof depict the great heroes and gods.  One of
+              the gods is fairly heavy-bellied and incredibly hairy, with a massive
+              beard.  Also among them are the great enemies and wrongdoers, such as
+              the evil Goddess Yochlol and the powerful evil Wizard Tharoecon.
+- vnum: 15018
+  name: The Great Hall
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You are standing in the north-east end of the Great Hall.  It
+    is truly vast; the roof is so high above your head, that it seems no
+    closer than the clouds outside.  The roof is beautifully painted, by
+    someone who must have been a true master.  The hall is very large,
+    and could easily seat several hundred people at a banquet.  To your
+    west, you see King Welmar's great throne, and to the east there is
+    an exit to a small passage.
+  exits:
+    east:
+      to: 15019
+      desc: |
+            You see a passage.
+      key: -1
+    south:
+      to: 15013
+      desc: |
+            You see the King's Great Hall.
+      key: -1
+    west:
+      to: 15017
+      desc: |
+            You see the part of the Great Hall where the throne is.
+      key: -1
+  extra_descs:
+  - keywords:
+    - roof
+    - paintings
+    - paint
+    desc: |
+              The paintings on the roof depict the great heroes and gods.  One of 
+              the gods is fairly heavy-bellied and incredibly hairy, with a massive
+              beard.  Also among them are the great enemies and wrongdoers, such as
+              the evil Goddess Yochlol and the powerful evil Wizard Tharoecon.
+- vnum: 15019
+  name: The Small Passage
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You are standing in a small passage, that leads north and south.
+    To the west, there is an exit into the Great Hall.
+  exits:
+    north:
+      to: 15024
+      desc: |
+            The passage continues to the north.
+      key: -1
+    south:
+      to: 15014
+      desc: |
+            The passage continues to the south.
+      key: -1
+    west:
+      to: 15018
+      desc: |
+            To the west you see the Great Hall.
+      key: -1
+- vnum: 15020
+  name: The Passage
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You are standing in a north-south leading passage.  There is a door
+    to the east.
+  exits:
+    north:
+      to: 15025
+      desc: |
+            The passage leads to a staircase.
+      key: -1
+    east:
+      to: 15021
+      desc: |
+            The door is quite small and unobtrusive.
+      door: regular
+      key: -1
+      keywords: door
+    south:
+      to: 15015
+      desc: |
+            The passage continues to the south.
+      key: -1
+- vnum: 15021
+  name: The Servants' Corridor
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You are standing in a corridor, that stretches further to the east.
+    There are doors to the north and west.  The corridor itself is mainly
+    used by servants, and lacks some of the beauty of the rest of the
+    castle.
+  exits:
+    north:
+      to: 15026
+      desc: |
+            There is a door there!
+      door: regular
+      key: -1
+      keywords: door
+    east:
+      to: 15022
+      desc: |
+            The corridor seems to come to its end a bit further east.
+      key: -1
+    west:
+      to: 15020
+      desc: |
+            The door to the west is made out of wood.
+      door: regular
+      key: -1
+      keywords: door wood
+- vnum: 15022
+  name: The End Of The Servants' Corridor
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       The corridor leads only west from here, but there is a door to
+    the north.
+  exits:
+    north:
+      to: 15027
+      desc: |
+            The door leads to a room intended for the butler.
+      door: regular
+      key: 15009
+      keywords: door
+    west:
+      to: 15021
+      desc: |
+            You see the corridor continue.
+      key: -1
+- vnum: 15023
+  name: The Training Room
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       This is the Training Room of the men of the Castle guard.  It is
+    very large, with weapons standing in racks by all the walls.  Most
+    of the weapons seem to be intended for training only, with blunt
+    edges and the like, but there are some that might be useful for
+    real fighting.  There is a door to the north.
+  exits:
+    north:
+      to: 15028
+      desc: |
+            The door is large and heavy.
+      door: regular
+      key: -1
+      keywords: door large heavy
+    east:
+      to: 15024
+      desc: |
+            You see a small passage.
+      key: -1
+- vnum: 15024
+  name: The Small Passage
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You are standing in a small passage leading north and south.  There
+    is also an exit to the west, from which grunts, cheers and heavy blows
+    can be heard.
+  exits:
+    north:
+      to: 15029
+      desc: |
+            The passage leads north to some stairs.
+      key: -1
+    south:
+      to: 15019
+      desc: |
+            You see the passage continuing.
+      key: -1
+    west:
+      to: 15023
+      desc: |
+            You see the Training Room.
+      key: -1
+- vnum: 15025
+  name: The Stair Room
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You are standing below a great staircase, that leads up to the
+    second floor of the Castle.  The stairs are made of marble, and there
+    are pillars carved in the likenesses of trees with little animals
+    running up and down the trunks.
+  exits:
+    south:
+      to: 15020
+      desc: |
+            You see the passage.
+      key: -1
+    up:
+      to: 15049
+      desc: |
+            The stairs lead up to the second floor.
+      key: -1
+  extra_descs:
+  - keywords:
+    - pillar
+    - pillars
+    - tree
+    - trees
+    desc: |
+              Very nice. Squirrels and little birds all over.
+  - keywords:
+    - stairs
+    - stair
+    desc: |
+              Made out of marble, and as all the rest of the Castle made primarily
+              for beauty and with great skill.
+- vnum: 15026
+  name: The Servants' Quarters
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You are standing in a large room, that seems to house many of the
+    servants.  The room is full of comfortable-looking beds.  There is also
+    a large chest, probably containing some of the servants' belongings.
+  exits:
+    south:
+      to: 15021
+      desc: |
+            The door is made out of wood.
+      door: regular
+      key: -1
+      keywords: door wood
+  extra_descs:
+  - keywords:
+    - bed
+    desc: |
+              The beds all look comfortable, despite the fact that this is just
+              the servants' place.
+- vnum: 15027
+  name: The Butler's Quarters
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You see at once that this must be the butler's room, for it lies
+    in the servants' wing, and still it is large and comfortable; almost
+    luxurious, in fact.  There is a large bed and a drawer in the room.
+    The only exit is via the door to the south.
+  exits:
+    south:
+      to: 15022
+      desc: |
+            You see the corridor.
+      door: regular
+      key: 15009
+      keywords: door
+  extra_descs:
+  - keywords:
+    - bed
+    desc: |
+              Looks very comfortable indeed.
+- vnum: 15028
+  name: The Guards' Barracks
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You are standing in a very large room with bunks all over.  It is
+    obvious, that this is where the guards off duty spend most of their
+    time, drinking and gambling or, probably, mostly sleeping.
+  exits:
+    south:
+      to: 15023
+      desc: |
+            The door is large and heavy.
+      door: regular
+      key: -1
+      keywords: door large heavy
+  extra_descs:
+  - keywords:
+    - bunk
+    - bunks
+    desc: |
+              They look a bit hard, but you could sleep in them.
+- vnum: 15029
+  name: The Stairs
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You are standing by a staircase leading down.  As you look down,
+    you notice that for the first time since you entered the castle,
+    things are not aesthetically made.  Instead it looks more functional
+    and prison-like.
+  exits:
+    south:
+      to: 15024
+      desc: |
+            You see the small passage.
+      key: -1
+    down:
+      to: 15055
+      desc: |
+            The stairs down lead into darkness.
+      key: -1
+  extra_descs:
+  - keywords:
+    - stairs
+    - stair
+    - staircase
+    desc: |
+              They seem to be made of granite, and stretch down into a more dimly
+              lit area than where you come from.
+- vnum: 15030
+  name: At A Bend In The Corridor
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You are standing at a place where the corridor bends from east to north.
+  exits:
+    north:
+      to: 15035
+      desc: |
+            You see the corridor continue.
+      key: -1
+    east:
+      to: 15031
+      desc: |
+            You see the corridor continue.
+      key: -1
+- vnum: 15031
+  name: The Corridor
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You are standing in a long corridor, decorated with tapestries
+    depicting old times and old heroes.  It leads east and west.
+  exits:
+    east:
+      to: 15032
+      desc: |
+            You see the corridor continue.
+      key: -1
+    west:
+      to: 15030
+      desc: |
+            You see the corridor continue.
+      key: -1
+- vnum: 15032
+  name: The Corridor
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You are standing in a long corridor, decorated with tapestries
+    depicting old times and old heroes.  It leads east and west.
+  exits:
+    east:
+      to: 15033
+      desc: |
+            You see the corridor continue.
+      key: -1
+    west:
+      to: 15031
+      desc: |
+            You see the corridor continue.
+      key: -1
+- vnum: 15033
+  name: The Corridor
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You are standing in a long corridor, decorated with tapestries
+    depicting old times and old heroes.  The corridor continues west,
+    and to the north you see the luxurious guest wing.
+  exits:
+    north:
+      to: 15038
+      desc: |
+            You see the guest wing.
+      key: -1
+    west:
+      to: 15032
+      desc: |
+            You see the corridor continue.
+      key: -1
+- vnum: 15034
+  name: In The South-East Tower
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       This part of the tower is fairly uninteresting, but it leads further
+    upwards...
+  exits:
+    up:
+      to: 15052
+      desc: |
+            The room at the top of the tower seems darkish for some reason.
+      key: -1
+    down:
+      to: 15009
+      desc: |
+            You see the stairs at the bottom of the tower.
+      key: -1
+- vnum: 15035
+  name: The Corridor
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You are standing in a long corridor, decorated with tapestries
+    depicting old times and old heroes.  It leads north and south.  There
+    is also an exit to the east here.
+  exits:
+    north:
+      to: 15040
+      desc: |
+            You see the corridor continue.
+      key: -1
+    east:
+      to: 15036
+      desc: |
+            You see a small room.
+      key: -1
+    south:
+      to: 15030
+      desc: |
+            You see the corridor continue.
+      key: -1
+- vnum: 15036
+  name: By The Treasure Room
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You are standing by a great iron door.  The door is very large, and
+    seems very solid indeed.  There is a sign posted by it. 
+  exits:
+    east:
+      to: 15037
+      desc: |
+            You see a large steel door.
+      door: pickproof
+      key: 15007
+      keywords: door steel large
+    west:
+      to: 15035
+      desc: |
+            You see the corridor.
+      key: -1
+  extra_descs:
+  - keywords:
+    - sign
+    desc: "\n              TREASURE ROOM\n\n   Authorized personnel only - all others keep out.\n   ANY trespassing will be SEVERELY punished!!\n\n"
+- vnum: 15037
+  name: The Great Treasury
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       As you enter this room, you are astonished by the riches that
+    are stowed away here; not so much in gold, but paintings, tapestries,
+    skillful carvings and sculptures all over the vast room.  You realise,
+    however, that most of these things are too well known to be sold
+    anywhere, without branding yourself as a thief, and condemning yourself
+    to instant death at the hands of the Royal Guard.
+  exits:
+    west:
+      to: 15036
+      desc: |
+            You see a large steel door.
+      door: pickproof
+      key: 15007
+      keywords: door large steel
+  extra_descs:
+  - keywords:
+    - painting
+    - paintings
+    - carving
+    - carvings
+    - sculptures
+    - tapestries
+    desc: |
+              It seems they are stored here temporarily to enable changing
+              of the decoration in the Castle on a regular basis.
+- vnum: 15038
+  name: The Guest Wing
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You have arrived at the part of the Castle where prominent
+    guests are housed.  To the east there is a large, ornamented
+    door, and a somewhat smaller one leads north. 
+  exits:
+    north:
+      to: 15043
+      desc: |
+            The door seems to lead to a guest room.
+      door: regular
+      key: -1
+      keywords: door small
+    east:
+      to: 15039
+      desc: |
+            You see the guest suite behind the ornamented door.
+      door: regular
+      key: -1
+      keywords: door ornament ornamented
+    south:
+      to: 15033
+      desc: |
+            You see the corridor.
+      key: -1
+- vnum: 15039
+  name: The Guest Suite
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       This must be where only the most highly regarded guests stay, since
+    it is luxurious beyond your wildest imagination.  This is only the living
+    room of the suite, but it is huge and tastefully decorated.  All the
+    furniture is not only beautiful, but also made for comfort.  To the
+    north, there is an exit to the bedroom, and there is a door to the west.
+  exits:
+    north:
+      to: 15044
+      desc: |
+            You see the bedroom.
+      key: -1
+    west:
+      to: 15038
+      desc: |
+            Behind the door you see the entrance to the Guest Wing.
+      door: regular
+      key: -1
+      keywords: door
+- vnum: 15040
+  name: The Corridor
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You are standing in a long corridor, decorated with tapestries
+    depicting old times and old heroes.  It leads north and south.
+  exits:
+    north:
+      to: 15045
+      desc: |
+            You see the corridor continue.
+      key: -1
+    south:
+      to: 15035
+      desc: |
+            You see the corridor continue.
+      key: -1
+- vnum: 15041
+  name: The Ball Room
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You are standing in the great Ball Room.  It is a truly large room,
+    with a stage for an orchestra in the south-east end.
+  exits:
+    north:
+      to: 15046
+      desc: |
+            You see the Ball Room.
+      key: -1
+    east:
+      to: 15042
+      desc: |
+            To the east you see the stage.
+      key: -1
+- vnum: 15042
+  name: By The Stage
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       Before you you see the stage.  It is large enough for some 40 
+    musicians to play on at the same time.  The Ball Room continues
+    to the west and north.
+  exits:
+    north:
+      to: 15047
+      desc: |
+            You see the Ball Room.
+      key: -1
+    west:
+      to: 15041
+      desc: |
+            You see the Ball Room.
+      key: -1
+- vnum: 15043
+  name: A Guest Room
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You are standing in a large room.  Although it is comfortable enough,
+    you can tell it is not meant for any of the most illustrious guests,
+    since it lacks that extreme luxury found elsewhere in the Castle.
+  exits:
+    south:
+      to: 15038
+      desc: |
+            Behind the door, you see the entrance to the Guest Wing.
+      door: regular
+      key: -1
+      keywords: door
+- vnum: 15044
+  name: The Bedroom
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       This room is dominated by the huge four-poster bed, that stands
+    against the northern wall.  The room is large and cosy, and the bed
+    virtually begs you to lie down in it and sleep.
+  exits:
+    south:
+      to: 15039
+      desc: |
+            You see the living room of the suite.
+      key: -1
+  extra_descs:
+  - keywords:
+    - bed
+    desc: |
+              Large, comfortable, bolstered... Invites you to sleep in it.
+- vnum: 15045
+  name: The Corridor
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You are standing in a long corridor, decorated with tapestries
+    depicting old times and old heroes.  It leads north and south.  There
+    is an exit to the east, that leads to a large room.
+  exits:
+    north:
+      to: 15049
+      desc: |
+            You see the corridor continue.
+      key: -1
+    east:
+      to: 15046
+      desc: |
+            You see the Ball Room.
+      key: -1
+    south:
+      to: 15040
+      desc: |
+            You see the corridor continue.
+      key: -1
+- vnum: 15046
+  name: The Ball Room
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You are standing in the great Ball Room.  It is a truly large room,
+    with a stage for an orchestra in the south-east end.
+  exits:
+    east:
+      to: 15047
+      desc: |
+            You see the Ball Room.
+      key: -1
+    south:
+      to: 15041
+      desc: |
+            You see the Ball Room.
+      key: -1
+    west:
+      to: 15045
+      desc: |
+            You see the corridor.
+      key: -1
+- vnum: 15047
+  name: The Ball Room
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You are standing in the great Ball Room.  It is a truly large room,
+    with a stage for an orchestra in the south-east end.
+  exits:
+    east:
+      to: 15048
+      desc: |
+            To the east, you can enter a tower.
+      key: -1
+    south:
+      to: 15042
+      desc: |
+            To the south you see the stage.
+      key: -1
+    west:
+      to: 15046
+      desc: |
+            You see the Ball Room.
+      key: -1
+- vnum: 15048
+  name: In The Tower
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You are standing in the north-eastern of the three great watch-
+    towers of the Castle.  To the west, you can enter the Ball Room and
+    there are stairs leading up into the Tower.
+  exits:
+    west:
+      to: 15047
+      desc: |
+            You see the Ball Room.
+      key: -1
+    up:
+      to: 15054
+      desc: |
+            The stairs lead a long way up to the top of the Tower.
+      key: -1
+  extra_descs:
+  - keywords:
+    - stairs
+    desc: |
+              The stairs are made out of granite, and seem solid enough.
+- vnum: 15049
+  name: The Grand Staircase
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You are standing on a great staircase, that leads up and down.  To 
+    the east, there is a large oak door, and a corridor leads south.
+  exits:
+    east:
+      to: 15050
+      desc: |
+            The door is large and made out of oak.
+      door: regular
+      key: 15014
+      keywords: door oak large
+    south:
+      to: 15045
+      desc: |
+            You see the corridor.
+      key: -1
+    up:
+      to: 15053
+      desc: |
+            The stairs continue up to the top of the tower.
+      key: -1
+    down:
+      to: 15025
+      desc: |
+            The stairs lead down to the first floor of the Castle.
+      key: -1
+  extra_descs:
+  - keywords:
+    - stairs
+    desc: |
+              The stairs are made of marble, and there are pillars carved in the
+              likenesses of trees with little animals running up and down the
+              trunks.
+- vnum: 15050
+  name: The Cosy Room
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You have entered a large, cosy living room.  There is a fireplace
+    with a fire burning, and a few comfortable chairs around a little
+    table.  There is a door to the west, and also an exit to the east.
+  exits:
+    east:
+      to: 15051
+      desc: |
+            You see a large bedroom.
+      key: -1
+    west:
+      to: 15049
+      desc: |
+            The door is large, and made out of oak.
+      door: regular
+      key: 15014
+      keywords: door large oak
+  extra_descs:
+  - keywords:
+    - chairs
+    desc: |
+              The chairs are arranged around the fireplace.
+  - keywords:
+    - table
+    desc: |
+              The table is made of mahogany, and elegant in a cosy way(!)
+  - keywords:
+    - fire
+    - fireplace
+    desc: |
+              The fire is built out of logs, and seems to be able to burn for 
+              quite a while longer.
+- vnum: 15051
+  name: King Welmar's Bedroom
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       This is a large room, with a wonderful view.  To one side of the
+    room, stands a large four-poster bed.  All around the room there are
+    massive bookshelves, filled with all kinds of books.  The titles include
+    works such as: 'A Treatise on the History of Midgaard and surrounding
+    areas', 'Magic - A Beginner's Introduction' and many others.  There is
+    an exit to the west.
+  exits:
+    west:
+      to: 15050
+      desc: |
+            There is a large and cosy room to the west.
+      key: -1
+  extra_descs:
+  - keywords:
+    - magic
+    desc: |
+              Beginner?  This book goes beyond most of what YOU know about magic
+              anyway.  But then, there are levels of magical knowledge, it seems.
+  - keywords:
+    - history
+    - midgaard
+    desc: |
+              A dry tome, filled with boring knowledge.
+  - keywords:
+    - bed
+    desc: |
+              Seems nice enough to sleep in, though you would never dare to, since
+              it is a Royal Bed!
+  - keywords:
+    - books
+    - book
+    - shelf
+    - shelves
+    - bookshelf
+    - bookshelves
+    desc: |
+              Most of the books seem worn, as if thoroughly studied.  The King
+              evidently is interested in keeping himself educated.
+- vnum: 15052
+  name: Up In The Tower
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       After a long climb, you finally reach the top of the tower.  This
+    room is small, and the only light source is a flickering candle, on
+    a cluttered table, in the middle of the room.  The only obvious exit
+    is back down the stairs.
+  exits:
+    down:
+      to: 15034
+      desc: |
+            The stairs go down the tower.
+      key: -1
+  extra_descs:
+  - keywords:
+    - candle
+    desc: |
+              Small, uninteresting... A candle that is as normal as can be.
+  - keywords:
+    - table
+    desc: |
+              On the table are various objects, all very strange-looking.
+- vnum: 15053
+  name: The Top Of The Tower
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You have arrived at the top of the tower.  This tower is pretty
+    uninteresting, and seems made purely for reasons of defence and 
+    guarding.  The windows are slits for bowmen, very narrow on the 
+    outward side and broad inwards to allow a wide shooting angle.
+    The only evident exit is down the stairs again.
+  exits:
+    down:
+      to: 15049
+      desc: |
+            The stairs go down to the second floor.
+      key: -1
+  extra_descs:
+  - keywords:
+    - window
+    - slit
+    desc: |
+              As you look out the windows, you are granted a view of the countryside.
+- vnum: 15054
+  name: The Top Of The Tower
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       This is the highest of all the towers, and is obviously used for
+    lookout purposes.  The view is splendid in all four directions.  All
+    around you, the rich countryside spreads out to the horizon.  To the
+    north and east you see a vast mountain range, and far to the west
+    a beautiful lake.  A bit closer, the town of Midgaard lies at the
+    end of the King's Road.  The only exit you can see is down again.
+  exits:
+    north:
+      to: -1
+      desc: |
+            To the north, the tall White Mountains have their highest peaks.
+            The mountaintops disappear in the white clouds, far above the 
+            plains.  The sight of those high, far mountains fills you with a
+            desire to scale them, to see the world from that vantage.
+      key: -1
+    east:
+      to: -1
+      desc: |
+            In the east you see an arm of the dominating mountain range on this
+            continent, the White Mountains.  Though not as high as those in the
+            north, the sight of those mountains fills you with awe.
+      key: -1
+    south:
+      to: -1
+      desc: |
+            To the south, rolling hills stretch away, as far as you can see.
+      key: -1
+    west:
+      to: -1
+      desc: |
+            As you look west, you see a river flowing through all of Midgaard
+            and continuing beyond it towards a great lake.  Still further
+            away, you can glimpse something silvery that has to be the Sea.
+      key: -1
+    down:
+      to: 15048
+      desc: |
+            You see the stairs going back down to the second floor.
+      key: -1
+- vnum: 15055
+  name: The Bottom Of The Stairs
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       The stairs lead down to a damp part of the castle, you can hear
+    water dripping somewhere around you.  The area is lit by a single
+    torch flickering in the room which this staircase is built off of.
+       The stairs lead upwards and they open up onto a fairly small
+    room to the east.
+  exits:
+    east:
+      to: 15056
+      desc: |
+            A small room opens up to the east.
+      key: -1
+    up:
+      to: 15029
+      desc: |
+            The stairs lead upwards out of this dank, dark place.
+      key: -1
+- vnum: 15056
+  name: The Guard Room
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You are at a loss to explain why someone would want to spend all
+    day down here.  The only explanation that seems even remotely logical
+    to you is that there must be an important prisoner kept in one of the
+    cells through the south door.
+       The decorations of the room are sparse, merely a table, a chair,
+    and a deck of cards.  A stairwell has been built into the western wall
+    and it leads upwards. 
+  exits:
+    south:
+      to: 15057
+      desc: |
+            Through the peep hole at the top of the small wooden door you can see
+            that there is a small corridor leading past several cells.
+      door: regular
+      key: 15017
+      keywords: door wooden
+    west:
+      to: 15055
+      desc: |
+            A small stairwell built into the western wall of the room leads upwards.
+      key: -1
+  extra_descs:
+  - keywords:
+    - card
+    - floor
+    desc: |
+              The card on the floor seems to be the Ace of Spades... a bad card to find
+              indeed.  What could be the bad luck brought about by this discovery?
+  - keywords:
+    - table
+    - cards
+    - deck
+    desc: |
+              There is a deck of cards on the table in a small pile.  There is one card
+              lying on the floor however.
+- vnum: 15057
+  name: The Prison
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       This small passage is about thirty feet long and is well lit by the
+    torches on each wall.  The torches have been locked inside small metal
+    cages to ensure that they are not removed.  The strangest thing about
+    the torches however, is the manner in which they burn, they have what
+    appears to be a constant flame in that it does not flicker whatsoever,
+    and does not give off any smoke.  Perhaps they have been magicked to
+    burn forever...
+       There are three cells along this passage way, one on each side of
+    the corridor right near the north end and one isolated at the south
+    end of the corridor with a small metal plaque located over the door
+    in the keystone of the archway.
+  exits:
+    north:
+      to: 15056
+      desc: |
+            A small wooden door blocks the way out of the prison.
+      door: regular
+      key: 15017
+      keywords: door wooden
+    east:
+      to: 15060
+      desc: |
+            A cell door is set into the eastern wall.
+      door: pickproof
+      key: 15017
+      keywords: door cell
+    south:
+      to: 15059
+      desc: |
+            The cell door to the south has been double padlocked and there is a
+            plaque placed in the keystone above the door.
+      door: pickproof
+      key: 15017
+      keywords: door cell
+    west:
+      to: 15058
+      desc: |
+            A cell door is set into the western wall.
+      door: pickproof
+      key: 15017
+      keywords: door cell
+  extra_descs:
+  - keywords:
+    - plaque
+    - keystone
+    desc: |
+              The plaque in the keystone is engraved with four simple words:
+
+                              Ergan, Murderer of Townsbridge
+- vnum: 15058
+  name: A Cell
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       This cell is in a shambles.  There is a small hole in the
+    western wall where something has broken through the stones
+    into the cell.  There is a cell door in the eastern wall.
+  exits:
+    east:
+      to: 15057
+      desc: |
+            The cell door to the east leads back to the prison hallway.
+      door: pickproof
+      key: 15017
+      keywords: door cell
+  extra_descs:
+  - keywords:
+    - hole
+    desc: |
+              The hole is much too small for you to clamber through.
+- vnum: 15059
+  name: Ergan's Cell
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       This large cell is almost like a living quarters with a cot
+    in one corner serving as a bed, a small table built out of the
+    wall in another corner.  There is even a rug in the center of
+    the floor to keep some warmth.  It seems that the prisoner kept
+    here is treated quite well, almost too well for a murderer of
+    an entire town...
+  exits:
+    north:
+      to: 15057
+      desc: |
+            The cell door to the north leads back to the prison hallway.
+      door: pickproof
+      key: 15017
+      keywords: door cell
+- vnum: 15060
+  name: A Cell
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       This small cell is damp and dark and looks like noone and nothing
+    has lived in it for quite some time.  A small cell door is located in
+    the west wall.
+  exits:
+    west:
+      to: 15057
+      desc: |
+            The cell door to the west leads back to the prison hallway.
+      door: pickproof
+      key: 15017
+      keywords: door cell
+- vnum: 15061
+  name: An Overgrown Trail
+  sector: hills
+  desc: |2
+       Moving off of the King's Road, you find yourself on a small
+    fading trail which appears to have been so little used that it
+    has almost completely grown over with vegitation from the woods
+    here.  Sounds of the forest can be heard all round and you feel
+    a peaceful feeling come over you as you realize that mankind
+    has not passed this way for some time.
+       The faded trail appears to lead north and south.
+  exits:
+    north:
+      to: 15000
+      desc: |
+            The travel upon the King's Road can be heard off to the north.
+      key: -1
+    south:
+      to: 15062
+      desc: |
+            The trail continues southwards.
+      key: -1
+- vnum: 15062
+  name: An Overgrown Trail
+  sector: hills
+  desc: |2
+       Continuing through the heavy undergrowth, you find yourself
+    in the middle of the forest.  The sounds of the forest can be
+    heard all round and you feel a peaceful feeling come over you
+    as you realize that mankind has not passed this way for some
+    time.
+       The fading trail you are on appears to have been so little
+    used that it has almost completely grown over with vegitation
+    from the woods here.  
+       The faded trail appears to lead north and east.
+  exits:
+    north:
+      to: 15061
+      desc: |
+            The trail continues northwards.
+      key: -1
+    east:
+      to: 15063
+      desc: |
+            The trail appears to continue to the east.
+      key: -1
+- vnum: 15063
+  name: An Overgrown Trail
+  sector: hills
+  desc: |2
+       Continuing through the heavy undergrowth, you find yourself
+    in the middle of the forest.  The sounds of the forest can be
+    heard all round and you feel a peaceful feeling come over you
+    as you realize that mankind has not passed this way for some
+    time.
+       The fading trail you are on appears to have been so little
+    used that it has almost completely grown over with vegitation
+    from the woods here.  
+       The faded trail appears to lead west and south.  To the south
+    a strange eerie silence seems to hang in the air, almost blocking
+    out all the sounds that you can hear from the north and east.
+  exits:
+    south:
+      to: 15064
+      desc: |
+            The undergrowth begins to open up to the south and you can see what
+            appears to be a small village to the south.  It is very quiet, almost
+            too quiet.
+      key: -1
+    west:
+      to: 15062
+      desc: |
+            The overgrown trail continues to the northwest.
+      key: -1
+- vnum: 15064
+  name: A Dirt Road
+  sector: field
+  desc: |2
+       As you leave the forest to the north, you find yourself at
+    what appears to be the beginning of a dirt road and a small
+    village.  Upon first laying eyes on this place you realize
+    that there is something funny about this settlement... there
+    is no sound other that the whistling wind here.  You would have
+    expected to hear people going about their regular business, but
+    the village is silent.  You cannot see any movement around the
+    village either.  It is almost as still and silent as the woods
+    to the north.
+    There is a small sign lying by the side of the road here.
+  exits:
+    north:
+      to: 15063
+      desc: |
+            An trail leads into the heavy undergrowth to the north.
+      key: -1
+    south:
+      to: 15065
+      desc: |
+            The dirt road continues through the village to the south.
+      key: -1
+    west:
+      to: 15068
+      desc: |
+            A house stands a short distance off the west side of the road, its
+            door hanging ajar.
+      key: -1
+  extra_descs:
+  - keywords:
+    - sign
+    desc: |
+
+              /----------------------------------\
+              |     Welcome to the hamlet of     |
+              |           Townsbridge            |
+              |                                  |
+              |                                  |
+              |     Population:  276             |
+              |                                  |
+              \----------------------------------/
+
+              The number 276 has been scratched out and replaced with the
+              number 0.
+- vnum: 15065
+  name: A Small Intersection
+  sector: field
+  desc: |2
+       Continuing along the dirt road, you find yourself at a place where
+    a small path splits away from the main road and leads off to the west.
+    The woods around the village seem to be pressing inwards towards you
+    as if the village hides a secret which they do not want to be spread
+    about.
+       There is another house standing on the east side of the road.  
+  exits:
+    north:
+      to: 15064
+      desc: |
+            The dirt road continues to the north.
+      key: -1
+    east:
+      to: 15069
+      desc: |
+            You can hear a wailing sound coming from the house to the east.
+      key: -1
+    south:
+      to: 15066
+      desc: |
+            The dirt road continues towards the south where a horrible smell
+            permeates the air.
+      key: -1
+    west:
+      to: 15072
+      desc: |
+            A small, dark trail leads off into the woods to the west.
+      key: -1
+- vnum: 15066
+  name: A Dirt Road
+  sector: field
+  desc: |2
+       This section of the dirt road is quiet, but there is an awful stench
+    in the air.  It brings to mind rotting corpses and raw sewage.  The woods
+    contiue to press closely about you, and almost totally surround the small
+    building to the west with a thatched roof.  There is a blackened shell of
+    a building to the east with a small sign hanging out front from a black
+    and charred chain.
+       The dirt road continues north and south.
+  exits:
+    north:
+      to: 15065
+      desc: |
+            The small dirt road continues towards the north.
+      key: -1
+    east:
+      to: 15071
+      desc: |
+            The building to the east is merely a shell of what it once probably
+            was.  The walls are blackened as if they had been exposed to fire at
+            some point in the past...
+      key: -1
+    south:
+      to: 15067
+      desc: |
+            The stench from the south is almost overpowering now... it seems that
+            the source wouldn't be too far from here.
+      key: -1
+    west:
+      to: 15070
+      desc: |
+            A small quiet cottage stands on the west side of the road, apparently
+            untouched by the desecration and destruction that appears to have hit
+            this small village.
+      key: -1
+  extra_descs:
+  - keywords:
+    - sign
+    desc: |
+              The sign is covered with soot and the wood is quite charred, but you can
+              still make out the following letters:
+
+                      T   TO  SB  DGE   NER L    RE
+- vnum: 15067
+  name: A Large Pit
+  sector: field
+  desc: |2
+       The dirt road ends at the edge of a large pit here and you now
+    realize where the awful smell was coming from.  This pit appears
+    to be a mass grave for the citizens of the village.  There are
+    bones and corpses lying all over the place.  A lot of the corpses
+    look too recent to be from the Townsbridge murders of almost a
+    decade ago, but the village seems to have been empty for almost
+    that long.
+       The dirt road leads away from the carnage to the north.
+  exits:
+    north:
+      to: 15066
+      desc: |
+            Just near the north edge of the pit a small and narrow trail leads
+            away.
+      key: -1
+- vnum: 15068
+  name: A House
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       This house is a wreck, furniture has been strewn all about
+    the room, and it looks like a tornado landed right in the middle
+    of the room.  The destruction that has taken place in this room
+    is almost beyond belief.  The oddest part of it all though, is
+    how it all seems so recent, since there are no cobwebs, and there
+    is no dust on anything.
+       The dirt road can be seen to the east through the doorway.
+  exits:
+    east:
+      to: 15064
+      desc: |
+            You can see the dirt road through the doorway to the east.
+      key: -1
+- vnum: 15069
+  name: A House
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       This darkened room is barely lit by the outdoor light, but what
+    you can see of it gives you the creeps.  There are cobwebs dangling
+    from everything, a thick layer of dust begins to rise up at your
+    passage, and a strange howl comes from somewhere around you.  The
+    furniture in this house is old and of a type that hasn't been seen
+    around these lands for some time.  If it was in better shape, you
+    might be able to sell it as antique.
+       The meager light of the road shines through the doorway to the
+    west.
+  exits:
+    west:
+      to: 15065
+      desc: |
+            You can see the dirt road through the doorway to the west.
+      key: -1
+- vnum: 15070
+  name: A Small Cottage
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       This cottage looks to have been left in exactly the same shape as
+    it was in quite some time ago.  It looks as if the residents left one
+    day and haven't returned home yet.  Oddly enough, the furniture is
+    dust free and the food on the table still looks fresh.  This house is
+    really strange, perhaps it wuld be in your best interests to leave as
+    soon as humanly possible.
+       The road is back through the open doorway to the east.
+  exits:
+    east:
+      to: 15066
+      desc: |
+            You can see the dirt road through the doorway to the east.
+      key: -1
+- vnum: 15071
+  name: The Burned Shop
+  sector: field
+  desc: |2
+       As you enter this small building, you notice that that blackened
+    walls are due to a fire that seemed to burn here unattended for quite
+    some time.  There is almost nothing left of the roof that would have
+    once covered this building, and the north and east walls have been
+    burnt to almost half the height of the other two walls.  There are
+    some burnt goods around on the ground and the remains of a counter
+    near what is left of the north wall seems to indicate that this was
+    once a shop.
+       The road lies to the west through the blackened wall.
+  exits:
+    west:
+      to: 15066
+      desc: |
+            You can see the dirt road to the west.
+      key: -1
+- vnum: 15072
+  name: A Dark Path
+  sector: city
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       As you move away form the open air into the darkness of the path
+    and the sinister looking woods around you, you get a feeling of awe
+    and something almost akin to horror.  The wood around is completely
+    silent, not even the rustling of leaves or the cracking of branches
+    breaks the silence.  The final thing you notice is that the darkness
+    all around you seems to be almost contrived, and doesn't seem natural
+    for this kind of vegitation.
+       The path continues west and you can see light to the east.
+  exits:
+    east:
+      to: 15065
+      desc: |
+            The path continues towards a small intersection with a dirt road.
+      key: -1
+    west:
+      to: 15073
+      desc: |
+            The path continues through the darkness.
+      key: -1
+- vnum: 15073
+  name: A Dark Path
+  sector: city
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       This narrow path leads through the overhanging trees in the unnatural
+    darkness.  It seems almost as if the trees are crowding in on you here,
+    as if they didn't want to feel your presence.  The wood is almost totally
+    silent and you wonder silently to yourself why this could be.
+       The path appears to continue east and west.
+  exits:
+    east:
+      to: 15072
+      desc: |
+            The path continues through the darkness.
+      key: -1
+    west:
+      to: 15074
+      desc: |
+            The glow from the west appears to be quite strong, but it does not
+            give enough light to see by here, nor can you see the source of the
+            glow.
+      key: -1
+- vnum: 15074
+  name: The Circle Of Stones
+  sector: city
+  flags:
+  - indoors
+  desc: |2
+       You are at the edge of a circle of seven large monolith-like stones.
+    Each stone towers over your head and appears to be at least double your
+    height.  The stones are made of a dark black material, almost black in
+    colour.
+       In the center of the ring of stones, you can see a black circular
+    mirror-like disk on the ground.  The surface is highly reflective and
+    almost appears to be rippling.  The trees surrounding the circle tower
+    far above your heads blocking out the sky.
+       A strange glow seems to be emanating from each stone, almost green
+    in colour.  This glow provides enough light for you to see with even
+    though the sky above has been blotted out.
+  exits:
+    east:
+      to: 15073
+      desc: |
+            A narrow path leads away into the darkness.
+      key: -1
+    up:
+      to: -1
+      desc: |
+            You cannot see the sky above since the trees around the stone ring
+            block it out entirely.
+      key: -1
+  extra_descs:
+  - keywords:
+    - stones
+    - glow
+    - stone
+    - ring
+    - circle
+    desc: |
+              Each stone is at least fifteen feet tall, maybe more, and the dark
+              material glows with a greenish aura providing more than enough light
+              for you to see by.
+mobiles:
+- vnum: 15000
+  keywords:
+  - gwydion
+  - guard
+  - royal
+  short: Gwydion
+  long: |
+    Gwydion the Royal Guard is here on duty.
+  desc: |
+    As all members of the Guard, Gwydion wears the chain mail required
+    of them as uniform.  He seems very well trained, and moves like an
+    experienced fighter.
+  act:
+  - spec
+  - sentinel
+  - stay_zone
+  alignment: 800
+  level: 11
+  thac0: 9
+  ac: 2
+  hp: 3d6+130
+  damage: 1d8+4
+  gold: 400
+  exp: 11000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 15001
+  keywords:
+  - king
+  - welmar
+  short: King Welmar
+  long: |
+    The wise King Welmar sits here in his throne.
+  desc: |
+    In his later middle-age, with his beard starting to grey, King Welmar
+    is still very powerfully built, and wouldn't take kindly to an attack.
+    Despite that, you know he is well-loved throughout the land, and has
+    a reputation as a wise and just ruler.
+  act:
+  - spec
+  - sentinel
+  affected:
+  - detect_invis
+  - sanctuary
+  alignment: 1000
+  level: 33
+  thac0: 0
+  ac: -10
+  hp: 3d60+1480
+  damage: 4d8+16
+  gold: 35000
+  exp: 1000000
+  position: sitting
+  default_position: standing
+  sex: male
+- vnum: 15002
+  keywords:
+  - ghost
+  - horrible
+  short: the horrible ghost
+  long: |
+    You hear a frightening wail, and see a horrible ghost approaching.
+  desc: |
+    The ghost is almost translucent, and looks really SCARY!
+  act:
+  - sentinel
+  - scavenger
+  - aware
+  - aggressive
+  - no_charm
+  - no_summon
+  - no_sleep
+  - no_bash
+  - no_blind
+  affected:
+  - detect_invis
+  - infravision
+  - sneak
+  alignment: -700
+  level: 15
+  thac0: 6
+  ac: -6
+  hp: 9d6+150
+  damage: 2d8+2
+  gold: 3000
+  exp: 22000
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 15003
+  keywords:
+  - jim
+  - guard
+  - royal
+  short: Jim
+  long: |
+    Jim the Royal Guard is here on duty.
+  desc: |
+    As all members of the Guard, Jim wears the chain mail required of
+    them as uniform.  He seems very well trained, and moves like an
+    experienced fighter.
+  act:
+  - spec
+  - stay_zone
+  alignment: 800
+  level: 11
+  thac0: 9
+  ac: 2
+  hp: 3d6+130
+  damage: 1d8+4
+  gold: 400
+  exp: 11000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 15004
+  keywords:
+  - brian
+  - guard
+  - royal
+  short: Brian
+  long: |
+    Brian the Royal Guard is here, training with the Master.
+  desc: |
+    As all members of the Guard, Brian wears the chain mail required of
+    them as uniform.  He seems very well trained, and moves like an
+    experienced fighter.
+  act:
+  - spec
+  - sentinel
+  - stay_zone
+  alignment: 800
+  level: 11
+  thac0: 9
+  ac: 2
+  hp: 3d6+130
+  damage: 1d8+4
+  gold: 400
+  exp: 11000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 15005
+  keywords:
+  - mick
+  - guard
+  - royal
+  short: Mick
+  long: |
+    Mick the Royal Guard is here, training with the Master.
+  desc: |
+    As all members of the Guard, Mick wears the chain mail required of
+    them as uniform.  He seems very well trained, and moves like an
+    experienced fighter.
+  act:
+  - spec
+  - sentinel
+  - stay_zone
+  alignment: 800
+  level: 11
+  thac0: 9
+  ac: 2
+  hp: 3d6+130
+  damage: 1d8+4
+  gold: 400
+  exp: 11000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 15006
+  keywords:
+  - matt
+  - guard
+  - royal
+  short: Matt
+  long: |
+    Matt the Royal Guard is here on duty.
+  desc: |
+    As all members of the Guard, Matt wears the chain mail required of
+    them as uniform.  He seems very well trained, and moves like an
+    experienced fighter.
+  act:
+  - spec
+  - stay_zone
+  alignment: 800
+  level: 11
+  thac0: 9
+  ac: 2
+  hp: 3d6+130
+  damage: 1d8+4
+  gold: 400
+  exp: 11000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 15007
+  keywords:
+  - jochem
+  - guard
+  - royal
+  short: Jochem
+  long: |
+    Jochem the Royal Guard sits here, off duty.
+  desc: |
+    As all members of the Guard, Jochem wears the chain mail required of
+    them as uniform.  He seems very well trained, and moves like a fighter
+    who has seen more than one battle, and longs to see the next!
+  act:
+  - spec
+  - stay_zone
+  alignment: 900
+  level: 13
+  thac0: 7
+  ac: 2
+  hp: 3d6+150
+  damage: 1d8+5
+  gold: 400
+  exp: 16000
+  position: sitting
+  default_position: sitting
+  sex: male
+- vnum: 15008
+  keywords:
+  - anne
+  - guard
+  - royal
+  short: Anne
+  long: |
+    Anne the Royal Guard is here on duty.
+  desc: |
+    As all members of the Guard, Anne wears the chain mail required of
+    them as uniform.  She seems very well trained, and moves like a fighter
+    who has seen more than one battle, and longs to see the next!
+  act:
+  - spec
+  - stay_zone
+  alignment: 900
+  level: 13
+  thac0: 7
+  ac: 2
+  hp: 3d6+150
+  damage: 1d8+5
+  gold: 400
+  exp: 16000
+  position: standing
+  default_position: standing
+  sex: female
+- vnum: 15009
+  keywords:
+  - andrew
+  - guard
+  - royal
+  short: Andrew
+  long: |
+    Andrew the Royal Guard is here on duty.
+  desc: |
+    As all members of the Guard, Andrew wears the chain mail required of
+    them as uniform.  He seems very well trained, and moves like a fighter
+    who has seen more than one battle, and longs to see the next!
+  act:
+  - spec
+  - stay_zone
+  alignment: 900
+  level: 13
+  thac0: 7
+  ac: 2
+  hp: 3d6+150
+  damage: 1d8+5
+  gold: 400
+  exp: 16000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 15010
+  keywords:
+  - bertram
+  - bert
+  - guard
+  - royal
+  short: Bertram
+  long: |
+    Bertram the Royal Guard is here on duty.
+  desc: |
+    As all members of the Guard, Bertram wears the chain mail required of
+    them as uniform.  He seems very well trained, and carries his scars
+    with pride.  This guy seems tough...
+  act:
+  - spec
+  - stay_zone
+  alignment: 900
+  level: 15
+  thac0: 5
+  ac: 1
+  hp: 3d6+175
+  damage: 1d8+7
+  gold: 400
+  exp: 21000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 15011
+  keywords:
+  - jeanette
+  - guard
+  - royal
+  short: Jeanette
+  long: |
+    Jeanette the Royal Guard is here on duty.
+  desc: |
+    As all members of the Guard, Jeanette wears the chain mail required of
+    them as uniform.  She seems very well trained, and carries her scars
+    with pride.  This girl could be nasty if she wanted to...
+  act:
+  - spec
+  - stay_zone
+  alignment: 900
+  level: 15
+  thac0: 5
+  ac: 1
+  hp: 3d6+175
+  damage: 1d8+7
+  gold: 400
+  exp: 21000
+  position: standing
+  default_position: standing
+  sex: female
+- vnum: 15012
+  keywords:
+  - peter
+  - captain
+  - guard
+  - royal
+  short: Peter, the Captain of the Royal Guard
+  long: |
+    Peter, the Captain of the Royal Guard, walks around inspecting.
+  desc: |
+    As all members of the Guard, Peter wears the chain mail required of
+    them as uniform.  Even though all the other guards seem well trained,
+    you realise none of them would stand a chance against this man in a
+    fight.  He stands at least two metres tall, but still moves with an
+    almost feline grace.  He actually radiates strength and confidence,
+    and you have to fight a sudden urge to come to attention as you see
+    him.
+  act:
+  - spec
+  - stay_zone
+  alignment: 900
+  level: 19
+  thac0: 1
+  ac: -1
+  hp: 3d6+240
+  damage: 2d6+8
+  gold: 1000
+  exp: 35000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 15013
+  keywords:
+  - master
+  - trainingmaster
+  short: the Training Master
+  long: |
+    The Training Master is here, supervising.
+  desc: |
+    Aged, but experienced, the Training Master is skilled in the use
+    of virtually every weapon type invented by Man.
+  act:
+  - spec
+  - sentinel
+  - stay_zone
+  alignment: 950
+  level: 18
+  thac0: 1
+  ac: 1
+  hp: 2d6+220
+  damage: 1d8+8
+  gold: 1000
+  exp: 30000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 15014
+  keywords:
+  - herald
+  - royal
+  short: the Royal Herald
+  long: |
+    The Royal Herald is standing here.
+  desc: |
+    This is a young, powerfully built man, whose primary function
+    is to make Royal Announcements.
+  alignment: 800
+  level: 18
+  thac0: 1
+  ac: -1
+  hp: 3d6+220
+  damage: 1d8+9
+  gold: 500
+  exp: 30000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 15015
+  keywords:
+  - ergan
+  - murderer
+  short: Ergan the Murderer
+  long: |
+    Slumped in a corner you see Ergan, aka the Murderer of Townsbridge.
+  desc: |
+    You remember a time almost a decade ago, when the news of the day
+    was how this man had slaughtered the entire population of the little
+    village of Townsbridge.  He was imprisoned, and here he is - a shadow
+    of the undoubtedly great warrior he once was, but still to be reckoned
+    with.
+  act:
+  - spec
+  - scavenger
+  - aware
+  - aggressive
+  - wimpy
+  - no_charm
+  - no_summon
+  affected:
+  - no_track
+  - sneak
+  alignment: -1000
+  level: 13
+  thac0: 8
+  ac: 2
+  hp: 3d6+155
+  damage: 2d8+2
+  gold: 0
+  exp: 18000
+  position: sitting
+  default_position: sitting
+  sex: male
+- vnum: 15016
+  keywords:
+  - butler
+  - james
+  short: James the Butler
+  long: |
+    James the Butler is standing here, looking pompous.
+  desc: |
+    The typical perfect butler: upper middle age, a bit bald and with 
+    an impressive belly.
+  act:
+  - spec
+  - stay_zone
+  alignment: 500
+  level: 8
+  thac0: 13
+  ac: 3
+  hp: 1d6+100
+  damage: 1d9+2
+  gold: 200
+  exp: 3750
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 15017
+  keywords:
+  - woman
+  - cleaning
+  short: the Cleaning Woman
+  long: |
+    There is a Cleaning Woman here, trying not be noticed.
+  desc: |
+    Although she has a menial job, she seems to like it.
+  act:
+  - spec
+  - stay_zone
+  alignment: 800
+  level: 1
+  thac0: 20
+  ac: 9
+  hp: 4d6+1
+  damage: 1d5
+  gold: 10
+  exp: 100
+  position: standing
+  default_position: standing
+  sex: female
+- vnum: 15018
+  keywords:
+  - cockroach
+  - roach
+  short: the cockroach
+  long: |
+    A large cockroach is crawling by the wall.
+  desc: |
+    Very large indeed, and they say cockroaches are hard to kill...
+  act:
+  - aware
+  - no_bash
+  - no_blind
+  alignment: -250
+  level: 4
+  thac0: 20
+  ac: 3
+  hp: 2d6+120
+  damage: 1d3
+  gold: 5
+  exp: 750
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 15019
+  keywords:
+  - astrologer
+  short: the Astrologer
+  long: |
+    The Astrologer is sitting here, studying a book.
+  desc: |
+    He is old and white-haired, with a long beard.  As you see him,
+    you can almost believe the rumours about stars deciding Fate,
+    and that astrology is capable of seeing the future.
+  act:
+  - spec
+  - sentinel
+  - aware
+  - memory
+  - no_charm
+  - no_summon
+  alignment: 900
+  level: 23
+  thac0: 0
+  ac: -2
+  hp: 1d1+30000
+  damage: 3d8+30
+  gold: 2000
+  exp: 80000
+  position: sitting
+  default_position: sitting
+  sex: male
+- vnum: 15020
+  keywords:
+  - tim
+  - guard
+  - lifeguard
+  short: Tim, the King's Lifeguard
+  long: |
+    Tim, the King's Lifeguard, is standing here.
+  desc: |
+    This guy looks just like his twin, Tom.  There seems to be no
+    doubt that he is completely prepared to give his life for the
+    King, if necessary.
+  act:
+  - spec
+  - sentinel
+  affected:
+  - detect_invis
+  alignment: 900
+  level: 17
+  thac0: 4
+  ac: 1
+  hp: 3d6+205
+  damage: 1d8+8
+  gold: 1000
+  exp: 28000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 15021
+  keywords:
+  - tom
+  - guard
+  - lifeguard
+  short: Tom, the King's Lifeguard
+  long: |
+    Tom, the King's Lifeguard, is standing here.
+  desc: |
+    This guy looks just like his twin, Tim.  There seems to be no
+    doubt that he is completely prepared to give his life for the
+    King, if necessary.
+  act:
+  - spec
+  - sentinel
+  affected:
+  - detect_invis
+  alignment: 900
+  level: 17
+  thac0: 4
+  ac: 1
+  hp: 3d6+205
+  damage: 1d8+8
+  gold: 1000
+  exp: 28000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 15022
+  keywords:
+  - chef
+  - cook
+  short: the Chef
+  long: |
+    The Chef is here, shouting orders to the other cooks.
+  desc: |
+    It seems he has been tasting his own food a bit too enthusiastically.
+    He is, in other words, a bit fat.
+  act:
+  - sentinel
+  - aware
+  - wimpy
+  - memory
+  - no_charm
+  - no_summon
+  alignment: 500
+  level: 19
+  thac0: 4
+  ac: -1
+  hp: 2d6+1283
+  damage: 4d4+14
+  gold: 1000
+  exp: 40000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 15023
+  keywords:
+  - cook
+  short: the cook
+  long: |
+    There is a cook here, making himself busy with a pot.
+  desc: |
+    A junior cook, eager to do the Chef's bidding.
+  act:
+  - sentinel
+  - wimpy
+  alignment: 300
+  level: 4
+  thac0: 17
+  ac: 6
+  hp: 2d7+46
+  damage: 1d8
+  gold: 50
+  exp: 600
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 15024
+  keywords:
+  - david
+  - man
+  - guard
+  short: David
+  long: |
+    David, a big, mean-looking man, stands here, guarding the door.
+  desc: |
+    He really is big, and you get the feeling he wouldn't take kindly
+    to an attempt to get past him.
+  act:
+  - spec
+  - sentinel
+  affected:
+  - detect_invis
+  alignment: 250
+  level: 19
+  thac0: 2
+  ac: 0
+  hp: 2d6+235
+  damage: 1d7+10
+  gold: 2000
+  exp: 35000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 15025
+  keywords:
+  - dick
+  - man
+  - guard
+  short: Dick
+  long: |
+    Dick, a big, mean-looking man, stands here, guarding the door.
+  desc: |
+    He really is big, and you get the feeling he wouldn't take kindly
+    to an attempt to get past him.
+  act:
+  - spec
+  - sentinel
+  affected:
+  - detect_invis
+  alignment: 250
+  level: 19
+  thac0: 2
+  ac: 0
+  hp: 2d6+235
+  damage: 1d7+10
+  gold: 2000
+  exp: 35000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 15026
+  keywords:
+  - jerry
+  - guard
+  - royal
+  short: Jerry
+  long: |
+    Jerry the Royal Guard is here off duty, playing dice.
+  desc: |
+    As all members of the Guard, Jerry wears the chain mail required
+    of them as uniform.  He seems very well trained, and moves like
+    an experienced fighter.
+  act:
+  - spec
+  - stay_zone
+  alignment: 800
+  level: 11
+  thac0: 9
+  ac: 2
+  hp: 3d6+130
+  damage: 1d8+4
+  gold: 400
+  exp: 11000
+  position: resting
+  default_position: resting
+  sex: male
+- vnum: 15027
+  keywords:
+  - michael
+  - guard
+  - royal
+  short: Michael
+  long: |
+    Michael the Royal Guard is here off duty, playing dice.
+  desc: |
+    As all members of the Guard, Michael wears the chain mail required
+    of them as uniform.  He seems very well trained, and moves like an
+    experienced fighter.
+  act:
+  - spec
+  - stay_zone
+  alignment: 800
+  level: 11
+  thac0: 9
+  ac: 2
+  hp: 3d6+130
+  damage: 1d8+4
+  gold: 400
+  exp: 11000
+  position: resting
+  default_position: resting
+  sex: male
+- vnum: 15028
+  keywords:
+  - hans
+  - guard
+  - royal
+  short: Hans
+  long: |
+    Hans the Royal Guard is here on duty.
+  desc: |
+    As all members of the Guard, Hans wears the chain mail required
+    of them as uniform.  He seems very well trained, and moves like
+    a fighter who has seen more than one battle, and longs to see
+    the next!
+  act:
+  - spec
+  - stay_zone
+  alignment: 900
+  level: 13
+  thac0: 7
+  ac: 2
+  hp: 3d6+150
+  damage: 1d8+5
+  gold: 400
+  exp: 16000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 15029
+  keywords:
+  - boris
+  - guard
+  - royal
+  short: Boris
+  long: |
+    Boris the Royal Guard is here on duty.
+  desc: |
+    As all members of the Guard, Boris wears the chain mail required of
+    them as uniform.  He seems very well trained, and carries his scars
+    with pride.  This guy seems tough...
+  act:
+  - spec
+  - stay_zone
+  alignment: 900
+  level: 15
+  thac0: 5
+  ac: 1
+  hp: 3d6+175
+  damage: 1d8+7
+  gold: 400
+  exp: 21000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 15030
+  keywords:
+  - zombie
+  - villager
+  short: the zombie
+  long: |
+    A zombie is shambling over some corpses here, moving quite silently.
+  desc: |
+    It is entirely possible that this zombie was once one of the villagers
+    of Townsbridge who has been brought to an undead life by a fuelling
+    desire for revenge.
+  act:
+  - sentinel
+  - aware
+  - aggressive
+  - no_charm
+  - no_sleep
+  - no_blind
+  affected:
+  - detect_invis
+  - sense_life
+  - infravision
+  - sneak
+  alignment: 0
+  level: 11
+  thac0: 6
+  ac: 3
+  hp: 4d4+95
+  damage: 2d4+8
+  gold: 0
+  exp: 10000
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 15031
+  keywords:
+  - skeleton
+  - villager
+  short: the skeleton
+  long: |
+    A skeleton is moving about with a loud clatter here, climbing over corpses.
+  desc: |
+    It is entirely possible that this skeleton was once one of the villagers
+    of Townsbridge who has been brought to an undead life by a fuelling desire
+    for revenge.
+  act:
+  - sentinel
+  - aware
+  - aggressive
+  - no_charm
+  - no_sleep
+  - no_blind
+  affected:
+  - detect_invis
+  - sense_life
+  - infravision
+  alignment: 0
+  level: 10
+  thac0: 8
+  ac: 3
+  hp: 4d4+80
+  damage: 2d3+6
+  gold: 0
+  exp: 8000
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 15032
+  keywords:
+  - pit
+  - fiend
+  - demon
+  short: the pit fiend
+  long: |
+    A large demon surrounded by flames rises out of the dark pool.
+  desc: |
+    It is a horrifying thing, this demonic creature from the depths of the
+    Abyss.  It glares down at you through blood-red eyes, and bares its huge
+    white fangs and its razor-sharp talons.
+  act:
+  - spec
+  - sentinel
+  - aware
+  - aggressive
+  - memory
+  - no_charm
+  - no_summon
+  - no_sleep
+  - no_bash
+  - no_blind
+  affected:
+  - detect_invis
+  - sense_life
+  - sanctuary
+  - infravision
+  alignment: 1000
+  level: 33
+  thac0: 0
+  ac: -10
+  hp: 3d60+1480
+  damage: 4d8+16
+  gold: 35000
+  exp: 1000000
+  position: sitting
+  default_position: standing
+  sex: male
+objects:
+- vnum: 15000
+  keywords:
+  - nothingness
+  - universal
+  short: Sapowox's Universal Nothingness
+  desc: You are quite unable to perceive Sapowox's Universal Nothingness here.
+  type: weapon
+  wear:
+  - take
+  - wield
+  flags:
+  - hum
+  - no_rent
+  - magic
+  weapon:
+    dice: 6d4
+    damage_type: sting
+  weight: 40
+  cost: 0
+  rent: 200000
+  affects:
+  - location: hitroll
+    modifier: 2
+  - location: damroll
+    modifier: 2
+  extra_descs:
+  - keywords:
+    - text
+    - writing
+    - inscription
+    desc: |
+              It just says: ' (void *) '
+              Not very enlightening, is it?
+  - keywords:
+    - nothingness
+    - universal
+    desc: |
+              You are not sure, but you do not seem not able to figure out what
+              it isn't, because it doesn't much resemble anything you haven't 
+              ever seen.  You feel a bit of mortal confusion, but you notice a
+              small inscription on it.
+- vnum: 15001
+  keywords:
+  - gold
+  - coins
+  short: the gold
+  desc: A lot of gold is here.
+  type: money
+  wear:
+  - take
+  values:
+  - 32385
+  - 0
+  - 0
+  - 0
+  weight: 0
+  cost: 32385
+  rent: 0
+- vnum: 15002
+  keywords:
+  - sceptre
+  - royal
+  - golden
+  short: a golden sceptre
+  desc: A golden Royal sceptre lies on the ground.
+  type: other
+  wear:
+  - take
+  - hold
+  flags:
+  - magic
+  - anti_evil
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 20
+  cost: 15000
+  rent: 3000
+  affects:
+  - location: hitroll
+    modifier: 2
+- vnum: 15003
+  keywords:
+  - crown
+  - golden
+  short: a golden crown
+  desc: A magnificently jewelled golden crown has been left here.
+  type: armor
+  wear:
+  - take
+  - head
+  flags:
+  - magic
+  - anti_evil
+  armor:
+    ac_apply: 7
+  weight: 40
+  cost: 12000
+  rent: 10000
+  affects:
+  - location: max_mana
+    modifier: 30
+  - location: int
+    modifier: 1
+- vnum: 15004
+  keywords:
+  - apple
+  - golden
+  short: a golden apple
+  desc: There is a golden apple here.
+  type: light
+  wear:
+  - take
+  - hold
+  flags:
+  - magic
+  - anti_evil
+  light:
+    hours: -1
+  weight: 5
+  cost: 8000
+  rent: 400
+- vnum: 15005
+  keywords:
+  - telescope
+  - scope
+  short: a large telescope
+  desc: There is a large telescope here, pointing at the sky.
+  type: other
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 0
+  cost: 0
+  rent: 0
+  extra_descs:
+  - keywords:
+    - telescope
+    - scope
+    desc: |
+              A small sign says:
+
+              Made in Siberia.
+- vnum: 15006
+  keywords:
+  - sword
+  - training
+  short: a training sword
+  desc: A training sword with blunt edges is leaned against a wall.
+  type: weapon
+  wear:
+  - take
+  - wield
+  weapon:
+    dice: 1d4
+    damage_type: slash
+  weight: 7
+  cost: 300
+  rent: 5
+  affects:
+  - location: hitroll
+    modifier: -2
+- vnum: 15007
+  keywords:
+  - key
+  - huge
+  short: a huge key
+  desc: There is a huge, heavy-looking key on the floor here.
+  type: key
+  wear:
+  - take
+  - hold
+  flags:
+  - no_rent
+  values:
+  - 15007
+  - 0
+  - 0
+  - 0
+  weight: 1
+  cost: 0
+  rent: 0
+- vnum: 15008
+  keywords:
+  - Verminator
+  - sword
+  short: Verminator
+  desc: A strange looking sword is lying upon the ground here.
+  type: weapon
+  wear:
+  - take
+  - wield
+  flags:
+  - glow
+  - no_donate
+  - anti_good
+  - anti_mage
+  - anti_cleric
+  - anti_thief
+  - no_sell
+  weapon:
+    dice: 3d4
+    damage_type: pierce
+  weight: 2
+  cost: 1
+  rent: 4000
+  extra_descs:
+  - keywords:
+    - verminator
+    - sword
+    desc: |
+              This strange sword seems to be made of black metal, an eerie green glow
+              surrounds the blade.
+- vnum: 15009
+  keywords:
+  - key
+  - butlers
+  - butler
+  short: the Butler's key
+  desc: The Butler's key is here.
+  type: key
+  wear:
+  - take
+  - hold
+  flags:
+  - no_rent
+  values:
+  - 15009
+  - 0
+  - 0
+  - 0
+  weight: 3
+  cost: 0
+  rent: 0
+- vnum: 15010
+  keywords:
+  - key
+  - small
+  short: a small key
+  desc: A small key lies here.
+  type: key
+  wear:
+  - take
+  - hold
+  flags:
+  - no_rent
+  values:
+  - 15010
+  - 0
+  - 0
+  - 0
+  weight: 1
+  cost: 0
+  rent: 100
+- vnum: 15011
+  keywords:
+  - chest
+  - wooden
+  short: a large wooden chest
+  desc: A large wooden chest stands here in a corner.
+  type: container
+  wear:
+  - take
+  container:
+    capacity: 800
+    closeable: true
+    closed: true
+    locked: true
+    key: 15010
+  weight: 450
+  cost: 400
+  rent: 100
+  extra_descs:
+  - keywords:
+    - chest
+    desc: |
+              It is equipped with a small lock, that any self-respecting thief
+              should be able to pick.
+- vnum: 15012
+  keywords:
+  - vial
+  - large
+  - potion
+  - brown
+  short: a large vial
+  desc: A large vial has been left here.
+  type: potion
+  wear:
+  - take
+  flags:
+  - magic
+  values:
+  - 15
+  - 15
+  - -1
+  - -1
+  weight: 14
+  cost: 2000
+  rent: 2000
+  extra_descs:
+  - keywords:
+    - vial
+    - large
+    - brown
+    - potion
+    desc: |
+              It is filled with a disgusting brown liquid.
+- vnum: 15013
+  keywords:
+  - banner
+  - royal
+  short: a royal banner
+  desc: The royal banner has been firmly planted in the ground here.
+  type: other
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 0
+  cost: 0
+  rent: 0
+  extra_descs:
+  - keywords:
+    - flag
+    desc: |
+              On the flag is the symbol of King Welmar's house, the rampant stag.
+  - keywords:
+    - banner
+    - royal
+    - standard
+    desc: |
+              It is large and very heavy.  On top of it flutters King Welmar's flag
+              proudly.
+- vnum: 15014
+  keywords:
+  - key
+  short: a key
+  desc: A key lies on the floor.
+  type: key
+  wear:
+  - take
+  flags:
+  - no_rent
+  values:
+  - 15014
+  - 0
+  - 0
+  - 0
+  weight: 13
+  cost: 0
+  rent: 0
+  extra_descs:
+  - keywords:
+    - key
+    desc: |
+              It has a finely carved letter 'W' inscribed on it.
+- vnum: 15015
+  keywords:
+  - hauberk
+  - mail
+  - chain
+  short: a guard's chain mail hauberk
+  desc: A chain mail hauberk lies on the floor
+  type: armor
+  wear:
+  - take
+  - body
+  armor:
+    ac_apply: 5
+  weight: 60
+  cost: 2000
+  rent: 500
+- vnum: 15016
+  keywords:
+  - broadsword
+  - sword
+  - large
+  short: a large broadsword
+  desc: There is a large broadsword lying here.
+  type: weapon
+  wear:
+  - take
+  - wield
+  weapon:
+    dice: 2d6
+    damage_type: slash
+  weight: 14
+  cost: 1300
+  rent: 3000
+- vnum: 15017
+  keywords:
+  - key
+  - cell
+  short: the cell key
+  desc: A key lies on the floor.
+  type: key
+  wear:
+  - take
+  flags:
+  - no_rent
+  values:
+  - 15017
+  - 0
+  - 0
+  - 0
+  weight: 3
+  cost: 0
+  rent: 0
+  extra_descs:
+  - keywords:
+    - key
+    - cell
+    desc: |
+              This appears to be the key for the cells of the castle.
+- vnum: 15018
+  keywords:
+  - corpse
+  short: a corpse
+  desc: There is a corpse lying in the middle of the floor of the building here.
+  type: trash
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 0
+  cost: 0
+  rent: 0
+- vnum: 15019
+  keywords:
+  - lobster
+  short: a delicious-looking lobster
+  desc: A delicious-looking lobster is lying here, tempting your appetite.
+  type: food
+  wear:
+  - take
+  values:
+  - 7
+  - 0
+  - 0
+  - 0
+  weight: 5
+  cost: 100
+  rent: 10
+- vnum: 15020
+  keywords:
+  - caviar
+  short: some Russian caviar
+  desc: There is some delicious-looking Russian caviar here, making your mouth water.
+  type: food
+  wear:
+  - take
+  values:
+  - 2
+  - 0
+  - 0
+  - 0
+  weight: 1
+  cost: 250
+  rent: 20
+- vnum: 15021
+  keywords:
+  - glow
+  short: the glow from the west
+  desc: There is a strange glow coming from the west.
+  type: trash
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 0
+  cost: 0
+  rent: 0
+  extra_descs:
+  - keywords:
+    - glow
+    desc: |
+              The glow from the west appears to be quite strong, but it does not
+              give enough light to see by here, nor can you see the source of the
+              glow.
+- vnum: 15022
+  keywords:
+  - wail
+  - sound
+  short: the wailing sound from the east
+  desc: There is an eerie wailing sound coming from the house to the east.
+  type: trash
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 0
+  cost: 0
+  rent: 0
+shops:
+- vnum: 15019
+  keeper: 15019
+  rooms:
+  - 15052
+  sells:
+  - 15012
+  - 3050
+  - 3052
+  buys:
+  - type: scroll
+  - type: wand
+  - type: staff
+  - type: potion
+  markup: 1.2
+  markdown: 0.3
+  hours:
+  - - 2
+    - 8
+  - - 20
+    - 28
+  flags:
+  - uses_bank
+  refuses:
+  - magic_user
+  - thief
+  temper: 2
+  messages:
+    no_such_item_keeper: "%s But I have no such thing for sale."
+    no_such_item_player: "%s But you do not have this item."
+    do_not_buy: "%s I have no interest in that."
+    keeper_broke: "%s I am sorry, but I can not afford such a valuable item."
+    player_broke: "%s But you can not afford that item."
+    buy: "%s It will cost you %d coins."
+    sell: "%s Here, you shall have %d coins for it."
+- vnum: 15022
+  keeper: 15022
+  rooms:
+  - 15005
+  sells:
+  - 15019
+  - 15020
+  markup: 1.1
+  markdown: 1.0
+  hours:
+  - - 6
+    - 23
+  flags:
+  - uses_bank
+  messages:
+    no_such_item_keeper: "%s Je suis tres desole, mais je n'ai pas ca."
+    no_such_item_player: "%s Mais, je n'achete pas!"
+    do_not_buy: "%s Mais, je n'achete pas!"
+    keeper_broke: "%s Mais, je n'achete pas!"
+    player_broke: "%s Si vous n'avez d'argent, vous ne pouvez p'acheter!"
+    buy: "%s Ca coute %d piece d'or, s'il vous plait."
+    sell: "%s Oops - %d, a minor bug - please report!"
+resets:
+- mob: 15001
+  room: 15017
+  max: 1
+  then:
+  - equip: 15002
+    slot: hold
+    max: 1
+  - equip: 15003
+    slot: head
+    max: 1
+  - equip: 15004
+    slot: light
+    max: 1
+  - give: 15014
+    max: 1
+- mob: 15003
+  room: 15042
+  max: 1
+  then:
+  - equip: 3022
+    slot: wield
+    max: 100
+  - equip: 15015
+    slot: body
+    max: 50
+- mob: 15004
+  room: 15023
+  max: 1
+  then:
+  - equip: 15006
+    slot: wield
+    max: 100
+  - equip: 15015
+    slot: body
+    max: 50
+- mob: 15005
+  room: 15023
+  max: 1
+  then:
+  - equip: 15006
+    slot: wield
+    max: 100
+  - equip: 15015
+    slot: body
+    max: 50
+- mob: 15006
+  room: 15035
+  max: 1
+  then:
+  - equip: 3022
+    slot: wield
+    max: 100
+  - equip: 15015
+    slot: body
+    max: 50
+- mob: 15007
+  room: 15028
+  max: 1
+  then:
+  - equip: 3022
+    slot: wield
+    max: 100
+  - equip: 15015
+    slot: body
+    max: 50
+- mob: 15008
+  room: 15023
+  max: 1
+  then:
+  - equip: 3022
+    slot: wield
+    max: 100
+  - equip: 15015
+    slot: body
+    max: 50
+- mob: 15009
+  room: 15008
+  max: 1
+  then:
+  - equip: 3022
+    slot: wield
+    max: 100
+  - equip: 15015
+    slot: body
+    max: 50
+- mob: 15010
+  room: 15032
+  max: 1
+  then:
+  - equip: 3022
+    slot: wield
+    max: 100
+  - equip: 15015
+    slot: body
+    max: 50
+- mob: 15011
+  room: 15019
+  max: 1
+  then:
+  - equip: 3022
+    slot: wield
+    max: 100
+  - equip: 15015
+    slot: body
+    max: 50
+- mob: 15012
+  room: 15023
+  max: 1
+  then:
+  - equip: 15015
+    slot: body
+    max: 50
+  - equip: 15016
+    slot: wield
+    max: 10
+- mob: 15013
+  room: 15023
+  max: 1
+  then:
+  - equip: 3022
+    slot: wield
+    max: 100
+- mob: 15014
+  room: 15017
+  max: 1
+- mob: 15016
+  room: 15027
+  max: 1
+  then:
+  - give: 15009
+    max: 1
+- mob: 15017
+  room: 15010
+  max: 5
+- mob: 15017
+  room: 15010
+  max: 5
+- mob: 15017
+  room: 15041
+  max: 5
+- mob: 15017
+  room: 15041
+  max: 5
+- mob: 15017
+  room: 15038
+  max: 5
+- mob: 15019
+  room: 15052
+  max: 1
+  then:
+  - give: 3052
+    max: 100
+  - give: 3050
+    max: 100
+  - give: 15012
+    max: 10
+- mob: 15020
+  room: 15017
+  max: 1
+  then:
+  - equip: 3022
+    slot: wield
+    max: 100
+  - equip: 15015
+    slot: body
+    max: 50
+- mob: 15021
+  room: 15017
+  max: 1
+  then:
+  - equip: 3022
+    slot: wield
+    max: 100
+  - equip: 15015
+    slot: body
+    max: 50
+- mob: 15022
+  room: 15005
+  max: 1
+  then:
+  - give: 15019
+    max: 50
+  - give: 15020
+    max: 50
+- mob: 15023
+  room: 15005
+  max: 2
+  then:
+  - give: 15010
+    max: 1
+- mob: 15023
+  room: 15005
+  max: 2
+- mob: 15024
+  room: 15036
+  max: 1
+  then:
+  - equip: 3022
+    slot: wield
+    max: 100
+  - equip: 15015
+    slot: body
+    max: 50
+  - give: 15007
+    max: 1
+  - mob: 15025
+    room: 15036
+    max: 1
+  - equip: 3022
+    slot: wield
+    max: 100
+  - equip: 15015
+    slot: body
+    max: 50
+- mob: 15026
+  room: 15008
+  max: 1
+  then:
+  - equip: 3022
+    slot: wield
+    max: 100
+  - equip: 15015
+    slot: body
+    max: 50
+- mob: 15027
+  room: 15008
+  max: 1
+  then:
+  - equip: 3022
+    slot: wield
+    max: 100
+  - equip: 15015
+    slot: body
+    max: 50
+- mob: 15028
+  room: 15047
+  max: 1
+  then:
+  - equip: 3022
+    slot: wield
+    max: 100
+  - equip: 15015
+    slot: body
+    max: 50
+- mob: 15029
+  room: 15009
+  max: 1
+  then:
+  - equip: 3022
+    slot: wield
+    max: 100
+  - equip: 15015
+    slot: body
+    max: 50
+- room: 15023
+  remove: 3020
+- room: 15023
+  object: 3020
+  max: 100
+- room: 15023
+  remove: 3021
+- room: 15023
+  object: 3021
+  max: 100
+- room: 15023
+  remove: 3022
+- room: 15023
+  object: 3022
+  max: 100
+  then:
+  - room: 15037
+    object: 15001
+    max: 1
+- room: 15052
+  object: 15005
+  max: 1
+- room: 15026
+  object: 15011
+  max: 1
+- door: 15004
+  dir: north
+  state: closed
+- door: 15007
+  dir: south
+  state: closed
+- door: 15007
+  dir: west
+  state: closed
+- door: 15006
+  dir: east
+  state: closed
+- door: 15020
+  dir: east
+  state: closed
+- door: 15021
+  dir: west
+  state: closed
+- door: 15021
+  dir: north
+  state: closed
+- door: 15026
+  dir: south
+  state: closed
+- door: 15022
+  dir: north
+  state: locked
+- door: 15027
+  dir: south
+  state: locked
+- door: 15023
+  dir: north
+  state: closed
+- door: 15028
+  dir: south
+  state: closed
+- door: 15036
+  dir: east
+  state: locked
+- door: 15037
+  dir: west
+  state: locked
+- door: 15038
+  dir: north
+  state: closed
+- door: 15043
+  dir: south
+  state: closed
+- door: 15038
+  dir: east
+  state: closed
+- door: 15039
+  dir: west
+  state: closed
+- door: 15049
+  dir: east
+  state: locked
+- door: 15050
+  dir: west
+  state: locked
+- mob: 15000
+  room: 15056
+  max: 1
+  then:
+  - equip: 3022
+    slot: wield
+    max: 100
+  - equip: 15015
+    slot: body
+    max: 50
+  - give: 15017
+    max: 1
+- mob: 15002
+  room: 15069
+  max: 1
+- mob: 15015
+  room: 15059
+  max: 1
+- mob: 15018
+  room: 15058
+  max: 2
+- mob: 15018
+  room: 15058
+  max: 2
+- mob: 15030
+  room: 15067
+  max: 2
+- mob: 15030
+  room: 15067
+  max: 2
+- mob: 15031
+  room: 15067
+  max: 2
+- mob: 15031
+  room: 15067
+  max: 2
+- mob: 15032
+  room: 15074
+  max: 1
+  then:
+  - equip: 15008
+    slot: wield
+    max: 3
+- room: 15054
+  object: 15013
+  max: 1
+- room: 15070
+  object: 15018
+  max: 1
+- room: 15073
+  object: 15021
+  max: 1
+- room: 15065
+  object: 15022
+  max: 1
+- door: 15056
+  dir: south
+  state: locked
+- door: 15057
+  dir: north
+  state: locked
+- door: 15057
+  dir: east
+  state: locked
+- door: 15060
+  dir: west
+  state: locked
+- door: 15057
+  dir: south
+  state: locked
+- door: 15059
+  dir: north
+  state: locked
+- door: 15057
+  dir: west
+  state: locked
+- door: 15058
+  dir: east
+  state: locked

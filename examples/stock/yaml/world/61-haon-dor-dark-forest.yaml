@@ -1,0 +1,2716 @@
+schema: dl/world@1
+zone:
+  vnum: 61
+  name: Haon-Dor, Dark Forest
+  range:
+  - 6100
+  - 6199
+  lifespan: 30
+  reset: always
+rooms:
+- vnum: 6100
+  name: A Narrow Trail Through The Deep, Dark Forest
+  sector: forest
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are on a narrow trail winding its way between the enormous, grey
+    trunks.  The crowns of the trees must be very dense, as they leave the
+    forest floor in utter darkness.  The trail leads east and west.
+  exits:
+    north:
+      to: 6064
+      desc: |
+            A small shadowy path leads away to the north.
+      key: -1
+    east:
+      to: 6004
+      desc: |
+            The narrow trail leads east to a somewhat lighter part of the forest.
+      key: -1
+    west:
+      to: 6101
+      desc: |
+            The narrow, dusty trail leads west through the forest.
+      key: -1
+  extra_descs:
+  - keywords:
+    - tree
+    - trees
+    - trunk
+    - trunks
+    desc: |
+              These ancient trees must have been here for many, many years.  It is impossible
+              to catch even a glimpse of anything above the lowest branches.
+  - keywords:
+    - trail
+    desc: |
+              The dark and dusty trail seems fragile compared to the massive trunks, and in
+              some places, giant grey roots have broken up through its surface.
+- vnum: 6101
+  name: A Narrow Trail Through The Deep, Dark Forest
+  sector: forest
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are on a dusty trail winding its way east-west between huge,
+    ancient trees whose grey trunks remind you of ancient pillars in a
+    enormous, deserted hall.  To the south, a frail path leads away from
+    the trail.
+  exits:
+    east:
+      to: 6100
+      desc: |
+            The narrow, dusty trail leads east through the forest.
+      key: -1
+    south:
+      to: 6104
+      desc: |
+            The path leads south - away from the trail.
+      key: -1
+    west:
+      to: 6102
+      desc: |
+            The narrow, dusty trail leads west through the forest.
+      key: -1
+  extra_descs:
+  - keywords:
+    - tree
+    - trees
+    - trunk
+    - trunks
+    desc: |
+              These ancient trees must have been here for many, many years.  It is impossible
+              to catch even a glimpse of anything above the lowest branches.
+  - keywords:
+    - path
+    desc: |
+              The path seems fragile and unsafe compared to the enormous trunks that loom
+              around it.
+  - keywords:
+    - trail
+    desc: |
+              The dark and dusty trail seems fragile compared to the massive trunks, and in
+              some places, giant grey roots have broken up through its surface.
+- vnum: 6102
+  name: A Narrow Trail Through The Deep, Dark Forest
+  sector: forest
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are on a dusty trail winding its way east-west between huge,
+    ancient trees that stand close on all sides.  Not a sound is to be
+    heard - everything is ominously quiet.
+  exits:
+    east:
+      to: 6101
+      desc: |
+            The narrow, dusty trail leads east through the forest.
+      key: -1
+    west:
+      to: 6103
+      desc: |
+            The narrow, dusty trail leads west through the forest.
+      key: -1
+  extra_descs:
+  - keywords:
+    - tree
+    - trees
+    - trunk
+    - trunks
+    desc: |
+              These ancient trees must have been here for many, many years.  It is impossible
+              to catch even a glimpse of anything above the lowest branches.
+  - keywords:
+    - path
+    desc: |
+              The path seems fragile and unsafe compared to the enormous trunks that loom
+              around it.
+  - keywords:
+    - trail
+    desc: |
+              The dark and dusty trail seems fragile compared to the massive trunks, and in
+              some places, giant grey roots have broken up through its surface.
+- vnum: 6103
+  name: A Narrow Trail Through The Deep, Dark Forest
+  sector: forest
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are where the dusty trail bends, as to avoid conflict with a
+    colossal trunk to the west.  Not a sound is to be heard - everything
+    is ominously quiet.  The trail leads east and south and there is a
+    small path leading off the trail to the north.
+  exits:
+    north:
+      to: 6150
+      desc: |
+            A small path leads north off the trail.
+      key: -1
+    east:
+      to: 6102
+      desc: |
+            The narrow, dusty trail leads east through the forest.
+      key: -1
+    south:
+      to: 6108
+      desc: |
+            The narrow, dusty trail leads south through the forest.
+      key: -1
+  extra_descs:
+  - keywords:
+    - trees
+    - trunks
+    desc: |
+              These ancient trees must have been here for many, many years.  It is impossible
+              to catch even a glimpse of anything above the lowest branches.
+  - keywords:
+    - trail
+    desc: |
+              The dark and dusty trail seems fragile compared to the massive trunks, and in
+              some places, giant grey roots have broken up through its surface.
+- vnum: 6104
+  name: A Small Path In The Deep, Dark Forest
+  sector: forest
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are on a narrow path leading through the deep, dark forest.  You
+    feel as if the ancient trees observe you in watchful silence.  The path
+    continues north and south.
+  exits:
+    north:
+      to: 6101
+      desc: |
+            The narrow path winds its way through the trees to the north.
+      key: -1
+    south:
+      to: 6105
+      desc: |
+            The narrow path winds its way through the trees to the south.
+      key: -1
+  extra_descs:
+  - keywords:
+    - path
+    desc: |
+              The path seems all too frail.  One of the giant roots could probably crush it
+              in a single blow.
+  - keywords:
+    - tree
+    - trees
+    - trunk
+    - trunks
+    desc: |
+              The ancient grey giants seem to observe you silently.
+- vnum: 6105
+  name: A Small Path In The Deep, Dark Forest
+  sector: forest
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are on a narrow path leading through the deep, dark forest.  Ancient
+    grey trees loom all around you.  The path continues north and west.
+  exits:
+    north:
+      to: 6104
+      desc: |
+            The narrow path winds its way through the trees to the north.
+      key: -1
+    west:
+      to: 6106
+      desc: |
+            The narrow path winds its way through the trees to the west.
+      key: -1
+  extra_descs:
+  - keywords:
+    - path
+    desc: |
+              The path seems all too frail.  One of the giant roots could probably crush it
+              in a single blow.
+  - keywords:
+    - tree
+    - trees
+    - trunk
+    - trunks
+    desc: |
+              The ancient grey giants seem to observe you silently.
+- vnum: 6106
+  name: A Junction In The Deep, Dark Forest
+  sector: forest
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are by a junction where three paths meet.  Ancient grey trees tower
+    above you on all sides.  Paths lead east, south and west.
+  exits:
+    east:
+      to: 6105
+      desc: |
+            The narrow path winds its way through the trees to the east.
+      key: -1
+    south:
+      to: 6117
+      desc: |
+            The narrow path winds its way through the trees to the south.
+      key: -1
+    west:
+      to: 6107
+      desc: |
+            The narrow path winds its way through the trees to the west.
+      key: -1
+  extra_descs:
+  - keywords:
+    - path
+    - paths
+    desc: |
+              The path seems all too frail.  One of the giant roots could probably crush it
+              in a single blow.
+  - keywords:
+    - tree
+    - trees
+    - trunk
+    - trunks
+    desc: |
+              The ancient grey giants seem to observe you silently.
+- vnum: 6107
+  name: A Small Path In The Deep, Dark Forest
+  sector: forest
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are on a narrow path leading through the deep, dark forest.  Ancient
+    grey trees loom all around you.  The path continues north and east.
+  exits:
+    north:
+      to: 6108
+      desc: |
+            The narrow path winds its way through the trees to the north.
+      key: -1
+    east:
+      to: 6106
+      desc: |
+            The narrow path winds its way through the trees to the east.
+      key: -1
+  extra_descs:
+  - keywords:
+    - path
+    desc: |
+              The path seems all too frail.  One of the giant roots could probably crush it
+              in a single blow.
+  - keywords:
+    - tree
+    - trees
+    - trunk
+    - trunks
+    desc: |
+              The ancient grey giants seem to observe you silently.
+- vnum: 6108
+  name: A Narrow Trail Through The Deep, Dark Forest
+  sector: forest
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are on a dusty trail winding its way between huge, ancient trees
+    standing close on all sides.  The trail leads north and west and to the
+    south, a frail path leads away from the trail.
+  exits:
+    north:
+      to: 6103
+      desc: |
+            The narrow, dusty trail leads north through the forest.
+      key: -1
+    south:
+      to: 6107
+      desc: |
+            The path leads south - away from the trail.
+      key: -1
+    west:
+      to: 6109
+      desc: |
+            The narrow, dusty trail leads west through the forest.
+      key: -1
+  extra_descs:
+  - keywords:
+    - tree
+    - trees
+    - trunk
+    - trunks
+    desc: |
+              These ancient trees must have been here for many, many years.  It is impossible
+              to catch even a glimpse of anything above the lowest branches.
+  - keywords:
+    - path
+    desc: |
+              The path seems fragile and unsafe compared to the enormous trunks that loom
+              around it.
+  - keywords:
+    - trail
+    desc: |
+              The dark and dusty trail seems fragile compared to the massive trunks, and in
+              some places, giant grey roots have broken up through its surface.
+- vnum: 6109
+  name: A Narrow Trail Through The Deep, Dark Forest
+  sector: forest
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are on a dusty trail winding its way east-west between huge, ancient
+    trees that stand close on all sides.  Not a sound is to be heard - everything
+    is ominously quiet.
+  exits:
+    east:
+      to: 6108
+      desc: |
+            The narrow, dusty trail leads east through the forest.
+      key: -1
+    west:
+      to: 6110
+      desc: |
+            The narrow, dusty trail leads west through the forest.
+      key: -1
+  extra_descs:
+  - keywords:
+    - tree
+    - trees
+    - trunk
+    - trunks
+    desc: |
+              These ancient trees must have been here for many, many years.  It is impossible
+              to catch even a glimpse of anything above the lowest branches.
+  - keywords:
+    - trail
+    desc: |
+              The dark and dusty trail seems fragile compared to the massive trunks, and in
+              some places, giant grey roots have broken up through its surface.
+- vnum: 6110
+  name: A Narrow Trail Through The Deep, Dark Forest
+  sector: forest
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are on a dusty trail winding its way between huge, ancient trees that
+    stand close on all sides.  The trail leads east and south.  To the west, a
+    narrow path leads away from the trail.
+  exits:
+    east:
+      to: 6109
+      desc: |
+            The narrow, dusty trail leads east through the forest.
+      key: -1
+    south:
+      to: 6111
+      desc: |
+            The narrow, dusty trail leads south through the forest.
+      key: -1
+    west:
+      to: 6130
+      desc: |
+            The narrow path leads west between the giant trees.
+      key: -1
+  extra_descs:
+  - keywords:
+    - tree
+    - trees
+    - trunk
+    - trunks
+    desc: |
+              Some of the trunks to the west are covered in a thin, almost transparent
+              substance.  It looks like small threads woven carefully together.
+  - keywords:
+    - path
+    desc: |
+              The path seems fragile and unsafe compared to the enormous trunks that loom
+              around it.
+  - keywords:
+    - trail
+    desc: |
+              The dark and dusty trail seems fragile compared to the massive trunks, and in
+              some places, giant grey roots have broken up through its surface.
+- vnum: 6111
+  name: A Narrow Trail Through The Deep, Dark Forest
+  sector: forest
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are on a dusty trail winding its way north-south between huge, ancient
+    trees that loom ominously above you.
+  exits:
+    north:
+      to: 6110
+      desc: |
+            The narrow, dusty trail leads north through the forest.
+      key: -1
+    south:
+      to: 6112
+      desc: |
+            The narrow, dusty trail leads south through the forest.
+      key: -1
+  extra_descs:
+  - keywords:
+    - tree
+    - trees
+    - trunk
+    - trunks
+    desc: |
+              These ancient trees must have been here for many, many years.  It is impossible
+              to catch even a glimpse of anything above the lowest branches.
+  - keywords:
+    - trail
+    desc: |
+              The dark and dusty trail seems fragile compared to the massive trunks, and in
+              some places, giant grey roots have broken up through its surface.
+- vnum: 6112
+  name: A Narrow Trail Through The Deep, Dark Forest
+  sector: forest
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are on a dusty trail winding its way between huge, ancient trees
+    standing close on all sides.  The trail leads north and west and to the
+    east, a frail path leads away from the trail.
+  exits:
+    north:
+      to: 6111
+      desc: |
+            The narrow, dusty trail leads north through the forest.
+      key: -1
+    east:
+      to: 6113
+      desc: |
+            The path leads east - away from the trail.
+      key: -1
+    west:
+      to: 6127
+      desc: |
+            The narrow, dusty trail leads west through the forest.
+      key: -1
+  extra_descs:
+  - keywords:
+    - tree
+    - trees
+    - trunk
+    - trunks
+    desc: |
+              These ancient trees must have been here for many, many years.  It is impossible
+              to catch even a glimpse of anything above the lowest branches.
+  - keywords:
+    - path
+    desc: |
+              The path seems fragile and unsafe compared to the enormous trunks that loom
+              around it.
+  - keywords:
+    - trail
+    desc: |
+              The dark and dusty trail seems fragile compared to the massive trunks, and in
+              some places, giant grey roots have broken up through its surface.
+- vnum: 6113
+  name: A Small Path In The Deep, Dark Forest
+  sector: forest
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are on a narrow path leading through the deep, dark forest.  Ancient
+    grey trees loom in all directions.  The path continues south and west.
+  exits:
+    south:
+      to: 6114
+      desc: |
+            The narrow path winds its way through the trees to the south.
+      key: -1
+    west:
+      to: 6112
+      desc: |
+            The narrow path winds its way through the trees to the west.
+      key: -1
+  extra_descs:
+  - keywords:
+    - path
+    desc: |
+              The path seems all too frail.  One of the giant roots could probably crush it
+              in a single blow.
+  - keywords:
+    - tree
+    - trees
+    - trunk
+    - trunks
+    desc: |
+              The ancient grey giants seem to observe you silently.
+- vnum: 6114
+  name: A Junction In The Deep, Dark Forest
+  sector: forest
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are by a junction where three paths meet.  Ancient grey trees tower
+    above you on all sides.  Paths lead north, east and west.
+  exits:
+    north:
+      to: 6113
+      desc: |
+            The narrow path winds its way through the trees to the north.
+      key: -1
+    east:
+      to: 6115
+      desc: |
+            The narrow path winds its way through the trees to the east.
+      key: -1
+    west:
+      to: 6122
+      desc: |
+            The narrow path winds its way through the trees to the west.
+      key: -1
+  extra_descs:
+  - keywords:
+    - path
+    - paths
+    desc: |
+              The path seems all too frail.  One of the giant roots could probably crush it
+              in a single blow.
+  - keywords:
+    - tree
+    - trees
+    - trunk
+    - trunks
+    desc: |
+              The ancient grey giants seem to observe you silently.
+- vnum: 6115
+  name: A Small Path In The Deep, Dark Forest
+  sector: forest
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are on a narrow path leading through the deep, dark forest.  You feel
+    as if the ancient trees observe you in watchful silence.  The path continues
+    north and west.
+  exits:
+    north:
+      to: 6116
+      desc: |
+            The narrow path winds its way through the trees to the north.
+      key: -1
+    west:
+      to: 6114
+      desc: |
+            The narrow path winds its way through the trees to the west.
+      key: -1
+  extra_descs:
+  - keywords:
+    - path
+    desc: |
+              The path seems all too frail.  One of the giant roots could probably crush it
+              in a single blow.
+  - keywords:
+    - tree
+    - trees
+    - trunk
+    - trunks
+    desc: |
+              The ancient grey giants seem to observe you silently.
+- vnum: 6116
+  name: A Small Path In The Deep, Dark Forest
+  sector: forest
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are on a narrow path leading through the deep, dark forest.  Giant,
+    grey trees loom ominously on all sides.  The path continues east and south.
+  exits:
+    east:
+      to: 6117
+      desc: |
+            The narrow path winds its way through the trees to the east.
+      key: -1
+    south:
+      to: 6115
+      desc: |
+            The narrow path winds its way through the trees to the south.
+      key: -1
+  extra_descs:
+  - keywords:
+    - path
+    desc: |
+              The path seems all too frail.  One of the giant roots could probably crush it
+              in a single blow.
+  - keywords:
+    - tree
+    - trees
+    - trunk
+    - trunks
+    desc: |
+              The ancient grey giants seem to observe you silently.
+- vnum: 6117
+  name: A Junction In The Deep, Dark Forest
+  sector: forest
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are by a junction where three paths meet.  Ancient, grey trees seem
+    to observe you silently you from all sides.  Paths lead north, east and west.
+  exits:
+    north:
+      to: 6106
+      desc: |
+            The narrow path winds its way through the trees to the north.
+      key: -1
+    east:
+      to: 6118
+      desc: |
+            The narrow path winds its way through the trees to the east.
+      key: -1
+    west:
+      to: 6116
+      desc: |
+            The narrow path winds its way through the trees to the west.
+      key: -1
+  extra_descs:
+  - keywords:
+    - path
+    - paths
+    desc: |
+              The path seems all too frail.  One of the giant roots could probably crush it
+              in a single blow.
+  - keywords:
+    - tree
+    - trees
+    - trunk
+    - trunks
+    desc: |
+              The ancient grey giants seem to observe you silently.
+- vnum: 6118
+  name: A Small Path In The Deep, Dark Forest
+  sector: forest
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are on a narrow path leading through the deep, dark forest.  Ancient,
+    grey trees loom everywhere.  The path continues south and west.
+  exits:
+    south:
+      to: 6119
+      desc: |
+            The narrow path winds its way through the trees to the south.
+      key: -1
+    west:
+      to: 6117
+      desc: |
+            The narrow path winds its way through the trees to the west.
+      key: -1
+  extra_descs:
+  - keywords:
+    - path
+    desc: |
+              The path seems all too frail.  One of the giant roots could probably crush it
+              in a single blow.
+  - keywords:
+    - tree
+    - trees
+    - trunk
+    - trunks
+    desc: |
+              The ancient grey giants seem to observe you silently.
+- vnum: 6119
+  name: A Small Path In The Deep, Dark Forest
+  sector: forest
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are on a narrow path leading through the deep, dark forest.  Huge,
+    ancient trees are on all sides.  The path continues north and south.
+  exits:
+    north:
+      to: 6118
+      desc: |
+            The narrow path winds its way through the trees to the north.
+      key: -1
+    south:
+      to: 6120
+      desc: |
+            The narrow path winds its way through the trees to the south.
+      key: -1
+  extra_descs:
+  - keywords:
+    - path
+    desc: |
+              The path seems all too frail.  One of the giant roots could probably crush it
+              in a single blow.
+  - keywords:
+    - tree
+    - trees
+    - trunk
+    - trunks
+    desc: |
+              You feel as if they are watching you.
+- vnum: 6120
+  name: On The River Bank In The Deep, Dark Forest
+  sector: forest
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are on a narrow path leading through the deep, dark forest.  To the
+    south a fast river is flowing westward through the forest.  Ancient grey
+    trees loom on both banks.  The path continues north and west.
+  exits:
+    north:
+      to: 6119
+      desc: |
+            The narrow path winds its way through the trees to the north.
+      key: -1
+    south:
+      to: 901
+      desc: |
+            It looks as if you can enter the fast flowing river just to the
+            south.
+      key: -1
+    west:
+      to: 6121
+      desc: |
+            The narrow path winds its way through the trees to the west.
+      key: -1
+  extra_descs:
+  - keywords:
+    - path
+    desc: |
+              The path seems all too frail.  One of the giant roots could probably crush it
+              in a single blow.
+  - keywords:
+    - bank
+    - banks
+    - tree
+    - trees
+    - trunk
+    - trunks
+    desc: |
+              The ancient crowns of trees on both banks reach together forming a dense roof
+              above the dark river.
+  - keywords:
+    - river
+    desc: |
+              The river flows fast and strong.  It is black or looks so in the gloom.
+- vnum: 6121
+  name: A Dead End Path On The River Bank In The Deep, Dark Forest
+  sector: forest
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are on a narrow path leading through the deep, dark forest.  The
+    ancient trees stand so close that the path disappears between the dusty
+    roots.  To the south a dark river flows from east to west.  The only exit
+    appears to be east.
+  exits:
+    east:
+      to: 6120
+      desc: |
+            The narrow path winds its way through the trees to the east.
+      key: -1
+  extra_descs:
+  - keywords:
+    - path
+    desc: |
+              The path seems all too frail.  One of the giant roots could probably crush it
+              in a single blow.
+  - keywords:
+    - bank
+    - banks
+    - tree
+    - trees
+    - trunk
+    - trunks
+    desc: |
+              The ancient crowns of trees on both banks reach together forming a dense roof
+              above the dark river.
+  - keywords:
+    - river
+    desc: |
+              The river flows fast and strong.  It is black or looks so in the gloom.
+- vnum: 6122
+  name: A Small Path In The Deep, Dark Forest
+  sector: forest
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are on a narrow path leading through the deep, dark forest.  Giant,
+    grey trees loom ominously all around.  The path continues east and south.
+  exits:
+    east:
+      to: 6114
+      desc: |
+            The narrow path winds its way through the trees to the east.
+      key: -1
+    south:
+      to: 6123
+      desc: |
+            The narrow path winds its way through the trees to the south.
+      key: -1
+  extra_descs:
+  - keywords:
+    - path
+    desc: |
+              The path seems all too frail.  One of the giant roots could probably crush it
+              in a single blow.
+  - keywords:
+    - tree
+    - trees
+    - trunk
+    - trunks
+    desc: |
+              The ancient grey giants seem to observe you silently.
+- vnum: 6123
+  name: A Junction On The River Bank In The Deep, Dark Forest
+  sector: forest
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are by a junction where three paths meet.  Ancient, grey trees seem
+    to observe you silently you from all around.  To the south a dark river
+    flows from east to west through the forest.  Paths lead north, east and west.
+  exits:
+    north:
+      to: 6122
+      desc: |
+            The narrow path winds its way through the trees to the north.
+      key: -1
+    east:
+      to: 6124
+      desc: |
+            The narrow path winds its way through the trees to the east.
+      key: -1
+    west:
+      to: 6125
+      desc: |
+            The narrow path winds its way through the trees to the west.
+      key: -1
+  extra_descs:
+  - keywords:
+    - path
+    - paths
+    desc: |
+              The path seems all too frail.  One of the giant roots could probably crush it
+              in a single blow.
+  - keywords:
+    - bank
+    - banks
+    - tree
+    - trees
+    - trunk
+    - trunks
+    desc: |
+              The ancient crowns of trees on both banks reach together forming a dense roof
+              above the dark river.
+  - keywords:
+    - river
+    desc: |
+              The river flows fast and strong.  It is black or looks so in the gloom.
+- vnum: 6124
+  name: A Dead End Path In The Deep, Dark Forest
+  sector: forest
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are on a narrow path leading through the deep, dark forest.  The
+    ancient trees stand so close that the path disappears between the dusty
+    roots.  To the south a dark river flows from east to west.  The only exit
+    appears to be west.
+  exits:
+    west:
+      to: 6123
+      desc: |
+            The narrow path winds its way through the trees to the west.
+      key: -1
+  extra_descs:
+  - keywords:
+    - path
+    desc: |
+              The path seems all too frail.  One of the giant roots could probably crush it
+              in a single blow.
+  - keywords:
+    - bank
+    - banks
+    - tree
+    - trees
+    - trunk
+    - trunks
+    desc: |
+              The ancient crowns of trees on both banks reach together forming a dense roof
+              above the dark river.
+  - keywords:
+    - river
+    desc: |
+              The river flows fast and strong.  It is black or looks so in the gloom.
+- vnum: 6125
+  name: A Small Path On The River Bank In The Deep, Dark Forest
+  sector: forest
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are on a narrow path leading through the deep, dark forest.
+    Ancient grey trees loom everywhere.  To the south a dark river flows
+    westward through the forest.  The path continues north and east.
+  exits:
+    north:
+      to: 6126
+      desc: |
+            The narrow path winds its way through the trees to the north.
+      key: -1
+    east:
+      to: 6123
+      desc: |
+            The narrow path winds its way through the trees to the east.
+      key: -1
+  extra_descs:
+  - keywords:
+    - path
+    desc: |
+              The path seems all too frail.  One of the giant roots could probably crush it
+              in a single blow.
+  - keywords:
+    - bank
+    - banks
+    - tree
+    - trees
+    - trunk
+    - trunks
+    desc: |
+              The ancient crowns of trees on both banks reach together forming a dense roof
+              above the dark river.
+  - keywords:
+    - river
+    desc: |
+              The river flows fast and strong.  It is black or looks so in the gloom.
+- vnum: 6126
+  name: A Narrow Trail Through The Deep, Dark Forest
+  sector: forest
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are on a dusty trail winding its way between huge, ancient trees
+    standing close on all sides.  The trail leads north and west, and to the
+    south a frail path leads away from the trail.
+  exits:
+    north:
+      to: 6127
+      desc: |
+            The narrow, dusty trail leads north through the forest.
+      key: -1
+    south:
+      to: 6125
+      desc: |
+            The path leads south - away from the trail.
+      key: -1
+    west:
+      to: 6128
+      desc: |
+            The narrow, dusty trail leads west through the forest.
+      key: -1
+  extra_descs:
+  - keywords:
+    - tree
+    - trees
+    - trunk
+    - trunks
+    desc: |
+              These ancient trees must have been here for many, many years.  It is impossible
+              to catch even a glimpse of anything above the lowest branches.
+  - keywords:
+    - path
+    desc: |
+              The path seems fragile and unsafe compared to the enormous trunks that loom
+              around it.
+  - keywords:
+    - trail
+    desc: |
+              The dark and dusty trail seems fragile compared to the massive trunks, and in
+              some places, giant grey roots have broken up through its surface.
+- vnum: 6127
+  name: A Narrow Trail Through The Deep, Dark Forest
+  sector: forest
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are on a dusty trail winding its way between huge, ancient trees
+    standing close on all sides.  The trail leads east and south.
+  exits:
+    east:
+      to: 6112
+      desc: |
+            The narrow, dusty trail leads east through the forest.
+      key: -1
+    south:
+      to: 6126
+      desc: |
+            The narrow, dusty trail leads south through the forest.
+      key: -1
+  extra_descs:
+  - keywords:
+    - tree
+    - trees
+    - trunk
+    - trunks
+    desc: |
+              These ancient trees must have been here for many, many years.  It is impossible
+              to catch even a glimpse of anything above the lowest branches.
+  - keywords:
+    - trail
+    desc: |
+              The dark and dusty trail seems fragile compared to the massive trunks, and in
+              some places, giant grey roots have broken up through its surface.
+- vnum: 6128
+  name: A Narrow Trail Through The Deep, Dark Forest
+  sector: forest
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are on a dusty trail winding its way east-west between huge, ancient
+    trees that stand close on all sides.  Not a sound is to be heard - everything
+    is ominously quiet.
+  exits:
+    east:
+      to: 6126
+      desc: |
+            The narrow, dusty trail leads east through the forest.
+      key: -1
+    west:
+      to: 6129
+      desc: |
+            The narrow, dusty trail leads west through the forest.
+      key: -1
+  extra_descs:
+  - keywords:
+    - tree
+    - trees
+    - trunk
+    - trunks
+    desc: |
+              These ancient trees must have been here for many, many years.  It is impossible
+              to catch even a glimpse of anything above the lowest branches.
+  - keywords:
+    - trail
+    desc: |
+              The dark and dusty trail seems fragile compared to the massive trunks, and in
+              some places, giant grey roots have broken up through its surface.
+- vnum: 6129
+  name: A Narrow Trail Through The Deep, Dark Forest
+  sector: forest
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are on a dusty trail winding its way east-west between huge, ancient
+    trees that stand close on all sides.  Not a sound is to be heard - everything
+    is ominously quiet.
+  exits:
+    east:
+      to: 6128
+      desc: |
+            The narrow, dusty trail leads east through the forest.
+      key: -1
+    west:
+      to: 6135
+      desc: |
+            The narrow, dusty trail leads west through the forest.
+      key: -1
+  extra_descs:
+  - keywords:
+    - tree
+    - trees
+    - trunk
+    - trunks
+    desc: |
+              These ancient trees must have been here for many, many years.  It is impossible
+              to catch even a glimpse of anything above the lowest branches.
+  - keywords:
+    - trail
+    desc: |
+              The dark and dusty trail seems fragile compared to the massive trunks, and in
+              some places, giant grey roots have broken up through its surface.
+- vnum: 6130
+  name: A Narrow Trail Through The Deep, Dark Forest
+  sector: forest
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are on a dusty trail winding its way westward between huge, ancient
+    trees that stand close on all sides.  The tree trunks seem to be covered in
+    some sticky substance which gets much stickier towards the west!  Beware!
+  exits:
+    east:
+      to: 6110
+      desc: |
+            The narrow, dusty trail leads east through the forest.
+      key: -1
+    west:
+      to: 6131
+      desc: |
+            The sticky substance is hanging like ropes between the trees just above the
+            path.  To the west the path seems to be covered with these giant threads
+            covered with glue.  You can sense the forces of evil coming from the west
+            and your bones tell you it may not be such a good idea to proceed.
+      key: -1
+    up:
+      to: 6132
+      key: -1
+  extra_descs:
+  - keywords:
+    - tree
+    - trees
+    - trunk
+    - trunks
+    desc: |
+              The sticky substance is hanging like ropes between the ancient trees, crossing
+              the path just out of reach.  It might be possible to climb one of the sticky
+              trunks.
+  - keywords:
+    - trail
+    desc: |
+              The dark and dusty trail seems fragile compared to the massive trunks, and in
+              some places, giant grey roots have broken up through its surface.
+  - keywords:
+    - substance
+    - rope
+    - ropes
+    - thread
+    - threads
+    desc: |
+              The substance reminds you of giant threads covered with glue.  If it hadn't
+              been for the size you could have sworn it was part of a spider web.
+- vnum: 6131
+  name: The Deadly Spider Web
+  sector: forest
+  flags:
+  - death
+  - indoors
+  desc: |2
+       You are walking along the narrow path, ducking under the sticky ropes
+    as you advance...
+
+    >
+    A huge, poisonous spider drops from above!
+    A huge, poisonous spider drops from above!
+    A huge, poisonous spider drops from above!
+
+    >
+    The huge, poisonous spider stings you!  You resist the poison!
+    The huge, poisonous spider stings you!  You are poisoned!
+    The huge, poisonous spider stings you!  You are poisoned!
+
+    You are dead.
+  exits:
+    east:
+      to: 6130
+      key: -1
+    west:
+      to: 6134
+      key: -1
+    up:
+      to: 6133
+      key: -1
+- vnum: 6132
+  name: Up In The Tree
+  sector: water_swim
+  flags:
+  - dark
+  - no_mob
+  - indoors
+  desc: |2
+       You are hanging on the outside of a huge tree trunk covered in a sticky
+    substance.  Directly to the west is an immense spider web suspended between
+    numerous of the giant trees including the one you are hanging on.  To the
+    north is what looks like a large webbed entrance.
+  exits:
+    north:
+      to: 6301
+      desc: |
+            To the north is what looks like a large expanse of webbing which extends
+            very far into the trees.
+      key: -1
+    west:
+      to: 6133
+      desc: |
+            To the west is the immense spider web.  It seems to move softly.
+      key: -1
+    down:
+      to: 6130
+      desc: |
+            Downwards is the narrow forest path.
+      key: -1
+  extra_descs:
+  - keywords:
+    - web
+    desc: |
+              The spider web stretches out to the west.  It looks as if it is possible to
+              walk on it.
+- vnum: 6133
+  name: On The spider web
+  sector: water_swim
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are balancing carefully on the giant sticky threads that holds the
+    giant web in place.  To the east is a giant tree trunk and to the west is
+    an entrance to a cave-like structure made from many layers of spider web.
+  exits:
+    east:
+      to: 6132
+      desc: |
+            To the east is the giant tree trunk.
+      key: -1
+    west:
+      to: 6134
+      desc: |
+            To the west is the entrance to the cave-like structure.
+      key: -1
+  extra_descs:
+  - keywords:
+    - cave
+    - structure
+    desc: |
+              It covers a ground area corresponding to an irregular circle with a diameter
+              of about 20 feet and is nearly 10 feet tall.  It looks very old.
+  - keywords:
+    - web
+    desc: |
+              The immense spider web moves softly.
+- vnum: 6134
+  name: The Den Of The Queen Spider
+  sector: water_swim
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are inside a cave-like structure that seems to be made entirely
+    from countless layers of spider web.  Temperature and humidity is very
+    high making it hard to breathe the foul air that lingers here.  The walls
+    are covered with open cocoons.
+  exits:
+    east:
+      to: 6133
+      desc: |
+            Compared to this place the east exit looks inviting.
+      key: -1
+  extra_descs:
+  - keywords:
+    - cocoon
+    - cocoons
+    desc: |
+              The cocoons are burst open as if something inside really wanted to get
+              out.  They are at the size of a human head.
+  - keywords:
+    - web
+    - wall
+    - walls
+    desc: |
+              The sticky walls are covered with open cocoons.
+- vnum: 6135
+  name: A Dusty Trail In The Deep, Dark Forest
+  sector: forest
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are on a dusty trail leading through the deep, dark forest.  Ancient
+    grey trees loom all around you.  The trail continues north and east.
+  exits:
+    north:
+      to: 6136
+      desc: |
+            The dusty trail leads north through the trees.
+      key: -1
+    east:
+      to: 6129
+      desc: |
+            The dusty trail leads east through the trees.
+      key: -1
+  extra_descs:
+  - keywords:
+    - tree
+    - trees
+    - trunk
+    - trunks
+    desc: |
+              The ancient grey giants seem to observe you silently.
+- vnum: 6136
+  name: A Dusty Trail In The Deep, Dark Forest
+  sector: forest
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are on a dusty trail leading through the deep, dark forest.  Ancient,
+    grey trees loom everywhere.  The trail continues south and west.  A broad
+    irregular path leads eastward away from the trail.
+  exits:
+    east:
+      to: 6142
+      desc: |
+            The trees standing on the sides of the path have scratch marks on them.
+      key: -1
+    south:
+      to: 6135
+      desc: |
+            The dusty trail leads south through the trees.
+      key: -1
+    west:
+      to: 6137
+      desc: |
+            The dusty trail leads west through the trees.
+      key: -1
+  extra_descs:
+  - keywords:
+    - trail
+    desc: |
+              The dark and dusty trail seems fragile compared to the massive trunks, and in
+              some places, giant grey roots have broken up through its surface.
+  - keywords:
+    - path
+    desc: |
+              The trees standing on the sides of the path have scratch marks on them.
+  - keywords:
+    - tree
+    - trees
+    - trunk
+    - trunks
+    desc: |
+              To the east the ancient grey giants have many marks as if something with huge
+              claws has been tearing at them in rage.
+- vnum: 6137
+  name: At The End Of The Trail Through The Deep, Dark Forest
+  sector: forest
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are on a dusty trail leading through the deep, dark forest.  Ancient
+    grey trees loom all around you.  A small trail leads northwards and the only
+    other exit is east, along the main trail.
+  exits:
+    north:
+      to: 6138
+      desc: |
+            A narrow trail leads northwards through the underbrush.
+      key: -1
+    east:
+      to: 6136
+      desc: |
+            The dusty trail leads east through the trees.
+      key: -1
+  extra_descs:
+  - keywords:
+    - tree
+    - trees
+    - trunk
+    - trunks
+    desc: |
+              The ancient grey giants seem to observe you silently.
+- vnum: 6138
+  name: On The Narrow Trail
+  sector: forest
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       The trail continues to the north and south as it leads through
+    the heavy underbrush of this part of the Haon-Dor Forest.  Ancient
+    grey trees loom all around you.  The brush seems to be bending
+    closely over the path in a somewhat ominous manner, but you easily
+    shrug it off.  The trail looks to open up somewhat a short distance
+    to the south.
+  exits:
+    north:
+      to: 6139
+      desc: |
+            The narrow trail continues northwards through the underbrush.
+      key: -1
+    south:
+      to: 6137
+      desc: |
+            The dusty trail leads east through the trees.
+      key: -1
+  extra_descs:
+  - keywords:
+    - tree
+    - trees
+    - trunk
+    - trunks
+    desc: |
+              The ancient grey giants seem to observe you silently.
+- vnum: 6139
+  name: On The Narrow Trail
+  sector: forest
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       The trail continues to the north and south as it leads through
+    the heavy underbrush of this part of the Haon-Dor Forest.  The
+    trail looks surprisingly well trodden along this part.  The brush
+    seems to be bending closely over the path in a somewhat ominous
+    manner, but you easily shrug it off.
+  exits:
+    north:
+      to: 6203
+      desc: |
+            A short distance to the north, you can see something shimmering.
+      key: -1
+    south:
+      to: 6138
+      desc: |
+            The path leads southwards through the underbrush.
+      key: -1
+- vnum: 6142
+  name: Outside A Cave In The Deep, Dark Forest
+  sector: forest
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are at the end of a broad, irregular path.  To the north is a very
+    large ominous-looking cave opening.  The trees here have many marks as if
+    something with huge claws has been tearing at them in rage.
+  exits:
+    north:
+      to: 6143
+      desc: |
+            The disgusting smell of a large reptile emanates from the cave opening.
+      key: -1
+    west:
+      to: 6136
+      desc: |
+            The path winds its way westward.
+      key: -1
+  extra_descs:
+  - keywords:
+    - cave
+    - opening
+    desc: |
+              The disgusting smell of a large reptile emanates from the cave opening.
+  - keywords:
+    - tree
+    - trees
+    desc: |
+              The ancient grey giants have many marks as if something with huge claws has
+              been tearing at them in rage.
+- vnum: 6143
+  name: The Cave Of The Green Dragon
+  sector: forest
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are in a big natural cave.  The floor is littered with bones of
+    all sorts and the stench is so massive that you could cut it with a
+    knife.  The only exit is to the south.
+  exits:
+    south:
+      to: 6142
+      desc: |
+            The exit leads out into the forest.
+      key: -1
+  extra_descs:
+  - keywords:
+    - bone
+    - bones
+    - floor
+    desc: |
+              Most of the bones on the floor appear to be of human origin.
+- vnum: 6150
+  name: The Narrow Trail
+  sector: forest
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       This trail looks much spookier than any other that's you have seen.  The
+    usual animal claw marks and bites on the trees are becoming few and far
+    between.  The trail continues north.
+  exits:
+    north:
+      to: 6151
+      desc: |
+            The narrow trail continues north.
+      key: -1
+    south:
+      to: 6103
+      desc: |
+            The trail intersects the main forest path.
+      key: -1
+- vnum: 6151
+  name: The Narrow Trail
+  sector: forest
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       This area of the trail is also very peculiar.  You can see no signs of
+    animal life what so ever.  The structure of the surrounding trees forces
+    the path to make a sharp turn to the east.
+  exits:
+    east:
+      to: 6152
+      desc: |
+            The trail bends east.
+      key: -1
+    south:
+      to: 6150
+      desc: |
+            The start of the trail.
+      key: -1
+- vnum: 6152
+  name: The Circle Of Trees
+  sector: forest
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       The trees here seem to form a circle around the enormous tree in
+    the center.  You notice a wooden door carved into the huge tree to
+    the east.  The trail that you followed to get here seems to end at
+    the base of the tree.
+  exits:
+    east:
+      to: 6153
+      desc: |
+            The tree door is carved beautifully.
+      door: regular
+      key: -1
+      keywords: door
+    west:
+      to: 6151
+      desc: |
+            The bend on the trail.
+      key: -1
+- vnum: 6153
+  name: Inside The Great Tree
+  sector: forest
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You have stepped inside of this hollowed tree.  From here steps lead down
+    into darkness or you can exit the tree by going west.
+  exits:
+    west:
+      to: 6152
+      desc: |
+            The door is carved beautifully.
+      door: regular
+      key: -1
+      keywords: door
+    down:
+      to: 6154
+      desc: |
+            The steps look appear like they will hold your weight.
+      key: -1
+- vnum: 6154
+  name: The Underground Hallway
+  sector: forest
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       This hallway is apparently one of the roots of the tree hollowed out.
+    The hall leads south to a room where you hear strange noises or you can
+    go up the steps.
+  exits:
+    south:
+      to: 6155
+      desc: |
+            The hallway looks quite grand.
+      key: -1
+    up:
+      to: 6153
+      desc: |
+            The steps appear like they will hold your weight.
+      key: -1
+- vnum: 6155
+  name: The Cultist Temple
+  sector: forest
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       This temple, built to a god you don't worship, is a nice place to
+    visit but you feel very uncomfortable about spending any amount of
+    time here.  The wooden altar seems to almost glow as you enter the
+    room.  The only exit is the way you came in.
+  exits:
+    north:
+      to: 6154
+      desc: |
+            The hallway to the north looks quite grand.
+      key: -1
+mobiles:
+- vnum: 6100
+  keywords:
+  - warg
+  - vicious
+  short: the vicious warg
+  long: |
+    A vicious warg is here, snarling angrily at you.
+  desc: |
+    It is an exceptionally large wolf with thick, black fur.  Saliva is dripping
+    quickly from its long, white fangs.  It looks quite dangerous and very angry.
+  act:
+  - aggressive
+  - stay_zone
+  affected:
+  - infravision
+  alignment: -350
+  level: 5
+  thac0: 16
+  ac: 5
+  hp: 1d12+60
+  damage: 2d4
+  gold: 0
+  exp: 1000
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 6101
+  keywords:
+  - warg
+  - ferocious
+  short: the ferocious warg
+  long: |
+    A ferocious warg is here, snarling angrily at you.
+  desc: |
+    It is an exceptionally large wolf with thick, black fur.  Saliva is dripping
+    quickly from its long, white fangs.  It looks quite dangerous and very angry.
+  act:
+  - aggressive
+  - stay_zone
+  affected:
+  - infravision
+  alignment: -350
+  level: 5
+  thac0: 16
+  ac: 5
+  hp: 1d12+80
+  damage: 2d4+4
+  gold: 0
+  exp: 1000
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 6102
+  keywords:
+  - wolf
+  - grey
+  short: the large, grey wolf
+  long: |
+    A large, grey wolf is here, glaring hungrily at you.
+  desc: |
+    The large, grey wolf eyes you with interest while licking its lips.
+  act:
+  - aggressive
+  - stay_zone
+  affected:
+  - infravision
+  alignment: -150
+  level: 3
+  thac0: 18
+  ac: 7
+  hp: 1d12+35
+  damage: 1d7
+  gold: 0
+  exp: 450
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 6103
+  keywords:
+  - wolf
+  - black
+  short: the large, black wolf
+  long: |
+    A large, black wolf is here, glaring hungrily at you.
+  desc: |
+    The large, black wolf eyes you with interest while licking its lips.
+  act:
+  - aggressive
+  - stay_zone
+  affected:
+  - infravision
+  alignment: -150
+  level: 3
+  thac0: 18
+  ac: 7
+  hp: 1d12+45
+  damage: 1d7+3
+  gold: 0
+  exp: 450
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 6110
+  keywords:
+  - tree
+  - ancient
+  short: the ancient tree
+  long: |
+    A huge, ancient tree towers above you.
+  desc: |
+    Its roots are extremely big and large parts of them are above ground.
+    Something about it makes you think that this is not a normal oak tree.
+
+    The enormous grey trunk shivers slightly, as if sighing deeply.
+  act:
+  - stay_zone
+  - memory
+  - no_charm
+  - no_summon
+  - no_sleep
+  - no_bash
+  - no_blind
+  affected:
+  - detect_invis
+  - sense_life
+  - infravision
+  - no_track
+  - sneak
+  - hide
+  alignment: 0
+  level: 30
+  thac0: 0
+  ac: -10
+  hp: 1d1+1299
+  damage: 4d4+22
+  gold: 0
+  exp: 500000
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 6111
+  keywords:
+  - tree
+  - ancient
+  short: the ancient tree
+  long: |
+    A huge, ancient tree towers above you.
+  desc: |
+    Its roots are extremely big and large parts of them are above ground.
+    Something about it makes you think that this is not a normal oak tree.
+
+    The enormous grey trunk emits a deep, moaning sound.
+  act:
+  - stay_zone
+  - memory
+  - no_charm
+  - no_summon
+  - no_sleep
+  - no_bash
+  - no_blind
+  affected:
+  - detect_invis
+  - sense_life
+  - infravision
+  - no_track
+  - sneak
+  - hide
+  alignment: 0
+  level: 30
+  thac0: 0
+  ac: -10
+  hp: 1d1+999
+  damage: 4d4+18
+  gold: 0
+  exp: 400000
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 6112
+  keywords:
+  - dragon
+  - green
+  short: the green dragon
+  long: |
+    A huge green dragon is here, its narrow yellow eyes glowing with rage.
+  desc: |
+    This enormous winged serpent has dark green scales covering most of its
+    colossal body.  Numerous holes in its heavy wings tell of many fights as
+    does the nicks in the horns on its head.  It smells as disgusting as only
+    dragons do.
+  act:
+  - spec
+  - aggressive
+  - stay_zone
+  - no_charm
+  - no_summon
+  - no_bash
+  affected:
+  - detect_invis
+  - infravision
+  alignment: -1000
+  level: 20
+  thac0: 1
+  ac: 0
+  hp: 1d12+248
+  damage: 2d6+9
+  gold: 0
+  exp: 40000
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 6113
+  keywords:
+  - spider
+  - poisonous
+  short: the huge, poisonous spider
+  long: |
+    A huge, poisonous spider is here.
+  desc: |
+    This disgusting creature is at the size of a human crawling on all four.  It
+    has eight hairy legs that gives it a tremendous speed on almost any surface
+    and sharp poisonous fangs to paralyze or kill its prey.
+  act:
+  - spec
+  - sentinel
+  - aggressive
+  - stay_zone
+  affected:
+  - detect_invis
+  - infravision
+  alignment: -350
+  level: 8
+  thac0: 13
+  ac: 2
+  hp: 1d12+98
+  damage: 2d5+1
+  gold: 0
+  exp: 4000
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 6114
+  keywords:
+  - queen
+  - spider
+  short: the Queen spider
+  long: |
+    The huge, bulky Queen spider is here.
+  desc: |
+    This disgusting creature is at the size of a small elephant.  It has eight
+    huge, hairy legs that would give it a tremendous speed on almost any surface
+    if it wasn't so immensely fat.  Its large, bulbous eyes stare back at you.
+  act:
+  - spec
+  - sentinel
+  - stay_zone
+  - aggr_good
+  - memory
+  affected:
+  - detect_invis
+  - sense_life
+  - infravision
+  - no_track
+  alignment: -1000
+  level: 15
+  thac0: 6
+  ac: 1
+  hp: 1d12+185
+  damage: 2d8+3
+  gold: 0
+  exp: 31000
+  position: standing
+  default_position: standing
+  sex: female
+- vnum: 6115
+  keywords:
+  - shargugh
+  - brownie
+  short: Shargugh
+  long: |
+    Shargugh the Forest Brownie is here, grinning broadly at you.
+  desc: |
+    This little fellow is only three foot tall with wild matted brown hair and
+    long tangled brown beard.  He wears ragged brown and green clothing and looks
+    as if he is having great fun.
+  act:
+  - spec
+  - scavenger
+  - stay_zone
+  - wimpy
+  - memory
+  affected:
+  - invisible
+  - detect_invis
+  - sense_life
+  - waterwalk
+  - infravision
+  - no_track
+  - sneak
+  - hide
+  alignment: 1000
+  level: 10
+  thac0: 1
+  ac: -10
+  hp: 1d12+47
+  damage: 1d8
+  gold: 1000
+  exp: 11000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 6116
+  keywords:
+  - elder
+  - druid
+  short: the Elder druid
+  long: |
+    The Elder druid is here.  He looks very upset about your presence in his home.
+  desc: |
+    The druid looks quite old.  You would think of him as venerable but yet you
+    know he would be a tough foe.
+  act:
+  - spec
+  - sentinel
+  - aggr_evil
+  - aggr_good
+  affected:
+  - detect_invis
+  - sense_life
+  - infravision
+  alignment: 0
+  level: 19
+  thac0: 2
+  ac: 0
+  hp: 1d12+236
+  damage: 3d6+4
+  gold: 5000
+  exp: 45000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 6117
+  keywords:
+  - isha
+  - elf
+  short: Isha the Dark Elf
+  long: |
+    Isha the Dark Elf is here, observing you silently.
+  desc: |
+    She is no less than beautiful, skin as dark as the night and hair
+    shining like silver in the moonlight.  Her slender body is adorned
+    with a sleeveless shirt and a short skirt made from black scales
+    joined with silver threads.  Her back is covered by a large, hooded
+    cloak as black as her skin and in her broad silver belt hangs a long,
+    slender sword in a silver scabbard.
+  act:
+  - spec
+  - sentinel
+  - memory
+  - helper
+  affected:
+  - detect_invis
+  - infravision
+  - sneak
+  alignment: -1000
+  level: 20
+  thac0: 1
+  ac: 0
+  hp: 1d12+245
+  damage: 3d6+4
+  gold: 5000
+  exp: 40000
+  position: standing
+  default_position: standing
+  sex: female
+objects:
+- vnum: 6101
+  keywords:
+  - sign
+  short: a sign
+  desc: An old, battered sign lies on the ground.
+  type: other
+  wear:
+  - take
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 10
+  cost: 2
+  rent: 2
+  extra_descs:
+  - keywords:
+    - sign
+    desc: |
+              Only some of the letters are legible :-
+                              _
+                    _________| |_________
+                   /         | |         \
+                  /  CAR.AX  | |  M.STY   \
+                  \  M..SI.N | |  SW..P   /
+                   \_________| |_________/
+                             | |
+- vnum: 6102
+  keywords:
+  - tree
+  - opening
+  short: a colossal tree
+  desc: A colossal tree blocks the way westward.
+  type: container
+  container:
+    capacity: 1000
+    key: 0
+  weight: 0
+  cost: 0
+  rent: 0
+  extra_descs:
+  - keywords:
+    - opening
+    desc: |
+              The opening is far too narrow for you to squeeze through but it looks as if
+              the tree is hollow.
+  - keywords:
+    - tree
+    desc: |
+              This enormous tree must be a thousand years old.  Its rough bark looks grey
+              and pale and is decorated with scratches and clawmarks.  On its west side is
+              a small opening just above ground level.
+- vnum: 6103
+  keywords:
+  - branch
+  - grey
+  - long
+  short: a long, grey branch
+  desc: A long, grey branch rests heavily on the ground.
+  type: light
+  wear:
+  - take
+  - hold
+  light:
+    hours: 25
+  weight: 20
+  cost: 1
+  rent: 3
+  extra_descs:
+  - keywords:
+    - branch
+    - grey
+    - long
+    desc: |
+              It is quite heavy and looks as if it has been dropped from great height.  It
+              is long dead and very dry.  Could probably be lighted quite easily.
+- vnum: 6104
+  keywords:
+  - branch
+  - grey
+  - long
+  short: a long, grey branch
+  desc: A long, grey branch rests heavily on the ground.
+  type: weapon
+  wear:
+  - take
+  - wield
+  weapon:
+    dice: 2d6
+    damage_type: pound
+  weight: 18
+  cost: 60
+  rent: 20
+  affects:
+  - location: hitroll
+    modifier: -2
+  extra_descs:
+  - keywords:
+    - branch
+    - grey
+    - long
+    desc: |
+              It is very heavy and looks as if it has been dropped from great height.  It
+              is long and straight and the wood is very hard, still being full of sap.
+              Although it does not fit very well in your hand, it could be used as a clumsy
+              but very heavy weapon.
+- vnum: 6105
+  keywords:
+  - branch
+  - grey
+  - long
+  short: a long, grey branch
+  desc: A long, grey branch rests heavily on the ground.
+  type: trash
+  wear:
+  - take
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 40
+  cost: 0
+  rent: 0
+  extra_descs:
+  - keywords:
+    - branch
+    - grey
+    - long
+    desc: |
+              It is very heavy and looks as if it has been dropped from great height.  It
+              is somewhat twisted and the hard wood is still full of sap.
+- vnum: 6106
+  keywords:
+  - toadstool
+  short: a toadstool
+  desc: A large toadstool grows nearby.
+  type: food
+  wear:
+  - take
+  values:
+  - 12
+  - 0
+  - 0
+  - 0
+  weight: 5
+  cost: 20
+  rent: 20
+  extra_descs:
+  - keywords:
+    - toadstool
+    desc: |
+              It is a large, brown boletus that must weigh nearly five pounds.  The top
+              surface is covered in a thin layer of transparent slime that emits a weak,
+              musty smell.  Not the most delicious thing you have seen.
+- vnum: 6107
+  keywords:
+  - toadstool
+  short: a toadstool
+  desc: A large toadstool grows nearby.
+  type: food
+  wear:
+  - take
+  values:
+  - 12
+  - 0
+  - 0
+  - 1
+  weight: 5
+  cost: 20
+  rent: 20
+  extra_descs:
+  - keywords:
+    - toadstool
+    desc: |
+              It is a large, brown boletus that must weigh nearly five pounds.  It
+              has small white spots and the top surface is covered in a thin layer
+              of transparent slime that emits a weak, musty smell.  Not the most
+              delicious thing you have seen.
+- vnum: 6108
+  keywords:
+  - coins
+  - gold
+  short: a big pile of gold coins
+  desc: A big pile of gold coins is lying here.
+  type: money
+  wear:
+  - take
+  values:
+  - 15326
+  - 0
+  - 0
+  - 0
+  weight: 15
+  cost: 15326
+  rent: 0
+- vnum: 6109
+  keywords:
+  - potion
+  - blue
+  short: a blue potion
+  desc: A blue potion has been left here.
+  type: potion
+  wear:
+  - take
+  flags:
+  - magic
+  values:
+  - 15
+  - 28
+  - -1
+  - -1
+  weight: 2
+  cost: 68000
+  rent: 5000
+  extra_descs:
+  - keywords:
+    - potion
+    - blue
+    desc: |
+              It has a nice deep blue color and a smell like peppermint.
+- vnum: 6110
+  keywords:
+  - potion
+  - yellow
+  - musky
+  short: a musky yellow potion
+  desc: A yellow potion has been left here.
+  type: potion
+  wear:
+  - take
+  flags:
+  - magic
+  values:
+  - 15
+  - 39
+  - -1
+  - -1
+  weight: 2
+  cost: 1000
+  rent: 200
+  extra_descs:
+  - keywords:
+    - potion
+    - yellow
+    - musky
+    desc: |
+              It has a deep yellow color and and a strong spicy smell.
+- vnum: 6111
+  keywords:
+  - shield
+  - round
+  - large
+  short: a large round shield
+  desc: A large round shield has been left here.
+  type: armor
+  wear:
+  - take
+  - shield
+  armor:
+    ac_apply: 5
+  weight: 15
+  cost: 300
+  rent: 800
+  extra_descs:
+  - keywords:
+    - shield
+    - round
+    - large
+    desc: |
+              It is made from hard wood that has been reinforced with heavy iron bands.
+- vnum: 6112
+  keywords:
+  - crown
+  - iron
+  short: an iron crown
+  desc: An iron crown rests on the ground.
+  type: armor
+  wear:
+  - take
+  - head
+  flags:
+  - magic
+  armor:
+    ac_apply: 6
+  weight: 20
+  cost: 7000
+  rent: 500
+  extra_descs:
+  - keywords:
+    - crown
+    - iron
+    desc: |
+              It is a heavy human-sized crown made from solid iron.
+- vnum: 6113
+  keywords:
+  - sceptre
+  - iron
+  short: an iron sceptre
+  desc: An iron sceptre lies on the ground.
+  type: light
+  wear:
+  - take
+  - hold
+  flags:
+  - magic
+  light:
+    hours: -1
+  weight: 10
+  cost: 5000
+  rent: 700
+  extra_descs:
+  - keywords:
+    - sceptre
+    - iron
+    desc: |
+              It is a heavy sceptre made from solid iron.
+- vnum: 6114
+  keywords:
+  - ring
+  - iron
+  short: an iron ring
+  desc: An iron ring has been left here.
+  type: worn
+  wear:
+  - take
+  - finger
+  flags:
+  - magic
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 10
+  cost: 5000
+  rent: 500
+  affects:
+  - location: armor
+    modifier: -4
+  - location: age
+    modifier: 1
+  extra_descs:
+  - keywords:
+    - ring
+    - iron
+    desc: |
+              It is a quite heavy human-sized ring made from solid iron.  It lacks
+              decorations of any kind.
+- vnum: 6115
+  keywords:
+  - star
+  - morning-star
+  short: the morning star
+  desc: The morning star is here collecting dust while it lies on the ground.
+  type: weapon
+  wear:
+  - take
+  - wield
+  flags:
+  - magic
+  weapon:
+    dice: 2d9
+    damage_type: pound
+  weight: 10
+  cost: 15000
+  rent: 2000
+  affects:
+  - location: hitroll
+    modifier: 2
+- vnum: 6116
+  keywords:
+  - shirt
+  - scale
+  short: a black dragon scale shirt
+  desc: A black dragon scale shirt has been left here.
+  type: armor
+  wear:
+  - take
+  - body
+  flags:
+  - magic
+  armor:
+    ac_apply: 6
+  weight: 10
+  cost: 10000
+  rent: 100
+  extra_descs:
+  - keywords:
+    - shirt
+    - scale
+    desc: |
+              It is a sleeveless shirt made from big, black dragon scales joined
+              with silver threads.  Its inside has been made from the soft skin
+              on the dragon's belly, making it very comfortable to wear.  The word
+              'Isha' has been engraved on one of the scales.
+- vnum: 6117
+  keywords:
+  - skirt
+  - scale
+  short: a black dragon scale skirt
+  desc: A black dragon scale skirt has been left here.
+  type: armor
+  wear:
+  - take
+  - legs
+  flags:
+  - magic
+  armor:
+    ac_apply: 6
+  weight: 8
+  cost: 5000
+  rent: 100
+  extra_descs:
+  - keywords:
+    - skirt
+    - scale
+    desc: |
+              It is a short skirt made from big, black dragon scales joined with
+              silver threads.  Its inside has been made from the soft skin on the
+              dragon's belly, making it very comfortable to wear.  The word 'Isha'
+              has been engraved on one of the scales.
+- vnum: 6118
+  keywords:
+  - cloak
+  - black
+  short: a black, hooded cloak
+  desc: A large, hooded cloak, as dark as the night, has been left here.
+  type: worn
+  wear:
+  - take
+  - about
+  flags:
+  - magic
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 20
+  cost: 8000
+  rent: 4000
+  affects:
+  - location: armor
+    modifier: -6
+  - location: saving_spell
+    modifier: -4
+  extra_descs:
+  - keywords:
+    - cloak
+    - black
+    desc: |
+              It is a heavy, black cloak with a large hood.  The word 'Isha' is written
+              inside it with a silver thread.
+- vnum: 6119
+  keywords:
+  - belt
+  - silver
+  short: a broad silver belt
+  desc: A broad silver belt has been left here.
+  type: armor
+  wear:
+  - take
+  - waist
+  flags:
+  - glow
+  - magic
+  armor:
+    ac_apply: 6
+  weight: 4
+  cost: 5000
+  rent: 3500
+  extra_descs:
+  - keywords:
+    - belt
+    - silver
+    desc: |
+              It is a broad belt made from tiny silver rings woven together.
+- vnum: 6120
+  keywords:
+  - sword
+  - long
+  - slender
+  short: a long, slender sword
+  desc: A long, slender sword lies on the ground.
+  type: weapon
+  wear:
+  - take
+  - wield
+  flags:
+  - glow
+  - magic
+  - anti_good
+  - anti_neutral
+  weapon:
+    dice: 3d6
+    damage_type: slash
+  weight: 4
+  cost: 30000
+  rent: 6000
+  affects:
+  - location: hitroll
+    modifier: 4
+  - location: damroll
+    modifier: 2
+  extra_descs:
+  - keywords:
+    - sword
+    - long
+    - slender
+    desc: |
+              It is a long, slender sword that seems to be made from silver.  The word
+              'Isha' has been engraved on the hilt.
+resets:
+- mob: 6100
+  room: 6116
+  max: 2
+- mob: 6100
+  room: 6116
+  max: 2
+- mob: 6101
+  room: 6127
+  max: 2
+- mob: 6101
+  room: 6127
+  max: 2
+- mob: 6102
+  room: 6108
+  max: 4
+- mob: 6102
+  room: 6108
+  max: 4
+- mob: 6102
+  room: 6104
+  max: 4
+- mob: 6102
+  room: 6104
+  max: 4
+- mob: 6103
+  room: 6112
+  max: 4
+- mob: 6103
+  room: 6112
+  max: 4
+- mob: 6103
+  room: 6118
+  max: 4
+- mob: 6103
+  room: 6118
+  max: 4
+- mob: 6110
+  room: 6120
+  max: 4
+- mob: 6110
+  room: 6123
+  max: 4
+- mob: 6111
+  room: 6109
+  max: 4
+- mob: 6111
+  room: 6105
+  max: 4
+- mob: 6112
+  room: 6143
+  max: 1
+  then:
+  - give: 6108
+    max: 10
+  - give: 6110
+    max: 10
+  - give: 6112
+    max: 1
+  - room: 6143
+    object: 6111
+    max: 10
+- mob: 6113
+  room: 6133
+  max: 3
+- mob: 6113
+  room: 6133
+  max: 3
+- mob: 6113
+  room: 6133
+  max: 3
+- mob: 6114
+  room: 6134
+  max: 1
+  then:
+  - give: 6108
+    max: 10
+  - give: 6109
+    max: 3
+  - give: 6113
+    max: 2
+- mob: 6115
+  room: 6100
+  max: 1
+  then:
+  - equip: 6114
+    slot: finger_right
+    max: 1
+- mob: 6116
+  room: 6155
+  max: 1
+  then:
+  - equip: 6115
+    slot: wield
+    max: 1
+  - give: 3055
+    max: 3
+- mob: 6117
+  room: 6134
+  max: 1
+  then:
+  - equip: 6116
+    slot: body
+    max: 1
+  - equip: 6117
+    slot: legs
+    max: 1
+  - equip: 6118
+    slot: about
+    max: 1
+  - equip: 6119
+    slot: waist
+    max: 1
+  - equip: 6120
+    slot: wield
+    max: 1
+- room: 6103
+  object: 6102
+  max: 1
+- room: 6113
+  object: 6103
+  max: 1
+- room: 6125
+  object: 6104
+  max: 1
+- room: 6105
+  object: 6105
+  max: 1
+- room: 6104
+  remove: 6106
+- room: 6104
+  object: 6106
+  max: 4
+- room: 6111
+  remove: 6106
+- room: 6111
+  object: 6106
+  max: 4
+- room: 6122
+  remove: 6106
+- room: 6122
+  object: 6106
+  max: 4
+- room: 6119
+  remove: 6107
+- room: 6119
+  object: 6107
+  max: 4
+  then:
+  - door: 6152
+    dir: east
+    state: closed
+  - door: 6153
+    dir: west
+    state: closed

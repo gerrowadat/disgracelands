@@ -1,0 +1,11 @@
+"DETECT ALIGNMENT"
+
+Usage       : cast 'detect alignment'
+Accumulative: Yes (Duration)
+Duration    : 12 hours + level
+Level       : Cleric level 4.
+
+Allows the caster to detect the alignment of those around them.
+Evil will show as a red aura, good in a blue aura.
+
+See also: "DETECT INVISIBILITY"

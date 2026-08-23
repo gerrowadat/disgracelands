@@ -1,0 +1,1091 @@
+schema: dl/world@1
+zone:
+  vnum: 9
+  name: River Island Of Minos
+  range:
+  - 900
+  - 999
+  lifespan: 39
+  reset: empty
+rooms:
+- vnum: 900
+  name: On The Swift Flowing River
+  sector: water_noswim
+  desc: |2
+       As the river exits the city of Midgaard it picks up speed and whisks
+    you along high banks flanked by the trees of Haon-Dor.  As the city
+    fades in the east, you approach a gloomy forest to the west.
+  exits:
+    east:
+      to: 3200
+      key: -1
+    west:
+      to: 901
+      key: -1
+- vnum: 901
+  name: The Riverbank
+  sector: water_noswim
+  desc: |2
+       The river is deep, and runs swiftly in an east-west direction.  To the
+    north the river eddies and enters a backwash where a small bank extends
+    down from a dark, thick stand of trees.  It doesn't look particulary
+    inviting however.
+  exits:
+    north:
+      to: 6120
+      key: -1
+    east:
+      to: 900
+      key: -1
+    west:
+      to: 902
+      key: -1
+- vnum: 902
+  name: The Twisty Part Of The River
+  sector: water_noswim
+  desc: |2
+       The river twists and turns and nearly tosses you out of your boat.
+    The water is dark, cold, almost reptilian in sheen.  It seems almost
+    alive.  The river runs east and south.
+  exits:
+    east:
+      to: 901
+      key: -1
+    south:
+      to: 903
+      key: -1
+- vnum: 903
+  name: The Scenic Route
+  sector: water_noswim
+  desc: |2
+       The dark forest of Haon-Dor recedes behind you to the northeast.
+    The river continues in a westerly direction toward the river delta,
+    where you can just make out a large island.
+  exits:
+    east:
+      to: 902
+      key: -1
+    west:
+      to: 904
+      key: -1
+- vnum: 904
+  name: The Swift River Delta
+  sector: water_noswim
+  desc: |2
+       You are at the edge of the river delta, where the river empties
+    out on its way to the sea.  The water here is Black.  Deep.  Dark.
+    Deadly.  The tidal waves sweep you around and around up and down.
+  exits:
+    north:
+      to: 911
+      key: -1
+    east:
+      to: 903
+      key: -1
+    south:
+      to: 906
+      key: -1
+    west:
+      to: 905
+      key: -1
+- vnum: 905
+  name: Near The Rocks
+  sector: water_noswim
+  desc: |2
+       You bob up and down in the waves comming dangerously close to some
+    large, jagged rocks on the eastern shore of an unusual looking island.
+    There is no way you could possibly land there without getting killed.
+  exits:
+    east:
+      to: 904
+      key: -1
+    south:
+      to: 906
+      key: -1
+- vnum: 906
+  name: The South River Delta
+  sector: water_noswim
+  desc: |2
+       You are making your way along a channel in the river delta between
+    the island to the west and the shore to the south and east.  To the
+    south an aging broken down looking pier juts out from land and toward
+    the west the channel works it way close to the island as it moves around
+    its southern tip.
+  exits:
+    north:
+      to: 905
+      key: -1
+    east:
+      to: 904
+      key: -1
+    south:
+      to: 907
+      key: -1
+    west:
+      to: 908
+      key: -1
+- vnum: 907
+  name: The Pier
+  sector: water_noswim
+  desc: |2
+       You float next to a crumbling pier long since neglected.
+    To the west the water gets sluggish and there are many weeds and
+    some seaweed floating about.
+  exits:
+    north:
+      to: 906
+      key: -1
+    west:
+      to: 908
+      key: -1
+- vnum: 908
+  name: Mired In Seaweed
+  sector: water_noswim
+  desc: |2
+       The going is rough here.  The tide struggles with the normal flow
+    of the river and here near the edge of the sea there is a large
+    amount of growth.  To the west the channel passes the southern tip of
+    the island and heads for open waters.
+  exits:
+    north:
+      to: 906
+      key: -1
+    east:
+      to: 907
+      key: -1
+    west:
+      to: 909
+      key: -1
+- vnum: 909
+  name: The Last Stop
+  sector: water_noswim
+  desc: |2
+       The delta meets the sea here.  To the west you see nothing but
+    ocean on the horizon.  Sea birds squawk noisily at your approach
+    and take flight from a nearby beach head on the island.  It looks
+    as though this could be the last stop for those heading out to sea.
+  exits:
+    north:
+      to: 910
+      key: -1
+    east:
+      to: 908
+      key: -1
+- vnum: 910
+  name: The Beach Head
+  sector: field
+  desc: |2
+       This is a secluded looking beach on the southern tip of the island.
+    There isn't much to see here and there is no way to cross the steep
+    rocky cliffs that wall in this place.
+  exits:
+    south:
+      to: 909
+      key: -1
+- vnum: 911
+  name: The North Channel
+  sector: water_noswim
+  flags:
+  - no_mob
+  desc: |2
+       The river splits as runs up against the island and a navigatble
+    channel slips off to the north and west.
+  exits:
+    north:
+      to: 912
+      key: -1
+    south:
+      to: 904
+      key: -1
+    west:
+      to: 912
+      key: -1
+- vnum: 912
+  name: The North Channel
+  sector: water_noswim
+  desc: |2
+       The river current carries you swiftly westward as the channel
+    begins to narrow as it squeezes past the north end of the island.
+  exits:
+    east:
+      to: 911
+      key: -1
+    south:
+      to: 911
+      key: -1
+    west:
+      to: 913
+      key: -1
+- vnum: 913
+  name: Near The Isle
+  sector: water_noswim
+  flags:
+  - no_mob
+  desc: |2
+       You are sitting just off a small landing on the island that
+    appears to be nothing more than a short path that leads to the
+    side of a hill.
+  exits:
+    east:
+      to: 912
+      key: -1
+    south:
+      to: 914
+      key: -1
+- vnum: 914
+  name: The Lane Of The Lying
+  sector: city
+  desc: |2
+       Bodies lie everywhere.  Commoner, peasant, duke, duchess.  The Gods
+    will not hear you call here.  Hence they will not answer you.  To the
+    south the path ends at a dark cave entrance.
+    A sign has been posted beside the entrance.
+  exits:
+    north:
+      to: 913
+      key: -1
+    south:
+      to: 915
+      key: -1
+  extra_descs:
+  - keywords:
+    - sign
+    - cave
+    desc: |
+              A sign beside the dark cave opening reads:
+
+                 WARNING! Only fools and dead people pass this way.
+                 The tests of Minos, our glorious ruler, await.
+- vnum: 915
+  name: The First Trial Of Minos
+  sector: city
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       Ah... you find yourself in Minos' battlefield playground.  
+    Minos loves to torture his people through these places.  He
+    collects the monsters of the world and puts them here.
+  exits:
+    east:
+      to: 916
+      key: -1
+- vnum: 916
+  name: The Second Trial Of Minos
+  sector: city
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       Minos' voice reveberates from the four walls of this room:
+    'Get some rest and make sure you're healed.  You'll need it for
+    the next monster in my playground.  Or are you strong enough?'
+       To the south is the entrance to the next challenge of Minos'
+    stronghold.
+  exits:
+    south:
+      to: 917
+      key: -1
+- vnum: 917
+  name: The Third Trial Of Minos
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You go inside a red room.  Very red.  As if the Minos King used
+    them to disembowel his guests.  The path continues eastward.  You
+    see blue lights in that direction.
+  exits:
+    east:
+      to: 918
+      key: -1
+- vnum: 918
+  name: The Fourth Trial Of Minos
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       Minos must be a monster hacking machine.  You see a blue light
+    flicker on and off.  A voice crackles, 'WHY ARE YOU HERE!'
+  exits:
+    south:
+      to: 919
+      key: -1
+- vnum: 919
+  name: The Fifth Trial Of Minos
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       This is General Woundwort's quarters.  Hraka abound.  The frayed
+    corpses of rabbits lie scattered about this hell-hole.  The General
+    is not a very neat person as you can tell.
+  exits:
+    east:
+      to: 920
+      key: -1
+- vnum: 920
+  name: The Sixth Trial Of Minos
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       Dare we surmise how many more rooms Minos has?  The paths appear to be
+    endless.  You shudder the sounds of death cries from the east.  A loud
+    voice bellows another warning: 'Leave now or face my wrath!'
+    There is a crawlway leading upwards at the far end of the room and
+    there is a fresh breeze comming from there.
+  exits:
+    south:
+      to: 921
+      key: -1
+    up:
+      to: 923
+      key: -1
+- vnum: 921
+  name: The Final Trial Of Minos
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       This is Minos' room.  What else did you expect?  The room is lavishly
+    decorated for this bovine king.  Everything is so opulent that it makes
+    your eyes bulge.  Survive and reap his fortune!  The only exit is a large
+    oak door in the east wall.
+  exits:
+    east:
+      to: 922
+      desc: |
+            You see a rather large oak door bound with iron and securely locked.
+      door: pickproof
+      key: 900
+      keywords: door oak
+- vnum: 922
+  name: The Royal Chamber
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  - private
+  desc: |2
+       The treasure room of Minos is dark save for your lantern.
+    Hopefully it has not been looted yet by the many legendary thieves
+    of Midgaard.  A clever looking secret passage leads upward from here.
+  exits:
+    up:
+      to: 910
+      key: -1
+- vnum: 923
+  name: Above, On The Beach
+  sector: hills
+  desc: |2
+       You sit amongst the rocks above a small beach at the southern
+    end of the island.  You could clamber down easy enough, but getting
+    back up would be another story.
+  exits:
+    down:
+      to: 910
+      key: -1
+mobiles:
+- vnum: 900
+  keywords:
+  - homba
+  short: the homba
+  long: |
+    The homba flits about.
+  desc: |
+    Part kestrel, part bear, part wolf.  Parts is parts, and makes an ugly whole.
+  act:
+  - sentinel
+  - aggressive
+  - memory
+  - helper
+  affected:
+  - invisible
+  - detect_invis
+  - waterwalk
+  - infravision
+  - no_track
+  alignment: -100
+  level: 4
+  thac0: 16
+  ac: 5
+  hp: 2d10+40
+  damage: 1d8+4
+  gold: 100
+  exp: 1500
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 901
+  keywords:
+  - swordsman
+  short: the swordsman
+  long: |
+    The greatest swordsman in the land is standing here with a sneer on his face.
+  desc: |
+    This is the ultimate swordsman.
+  act:
+  - sentinel
+  - aggressive
+  - memory
+  - helper
+  affected:
+  - detect_invis
+  - infravision
+  - no_track
+  alignment: -400
+  level: 7
+  thac0: 12
+  ac: 3
+  hp: 3d10+80
+  damage: 2d5+2
+  gold: 250
+  exp: 3000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 902
+  keywords:
+  - mummy
+  - rabscuttle
+  short: the Mummy of Rabscuttle
+  long: |
+    The Mummy of Rabscuttle wanders here, hands aloft, walking towards you.
+  desc: |
+    All bandages, no personality.
+  act:
+  - sentinel
+  - aggressive
+  - memory
+  - helper
+  affected:
+  - detect_invis
+  - infravision
+  - no_track
+  alignment: -780
+  level: 11
+  thac0: 10
+  ac: 1
+  hp: 6d3+130
+  damage: 2d6+2
+  gold: 750
+  exp: 10500
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 903
+  keywords:
+  - lizard
+  - giant
+  short: the giant lizard
+  long: |
+    A giant lizard is here.
+  desc: |
+    This scaly creature looks like it is well adapted to its underground
+    habitat.  He looks very powerful.
+  act:
+  - sentinel
+  - aggressive
+  - memory
+  - helper
+  affected:
+  - detect_invis
+  - infravision
+  - no_track
+  alignment: 100
+  level: 16
+  thac0: 6
+  ac: 2
+  hp: 10d2+220
+  damage: 3d4+5
+  gold: 1200
+  exp: 26000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 904
+  keywords:
+  - woundwort
+  - general
+  - demon
+  short: General Woundwort
+  long: |
+    General Woundwort, the dark demon of Minos, awaits to maul you to shreds.
+  desc: |
+    He looks vaguely like a rabbit, but sure doesn't act like one.
+  act:
+  - sentinel
+  - aggressive
+  - memory
+  - helper
+  affected:
+  - detect_invis
+  - sanctuary
+  - infravision
+  - no_track
+  alignment: -1000
+  level: 25
+  thac0: 0
+  ac: -1
+  hp: 10d8+520
+  damage: 3d5+12
+  gold: 10000
+  exp: 120000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 905
+  keywords:
+  - franz
+  - henchman
+  short: Franz the Henchman
+  long: |
+    Franz, Minos' henchman, is here ready to pump you up.
+  desc: |
+    Franz is no girlie man.  He is very muscular and looks as if he could
+    squeeze your head like a grapefruit.
+  act:
+  - sentinel
+  - aggressive
+  - memory
+  - helper
+  affected:
+  - detect_invis
+  - sanctuary
+  - infravision
+  - no_track
+  alignment: -300
+  level: 12
+  thac0: 7
+  ac: 4
+  hp: 5d10+120
+  damage: 2d8+4
+  gold: 1000
+  exp: 14000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 906
+  keywords:
+  - hanz
+  - henchman
+  short: Hanz the Henchman
+  long: |
+    Hanz is here flexing his muscles and squeezing grapefruits.
+  desc: |
+    Hanz is no girlie man.  He is very muscular and looks as if he could
+    lift a large dragon.
+  act:
+  - sentinel
+  - aggressive
+  - memory
+  - helper
+  affected:
+  - detect_invis
+  - sanctuary
+  - infravision
+  - no_track
+  alignment: -300
+  level: 12
+  thac0: 7
+  ac: 4
+  hp: 5d10+120
+  damage: 2d8+4
+  gold: 1000
+  exp: 14000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 907
+  keywords:
+  - minos
+  - king
+  - minotaur
+  short: King Minos the Minotaur
+  long: |
+    King Minos the Minotaur is ready and waiting to gore you to death.
+  desc: |
+    He smells something awful.
+  act:
+  - sentinel
+  - aggressive
+  - memory
+  - helper
+  - no_charm
+  - no_summon
+  - no_bash
+  affected:
+  - detect_invis
+  - sense_life
+  - sanctuary
+  - infravision
+  - no_track
+  alignment: -1000
+  level: 26
+  thac0: 0
+  ac: -2
+  hp: 12d8+590
+  damage: 4d6+10
+  gold: 0
+  exp: 160000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 908
+  keywords:
+  - turtle
+  - dragon
+  short: the dragon turtle
+  long: |
+    A large dragon turtle breaks the surface churning the water into huge waves.
+  desc: |
+    The turtle's shell is the size of a small house and looks as hard as rock.
+  act:
+  - aggressive
+  - stay_zone
+  - no_bash
+  affected:
+  - detect_invis
+  - infravision
+  - no_track
+  alignment: -200
+  level: 22
+  thac0: 4
+  ac: -5
+  hp: 12d6+350
+  damage: 1d20+5
+  gold: 10000
+  exp: 80000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 909
+  keywords:
+  - hag
+  - sea
+  short: the sea hag
+  long: |
+    You notice the face of an ugly hag in the sea weeds.
+  desc: |
+    The sea hag is terribly fightful and has razor sharp teeth.
+  act:
+  - aggressive
+  - stay_zone
+  affected:
+  - detect_invis
+  - infravision
+  - no_track
+  alignment: -700
+  level: 4
+  thac0: 16
+  ac: 6
+  hp: 4d4+35
+  damage: 2d5
+  gold: 100
+  exp: 750
+  position: standing
+  default_position: standing
+  sex: female
+- vnum: 910
+  keywords:
+  - merman
+  short: the merman
+  long: |
+    There is a merman swimming here brandishing his trident at you!
+  desc: |
+    The merman has a powerful tail fin instead of legs.
+  act:
+  - sentinel
+  - aggressive
+  - memory
+  - helper
+  - no_charm
+  - no_summon
+  - no_bash
+  affected:
+  - detect_invis
+  - infravision
+  - no_track
+  - sneak
+  - hide
+  alignment: 350
+  level: 5
+  thac0: 14
+  ac: 5
+  hp: 5d5+65
+  damage: 2d4+2
+  gold: 1500
+  exp: 1000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 911
+  keywords:
+  - crab
+  - crusty
+  short: the crusty crab
+  long: |
+    A crusty looking crab is crawling around here searching for food.
+  desc: |
+    It looks like a crab... what more can be said?
+  act:
+  - aggressive
+  - wimpy
+  - no_bash
+  affected:
+  - detect_invis
+  - infravision
+  - no_track
+  alignment: 0
+  level: 2
+  thac0: 18
+  ac: 4
+  hp: 5d2+25
+  damage: 1d5
+  gold: 0
+  exp: 150
+  position: standing
+  default_position: standing
+  sex: neutral
+objects:
+- vnum: 900
+  keywords:
+  - key
+  - golden
+  - heavy
+  short: a golden key
+  desc: A heavy golden key lies here.
+  type: key
+  wear:
+  - take
+  - hold
+  flags:
+  - no_rent
+  values:
+  - 900
+  - 0
+  - 0
+  - 0
+  weight: 1
+  cost: 0
+  rent: 0
+- vnum: 901
+  keywords:
+  - shield
+  - minotaur
+  short: a dark minotaur shield
+  desc: A dark minotaur shield has been left here.
+  type: armor
+  wear:
+  - take
+  - shield
+  flags:
+  - no_donate
+  - magic
+  - no_drop
+  armor:
+    ac_apply: 12
+  weight: 12
+  cost: 5000
+  rent: 1350
+  affects:
+  - location: saving_breath
+    modifier: -4
+  extra_descs:
+  - keywords:
+    - shield
+    - minotaur
+    desc: |
+              A strong, sturdy shield.  It brings to mind legends of a shield that
+              provided protection from poisonous gases.
+- vnum: 902
+  keywords:
+  - potion
+  - speckled
+  short: a speckled potion
+  desc: A speckled potion speckles here.
+  type: potion
+  wear:
+  - take
+  flags:
+  - magic
+  values:
+  - 15
+  - 15
+  - 15
+  - 15
+  weight: 2
+  cost: 1300
+  rent: 500
+- vnum: 903
+  keywords:
+  - gauntlets
+  - troll
+  short: a pair of troll gauntlets
+  desc: A pair of gauntlets made from troll skin lie on the ground.
+  type: armor
+  wear:
+  - take
+  - hands
+  flags:
+  - magic
+  armor:
+    ac_apply: 5
+  weight: 8
+  cost: 2000
+  rent: 1350
+- vnum: 904
+  keywords:
+  - ring
+  - platinum
+  short: a platinum ring
+  desc: A shining ring of platinum lies here.  It has a tiny inscription.
+  type: light
+  wear:
+  - take
+  - finger
+  - hold
+  flags:
+  - glow
+  - magic
+  - no_drop
+  light:
+    hours: -1
+  weight: 1
+  cost: 2000
+  rent: 5500
+  affects:
+  - location: armor
+    modifier: 10
+  - location: hitroll
+    modifier: 2
+  extra_descs:
+  - keywords:
+    - ring
+    - platinum
+    - inscription
+    desc: |
+              The inscription on the ring reads:
+
+              Cursed be the gods that supply coins to mortals!
+              And cursed be the mortal that accepts valuable gifts from the gods!
+              Especially cursed are those who do not leave the toilet seat up!
+- vnum: 905
+  keywords:
+  - flail
+  short: a flail
+  desc: A flail has been carelessly left here.
+  type: weapon
+  wear:
+  - take
+  - wield
+  flags:
+  - invisible
+  - magic
+  - no_drop
+  weapon:
+    dice: 3d4
+    damage_type: pound
+  weight: 8
+  cost: 5000
+  rent: 3500
+  affects:
+  - location: damroll
+    modifier: 2
+- vnum: 906
+  keywords:
+  - coins
+  - gold
+  - treasure
+  short: a great pile of treasure
+  desc: A great, gleaming pile of treasure lies at your feet.
+  type: money
+  wear:
+  - take
+  values:
+  - 43500
+  - 0
+  - 0
+  - 0
+  weight: 20
+  cost: 43500
+  rent: 0
+- vnum: 907
+  keywords:
+  - spear
+  - heavy
+  short: a heavy spear
+  desc: A heavy spear has been tossed on the ground here.
+  type: weapon
+  wear:
+  - take
+  - wield
+  weapon:
+    dice: 1d7
+    damage_type: pierce
+  weight: 8
+  cost: 450
+  rent: 200
+  affects:
+  - location: damroll
+    modifier: 1
+- vnum: 908
+  keywords:
+  - trident
+  short: a trident
+  desc: There is a warrior's trident here.
+  type: weapon
+  wear:
+  - take
+  - wield
+  weapon:
+    dice: 2d4
+    damage_type: pierce
+  weight: 8
+  cost: 350
+  rent: 200
+  extra_descs:
+  - keywords:
+    - trident
+    desc: |
+              This is a common trident, often used by gladiators or mermen.  It has
+              three sharp prongs jutting from the business end and a smooth wooden
+              handle with two comfortable grip points.
+- vnum: 909
+  keywords:
+  - boots
+  - boat
+  short: a pair of boots
+  desc: A pair of boots sit here in a puddle of water.
+  type: boat
+  wear:
+  - take
+  - feet
+  flags:
+  - no_donate
+  - no_invis
+  - no_sell
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 1
+  cost: 5000
+  rent: 1850
+  affects:
+  - location: max_move
+    modifier: -20
+  extra_descs:
+  - keywords:
+    - boots
+    - boat
+    desc: |
+              The boots are made of a strange lightweight hide and float in a puddle
+              of water.
+resets:
+- mob: 900
+  room: 915
+  max: 3
+- mob: 900
+  room: 915
+  max: 3
+- mob: 900
+  room: 915
+  max: 3
+- mob: 901
+  room: 916
+  max: 2
+  then:
+  - equip: 901
+    slot: hold
+    max: 15
+- mob: 901
+  room: 916
+  max: 2
+- mob: 902
+  room: 917
+  max: 1
+- mob: 903
+  room: 918
+  max: 1
+- mob: 904
+  room: 919
+  max: 1
+  then:
+  - equip: 903
+    slot: hands
+    max: 10
+  - equip: 902
+    slot: hold
+    max: 25
+- mob: 905
+  room: 920
+  max: 1
+  then:
+  - equip: 905
+    slot: wield
+    max: 10
+- mob: 906
+  room: 920
+  max: 1
+  then:
+  - equip: 907
+    slot: wield
+    max: 5
+- mob: 907
+  room: 921
+  max: 1
+  then:
+  - equip: 901
+    slot: shield
+    max: 8
+  - equip: 900
+    slot: hold
+    max: 1
+  - room: 922
+    object: 904
+    max: 10
+  - room: 922
+    object: 906
+    max: 1
+- mob: 909
+  room: 908
+  max: 2
+- mob: 909
+  room: 908
+  max: 2
+- mob: 910
+  room: 909
+  max: 2
+  then:
+  - equip: 908
+    slot: wield
+    max: 30
+- mob: 910
+  room: 909
+  max: 2
+  then:
+  - equip: 908
+    slot: wield
+    max: 30
+- mob: 911
+  room: 910
+  max: 3
+- mob: 911
+  room: 910
+  max: 3
+- room: 910
+  remove: 909
+- room: 910
+  object: 909
+  max: 12
+- door: 921
+  dir: east
+  state: locked

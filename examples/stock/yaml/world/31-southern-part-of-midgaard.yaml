@@ -1,0 +1,1827 @@
+schema: dl/world@1
+zone:
+  vnum: 31
+  name: Southern part of Midgaard
+  range:
+  - 3100
+  - 3299
+  lifespan: 40
+  reset: always
+rooms:
+- vnum: 3100
+  name: The Northwest End Of The Concourse
+  sector: city
+  desc: |2
+       You are at the concourse, the city wall is just west.  A small promenade
+    goes east, and the bridge is just north of here.  The concourse continues
+    south along the city wall.
+  exits:
+    north:
+      to: 3051
+      desc: |
+            You see the Bridge.
+      key: -1
+    east:
+      to: 3101
+      desc: |
+            You see the promenade.
+      key: -1
+    south:
+      to: 3127
+      desc: |
+            The promenade continues far south.
+      key: -1
+- vnum: 3101
+  name: The Promenade
+  sector: city
+  desc: |2
+       The river gently flows westwards just north of here.  The promenade
+    continues further east and to the west you see the city wall.  Park Road
+    leads south from here.
+  exits:
+    east:
+      to: 3102
+      desc: |
+            The promenade continues.
+      key: -1
+    south:
+      to: 3131
+      desc: |
+            Park Road leads south.
+      key: -1
+    west:
+      to: 3100
+      desc: |
+            You see the Concourse.
+      key: -1
+- vnum: 3102
+  name: The Promenade
+  sector: city
+  desc: |2
+       The river gently flows westwards just north of here.  The promenade
+    continues both east and west.  South of here you see the entrance to
+    the park, and a small building seems to be just west of the entrance.
+  exits:
+    east:
+      to: 3103
+      desc: |
+            You see the promenade.
+      key: -1
+    south:
+      to: 3105
+      desc: |
+            You see the park entrance.
+      key: -1
+    west:
+      to: 3101
+      desc: |
+            You see the promenade.
+      key: -1
+- vnum: 3103
+  name: The Promenade
+  sector: city
+  desc: |2
+       The river gently flows westwards just north of here.  The promenade
+    continues both east and west.  A small path leads south.  Looking across
+    the river you see the levee.
+  exits:
+    east:
+      to: 3104
+      desc: |
+            You see the Concourse.
+      key: -1
+    south:
+      to: 3132
+      desc: |
+            The small path leads south.
+      key: -1
+    west:
+      to: 3102
+      desc: |
+            You see the promenade.
+      key: -1
+- vnum: 3104
+  name: The Northeast End Of The Concourse
+  sector: city
+  desc: |2
+       You are at the Concourse.  The city wall is just east and a small
+    promenade goes west.  Looking across the river you see a building that
+    resembles a warehouse.  The Concourse continues south along the city
+    wall.
+  exits:
+    south:
+      to: 3130
+      desc: |
+            The Concourse continues south.
+      key: -1
+    west:
+      to: 3103
+      desc: |
+            You see the promenade.
+      key: -1
+  extra_descs:
+  - keywords:
+    - wall
+    desc: |
+              It is built from large grey rocks that have been fastened to each other with
+              some kind of mortar.  It is far too high to climb.
+- vnum: 3105
+  name: The Park Entrance
+  sector: city
+  flags:
+  - no_mob
+  desc: |2
+       You are standing just inside the small park of Midgaard.  To the north is
+    the promenade and a small path leads south into the park.  To your east is
+    the famous Park Cafe.
+  exits:
+    north:
+      to: 3102
+      desc: |
+            You see the promenade.
+      key: -1
+    east:
+      to: 3106
+      desc: |
+            You see Park Cafe.
+      key: -1
+    south:
+      to: 3108
+      desc: |
+            You see the park.
+      key: -1
+- vnum: 3106
+  name: Park Cafe
+  sector: inside
+  flags:
+  - indoors
+  - no_magic
+  desc: |2
+       You are inside Park Cafe, a very cozy place with many tables and
+    seats where you can relax and enjoy the view.  To the east you can
+    see the entrance to the park.
+  exits:
+    west:
+      to: 3105
+      desc: |
+            You see the park entrance.
+      key: -1
+- vnum: 3107
+  name: A Small Path In The Park
+  sector: city
+  desc: |2
+       You are walking along a small path through the park.  The path continues
+    south and east.
+  exits:
+    east:
+      to: 3108
+      key: -1
+    south:
+      to: 3113
+      key: -1
+- vnum: 3108
+  name: A Small Path In The Park
+  sector: city
+  desc: |2
+       You are standing on a small path inside the park.  The park entrance is
+    just north of here, and Park Cafe is just east of the entrance.  The path
+    leads further east and west.
+  exits:
+    north:
+      to: 3105
+      desc: |
+            You see the northern park entrance.
+      key: -1
+    east:
+      to: 3109
+      key: -1
+    west:
+      to: 3107
+      key: -1
+- vnum: 3109
+  name: A Small Path In The Park
+  sector: city
+  desc: |2
+       You are on a small path running through the park.  It continues west and
+    south and just north of here you see the southern wall of Park Cafe.
+  exits:
+    south:
+      to: 3115
+      key: -1
+    west:
+      to: 3108
+      key: -1
+- vnum: 3110
+  name: Cityguard HeadQuarters
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You are inside a tidy office.
+  exits:
+    east:
+      to: 3111
+      desc: |
+            You see Park Road.
+      door: regular
+      key: 3105
+      keywords: door
+- vnum: 3111
+  name: Park Road
+  sector: city
+  desc: |2
+       The road continues north and south.  A building is just west of here, you
+    notice a sign on the door.  The park entrance is to the east.
+  exits:
+    north:
+      to: 3131
+      key: -1
+    east:
+      to: 3112
+      desc: |
+            You see the park entrance.
+      key: -1
+    south:
+      to: 3118
+      key: -1
+    west:
+      to: 3110
+      desc: |
+            You see the Cityguard HeadQuarters.
+      door: regular
+      key: 3105
+      keywords: door
+  extra_descs:
+  - keywords:
+    - building
+    - door
+    - sign
+    desc: |
+              The sign on the door says:
+
+                               Cityguard HeadQuarters
+
+                         WARNING: Authorized Personnel Only!
+- vnum: 3112
+  name: The Western Park Entrance
+  sector: city
+  flags:
+  - no_mob
+  desc: |2
+       You are standing at the western end of the park.  A small path leads east
+    into the park and going west through the entrance you will reach Park Road.
+  exits:
+    east:
+      to: 3113
+      key: -1
+    west:
+      to: 3111
+      key: -1
+- vnum: 3113
+  name: A Path In The Park
+  sector: city
+  desc: |2
+       You are in the park.  The paths lead north and west.  Westward is the
+    park entrance and to the east you see a small pond.
+  exits:
+    north:
+      to: 3107
+      key: -1
+    east:
+      to: 3114
+      desc: |
+            You see the pond.
+      key: -1
+    west:
+      to: 3112
+      desc: |
+            You see the western park entrance.
+      key: -1
+- vnum: 3114
+  name: The Pond
+  sector: water_swim
+  desc: |2
+       You are swimming around in the pond, feeling rather stupid.  You can get
+    back on the path from the eastern and western end of the pond.
+  exits:
+    east:
+      to: 3115
+      key: -1
+    west:
+      to: 3113
+      key: -1
+- vnum: 3115
+  name: A Path In The Park
+  sector: city
+  desc: |2
+       You are in the park.  The paths lead north and east.  Eastward is the
+    park entrance and to the west you see a small pond.
+  exits:
+    north:
+      to: 3109
+      key: -1
+    east:
+      to: 3116
+      key: -1
+    west:
+      to: 3114
+      key: -1
+- vnum: 3116
+  name: The Eastern Park Entrance
+  sector: city
+  flags:
+  - no_mob
+  desc: |2
+       You are standing at the eastern end of the park.  A small path leads west
+    into the park.  Going east through the entrance you will reach Emerald
+    Avenue.
+  exits:
+    east:
+      to: 3117
+      key: -1
+    west:
+      to: 3115
+      key: -1
+- vnum: 3117
+  name: Emerald Avenue
+  sector: city
+  desc: |2
+       You are standing on the north end of Emerald Avenue.  To the north is the
+    promenade and to the west is the park entrance.  To the east is the not very
+    big Town Hall of Midgaard.
+  exits:
+    north:
+      to: 3132
+      key: -1
+    east:
+      to: 3137
+      key: -1
+    south:
+      to: 3119
+      key: -1
+    west:
+      to: 3116
+      key: -1
+- vnum: 3118
+  name: Park Road
+  sector: city
+  desc: |2
+       You are on Park Road which leads north and south.
+  exits:
+    north:
+      to: 3111
+      key: -1
+    south:
+      to: 3135
+      key: -1
+- vnum: 3119
+  name: Emerald Avenue
+  sector: city
+  desc: |2
+       You are standing at a bend on Emerald Avenue.  The road leads north and
+    west.
+  exits:
+    north:
+      to: 3117
+      key: -1
+    west:
+      to: 3133
+      key: -1
+- vnum: 3120
+  name: The Road Crossing
+  sector: city
+  desc: |2
+       You are in the middle of the road cross.  Roads lead in all directions.
+    A huge black iron chain as thick as a tree trunk is fastened into the ground
+    at the center of the road cross.  Its other end leads directly upwards towards
+    the sky.
+    A road sign is here.
+  exits:
+    north:
+      to: 3133
+      key: -1
+    east:
+      to: 3136
+      key: -1
+    south:
+      to: 3134
+      key: -1
+    west:
+      to: 3135
+      key: -1
+    up:
+      to: 7914
+      desc: |
+            The chain disappears in the clouds.
+      key: -1
+  extra_descs:
+  - keywords:
+    - chain
+    desc: |
+              The chain reaches the clouds high above you.  It must take some really
+              powerful magic to hold such a chain in place.
+  - keywords:
+    - sign
+    desc: |
+              The sign points in all directions:
+
+                 North - Emerald Avenue.
+                 East  - Park Road.
+                 South - Emerald Avenue.
+                 West  - Park Road.
+
+              Someone has added the following with red paint:
+
+                 Up    - Redferne's Flying Citadel.
+- vnum: 3121
+  name: Emerald Avenue
+  sector: city
+  desc: |2
+       You are standing at a bend on Emerald Avenue.  The road leads south and
+    east.
+  exits:
+    east:
+      to: 3134
+      key: -1
+    south:
+      to: 3125
+      key: -1
+- vnum: 3122
+  name: Park Road
+  sector: city
+  desc: |2
+       You are on Park Road which leads south and north.  Elm Street is east of
+    here.
+  exits:
+    north:
+      to: 3136
+      key: -1
+    east:
+      to: 3123
+      key: -1
+    south:
+      to: 3126
+      key: -1
+- vnum: 3123
+  name: Elm Street
+  sector: city
+  desc: |2
+       You are on Elm street.  Park Road is to the west and Elm Street continues
+    in eastward direction.
+  exits:
+    east:
+      to: 3124
+      key: -1
+    west:
+      to: 3122
+      key: -1
+- vnum: 3124
+  name: The End Of Elm Street
+  sector: city
+  desc: |2
+       You are at the end of Elm Street.
+  exits:
+    west:
+      to: 3123
+      key: -1
+- vnum: 3125
+  name: Emerald Avenue
+  sector: city
+  desc: |2
+       You are on Emerald Avenue which continues north.  The Concourse is south
+    of here.
+  exits:
+    north:
+      to: 3121
+      key: -1
+    south:
+      to: 3128
+      key: -1
+- vnum: 3126
+  name: Park Road
+  sector: city
+  desc: |2
+       You are on Park Road which continues north.  The Concourse is south of
+    here.
+  exits:
+    north:
+      to: 3122
+      key: -1
+    south:
+      to: 3129
+      key: -1
+- vnum: 3127
+  name: On The Concourse
+  sector: city
+  desc: |2
+       You are at the southwest corner of the city wall.  The Concourse leads
+    both north and east.
+  exits:
+    north:
+      to: 3100
+      key: -1
+    east:
+      to: 3128
+      key: -1
+    west:
+      to: 3504
+      desc: |
+            Through the South Gate you can see a small path leading southwards.
+      key: -1
+- vnum: 3128
+  name: On The Concourse
+  sector: city
+  desc: |2
+       The Concourse continues both east and west.  Emerald Avenue is north of
+    here.
+  exits:
+    north:
+      to: 3125
+      key: -1
+    east:
+      to: 3129
+      key: -1
+    west:
+      to: 3127
+      key: -1
+- vnum: 3129
+  name: On The Concourse
+  sector: city
+  desc: |2
+       The Concourse continues both east and west.  Park Road is north of here
+    and an iron grate leads south to the graveyard.
+  exits:
+    north:
+      to: 3126
+      key: -1
+    east:
+      to: 3130
+      key: -1
+    south:
+      to: 3150
+      desc: |
+            Through the solid iron bars you see the graveyard.
+      door: pickproof
+      key: 3106
+      keywords: grate
+    west:
+      to: 3128
+      key: -1
+- vnum: 3130
+  name: On The Concourse
+  sector: city
+  desc: |2
+       You are at the southeast corner of the city wall.  The Concourse leads
+    both north and west.
+  exits:
+    north:
+      to: 3104
+      key: -1
+    west:
+      to: 3129
+      key: -1
+- vnum: 3131
+  name: Park Road
+  sector: city
+  desc: |2
+       You are at Park Road which continues north and south.
+  exits:
+    north:
+      to: 3101
+      key: -1
+    south:
+      to: 3111
+      key: -1
+- vnum: 3132
+  name: Emerald Avenue
+  sector: city
+  desc: |2
+       You are at Emerald Avenue which continues north and south.  Penny Lane leads
+    east from here.
+  exits:
+    north:
+      to: 3103
+      key: -1
+    east:
+      to: 3139
+      key: -1
+    south:
+      to: 3117
+      key: -1
+- vnum: 3133
+  name: Emerald Avenue
+  sector: city
+  desc: |2
+       You are standing at a bend on Emerald Avenue.  To the east the road goes on
+    and to the south is the Road Crossing.
+  exits:
+    east:
+      to: 3119
+      key: -1
+    south:
+      to: 3120
+      key: -1
+- vnum: 3134
+  name: Emerald Avenue
+  sector: city
+  desc: |2
+       You are standing at a bend on Emerald Avenue.  To the west the road goes on
+    and to the north is the Road Crossing.
+  exits:
+    north:
+      to: 3120
+      key: -1
+    west:
+      to: 3121
+      key: -1
+- vnum: 3135
+  name: Park Road
+  sector: city
+  desc: |2
+       You are at a bend on Park Road.  To the north the road goes on and to the
+    east is the Road Crossing.
+  exits:
+    north:
+      to: 3118
+      key: -1
+    east:
+      to: 3120
+      key: -1
+- vnum: 3136
+  name: Park Road
+  sector: city
+  desc: |2
+       You are at a bend on Park Road.  To the south the road goes on and to the
+    west is the Road Crossing.
+  exits:
+    south:
+      to: 3122
+      key: -1
+    west:
+      to: 3120
+      key: -1
+- vnum: 3137
+  name: The Waiting Room
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You are standing in the waiting room at the town hall.  Wooden chairs stand
+    along the walls and a long desk with a typewriter is placed in the middle of
+    the room.
+  exits:
+    east:
+      to: 3138
+      desc: |
+            It looks like some kind of office.
+      key: -1
+    west:
+      to: 3117
+      desc: |
+            The exit west leads to Emerald Avenue.
+      key: -1
+  extra_descs:
+  - keywords:
+    - typewriter
+    desc: |
+              It is an ancient Quifatronic T-1000 mk I.  These machines are known for their
+              incredible durability, and for their even more incredible weight.  They make
+              a Cray II look like a laptop.
+  - keywords:
+    - desk
+    desc: |
+              An extremely heavy desk.  It is so large that it doesn't even need drawers.
+              Everything can be stored on its top.
+  - keywords:
+    - chair
+    - chairs
+    desc: |
+              Not the very least comfortable.
+- vnum: 3138
+  name: The Mayor's Office
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       You are in the not very big office of the Mayor of Midgaard.  A large and
+    polished but completely empty desk is standing in front of an armchair that
+    looks so comfortable that it most of all resembles a bed with the head end
+    raised slightly.
+  exits:
+    west:
+      to: 3137
+      desc: |
+            The waiting room is to the west.
+      key: -1
+  extra_descs:
+  - keywords:
+    - chair
+    - armchair
+    desc: |
+              This chair is really a masterpiece.  A chair where one can sit as comfortably
+              as in a bed.  All auditoriums should be equipped with these things.  A shame
+              that there wouldn't be room for the students too, though.
+  - keywords:
+    - desk
+    desc: |
+              This desk is obviously very old.  Nevertheless it looks as if has never been
+              used.
+- vnum: 3139
+  name: Penny Lane
+  sector: city
+  desc: |2
+       You are on Penny Lane.  Emerald Avenue is to the west and Penny Lane
+    continues in eastward direction.
+  exits:
+    east:
+      to: 3140
+      key: -1
+    west:
+      to: 3132
+      key: -1
+- vnum: 3140
+  name: Penny Lane
+  sector: city
+  desc: |2
+       You are on Penny Lane.  The narrow road continues north and west.
+  exits:
+    north:
+      to: 3141
+      key: -1
+    west:
+      to: 3139
+      key: -1
+- vnum: 3141
+  name: The End Of Penny Lane
+  sector: city
+  desc: |2
+       You are at the end of Penny Lane.  The only exit appears to be south.
+  exits:
+    south:
+      to: 3140
+      key: -1
+- vnum: 3150
+  name: A Gravel Road In The Graveyard
+  sector: field
+  desc: |2
+       You are on a well-kept gravel road that leads north-south through the
+    graveyard.  On both sides of the road grow dark evergreen trees.  An iron
+    grate is to the north.
+  exits:
+    north:
+      to: 3129
+      desc: |
+            Through the solid iron bars you see the Concourse.
+      door: pickproof
+      key: 3106
+      keywords: grate
+    south:
+      to: 3151
+      desc: |
+            The gravel road continues southward.
+      key: -1
+- vnum: 3151
+  name: A Gravel Road In The Graveyard
+  sector: field
+  desc: |2
+      You are on a well-kept gravel road that leads north-south through the
+    graveyard.  On both sides of the road grow dark evergreen trees.
+  exits:
+    north:
+      to: 3150
+      desc: |
+            The gravel road continues northwards.
+      key: -1
+    south:
+      to: 3152
+      desc: |
+            The gravel road continues southward.
+      key: -1
+- vnum: 3152
+  name: A Gravel Road In The Graveyard
+  sector: field
+  desc: |2
+      You are on a well-kept gravel road that leads north-south through the
+    graveyard.  On both sides of the road grow dark evergreen trees.
+  exits:
+    north:
+      to: 3151
+      desc: |
+            The gravel road continues northwards.
+      key: -1
+    south:
+      to: 3153
+      desc: |
+            The gravel road continues southward.
+      key: -1
+- vnum: 3153
+  name: A Gravel Road In The Graveyard
+  sector: city
+  desc: |2
+      You are on a well-kept gravel road that leads north-south through the
+    graveyard.  On both sides of the road grow dark evergreen trees.
+  exits:
+    north:
+      to: 3152
+      desc: |
+            The gravel road continues northwards.
+      key: -1
+    south:
+      to: 3154
+      desc: |
+            The gravel road continues southward to an open space before a small
+            building.
+      key: -1
+- vnum: 3154
+  name: In Front Of The Chapel
+  sector: field
+  desc: |2
+       You are on an open space before a small chapel.  A gravel road leads north
+    through the graveyard and the chapel entrance is to the south.
+  exits:
+    north:
+      to: 3153
+      desc: |
+            The gravel road continues northwards.
+      key: -1
+    south:
+      to: 3155
+      desc: |
+            The chapel door is made of dark wood.
+      door: regular
+      key: -1
+      keywords: door
+- vnum: 3155
+  name: Inside The Chapel
+  sector: inside
+  flags:
+  - dark
+  - indoors
+  desc: |2
+       You are in a small, dark chapel.  The dark brown glass in the tiny windows
+    do not let much light through.  A few rows of worn wooden benches stand here
+    and an ancient altar sits in the middle of the floor.
+  exits:
+    north:
+      to: 3154
+      desc: |
+            The chapel door is made of dark wood.
+      door: regular
+      key: -1
+      keywords: door
+  extra_descs:
+  - keywords:
+    - benches
+    - rows
+    desc: |
+              The benches are not of the comfortable kind.
+  - keywords:
+    - altar
+    desc: |
+              The altar looks very old... you examine the floor around the altar and notice
+              that it seems less dusty than the rest of the room... someone must clean here
+              regularly... maybe that old guy in Park Cafe, he looked like that sort...
+  - keywords:
+    - glass
+    - windows
+    desc: |
+              The windows must be meant to be dark.  At least they are completely clean.
+- vnum: 3200
+  name: Under The Bridge
+  sector: water_noswim
+  desc: |2
+       The arch under the bridge is covered by seaweed about a foot above the
+    surface of the river.  The water gently flows through an opening in the lower
+    part of the city wall.
+  exits:
+    east:
+      to: 3201
+      key: -1
+    west:
+      to: 900
+      key: -1
+  extra_descs:
+  - keywords:
+    - wall
+    desc: |
+              It is built from large grey rocks that have been fastened to each other with
+              some kind of mortar.  Looks pretty solid.
+- vnum: 3201
+  name: On The River
+  sector: water_noswim
+  desc: |2
+       North of here you see the miserable buildings of Poor Alley.  The
+    river flows west towards the bridge.  The riverbanks are too steep to
+    climb.
+  exits:
+    east:
+      to: 3202
+      key: -1
+    west:
+      to: 3200
+      key: -1
+- vnum: 3202
+  name: On The River
+  sector: water_noswim
+  desc: |2
+       North of here you see the dump.  The river flows from east to west.  The
+    riverbanks are too steep to climb.
+  exits:
+    east:
+      to: 3203
+      key: -1
+    west:
+      to: 3201
+      key: -1
+- vnum: 3203
+  name: On The River
+  sector: water_noswim
+  desc: |2
+       The levee is directly north of here.  The river flows in an east west
+    direction.
+  exits:
+    north:
+      to: 3049
+      key: -1
+    east:
+      to: 3204
+      key: -1
+    west:
+      to: 3202
+      key: -1
+- vnum: 3204
+  name: On The River
+  sector: water_noswim
+  desc: |2
+       You see the warehouse on the northern riverbank.  East of here you see the
+    city wall.  The river flows west towards the levee.
+  exits:
+    east:
+      to: 3205
+      key: -1
+    west:
+      to: 3203
+      key: -1
+- vnum: 3205
+  name: On The River
+  sector: water_noswim
+  desc: |2
+       The river enters from a hole in the eastern city wall.  The hole has been
+    blocked by several vertically positioned iron bars set into the wall.
+  exits:
+    east:
+      to: 5001
+      desc: |
+            The iron bars make it difficult to pass through the hole in the wall.
+            Beyond the bars you see that the river leads into a cavern below the
+            mountain range to the east.
+      key: -1
+    west:
+      to: 3204
+      key: -1
+mobiles:
+- vnum: 3100
+  keywords:
+  - maid
+  short: the Maid
+  long: |
+    The Maid is waiting for your order.
+  desc: |
+    She is very beautiful with golden hair, and deep blue eyes.  A good reason
+    for coming here more often, you think to yourself.
+  act:
+  - spec
+  - sentinel
+  - memory
+  - no_charm
+  - no_summon
+  affected:
+  - detect_invis
+  alignment: 1000
+  level: 33
+  thac0: 0
+  ac: -10
+  hp: 1d1+30000
+  damage: 1d8+22
+  gold: 2000
+  exp: 80000
+  position: standing
+  default_position: standing
+  sex: female
+- vnum: 3101
+  keywords:
+  - sexton
+  short: the Sexton
+  long: |
+    A Sexton is sitting here, drinking hot tea.
+  desc: |
+    The Sexton looks like he is relaxing after another gravedigging job.
+  act:
+  - sentinel
+  alignment: 800
+  level: 3
+  thac0: 18
+  ac: 7
+  hp: 2d6+35
+  damage: 1d7
+  gold: 13
+  exp: 300
+  position: sitting
+  default_position: sitting
+  sex: male
+- vnum: 3102
+  keywords:
+  - chief
+  - guard
+  short: the Chief Guard
+  long: |
+    The Chief Guard is looking very upset.
+  desc: |
+    A very angry chief.
+  act:
+  - sentinel
+  - scavenger
+  - aggressive
+  affected:
+  - detect_invis
+  alignment: 800
+  level: 17
+  thac0: 3
+  ac: 1
+  hp: 1d12+210
+  damage: 1d8+18
+  gold: 0
+  exp: 28000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 3103
+  keywords:
+  - cityguard
+  - guard
+  short: the upset cityguard
+  long: |
+    A cityguard stands here, looking very upset.
+  desc: |
+    A big, strong, angry guard.
+  act:
+  - sentinel
+  - scavenger
+  - aggressive
+  alignment: 1000
+  level: 10
+  thac0: 10
+  ac: 2
+  hp: 1d12+123
+  damage: 1d8+3
+  gold: 0
+  exp: 9000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 3104
+  keywords:
+  - secretary
+  short: the Secretary
+  long: |
+    A secretary is sitting at the desk, typing away on the typewriter.
+  desc: |
+    She looks very busy.
+
+    The Secretary says 'Sorry, but the Mayor is extremely busy today.'
+    The Secretary says 'Please sit down and have a seat in the meantime.'
+  act:
+  - sentinel
+  alignment: 900
+  level: 12
+  thac0: 9
+  ac: 2
+  hp: 1d12+148
+  damage: 2d7+1
+  gold: 100
+  exp: 13000
+  position: standing
+  default_position: standing
+  sex: female
+- vnum: 3105
+  keywords:
+  - mayor
+  short: the Mayor
+  long: |
+    The Mayor is sitting in his huge chair, snoring loudly.
+  desc: |
+    He is a stocky, middle-aged man with thin, grey hair.
+  act:
+  - spec
+  - sentinel
+  - memory
+  - no_charm
+  - no_summon
+  affected:
+  - detect_invis
+  alignment: 1000
+  level: 24
+  thac0: 0
+  ac: -4
+  hp: 6d10+790
+  damage: 1d8+18
+  gold: 1000
+  exp: 130000
+  position: sleeping
+  default_position: sleeping
+  sex: male
+- vnum: 3106
+  keywords:
+  - crier
+  short: the Town Crier
+  long: |
+    The Town Crier is here, weeping quietly.
+  desc: |
+    He is very good at his job - completely dissolved in tears.
+  act:
+  - wimpy
+  alignment: 900
+  level: 1
+  thac0: 20
+  ac: 9
+  hp: 2d6+10
+  damage: 1d5
+  gold: 34
+  exp: 100
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 3120
+  keywords:
+  - swan
+  short: the swan
+  long: |
+    A swan is swimming around in the pond.
+  desc: |
+    The white swan is very elegant.
+  act:
+  - sentinel
+  alignment: 1000
+  level: 1
+  thac0: 20
+  ac: 9
+  hp: 2d6+10
+  damage: 1d5
+  gold: 0
+  exp: 100
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 3121
+  keywords:
+  - duckling
+  short: the duckling
+  long: |
+    A duckling is swimming around in the pond.
+  desc: |
+    The duckling is adorable, it looks most of all like a tiny furball.
+  act:
+  - sentinel
+  alignment: 1000
+  level: 0
+  thac0: 20
+  ac: 10
+  hp: 1d1
+  damage: 1d1
+  gold: 0
+  exp: 1
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 3122
+  keywords:
+  - sparrow
+  short: the sparrow
+  long: |
+    A sparrow is flapping around on the ground.
+  desc: |
+    The sparrow looks like it is enjoying life.
+  act:
+  - stay_zone
+  - wimpy
+  alignment: 1000
+  level: 0
+  thac0: 20
+  ac: 10
+  hp: 2d6
+  damage: 1d3
+  gold: 0
+  exp: 25
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 3123
+  keywords:
+  - duck
+  short: the duck
+  long: |
+    A duck is here, quacking happily.
+  desc: |
+    The duck is quite fat.  It looks like it is enjoying life.
+  act:
+  - stay_zone
+  alignment: 1000
+  level: 1
+  thac0: 20
+  ac: 10
+  hp: 2d6+5
+  damage: 1d4
+  gold: 0
+  exp: 75
+  position: standing
+  default_position: standing
+  sex: neutral
+objects:
+- vnum: 3100
+  keywords:
+  - cup
+  - tea
+  short: a cup
+  desc: A cup has been set here.
+  type: drink_container
+  wear:
+  - take
+  drink:
+    capacity: 8
+    current: 8
+    liquid: tea
+  weight: 13
+  cost: 5
+  rent: 1
+  extra_descs:
+  - keywords:
+    - cup
+    desc: |
+              It is a small simple cup.
+- vnum: 3101
+  keywords:
+  - cup
+  - coffee
+  short: a cup
+  desc: A cup has been set here.
+  type: drink_container
+  wear:
+  - take
+  drink:
+    capacity: 8
+    current: 8
+    liquid: coffee
+  weight: 13
+  cost: 7
+  rent: 1
+  extra_descs:
+  - keywords:
+    - cup
+    desc: |
+              It is a small simple cup.
+- vnum: 3102
+  keywords:
+  - cup
+  - water
+  short: a cup
+  desc: A cup has been set here.
+  type: drink_container
+  wear:
+  - take
+  drink:
+    capacity: 12
+    current: 12
+    liquid: clear_water
+  weight: 17
+  cost: 2
+  rent: 1
+  extra_descs:
+  - keywords:
+    - cup
+    desc: |
+              It is a large simple cup.
+- vnum: 3103
+  keywords:
+  - bottle
+  - water
+  short: a bottle
+  desc: A bottle of Evian natural spring water is here.
+  type: drink_container
+  wear:
+  - take
+  drink:
+    capacity: 24
+    current: 24
+    liquid: clear_water
+  weight: 29
+  cost: 10
+  rent: 6
+  extra_descs:
+  - keywords:
+    - bottle
+    desc: |
+              It is a large, clean bottle.  There is a large label pasted on the side.
+  - keywords:
+    - label
+    desc: |
+              You've been ripped off!  It says here at the bottom of the label, in really
+              really small letters, 'Bottled in the Midgaard branch of Evian Inc.  This
+              water is from the natural, mostly clean River of Midgaard.'
+- vnum: 3104
+  keywords:
+  - canteen
+  - water
+  short: a canteen
+  desc: A canteen has been set on the ground here.
+  type: drink_container
+  wear:
+  - take
+  drink:
+    capacity: 80
+    current: 80
+    liquid: clear_water
+  weight: 85
+  cost: 45
+  rent: 15
+  extra_descs:
+  - keywords:
+    - canteen
+    desc: |
+              It is a fairly big canteen.  Looks like it can hold a lot of liquid.
+- vnum: 3105
+  keywords:
+  - key
+  - iron
+  short: an iron key
+  desc: An iron key has been left here.
+  type: key
+  wear:
+  - take
+  flags:
+  - no_rent
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 1
+  cost: 0
+  rent: 10
+  extra_descs:
+  - keywords:
+    - key
+    - iron
+    desc: |
+              The iron key is not special.  In fact, it is quite boring.
+- vnum: 3106
+  keywords:
+  - key
+  - rusty
+  short: a rusty key
+  desc: A rusty key has been left here.
+  type: key
+  wear:
+  - take
+  flags:
+  - no_rent
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 1
+  cost: 0
+  rent: 10
+  extra_descs:
+  - keywords:
+    - key
+    - rusty
+    desc: |
+              The key is a fairly large rusty key.  You notice a lot of dirt it.
+- vnum: 3107
+  keywords:
+  - key
+  - wooden
+  short: a wooden key
+  desc: A wooden key has been left here.
+  type: key
+  wear:
+  - take
+  flags:
+  - no_rent
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 1
+  cost: 0
+  rent: 10
+  extra_descs:
+  - keywords:
+    - key
+    - wooden
+    desc: |
+              The wooden key is not special.  In fact it is just about the most boring
+              key you've ever seen in your life.
+- vnum: 3108
+  keywords:
+  - key
+  - brass
+  short: a brass key
+  desc: A brass key has been left here.
+  type: key
+  wear:
+  - take
+  flags:
+  - no_rent
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 1
+  cost: 0
+  rent: 10
+  extra_descs:
+  - keywords:
+    - key
+    - brass
+    desc: |
+              The brass key is small and looks like it fits a very complicated lock.
+- vnum: 3109
+  keywords:
+  - desk
+  - drawer
+  short: the desk
+  desc: A desk is set against the western wall.
+  type: container
+  container:
+    capacity: 34
+    closeable: true
+    pickproof: true
+    closed: true
+    locked: true
+    key: 3107
+  weight: 100
+  cost: 0
+  rent: 0
+  extra_descs:
+  - keywords:
+    - drawer
+    desc: |
+              You notice a keyhole in the drawer.
+  - keywords:
+    - desk
+    desc: |
+              The desk looks very sparse, there is a drawer in the left side.
+- vnum: 3110
+  keywords:
+  - safe
+  short: the safe
+  desc: A safe is placed in a dark corner of the room.
+  type: container
+  container:
+    capacity: 34
+    closeable: true
+    pickproof: true
+    closed: true
+    locked: true
+    key: 3108
+  weight: 999
+  cost: 0
+  rent: 0
+  extra_descs:
+  - keywords:
+    - safe
+    desc: |
+              The safe is very heavy and has a keyhole.
+- vnum: 3111
+  keywords:
+  - bench
+  short: the Bench
+  desc: A white-painted wooden bench is standing here.
+  type: other
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 100
+  cost: 600
+  rent: 200
+  extra_descs:
+  - keywords:
+    - bench
+    desc: |
+              It is a quite heavy but very comfortable bench.  It is placed with its front
+              towards the river so you can sit and watch the river and the houses on the
+              other side.
+- vnum: 3112
+  keywords:
+  - key
+  - city
+  short: the City Key
+  desc: The very big City Key is lying here.
+  type: key
+  wear:
+  - take
+  flags:
+  - no_rent
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 30
+  cost: 10000
+  rent: 500
+  extra_descs:
+  - keywords:
+    - key
+    - city
+    desc: |
+              It is probably the biggest key you have seen in your life.  It is made from
+              polished gold and has various patterns on it along with the Midgaard Coat of
+              Arms.
+- vnum: 3113
+  keywords:
+  - fountain
+  - water
+  short: a fountain
+  desc: A small white fountain is standing here, gurgling happily.
+  type: fountain
+  values:
+  - 999
+  - 999
+  - 15
+  - 0
+  weight: 999
+  cost: 0
+  rent: 0
+  extra_descs:
+  - keywords:
+    - fountain
+    - water
+    desc: |
+              It is very nice.  Made from fine white marble.
+- vnum: 3114
+  keywords:
+  - coins
+  - gold
+  short: a small pile of gold coins
+  desc: A small pile of gold coins lies here.
+  type: money
+  wear:
+  - take
+  values:
+  - 37
+  - 0
+  - 0
+  - 0
+  weight: 0
+  cost: 0
+  rent: 0
+- vnum: 3115
+  keywords:
+  - gold
+  - coins
+  short: the gold
+  desc: A lot of gold is here.
+  type: money
+  wear:
+  - take
+  values:
+  - 32385
+  - 0
+  - 0
+  - 0
+  weight: 0
+  cost: 32385
+  rent: 0
+- vnum: 3116
+  keywords:
+  - candlestick
+  - candle
+  - stick
+  - pewter
+  short: a candlestick
+  desc: A pewter candlestick is standing here.
+  type: light
+  wear:
+  - take
+  - hold
+  light:
+    hours: 24
+  weight: 5
+  cost: 150
+  rent: 10
+  extra_descs:
+  - keywords:
+    - candlestick
+    desc: |
+              It is a rather old-looking three-armed candlestick made from pewter.  Its
+              candles are a yellowish white color.
+- vnum: 3117
+  keywords:
+  - tree
+  - elm
+  short: an elm tree
+  desc: An old elm tree grows here.
+  type: trash
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 0
+  cost: 0
+  rent: 0
+  extra_descs:
+  - keywords:
+    - elm
+    - tree
+    desc: |
+              The fresh young leaves of the elm tree wave gently in the wind.
+shops:
+- vnum: 3100
+  keeper: 3100
+  rooms:
+  - 3106
+  sells:
+  - 3100
+  - 3101
+  - 3102
+  markup: 1.1
+  markdown: 0.9
+  hours:
+  - - 6
+    - 22
+  - - 23
+    - 24
+  messages:
+    no_such_item_keeper: "%s I haven't got such a drink."
+    no_such_item_player: "%s I see no such thing."
+    do_not_buy: "%s I do not buy, would you like a drink?"
+    keeper_broke: "%s BUG, Please report."
+    player_broke: "%s You can't afford such a fine drink, try the Grubby Inn."
+    buy: "%s Fine, that'll be %d gold pieces."
+    sell: "%s Bug, please report (%d)."
+resets:
+- mob: 3060
+  room: 3111
+  max: 20
+  then:
+  - equip: 3022
+    slot: wield
+    max: 100
+  - give: 3105
+    max: 2
+- mob: 3060
+  room: 3111
+  max: 20
+  then:
+  - equip: 3022
+    slot: wield
+    max: 100
+- mob: 3060
+  room: 3111
+  max: 20
+  then:
+  - equip: 3022
+    slot: wield
+    max: 100
+- mob: 3060
+  room: 3111
+  max: 20
+  then:
+  - equip: 3022
+    slot: wield
+    max: 100
+- mob: 3068
+  room: 3106
+  max: 4
+- mob: 3100
+  room: 3106
+  max: 1
+  then:
+  - give: 3100
+    max: 500
+  - give: 3101
+    max: 500
+  - give: 3102
+    max: 500
+- mob: 3101
+  room: 3106
+  max: 1
+  then:
+  - give: 3106
+    max: 2
+- mob: 3102
+  room: 3110
+  max: 1
+  then:
+  - give: 3107
+    max: 2
+- mob: 3103
+  room: 3110
+  max: 4
+  then:
+  - mob: 3103
+    room: 3110
+    max: 4
+  - mob: 3103
+    room: 3110
+    max: 4
+  - mob: 3103
+    room: 3110
+    max: 4
+- mob: 3104
+  room: 3137
+  max: 1
+- mob: 3105
+  room: 3138
+  max: 1
+  then:
+  - equip: 3112
+    slot: hold
+    max: 1
+- mob: 3106
+  room: 3120
+  max: 1
+- mob: 3120
+  room: 3114
+  max: 1
+- mob: 3121
+  room: 3114
+  max: 1
+- mob: 3122
+  room: 3109
+  max: 1
+- mob: 3123
+  room: 3113
+  max: 2
+- mob: 3123
+  room: 3115
+  max: 2
+- room: 3110
+  object: 3109
+  max: 1
+  then:
+  - put: 3108
+    into: 3109
+    max: 1
+- room: 3110
+  object: 3110
+  max: 1
+  then:
+  - put: 3115
+    into: 3110
+    max: 1
+- room: 3101
+  remove: 3111
+- room: 3101
+  object: 3111
+  max: 3
+- room: 3102
+  remove: 3111
+- room: 3102
+  object: 3111
+  max: 3
+- room: 3103
+  remove: 3111
+- room: 3103
+  object: 3111
+  max: 3
+- room: 3141
+  remove: 3113
+- room: 3141
+  object: 3113
+  max: 1
+- room: 3141
+  object: 3114
+  max: 1
+- room: 3155
+  object: 3116
+  max: 1
+- room: 3124
+  object: 3117
+  max: 1
+- door: 3111
+  dir: west
+  state: locked
+- door: 3110
+  dir: east
+  state: locked
+- door: 3129
+  dir: south
+  state: locked
+- door: 3150
+  dir: north
+  state: locked
+- door: 3154
+  dir: south
+  state: closed
+- door: 3155
+  dir: north
+  state: closed

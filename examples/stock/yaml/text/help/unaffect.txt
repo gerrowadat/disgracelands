@@ -1,0 +1,7 @@
+UNAFFECT
+
+Usage: unaffect <victim>
+
+Removes all affections (i.e., spell effects) from a player.
+
+See also: STAT
