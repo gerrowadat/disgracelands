@@ -4,9 +4,11 @@ This is the Disgracelands game as it actually is: CircleMUD 3.0 patchlevel 20
 plus OasisOLC plus years of local modification, patched to compile and run on
 a modern 64-bit Linux box.
 
-It is the codebase that was played from roughly 2001 to 2008. It works. Until
-the Go port at the repository root can do everything it does, **this is the
-real server** and the Go tree is the project.
+It is the codebase that was played from roughly 2001 to 2008. It still
+builds and still works. Nothing is running it, though — nothing has been
+running Disgracelands in either language since 2008 — so "the real server"
+is a statement about *authority*, not about operation: where this tree and
+the Go port disagree about the game, **this tree is what the game was**.
 
 ## Why it lives in reference/
 
@@ -18,14 +20,16 @@ tree has two active jobs, and it will keep both for a long time:
 
 1. **It is the reference implementation.** Where the Go port and this tree
    disagree about anything, this tree is right by definition — it is the one
-   that has been running the game. Every parser in the Go port was written by
+   that ran the game. Every parser in the Go port was written by
    reading the corresponding function here.
 2. **It is the parity oracle.** `scripts/world-parity.sh` builds this server,
    has it dump the world it loaded, and diffs that against the Go server's
    dump. That check runs in CI on every change. See "The world dump" below.
 
-Nothing here should be deleted until the Go port has been running the real
-game for a while.
+Nothing here should be deleted. Even after the Go port is the only thing
+anyone would start, this tree is the answer to every future fidelity
+question, and deleting it would throw that away for nothing — it costs a
+directory.
 
 ## What is in here
 
@@ -110,13 +114,22 @@ what is wrong.
 
 ## Known problems
 
-Inherited, not introduced, and none of them fixed:
+Inherited, not introduced, and none of them fixed — nor going to be. None
+of these have an operational stake: nothing is exposing this tree to
+anybody, so they are documented because a reader building it locally
+should know what they are running, and because the Go port has to decide
+what to do about each one, not because there is a risk here to close.
+Where the port does fix one, that is a deviation and gets recorded
+(`docs/deviations.md`).
 
 - **The `sprintf`-into-shared-`buf` patterns** throughout `db.c`,
   `improved-edit.c`, `tedit.c`, `zedit.c`, `listrent.c` and `shopconv.c`.
-  Several look like genuine buffer-overflow-shaped bugs — old, apparently
-  never triggered, but "apparently never triggered" is not "safe". The `-w`
-  flag is hiding them.
+  Several look like genuine buffer-overflow-shaped bugs — old and
+  apparently never triggered. Auditing them was an open item until it was
+  decided against (issue #143, `TODO.md`'s "Superseded"): a bug reachable
+  only by someone who chose to build and run this tree themselves is
+  history, not a vulnerability. The `-w` flag is hiding them; that is the
+  thing to know if you build it.
 - **No 64-bit audit** of anything touching saved binary data. The player
   database is a raw `fwrite()` of a struct whose `long` fields changed width
   when the world moved to 64-bit; see
@@ -127,8 +140,9 @@ Inherited, not introduced, and none of them fixed:
   of a password ever mattered.
 - **Telnet only.** No TLS, no rate limiting, no modern connection hygiene.
 
-None of this has been hardened for 2026. Local, LAN, or VPN-only remains the
-sane posture for this tree.
+None of this has been hardened for 2026, and none of it will be. If you
+run this tree at all, run it locally — it exists to be read, dumped and
+diffed against the port, not to take connections.
 
 ## Licence
 

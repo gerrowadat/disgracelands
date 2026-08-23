@@ -7,15 +7,18 @@ seeded from the archive of the original server.
 
 The project is a **Go port** of that server. The root of this repository is
 that port; the original C server lives in `reference/moderncserver/`, where
-it stays buildable, runnable, and authoritative until the port can do
-everything it does.
+it stays buildable, runnable and authoritative — it is what the game was,
+and it is what answers any fidelity question the port raises.
 
 ## Status
 
-**The C server works.** It compiles and boots on modern Linux and serves a
-playable game. Until the Go port catches up, that is the game — and it stays
-the reference implementation either way: where the two disagree, the C is
-right by definition, because it is the one that was played.
+**The C server works.** It compiles and boots on modern Linux and would
+serve a playable game if anyone started it. Nobody is: nothing is running
+Disgracelands in either language, and nothing has since 2008. What that
+tree is for is being *right* — where it and the port disagree, the C wins
+by definition, because it is the one that was played. Phase 7
+(`docs/proposals/go-port-plan.md` §10) is what would have to be true before
+anything took real connections again.
 
 **The data in this repo is stock.** `examples/stock/binary/` is CircleMUD
 3.0 bpl20's `lib/`, unmodified — Midgaard, not Disgracelands — and it is
