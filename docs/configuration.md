@@ -248,6 +248,12 @@ certificate never arrives.
 enforced. `--trust-proxy-headers` has nothing to apply to until the
 WebSocket listener exists.
 
+`--max-connections-per-ip` counts an IPv6 address by its own `/64`, not by
+itself — the block an ISP actually hands one subscriber (RFC 6177), so
+one machine's ordinary address rotation (RFC 4941) cannot walk straight
+through the limit for free the way an address-exact count would let it.
+An IPv4 address, and an IPv4-mapped IPv6 one, still count by themselves.
+
 ## Engine
 
 | Flag | Default | Meaning |

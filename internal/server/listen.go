@@ -56,7 +56,7 @@ func ListenTLS(addr string, cfg *tls.Config) (*Listener, error) {
 func (s *Server) Accept(ctx context.Context, ln *Listener, limits Limits) error {
 	var (
 		nextID  atomic.Uint64
-		perHost sync.Map // host -> *atomic.Int64
+		perHost sync.Map // perHostKey(host) -> *atomic.Int64
 		wg      sync.WaitGroup
 	)
 
@@ -97,8 +97,10 @@ func (s *Server) Accept(ctx context.Context, ln *Listener, limits Limits) error 
 
 		// One address may not use up every slot the server has. This is the
 		// cheapest defence there is against a trivial denial of service, and
-		// the C server has none at all.
-		countAny, _ := perHost.LoadOrStore(host, new(atomic.Int64))
+		// the C server has none at all. Counted by perHostKey, not by host
+		// itself — see its own doc comment for why an IPv6 address needs a
+		// wider bucket than an IPv4 one for "one address" to mean anything.
+		countAny, _ := perHost.LoadOrStore(perHostKey(host), new(atomic.Int64))
 		count := countAny.(*atomic.Int64)
 		if limits.MaxPerHost > 0 && count.Load() >= int64(limits.MaxPerHost) {
 			s.logger.Warn("refusing a connection: too many from this address",
@@ -125,11 +127,38 @@ type Limits struct {
 	// every listener — the C's own max_players (comm.c:1337). Zero means
 	// no limit.
 	MaxPlayers int
-	// MaxPerHost caps simultaneous connections from one address. Zero means
+	// MaxPerHost caps simultaneous connections from one address — one
+	// perHostKey bucket, in practice, not literally one net.IP. Zero means
 	// no limit.
 	MaxPerHost int
 	// LoginGrace is how long a connection may stay unauthenticated.
 	LoginGrace time.Duration
+}
+
+// perHostKey is what --max-connections-per-ip actually counts against, and
+// it is not always the address on the wire.
+//
+// An IPv4 address counts by itself — the C has no equivalent limit at all,
+// so "one address" is this port's own invention, and for IPv4 one address
+// is a reasonable stand-in for one machine. It stops being one for IPv6:
+// a residential ISP hands a single subscriber a /64 or wider (RFC 6177),
+// an ordinary OS's privacy extensions (RFC 4941) rotate an outgoing
+// address from within it every so often on their own, and nothing stops a
+// deliberate abuser picking a fresh one from the same /64 for every
+// connection, for free — an address-exact counter is then not a limit,
+// it is a formality. Bucketing by the /64 the address belongs to is the
+// same "one subscriber" boundary the address space itself already draws.
+//
+// net.IP.To4 is what tells an ordinary IPv4 address apart from an IPv6
+// one — it also returns non-nil for an IPv4-mapped IPv6 address
+// (::ffff:a.b.c.d), which is exactly the "this is really IPv4" case and
+// belongs on the IPv4 side of this split too.
+func perHostKey(host string) string {
+	ip := net.ParseIP(host)
+	if ip == nil || ip.To4() != nil {
+		return host
+	}
+	return ip.Mask(net.CIDRMask(64, 128)).String()
 }
 
 // serve runs one session.
