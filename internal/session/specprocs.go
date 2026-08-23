@@ -7,6 +7,7 @@
 package session
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/gerrowadat/disgracelands/internal/game"
@@ -364,6 +365,88 @@ func specDump(sc *SpecialCall) bool {
 	sc.Actor.Record.Points.Gold += value
 	return true
 }
+
+// specPetShop is SPECIAL(pet_shops) (spec_procs.c:951), assigned to room
+// 3031 itself rather than to a mobile or an object — Midgaard's pet shop has
+// no keeper standing in it at all, just a sign, and the room answers `list`
+// and `buy` on its own behalf.
+//
+// The pets on offer live in the room one vnum higher, reached the same blunt
+// way the C reaches it: `IN_ROOM(ch) + 1`, not a lookup by name or a field on
+// the room. The world file's own comment agrees this is load-bearing rather
+// than incidental: "It is vital that this room's virtual number is exactly
+// one larger [than the shop's]" (data/world/wld/30.wld, room 3032).
+func specPetShop(sc *SpecialCall) bool {
+	petRoom := sc.Actor.Room + 1
+
+	switch {
+	case sc.Is("list"):
+		sc.Tell("Available pets are:\r\n")
+		for _, pet := range sc.World.Occupants(petRoom) {
+			// "No, you can't have the Implementor as a pet if he's in
+			// there" — the C's own comment for this exact check.
+			if !pet.IsNPC() {
+				continue
+			}
+			sc.Tell("%8d - %s\r\n", petPrice(pet), pet.Name)
+		}
+		return true
+
+	case sc.Is("buy"):
+		name, petName, _ := twoArguments(sc.Arg)
+		pet := sc.World.FindInRoom(nil, petRoom, name)
+		if pet == nil || !pet.IsNPC() {
+			sc.Tell("There is no such pet!\r\n")
+			return true
+		}
+		price := petPrice(pet)
+		if sc.Actor.Record == nil || sc.Actor.Record.Points.Gold < price {
+			sc.Tell("You don't have enough gold!\r\n")
+			return true
+		}
+		sc.Actor.Record.Points.Gold -= price
+
+		// read_mobile(GET_MOB_RNUM(pet), REAL): a fresh instance, not the
+		// catalogue animal itself — the one in the back room stays put for
+		// the next customer, the same way a shop's Producing item does.
+		bought := sc.World.SpawnMobile(pet.MobDef.Vnum, sc.Actor.Room, sc.RNG)
+		if bought == nil {
+			return true
+		}
+		bought.Record.Points.Exp = 0
+
+		// SET_BIT(AFF_FLAGS(pet), AFF_CHARM) in the C: a raw flag set with
+		// no affected-type entry behind it, unlike a cast charm spell —
+		// which is why a bought pet never shakes it off on its own the way
+		// spellCharm's timed affect does. BaseAffectFlags is the layer
+		// RecomputeAffects derives from rather than overwrites, so setting
+		// both here directly (the same shape follow.go's own AffectGroup/
+		// AffectHide toggles use) is permanent until StopFollowing clears
+		// it, exactly as letting a pet go should.
+		bought.Record.BaseAffectFlags = bought.Record.BaseAffectFlags.Set(game.AffectCharm)
+		bought.Record.AffectFlags = bought.Record.AffectFlags.Set(game.AffectCharm)
+
+		if petName != "" {
+			// The C appends to the mob's own name field, which is the
+			// keyword list a player types to refer to a mobile by — this
+			// port's Keywords — not the sentence-form name a room listing
+			// or combat message uses.
+			bought.Keywords = bought.Keywords + " " + petName
+			bought.Record.Description += fmt.Sprintf(
+				"A small sign on a chain around the neck says 'My name is %s'\r\n", petName)
+		}
+
+		sc.World.AddFollower(bought, sc.Actor)
+
+		sc.Actor.Tell("May you enjoy your pet.\r\n")
+		sc.ToRoom("%s buys %s as a pet.\r\n", sc.Actor.Name, bought.Name)
+		return true
+	}
+	return false
+}
+
+// petPrice is PET_PRICE (spec_procs.c:949).
+func petPrice(pet *game.Character) int32 { return pet.Level() * 300 }
 
 // dropForDump runs the drop and returns what landed on the floor, so the
 // caller can price it. Simpler than the C's arrangement, which drops and then

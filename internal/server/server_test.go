@@ -195,6 +195,12 @@ const (
 	// no exits: tests put a character in it directly, so that adding it
 	// changes no other room's `[ Exits: ]` line.
 	CellarRoom game.RoomVnum = 3022
+	// PetShopRoom answers `list`/`buy` itself (pet_shops is a room special,
+	// not a mobile's). PetShopBackRoom must be exactly one vnum higher —
+	// specPetShop finds it the same blunt way the C does, by arithmetic on
+	// the room the player is standing in, not a lookup.
+	PetShopRoom     game.RoomVnum = 3023
+	PetShopBackRoom game.RoomVnum = 3024
 )
 
 // MageGuildRoom is guild_info's first row: the magic-user guild, whose door
@@ -444,9 +450,17 @@ func testWorld() *game.Live {
 	houseRoom.Exits[game.North] = &game.ExitDef{ToRoom: AtriumRoom}
 	atriumRoom.Exits[game.South] = &game.ExitDef{ToRoom: HouseRoom}
 
+	petShopRoom := &game.RoomDef{
+		Vnum: PetShopRoom, Name: "The Pet Shop", Description: "A pet shop.\r\n",
+		Spec: "pet_shops",
+	}
+	petShopBackRoom := &game.RoomDef{
+		Vnum: PetShopBackRoom, Name: "Pet Shop Store", Description: "Where the pets are kept.\r\n",
+	}
+
 	rooms := []*game.RoomDef{
 		temple, board, guild, donation, shopRoom, boardRoom, houseRoom,
-		atriumRoom, cellarRoom,
+		atriumRoom, cellarRoom, petShopRoom, petShopBackRoom,
 	}
 	// A run of otherwise-inert rooms — unflagged, no exits — for a test
 	// that needs `show death`/`show godrooms` (act.wizard.c's shared

@@ -510,19 +510,35 @@ Listed here so they are not mistaken for deliberate differences.
   confirmed, not assumed: `MobDef` has no such field, and nothing reads
   one — so there was nothing to resolve it from. Worth a note when the
   world format's mob fields are next revisited.
-- **Two special procedures are left.** The subsystems that were blocking the
+- **One special procedure is left.** The subsystems that were blocking the
   rest all landed in 5f and 5g, so the seam now carries the guildmasters,
   guild guards, Puff, fidos, janitors, cityguards, snakes, mobile mages,
   thieves, the dump, the shopkeeper, the banker, the receptionist, the
-  cryogenicist, the postmaster and the boards — sixteen in all. Two stock ones
-  are left, and both are assigned to vnums the shipped world really has: the
-  **pet shop** (`pet_shops`, room 3031, its own two-room buy-a-follower
-  mechanic) and the **mayor** (mob 3105, a scripted walk around Midgaard on a
-  timer, opening and closing the gates). Neither blocks anything else.
-  **`assign_kings_castle`** is a zone-sized script rather than a special and
-  stays untouched. The local ones (`talkera`, `marblesa`, `remmob`, `cerberus`,
-  `teleporter` and the rest) are attached to vnums that exist only in the
-  archived world, so there is nothing here to attach them to.
+  cryogenicist, the postmaster, the boards and the **pet shop**
+  (`pet_shops`, `spec_procs.c:951`) — seventeen in all. The pet shop is
+  assigned to room 3031 itself rather than to a mobile — Midgaard's has no
+  keeper standing in it, just a sign — and the animals for sale live in
+  room 3032, found by `IN_ROOM(ch) + 1` rather than any lookup, which the
+  port reproduces the same blunt way (`internal/session/specprocs.go`'s
+  `specPetShop`). One accepted gap in what it does once bought: the C also
+  sets `IS_CARRYING_W`/`IS_CARRYING_N` on the new pet to already-maxed
+  values, a cache-poisoning trick that stops it being given, wearing or
+  wielding anything without needing a real "no carrying" mechanism. This
+  port computes carried weight and count from what a character actually
+  holds rather than caching them on the character, so there is no field to
+  poison the same way — a bought pet here can, in principle, be handed an
+  item and carry it, which the real game's pets never could. Small and
+  cosmetic (nobody plays with a charmed puppy's inventory), not worth a
+  new mechanism invented solely to reproduce a cache trick this port's
+  model does not have.
+
+  The **mayor** (mob 3105, a scripted walk around Midgaard on a timer,
+  opening and closing the gates) is the one left, and does not block
+  anything else. **`assign_kings_castle`** is a zone-sized script rather
+  than a special and stays untouched. The local ones (`talkera`,
+  `marblesa`, `remmob`, `cerberus`, `teleporter` and the rest) are attached
+  to vnums that exist only in the archived world, so there is nothing here
+  to attach them to.
 - **`goto <object>` picks an arbitrary one when several answer to the name.**
   `find_target_room` falls back to `get_obj_vis`, which walks the C's
   `object_list` in creation order; this port walks a map, which has no order

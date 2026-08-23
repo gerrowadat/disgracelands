@@ -125,6 +125,7 @@ func init() {
 		"cryogenicist": specCryogenicist,
 		"gen_board":    specGenBoard,
 		"postmaster":   specPostmaster,
+		"pet_shops":    specPetShop,
 	}
 }
 

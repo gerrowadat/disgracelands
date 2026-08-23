@@ -1500,6 +1500,23 @@ Still not wired: `background`'s own `page_string` call, which pages
 from `CON_MENU` rather than `CON_PLAYING` and so needs a real design
 decision `StatePaging` has so far avoided — see §13.
 
+**The pet shop ✅ — the last of 5a's specials but the mayor.** `pet_shops`
+(`spec_procs.c:951`) is assigned to room 3031 itself rather than to a
+mobile — Midgaard's pet shop has no keeper standing in it — and finds
+its stock in room 3032 by `IN_ROOM(ch) + 1`, which `specPetShop`
+reproduces the same blunt way rather than by any lookup. One accepted
+gap: the C also poisons the bought pet's cached carry-weight/count
+fields so it can never be given anything; this port computes those from
+what a character actually holds, so there is no field to poison the
+same way, and a bought pet can in principle carry an item the real
+game's pets never could — small and cosmetic, not worth inventing a
+mechanism solely to reproduce a cache trick this port's model does not
+have. `docs/deviations.md` has the full writeup. Only the **mayor** (mob
+3105, a scripted walk around Midgaard on a timer, opening and closing
+the gates) is left of 5a's specials now — genuinely just not built yet,
+not blocked on anything: the game clock and the door-open/close
+mechanism it would need both already exist.
+
 **Phase 7 — Cutover.** Shadow-run both servers against copies of the same
 `data/`, compare. Then run the Go server as primary, keep the C tree as
 reference. Retire `autorun`/`automaint`/`configure`.
