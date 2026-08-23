@@ -371,6 +371,43 @@ func (l *Live) ReloadMobile(fresh *MobDef, r *rng.Rand) (refreshed int, ok bool)
 	return len(instances), true
 }
 
+// ReloadObject refreshes an object prototype from a freshly loaded
+// definition. New tooling, not a C port — the object half of the reload
+// family ReloadMobile/ReloadZone started.
+//
+// Deliberately narrower than ReloadMobile: an object's shadow fields —
+// Keywords, ShortDesc, Description, ExtraFlags, Values, Affects,
+// PermAffect (Object's own doc comment: "so that one object can differ
+// from its prototype") — hold real state ordinary gameplay mutates
+// continuously: a wand's remaining charges, a container's lock state, a
+// bless or curse effect, a drink container's flavour. That is nothing
+// like a mobile's Record, which is disposable and safely rerolled at
+// every reload; refreshing it here would silently erase whatever play had
+// already changed on every live instance of the vnum in the world at
+// once. So ReloadObject touches only the prototype: existing instances
+// keep whatever they currently are, and pick up only the handful of
+// fields Object already reads live from Def rather than copies at spawn
+// (Spec, MinLevel, RentPerDay, the fallback ActionDesc). A new spawn — a
+// shop restocking, a zone reset, `dlctl` — gets the fresh definition in
+// full.
+//
+// Spec is preserved across the copy for the same reason ReloadMobile
+// preserves it: set once at boot from AssignSpecials, never from the
+// world file, so a freshly loaded ObjDef always has it blank.
+func (l *Live) ReloadObject(fresh *ObjDef) bool {
+	if fresh == nil {
+		return false
+	}
+	existing := l.objectDefs[fresh.Vnum]
+	if existing == nil {
+		return false
+	}
+	spec := existing.Spec
+	*existing = *fresh
+	existing.Spec = spec
+	return true
+}
+
 // ReloadZoneResult reports what a zone reload actually changed.
 type ReloadZoneResult struct {
 	// Rooms is how many room prototypes were updated.

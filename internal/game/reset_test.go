@@ -447,6 +447,158 @@ func TestReloadMobileUnknownVnumIsRefused(t *testing.T) {
 	}
 }
 
+// TestReloadObjectLeavesExistingInstancesAlone is ReloadObject's central
+// guarantee, chosen deliberately over ReloadMobile's own: only the
+// prototype changes, so an existing instance's shadow fields — the ones
+// gameplay actually mutates, Values standing in for a wand's charges or a
+// container's lock state here — must survive a reload untouched, while a
+// *new* spawn picks up the fresh definition in full.
+func TestReloadObjectLeavesExistingInstancesAlone(t *testing.T) {
+	l := resetWorld(nil)
+	sword := l.NewObject(3020)
+	if sword == nil {
+		t.Fatal("NewObject returned nil")
+	}
+	// Stand in for state gameplay would have changed since spawn — a
+	// charge count, a lock bit, whatever the item type's own Values mean.
+	sword.Values[0] = 42
+
+	fresh := &ObjDef{
+		Vnum: 3020, Keywords: "sword", ShortDesc: "a reloaded sword",
+		Description: "A freshly reloaded sword lies here.",
+		Type:        ItemWeapon, WearFlags: ItemWearTake | ItemWearWield,
+		Weight: 12, MinLevel: 5, RentPerDay: 3,
+	}
+	if !l.ReloadObject(fresh) {
+		t.Fatal("ReloadObject refused a known vnum")
+	}
+
+	if sword.ShortDesc != "a sword" {
+		t.Errorf("the existing sword's ShortDesc changed to %q; ReloadObject must not touch spawned instances", sword.ShortDesc)
+	}
+	if sword.Values[0] != 42 {
+		t.Errorf("the existing sword's Values changed to %v; real per-instance state must survive a reload", sword.Values)
+	}
+	if sword.Weight != 10 {
+		t.Errorf("the existing sword's Weight changed to %d, want the original 10", sword.Weight)
+	}
+
+	// Def is a shared pointer: the handful of fields Object reads live
+	// from it update immediately even for the existing instance.
+	if sword.Def.MinLevel != 5 {
+		t.Errorf("Def.MinLevel = %d, want the reloaded value 5", sword.Def.MinLevel)
+	}
+	if sword.Def.RentPerDay != 3 {
+		t.Errorf("Def.RentPerDay = %d, want the reloaded value 3", sword.Def.RentPerDay)
+	}
+
+	// A fresh spawn gets the new definition in full.
+	again := l.NewObject(3020)
+	if again == nil {
+		t.Fatal("NewObject returned nil after reload")
+	}
+	if again.ShortDesc != "a reloaded sword" {
+		t.Errorf("a new spawn's ShortDesc = %q, want the reloaded short description", again.ShortDesc)
+	}
+	if again.Weight != 12 {
+		t.Errorf("a new spawn's Weight = %d, want the reloaded value 12", again.Weight)
+	}
+}
+
+func TestReloadObjectPreservesSpecAssignment(t *testing.T) {
+	l := resetWorld(nil)
+	l.objectDefs[3020].Spec = "bank"
+
+	// The freshly-parsed def, exactly as a world-file parse would
+	// produce: Spec is never in the file, so it comes back empty.
+	if !l.ReloadObject(&ObjDef{Vnum: 3020, Keywords: "sword", ShortDesc: "a sword"}) {
+		t.Fatal("ReloadObject refused")
+	}
+	if l.objectDefs[3020].Spec != "bank" {
+		t.Errorf("objectDefs[3020].Spec = %q, want the boot-time assignment preserved", l.objectDefs[3020].Spec)
+	}
+}
+
+func TestReloadObjectUnknownVnumIsRefused(t *testing.T) {
+	l := resetWorld(nil)
+	if l.ReloadObject(&ObjDef{Vnum: 99999}) {
+		t.Error("ReloadObject succeeded for a vnum nothing has")
+	}
+}
+
+// shopWorld is a small world with one shop, for ReloadShop's own tests —
+// resetWorld does not carry one.
+func shopWorld() *Live {
+	temple := &RoomDef{Vnum: 3001, Name: "The Temple"}
+	l := NewLive(&World{
+		Rooms: []*RoomDef{temple},
+		Mobiles: []*MobDef{
+			{Vnum: 3060, Keywords: "keeper", ShortDesc: "the keeper",
+				Level: 10, Position: int32(PosStanding)},
+			{Vnum: 3061, Keywords: "second keeper", ShortDesc: "the second keeper",
+				Level: 10, Position: int32(PosStanding)},
+		},
+		Shops: []*ShopDef{
+			{Vnum: 9001, Keeper: 3060, ProfitBuy: 1.1, ProfitSell: 0.5, Temper: 0},
+		},
+	})
+	l.AssignShopkeepers()
+	return l
+}
+
+func TestReloadShopUpdatesConfiguration(t *testing.T) {
+	l := shopWorld()
+	// A boot-time secondary function, the way a keeper who is also a
+	// janitor would have one — never in the file, always derived, so
+	// simulated directly rather than by re-running AssignShopkeepers.
+	l.Shop(9001).Secondary = "innkeeper"
+
+	if !l.ReloadShop(&ShopDef{
+		Vnum: 9001, Keeper: 3060, ProfitBuy: 1.25, ProfitSell: 0.4, Temper: 1,
+	}) {
+		t.Fatal("ReloadShop refused a known vnum")
+	}
+
+	shop := l.Shop(9001)
+	if shop.ProfitBuy != 1.25 {
+		t.Errorf("ProfitBuy = %v, want the reloaded 1.25", shop.ProfitBuy)
+	}
+	if shop.Temper != 1 {
+		t.Errorf("Temper = %d, want the reloaded 1", shop.Temper)
+	}
+	// Never in the file — must survive, the same reason Spec survives a
+	// mobile or object reload.
+	if shop.Secondary != "innkeeper" {
+		t.Errorf("Secondary = %q, want the boot-time assignment preserved", shop.Secondary)
+	}
+}
+
+func TestReloadShopChangingKeeperReassignsTheSpecial(t *testing.T) {
+	l := shopWorld()
+	l.mobileDefs[3061].Spec = "janitor"
+
+	if !l.ReloadShop(&ShopDef{Vnum: 9001, Keeper: 3061, ProfitBuy: 1.1, ProfitSell: 0.5}) {
+		t.Fatal("ReloadShop refused")
+	}
+
+	if l.mobileDefs[3061].Spec != "shop_keeper" {
+		t.Errorf("the new keeper's Spec = %q, want shop_keeper", l.mobileDefs[3061].Spec)
+	}
+	if l.Shop(9001).Secondary != "janitor" {
+		t.Errorf("Secondary = %q, want the new keeper's prior spec", l.Shop(9001).Secondary)
+	}
+	if l.ShopFor(&Character{MobDef: l.mobileDefs[3061]}) == nil {
+		t.Error("ShopFor does not recognise the new keeper")
+	}
+}
+
+func TestReloadShopUnknownVnumIsRefused(t *testing.T) {
+	l := shopWorld()
+	if l.ReloadShop(&ShopDef{Vnum: 99999}) {
+		t.Error("ReloadShop succeeded for a vnum nothing has")
+	}
+}
+
 // freshTemple is resetWorld's own zone 30 (Bottom 3000, Top 3099), room
 // 3001 and mob 3060, all changed the way a builder editing the world
 // file would change them.

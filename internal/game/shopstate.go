@@ -78,6 +78,16 @@ func (l *Live) Shops() []*ShopDef {
 	return l.defs.Shops
 }
 
+// Shop returns the shop with this vnum, or nil.
+func (l *Live) Shop(vnum ShopVnum) *ShopDef {
+	for _, shop := range l.Shops() {
+		if shop.Vnum == vnum {
+			return shop
+		}
+	}
+	return nil
+}
+
 // ShopFor returns the shop a mobile keeps, or nil.
 func (l *Live) ShopFor(keeper *Character) *ShopDef {
 	if keeper == nil || keeper.MobDef == nil {
@@ -114,6 +124,58 @@ func (l *Live) AssignShopkeepers() int {
 		assigned++
 	}
 	return assigned
+}
+
+// ReloadShop refreshes a shop's own configuration — prices, buy types,
+// messages, temper, flags, trade-with, rooms, keeper — from a freshly
+// loaded definition. New tooling, not a C port, the shop half of the
+// reload family ReloadMobile/ReloadObject/ReloadZone started.
+//
+// Unlike a mobile or an object, a shop is never instantiated: shopState's
+// own comment says it plainly — "there is exactly one of each shop" — so
+// there is no shared-prototype-versus-live-instance question to answer at
+// all. The one thing this does not touch is a shop's actual runtime
+// state, its shopState (Bank, Sorted): that is the till, not the
+// configuration, the same way ReloadMobile leaves a mobile's Room,
+// Carrying and Position alone.
+//
+// If the keeper vnum changes, the new keeper's prototype needs the
+// shop_keeper special the way AssignShopkeepers gives it at boot —
+// ShopFor resolves the keeper by matching Keeper against a live mobile's
+// vnum on every call, so no *Character needs to move, but nothing else
+// would ever set the new keeper's Spec.
+//
+// Secondary, like a mobile's or an object's Spec, is preserved across the
+// copy rather than taken from the fresh definition: no loader ever sets
+// it (checked, not assumed — grepping every classic and native loader
+// turns up nothing), it exists purely as what AssignShopkeepers computed
+// at boot, so a freshly loaded ShopDef always has it blank. Only a real
+// keeper change re-derives it, the same computation AssignShopkeepers
+// itself does.
+func (l *Live) ReloadShop(fresh *ShopDef) bool {
+	if fresh == nil {
+		return false
+	}
+	existing := l.Shop(fresh.Vnum)
+	if existing == nil {
+		return false
+	}
+
+	oldKeeper, secondary := existing.Keeper, existing.Secondary
+	*existing = *fresh
+	existing.Secondary = secondary
+
+	if existing.Keeper != oldKeeper && existing.Keeper != NoMob {
+		if def, ok := l.mobileDefs[existing.Keeper]; ok {
+			// AssignShopkeepers' own condition, exactly: a blank or
+			// already-shop_keeper Spec leaves Secondary as it was.
+			if def.Spec != "" && def.Spec != "shop_keeper" {
+				existing.Secondary = def.Spec
+			}
+			def.Spec = "shop_keeper"
+		}
+	}
+	return true
 }
 
 // shopState returns the mutable state for a shop, creating it on first use.

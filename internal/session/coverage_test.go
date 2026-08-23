@@ -54,6 +54,8 @@ var notPorted = map[string]string{
 var newCommands = map[string]string{
 	"reloadmob":  "hot-reloads a mobile's definition from disk; see docs/deviations.md",
 	"reloadzone": "reloadmob's own zone-wide extension; see docs/deviations.md",
+	"reloadobj":  "reloadmob's own object counterpart; see docs/deviations.md",
+	"reloadshop": "reloadmob's own shop counterpart; see docs/deviations.md",
 }
 
 // TestEveryCommandIsPortedOrListed compares the C's table against ours.

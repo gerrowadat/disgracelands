@@ -105,6 +105,12 @@ type Context struct {
 	// ZoneReload hot-reloads a zone's rooms and mobiles from disk, for
 	// `reloadzone`.
 	ZoneReload ZoneReloader
+	// ObjectReload hot-reloads an object prototype from disk, for
+	// `reloadobj`.
+	ObjectReload ObjectReloader
+	// ShopReload hot-reloads a shop's configuration from disk, for
+	// `reloadshop`.
+	ShopReload ShopReloader
 	// Arg is everything after the command word, trimmed.
 	Arg string
 	// Social is the social being run, for the commands that are one.
@@ -160,6 +166,28 @@ type ZoneReloader interface {
 // ErrZoneEngaged is what a ZoneReloader returns when a player is
 // anywhere in the zone, or a mobile within its range is fighting.
 var ErrZoneEngaged = errors.New("occupied")
+
+// ObjectReloader hot-reloads an object prototype from disk, for
+// `reloadobj` — new capability, not a C port; see docs/deviations.md.
+// Unlike MobReloader there is no engagement refusal: game.Live.
+// ReloadObject never touches an already-spawned instance, only the
+// prototype (see its own doc comment for why — an object's shadow
+// fields hold real state gameplay mutates, unlike a mobile's disposable
+// derived stats), so there is nothing a live instance could be busy
+// doing that a reload would interrupt.
+type ObjectReloader interface {
+	ReloadObject(w *game.Live, vnum game.ObjVnum) error
+}
+
+// ShopReloader hot-reloads a shop's configuration from disk, for
+// `reloadshop` — new capability, not a C port; see docs/deviations.md.
+// The same no-engagement-refusal reasoning as ObjectReloader: a shop is
+// never instantiated, and game.Live.ShopFor resolves a shop's keeper
+// directly from the live world on every call rather than caching a
+// binding, so there is nothing for a reload to catch mid-use.
+type ShopReloader interface {
+	ReloadShop(w *game.Live, vnum game.ShopVnum) error
+}
 
 // TextEditor is tedit's own seam: reading a canned text file's current
 // content and writing a new one back, both by symbolic name — the same
@@ -551,6 +579,10 @@ func init() {
 		// fine), and both sort after the real "reload" (428) and
 		// before the real "redeem" (430) either way.
 		{Name: "reloadzone", Help: "Re-read a zone's rooms and mobiles from disk.", Run: doReloadZone, CLine: 429, MinLevel: game.LevelGreaterGod},
+		// reloadobj and reloadshop share the same synthetic CLine as
+		// reloadmob/reloadzone, for the same reason.
+		{Name: "reloadobj", Help: "Re-read an object's definition from disk.", Run: doReloadObject, CLine: 429, MinLevel: game.LevelGreaterGod},
+		{Name: "reloadshop", Help: "Re-read a shop's configuration from disk.", Run: doReloadShop, CLine: 429, MinLevel: game.LevelGreaterGod},
 		{Name: "skillset", Help: "Set somebody's skill to a number.", Run: doSkillset, CLine: 469, MinLevel: game.LevelGreaterGod},
 		{Name: "trackthru", Help: "Switch tracking through closed doors.", Run: doTrackThrough, CLine: 517, MinLevel: game.LevelImplementor},
 		{Name: "users", Help: "List every connection, not just the players.", Run: doUsers, CLine: 528, MinLevel: game.LevelImmortal},
@@ -705,6 +737,12 @@ type Dispatcher struct {
 	// ZoneReload hot-reloads a zone's rooms and mobiles from disk, for
 	// `reloadzone`.
 	ZoneReload ZoneReloader
+	// ObjectReload hot-reloads an object prototype from disk, for
+	// `reloadobj`.
+	ObjectReload ObjectReloader
+	// ShopReload hot-reloads a shop's configuration from disk, for
+	// `reloadshop`.
+	ShopReload ShopReloader
 }
 
 // Do implements CommandHandler.
@@ -764,7 +802,7 @@ func (d *Dispatcher) Do(ctx context.Context, s *Session, line string) error {
 		c := &Context{
 			Ctx: ctx, Session: s, Character: s.Character(),
 			World: w, Text: d.Text, RNG: d.RNG, Violence: d.Violence, Arg: arg,
-			Social: cmd.Social, Save: d.Save, Rent: d.Rent, SaveBoard: d.SaveBoard, Mail: d.Mail, Houses: d.Houses, Operator: d.Operator, Bans: d.Bans, Reports: d.Reports, SetPassword: d.SetPassword, TextEdit: d.TextEdit, MobReload: d.MobReload, ZoneReload: d.ZoneReload,
+			Social: cmd.Social, Save: d.Save, Rent: d.Rent, SaveBoard: d.SaveBoard, Mail: d.Mail, Houses: d.Houses, Operator: d.Operator, Bans: d.Bans, Reports: d.Reports, SetPassword: d.SetPassword, TextEdit: d.TextEdit, MobReload: d.MobReload, ZoneReload: d.ZoneReload, ObjectReload: d.ObjectReload, ShopReload: d.ShopReload,
 		}
 
 		// A command that panics must not leave the player staring at a dead

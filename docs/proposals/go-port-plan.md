@@ -1053,21 +1053,29 @@ player skip the mechanic the class exists to reward.
 ### What is not in it
 
 A phase marked done without its gaps is worse than one not marked at all.
-These are the two, and neither is a deviation — they are simply not built,
-so they are not in `docs/deviations.md`:
+This was two once, and is one now — the other, corrected here rather than
+left for a reader to trip over, is not a deviation, so it is not in
+`docs/deviations.md`:
 
 - **`--listen-ws` starts nothing.** The WebSocket transport is the one part
   of this phase not built, so the greeting requirement above holds for every
   transport that exists rather than for every transport intended. It is not
   rescheduled into a numbered phase: it belongs with the web client in the
   "Later" list, and the requirement travels with it.
-- **Movement ignores door state.** `EX_CLOSED` is not checked, because there
-  is no `open`/`close` and no door state to check yet, so a closed door is
-  walked through. It belongs with the rules core in Phase 4.
 
 The configuration gap is marked *(inert)* in `docs/configuration.md` rather
 than left to be discovered at runtime. `--max-players` was the other one
 this section used to name; it is enforced now — see Phase 6's write-up.
+
+**"Movement ignores door state" stopped being true without this document
+saying so.** `EX_CLOSED` reads as though nothing had ever ported it, and
+by the time Phase 6 started reading the C for the specproc and pager work,
+doors, their runtime state, and all five commands that operate them
+(`open`/`close`/`lock`/`unlock`/`pick`) had already landed — `perform_move`'s
+own `EX_CLOSED` check included, so a player has not been able to walk
+through a closed door for a while. Left here as a corrected record rather
+than moved, the same reason color's own stale note was fixed rather than
+silently dropped (#110).
 
 **Phase 4 — Rules core. ✅ Done.** Combat, magic, skills, classes including
 the remort bitmask, affects, position/regen, death and corpses, zone resets,
@@ -1474,12 +1482,55 @@ rather than leaving implicit: a room or mobile vnum the fresh data
 introduces that the running world does not already have is **skipped,
 not created** — reload updates what exists, it does not import what is
 new — and a vnum the fresh data no longer has (deleted from the file) is
-**left as a stale entry**, not removed. Both still need a restart. Object
-and shop reload, and reset-script re-application, are not attempted —
-objects carry `Object`'s own shadow-field copy of their prototype's name/
-description (unlike a mobile's Record, which is fully re-derived), so
-"what does refreshing an existing object even mean" needs its own answer
-before building it, not assumed from the mobile case.
+**left as a stale entry**, not removed. Both still need a restart.
+Reset-script re-application is not attempted — reloading a zone changes
+what its `M`/`O`/`G`/`E` commands would create from now on, not what a
+reset already made — and needs its own answer for the same reason zone
+reload's own room/mobile carve-out did: re-running the list would create
+duplicates of everything the zone already holds rather than refreshing
+it, which is a different feature from this one.
+
+**`reloadobj`/`reloadshop` ✅ — object and shop reload, landed once "what
+does refreshing an existing object even mean" had an answer.** Objects
+carry `Object`'s own shadow-field copy of their prototype's name/
+description (unlike a mobile's `Record`, which is fully re-derived every
+reload), and those fields hold real per-instance state ordinary gameplay
+mutates continuously — a wand's remaining charges, a container's lock
+state, a bless or curse. `ReloadObject` (`internal/game/reset.go`)
+answers by touching only the prototype: existing instances keep whatever
+they currently are, and pick up only the handful of fields `Object`
+already reads live from `Def` rather than copies at spawn (`Spec`,
+`MinLevel`, `RentPerDay`, the fallback `ActionDesc`) — a new spawn gets
+the fresh definition in full. Unlike `reloadmob`, there is no engagement
+refusal to make: nothing about an object can be "fighting", so there is
+nothing a reload could interrupt.
+
+A shop is simpler still, and for a different reason: `shopState`'s own
+doc comment already says it plainly, "there is exactly one of each shop"
+— no shared-prototype-versus-live-instance question ever arises, because
+a shop is never instantiated the way a mobile or an object is.
+`ReloadShop` (`internal/game/shopstate.go`) copies the whole
+configuration across — prices, buy types, messages, temper, flags,
+trade-with, rooms, keeper — leaving only the shop's actual till
+(`shopState`'s `Bank`/`Sorted`) untouched, the same way `ReloadMobile`
+leaves a mobile's room, inventory and position alone. A keeper change
+needs one extra step `ReloadMobile`/`ReloadObject` do not: the new
+keeper's prototype needs the `shop_keeper` special the way
+`AssignShopkeepers` gives it at boot, since `ShopFor` resolves a shop's
+keeper by matching `Keeper` against a live mobile's vnum on every call
+rather than caching a binding — nothing else would ever set it. `Secondary`
+is preserved across a reload the same reason `Spec` is on a mobile or an
+object: no loader ever writes it (checked by grepping every loader, not
+assumed), so a freshly parsed `ShopDef` always has it blank, and only a
+real keeper change re-derives it.
+
+Neither `reloadobj <vnum>` nor `reloadshop <vnum>` is wired into
+`reloadzone`'s own zone-wide sweep — each is its own command, the same
+shape `reloadmob` had before `reloadzone` extended it, and that
+extension is not repeated here yet. `docs/deviations.md` was not the
+right place for any of this: none of it is a deviation, it is simply new
+capability with no `interpreter.c` row to compare against, the same as
+`reloadmob`/`reloadzone` before it.
 
 **The pager ✅ — `page_string`, ported in full, then wired into the rest
 of its own call sites.** `next_page`/`count_pages`/`paginate_string`/
