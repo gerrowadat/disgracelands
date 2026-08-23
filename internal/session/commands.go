@@ -200,6 +200,19 @@ func (c *Context) SendAt(want colour.Level, format string, args ...any) {
 	c.Session.SendAt(want, format, args...)
 }
 
+// SendPaged is Send for a text long enough to want page_string's pager
+// (pager.go) — credits, help and the rest of the canned-text commands.
+// A Context with no session (a mobile's own special procedure, say) has
+// nowhere to page to, so it falls back to Send's own plain-Tell posture
+// rather than pretending to paginate.
+func (c *Context) SendPaged(format string, args ...any) {
+	if c.Session == nil {
+		c.Character.Tell(format, args...)
+		return
+	}
+	c.Session.SendPaged(format, args...)
+}
+
 // Commands is the command table.
 //
 // Order matters: the C server's interpreter matches the first entry whose
@@ -924,11 +937,25 @@ func split(line string) (word, arg string) {
 // prompt is what a player sees when the server is waiting for them, ported
 // from make_prompt (comm.c:1043).
 //
-// Each part is shown only if the matching preference is set. A new character
-// gets all three, because the local block at the class prompt turns them on;
-// a converted one gets whatever they had turned on when they last played,
-// which is the point of keeping the preference bits faithful.
+// make_prompt's own first checks are for two states that are not the
+// per-preference vitals line at all — showstr_count (paging) and str
+// (the line editor) — checked here first for the same reason, since this
+// is called from one shared place after every command (Dispatcher.Do's
+// own tail), paging or editing included: nothing else decides what a
+// player mid-page or mid-edit sees next.
+//
+// Each part of the ordinary prompt is shown only if the matching preference
+// is set. A new character gets all three, because the local block at the
+// class prompt turns them on; a converted one gets whatever they had turned
+// on when they last played, which is the point of keeping the preference
+// bits faithful.
 func prompt(s *Session) string {
+	if s.state == StatePaging {
+		return s.pagingPrompt()
+	}
+	if s.state == StateEditing {
+		return "] "
+	}
 	c := s.Character()
 	if c == nil || c.Record == nil {
 		return "> "
@@ -1463,7 +1490,7 @@ func doWho(c *Context) error {
 // `credits` command is used (docs/proposals/go-port-plan.md §12). It is in
 // the first set of commands implemented for exactly that reason.
 func doCredits(c *Context) error {
-	c.Send("%s", ensureNewline(c.Text.Credits()))
+	c.SendPaged("%s", ensureNewline(c.Text.Credits()))
 	return nil
 }
 
@@ -1481,12 +1508,14 @@ func doCredits(c *Context) error {
 func doHelp(c *Context) error {
 	if c.Arg == "" {
 		if screen := c.Text.HelpScreen(); screen != "" {
-			c.Send("%s", ensureNewline(screen))
+			c.SendPaged("%s", ensureNewline(screen))
 			return nil
 		}
 		// No help data configured at all: the command list this stub
 		// always showed, so a server with none is no worse off than
-		// before this landed.
+		// before this landed. This port's own fallback, not the C's —
+		// left unpaginated, since there is nothing in interpreter.c to
+		// match it against.
 		c.Send("Commands\r\n--------\r\n")
 		for _, cmd := range Commands {
 			c.Send("  %-10s %s\r\n", cmd.Name, cmd.Help)
@@ -1499,7 +1528,7 @@ func doHelp(c *Context) error {
 		c.Send("There is no help on that word.\r\n")
 		return nil
 	}
-	c.Send("%s", ensureNewline(entry))
+	c.SendPaged("%s", ensureNewline(entry))
 	return nil
 }
 

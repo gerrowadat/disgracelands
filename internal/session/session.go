@@ -65,6 +65,11 @@ const (
 	// bulletin board is the one thing that uses it so far, and mail will be
 	// the second.
 	StateEditing
+	// StatePaging is the C's pager (page_string, modify.c:436): a long text
+	// is shown one screenful at a time, and the connection waits for
+	// RETURN/Q/R/B/a page number between pages rather than an ordinary
+	// command.
+	StatePaging
 	// The three states of changing a password from the menu, matching
 	// CON_CHPWD_GETOLD, CON_CHPWD_GETNEW and CON_CHPWD_VRFY.
 	StateChangePasswordOld
@@ -105,6 +110,8 @@ func (s State) String() string {
 		return "enter-description"
 	case StateEditing:
 		return "editing"
+	case StatePaging:
+		return "paging"
 	case StateChangePasswordOld:
 		return "change-password-old"
 	case StateChangePasswordNew:
@@ -184,6 +191,13 @@ type Session struct {
 	// what to do with the finished text.
 	editorMax  int
 	editorDone func(text string)
+
+	// pagerPages and pagerIndex belong to StatePaging: the whole text,
+	// pre-split (paginate_string's own eager approach, not lazy), and
+	// the C's own d->showstr_page — the *next* page to show, already
+	// past every one shown so far.
+	pagerPages []string
+	pagerIndex int
 
 	// proto is the telnet state: options, charset, GMCP.
 	proto protocol
@@ -473,6 +487,12 @@ func (s *Session) Send(format string, args ...any) {
 	s.SendAt(colour.Normal, format, args...)
 }
 
+// SendPaged is Send for a text long enough to want page_string's pager —
+// see pager.go.
+func (s *Session) SendPaged(format string, args ...any) {
+	s.sendPaged(colour.Normal, format, args...)
+}
+
 // SendAt is Send for a message that wants a colour level other than the
 // ordinary one.
 //
@@ -490,6 +510,14 @@ func (s *Session) SendAt(want colour.Level, format string, args ...any) {
 		text = fmt.Sprintf(format, args...)
 	}
 	text = colour.Render(text, want, s.colourLevel())
+	s.sendRendered(text)
+}
+
+// sendRendered writes text that has already been through colour.Render —
+// the common tail SendAt and the pager (pager.go) both need, factored out
+// so pagination does not re-render each page (and double-count what
+// next_page's own ANSI-skip logic would otherwise have to undo).
+func (s *Session) sendRendered(text string) {
 	select {
 	case s.out <- outgoing{data: []byte(normalise(text))}:
 	case <-s.done:
@@ -819,6 +847,13 @@ var connectedNames = map[State]string{ //nolint:gosec // prompt labels, not cred
 	// is the closest thing the C would print, since that is the state its own
 	// editor runs in.
 	StateEditing: "Get descript.",
+	// StatePaging has no CON_ of its own either — the C's showstr_count
+	// check runs *before* the STATE(d) switch entirely (comm.c:811), so
+	// STATE(d) never changes while paging at all. Every command this
+	// port paginates only runs from CON_PLAYING, so "Playing" is exactly
+	// what the C would still show, not a stand-in the way "Get descript."
+	// is for StateEditing.
+	StatePaging: "Playing",
 }
 
 // ConnectedName is what `users` calls this state.

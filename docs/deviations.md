@@ -430,17 +430,40 @@ Listed here so they are not mistaken for deliberate differences.
   `slog` at info level, but its `mudlog(..., CMP, LVL_IMMORT, FALSE)` half
   (act.other.c:904-905) — the in-game echo to online gods — goes nowhere,
   same as every command already on this list.
-- **Nothing paginates.** `page_string` (`modify.c:436`) is the C's full
-  terminal-height "--More--" pager — `credits`, `wizlist`, `immlist`,
-  `background`, `news`, `policies`, `handbook` and now `help` all go
-  through it there. None of this port's equivalents do: every long text is
-  sent whole, in one write. This was never written down until `help`
-  landed (step 6c) made it the most visible instance — individual help
-  entries run to several KB, and a client with a short scrollback loses
-  the top of one — but the gap is exactly as old as `credits`, the first
-  of these commands built. `PAGE_LENGTH` (`comm.h:44`) is a fixed 22
-  lines in the C, not a per-player preference — there is nothing to read
-  back even if this were ported, only a constant to reintroduce.
+- **The pager now covers `credits`/`news`/`info`/`wizlist`/`immlist`/
+  `handbook`/`policy`/`motd`/`imotd`/`help`, not everything `page_string`
+  (`modify.c:436`) does in the C.** Ported: `next_page`/`count_pages`/
+  `paginate_string`/`show_string` (`internal/session/pager.go`), a real
+  `StatePaging` connection state (mirroring `StateEditing`'s own shape),
+  and `make_prompt`'s own paging branch (`comm.c:1067`, `"[ Return to
+  continue, (q)uit, (r)efresh, (b)ack, or page number (N/M) ]"`) folded
+  into `prompt(s)` itself — the same shared place `Dispatcher.Do`'s own
+  tail already calls after every command, paging or not, so nothing
+  extra had to be threaded through it. `PAGE_LENGTH`/`PAGE_WIDTH`
+  (`comm.h:44-45`) are the C's fixed 22×80, not a per-player preference —
+  there is nothing to read back even with this built, only the two
+  constants. **Not ported**: `background` (menu choice 3,
+  `interpreter.c:1713`) also pages in the C, from `CON_MENU` rather than
+  `CON_PLAYING` — every command this port wires through the pager runs
+  from `CON_PLAYING` only, which keeps `StatePaging`'s own "what was I
+  doing before" question moot (the C never changes `STATE(d)` while
+  paging at all, so it never has to ask); adding `background` means
+  deciding what state to return to, which the C never needed and this
+  port has not decided. Board reading, shop listing and a handful of
+  `act.wizard.c` long outputs (`show`/`vstat`-adjacent) page in the C too
+  and are not wired up either — cheap, mechanical follow-ups once wanted,
+  reusing the same mechanism, not attempted because nothing forced the
+  question yet.
+
+  A real bug this pass found rather than assumed away: `next_page`'s own
+  algorithm only resets its column counter on `\r`, because every string
+  the C holds is CRLF throughout. This port's own `text/` files are
+  plain LF on disk (§7: "prose stays prose"), and pagination has to
+  normalise to CRLF *before* counting, or a run of ordinary short LF
+  lines racks up phantom column-overflow breaks on top of the real
+  newline-driven ones — found by a live server test against the real
+  archived `text/help/screen` breaking after eleven lines instead of
+  the file's real twenty-one, not by inspection.
 - **Combat messages are real everywhere `damage()` is reached.**
   `internal/server/violence.go`'s `s.hit` ports `dam_message` and
   `skill_message`'s weapon-type half of `misc/messages` in full (step

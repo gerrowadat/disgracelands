@@ -459,7 +459,9 @@ func doCommands(mode listMode) func(*Context) error {
 	}
 }
 
-// cannedText returns the command for one of do_gen_ps's files.
+// cannedText returns the command for one of do_gen_ps's files. do_gen_ps
+// pages every one of its own branches (act.informative.c:1375-1399) —
+// SendPaged, not Send.
 func cannedText(name string, text func(TextFiles) string) func(*Context) error {
 	return func(c *Context) error {
 		body := text(c.Text)
@@ -467,7 +469,7 @@ func cannedText(name string, text func(TextFiles) string) func(*Context) error {
 			c.Send("There is no %s.\r\n", name)
 			return nil
 		}
-		c.Send("%s", ensureNewline(body))
+		c.SendPaged("%s", ensureNewline(body))
 		return nil
 	}
 }

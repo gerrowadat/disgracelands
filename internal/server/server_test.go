@@ -1084,10 +1084,17 @@ func TestCreditsAndHelpCircleMUD(t *testing.T) {
 	// The text is identical for all three, so each occurrence has to be
 	// asked for by number — expect alone would match the first reply
 	// again and return immediately (CLAUDE.md's testing-traps note).
+	// The entry runs long enough to page (step 6c-vii's own pager, "Nothing
+	// paginates" no longer true) — "q" closes it after each query's own
+	// first page, which is already past wantCredits, so the next query
+	// reaches the ordinary command dispatcher rather than being read as
+	// pager input.
 	const wantCredits = "CircleMUD was developed from DikuMud"
 	for i, query := range []string{"help circlemud", "help credits", "help circle"} {
 		c.send(query)
 		c.expectCount(wantCredits, i+1)
+		c.expectCount("Return to continue", i+1)
+		c.send("q")
 	}
 	if n := strings.Count(c.transcript(), wantCredits); n != 3 {
 		t.Errorf("the real credits entry appeared %d times, want 3 (once per query):\n%s",

@@ -19,8 +19,14 @@ func TestHelp(t *testing.T) {
 	c.send("help")
 	c.expect("Further information available by HELP <keyword>")
 
+	// ALIAS's own real entry runs to 49 lines — comfortably over
+	// PAGE_LENGTH, so it pages (the pager, step 6c-vii). "q" closes it
+	// before the next query, or "help nonsensicalgibberish" would be
+	// read as pager input rather than a command.
 	c.send("help alias")
 	c.expect("An alias is a single command used to represent")
+	c.expect("Return to continue")
+	c.send("q")
 
 	c.send("help nonsensicalgibberish")
 	c.expect("There is no help on that word.")
