@@ -1573,10 +1573,7 @@ rooms:
   - keywords:
     - plaque
     - keystone
-    desc: |
-              The plaque in the keystone is engraved with four simple words:
-
-                              Ergan, Murderer of Townsbridge
+    desc: "The plaque in the keystone is engraved with four simple words:\n\n                Ergan, Murderer of Townsbridge\n\n"
 - vnum: 15058
   name: A Cell
   sector: inside
@@ -1744,19 +1741,7 @@ rooms:
   extra_descs:
   - keywords:
     - sign
-    desc: |
-
-              /----------------------------------\
-              |     Welcome to the hamlet of     |
-              |           Townsbridge            |
-              |                                  |
-              |                                  |
-              |     Population:  276             |
-              |                                  |
-              \----------------------------------/
-
-              The number 276 has been scratched out and replaced with the
-              number 0.
+    desc: "\n/----------------------------------\\\n|     Welcome to the hamlet of     |\n|           Townsbridge            |\n|                                  |\n|                                  |\n|     Population:  276             |\n|                                  |\n\\----------------------------------/\n\nThe number 276 has been scratched out and replaced with the\nnumber 0.\n\n"
 - vnum: 15065
   name: A Small Intersection
   sector: field
@@ -1829,11 +1814,7 @@ rooms:
   extra_descs:
   - keywords:
     - sign
-    desc: |
-              The sign is covered with soot and the wood is quite charred, but you can
-              still make out the following letters:
-
-                      T   TO  SB  DGE   NER L    RE
+    desc: "The sign is covered with soot and the wood is quite charred, but you can\nstill make out the following letters:\n\n        T   TO  SB  DGE   NER L    RE\n\n"
 - vnum: 15067
   name: A Large Pit
   sector: field
@@ -3077,10 +3058,7 @@ objects:
   - keywords:
     - telescope
     - scope
-    desc: |
-              A small sign says:
-
-              Made in Siberia.
+    desc: "A small sign says:\n\nMade in Siberia.\n\n"
 - vnum: 15006
   keywords:
   - sword

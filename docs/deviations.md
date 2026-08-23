@@ -353,6 +353,25 @@ The binary format can still be read and written, because `dlctl` needs both
 directions to convert between them. But a live server refuses to run on it.
 (Plan §5.2.)
 
+### The yaml format re-spaces a keyword list
+
+Keywords are a list in the yaml format (`keywords: [gate, door]`, §4 of
+`docs/design/data-format.md`) and a single space-separated string in the
+classic files and in memory. Converting to yaml splits on whitespace and
+converting back joins with one space, so a classic keyword string with a
+trailing space or a doubled space between two words does not come back the
+way it went in: `"cape wool woolen "` becomes `"cape wool woolen"`.
+
+Nothing can observe the difference. The only consumer of the string is
+`isname`, which walks it word by word (and had its own semantics pinned by
+an oracle — see `reference/tools/`); a run of spaces yields no word, and a
+trailing space yields no trailing word, so no keyword is gained or lost.
+The alternative is storing keywords as an opaque string, which would give
+up the readability and the per-keyword validation the list form exists
+for, to preserve whitespace that has no meaning to the server. Four
+records in the real world data have it, all trailing spaces a builder left
+behind. (`internal/persist/world/yaml`.)
+
 ### A password can be set from outside the game
 
 The C has no way for anyone but the owner to change a password: `set`

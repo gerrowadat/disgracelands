@@ -1429,7 +1429,7 @@ format-neutral and that is the whole reason it exists.
 | **1. Vocabularies ✅** | Name tables for every flag set, sector, position, item type, apply location and wear slot, in `internal/game/yamlnames.go`, with round-trip tests (`yamlnames_test.go`) against the C-sourced display tables in `bitnames.go`/`object.go`. | Every bit in the stock world has a name or round-trips via `flags_raw`. |
 | **1b. Colour ✅** | The `{{…}}` parser, ANSI renderer and stripper, keyed off `PrefColour1`/`PrefColour2`, plus `DisplayWidth` — `internal/game/colour.go`. | The swearing social in §5.3 survives parse → render → strip unescaped and unchanged (`colour_test.go`); no wrapping layer exists yet to consume `DisplayWidth`. |
 | **2. World read ✅** | `yaml` as a `world.Source` (`internal/persist/world/yaml/`), plus `dlctl world import` from `classic`, including CP1252→UTF-8 transcoding and ESC → named-code demotion. | `dlctl world import` on the real `data/world` produces zero `dlctl world lint --world-format=yaml` findings, and `dlmud --world-format=yaml` boots, populates and serves a connection. |
-| **3. World write ✅ (export not yet)** | `world.Sink` (`WriteZone`), the canonical writer (`text.go`'s `Text`/`NestedText`), `dlctl world fmt`. `dlctl world export` (yaml → classic) is **not built** — it needs a classic-format *writer*, which does not exist in this tree at all yet (`classic` has only ever been a reader). | `classic → yaml → classic` round-trips byte-identical at the in-memory/parity-dump level for the whole real world (`yaml/parity_test.go`, 30 zones / 3,202 records) modulo one documented, reported lossy transform (trailing blank lines beyond one, `text.go`'s `TrimsTrailingBlankLines` — see §12); `fmt` is idempotent, verified against the real corpus. |
+| **3. World write ✅ (export not yet)** | `world.Sink` (`WriteZone`), the canonical writer (`text.go`'s `Text`/`NestedText`), `dlctl world fmt`. `dlctl world export` (yaml → classic) is **not built** — it needs a classic-format *writer*, which does not exist in this tree at all yet (`classic` has only ever been a reader). | `classic → yaml → classic` round-trips byte-identical at the in-memory/parity-dump level for the whole real world (`yaml/parity_test.go`, 30 zones / 3,202 records) with no lossy transform left to except (trailing blank lines used to be one; `text.go`'s `needsQuoting` now escapes them instead — see §12); `fmt` is idempotent, verified against the real corpus. |
 | **4. Flip the default** | `--world-format=yaml`, `data/` converted in the repo, `classic` demoted to import-only. | Not attempted — a decision about `data/` itself, separate from this code landing. `--world-format=yaml` is available and works today; `classic` stays the default. |
 | **5. Players ✅** | `yaml` player store (`internal/persist/player/yaml/`), implementing both `player.Store` and `player.ObjectStore` against one file (§8); `dlctl pfile import`/`pfile fmt`; the `alias` command (`interpreter.c`'s `do_alias`/`perform_alias`, previously unported — no archived alias data exists anywhere to have ported instead); real container nesting, format-gated on `yaml` as a user-approved deviation (`docs/deviations.md`). | `dlctl pfile import` converts a `binary` roster (rent files included); `dlmud --player-format=yaml` boots, and a character created on it, quit and logged back in, keeps a bag's contents *inside* the bag — proven live (`TestRentingUnderYamlKeepsTheRingInTheBag`), not just at the codec level. `PlayerRecord`/`player.Store` needed no restructuring: `ObjectStore` was already a separate interface a format could additionally implement, and `StoredObject` grew one field (`Contains`) rather than being redesigned. |
 | **6a. Bans, boards, mail, houses ✅** | `yaml` for each (`internal/persist/{bans,boards,mail,houses}/yaml/`), every one retrofitted to the `Store`/`Register`/`Open` shape `world`/`player` already had (`classic` moved to its own subpackage per format, unchanged); `--state-format`; `dlctl state import`/`fmt`, converting all four together. Houses' contents reuse the player object-instance schema directly, always flat (containment stayed scoped to player rent files, §8's own note in this table's row 5). | `dlctl state import`/`fmt` round-trip a synthetic fixture (no real archived data exists for any of these four — confirmed, not assumed, in the scoping survey); a live server integration test per format proves each one end to end (posting/reading a board message, sending/receiving mail, a ban refusing a connection, a house crash-save surviving a reload), all under `--state-format=yaml`. |
@@ -1572,19 +1572,32 @@ transform is a straight `strings.ReplaceAll`, lossless in both directions,
 verified against the CRLF fields that are actually in the real corpus (the
 astral-plane and river-zone room descriptions).
 
-**A second, genuinely lossy transform, also found by the fuzz test: "keep"
-chomping.** A string with two or more trailing newlines — a sign or note
-description with a trailing blank line before its closing `~` — cannot
-round-trip through `goccy/go-yaml` v1.19.2's custom-marshaler path at all:
-the library re-parses and re-prints whatever a `BytesMarshaler` returns
-while splicing it into the surrounding document, and its own re-print of a
-literal block node unconditionally strips every trailing newline before
-re-adding exactly one, regardless of what chomping indicator asked for.
-`yaml` collapses such a string to a single trailing newline on write
-(`text.go`'s `TrimsTrailingBlankLines`) rather than emit a `|+` header the
-library cannot actually honour — the same "reported rather than refused"
-posture §5.5 sets for colour's bold/normal-order normalisation. Real-corpus
-incidence: three room descriptions out of 12,372 strings.
+**A second finding, which used to be a lossy transform and is not one any
+more: "keep" chomping.** A string with two or more trailing newlines — a
+sign or note description with a trailing blank line before its closing `~`
+— cannot round-trip through `goccy/go-yaml` v1.19.2's *block-scalar* path
+at all: the library re-parses and re-prints whatever a `BytesMarshaler`
+returns while splicing it into the surrounding document, and its own
+re-print of a literal block node unconditionally strips every trailing
+newline before re-adding exactly one, regardless of what chomping
+indicator asked for. `|+` is emitted and then ignored, re-verified against
+this library version rather than taken from the note that first recorded
+it.
+
+What changed is the response, not the finding. `yaml` used to collapse
+such a string to a single trailing newline on write and report the
+normalisation; it now writes the string as a quoted, escaped scalar
+instead (`text.go`'s `needsQuoting`), which the same library carries back
+unchanged. The trailing blank line is a blank line on a player's screen,
+and "reported rather than refused" is the right posture for a transform
+with no alternative — this one had an alternative. Two more shapes reach
+the same escape hatch, both found the same way: a **bare carriage
+return**, which is unrepresentable in a block scalar because YAML folds
+CR, CRLF and LF alike into `\n` on decode (§5.4 of the spec) — a world
+file whose text carries stray CRs is a thing that exists — and **trailing
+whitespace on a final line with no newline after it**, which that same
+re-print drops. Real-corpus incidence of all three together: 61 strings
+out of 12,372, against 5,347 that still write as literal blocks.
 
 **A third finding, about the indentation indicator itself (§4.6): it is
 only reliable at one nesting depth.** The same re-parse-and-splice

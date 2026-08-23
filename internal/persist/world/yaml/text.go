@@ -7,6 +7,7 @@
 package yaml
 
 import (
+	"strconv"
 	"strings"
 
 	"github.com/goccy/go-yaml"
@@ -27,6 +28,14 @@ import (
 //     all, because plain YAML infers the block's indentation from the
 //     first line. The fix is the indentation indicator (`|2`), and the
 //     library never emits one on its own.
+//   - A block containing a carriage return that is not part of a CRLF
+//     pair cannot be a block scalar at all. YAML folds CR, CRLF and LF
+//     alike into a single '\n' when it parses (spec §5.4), so a bare CR
+//     is not merely awkward to emit — it is unrepresentable in that
+//     style, and the parser reads it as a line break with no indentation
+//     and rejects the block. Both types escape such a string instead.
+//     See ToStored for where bare CRs come from, which is not a
+//     hypothetical.
 //   - Whatever a custom MarshalYAML returns is re-parsed and re-embedded
 //     into the surrounding document by re-printing the parsed node, and
 //     that re-print adds a *fixed* two-space shift to every line
@@ -59,6 +68,9 @@ type Text string
 // MarshalYAML implements yaml.BytesMarshaler.
 func (t Text) MarshalYAML() ([]byte, error) {
 	s := string(t)
+	if needsQuoting(s) {
+		return quotedScalar(s), nil
+	}
 	if !strings.Contains(s, "\n") {
 		return marshalSingleLine(s)
 	}
@@ -72,6 +84,9 @@ type NestedText string
 // MarshalYAML implements yaml.BytesMarshaler.
 func (t NestedText) MarshalYAML() ([]byte, error) {
 	s := string(t)
+	if needsQuoting(s) {
+		return quotedScalar(s), nil
+	}
 	if !strings.Contains(s, "\n") {
 		return marshalSingleLine(s)
 	}
@@ -80,7 +95,7 @@ func (t NestedText) MarshalYAML() ([]byte, error) {
 		// Falls back to a quoted, escaped scalar rather than a literal
 		// block: see the package doc comment for why this depth cannot
 		// reliably use an indentation indicator.
-		return yaml.Marshal(s)
+		return quotedScalar(s), nil
 	}
 	// nominalIndent here only needs to clear the deepest column this
 	// format's schema actually reaches (validated up to an exit's `desc`,
@@ -95,24 +110,59 @@ func (t NestedText) MarshalYAML() ([]byte, error) {
 // than misread as a flow-mapping opener.
 func marshalSingleLine(s string) ([]byte, error) { return yaml.Marshal(s) }
 
-// TrimsTrailingBlankLines reports whether encoding s through Text or
-// NestedText will normalise away trailing blank lines, so a caller can
-// raise a lint finding for it — the same "reported rather than refused"
-// posture §5.5 sets for colour normalisation.
+// quotedScalar renders s as a YAML double-quoted scalar, rather than asking
+// the library to pick a style for it.
 //
-// The reason, verified rather than guessed at: goccy re-parses and
-// re-prints whatever a custom MarshalYAML returns while splicing it into
-// the surrounding document, and its re-print of a literal node
-// (ast.LiteralNode.String(), which unconditionally right-trims every
-// trailing newline off the node's content before re-emitting it) collapses
-// any number of trailing blank lines to at most one, regardless of the
-// "+"/keep chomping indicator asking it to preserve them. This reproduces
-// identically no matter how the returned bytes are built, so it is not a
-// bug this function can route around — it is normalised on purpose here,
-// to a single trailing newline, rather than emitting a "+2" header the
-// library cannot actually honour.
-func TrimsTrailingBlankLines(s string) bool {
-	return strings.HasSuffix(s, "\n\n")
+// NestedText's fallback used to be a plain yaml.Marshal of the string, on
+// the understanding that the library quotes anything it cannot safely emit
+// as a literal block. It does not: goccy picks double-quoted for content
+// whose first line begins with a *space*, and a literal block for content
+// whose first line begins with a *tab* — which is the one input the
+// fallback exists to handle, and which then fails to parse back. Choosing
+// the style here rather than describing the input and hoping is what makes
+// the fallback actually a fallback.
+//
+// strconv.Quote's escapes are a subset of YAML's double-quoted ones —
+// \\, \", \n, \r, \t, \a, \b, \f, \v, and \xNN/\uNNNN for anything else
+// non-printable — so its output is a valid YAML scalar as it stands.
+func quotedScalar(s string) []byte { return []byte(strconv.Quote(s) + "\n") }
+
+// needsQuoting reports whether s has to be written as an escaped scalar
+// because a literal block cannot carry it back unchanged. Each case below
+// is a string the block form loses or rejects, established by round-tripping
+// it rather than by reading the spec and hoping:
+//
+//   - A bare carriage return. Unrepresentable in the style at all; see the
+//     package doc comment.
+//   - Trailing blank lines. goccy re-parses and re-prints whatever a custom
+//     MarshalYAML returns, and its re-print of a literal node
+//     (ast.LiteralNode.String(), which unconditionally right-trims every
+//     trailing newline off the node's content) collapses any number of them
+//     to one, regardless of the "+"/keep chomping indicator asking it not
+//     to. Nothing about how the returned bytes are built changes that.
+//   - Trailing whitespace on a last line that has no newline after it. The
+//     same re-print drops it. A trailing *tab* there happens to survive
+//     where a trailing *space* does not, which is exactly the kind of
+//     distinction not worth depending on: both are quoted.
+//
+// This used to be TrimsTrailingBlankLines, which named the second case and
+// reported it as an accepted lossy transform for a linter to warn about.
+// The transform is not accepted any more, because it did not have to be —
+// quoting costs nothing but prettiness, and a trailing blank line is a
+// deliberate blank line in a room description on the way to a player's
+// screen. A real world file wrote one, which is what made the difference
+// between "documented normalisation" and "silently altered text" concrete.
+func needsQuoting(s string) bool {
+	if strings.ContainsRune(s, '\r') {
+		return true
+	}
+	if strings.HasSuffix(s, "\n\n") {
+		return true
+	}
+	if n := len(s); n > 0 && (s[n-1] == ' ' || s[n-1] == '\t') {
+		return true
+	}
+	return false
 }
 
 // literalBlock renders s as a YAML literal block scalar: a chomping
@@ -165,12 +215,25 @@ func literalBlock(s string, nominalIndent int, withIndicator bool) string {
 // and NestedText go through (see literalBlock and TrimsTrailingBlankLines)
 // collapses that leading whitespace to nothing without an indicator
 // present, verified against the real corpus rather than assumed.
+//
+// "Leading whitespace" means a leading *tab* as well as a leading space,
+// and the tab case is not a refinement of the space one — it is the
+// difference between a document that parses and one that does not. YAML
+// forbids a tab anywhere it would be read as indentation (spec §6.1), so a
+// literal block whose first content line opens with one has no indentation
+// for the parser to infer and the emitter's output is rejected outright,
+// where the leading-space case merely round-trips to a different string.
+// An explicit indicator settles it: with `|2` present the parser stops
+// inferring, the two-space prefix literalBlock writes is the indentation,
+// and every tab after it is content like any other character. NestedText,
+// which cannot use an indicator at all, falls back to a quoted scalar for
+// the same input and is equally safe.
 func needsIndentIndicator(lines []string) bool {
 	for _, l := range lines {
 		if strings.TrimSpace(l) == "" {
 			continue
 		}
-		return leadingSpaces(l) > 0
+		return leadingWhitespace(l) > 0
 	}
 	return false
 }
@@ -184,9 +247,20 @@ func needsIndentIndicator(lines []string) bool {
 // the yaml format's stored form is always LF-only, and this is the
 // conversion applied once, on the way into a YAML document.
 //
-// The replacement is lossless in both directions because readString never
-// produces a bare '\r': it always inserts the pair together, so every '\r'
-// in a loaded description is immediately followed by '\n'.
+// The replacement is lossless in both directions for every '\r' readString
+// itself inserts, because it always inserts the pair together. What it is
+// not is a guarantee that a stored string holds no '\r' at all: readString
+// appends CRLF to the line it read, and says nothing about what was *in*
+// that line. A world file whose text already carries carriage returns —
+// an editor or a paste that left them behind, which happens and is not
+// rare enough to treat as corrupt — survives ToStored as a string with
+// bare CRs in it, since only the pairs matched.
+//
+// That is why Text and NestedText check for a bare '\r' before choosing a
+// block scalar: the pairs are converted here, and whatever is left is real
+// content that has to be escaped rather than folded away. Preserving it is
+// the fidelity answer as well as the mechanical one — the C sends those
+// bytes to the client exactly as they sit in the file.
 func ToStored(s string) string { return strings.ReplaceAll(s, "\r\n", "\n") }
 
 // FromStored is ToStored's inverse, applied on the way out of a YAML
@@ -196,9 +270,9 @@ func ToStored(s string) string { return strings.ReplaceAll(s, "\r\n", "\n") }
 // regardless of which file format produced it.
 func FromStored(s string) string { return strings.ReplaceAll(s, "\n", "\r\n") }
 
-func leadingSpaces(s string) int {
+func leadingWhitespace(s string) int {
 	n := 0
-	for n < len(s) && s[n] == ' ' {
+	for n < len(s) && (s[n] == ' ' || s[n] == '\t') {
 		n++
 	}
 	return n

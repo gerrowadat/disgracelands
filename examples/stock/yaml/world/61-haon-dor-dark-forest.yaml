@@ -2064,15 +2064,7 @@ objects:
   extra_descs:
   - keywords:
     - sign
-    desc: |
-              Only some of the letters are legible :-
-                              _
-                    _________| |_________
-                   /         | |         \
-                  /  CAR.AX  | |  M.STY   \
-                  \  M..SI.N | |  SW..P   /
-                   \_________| |_________/
-                             | |
+    desc: "Only some of the letters are legible :-\n                _\n      _________| |_________\n     /         | |         \\\n    /  CAR.AX  | |  M.STY   \\\n    \\  M..SI.N | |  SW..P   /\n     \\_________| |_________/\n               | |\n\n"
 - vnum: 6102
   keywords:
   - tree

@@ -256,12 +256,7 @@ rooms:
     - building
     - door
     - sign
-    desc: |
-              The sign on the door says:
-
-                               Cityguard HeadQuarters
-
-                         WARNING: Authorized Personnel Only!
+    desc: "The sign on the door says:\n\n                 Cityguard HeadQuarters\n\n           WARNING: Authorized Personnel Only!\n\n"
 - vnum: 3112
   name: The Western Park Entrance
   sector: city
@@ -422,17 +417,7 @@ rooms:
               powerful magic to hold such a chain in place.
   - keywords:
     - sign
-    desc: |
-              The sign points in all directions:
-
-                 North - Emerald Avenue.
-                 East  - Park Road.
-                 South - Emerald Avenue.
-                 West  - Park Road.
-
-              Someone has added the following with red paint:
-
-                 Up    - Redferne's Flying Citadel.
+    desc: "The sign points in all directions:\n\n   North - Emerald Avenue.\n   East  - Park Road.\n   South - Emerald Avenue.\n   West  - Park Road.\n\nSomeone has added the following with red paint:\n\n   Up    - Redferne's Flying Citadel.\n\n"
 - vnum: 3121
   name: Emerald Avenue
   sector: city

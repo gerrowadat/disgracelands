@@ -470,17 +470,7 @@ rooms:
   flags:
   - death
   - indoors
-  desc: |2
-       As you land at the bottom of this dirt-walled pit, the realization that a
-    pit full of lions is NOT a good thing to be hanging around in.  Several of
-    the gladiators gather around the edge of the pit to watch your demise.  You
-    look around you, and all you see is tawny fur and gaping jaws... it is too
-    late to run, too late to hide.
-       Twelve lions rip you and your belongings into a gory mass of bloodied
-    leather, bronze, and bone.
-
-       What's that old saying? 
-       Cats killed the curious?  Something like that, I'm sure...
+  desc: "   As you land at the bottom of this dirt-walled pit, the realization that a\npit full of lions is NOT a good thing to be hanging around in.  Several of\nthe gladiators gather around the edge of the pit to watch your demise.  You\nlook around you, and all you see is tawny fur and gaping jaws... it is too\nlate to run, too late to hide.\n   Twelve lions rip you and your belongings into a gory mass of bloodied\nleather, bronze, and bone.\n\n   What's that old saying? \n   Cats killed the curious?  Something like that, I'm sure...\n\n"
   exits:
     up:
       to: 12010

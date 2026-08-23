@@ -244,12 +244,7 @@ rooms:
   extra_descs:
   - keywords:
     - plaque
-    desc: |
-              The plaque reads:
-
-                                      The Great Pyramid
-
-                              Created by the Andersen work crew.
+    desc: "The plaque reads:\n\n                        The Great Pyramid\n\n                Created by the Andersen work crew.\n\n"
   - keywords:
     - stones
     desc: |
@@ -622,14 +617,7 @@ rooms:
   - keywords:
     - man
     - old
-    desc: |
-              The old man looks like he has been trapped down here far too long, and
-              has begun to lose his mind.  He moves about slowly, cackling to himself.
-
-              He turns to you and shouts, 'nope measse!  nope measse!', then turns 
-              back and stares into the fire.
-
-              'What a strange person,' you think to yourself.
+    desc: "The old man looks like he has been trapped down here far too long, and\nhas begun to lose his mind.  He moves about slowly, cackling to himself.\n\nHe turns to you and shouts, 'nope measse!  nope measse!', then turns \nback and stares into the fire.\n\n'What a strange person,' you think to yourself.\n\n"
 - vnum: 5321
   name: Down The Crevasse
   sector: inside
@@ -848,10 +836,7 @@ rooms:
               On this side the coffin lid is smooth featureless stone.
   - keywords:
     - inscriptions
-    desc: |
-              You blow dust away from the inscriptions to read:
-
-              Beware the curse of the mummy.
+    desc: "You blow dust away from the inscriptions to read:\n\nBeware the curse of the mummy.\n\n"
 - vnum: 5328
   name: A Stairway
   sector: inside

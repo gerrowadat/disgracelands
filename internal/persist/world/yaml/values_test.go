@@ -75,3 +75,56 @@ func TestTypedValuesRoundTripsRealObjects(t *testing.T) {
 	}
 	t.Logf("%d objects took a typed form, %d stayed raw (unsupported type, unused-slot junk, or an unnamed value)", typed, raw)
 }
+
+// TestDrinkPoisonOutsideZeroOrOneFallsBackToRaw guards a value the typed
+// schema reads but cannot carry back. `poisoned` is a bool because the C
+// tests value 3 as a truth value and nothing more, but the file holds an
+// int and a builder's file holds one that is neither 0 nor 1 — folding it
+// to 1 rewrites world data on the way through the converter. §4.3's raw
+// fallback is the existing answer for a value the typed form would lose,
+// and this is a case of it, not an exception to it.
+func TestDrinkPoisonOutsideZeroOrOneFallsBackToRaw(t *testing.T) {
+	liquid, ok := game.ValueByName("blood", game.YamlLiquidNames())
+	if !ok {
+		t.Fatal("no liquid named blood")
+	}
+
+	for _, tc := range []struct {
+		name     string
+		poison   int32
+		wantRaw  bool
+		wantBool bool
+	}{
+		{"unpoisoned", 0, false, false},
+		{"poisoned", 1, false, true},
+		{"poisoned with a number that is not one", 5, true, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			values := [game.NumObjValues]int32{6, 6, liquid, tc.poison}
+			typed, unusedNonzero, ok := TypedValues(game.ItemDrinkCon, values)
+			if tc.wantRaw {
+				if ok {
+					t.Fatalf("expected the raw fallback, got typed %+v", typed)
+				}
+				if !unusedNonzero {
+					t.Error("expected unusedNonzero, so the caller writes the raw form")
+				}
+				return
+			}
+			if !ok {
+				t.Fatalf("expected a typed form, got the raw fallback")
+			}
+			drink, isDrink := typed.(DrinkValues)
+			if !isDrink {
+				t.Fatalf("expected DrinkValues, got %T", typed)
+			}
+			if drink.Poisoned != tc.wantBool {
+				t.Errorf("poisoned: got %v, want %v", drink.Poisoned, tc.wantBool)
+			}
+			back, backOK := ValuesFromDrink(drink)
+			if !backOK || back != values {
+				t.Errorf("round trip: got %v (ok=%v), want %v", back, backOK, values)
+			}
+		})
+	}
+}

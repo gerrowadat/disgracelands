@@ -12,6 +12,7 @@ import (
 
 	"github.com/gerrowadat/disgracelands/internal/game"
 	"github.com/gerrowadat/disgracelands/internal/persist/player"
+	worldtext "github.com/gerrowadat/disgracelands/internal/persist/world/yaml"
 )
 
 // docFromRecord builds the roster half of a player.yaml document — every
@@ -42,7 +43,7 @@ func docFromRecord(rec *game.PlayerRecord) playerDoc {
 			RemortRaw:   uint64(remortRaw),
 			Home:        int32(rec.Hometown),
 			LoadRoom:    int32(rec.LoadRoom),
-			Description: Text(rec.Description),
+			Description: Text(worldtext.ToStored(rec.Description)),
 		},
 		Times: timesDoc{
 			Created:   rfc3339OrEmpty(rec.Birth),

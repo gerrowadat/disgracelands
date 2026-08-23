@@ -7,8 +7,11 @@
 package yaml
 
 import (
+	"bytes"
 	"context"
 	"errors"
+	"os"
+	"path/filepath"
 	"reflect"
 	"testing"
 	"time"
@@ -25,17 +28,25 @@ func richRecord() *game.PlayerRecord {
 		Name:       "Zaphod",
 		Credential: game.Credential{Scheme: game.SchemeArgon2id, Hash: "$argon2id$v=19$..."},
 		Title:      "the Confused",
-		Sex:        game.SexMale,
-		Class:      game.ClassWarrior,
-		Race:       3,
-		Level:      34,
-		Hometown:   3001,
-		Birth:      time.Date(2001, 11, 3, 21, 14, 7, 0, time.UTC),
-		LastLogon:  time.Date(2008, 6, 19, 2, 31, 55, 0, time.UTC),
-		Played:     1847293 * time.Second,
-		Host:       "136.206.1.2:4000",
-		Height:     183,
-		Weight:     187,
+		// CRLF because that is what a description looks like in memory:
+		// the binary pfile stores the line endings the C wrote, and this
+		// format converts at its own boundary rather than normalising the
+		// record. richRecord carries one so that every round-trip test
+		// here covers the field -- before this, none of them did, and a
+		// description was the one thing that made a written file
+		// unparseable.
+		Description: "A tall man with a scar across one cheek.\r\nHe watches you carefully.\r\n",
+		Sex:         game.SexMale,
+		Class:       game.ClassWarrior,
+		Race:        3,
+		Level:       34,
+		Hometown:    3001,
+		Birth:       time.Date(2001, 11, 3, 21, 14, 7, 0, time.UTC),
+		LastLogon:   time.Date(2008, 6, 19, 2, 31, 55, 0, time.UTC),
+		Played:      1847293 * time.Second,
+		Host:        "136.206.1.2:4000",
+		Height:      183,
+		Weight:      187,
 		Abilities: game.Abilities{
 			Strength: 18, StrengthPercentile: 100, Intelligence: 13,
 			Wisdom: 11, Dexterity: 16, Constitution: 17, Charisma: 12,
@@ -298,5 +309,83 @@ func TestMarkCrashedRewritesOnlyTheHeader(t *testing.T) {
 	}
 	if len(got.Objects) != len(f.Objects) {
 		t.Fatalf("MarkCrashed lost objects: got %d, want %d", len(got.Objects), len(f.Objects))
+	}
+}
+
+// TestSaveLoadRoundTripsDescriptions walks the shapes a description
+// actually takes, because the field is free text a player typed into the
+// string editor and every one of these reaches a different branch of the
+// block-scalar writer.
+//
+// The regression this guards is not a wrong value but an unparseable file:
+// Save marshals and writes without reading back, so a description emitted
+// at the wrong indentation produced a file that reported success on the
+// way out and failed on the way in. Load is what makes that visible, which
+// is why every case here is a round trip rather than a golden string.
+func TestSaveLoadRoundTripsDescriptions(t *testing.T) {
+	for _, tc := range []struct{ name, desc string }{
+		{"single line", "A short, stout figure.\r\n"},
+		{"several lines", "A short, stout figure.\r\nOne eye is missing.\r\n"},
+		{"indented first line", "   An indented opening line.\r\nAnd a second.\r\n"},
+		{"tab indented", "\tName: nobody\r\n\tRank: none\r\n"},
+		{"blank line between", "One paragraph.\r\n\r\nAnother paragraph.\r\n"},
+		{"no trailing newline", "no trailing newline at all"},
+		{"colour markup", "{{red}}A figure wreathed in flame.{{/}}\r\n"},
+		{"empty", ""},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			s, err := New(player.Config{Dir: t.TempDir()})
+			if err != nil {
+				t.Fatalf("New: %v", err)
+			}
+			defer func() { _ = s.Close() }()
+
+			want := &game.PlayerRecord{
+				Name: "Zaphod", Conditions: [3]int32{-1, -1, -1}, Description: tc.desc,
+			}
+			if err := s.Save(context.Background(), want); err != nil {
+				t.Fatalf("Save: %v", err)
+			}
+			got, err := s.Load(context.Background(), "Zaphod")
+			if err != nil {
+				t.Fatalf("Load: %v", err)
+			}
+			if got.Description != tc.desc {
+				t.Fatalf("description round trip mismatch:\n got: %q\nwant: %q",
+					got.Description, tc.desc)
+			}
+		})
+	}
+}
+
+// TestSavedDescriptionHoldsNoCarriageReturns pins the other half of the
+// contract the round trip above cannot see. YAML normalises every
+// line-break style to '\n' when it decodes, so a CRLF description has to
+// be converted on the way in and back on the way out; storing the CR
+// would make the file's meaning depend on a parser detail. This is the
+// same ToStored/FromStored boundary the world format applies to a room
+// description, applied at the same place for the same reason.
+func TestSavedDescriptionHoldsNoCarriageReturns(t *testing.T) {
+	dir := t.TempDir()
+	s, err := New(player.Config{Dir: dir})
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	defer func() { _ = s.Close() }()
+
+	rec := &game.PlayerRecord{
+		Name: "Zaphod", Conditions: [3]int32{-1, -1, -1},
+		Description: "First line.\r\nSecond line.\r\n",
+	}
+	if err := s.Save(context.Background(), rec); err != nil {
+		t.Fatalf("Save: %v", err)
+	}
+
+	b, err := os.ReadFile(filepath.Join(dir, "z", "zaphod.yaml"))
+	if err != nil {
+		t.Fatalf("ReadFile: %v", err)
+	}
+	if bytes.ContainsRune(b, '\r') {
+		t.Fatalf("saved file holds a carriage return:\n%s", b)
 	}
 }

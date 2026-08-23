@@ -66,12 +66,7 @@ rooms:
       keywords: door oak tall
     south:
       to: 7900
-      desc: |
-            Here you see a REAL door.  It would be more proper to call this a
-            'GATE', rather than a 'door'.  It is really HUGE!  On it hangs a
-            large sign with very large letters spelling:
-
-                            EMERGENCY EXIT
+      desc: "Here you see a REAL door.  It would be more proper to call this a\n'GATE', rather than a 'door'.  It is really HUGE!  On it hangs a\nlarge sign with very large letters spelling:\n\n                EMERGENCY EXIT\n\n"
       door: pickproof
       key: 7901
       keywords: gate iron huge
@@ -93,18 +88,10 @@ rooms:
   extra_descs:
   - keywords:
     - letters
-    desc: |
-              They read:
-
-                              LIBRARY
+    desc: "They read:\n\n                LIBRARY\n\n"
   - keywords:
     - runes
-    desc: |
-              These runes are utterly strange to you, but you are in luck today:
-              Under the runes you can just make out a sentence in Common.  It
-              reads:
-
-              Stay out, if you treasure your life.  That is if you are mortal.
+    desc: "These runes are utterly strange to you, but you are in luck today:\nUnder the runes you can just make out a sentence in Common.  It\nreads:\n\nStay out, if you treasure your life.  That is if you are mortal.\n\n"
 - vnum: 7902
   name: Redferne's Library
   sector: inside
@@ -1222,10 +1209,7 @@ objects:
   extra_descs:
   - keywords:
     - inscription
-    desc: |
-              The inscription reads:
-
-              Pax Est Sanctuum
+    desc: "The inscription reads:\n\nPax Est Sanctuum\n\n"
   - keywords:
     - shield
     - rose
