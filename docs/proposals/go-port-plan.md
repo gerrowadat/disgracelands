@@ -1574,6 +1574,29 @@ parsing (a close but not scanf-exact reading of
 `sscanf(string, " %d - %d ", ...)`) and why it does not go through the
 pager.
 
+**A `select` ban ✅ — corrected, not merely built.** 5i-g's own "ban
+enforcement at the name prompt" landed a `select` ban that refused
+everybody, the same as `all` — documented in `docs/deviations.md` at the
+time as the conservative reading of a half-implemented ban, since nothing
+could set `PLR_SITEOK` yet to check it against. `set <name> siteok`
+changed that in 5i-e, but placing the *real* check turned out to need
+reading `interpreter.c` closely rather than acting on what the earlier
+entry already said: `BAN_SELECT` is not checked at the name prompt at all
+(`interpreter.c:1482-1490`) — it is checked at `CON_PASSWORD`, after a
+password has already been verified, against the *loaded character's own*
+flag. `handleGetName` no longer refuses anybody for `select`;
+`handlePassword` does, once it knows who is actually logging in. A brand
+new character is never touched by it regardless: creation already grants
+`PLR_SITEOK` for free (`game.ApplyNewCharacterDefaults`, landed with
+Phase 3's character-creation work — itself porting a Disgracelands
+`<DoC>` addition, "Sometimes siteok is off for new players",
+`interpreter.c:1623`), and a new character never reaches `CON_PASSWORD`
+in the first place, so the flag's absence could never have applied to
+one. Only an existing record nobody has cleared is ever refused, and
+`set <name> siteok` is how an immortal clears one — which
+`TestASelectBanChecksSiteOKAfterThePassword` (`internal/server/
+bans_test.go`) exercises end to end, refusal and clearance both.
+
 **Phase 7 — Cutover.** Shadow-run both servers against copies of the same
 `data/`, compare. Then run the Go server as primary, keep the C tree as
 reference. Retire `autorun`/`automaint`/`configure`.

@@ -150,6 +150,77 @@ func TestANewBanOnlyStopsNewCharacters(t *testing.T) {
 	back.expect("Password:")
 }
 
+// A `select` ban is checked after the password, not at the name prompt —
+// reading interpreter.c:1482-1490 closely found it fires at CON_PASSWORD,
+// against the loaded character's own PLR_SITEOK bit, later than
+// docs/deviations.md used to say. A brand new character is never touched
+// by it (creation grants the flag for free, game.ApplyNewCharacterDefaults)
+// and `set <name> siteok` is what clears an existing one.
+func TestASelectBanChecksSiteOKAfterThePassword(t *testing.T) {
+	srv, _ := newTestServer(t)
+	addr := listening(t, srv)
+
+	god := dialClient(t, addr)
+	god.create("Bouncer", "pickyaboutwho", "m", "w")
+
+	regular := dialClient(t, addr)
+	regular.create("Regular", "beenherebefore", "m", "w")
+
+	// Creation grants siteok to everybody; strip it back off — the only
+	// way an existing record ends up without it — before the ban goes up.
+	god.send("set regular siteok off")
+	god.expect("Siteok OFF for Regular.")
+
+	regular.send("quit")
+	regular.expect("Goodbye")
+	regular.close()
+	waitForLogout(t, srv, "Regular")
+	srv.WaitForWrites()
+
+	god.send("ban select 127.0.0.1")
+	god.expect("Site banned.")
+
+	// The name prompt itself does not refuse anybody.
+	blocked := dialClient(t, addr)
+	blocked.expect("By what name do you wish to be known?")
+	blocked.send("Regular")
+	blocked.expect("Password:")
+	blocked.send("beenherebefore")
+	blocked.expect("Sorry, this char has not been cleared for login from your site!")
+
+	// A brand new character is unaffected: creation grants siteok before
+	// the check could ever apply, so the ban never touches it.
+	fresh := dialClient(t, addr)
+	fresh.create("Newcomer", "nevermetaban", "m", "w")
+
+	// `set <name> siteok on` is what actually clears an existing
+	// character, not merely something nothing enforces: lift the ban
+	// briefly to let Regular in, flip the flag while they are online (the
+	// only time `set` can reach them), and reinstate the ban to prove it.
+	god.send("unban 127.0.0.1")
+	god.expect("Site unbanned.")
+
+	back := dialClient(t, addr)
+	back.login("Regular", "beenherebefore")
+
+	god.send("set regular siteok on")
+	god.expect("Siteok ON for Regular.")
+
+	back.send("quit")
+	back.expect("Goodbye")
+	back.close()
+	waitForLogout(t, srv, "Regular")
+	srv.WaitForWrites()
+
+	god.send("ban select 127.0.0.1")
+	god.expect("Site banned.")
+
+	cleared := dialClient(t, addr)
+	cleared.login("Regular", "beenherebefore")
+	cleared.send("look")
+	cleared.expect(">")
+}
+
 func TestShowOptions(t *testing.T) {
 	srv, _ := newTestServer(t)
 	c := dialClient(t, listening(t, srv))

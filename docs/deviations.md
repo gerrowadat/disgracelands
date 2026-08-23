@@ -596,16 +596,6 @@ Listed here so they are not mistaken for deliberate differences.
   `docs/operations.md` — so `reboot` and `now` ask to come back and `die` and
   `pause` ask not to, and the answer is an exit code rather than a file.
 
-- **A `select` ban is treated as `all`, and no longer has to be.** SELECT lets
-  in only characters flagged `PLR_SITEOK`. When this was written nothing in
-  the tree could set that flag, so refusing everybody was the safe reading of
-  a half-implemented ban — letting them all through would have made `ban
-  select` do nothing at all and say nothing about it. `set <name> siteok`
-  landed with the rest of `set` in 5i-e, so the flag is now settable and the
-  real check is a one-line lookup at the name prompt. Until someone writes it,
-  the conservative behaviour stands; the comment at
-  `internal/session/login.go` says the same.
-
 - **`show rent` and `show shops` are not ported.** The first is
   `Crash_listrent`, which lists a rent file without loading it; the second is
   `show_shops` in shop.c. Both are listings of their own and neither is

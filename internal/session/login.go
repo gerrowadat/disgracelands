@@ -109,6 +109,12 @@ func (s *Session) handleGetName(ctx context.Context, deps Deps, line string) err
 	// The ban check, at the name prompt (interpreter.c's CON_GET_NAME). A
 	// site banned outright is refused whoever they say they are; one banned
 	// to new players is refused only if the name is new.
+	//
+	// SELECT is not here: reading the C closely (interpreter.c:1482-1490)
+	// found it is checked much later than this comment used to say — at
+	// CON_PASSWORD, after a password has already been verified, against
+	// the loaded character's own PLR_SITEOK bit, not at the name prompt at
+	// all. handlePassword is where that lives now.
 	switch deps.Login.BanFor(s.Host()) {
 	case "all":
 		s.Send("You are not welcome here.\r\n")
@@ -122,18 +128,6 @@ func (s *Session) handleGetName(ctx context.Context, deps Deps, line string) err
 			s.Close()
 			return nil
 		}
-	case "select":
-		// SELECT lets in only characters flagged PLR_SITEOK. Treated as `all`,
-		// which is the conservative reading: letting everybody through would
-		// make `ban select` do nothing at all and say nothing about it.
-		//
-		// `set <name> siteok` landed in 5i-e, so the flag is settable now and
-		// the real check is a lookup of the named character's record here.
-		// Noted in docs/deviations.md rather than left to be discovered.
-		s.Send("You are not welcome here.\r\n")
-		s.logger.Info("refused a banned site", "host", s.Host(), "ban", "select")
-		s.Close()
-		return nil
 	}
 
 	s.pendingName = name
@@ -189,6 +183,20 @@ func (s *Session) handlePassword(ctx context.Context, deps Deps, line string) er
 		return nil
 	}
 
+	// The SELECT ban (interpreter.c:1482-1490): once the password is right,
+	// a site-banned connection is still refused unless this particular
+	// character carries PLR_SITEOK. Every new character gets that bit for
+	// free (game.ApplyNewCharacterDefaults, "Sometimes siteok is off for new
+	// players" — interpreter.c:1623, a Disgracelands `<DoC>` addition), so
+	// this only ever bites an older record nobody has cleared, exactly as
+	// intended — `set <name> siteok` is how an immortal clears one.
+	if deps.Login.BanFor(s.Host()) == "select" && !siteOK(character) {
+		s.logger.Info("refused a select-banned site", "host", s.Host(), "character", character.Name)
+		s.Send("Sorry, this char has not been cleared for login from your site!\r\n")
+		s.Close()
+		return nil
+	}
+
 	// If their previous connection dropped, their character is still
 	// standing where they left it. Reconnect to that body rather than
 	// putting a second copy of them into the world.
@@ -205,6 +213,13 @@ func (s *Session) handlePassword(ctx context.Context, deps Deps, line string) er
 	s.state = StateReadMOTD
 	s.Send("%s\r\n*** PRESS RETURN: ", motdFor(deps, character))
 	return nil
+}
+
+// siteOK is PLR_FLAGGED(d->character, PLR_SITEOK), guarding against a
+// character loaded with no record at all — the same defensiveness every
+// other Record-reading helper in this tree already has.
+func siteOK(c *game.Character) bool {
+	return c != nil && c.Record != nil && c.Record.PlayerFlags.Has(game.PlayerSiteOK)
 }
 
 // motdFor picks the message of the day, which is a different file for
