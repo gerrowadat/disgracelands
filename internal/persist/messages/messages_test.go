@@ -115,7 +115,7 @@ func TestUnknownFormatIsRefused(t *testing.T) {
 // AttackTypeName/AttackTypeFromName being real inverses of each other,
 // not just plausible-looking ones.
 func TestClassicToYamlImportAgainstTheRealArchive(t *testing.T) {
-	classic, err := Load("classic", "../../../data/misc/messages")
+	classic, err := Load("classic", "../../../examples/stock/binary/misc/messages")
 	if err != nil {
 		t.Fatalf("Load(classic): %v", err)
 	}

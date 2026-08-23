@@ -23,7 +23,7 @@ OUT     ?= out
 
 # Where the server reads its data. `make run LIB=/srv/disgracelands/lib` runs
 # against a real directory; the default is the one in the repository.
-LIB     ?= data
+LIB     ?= examples/stock/binary
 
 # Listen addresses for the dev targets. The plaintext port is the C server's
 # habitual 4000; 4443 is the TLS one; 9090 carries /metrics, /healthz, /readyz.
@@ -88,7 +88,7 @@ run-mini: ## Run against the tiny world (--mini-mud): three zones, boots instant
 # roster is made an Implementor (internal/game/create.go, from db.c's "if this
 # is our first player --- he be God"). That is the quickest route to a level
 # 34 character, and it is why this target exists rather than being a variant
-# of `run`: on data/ you would only get one, once.
+# of `run`: on LIB itself you would only get one, once.
 .PHONY: run-fresh
 run-fresh: $(SCRATCH) ## Run on a throwaway copy of the data, no players (first login is an Implementor)
 	$(GO) run ./cmd/dlmud $(RUN_FLAGS) --lib-dir=$(SCRATCH)
@@ -118,9 +118,10 @@ health: ## Print /healthz, /readyz and the server's own metrics from a running s
 	@curl -sS http://$(HOST):$(METRICS_PORT)/metrics | grep '^dlmud_' || true
 
 # cp -a then delete the player state: a fresh directory is the point, and
-# data/pfiles locally may hold real ex-players' hashes and mail, which have no
-# business being copied around. The empty directories are recreated because a
-# missing one is a first-login failure rather than an empty roster.
+# $(LIB)/pfiles may hold real ex-players' hashes and mail if LIB has been
+# pointed at a converted archive, which have no business being copied around.
+# The empty directories are recreated because a missing one is a first-login
+# failure rather than an empty roster.
 $(SCRATCH):
 	@echo "==> Building a scratch data directory in $(SCRATCH) from $(LIB)"
 	@rm -rf $(SCRATCH)

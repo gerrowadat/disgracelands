@@ -23,7 +23,7 @@ format. To convert it locally:
 ```sh
 go run ./cmd/dlctl pfile convert \
   --from=binary --from-dir=../welmar/CircleMUD3/lib/etc \
-  --to=ascii    --to-dir=data/pfiles
+  --to=ascii    --to-dir=examples/stock/binary/pfiles
 ```
 
 That is Phase 2's replacement for the old `-m32` `bin2ascii` route, and it
@@ -32,11 +32,11 @@ needs no 32-bit toolchain; the C tool is still in `reference/tools/` and
 `dlctl convert` does the whole data directory, roster included, if that is
 what you have.
 
-The output (`data/pfiles/`) is gitignored and stays local. No player data
+The output (`examples/stock/binary/pfiles/`) is gitignored and stays local. No player data
 has ever been committed here, deliberately: it is real people's password
 hashes, private in-game mail and connection hosts.
 
-A checkout with no `data/etc/players` is the *normal* fresh-install state,
+A checkout with no `etc/players` in its lib-dir is the *normal* fresh-install state,
 not a broken one. `db.c`'s "if this is our first player --- he be God"
 (~line 2705) promotes whoever registers first to Implementor, which is how
 you bootstrap.

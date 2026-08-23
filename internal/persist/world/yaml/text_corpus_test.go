@@ -36,7 +36,7 @@ func roundTripString(s string) (string, error) {
 // same files scripts/world-parity.sh checks against the C server) and
 // round-trips every prose field found on a room, mobile, object or shop.
 func TestTextRoundTripsRealCorpus(t *testing.T) {
-	src, err := classic.New(world.Config{Dir: "../../../../data/world"})
+	src, err := classic.New(world.Config{Dir: "../../../../examples/stock/binary/world"})
 	if err != nil {
 		t.Fatalf("open classic source: %v", err)
 	}

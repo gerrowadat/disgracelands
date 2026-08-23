@@ -95,7 +95,7 @@ func TestParseMessagesFileEmptyIsFine(t *testing.T) {
 // (300-314) entries that make the damage()-dispatch fallback matter —
 // confirmed present, not assumed.
 func TestParseMessagesFileAgainstTheRealArchive(t *testing.T) {
-	f, err := os.Open("../../data/misc/messages")
+	f, err := os.Open("../../examples/stock/binary/misc/messages")
 	if err != nil {
 		t.Fatalf("opening: %v", err)
 	}

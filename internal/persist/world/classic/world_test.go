@@ -21,7 +21,7 @@ import (
 // bpl20's lib/world, the data the C tree in reference/ was built against.
 // Parsing it is the test that matters: hand-written fixtures only prove the
 // parser handles what its author thought of.
-const realWorldDir = "../../../../data/world"
+const realWorldDir = "../../../../examples/stock/binary/world"
 
 // Record counts for the shipped world.
 //

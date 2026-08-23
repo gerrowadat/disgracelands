@@ -118,26 +118,26 @@ fi
 
 # 4. The credit files, which the license requires be preserved and displayed.
 echo "==> Credit text is present and intact"
-grep -qi 'CircleMUD was developed from Diku' data/text/credits ||
-	bad "data/text/credits has lost the stock CircleMUD credit"
-grep -q 'Type HELP CIRCLEMUD' data/text/credits ||
-	bad "data/text/credits no longer points at the CIRCLEMUD help entry"
-grep -q '^CIRCLE CIRCLEMUD CREDITS' data/text/help/info.hlp ||
-	bad "the CIRCLEMUD help entry is missing from data/text/help/info.hlp"
+grep -qi 'CircleMUD was developed from Diku' examples/stock/binary/text/credits ||
+	bad "examples/stock/binary/text/credits has lost the stock CircleMUD credit"
+grep -q 'Type HELP CIRCLEMUD' examples/stock/binary/text/credits ||
+	bad "examples/stock/binary/text/credits no longer points at the CIRCLEMUD help entry"
+grep -q '^CIRCLE CIRCLEMUD CREDITS' examples/stock/binary/text/help/info.hlp ||
+	bad "the CIRCLEMUD help entry is missing from examples/stock/binary/text/help/info.hlp"
 for name in Staerfeldt Nyboe Madsen Seifert Hammer; do
-	grep -q "$name" data/text/credits ||
-		bad "data/text/credits does not name $name"
+	grep -q "$name" examples/stock/binary/text/credits ||
+		bad "examples/stock/binary/text/credits does not name $name"
 done
 
 # 5. The login sequence, which must name both sets of creators. "Login
 # sequence" is defined by the license as everything a player sees between
-# connecting and playing; data/text/greetings is the file that carries it.
+# connecting and playing; examples/stock/binary/text/greetings is the file that carries it.
 echo "==> The login sequence names the creators"
-grep -q 'Jeremy Elson' data/text/greetings ||
-	bad "data/text/greetings does not name the CircleMUD creator"
+grep -q 'Jeremy Elson' examples/stock/binary/text/greetings ||
+	bad "examples/stock/binary/text/greetings does not name the CircleMUD creator"
 for name in Staerfeldt Nyboe Madsen Seifert Hammer; do
-	grep -q "$name" data/text/greetings ||
-		bad "data/text/greetings does not name $name"
+	grep -q "$name" examples/stock/binary/text/greetings ||
+		bad "examples/stock/binary/text/greetings does not name $name"
 done
 
 if [ "$fail" -eq 0 ]; then

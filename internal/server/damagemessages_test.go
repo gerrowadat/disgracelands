@@ -147,7 +147,7 @@ func TestOtherDamageCallersStaySilentAboutTheHit(t *testing.T) {
 }
 
 // Against the real archive: a death blow's bare-hand entry (AttackHit,
-// registered in data/misc/messages) is preferred over the compiled table
+// registered in examples/stock/binary/misc/messages) is preferred over the compiled table
 // — proving the live dispatch reaches real data, not just a synthetic
 // fixture. newTestServer's own default has no messages loaded at all
 // (unlike help/socials, deliberately: every other combat test in this
@@ -172,21 +172,21 @@ func TestDeathBlowAgainstTheRealArchive(t *testing.T) {
 	}
 	// Whichever of AttackHit's registered die-message variants was
 	// picked, it is not the compiled table's — a real entry exists
-	// (data/misc/messages has four records for attack type 300), so the
+	// (examples/stock/binary/misc/messages has four records for attack type 300), so the
 	// dispatch must have preferred it.
 	if attackerClient.said("OBLITERATE") {
 		t.Errorf("used the compiled table despite a real registered entry existing: %v", attackerClient.lines)
 	}
 }
 
-// loadRealFightMessages loads the real data/misc/messages archive into
+// loadRealFightMessages loads the real stock misc/messages table into
 // srv, for a test that specifically wants real registered entries rather
 // than newTestServer's default (no messages configured at all — see
 // TestDeathBlowAgainstTheRealArchive's own doc comment for why that stays
 // the default).
 func loadRealFightMessages(t *testing.T, srv *Server) {
 	t.Helper()
-	f, err := os.Open(filepath.Join(repoRoot(t), "data", messagesFile))
+	f, err := os.Open(filepath.Join(repoRoot(t), "examples", "stock", "binary", messagesFile))
 	if err != nil {
 		t.Fatalf("opening the real archive: %v", err)
 	}
@@ -298,7 +298,7 @@ func TestSkillDamageAgainstTheRealArchive(t *testing.T) {
 // A spell number is just another skillType to SkillDamage — mag_damage's
 // own C ends with `return (damage(ch, victim, dam, spellnum))`
 // (magic.c:294), the identical dispatch a skill's number goes through.
-// Magic Missile has a real data/misc/messages entry; Ouchie, one of the
+// Magic Missile has a real examples/stock/binary/misc/messages entry; Ouchie, one of the
 // two local joke spells (spell.go's own naming), does not — proving the
 // registered/unregistered split holds for spell numbers exactly as it
 // does for SkillKick/SkillBash/SkillBackstab, not by inspection but by
@@ -353,7 +353,7 @@ func TestSkillDamageIsSilentWithNothingRegistered(t *testing.T) {
 // cmd/dlmud/main.go), not just internal/persist/messages' own codec
 // (already covered by its own real-archive round-trip test).
 func TestYamlMessagesFormatEndToEnd(t *testing.T) {
-	classic, err := messages.Load("classic", "../../data/misc/messages")
+	classic, err := messages.Load("classic", "../../examples/stock/binary/misc/messages")
 	if err != nil {
 		t.Fatalf("Load(classic): %v", err)
 	}

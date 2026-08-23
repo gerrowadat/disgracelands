@@ -377,9 +377,11 @@ enforce that, only the warning in the command's help.
 
 Listed here so they are not mistaken for deliberate differences.
 
-- **`data/` is the on-disk contract**, decided rather than deviated: both
-  servers read the same directory, which is what the world-parity harness and
-  the Phase 7 shadow run depend on.
+- **Whatever `--lib-dir` points at is the on-disk contract**, decided
+  rather than deviated: both servers read the same directory, which is
+  what the world-parity harness and the Phase 7 shadow run depend on. In
+  this repo that directory is `examples/stock/binary/`, the shipped
+  example and the Go server's default.
 - **`generic_find`'s combined forms are not ported.** `CAN_SEE` and `N.thing`
   both reach the search functions now, so an invisible thief can neither be
   seen nor named and `2.sword` picks the second one. What the C keeps in
@@ -415,7 +417,7 @@ Listed here so they are not mistaken for deliberate differences.
   for exactly this) and `yaml` (folded into the one file, §8), but
   **`binary` has no `plralias`-equivalent codec at all** — `alias.c`'s
   format is a separate file the C keeps regardless of pfile format, and
-  zero archived instances of it exist anywhere in `data/` to build or
+  zero archived instances of it exist anywhere in the surviving archive to build or
   verify one against. Building a format with no corpus behind it is what
   the "do not read the C and transcribe it" testing discipline warns off,
   so it was not attempted; a character loaded from `binary` simply starts

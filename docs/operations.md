@@ -179,16 +179,16 @@ many call sites are still would-be producers.
 
 ## Backups
 
-Back up `data/`. That is all the state there is.
+Back up your `--lib-dir` (`examples/stock/binary/` if you are running on
+the shipped default). That is all the state there is.
 
 Of particular note, and none of it in git for good reason:
 
-- `data/etc/players` (or `data/pfiles/`) — the roster, including password
-  hashes.
-- `data/plrobjs/`, `data/plralias/` — player inventories and aliases.
-- `data/house/`, `data/etc/hcontrol` — player housing and its contents.
-- `data/etc/plrmail` — in-game mail.
-- `data/world/` — the world itself, which changes if anyone builds in-game.
+- `etc/players` (or `pfiles/`) — the roster, including password hashes.
+- `plrobjs/`, `plralias/` — player inventories and aliases.
+- `house/`, `etc/hcontrol` — player housing and its contents.
+- `etc/plrmail` — in-game mail.
+- `world/` — the world itself, which changes if anyone builds in-game.
 
 The repo deliberately ships no player data; see the "Player data" section
 of the top-level `README.md`.
@@ -231,7 +231,7 @@ The shipped world currently reports **0 errors, 11 warnings, 12 notes**. The
 warnings are worth knowing about:
 
 - Four complete zones (23, 90, 92, 147) and two further `.zon` files exist
-  in `data/world/` but appear in no index, so nothing ever loads them. This
+  in `examples/stock/binary/world/` but appear in no index, so nothing ever loads them. This
   is silent in the C server: a builder who adds a zone and forgets the index
   gets no error, just a world quietly missing their work.
 - Two rooms have exits locked by key objects that do not exist.
@@ -408,8 +408,9 @@ dlctl world dump --world-dir=lib/world --out=go.json
 Writes the loaded world as canonical JSON: deterministic ordering, values
 as they are *after* load-time adjustments and reference resolution, and
 absent exits explicitly null so a missing exit cannot be confused with an
-exit to nowhere. Strings are escaped byte by byte, because `data/world` is
-not UTF-8 and a dump that "fixed" those bytes could hide a real difference.
+exit to nowhere. Strings are escaped byte by byte, because a classic-format
+world is not UTF-8 and a dump that "fixed" those bytes could hide a real
+difference.
 
 The C server dumps the same format with `reference/moderncserver/bin/circle
 -J <file>`, which loads the world exactly as a real boot does and then

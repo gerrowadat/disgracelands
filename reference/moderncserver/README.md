@@ -49,9 +49,9 @@ autorun*, automaint, macrun.pl, vms_autorun.com
 FAQ, ChangeLog  Upstream CircleMUD project documents, kept as-is.
 ```
 
-Game data is **not** here. It lives in `data/` at the repository root,
-because both servers read it and it is not C code. The `lib` symlink above
-points at it.
+Game data is **not** here. It lives in `examples/stock/binary/` at the
+repository root, because both servers read it and it is not C code. The
+`lib` symlink above points at it.
 
 ## Building it
 

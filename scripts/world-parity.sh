@@ -20,7 +20,7 @@
 set -eu
 
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
-WORLD_DIR=${1:-data/world}
+WORLD_DIR=${1:-examples/stock/binary/world}
 OUT=$(mktemp -d)
 trap 'rm -rf "$OUT"' EXIT
 

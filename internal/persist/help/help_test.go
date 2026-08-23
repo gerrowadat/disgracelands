@@ -138,7 +138,7 @@ func TestUnknownFormatIsRefused(t *testing.T) {
 // game.ParseHelpFile's own tests), and importing it into yaml and
 // reading it back produces byte-identical records.
 func TestClassicToYamlImportAgainstTheRealArchive(t *testing.T) {
-	classic, err := Load("classic", "../../../data/text/help")
+	classic, err := Load("classic", "../../../examples/stock/binary/text/help")
 	if err != nil {
 		t.Fatalf("Load(classic): %v", err)
 	}
@@ -162,7 +162,7 @@ func TestClassicToYamlImportAgainstTheRealArchive(t *testing.T) {
 // dlctl help fmt should be idempotent: running Save on what Load(yaml)
 // just produced writes byte-identical files.
 func TestFmtIsIdempotent(t *testing.T) {
-	classic, err := Load("classic", "../../../data/text/help")
+	classic, err := Load("classic", "../../../examples/stock/binary/text/help")
 	if err != nil {
 		t.Fatalf("Load(classic): %v", err)
 	}

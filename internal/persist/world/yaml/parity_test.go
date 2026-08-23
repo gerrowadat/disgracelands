@@ -25,7 +25,7 @@ import (
 // scripts/world-parity.sh uses to compare the Go and C loaders, applied
 // here to compare classic and yaml within the Go side.
 func TestClassicYamlParity(t *testing.T) {
-	src, err := classic.New(world.Config{Dir: "../../../../data/world"})
+	src, err := classic.New(world.Config{Dir: "../../../../examples/stock/binary/world"})
 	if err != nil {
 		t.Fatalf("open classic source: %v", err)
 	}

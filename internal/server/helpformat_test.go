@@ -24,7 +24,7 @@ import (
 // cmd/dlmud/main.go), not just internal/persist/help's own codec
 // (already covered by its own real-archive round-trip test).
 func TestYamlHelpFormatEndToEnd(t *testing.T) {
-	classic, err := help.Load("classic", "../../data/text/help")
+	classic, err := help.Load("classic", "../../examples/stock/binary/text/help")
 	if err != nil {
 		t.Fatalf("Load(classic): %v", err)
 	}

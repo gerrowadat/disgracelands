@@ -17,7 +17,7 @@ import (
 )
 
 func TestNestFlattenResetsRoundTripsRealZones(t *testing.T) {
-	src, err := classic.New(world.Config{Dir: "../../../../data/world"})
+	src, err := classic.New(world.Config{Dir: "../../../../examples/stock/binary/world"})
 	if err != nil {
 		t.Fatalf("open classic source: %v", err)
 	}

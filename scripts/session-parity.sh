@@ -14,9 +14,9 @@
 # against an oracle written by hand, and a reading is what has been wrong
 # repeatedly.
 #
-# Both servers run on a throwaway copy of data/ with an empty roster, so the
-# first character created is an implementor on each — the same character, with
-# the same powers, on both sides.
+# Both servers run on a throwaway copy of examples/stock/binary/ with an
+# empty roster, so the first character created is an implementor on each —
+# the same character, with the same powers, on both sides.
 #
 # Usage: scripts/session-parity.sh [script.session ...]
 
@@ -59,7 +59,7 @@ prepare_lib() {
 	target=$1
 	mkdir -p "$target"
 	# -L so the copy is of the data rather than of any symlinks in it.
-	cp -RL data/. "$target/"
+	cp -RL examples/stock/binary/. "$target/"
 	# The player-bearing directories: emptied, not removed, because both
 	# servers expect them to exist.
 	for d in pfiles plrobjs plralias house; do
@@ -77,14 +77,16 @@ prepare_lib() {
 	#
 	# `boards.c` in the patched tree declares six boards (boards.c:67-72) and
 	# two of them — 3094 "suggestion" and 3095 "pkill" — are Disgracelands
-	# additions whose objects only ever existed in the archived world. `data/`
-	# here is stock CircleMUD 3.0 bpl20, which has 3096-3099 and no more, so
-	# the C server hits "SYSERR: Fatal board error: board vnum 3095 does not
-	# exist!" and dies the moment an immortal looks at the board room.
+	# additions whose objects only ever existed in the archived world.
+	# `examples/stock/binary/` here is stock CircleMUD 3.0 bpl20, which has
+	# 3096-3099 and no more, so the C server hits "SYSERR: Fatal board error:
+	# board vnum 3095 does not exist!" and dies the moment an immortal looks
+	# at the board room.
 	#
 	# So the scratch copy gets them, modelled on 3096 and identical for both
 	# servers. Synthetic data for a test, in a directory that is deleted
-	# afterwards — `data/` itself is untouched. See docs/deviations.md.
+	# afterwards — examples/stock/binary/ itself is untouched. See
+	# docs/deviations.md.
 	obj="$target/world/obj/30.obj"
 	if [ -f "$obj" ] && ! grep -q "^#3094$" "$obj"; then
 		# In ascending vnum order, before #3096. That is not tidiness:

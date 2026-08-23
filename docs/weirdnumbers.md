@@ -731,7 +731,7 @@ than a million.
 
 `boards.c:67-72` declares six bulletin boards, and two of them — 3094
 "suggestion" and 3095 "pkill" — are Disgracelands additions whose *objects*
-only ever existed in the archived world. `data/` here is stock CircleMUD 3.0
+only ever existed in the archived world. `examples/stock/binary/` here is stock CircleMUD 3.0
 bpl20, which has 3096 to 3099 and no more.
 
 `init_boards` treats a missing board as fatal (boards.c:126), so the C server
@@ -741,7 +741,8 @@ dies the moment an immortal looks at the board room:
 
 It is not a problem for the world-parity harness, which never boots into the
 game — but the session-parity harness does, so `scripts/session-parity.sh`
-synthesises the two objects into its scratch copy. `data/` itself is untouched.
+synthesises the two objects into its scratch copy. `examples/stock/binary/`
+itself is untouched.
 
 *Source*: `boards.c:67`, `boards.c:126`.
 

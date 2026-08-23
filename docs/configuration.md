@@ -34,13 +34,19 @@ every flag appears here, but it cannot check that the prose is accurate.
 
 | Flag | Default | Meaning |
 |---|---|---|
-| `--lib-dir` | `lib` | Runtime data directory: world files, help text, boards, player data. The same directory the C server takes with `-d`. |
+| `--lib-dir` | `examples/stock/binary` | Runtime data directory: world files, help text, boards, player data. The same directory the C server takes with `-d`. |
 | `--player-dir` | *(empty)* | Player-data directory. Empty means `<lib-dir>/pfiles`. |
 | `--world-dir` | *(empty)* | World-data directory. Empty means `<lib-dir>/world`. |
 | `--config` | *(empty)* | Game-tuning config file (see "A config file: `--config`" below). Empty means `config.c`'s own defaults. |
 
-`data/` is **mutable state** — players, houses, boards, mail, and any world
-files edited in-game. Back it up; mount it as a volume in a container.
+The default points at `examples/stock/README.md`'s checked-in stock world
+so a fresh clone boots something playable with no setup — point
+`--lib-dir` at your own directory (converted from the real archive, or
+anything else) for anything beyond trying the server out.
+
+Whatever `--lib-dir` points at is **mutable state** — players, houses,
+boards, mail, and any world files edited in-game. Back it up; mount it as
+a volume in a container.
 
 ## Formats
 
@@ -56,8 +62,9 @@ files edited in-game. Back it up; mount it as a volume in a container.
 
 `ascii` is the ascii_pfiles 2.1 one-text-file-per-player format. `classic`
 is the original CircleMUD `.wld`/`.mob`/`.obj`/`.zon`/`.shp` flat-file world.
-Both are what the archived `data/` is kept in, and both remain the default
-so pointing the server at it needs no conversion step.
+Both are what `examples/stock/binary/` (the default `--lib-dir`) is kept
+in, and both remain the overall default so pointing the server at a real
+converted archive needs no conversion step either.
 
 `yaml` is the YAML-over-JSON format `docs/design/data-format.md`
 describes — for the world, one file per zone; for players, one file per
@@ -219,7 +226,7 @@ set. That is preferable to starting a server nobody can reach.
 | `--tls-cert` | *(empty)* | Certificate file. Must be set with `--tls-key`. |
 | `--tls-key` | *(empty)* | Private key file. |
 | `--tls-acme-domain` | *(empty)* | Obtain a certificate automatically via ACME (Let's Encrypt) for this domain. *(inert)* |
-| `--tls-acme-cache` | `data/.acme` | Where ACME caches issued certificates. Must persist across restarts. *(inert)* |
+| `--tls-acme-cache` | `examples/stock/binary/.acme` | Where ACME caches issued certificates. Must persist across restarts. *(inert)* |
 
 `--tls-cert`/`--tls-key` and `--tls-acme-domain` are mutually exclusive.
 Setting only one half of the cert/key pair is an error.

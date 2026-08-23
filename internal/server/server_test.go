@@ -83,7 +83,7 @@ func testText(t *testing.T) *Text {
 	if err := os.MkdirAll(filepath.Join(dir, "misc"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	socials, err := os.ReadFile(filepath.Join(repoRoot(t), "data", socialsFile))
+	socials, err := os.ReadFile(filepath.Join(repoRoot(t), "examples", "stock", "binary", socialsFile))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -95,7 +95,7 @@ func testText(t *testing.T) *Text {
 	// that need `help circlemud` to actually work — the licence
 	// requirement go-port-plan.md §12 describes — need the real table,
 	// not a synthetic stand-in.
-	realHelpDir := filepath.Join(repoRoot(t), "data", helpDir)
+	realHelpDir := filepath.Join(repoRoot(t), "examples", "stock", "binary", helpDir)
 	entries, err := os.ReadDir(realHelpDir)
 	if err != nil {
 		t.Fatal(err)

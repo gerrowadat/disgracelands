@@ -74,7 +74,7 @@ are not doing one of these three things, expect to be wrong.
 | `internal/persist/world` | Zone/mob/obj/shop file readers. |
 | `internal/persist/player` | The roster and the rent files, behind interfaces. |
 | `reference/` | The original C, the modernised C build, and the oracle tools. |
-| `data/` | The real game data, as it was. |
+| `examples/stock/` | Stock CircleMUD's own world, checked in as both classic and yaml — the server's default `--lib-dir`. The real game data, as it was, never ships here; see `docs/investigations/`. |
 
 ### The seams that matter
 

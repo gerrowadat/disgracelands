@@ -128,7 +128,7 @@ func TestParseHelpFileAgainstTheRealArchive(t *testing.T) {
 		{"spells.hlp", 44},
 		{"wizhelp.hlp", 50},
 	} {
-		f, err := os.Open("../../data/text/help/" + tc.file)
+		f, err := os.Open("../../examples/stock/binary/text/help/" + tc.file)
 		if err != nil {
 			t.Fatalf("%s: %v", tc.file, err)
 		}
@@ -167,7 +167,7 @@ func TestHelpSlug(t *testing.T) {
 func TestHelpSlugsAreUniqueAgainstTheRealArchive(t *testing.T) {
 	var all []HelpEntry
 	for _, file := range []string{"commands.hlp", "info.hlp", "socials.hlp", "spells.hlp", "wizhelp.hlp"} {
-		f, err := os.Open("../../data/text/help/" + file)
+		f, err := os.Open("../../examples/stock/binary/text/help/" + file)
 		if err != nil {
 			t.Fatalf("%s: %v", file, err)
 		}
@@ -200,7 +200,7 @@ func TestHelpSlugsAreUniqueAgainstTheRealArchive(t *testing.T) {
 }
 
 func TestCirclemudCreditsEntryIsReachable(t *testing.T) {
-	f, err := os.Open("../../data/text/help/info.hlp")
+	f, err := os.Open("../../examples/stock/binary/text/help/info.hlp")
 	if err != nil {
 		t.Fatalf("opening info.hlp: %v", err)
 	}

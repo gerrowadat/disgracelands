@@ -69,7 +69,7 @@ piece finds something the original document got wrong; not rewritten to
 hide that it started as a proposal.
 
 - **[data-format.md](design/data-format.md)** — a single yaml format for
-  everything in `data/`: the world, players, boards, mail, houses and the
+  everything a lib-dir holds: the world, players, boards, mail, houses and the
   game tuning still compiled into `config.c`. Replaces the eight unrelated
   formats a CircleMUD `lib/` carries, and is a superset of all of them. YAML
   over a JSON data model, one file per zone, one file per player, vnums

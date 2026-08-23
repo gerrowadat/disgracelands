@@ -17,12 +17,16 @@ playable game. Until the Go port catches up, that is the game — and it stays
 the reference implementation either way: where the two disagree, the C is
 right by definition, because it is the one that was played.
 
-**The data in this repo is stock.** `data/` is CircleMUD 3.0 bpl20's `lib/`,
-unmodified — Midgaard, not Disgracelands. The world, help text and boards the
-game actually ran on are in the private archive and are not committed here;
-point `--lib-dir` at a converted copy to run the real thing (`dlctl convert`,
-see `docs/operations.md`). Everything in `docs/investigations/` describes that
-archive rather than what ships.
+**The data in this repo is stock.** `examples/stock/binary/` is CircleMUD
+3.0 bpl20's `lib/`, unmodified — Midgaard, not Disgracelands — and it is
+the Go server's default `--lib-dir`, so a fresh clone boots something
+playable with no setup. `examples/stock/yaml/` is the same world again,
+through this project's own `yaml` format, as a worked example of both
+formats side by side (`examples/stock/README.md`). The world, help text
+and boards the game actually ran on are in the private archive and are
+not committed here; point `--lib-dir` at a converted copy to run the real
+thing (`dlctl convert`, see `docs/operations.md`). Everything in
+`docs/investigations/` describes that archive rather than what ships.
 
 **The Go port is playable.** Phases 0–4 of
 `docs/proposals/go-port-plan.md` are done and Phase 5 is all but finished. It
@@ -92,10 +96,14 @@ docs/           This project's own documentation. The root is operator
                 landed; docs/investigations/ is archaeology on the
                 original codebase. See docs/README.md.
 
-data/           Runtime game data: stock CircleMUD 3.0 bpl20 lib/, world
-                files, help text and socials. Read by both servers, so it
-                belongs to neither. Neither the real Disgracelands data nor
-                any player data ships here - see "Player data" below.
+examples/       Runtime game data, not the port's own code. stock/binary/
+                is stock CircleMUD 3.0 bpl20 lib/ - world files, help text
+                and socials - read by both servers and the Go server's
+                default --lib-dir; stock/yaml/ is the same world again in
+                this project's own yaml format. See
+                examples/stock/README.md. Neither the real Disgracelands
+                data nor any player data ships here - see "Player data"
+                below.
 
 reference/      Everything that is not the Go port.
   moderncserver/  The C server: the game as it actually is, and the
@@ -115,7 +123,7 @@ No player accounts, passwords, mail, or house/object saves are committed
 here, deliberately, and never have been — see `.gitignore` and the first
 commit's message for the reasoning (this was real ex-players' data:
 password hashes, private in-game mail, connection hosts). A checkout with
-no `data/etc/players` is the *normal* fresh-install state, not a broken
+no `etc/players` in its lib-dir is the *normal* fresh-install state, not a broken
 one: CircleMUD auto-creates it on boot, and whoever registers the first
 character is automatically promoted to Implementor (top wizard) — that's
 original stock CircleMUD behavior (`reference/moderncserver/src/db.c`, "if

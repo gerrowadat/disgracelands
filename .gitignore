@@ -34,29 +34,37 @@ syslog.CRASH
 reference/moderncserver/log/*
 !reference/moderncserver/log/.gitkeep
 
-# --- data/: runtime game data --------------------------------------------
-# Player data - deliberately never committed (real ex-players' password
-# hashes, private in-game mail, connection hosts, house contents). None of
-# this needs to exist for a fresh boot: db.c's build_player_index()
-# auto-creates an empty data/etc/players via touch() if it's missing, and
-# db.c's "if this is our first player --- he be God" (~line 2705-2714)
-# promotes whoever registers first to LVL_IMPL automatically - a blank
-# data/etc/players is the *normal* fresh-install state, not a broken one.
-# See docs/investigations/history.md and TODO.md for how to bring real player
-# data back in locally without it ever touching git.
-data/etc/players
-data/etc/players.beforewipe
-data/etc/plrmail
-data/etc/plrmail.beforwipe
-data/pfiles/
-data/plralias/*
-!data/plralias/.gitkeep
-data/plrobjs/*
-!data/plrobjs/.gitkeep
-data/house/*
-!data/house/README
-!data/house/.gitkeep
-data/.acme/
+# --- examples/stock/binary/: the default --lib-dir ------------------------
+# examples/stock/binary/ is a checked-in, static example (stock CircleMUD's
+# own lib/), but it is also the server's default --lib-dir (internal/config/
+# config.go): running dlmud with no flags at all boots against it, and a
+# fresh boot writes runtime state into whatever --lib-dir is. None of that
+# runtime state belongs in git, the same reasoning the old data/'s rules had
+# from when *that* was the default (db.c's build_player_index()
+# auto-creates an empty etc/players via touch() if it's missing, and db.c's
+# "if this is our first player --- he be God" (~line 2705-2714) promotes
+# whoever registers first to LVL_IMPL automatically - a blank etc/players is
+# the *normal* fresh-boot state, not a broken one).
+examples/stock/binary/etc/players
+examples/stock/binary/etc/players.beforewipe
+examples/stock/binary/etc/plrmail
+examples/stock/binary/etc/plrmail.beforwipe
+examples/stock/binary/pfiles/
+examples/stock/binary/plralias/*
+!examples/stock/binary/plralias/.gitkeep
+examples/stock/binary/plrobjs/*
+!examples/stock/binary/plrobjs/.gitkeep
+examples/stock/binary/house/*
+!examples/stock/binary/house/README
+!examples/stock/binary/house/.gitkeep
+examples/stock/binary/.acme/
+
+# examples/stock/yaml/ is not the default --lib-dir, so reaching it needs an
+# explicit --lib-dir/--player-format flag, but the same runtime-state
+# protection still applies if someone points a demo server at it.
+examples/stock/yaml/pfiles/
+examples/stock/yaml/players/
+examples/stock/yaml/.acme/
 
 # act (`make ci`) reads secrets and variables from these by default. .actrc
 # itself is tracked -- it holds the runner image and nothing sensitive -- but

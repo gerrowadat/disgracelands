@@ -22,7 +22,7 @@ import (
 // back to the raw form (ok=false) rather than losing that junk, and this
 // asserts that fallback happens rather than a silent wrong answer.
 func TestTypedValuesRoundTripsRealObjects(t *testing.T) {
-	src, err := classic.New(world.Config{Dir: "../../../../data/world"})
+	src, err := classic.New(world.Config{Dir: "../../../../examples/stock/binary/world"})
 	if err != nil {
 		t.Fatalf("open classic source: %v", err)
 	}

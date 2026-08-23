@@ -110,7 +110,7 @@ func TestActWithNothingToSubstitute(t *testing.T) {
 // TestSocialsFileParses against the real data, which is the only copy of the
 // format there is.
 func TestSocialsFileParses(t *testing.T) {
-	f, err := os.Open("../../data/misc/socials")
+	f, err := os.Open("../../examples/stock/binary/misc/socials")
 	if err != nil {
 		t.Fatalf("opening the socials file: %v", err)
 	}
@@ -180,7 +180,7 @@ func TestSocialsFileParses(t *testing.T) {
 // TestSocialsRenderThroughAct end to end: the file's codes, resolved for
 // three different audiences.
 func TestSocialsRenderThroughAct(t *testing.T) {
-	f, err := os.Open("../../data/misc/socials")
+	f, err := os.Open("../../examples/stock/binary/misc/socials")
 	if err != nil {
 		t.Fatal(err)
 	}

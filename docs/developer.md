@@ -22,7 +22,7 @@ Common variables, settable on any target:
 
 | Variable | Default | What it does |
 |---|---|---|
-| `LIB` | `data` | The data directory the server runs against. |
+| `LIB` | `examples/stock/binary` | The data directory the server runs against. |
 | `PORT` | `4000` | Plaintext telnet port. |
 | `TLS_PORT` | `4443` | TLS port for `run-tls`. |
 | `METRICS_PORT` | `9090` | `/metrics`, `/healthz`, `/readyz`. |
@@ -47,7 +47,7 @@ The other run targets:
 
 | Target | What you get |
 |---|---|
-| `make run` | The full world in `data/`, plaintext telnet. |
+| `make run` | The full world in `examples/stock/binary/`, plaintext telnet. |
 | `make run-mini` | The same directory, reduced world. |
 | `make run-fresh` | A throwaway copy of the data with no players in it. |
 | `make run-tls` | The TLS listener, with a self-signed local certificate. |
@@ -70,7 +70,7 @@ the port.
 ### A character with powers
 
 The first character created on an empty roster is made an Implementor
-(level 34, all skills, `data/pfiles` empty). This is stock CircleMUD
+(level 34, all skills, `LIB/pfiles` empty). This is stock CircleMUD
 behaviour — db.c's *"if this is our first player --- he be God"*, kept
 deliberately in `internal/game/create.go` — and it is the fastest way to get
 a god to test with.
@@ -81,16 +81,16 @@ You only get one per roster, though, so:
 make run-fresh
 ```
 
-builds `out/scratch-lib`, a copy of `data/` with the player state stripped
-out, and runs against that. Log in, pick any name, and you are an
-Implementor. `make clean` or `make scratch` throws it away and you can do it
-again.
+builds `out/scratch-lib`, a copy of `LIB` (`examples/stock/binary/` by
+default) with the player state stripped out, and runs against that. Log
+in, pick any name, and you are an Implementor. `make clean` or `make
+scratch` throws it away and you can do it again.
 
 The copy deliberately excludes `pfiles/`, `plrobjs/`, `plralias/`, `house/`,
 `etc/players` and `etc/plrmail`: partly because an empty roster is the whole
-point, and partly because a local `data/pfiles` may hold the real ex-players'
-password hashes and mail, which should not be getting copied around the
-filesystem.
+point, and partly because `LIB/pfiles` may hold the real ex-players'
+password hashes and mail if `LIB` has been pointed at a converted archive,
+which should not be getting copied around the filesystem.
 
 ### Against a real data directory
 
@@ -177,9 +177,9 @@ Useful `FLAGS` when reproducing something specific:
 ## What running writes
 
 Everything the server persists goes under its `--lib-dir`. Locally that is
-`data/`, and the player-bearing parts of it are gitignored on purpose:
-`data/pfiles/`, `data/plrobjs/`, `data/plralias/`, `data/house/`,
-`data/etc/players`, `data/etc/plrmail`.
+`examples/stock/binary/` by default, and the player-bearing parts of it
+are gitignored on purpose: `pfiles/`, `plrobjs/`, `plralias/`, `house/`,
+`etc/players`, `etc/plrmail`, under whatever `--lib-dir` is.
 
 Two rules follow, and they are worth keeping in reflex:
 
@@ -187,10 +187,10 @@ Two rules follow, and they are worth keeping in reflex:
   hosts, from real people who played in 2001. `git status` after a session
   should show nothing new under those paths; if it does, something wrote
   somewhere it should not have.
-- **Test destructive things against `out/scratch-lib`**, not `data/`. That is
-  what `make run-fresh` is for.
+- **Test destructive things against `out/scratch-lib`**, not
+  `examples/stock/binary/`. That is what `make run-fresh` is for.
 
-The world files in `data/world` are tracked, so anything that edits the world
+The world files in `examples/stock/binary/world` are tracked, so anything that edits the world
 in-game — a builder command, once those exist — shows up as a working-tree
 change. That is intended: the world is source.
 
@@ -212,7 +212,7 @@ just run, workflow and all, with `make ci` (see below):
   it is a separate target. Run it after touching `internal/persist/world/`.
   If it reports a difference, the Go loader is what is wrong.
 - **Session parity** — `scripts/session-parity.sh`. Boots *both* servers on
-  throwaway copies of `data/` with the same fixed RNG seed, plays a script from
+  throwaway copies of `examples/stock/binary/` with the same fixed RNG seed, plays a script from
   `testdata/parity/` at each, and diffs what they said. Where they differ, the
   C server is right.
 
@@ -443,7 +443,7 @@ one thing, and the mistakes it catches all look right.
   two disagree about the game, the C server is right by definition: it is the
   one that was played.
 - **Where the documentation and the data disagree, the data wins.** The world
-  parser is written against the real files in `data/world`, not against
+  parser is written against the real files in `examples/stock/binary/world`, not against
   CircleMUD's `doc/building.txt`, and each divergence is commented where it
   matters.
 - **World edits get linted.** `make world-lint` reports exits to deleted
@@ -485,7 +485,7 @@ internal/auth/      password verification; auth/descrypt is the DES port
 internal/rng/       the two generators behind --rng
 internal/obs/       metrics, health and readiness
 internal/buildinfo/ version stamping
-data/               runtime data: world, text, and (never committed) players
+examples/           runtime data: stock world, text, and (never committed) players
 reference/          the C server and other lineage codebases, for comparison
 docs/proposals/go-port-plan.md   the design and the phase order
 docs/design/                     design decisions that have actually landed

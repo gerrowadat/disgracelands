@@ -177,7 +177,7 @@ var (
 // telnet is implemented but off unless asked for).
 func Default() Config {
 	return Config{
-		LibDir:               "data",
+		LibDir:               "examples/stock/binary",
 		PlayerFormat:         "ascii",
 		WorldFormat:          "classic",
 		StateFormat:          "classic",
@@ -188,7 +188,7 @@ func Default() Config {
 		TelnetAddr:           "",
 		TelnetsAddr:          ":4443",
 		WSAddr:               "",
-		TLSACMECacheDir:      "data/.acme",
+		TLSACMECacheDir:      "examples/stock/binary/.acme",
 		MaxPlayers:           300,
 		MaxConnsPerIP:        8,
 		LoginGraceTime:       60 * time.Second,

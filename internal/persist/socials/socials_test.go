@@ -127,7 +127,7 @@ func TestUnknownFormatIsRefused(t *testing.T) {
 // game.ParseSocials's own tests), and importing it into yaml and reading
 // it back produces byte-identical records.
 func TestClassicToYamlImportAgainstTheRealArchive(t *testing.T) {
-	classic, err := Load("classic", "../../../data/misc/socials")
+	classic, err := Load("classic", "../../../examples/stock/binary/misc/socials")
 	if err != nil {
 		t.Fatalf("Load(classic): %v", err)
 	}

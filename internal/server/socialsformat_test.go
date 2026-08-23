@@ -21,7 +21,7 @@ import (
 // cmd/dlmud/main.go), not just internal/persist/socials' own codec
 // (already covered by its own real-archive round-trip test).
 func TestYamlSocialsFormatEndToEnd(t *testing.T) {
-	classic, err := socials.Load("classic", "../../data/misc/socials")
+	classic, err := socials.Load("classic", "../../examples/stock/binary/misc/socials")
 	if err != nil {
 		t.Fatalf("Load(classic): %v", err)
 	}

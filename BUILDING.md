@@ -92,13 +92,17 @@ volume, since it is mutable state.
 
 ## Where the game data lives
 
-`data/` at the repository root: world files, help text, socials, and —
-locally, never committed — player data. Both servers read it. The C server
-reaches it through a `lib` symlink, because its compiled-in default is `lib`
-(`config.c`'s `DFLT_DIR`).
+`examples/stock/binary/` at the repository root: world files, help text,
+socials, and — locally, never committed — player data. Both servers read
+it, and it is the Go server's own default `--lib-dir`. The C server
+reaches it through a `lib` symlink, because its compiled-in default is
+`lib` (`config.c`'s `DFLT_DIR`).
 
-What ships there is **stock CircleMUD 3.0 bpl20's `lib/`**, unmodified. It is
-enough to build, boot, test and compare both servers, which is what the tree
-needs it for. The Disgracelands world and text are archive material and are
-not in this repo; `dlctl convert` turns a copy of the archive into a directory
-either server runs on, and `--lib-dir` points at it.
+What ships there is **stock CircleMUD 3.0 bpl20's `lib/`**, unmodified —
+see `examples/stock/README.md`, which also has the same world converted to
+this project's own `yaml` format at `examples/stock/yaml/`, as a worked
+example of both formats side by side. It is enough to build, boot, test
+and compare both servers, which is what the tree needs it for. The
+Disgracelands world and text are archive material and are not in this
+repo; `dlctl convert` turns a copy of the archive into a directory either
+server runs on, and `--lib-dir` points at it.
