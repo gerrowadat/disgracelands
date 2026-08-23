@@ -240,9 +240,25 @@ func doRescue(c *Context) error {
 	return nil
 }
 
+// DefaultRoundLength is how long a combat round is: PULSE_VIOLENCE, two
+// seconds (structs.h:512).
+const DefaultRoundLength = 2 * time.Second
+
 // roundLength is how long a combat round is, which is what a wait state is
-// counted in. PULSE_VIOLENCE is two seconds.
-func (c *Context) roundLength() time.Duration { return 2 * time.Second }
+// counted in.
+//
+// A wait state is real elapsed time — Character.Wait stores a deadline and
+// the dispatcher sleeps on it — so a test that kicks or backstabs waits two
+// whole seconds of wall clock for each round of lag it caused. That is the
+// right behaviour for a player and a poor bargain for a test suite, so the
+// length is a knob: zero, which is every caller that has not thought about
+// it, means the real DefaultRoundLength.
+func (c *Context) roundLength() time.Duration {
+	if c.RoundLength > 0 {
+		return c.RoundLength
+	}
+	return DefaultRoundLength
+}
 
 // skillTarget finds who a skill is aimed at, falling back to whoever the
 // character is already fighting — which is what makes `kick` with no argument

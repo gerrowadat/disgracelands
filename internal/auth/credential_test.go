@@ -311,3 +311,53 @@ func TestNeedsUpgradeMatchesWhatVerifyDoes(t *testing.T) {
 		t.Error("a modern credential reports that it needs upgrading")
 	}
 }
+
+// TestDefaultCostIsTheRecommendedOne.
+//
+// The work factor is a field on Verifier so that the server's own test suite
+// can hash cheaply — it creates and logs in several hundred characters, and
+// at the real cost that was more than half its runtime. This is what stops
+// that convenience reaching production: the zero Verifier, which is what
+// every caller outside a test builds, must still hash at RFC 9106's second
+// recommendation.
+func TestDefaultCostIsTheRecommendedOne(t *testing.T) {
+	if DefaultCost.Memory != 64*1024 || DefaultCost.Time != 3 || DefaultCost.Threads != 4 {
+		t.Errorf("DefaultCost is %+v, want RFC 9106's 64 MiB over three passes in four lanes", DefaultCost)
+	}
+	if got := (Verifier{}).cost(); got != DefaultCost {
+		t.Errorf("a Verifier with no cost set hashes at %+v, want DefaultCost %+v", got, DefaultCost)
+	}
+}
+
+// TestAPartialCostIsFilledInFromTheDefault, so that setting only the memory
+// does not silently drop the pass count to zero — which argon2 panics on.
+func TestAPartialCostIsFilledInFromTheDefault(t *testing.T) {
+	got := Verifier{Cost: Cost{Memory: 8 * 1024}}.cost()
+	want := Cost{Time: DefaultCost.Time, Memory: 8 * 1024, Threads: DefaultCost.Threads}
+	if got != want {
+		t.Errorf("cost() = %+v, want %+v", got, want)
+	}
+}
+
+// TestACheapCredentialStillVerifies, and does so under a Verifier configured
+// for a different cost entirely: the parameters travel in the hash, which is
+// the property that lets the cost be raised without locking anybody out.
+func TestACheapCredentialStillVerifies(t *testing.T) {
+	cheap := Verifier{Cost: Cost{Time: 1, Memory: 8 * 1024, Threads: 4}}
+	cred, err := cheap.NewCredential("swordfish")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(cred.Hash, "m=8192,t=1,p=4") {
+		t.Errorf("the hash does not carry the cost it was made at: %s", cred.Hash)
+	}
+	for _, v := range []Verifier{cheap, {}} {
+		res, err := v.Verify(cred, "Zod", "swordfish")
+		if err != nil {
+			t.Fatalf("verifying: %v", err)
+		}
+		if !res.OK {
+			t.Errorf("the correct password was refused by %+v", v.cost())
+		}
+	}
+}

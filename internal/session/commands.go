@@ -115,6 +115,10 @@ type Context struct {
 	Arg string
 	// Social is the social being run, for the commands that are one.
 	Social *game.Social
+	// RoundLength is how long a combat round lasts, which is the unit a
+	// wait state is counted in. Zero means DefaultRoundLength — see
+	// Context.roundLength.
+	RoundLength time.Duration
 }
 
 // Violence is how a command hurts somebody.
@@ -743,6 +747,10 @@ type Dispatcher struct {
 	// ShopReload hot-reloads a shop's configuration from disk, for
 	// `reloadshop`.
 	ShopReload ShopReloader
+	// RoundLength is how long a combat round lasts, and so how long a wait
+	// state holds a command up for. Zero means DefaultRoundLength — see
+	// Context.roundLength.
+	RoundLength time.Duration
 }
 
 // Do implements CommandHandler.
@@ -802,7 +810,7 @@ func (d *Dispatcher) Do(ctx context.Context, s *Session, line string) error {
 		c := &Context{
 			Ctx: ctx, Session: s, Character: s.Character(),
 			World: w, Text: d.Text, RNG: d.RNG, Violence: d.Violence, Arg: arg,
-			Social: cmd.Social, Save: d.Save, Rent: d.Rent, SaveBoard: d.SaveBoard, Mail: d.Mail, Houses: d.Houses, Operator: d.Operator, Bans: d.Bans, Reports: d.Reports, SetPassword: d.SetPassword, TextEdit: d.TextEdit, MobReload: d.MobReload, ZoneReload: d.ZoneReload, ObjectReload: d.ObjectReload, ShopReload: d.ShopReload,
+			Social: cmd.Social, Save: d.Save, Rent: d.Rent, SaveBoard: d.SaveBoard, Mail: d.Mail, Houses: d.Houses, Operator: d.Operator, Bans: d.Bans, Reports: d.Reports, SetPassword: d.SetPassword, TextEdit: d.TextEdit, MobReload: d.MobReload, ZoneReload: d.ZoneReload, ObjectReload: d.ObjectReload, ShopReload: d.ShopReload, RoundLength: d.RoundLength,
 		}
 
 		// A command that panics must not leave the player staring at a dead

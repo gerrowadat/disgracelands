@@ -41,17 +41,38 @@ var ErrLegacyRefused = errors.New("auth: this character still has a legacy passw
 // docs/proposals/go-port-plan.md §5.3.1.
 const legacyPrefixLength = 10
 
-// Argon2 parameters. These are the RFC 9106 second recommendation — 64 MiB
-// and three passes — which takes a few tens of milliseconds. A MUD login
-// happens a few times a minute at most, so there is no reason to be
-// parsimonious, and the cost is what makes a stolen player file expensive.
+// The fixed halves of the argon2 parameters. The salt and digest lengths are
+// not a cost knob — they are how much randomness and how much digest there
+// is — so unlike Cost they are the same everywhere.
 const (
-	argonTime    = 3
-	argonMemory  = 64 * 1024 // KiB
-	argonThreads = 4
 	argonKeyLen  = 32
 	argonSaltLen = 16
 )
+
+// Cost is the argon2id work factor: what hashing a password costs, and
+// therefore what a stolen player file costs to attack.
+//
+// It is a field on Verifier rather than a package constant because of the
+// tests. The server's own suite creates and logs in several hundred
+// characters, and at the real cost — about 140ms a hash — that alone was
+// more than half the runtime of `go test ./internal/server`. Making the
+// factor injectable lets that suite hash cheaply while the parameters that
+// actually ship stay the ones a caller gets for free; internal/auth's own
+// tests still run against them.
+type Cost struct {
+	// Time is how many passes are made over the memory.
+	Time uint32
+	// Memory is how much of it there is, in KiB.
+	Memory uint32
+	// Threads is how many lanes the passes are split across.
+	Threads uint8
+}
+
+// DefaultCost is RFC 9106's second recommendation — 64 MiB and three passes
+// — which takes a few tens of milliseconds. A MUD login happens a few times
+// a minute at most, so there is no reason to be parsimonious, and the cost is
+// what makes a stolen player file expensive.
+var DefaultCost = Cost{Time: 3, Memory: 64 * 1024, Threads: 4}
 
 // Verifier checks passwords and produces new credentials.
 type Verifier struct {
@@ -60,6 +81,34 @@ type Verifier struct {
 	// defaults on and why the server counts how many accounts still depend
 	// on it.
 	AllowLegacy bool
+
+	// Cost is the work factor for credentials this Verifier creates. Each
+	// zero field means DefaultCost's, so a Verifier built without a thought
+	// for it hashes at the real cost rather than a cheap one — the right way
+	// round to be wrong.
+	//
+	// It has no bearing on verification: verifyArgon2id reads the parameters
+	// out of the stored hash, so a credential made under one cost still
+	// verifies under a Verifier configured for another. That is the same
+	// property that lets the cost be raised later without locking anybody
+	// out.
+	Cost Cost
+}
+
+// cost is the work factor to hash at, with DefaultCost filling in whatever
+// was left zero.
+func (v Verifier) cost() Cost {
+	c := v.Cost
+	if c.Time == 0 {
+		c.Time = DefaultCost.Time
+	}
+	if c.Memory == 0 {
+		c.Memory = DefaultCost.Memory
+	}
+	if c.Threads == 0 {
+		c.Threads = DefaultCost.Threads
+	}
+	return c
 }
 
 // Result describes what a verification concluded.
@@ -99,7 +148,7 @@ func (v Verifier) Verify(cred game.Credential, name, password string) (Result, e
 		// Correct password, obsolete hash: this is the only moment the
 		// plaintext is known, so it is the only moment the upgrade can
 		// happen.
-		upgraded, err := NewCredential(password)
+		upgraded, err := v.NewCredential(password)
 		if err != nil {
 			return Result{}, err
 		}
@@ -114,18 +163,31 @@ func (v Verifier) Verify(cred game.Credential, name, password string) (Result, e
 	}
 }
 
-// NewCredential hashes a password for storage.
+// NewCredential hashes a password for storage, at this Verifier's cost.
+func (v Verifier) NewCredential(password string) (game.Credential, error) {
+	return newCredential(password, v.cost())
+}
+
+// NewCredential hashes a password for storage at DefaultCost.
+//
+// It is for callers with no Verifier to hand, which means the ones that are
+// not a login: `dlctl pfile passwd` sets a password offline and has no
+// legacy policy to apply.
 func NewCredential(password string) (game.Credential, error) {
+	return newCredential(password, DefaultCost)
+}
+
+func newCredential(password string, cost Cost) (game.Credential, error) {
 	salt := make([]byte, argonSaltLen)
 	if _, err := rand.Read(salt); err != nil {
 		return game.Credential{}, fmt.Errorf("auth: reading random salt: %w", err)
 	}
-	key := argon2.IDKey([]byte(password), salt, argonTime, argonMemory, argonThreads, argonKeyLen)
+	key := argon2.IDKey([]byte(password), salt, cost.Time, cost.Memory, cost.Threads, argonKeyLen)
 
 	// The standard PHC string, so the parameters travel with the hash and a
 	// later change to them does not invalidate everything stored before it.
 	hash := fmt.Sprintf("$argon2id$v=%d$m=%d,t=%d,p=%d$%s$%s",
-		argon2.Version, argonMemory, argonTime, argonThreads,
+		argon2.Version, cost.Memory, cost.Time, cost.Threads,
 		base64.RawStdEncoding.EncodeToString(salt),
 		base64.RawStdEncoding.EncodeToString(key))
 

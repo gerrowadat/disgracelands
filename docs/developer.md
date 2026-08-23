@@ -210,6 +210,33 @@ single game goroutine (`docs/proposals/go-port-plan.md` §3.1), and the whole
 safety argument for that design rests on nothing else touching world state —
 which only the race detector can actually check.
 
+### Two things the server's tests deliberately run cheap
+
+`internal/server` is the big suite — several hundred tests, each of which
+stands a real server up, dials it over a real socket and logs a character in.
+Two of the game's own costs are turned down for it, both through options that
+production never sets:
+
+- **The password work factor.** `auth.Verifier.Cost` — `testAuth` in
+  `server_test.go` — hashes at 8 MiB and one pass instead of the real 64 MiB
+  and three. At the real factor a hash is about 140ms, and the suite makes
+  several hundred of them; a CPU profile put 94% of its samples inside
+  argon2. The hashes are still real argon2id, made and checked by the same
+  code the server uses, and the parameters travel in the hash, so verifying
+  is unaffected. `auth.DefaultCost` is what every non-test caller gets, and
+  `internal/auth` asserts it is still RFC 9106's recommendation.
+- **The combat round.** `server.Options.RoundLength` — `testRoundLength` —
+  is 100ms instead of two seconds. A wait state is real elapsed time
+  (`game.Character.Wait` stores a deadline and the dispatcher sleeps until it
+  passes), so at the real length a single `kick` cost its test six seconds of
+  doing nothing. `session.DefaultRoundLength` is what everything else gets,
+  and `internal/session` asserts it is still PULSE_VIOLENCE.
+
+Together these took the package from about 250 seconds under `-race` to about
+35. Both knobs default to the real value when left zero, so the way to get
+this wrong is to *set* one, not to forget to — which is the right way round.
+A test that asserts on lag should count in `testRoundLength`, not in seconds.
+
 ### What runs when
 
 CI used to run everything on every push and pull request, and got slow and

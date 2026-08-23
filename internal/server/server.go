@@ -124,6 +124,10 @@ type Server struct {
 	rebootWanted   atomic.Bool
 	// noSpecials suppresses special procedures, matching the C's -s.
 	noSpecials bool
+	// roundLength is how long a combat round lasts, and so how long a wait
+	// state holds somebody's next command up for. Zero is the real two
+	// seconds; see session.DefaultRoundLength.
+	roundLength time.Duration
 
 	rng *rng.Rand
 
@@ -172,6 +176,10 @@ type Options struct {
 	Restrict    bool
 	// NoSpecials suppresses special procedures (C: -s).
 	NoSpecials bool
+	// RoundLength overrides how long a combat round lasts. Zero — which is
+	// every caller that is not a test — means the real two seconds, which
+	// is what PULSE_VIOLENCE is. See session.DefaultRoundLength.
+	RoundLength time.Duration
 	// RNG is the generator the game rolls on. A nil one gets the modern
 	// generator seeded from the clock.
 	RNG *rng.Rand
@@ -199,6 +207,7 @@ func New(opts Options) *Server {
 		logger:      opts.Logger,
 		restrict:    opts.Restrict,
 		noSpecials:  opts.NoSpecials,
+		roundLength: opts.RoundLength,
 		rng:         opts.RNG,
 	}
 	s.booted = time.Now()
@@ -319,7 +328,7 @@ func (s *Server) Create(ctx context.Context, req session.CreateRequest) (*game.C
 		return nil, fmt.Errorf("the game is not accepting new characters")
 	}
 
-	cred, err := auth.NewCredential(req.Password)
+	cred, err := s.auth.NewCredential(req.Password)
 	if err != nil {
 		return nil, err
 	}
@@ -701,7 +710,7 @@ func (s *Server) SetPassword(ctx context.Context, c *game.Character, password st
 	if c == nil || c.Record == nil {
 		return fmt.Errorf("no character to set a password for")
 	}
-	cred, err := auth.NewCredential(password)
+	cred, err := s.auth.NewCredential(password)
 	if err != nil {
 		return err
 	}
