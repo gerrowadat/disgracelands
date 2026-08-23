@@ -199,7 +199,7 @@ behaviour in every case is to keep going until the machine stops.
 | Limit | C | Go | Where |
 |---|---|---|---|
 | Output queue | `txt_q` grows without bound; one stuck client can exhaust memory | 256 pending writes, then the connection is dropped | `outputQueue`, `internal/session/session.go` |
-| Connections per address | no limit | configurable, refused with a message | `Limits.MaxPerHost`, `internal/server/listen.go` |
+| Connections per address | no limit | configurable, refused with a message — an IPv6 address counts by its own /64, not by itself, since that is the block an ISP actually hands one subscriber (RFC 6177) | `Limits.MaxPerHost`, `perHostKey`, `internal/server/listen.go` |
 | Time at the login prompt | idle timeout only, once in the game | a login grace period | `Limits.LoginGrace` |
 | Telnet subnegotiation | n/a — not parsed | 16KB, then the subnegotiation is dropped rather than delivered truncated | `maxSubnegotiation`, `internal/telnet/parser.go` |
 | Input line | `MAX_INPUT_LENGTH`, then the line is truncated | 64KB | `maxLineLength`, `internal/session/session.go` |
