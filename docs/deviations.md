@@ -647,14 +647,6 @@ Listed here so they are not mistaken for deliberate differences.
   two conditions can never both hold. Ported as it stands rather than
   "fixed", since either reading changes behaviour.
 
-- **`remort` is not ported.** A local addition with a per-character bit
-  vector of borrowed class skills, the `IS_<CLASS>` macros that read it, and
-  `redeem` for a fallen paladin. See the plan's 5i-h.
-
-- **`redeem` is not ported.** It is the eighth branch of `do_wizutil`, a local
-  addition clearing a `PSF_FALLEN` flag on a paladin — and the paladin class,
-  the fallen state and the flag it lives in are all part of the remort work.
-
 - **`hunt_victim` is not ported, because nothing calls it.** `graph.c:219`
   walks a mobile along a BFS path towards its prey, and in this whole tree
   the only references to `HUNTING` are the two lines in `handler.c` that
