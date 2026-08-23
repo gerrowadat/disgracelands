@@ -1531,6 +1531,49 @@ player's own move gets (no movement-point cost, no boat/tunnel/atrium/
 godroom checks), documented as inert against the real data rather than
 a risk quietly taken. `docs/deviations.md` has the full writeup of both.
 
+**The improved line editor's `/a`/`/c`/`/h`/`/l`/`/s` ✅ — five of the
+eleven commands `tedit`'s own landing found missing.** `editorCommand`
+(`internal/session/menu.go`) ports `improved_editor_execute`
+(`improved-edit.c:27`) for the five that need no line-range editing
+machinery of their own: abort, clear, help, list and save. `/d`, `/e`,
+`/f`, `/i`, `/n` and `/r` — delete, edit, format, insert, numbered list
+and replace — stay unbuilt, and typing one (or anything else after a
+leading `/`) gets the C's own "Invalid option." rather than silently
+doing nothing; `/h`'s own text lists only the five that work rather than
+the C's full eleven, so it never promises what it cannot do. `tedit`'s
+instructions line now says what the C's `send_editor_help` actually said
+("/s or @ to save, /h for more options."), which stopped being a lie the
+moment `/s` and `/h` became real.
+
+Abort needed a real design decision the plain `@`-terminated loop never
+had to make: what to hand back when there is nothing to save.
+`beginEditor`/`beginEditorSeeded`'s `done` callback grew a second
+argument, `saved bool`, false only for `/a` — the text passed alongside
+it is always `""` then, the observable equivalent of the C freeing
+`*d->str` and restoring `d->backstr` (`modify.c:170-172`) without this
+port ever having captured a "before" text to restore. Every caller
+already treated an empty result as "nothing changed" (a note's own
+`ActionDesc`, a board post, a piece of mail), so the four call sites
+needed no new machinery, only a branch — except each one's *feedback* on
+abort turned out caller-specific rather than generic: `tedit` gets
+`tedit_string_cleanup`'s own "Edit aborted." plus the room announcement;
+mail gets `playing_string_cleanup`'s "Mail aborted." (and, checked
+against the same C branch, that message turned out to also cover a
+`@`-terminated save with nothing typed — a small, honest fix landing
+alongside the main one, since this port had never printed anything
+there before); a board post gets "Post aborted." instead of the C's own
+"Post not aborted, use REMOVE <post #>.", because that message assumes
+the empty-bodied post is already sitting in the board's list — true in
+the C, where `Board_write_message` inserts it before editing starts, and
+not here, where a post is appended only once the editor closes
+successfully (`boardWrite`'s own doc comment has that earlier decision);
+a note's own `write` stays silent on abort, matching the C exactly,
+since neither of `playing_string_cleanup`'s two branches applies to it.
+`docs/deviations.md` has the full writeup, including `/l`'s own range
+parsing (a close but not scanf-exact reading of
+`sscanf(string, " %d - %d ", ...)`) and why it does not go through the
+pager.
+
 **Phase 7 — Cutover.** Shadow-run both servers against copies of the same
 `data/`, compare. Then run the Go server as primary, keep the C tree as
 reference. Retire `autorun`/`automaint`/`configure`.

@@ -57,14 +57,13 @@ func teditLookup(field string) (teditField, bool) {
 // starts the line editor seeded with it — string_write's own behaviour
 // when the pointer it is handed already points at something.
 //
-// The C's own instructions line ("/s or @ to save, /h for more
-// options.") describes the improved editor's `/`-commands, which this
-// port does not implement (see docs/deviations.md's "gaps still to
-// fill" — a previously-undocumented finding from this pass, affecting
-// every editor in this port, not just this one). Printing that line
-// here would promise commands that do not work, so this uses the C's
-// own plain-editor text instead ("Type @ on a line by itself to end."),
-// which is what this port's line editor actually does.
+// The C's own instructions line ("/s or @ to save, /h for more options.",
+// send_editor_help's using_improved_editor branch, improved-edit.c:20) is
+// what this now prints too, now that /s and /h are both real
+// (menu.go's editorCommand) — /h's own text is what actually tells the
+// truth about which further `/`-commands exist (docs/deviations.md's
+// "improved line editor" entry has the ones still missing: /d, /e, /f,
+// /i, /n, /r).
 func doTedit(c *Context) error {
 	field := strings.TrimSpace(c.Arg)
 	level := c.Character.Level()
@@ -87,15 +86,22 @@ func doTedit(c *Context) error {
 	}
 	current, _ := c.TextEdit.TextField(spec.Name)
 
-	c.Send("Instructions: Type @ on a line by itself to end.\r\n")
+	c.Send("Instructions: /s or @ to save, /h for more options.\r\n")
 	c.Send("Edit file below:\r\n\r\n")
 	if current != "" {
 		c.Send("%s", current)
 	}
 	c.announce("%s begins editing a scroll.\r\n", c.Character.Name)
 
-	name, editor := spec.Name, c.TextEdit
-	c.Session.beginEditorSeeded(spec.MaxLength, current, func(text string) {
+	name, editor, actor := spec.Name, c.TextEdit, c.Character
+	c.Session.beginEditorSeeded(spec.MaxLength, current, func(text string, saved bool) {
+		if !saved {
+			// tedit_string_cleanup's own STRINGADD_ABORT case
+			// (tedit.c:54-57): the file is left untouched.
+			c.Send("Edit aborted.\r\n")
+			c.announce("%s stops editing some scrolls.\r\n", actor.Name)
+			return
+		}
 		editor.SetTextField(name, text)
 		// "Saved.\r\n" is tedit_string_cleanup's own confirmation
 		// (modify.c's STRINGADD_SAVE case), not the generic editor's —

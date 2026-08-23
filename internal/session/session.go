@@ -188,9 +188,12 @@ type Session struct {
 	// description — until its terminator arrives.
 	editorLines []string
 	// editorMax and editorDone belong to StateEditing: the length limit and
-	// what to do with the finished text.
+	// what to do with the finished text. saved is false only for an
+	// improved-editor /a (abort, improved-edit.c:39-40) — text is then
+	// always "", the same as the C freeing *d->str on the way out
+	// (modify.c:170).
 	editorMax  int
-	editorDone func(text string)
+	editorDone func(text string, saved bool)
 
 	// pagerPages and pagerIndex belong to StatePaging: the whole text,
 	// pre-split (paginate_string's own eager approach, not lazy), and

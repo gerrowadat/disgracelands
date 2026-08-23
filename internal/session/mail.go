@@ -117,8 +117,14 @@ func postmasterSendMail(sc *SpecialCall) {
 		from = who.Record.IDNum
 	}
 	mail := sc.Mail
-	sc.Session.beginEditor(maxMailSize, func(text string) {
-		if text == "" {
+	sc.Session.beginEditor(maxMailSize, func(text string, saved bool) {
+		// playing_string_cleanup's own PLR_MAILING branch (modify.c:226-231)
+		// says "Mail aborted." for anything but a real save with something in
+		// it — /a included, now that it exists. Its "Message sent!" half is
+		// not added here: this port never printed it even for a plain '@'
+		// save, a separate, pre-existing gap outside this pass's scope.
+		if !saved || text == "" {
+			sc.Tell("Mail aborted.\r\n")
 			return
 		}
 		mail.Send(recipient, from, time.Now(), text)

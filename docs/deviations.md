@@ -756,24 +756,60 @@ Listed here so they are not mistaken for deliberate differences.
   raised by `obj_to_char`. That is an optimisation for a machine that counted
   disk writes; a few hundred small files cannot miss anybody.
 
-- **The improved line editor's own commands are not implemented.** The
-  archived server's `improved-edit.h` has `CONFIG_IMPROVED_EDITOR`
-  hardcoded to `1` — `/c` (clear), `/l` (list so far), `/h` (help), `/a`
-  (abort) and `/s` (save) were always on, not a stock/optional feature,
-  found while porting `tedit` (Phase 6's first slice). This port's line
-  editor (`internal/session/menu.go`'s `beginEditor`/`beginEditorSeeded`,
-  used by board `write`, mail and now `tedit`) implements only the plain
-  `@`-terminated accumulate loop `string_add` falls back to when none of
-  those commands are typed — which is the core of what every caller so
-  far actually needs, `tedit` included: `string_write`'s own behaviour
-  when the buffer it is handed already has content is to *append*
-  whatever is typed onto the end of it, and `beginEditorSeeded` (new,
-  this pass) reproduces exactly that by pre-loading the buffer with the
-  file's current text. What is missing is only the `/`-commands
-  themselves — there is no way to clear the buffer mid-edit and start
-  over, or list what has been typed so far, without disconnecting and
-  starting again. `tedit`'s own instructions line says so honestly
-  ("Type @ on a line by itself to end.", the C's own plain-editor text,
-  not the improved editor's "/s or @ to save, /h for more options." that
-  the real server actually showed) rather than promising commands that
-  do not work.
+- **The improved line editor's own commands are implemented, five of
+  eleven.** The archived server's `improved-edit.h` has
+  `CONFIG_IMPROVED_EDITOR` hardcoded to `1` — `/a` (abort), `/c` (clear),
+  `/h` (help), `/l` (list) and `/s` (save) were always on, not a
+  stock/optional feature, found while porting `tedit` (Phase 6's first
+  slice). `internal/session/menu.go`'s `editorCommand` ports
+  `improved_editor_execute` (`improved-edit.c:27`) for exactly those
+  five — the ones that need no line-range editing machinery of their
+  own — wired into `handleEditing` ahead of the plain `@`-terminated
+  accumulate loop every caller already had (`beginEditor`/
+  `beginEditorSeeded`, used by board `write`, mail, a note's own `write`
+  and `tedit`). `/d` (delete), `/e` (edit a line), `/f` (format/word-wrap),
+  `/i` (insert before a line), `/n` (numbered list) and `/r` (replace)
+  are not built; typing one of those, or any other letter after a
+  leading `/`, gets the C's own default case, "Invalid option." — and
+  `/h`'s own text lists only the five that work, rather than advertising
+  ones that do not (the C's own help text, `improved-edit.c:104-120`,
+  lists all eleven regardless of `CONFIG_IMPROVED_EDITOR`, since it never
+  varies with anything).
+
+  `/l`'s optional line-range argument (`parse_action`'s
+  `sscanf(string, " %d - %d ", &line_low, &line_high)`,
+  `improved-edit.c:222`) is ported closely rather than exactly: Go's
+  `strconv.Atoi` on the text either side of a `-`, not a literal
+  re-implementation of scanf's own partial-match semantics. A leading
+  digit run followed by garbage (`sscanf`'s own "parse what you can, stop
+  at the first non-digit" behaviour) is not reproduced; `/l 3x` is treated
+  as "not a number" here and falls back to listing the whole buffer, where
+  the C would read `3` and list just that line. Typing a clean number is
+  the overwhelmingly likely case and both readings still produce a
+  listing rather than an error, so the difference was not judged worth
+  the extra parsing code.
+
+  `/l` also does not go through the pager (`page_string`, which the C's
+  own `PARSE_LIST_NORM`/`PARSE_LIST_NUM` call): paging mid-edit would need
+  `StatePaging` to remember what state to return to, which it does not —
+  `session/pager.go`'s own doc comment names the identical gap for
+  `background` — and a buffer within any caller's own length limit rarely
+  runs past a screen anyway, so the listing is sent directly instead.
+
+  `/a`'s abort message is caller-specific, because what "discard this
+  edit" means differs by what the edit was for: `tedit` prints
+  `tedit_string_cleanup`'s own "Edit aborted." and the room announcement
+  (`tedit.c:54-57`); `mail` prints `playing_string_cleanup`'s "Mail
+  aborted." (`modify.c:226-231`), which this port now also prints for a
+  `@`-terminated save with nothing typed, matching the same C branch — a
+  small fix alongside the main one, not a new gap; a board `write` prints
+  "Post aborted." rather than the C's own "Post not aborted, use REMOVE
+  <post #>." (`modify.c:239-243`), because that message assumes the
+  empty-bodied post was already in the board's list, true in the C
+  (`Board_write_message` inserts it before editing starts) and not here
+  — this port appends only on save, an earlier, separate choice recorded
+  in `boardWrite`'s own doc comment (`internal/session/boards.go`); a
+  note's own `write`
+  stays silent on abort, matching the C exactly (neither `PLR_MAILING`
+  nor `mail_to >= BOARD_MAGIC` applies to it, so `playing_string_cleanup`
+  has nothing to say either).

@@ -8,6 +8,7 @@ package session
 
 import (
 	"context"
+	"strconv"
 	"strings"
 
 	"github.com/gerrowadat/disgracelands/internal/auth"
@@ -311,7 +312,7 @@ func ensureTrailingNewline(s string) string {
 // magic.
 
 // beginEditor puts the session into the line editor.
-func (s *Session) beginEditor(maxLength int, done func(text string)) {
+func (s *Session) beginEditor(maxLength int, done func(text string, saved bool)) {
 	s.beginEditorSeeded(maxLength, "", done)
 }
 
@@ -329,7 +330,7 @@ func (s *Session) beginEditor(maxLength int, done func(text string)) {
 // game.HelpEntry.Body both already use; a trailing empty element (a seed
 // that already ends in \r\n, which every one of Text's fields does) is
 // dropped so an empty line is not appended for free.
-func (s *Session) beginEditorSeeded(maxLength int, seed string, done func(text string)) {
+func (s *Session) beginEditorSeeded(maxLength int, seed string, done func(text string, saved bool)) {
 	var lines []string
 	if seed != "" {
 		lines = strings.Split(seed, "\r\n")
@@ -343,27 +344,187 @@ func (s *Session) beginEditorSeeded(maxLength int, seed string, done func(text s
 	s.state = StateEditing
 }
 
-// handleEditing collects one line of an edited text.
+// handleEditing collects one line of an edited text, porting string_add
+// (modify.c:117): the '@' terminator, then — new here — the five
+// improved-editor commands editorCommand answers, then plain buffering.
 func (s *Session) handleEditing(line string) error {
-	if strings.TrimSpace(line) != descriptionTerminator {
-		s.editorLines = append(s.editorLines, line)
-		return nil
+	if strings.TrimSpace(line) == descriptionTerminator {
+		return s.finishEditing(true)
+	}
+	if handled, err := s.editorCommand(line); handled {
+		return err
+	}
+	s.editorLines = append(s.editorLines, line)
+	return nil
+}
+
+// editorCommand runs one improved-editor command, porting
+// improved_editor_execute (improved-edit.c:27) for the five commands that
+// were both always on in the archived server — CONFIG_IMPROVED_EDITOR is
+// hardcoded 1 there, docs/deviations.md — and need no line-range editing
+// machinery of their own: /a (abort), /c (clear), /h (help), /l (list) and
+// /s (save). /d, /e, /f, /i, /n and /r — delete, edit, format, insert,
+// numbered list and replace — are not built; typing one of those, or any
+// other letter, falls to the C's own default case, "Invalid option."
+//
+// Reports whether the line was a command at all: a bare '/' or anything
+// not starting with one is not, and falls through to being buffered as
+// ordinary text, the same as the C's own `if (*str != '/') return
+// STRINGADD_OK`.
+func (s *Session) editorCommand(line string) (bool, error) {
+	if !strings.HasPrefix(line, "/") {
+		return false, nil
+	}
+	var letter byte
+	if len(line) > 1 {
+		letter = line[1]
+	}
+	var args string
+	if len(line) > 2 {
+		args = line[2:]
 	}
 
-	text := strings.Join(s.editorLines, "\r\n")
-	if text != "" {
-		text += "\r\n"
+	switch letter {
+	case 'a':
+		return true, s.finishEditing(false)
+	case 's':
+		return true, s.finishEditing(true)
+	case 'c':
+		if len(s.editorLines) == 0 {
+			s.Send("Current buffer empty.\r\n")
+		} else {
+			s.editorLines = nil
+			s.Send("Current buffer cleared.\r\n")
+		}
+	case 'h':
+		s.Send("%s", editorHelpText)
+	case 'l':
+		s.editorList(args)
+	default:
+		s.Send("Invalid option.\r\n")
 	}
-	if s.editorMax > 0 && len(text) > s.editorMax {
-		text = text[:s.editorMax]
-		s.Send("Your message was truncated to %d characters.\r\n", s.editorMax)
+	return true, nil
+}
+
+// editorHelpText is send_editor_help's own PARSE_HELP text
+// (improved-edit.c:104-120), trimmed to the five commands this port
+// answers — advertising /d, /e, /f, /i, /n or /r here would promise
+// something that then says "Invalid option." when typed.
+const editorHelpText = "Editor command formats: /<letter>\r\n\r\n" +
+	"/a         -  aborts editor\r\n" +
+	"/c         -  clears buffer\r\n" +
+	"/h         -  list text editor commands\r\n" +
+	"/l         -  lists buffer\r\n" +
+	"/s         -  saves text\r\n"
+
+// editorList is parse_action's PARSE_LIST_NORM (improved-edit.c:215-276),
+// sent directly rather than through the pager: paging mid-edit would need
+// StatePaging to remember what state to return to, which it does not —
+// session/pager.go's own doc comment names the identical gap for
+// `background` — and a buffer within any caller's own length limit rarely
+// runs past a screen anyway.
+func (s *Session) editorList(args string) {
+	if len(s.editorLines) == 0 {
+		s.Send("Current buffer empty.\r\n")
+		return
+	}
+
+	low, high, errMsg := parseEditorRange(args)
+	if errMsg != "" {
+		s.Send("%s", errMsg)
+		return
+	}
+	if low < 1 {
+		s.Send("Line numbers must be greater than 0.\r\n")
+		return
+	}
+	if low > len(s.editorLines) {
+		s.Send("Line(s) out of range; no buffer listing.\r\n")
+		return
+	}
+	// The header decision is made from the *requested* range, before
+	// clamping to what the buffer actually holds — porting the C's own
+	// `if (line_high < 999999 || line_low > 1)` (improved-edit.c:243),
+	// which reads line_high exactly as sscanf left it. Deciding it after
+	// clamping would suppress the header for "/l 1-500" on a five-line
+	// buffer, where the C prints one anyway (500 is not the sentinel).
+	header := low > 1 || high < maxEditorLine
+	if high > len(s.editorLines) {
+		high = len(s.editorLines)
+	}
+
+	shown := s.editorLines[low-1 : high]
+	if header {
+		s.Send("Current buffer range [%d - %d]:\r\n", low, high)
+	}
+	s.Send("%s\r\n", strings.Join(shown, "\r\n"))
+	plural := "s "
+	if len(shown) == 1 {
+		plural = " "
+	}
+	s.Send("%d line%sshown.\r\n", len(shown), plural)
+}
+
+// maxEditorLine stands in for the C's 999999 (improved-edit.c:225,232),
+// its own way of saying "to the end" in an sscanf that always wants two
+// numbers.
+const maxEditorLine = 999999
+
+// parseEditorRange parses /l's optional line-range argument, porting
+// parse_action's `sscanf(string, " %d - %d ", &line_low, &line_high)`
+// (improved-edit.c:222) closely enough for what a person actually types:
+// nothing selects the whole buffer, one number selects that line alone,
+// and two separated by '-' select an inclusive range. Anything that does
+// not parse as a number falls back the same way sscanf's own zero-match
+// case does, rather than being rejected outright.
+func parseEditorRange(args string) (low, high int, errMsg string) {
+	args = strings.TrimSpace(args)
+	if args == "" {
+		return 1, maxEditorLine, ""
+	}
+
+	before, after, hasDash := strings.Cut(args, "-")
+	lo, err := strconv.Atoi(strings.TrimSpace(before))
+	if err != nil {
+		return 1, maxEditorLine, ""
+	}
+	if !hasDash {
+		return lo, lo, ""
+	}
+	hi, err := strconv.Atoi(strings.TrimSpace(after))
+	if err != nil {
+		return lo, lo, ""
+	}
+	if hi < lo {
+		return 0, 0, "That range is invalid.\r\n"
+	}
+	return lo, hi, ""
+}
+
+// finishEditing ends the line editor, porting string_add's own tail
+// (modify.c:159-221). saved is false only for /a: the C frees *d->str and
+// restores whatever was there before (modify.c:170-172), which this port
+// has never captured a "before" of — every caller already treats an empty
+// result as "nothing changed" (tedit's file, mail's send, a board post),
+// so handing back "" is the observable-equivalent outcome.
+func (s *Session) finishEditing(saved bool) error {
+	var text string
+	if saved {
+		text = strings.Join(s.editorLines, "\r\n")
+		if text != "" {
+			text += "\r\n"
+		}
+		if s.editorMax > 0 && len(text) > s.editorMax {
+			text = text[:s.editorMax]
+			s.Send("Your message was truncated to %d characters.\r\n", s.editorMax)
+		}
 	}
 
 	done := s.editorDone
 	s.editorLines, s.editorDone, s.editorMax = nil, nil, 0
 	s.state = StatePlaying
 	if done != nil {
-		done(text)
+		done(text, saved)
 	}
 	s.Send("%s", prompt(s))
 	return nil

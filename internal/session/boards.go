@@ -103,7 +103,18 @@ func boardWrite(sc *SpecialCall, board *game.Board) bool {
 	// simpler and unobservable, since a message with no body reads as empty
 	// either way.
 	saver, level := sc.SaveBoard, level
-	sc.Session.beginEditor(game.MaxBoardMessageLength, func(body string) {
+	sc.Session.beginEditor(game.MaxBoardMessageLength, func(body string, saved bool) {
+		if !saved {
+			// The C's own abort text here ("Post not aborted, use REMOVE
+			// <post #>.", playing_string_cleanup, modify.c:239-243)
+			// assumes the empty-bodied post was already in the list —
+			// true there, since Board_write_message inserts it before
+			// editing starts, but not here: this port appends only on
+			// save (see the comment above), so there is nothing to
+			// remove and nothing left un-aborted.
+			sc.Tell("Post aborted.\r\n")
+			return
+		}
 		board.Messages = append(board.Messages, game.BoardMessage{
 			Heading: heading, Level: level, Body: body,
 		})
@@ -339,7 +350,13 @@ func doWrite(c *Context) error {
 	}
 	c.Session.Send("Write your message.  Terminate with a @ on a new line.\r\n\r\n")
 	target := paper
-	c.Session.beginEditor(maxNoteLength, func(text string) {
+	c.Session.beginEditor(maxNoteLength, func(text string, saved bool) {
+		if !saved {
+			// Neither PLR_MAILING nor mail_to >= BOARD_MAGIC apply to a
+			// plain do_write, so playing_string_cleanup's own switch has
+			// nothing to say on abort — it stays exactly as silent here.
+			return
+		}
 		target.ActionDesc = text
 	})
 	return nil
