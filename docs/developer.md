@@ -401,8 +401,15 @@ Nearly all the remaining work is "port one more command", and it has a shape.
 
 ### Testing against the C rather than against your reading of it
 
-The rule that has held: **anything with a division, a cast, or a comment
-describing numbers gets an oracle rather than a reading.**
+This still applies in full to anything gameplay- or compatibility-shaped.
+It has nothing to say about work that's purely architecture or tooling and
+doesn't change what the C computed or stored — see `CLAUDE.md` and the
+plan's §0, "Fidelity, phase two", for what that distinction means and why
+it changed on 2026-08-23.
+
+The rule that has held, for the code this applies to: **anything with a
+division, a cast, or a comment describing numbers gets an oracle rather
+than a reading.**
 
 `reference/tools/*.c` holds original C function bodies with the `char_data`
 dereferences substituted and nothing else changed. The Go tests compile them
