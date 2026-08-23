@@ -24,6 +24,7 @@ import (
 	"github.com/gerrowadat/disgracelands/internal/auth"
 	"github.com/gerrowadat/disgracelands/internal/engine"
 	"github.com/gerrowadat/disgracelands/internal/game"
+	"github.com/gerrowadat/disgracelands/internal/obs"
 	"github.com/gerrowadat/disgracelands/internal/persist/bans"
 	"github.com/gerrowadat/disgracelands/internal/persist/boards"
 	"github.com/gerrowadat/disgracelands/internal/persist/houses"
@@ -204,6 +205,15 @@ func New(opts Options) *Server {
 	s.shutdownWanted = make(chan struct{})
 	if s.rng == nil {
 		s.rng = rng.NewRand(rng.NewModern(uint64(time.Now().UnixNano()))) //nolint:gosec // a game seed, not a secret
+	}
+	// mudlog()'s own in-game echo (utils.c:243-258): wraps whatever handler
+	// opts.Logger already had so every log call site keeps working exactly
+	// as before, and a wizvis-tagged one additionally reaches echoWizVis.
+	// Built here, after s exists, rather than passed in — s.connections is
+	// what echoWizVis needs to reach, and there is no Server yet at the
+	// point main.go builds the logger.
+	if s.logger != nil {
+		s.logger = slog.New(obs.WithWizVisEcho(s.logger.Handler(), s.echoWizVis))
 	}
 	return s
 }

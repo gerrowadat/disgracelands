@@ -1747,6 +1747,44 @@ Wired in from `cmd/dlmud/main.go` right after `BootReset`, gated on
 (`db.c:456`) — `--skip-rent-check`'s own entry in `docs/configuration.md`
 no longer says *(inert)*.
 
+**`syslog`'s in-game echo ✅ — the seam, and its first real producer.**
+`mudlog()`'s second job — echoing a line to online immortals whose level
+and own syslog verbosity (`PRF_LOG1`/`PRF_LOG2`) both qualify — had
+nowhere to reach a live connection from `internal/obs`, since that package
+cannot import `internal/session` without a cycle. `obs.WithWizVisEcho`
+wraps whatever `slog.Handler` a caller already had with one that also
+calls back into a `WizVisEcho` for any record carrying both `obs.WizLevel`
+and the new `obs.WizType` (mudlog's own `type` argument, `OFF`/`BRF`/
+`NRM`/`CMP` — a message's own minimum required verbosity, not a level);
+`Server.echoWizVis` (`internal/server/wizvis.go`) is the callback,
+supplied when `server.New` wraps `opts.Logger` right after building `s` —
+after, because `s.connections` is what the callback needs to reach, and
+main.go builds the logger before any `Server` exists to hand it to.
+
+The selection is the C's, condition for condition, not approximated:
+`STATE(i) != CON_PLAYING || IS_NPC(i->character)` is one check in the Go
+too, since a switched god's *current* character is the mobile they are
+inside — `IS_NPC` alone already excludes them, and the C has no separate
+"switched" check to reproduce. `PLR_WRITING` (mid-edit) is excluded for
+the same reason the C excludes it: a log line arriving inside somebody's
+own text buffer would be worse than not seeing it. `session.SyslogLevel`
+(exported from `internal/session/wizcomm.go`, unexported until now since
+nothing outside the package needed it) is `do_syslog`'s own two-bits-as-
+one-number arithmetic, reused rather than re-derived.
+
+`bug`/`idea`/`typo` (`internal/session/report.go`) is the seam's first
+real producer, and needed its own small correction along the way: the
+record's own message had been `"<kind> report"` with structured fields,
+which is fine for the log file but is not what `mudlog`'s `buf` — `"%s %s:
+%s"`, `GET_NAME(ch)`/`CMD_NAME`/`argument` — actually says, and
+`WithWizVisEcho` echoes a record's message verbatim, the same string
+mudlog's own `str` serves both jobs from. The message is now that exact
+format, so what an online, qualifying immortal sees in-game is the real
+text, not a placeholder. Every other command that logs something the C
+would have run through `mudlog()` remains a would-be producer — see
+`docs/deviations.md`'s own entry for the honest count of how many that
+still is.
+
 **Phase 7 — Cutover.** Shadow-run both servers against copies of the same
 `data/`, compare. Then run the Go server as primary, keep the C tree as
 reference. Retire `autorun`/`automaint`/`configure`.

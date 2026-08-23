@@ -116,3 +116,90 @@ func TestBugWithNoReportsConfigured(t *testing.T) {
 	c.send("bug the gate is stuck")
 	c.expect("Could not open the file.  Sorry.")
 }
+
+// mudlog(buf, CMP, LVL_IMMORT, FALSE) (act.other.c:904-905): bug/idea/typo
+// is the one call site wired through obs.WithWizVisEcho, and this is its
+// end-to-end proof — the plumbing from a log call, through the wrapped
+// handler, into a live session's own socket, not just obs's own unit-level
+// guarantee that the callback fires.
+func TestBugEchoesInGameToAnImmortalWithSyslogOn(t *testing.T) {
+	srv, store := newTestServerWithReports(t)
+	addr := listening(t, srv)
+
+	// The first character on the roster is an implementor (twoInARoom's own
+	// doc comment, visibility_test.go), so LVL_IMMORT is already met; the
+	// default syslog is off (game.ApplyNewCharacterDefaults sets no
+	// PrefLog bits), so it has to be turned up before the echo can reach it.
+	god := dialClient(t, addr)
+	god.create("Warden", "password123", "m", "w")
+	god.send("syslog complete")
+	god.expect("Your syslog is now complete.")
+
+	reporter := dialClient(t, addr)
+	reporter.create("Zod", "password123", "m", "w")
+
+	reporter.send("bug the gate is stuck")
+	reporter.expectCount("Okay.  Thanks!", 1)
+
+	// "%s %s: %s" (act.other.c:903) — the exact text mudlog's buf would
+	// have been, wrapped in "[ ... ]" and green (utils.c:241,255-257).
+	god.expect("Zod bug: the gate is stuck")
+
+	all, err := store.All()
+	if err != nil {
+		t.Fatalf("All: %v", err)
+	}
+	if len(all) != 1 {
+		t.Fatalf("got %d reports, want 1", len(all))
+	}
+}
+
+// TestBugDoesNotEchoToAnImmortalWithSyslogOff: online, above LVL_IMMORT,
+// and still nothing — mudlog()'s own `if (tp < type) continue`
+// (utils.c:252-253) against the default, unset syslog preference.
+func TestBugDoesNotEchoToAnImmortalWithSyslogOff(t *testing.T) {
+	srv, _ := newTestServerWithReports(t)
+	addr := listening(t, srv)
+
+	god := dialClient(t, addr)
+	god.create("Warden", "password123", "m", "w")
+
+	reporter := dialClient(t, addr)
+	reporter.create("Zod", "password123", "m", "w")
+
+	reporter.send("bug the gate is stuck")
+	reporter.expectCount("Okay.  Thanks!", 1)
+
+	god.settle()
+	if god.seen("Zod bug: the gate is stuck") {
+		t.Errorf("an immortal with syslog off saw the echo anyway:\n%s", god.transcript())
+	}
+}
+
+// TestBugDoesNotEchoToAMortal: LVL_IMMORT is the floor, whatever their
+// syslog setting says — a mortal reporting their own bug does not get to
+// read it back as if they were a god.
+func TestBugDoesNotEchoToAMortal(t *testing.T) {
+	srv, store := newTestServerWithReports(t)
+	addr := listening(t, srv)
+
+	// A second character is a mortal by default (the first on an empty
+	// roster is the only implementor made for free).
+	first := dialClient(t, addr)
+	first.create("Warden", "password123", "m", "w")
+
+	mortal := dialClient(t, addr)
+	mortal.create("Bystander", "password123", "f", "w")
+
+	mortal.send("bug the gate is stuck")
+	mortal.expectCount("Okay.  Thanks!", 1)
+
+	// Same connection, already past "Okay.  Thanks!" — no separate wait
+	// needed, unlike the immortal-on-a-different-connection case above.
+	if mortal.seen("Bystander bug: the gate is stuck") {
+		t.Errorf("a mortal saw their own bug report echoed as if they were a god:\n%s", mortal.transcript())
+	}
+	if all, err := store.All(); err != nil || len(all) != 1 {
+		t.Errorf("store.All() = %v, %v, want 1 report written regardless", all, err)
+	}
+}

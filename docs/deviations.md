@@ -441,17 +441,23 @@ Listed here so they are not mistaken for deliberate differences.
   entirely — see go-port-plan.md's own write-up of that work for what it
   brought with it.
 
-- **`syslog` sets a preference nothing reads.** `mudlog()` had two jobs: write
-  the line, and echo it to online immortals at or above a level. The second
-  survives as far as the `wizvis` attribute on the log record
-  (`internal/obs/log.go`) and stops there — nothing consumes it, so
-  `PRF_LOG1`/`PRF_LOG2` are set and stored by `do_syslog` and no god ever sees
-  a log line in-game. That is how immortals actually watched a running game,
-  and every `mudlog` call site in the ported commands is a would-be producer
-  — `bug`/`idea`/`typo` (step 6b) is the newest of them: it logs through
-  `slog` at info level, but its `mudlog(..., CMP, LVL_IMMORT, FALSE)` half
-  (act.other.c:904-905) — the in-game echo to online gods — goes nowhere,
-  same as every command already on this list.
+- **`syslog` has one real producer so far; every other `mudlog` call site in
+  the ported commands is still a would-be one.** `mudlog()` had two jobs:
+  write the line, and echo it to online immortals at or above a level whose
+  own syslog verbosity (`PRF_LOG1`/`PRF_LOG2`, the two bits `do_syslog`
+  sets) is high enough. The second is real now — `obs.WithWizVisEcho`
+  (`internal/obs/log.go`) wraps the server's log handler so a record
+  carrying both `obs.WizLevel` and `obs.WizType` reaches
+  `Server.echoWizVis` (`internal/server/wizvis.go`), which applies the C's
+  exact selection (online, `CON_PLAYING`, not switched into an NPC, at or
+  above the level, not mid-edit, syslog verbosity at or above the
+  message's own type) and sends it in green — but only `bug`/`idea`/`typo`
+  (`internal/session/report.go`) actually tags a record this way yet.
+  Every other command that calls `s.logger.Info`/`Error`/`Warn` for
+  something the C would have `mudlog()`'d is a would-be producer the
+  mechanism is ready for but nothing has wired up — auditing every such
+  call site against its own `mudlog` in the C is its own pass, not
+  attempted here.
 - **The pager now covers `credits`/`news`/`info`/`wizlist`/`immlist`/
   `handbook`/`policy`/`motd`/`imotd`/`help`, a bulletin board's message
   list and a message's own body, a shop's `list`, `practice`'s skill

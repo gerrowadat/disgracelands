@@ -7,6 +7,7 @@
 package session
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/gerrowadat/disgracelands/internal/game"
@@ -55,14 +56,16 @@ func doGenWrite(kind string) func(*Context) error {
 
 		// mudlog(buf, CMP, LVL_IMMORT, FALSE) (act.other.c:904-905), before
 		// the file-full check — the C logs the attempt even when the write
-		// that follows gets refused. file=FALSE means this never went to
-		// the C's own log file either, only to online immortals; that half
-		// is the wizvis attribute (internal/obs/log.go), which nothing
-		// consumes yet — see docs/deviations.md's "`syslog` sets a
-		// preference nothing reads".
+		// that follows gets refused. buf is `sprintf(buf, "%s %s: %s",
+		// GET_NAME(ch), CMD_NAME, argument)` (act.other.c:903) and doubles
+		// as both the log line and the exact text an online immortal sees
+		// in-game (obs.WithWizVisEcho echoes a record's own message, the
+		// same string mudlog's str serves both jobs from) — so the
+		// message here is that format, not a generic "<kind> report".
 		if c.Session != nil {
-			c.Session.logger.Info(kind+" report", "character", c.Character.Name, "text", arg,
-				obs.WizLevel(int(game.LevelImmortal)))
+			c.Session.logger.Info(fmt.Sprintf("%s %s: %s", c.Character.Name, kind, arg),
+				"character", c.Character.Name, "text", arg,
+				obs.WizLevel(int(game.LevelImmortal)), obs.WizType(obs.LogComplete))
 		}
 
 		if c.Reports == nil {

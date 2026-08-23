@@ -95,6 +95,86 @@ func TestWizLevelAttr(t *testing.T) {
 	}
 }
 
+func TestWizTypeAttr(t *testing.T) {
+	attr := WizType(LogComplete)
+	if attr.Key != WizVisTypeKey {
+		t.Errorf("key = %q, want %q", attr.Key, WizVisTypeKey)
+	}
+	if got := attr.Value.Int64(); got != LogComplete {
+		t.Errorf("value = %d, want %d", got, LogComplete)
+	}
+}
+
+// recordingEcho collects every call, for tests that only care what reached
+// the relay rather than what a real Server would then do with it.
+type recordingEcho struct {
+	calls []struct {
+		typ, level int
+		message    string
+	}
+}
+
+func (r *recordingEcho) echo(typ, level int, message string) {
+	r.calls = append(r.calls, struct {
+		typ, level int
+		message    string
+	}{typ, level, message})
+}
+
+// discardHandler is a slog.Handler that does nothing, so WithWizVisEcho's
+// own tests can build one without a real log destination.
+type discardHandler struct{}
+
+func (discardHandler) Enabled(context.Context, slog.Level) bool  { return true }
+func (discardHandler) Handle(context.Context, slog.Record) error { return nil }
+func (h discardHandler) WithAttrs([]slog.Attr) slog.Handler      { return h }
+func (h discardHandler) WithGroup(string) slog.Handler           { return h }
+
+func TestWithWizVisEchoFiresOnlyForTaggedRecords(t *testing.T) {
+	var rec recordingEcho
+	h := WithWizVisEcho(discardHandler{}, rec.echo)
+	logger := slog.New(h)
+
+	logger.Info("plain line, no tags at all")
+	logger.Info("level only", WizLevel(31))
+	logger.Info("type only", WizType(LogComplete))
+	logger.Info("Zod bug: the door is stuck", WizLevel(31), WizType(LogComplete))
+
+	if len(rec.calls) != 1 {
+		t.Fatalf("echo fired %d times, want 1 (only the fully-tagged record):\n%+v", len(rec.calls), rec.calls)
+	}
+	got := rec.calls[0]
+	if got.typ != LogComplete || got.level != 31 || got.message != "Zod bug: the door is stuck" {
+		t.Errorf("echo call = %+v, want {typ:%d level:31 message:%q}", got, LogComplete, "Zod bug: the door is stuck")
+	}
+}
+
+func TestWithWizVisEchoNilIsANoop(t *testing.T) {
+	// A caller with nothing to echo to yet (dlctl, or boot before a Server
+	// exists) must get the base handler back unchanged, not a wrapper that
+	// would panic dereferencing a nil callback.
+	base := discardHandler{}
+	if got := WithWizVisEcho(base, nil); got != slog.Handler(base) {
+		t.Error("WithWizVisEcho(base, nil) did not return base unchanged")
+	}
+}
+
+func TestWithWizVisEchoSurvivesWithAttrsAndWithGroup(t *testing.T) {
+	// A logger built with .With(...) or a group must keep relaying —
+	// slog.Handler's own contract is that WithAttrs/WithGroup return
+	// something that behaves like the original, and a naive wrapper that
+	// only overrides Handle would silently stop doing that here.
+	var rec recordingEcho
+	h := WithWizVisEcho(discardHandler{}, rec.echo)
+	logger := slog.New(h).With("component", "test").WithGroup("g")
+
+	logger.Info("Zod bug: still stuck", WizLevel(31), WizType(LogComplete))
+
+	if len(rec.calls) != 1 {
+		t.Fatalf("echo fired %d times through With/WithGroup, want 1", len(rec.calls))
+	}
+}
+
 // startTestServers brings up the diagnostics listeners on ephemeral ports and
 // returns the metrics base URL.
 func startTestServers(t *testing.T, health *Health) (string, *Servers) {

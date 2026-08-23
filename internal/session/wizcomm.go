@@ -157,7 +157,7 @@ func doSyslog(c *Context) error {
 	arg, _ := oneArgument(c.Arg)
 
 	if arg == "" {
-		c.Send("Your syslog is currently %s.\r\n", logTypes[syslogLevel(rec)])
+		c.Send("Your syslog is currently %s.\r\n", logTypes[SyslogLevel(rec)])
 		return nil
 	}
 
@@ -186,7 +186,12 @@ func doSyslog(c *Context) error {
 	return nil
 }
 
-func syslogLevel(rec *game.PlayerRecord) int {
+// SyslogLevel is the two PRF_LOG bits read together as one number
+// (act.wizard.c:1402's own arithmetic) — an online immortal's own syslog
+// verbosity, and what mudlog()'s in-game echo (utils.c:250-253) compares a
+// message's own type against. Exported for internal/server's echoWizVis,
+// which applies the same comparison from outside this package.
+func SyslogLevel(rec *game.PlayerRecord) int {
 	level := 0
 	if rec.Preferences.Has(game.PrefLog1) {
 		level++
