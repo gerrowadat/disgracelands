@@ -1225,6 +1225,48 @@ func TestTooManyConnectionsFromOneAddress(t *testing.T) {
 	third.expect("Too many connections")
 }
 
+// TestServerFullRefusesConnections is comm.c's own
+// `sockets_connected >= max_players` (comm.c:1337) — checked before a
+// connection is even given a hostname, let alone a greeting.
+func TestServerFullRefusesConnections(t *testing.T) {
+	srv, _ := newTestServer(t)
+	ln, err := ListenTelnet("127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		_ = srv.Accept(ctx, ln, Limits{MaxPlayers: 2})
+	}()
+	defer func() {
+		cancel()
+		<-done
+	}()
+
+	held := make([]*client, 0, 2)
+	for i := 0; i < 2; i++ {
+		c := dialClient(t, ln.Addr().String())
+		c.expect("By what name")
+		held = append(held, c)
+	}
+
+	third := dialClient(t, ln.Addr().String())
+	third.expect("Sorry, CircleMUD is full right now")
+
+	// One of the two leaves, freeing a slot for the next arrival — the
+	// limit counts live connections, not a lifetime total.
+	held[0].close()
+	if !eventually(5*time.Second, func() bool { return srv.connections.count() < 2 }) {
+		t.Fatal("the closed connection was never dropped from the registry")
+	}
+
+	fourth := dialClient(t, ln.Addr().String())
+	fourth.expect("By what name")
+}
+
 // testRNG is the C server's own generator on a fixed seed: a failing test can
 // be reproduced, and the numbers are the ones the C would roll.
 func testRNG() *rng.Rand { return rng.NewRand(rng.NewCircle(1)) }

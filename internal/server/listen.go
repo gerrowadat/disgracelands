@@ -76,6 +76,20 @@ func (s *Server) Accept(ctx context.Context, ln *Listener, limits Limits) error 
 			return err
 		}
 
+		// The C's own sockets_connected >= max_players (comm.c:1337): the
+		// first thing accept() does with a new descriptor, before even
+		// resolving its hostname, is check whether there is room for it at
+		// all. s.connections is shared across every listener this server
+		// runs, matching sockets_connected's own count of every descriptor
+		// regardless of which port it came in on.
+		if limits.MaxPlayers > 0 && s.connections.count() >= limits.MaxPlayers {
+			s.logger.Warn("refusing a connection: server full",
+				"limit", limits.MaxPlayers)
+			_, _ = conn.Write([]byte("Sorry, CircleMUD is full right now... please try again later!\r\n"))
+			_ = conn.Close()
+			continue
+		}
+
 		host, _, splitErr := net.SplitHostPort(conn.RemoteAddr().String())
 		if splitErr != nil {
 			host = conn.RemoteAddr().String()
@@ -107,6 +121,10 @@ func (s *Server) Accept(ctx context.Context, ln *Listener, limits Limits) error 
 
 // Limits bound what one connection may do.
 type Limits struct {
+	// MaxPlayers caps how many connections may be open at once, across
+	// every listener — the C's own max_players (comm.c:1337). Zero means
+	// no limit.
+	MaxPlayers int
 	// MaxPerHost caps simultaneous connections from one address. Zero means
 	// no limit.
 	MaxPerHost int

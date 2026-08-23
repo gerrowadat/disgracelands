@@ -196,13 +196,13 @@ certificate never arrives.
 
 | Flag | Default | Meaning |
 |---|---|---|
-| `--max-players` | `300` | Maximum simultaneous players. *(inert)* |
+| `--max-players` | `300` | Maximum simultaneous connections, across every listener. |
 | `--max-connections-per-ip` | `8` | Maximum simultaneous connections from one address. |
 | `--login-grace-time` | `60s` | How long a connection may stay unauthenticated before being dropped. |
 | `--trust-proxy-headers` | `false` | Trust `X-Forwarded-For`. Only enable behind a proxy you control — otherwise clients can forge their apparent address. *(inert)* |
 
-The per-address limit and the login grace time are enforced. `--max-players`
-is not yet, and `--trust-proxy-headers` has nothing to apply to until the
+`--max-players`, the per-address limit and the login grace time are all
+enforced. `--trust-proxy-headers` has nothing to apply to until the
 WebSocket listener exists.
 
 ## Engine

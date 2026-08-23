@@ -353,6 +353,7 @@ func run(args []string) error {
 	go srv.RunClockSave(ctx)
 
 	limits := server.Limits{
+		MaxPlayers: cfg.MaxPlayers,
 		MaxPerHost: cfg.MaxConnsPerIP,
 		LoginGrace: cfg.LoginGraceTime,
 	}

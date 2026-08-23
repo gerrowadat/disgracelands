@@ -1053,22 +1053,21 @@ player skip the mechanic the class exists to reward.
 ### What is not in it
 
 A phase marked done without its gaps is worse than one not marked at all.
-These are the three, and none of them is a deviation — they are simply not
-built, so they are not in `docs/deviations.md`:
+These are the two, and neither is a deviation — they are simply not built,
+so they are not in `docs/deviations.md`:
 
 - **`--listen-ws` starts nothing.** The WebSocket transport is the one part
   of this phase not built, so the greeting requirement above holds for every
   transport that exists rather than for every transport intended. It is not
   rescheduled into a numbered phase: it belongs with the web client in the
   "Later" list, and the requirement travels with it.
-- **`--max-players` is not enforced.** The per-address cap and the login
-  grace period are what limit connections today.
 - **Movement ignores door state.** `EX_CLOSED` is not checked, because there
   is no `open`/`close` and no door state to check yet, so a closed door is
   walked through. It belongs with the rules core in Phase 4.
 
-The two configuration gaps are marked *(inert)* in `docs/configuration.md`
-rather than left to be discovered at runtime.
+The configuration gap is marked *(inert)* in `docs/configuration.md` rather
+than left to be discovered at runtime. `--max-players` was the other one
+this section used to name; it is enforced now — see Phase 6's write-up.
 
 **Phase 4 — Rules core. ✅ Done.** Combat, magic, skills, classes including
 the remort bitmask, affects, position/regen, death and corpses, zone resets,
@@ -1629,6 +1628,25 @@ has; and `show shops`' detail view does not reproduce
 `handle_detailed_list`'s column-wrapping, since nothing in this port's
 world data has a `Rooms:`/`Produces:`/`Buys:` list long enough for the
 C's own wrap to trigger either.
+
+**`--max-players` ✅ — Phase 3's own remaining gap.** `sockets_connected >=
+max_players` (comm.c:1337) is checked at `Accept`'s own accept loop, before
+a connection is given a hostname or a per-address slot, matching where the
+C makes the same check relative to the rest of `new_descriptor`. `registry`
+(`internal/server/operator.go`, already `users`/`dc`'s own live-connection
+list) grew a `count()` alongside its existing `list()`, since the check
+runs on every single accepted connection and has no use for the ordering
+`list()` provides. `Limits.MaxPlayers` is shared across every listener a
+server runs, the same way `sockets_connected` counts every descriptor
+regardless of which port it arrived on — a telnet connection and a telnets
+one both draw from the one pool. Not reproduced: the C's check is
+inherently race-free (`new_descriptor` runs to completion before the next
+`accept()` in the same single-threaded loop), where this port's listeners
+run concurrently, so two connections arriving on two different listeners
+in the same instant could both pass the check before either is counted,
+overshooting the limit by at most the number of listeners running. A soft
+capacity guard rather than a hard security boundary, and not worth
+synchronising across listeners for.
 
 **Phase 7 — Cutover.** Shadow-run both servers against copies of the same
 `data/`, compare. Then run the Go server as primary, keep the C tree as

@@ -48,6 +48,15 @@ func (r *registry) remove(s *session.Session) {
 	delete(r.sessions, s)
 }
 
+// count returns how many sessions are registered, without building the
+// list — Accept's own MaxPlayers check runs on every connection and has no
+// use for the order.
+func (r *registry) count() int {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return len(r.sessions)
+}
+
 // list returns the live sessions, oldest first.
 func (r *registry) list() []*session.Session {
 	r.mu.Lock()
