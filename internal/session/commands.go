@@ -17,6 +17,7 @@ import (
 	"time"
 	"unicode"
 
+	"github.com/gerrowadat/disgracelands/internal/colour"
 	"github.com/gerrowadat/disgracelands/internal/game"
 	"github.com/gerrowadat/disgracelands/internal/rng"
 )
@@ -169,6 +170,17 @@ func (c *Context) Send(format string, args ...any) {
 		return
 	}
 	c.Session.Send(format, args...)
+}
+
+// SendAt is Send for a message whose colour is at a level other than the
+// ordinary one — the combat lines are C_CMP, so somebody on "normal" colour
+// sees the fight in plain text. See internal/colour.
+func (c *Context) SendAt(want colour.Level, format string, args ...any) {
+	if c.Session == nil {
+		c.Character.Tell(format, args...)
+		return
+	}
+	c.Session.SendAt(want, format, args...)
 }
 
 // Commands is the command table.
@@ -473,6 +485,7 @@ func init() {
 		{Name: "roomflags", Help: "Show each room's vnum and flags.", Run: toggleCommand("roomflags"), CLine: 446, MinLevel: game.LevelImmortal},
 		{Name: "clear", Help: "Clear the screen.", Run: doClearScreen, CLine: 254},
 		{Name: "cls", Help: "Clear the screen.", Run: doClearScreen, CLine: 256},
+		{Name: "color", Help: "Choose how much colour you see.", Run: doColour, CLine: 258},
 		{Name: "commands", Help: "List the commands you can use.", Run: doCommands(listCommands), CLine: 261},
 		{Name: "compact", Help: "Drop the blank line before each prompt.", Run: toggleCommand("compact"), CLine: 262},
 		{Name: "diagnose", Help: "See how hurt somebody is.", Run: doDiagnose, CLine: 276},
@@ -897,7 +910,18 @@ func prompt(s *Session) string {
 	}
 	rec := c.Record
 
+	// A blank line before the prompt unless the player has asked for compact
+	// mode (comm.c:1436). Another preference that was settable, listed by
+	// `toggle` and saved, and read by nothing — so `compact` reported success
+	// and did nothing, the same as `brief` and `autoexit` did before the light
+	// work. Found by the session-parity harness, which counted the blank line.
+	lead := "\r\n"
+	if rec.Preferences.Has(game.PrefCompact) {
+		lead = ""
+	}
+
 	var b strings.Builder
+	b.WriteString(lead)
 	if rec.InvisLevel > 0 {
 		fmt.Fprintf(&b, "i%d ", rec.InvisLevel)
 	}
@@ -999,11 +1023,14 @@ func roomDescription(w *game.Live, room *game.RoomDef, viewer *game.Character, i
 
 	// An immortal with `roomflags` on gets the vnum and the flags in the
 	// title line.
+	// Cyan, as look_at_room does (act.informative.c:425). The colour markup
+	// is resolved at the socket against the reader's preference — see
+	// internal/colour — so this string is written once for everybody.
 	if hasPref(viewer, game.PrefRoomFlags) {
-		fmt.Fprintf(&b, "[%5d] %s [ %s]\r\n",
+		fmt.Fprintf(&b, "{{cyan}}[%5d] %s [ %s]{{/}}\r\n",
 			room.Vnum, room.Name, game.SprintBit(room.Flags, game.RoomBitNames()))
 	} else {
-		fmt.Fprintf(&b, "%s\r\n", room.Name)
+		fmt.Fprintf(&b, "{{cyan}}%s{{/}}\r\n", room.Name)
 	}
 
 	// Brief mode drops the description — but never in a DEATH room, because
@@ -1014,7 +1041,7 @@ func roomDescription(w *game.Live, room *game.RoomDef, viewer *game.Character, i
 	}
 
 	if hasPref(viewer, game.PrefAutoExit) {
-		fmt.Fprintf(&b, "[ Exits: %s]\r\n", autoExits(room))
+		fmt.Fprintf(&b, "{{cyan}}[ Exits: %s]{{/}}\r\n", autoExits(room))
 	}
 
 	// The two local additions, both `<DoC>` (act.informative.c:444, :452).
@@ -1025,21 +1052,39 @@ func roomDescription(w *game.Live, room *game.RoomDef, viewer *game.Character, i
 		b.WriteString("You have entered a [Player Killer] room. Beware!\r\n")
 	}
 
+	// Green for what is lying about and yellow for who is here, which is the
+	// C switching colour around each list rather than colouring the lines
+	// themselves (act.informative.c:469-473). The reset goes after the whole
+	// list, not after each line.
 	// list_obj_to_char (act.informative.c:165). An object you cannot see is
 	// simply not there, with no marker: the C's `show` argument produces
 	// " Nothing." for an empty *inventory*, never for an empty floor.
+	var objects strings.Builder
 	for _, obj := range w.RoomObjects(room.Vnum) {
 		if !w.CanSeeObj(viewer, obj) {
 			continue
 		}
 		if obj.Description != "" {
-			fmt.Fprintf(&b, "%s\r\n", obj.Description)
+			fmt.Fprintf(&objects, "%s\r\n", obj.Description)
 			continue
 		}
-		fmt.Fprintf(&b, "%s is lying here.\r\n", capitaliseFirst(obj.Name()))
+		fmt.Fprintf(&objects, "%s is lying here.\r\n", capitaliseFirst(obj.Name()))
 	}
-
-	b.WriteString(listCharToChar(w, room, viewer))
+	// Unconditionally, and with one reset for both lists rather than one each.
+	// The C sends the colour codes as bare writes around the two calls
+	// (act.informative.c:469-473):
+	//
+	//	send_to_char(CCGRN(ch, C_NRM), ch);
+	//	list_obj_to_char(...);
+	//	send_to_char(CCYEL(ch, C_NRM), ch);
+	//	list_char_to_char(...);
+	//	send_to_char(CCNRM(ch, C_NRM), ch);
+	//
+	// So an empty room still gets a green, a yellow and a reset with nothing
+	// between them — visible in a transcript, invisible on a terminal, and
+	// reproduced because the session-parity harness compares transcripts.
+	fmt.Fprintf(&b, "{{green}}%s{{yellow}}%s{{/}}",
+		objects.String(), listCharToChar(w, room, viewer))
 	return b.String()
 }
 

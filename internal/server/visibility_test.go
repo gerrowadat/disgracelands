@@ -421,3 +421,78 @@ func TestZeroDotMeansAPlayer(t *testing.T) {
 	mortal.send("look 0.dog")
 	mortal.expect("You do not see that here.")
 }
+
+// TestColourIsEmittedAtTheReadersLevel. The C interleaves escapes as it builds
+// each message; this port writes the markup once and renders it at the socket.
+// Either way what reaches the terminal depends on the reader.
+func TestColourIsEmittedAtTheReadersLevel(t *testing.T) {
+	srv, _ := newTestServer(t)
+	c := dialClient(t, listening(t, srv))
+	c.create("Zod", "swordfish", "m", "w")
+
+	// A new character has both PRF_COLOR bits, which is Complete.
+	c.send("color")
+	c.expect("Your current color level is Complete.")
+
+	c.send("look")
+	c.settle()
+	if !strings.Contains(string(c.wire()), "\x1b[36m") {
+		t.Error("the room title was not cyan for a reader on full colour")
+	}
+
+	c.send("color off")
+	c.expect("is now Off.")
+
+	before := len(c.wire())
+	c.send("look")
+	c.settle()
+	if strings.Contains(string(c.wire()[before:]), "\x1b[") {
+		t.Error("an escape sequence reached a reader who asked for no colour")
+	}
+
+	// And the markup does not leak either.
+	if strings.Contains(string(c.wire()[before:]), "{{") {
+		t.Error("the colour markup reached the player")
+	}
+}
+
+// TestColourUsage, and that the level is matched on a prefix.
+func TestColourUsage(t *testing.T) {
+	srv, _ := newTestServer(t)
+	c := dialClient(t, listening(t, srv))
+	c.create("Zod", "swordfish", "m", "w")
+
+	c.send("color purple")
+	c.expect("Usage: color { Off | Sparse | Normal | Complete }")
+
+	c.send("color s")
+	c.expect("is now Sparse.")
+	c.send("color")
+	c.expect("Your current color level is Sparse.")
+}
+
+// TestCompactDropsTheBlankLine before the prompt (comm.c:1436) — a preference
+// that was settable, listed and saved, and read by nothing.
+func TestCompactDropsTheBlankLine(t *testing.T) {
+	srv, _ := newTestServer(t)
+	c := dialClient(t, listening(t, srv))
+	c.create("Zod", "swordfish", "m", "w")
+
+	c.send("compact")
+	c.expect("Compact mode on.")
+	before := len(c.wire())
+	c.send("look")
+	c.settle()
+	if strings.Contains(string(c.wire()[before:]), "\r\n\r\n500H") {
+		t.Error("compact mode still printed the blank line before the prompt")
+	}
+
+	c.send("compact")
+	c.expect("Compact mode off.")
+	before = len(c.wire())
+	c.send("look")
+	c.settle()
+	if !strings.Contains(string(c.wire()[before:]), "\r\n500H") {
+		t.Error("the blank line before the prompt went missing")
+	}
+}

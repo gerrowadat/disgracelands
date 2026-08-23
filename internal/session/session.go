@@ -25,6 +25,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/gerrowadat/disgracelands/internal/colour"
 	"github.com/gerrowadat/disgracelands/internal/game"
 	"github.com/gerrowadat/disgracelands/internal/telnet"
 )
@@ -469,6 +470,18 @@ func (s *Session) StopSnooping() {
 // Send queues output. It never blocks: a client that cannot keep up is
 // disconnected rather than allowed to stall the world.
 func (s *Session) Send(format string, args ...any) {
+	s.SendAt(colour.Normal, format, args...)
+}
+
+// SendAt is Send for a message that wants a colour level other than the
+// ordinary one.
+//
+// The level is a *threshold*: the C writes `CCYEL(ch, C_CMP)` on the combat
+// messages, so somebody who has asked for "normal" colour sees the fight in
+// plain text and somebody who asked for "complete" sees it in yellow. Almost
+// everything is C_NRM, which is why Send has it as the default and this exists
+// for the handful that do not.
+func (s *Session) SendAt(want colour.Level, format string, args ...any) {
 	if s.closed.Load() {
 		return
 	}
@@ -476,6 +489,7 @@ func (s *Session) Send(format string, args ...any) {
 	if len(args) > 0 {
 		text = fmt.Sprintf(format, args...)
 	}
+	text = colour.Render(text, want, s.colourLevel())
 	select {
 	case s.out <- outgoing{data: []byte(normalise(text))}:
 	case <-s.done:
@@ -487,9 +501,26 @@ func (s *Session) Send(format string, args ...any) {
 	// Anybody snooping sees it too. The C copies at the descriptor's write,
 	// so a snooper sees everything including prompts — which is what makes
 	// snooping useful and also what makes it noisy.
+	//
+	// Already rendered, so the snooper sees the colour the *snooped* character
+	// would have seen rather than their own. That is the C's too: the copy
+	// happens at write_to_descriptor, long after the macros have expanded.
 	if watcher := s.SnoopedBy(); watcher != nil {
 		watcher.Send("%s", text)
 	}
+}
+
+// colourLevel is how much colour this session has asked for. A connection with
+// no character yet — the greeting, the name prompt — gets none, which matches
+// the C: every one of its macros takes a char_data and there is not one.
+func (s *Session) colourLevel() colour.Level {
+	if s.character == nil || s.character.Record == nil || s.character.IsNPC() {
+		return colour.Off
+	}
+	return colour.LevelOf(
+		s.character.Record.Preferences.Has(game.PrefColour1),
+		s.character.Record.Preferences.Has(game.PrefColour2),
+	)
 }
 
 // SendRaw queues bytes without line-ending translation, for text that is

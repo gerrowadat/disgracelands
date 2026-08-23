@@ -43,7 +43,6 @@ var notPorted = map[string]string{
 	"edit": "OasisOLC",
 
 	// Blocked on something.
-	"color":  "the PRF_COLOR bits are stored and set color works, but nothing emits colour",
 	"slowns": "switches reverse-DNS resolution, which this port does not do at all",
 }
 

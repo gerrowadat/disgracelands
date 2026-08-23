@@ -25,7 +25,20 @@ func doScore(c *Context) error {
 	}
 	now := time.Now()
 
-	c.Send("You are %d years old.\r\n", game.Age(rec, now))
+	// "  It's your birthday today." on the day itself, which is month zero and
+	// day zero of the age rather than of the calendar — so it lands on the
+	// anniversary of the character being rolled up, and a character made in
+	// the first hour of a mud month has one every mud year.
+	//
+	// Two spaces before it, and the C appends the newline in each branch
+	// rather than after the join. Found by the session-parity harness, which
+	// created a character and read their score in the same minute.
+	age := game.AgeOf(rec, now)
+	if age.Month == 0 && age.Day == 0 {
+		c.Send("You are %d years old.  It's your birthday today.\r\n", game.Age(rec, now))
+	} else {
+		c.Send("You are %d years old.\r\n", game.Age(rec, now))
+	}
 	c.Send("You have %d(%d) hit, %d(%d) mana and %d(%d) movement points.\r\n",
 		rec.Points.Hit, rec.Points.MaxHit,
 		rec.Points.Mana, rec.Points.MaxMana,

@@ -361,7 +361,15 @@ func (l *Live) Enter(c *Character, room RoomVnum) error {
 	}
 	l.Leave(c)
 	c.Room = room
-	l.occupants[room] = append(l.occupants[room], c)
+	// **Prepended**, not appended. `char_to_room` links onto the front of
+	// `world[room].people` (handler.c:396), so a room's list is in reverse
+	// order of arrival and everything that walks it — the room listing, `act`
+	// to the room, a zone reset's freshly made mobiles — sees newest first.
+	//
+	// It shows up in the plainest possible way: a room with a janitor and an
+	// innkeeper lists them in the other order from the C. Found by the
+	// session-parity harness.
+	l.occupants[room] = append([]*Character{c}, l.occupants[room]...)
 	l.byName[strings.ToLower(c.Name)] = c
 
 	// Entering the world is where a record and a body meet, so it is where

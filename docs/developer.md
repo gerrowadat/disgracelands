@@ -208,10 +208,18 @@ just run, workflow and all, with `make ci` (see below):
   systematic difference — the C emits ANSI and this port does not — so the
   rest is legible.
 
-  Adding a script is a file of lines to type in `testdata/parity/`. Prefer
-  things with no dice in them: the seed is fixed on both sides but the two
-  servers do not consume the sequence in the same order, so a script that
-  fights something is comparing rolls rather than wording.
+  Adding a script is a file of lines to type in `testdata/parity/`. Two things
+  to avoid, both of which produce differences that are not differences:
+
+  - **Dice.** The seed is fixed on both sides, but the two servers do not
+    consume the sequence in the same order, so a script that fights something
+    is comparing rolls rather than wording.
+  - **Rooms that wandering mobiles pass through.** A janitor's position
+    depends on how many mobile-activity pulses have elapsed, which depends on
+    how fast each server booted. The Midgaard temple and the immortal rooms
+    are all on a janitor's route. This is the harness's sharpest limitation
+    and the obvious fix is a way to hold mobile activity still on both sides —
+    the C has no flag for it, so it would be another `<DoC>` addition.
 - **The 32-bit codec checks** in `internal/persist/player`, which skip
   silently without `gcc-multilib`. They verify the layout the archived player
   database is actually in — and CI installs that toolchain **only for a change

@@ -1175,11 +1175,19 @@ shipped socials file fills 104 of those (it also carries a `you` entry with no
 table slot, which the C drops with a log and so does this port).
 
 **308 of the 318 were implemented when Phase 5 finished**: 203 in
-`internal/session/commands.go` plus the 105 socials — 309 now that `tedit`
-has landed. **Every slice below is built.** The 10 left when Phase 5 finished
-are listed under
-"What is not in it" — the OLC editors that belong to Phase 6, and a scattering
-of small commands that never had a slice of their own.
+`internal/session/commands.go` plus the 105 socials. **310 now** — `tedit` was
+Phase 6's first slice and `color` came with the colour work.
+
+**Every slice below is built.** The eight left are listed under "What is not in
+it": the seven remaining OasisOLC editors, which are Phase 6, and `slowns`,
+which is declined rather than pending.
+
+The authority for those numbers is no longer this paragraph. `notPorted` in
+`internal/session/coverage_test.go` lists every unported row with a reason, a
+test re-parses `interpreter.c` and requires the two to agree both ways, and a
+second test reads the figure back out of the prose. Porting a command fails the
+suite until the documents are corrected, which is how the count stopped drifting
+after being wrong four separate times.
 
 The slices are listed in dependency order rather than in order of importance:
 the first one unblocks three of the others, and after that the work was
@@ -1509,18 +1517,23 @@ backends, the WipeMud race system (`TODO.md` §2).
 
   What the first run found, in order of size:
 
-  - **The C emits colour and this port emits none.** Every room title, exit
-    line and object description differs by an ANSI escape. That is the
-    unported `color` command and the fact that nothing here writes an escape
-    sequence; `--ignore-colour` silences it so the rest is readable, and it is
-    off by default because hiding the loudest finding inside the harness would
-    defeat the point.
-  - **Blank lines and listing order.** Around a hundred lines differ once
-    colour is set aside: where a blank line falls around the menu and the
-    message of the day, and where a mobile's long description sits relative to
-    the objects in the room.
-  - **The message of the day for a brand-new implementor** — fixed here, see
-    below.
+  - **The message of the day for a brand-new implementor.** Fixed in the same
+    change that built the harness.
+  - **Colour.** The C emitted it and this port emitted none — every room
+    title, exit line and object list differed by an escape sequence. Fixed:
+    `internal/colour`, the markup `data-format.md` §5 already specified, and
+    `color` ported. It brought three more with it, each invisible until the
+    transcripts were laid side by side: **`compact` was another settable,
+    listed, saved preference that nothing read**, so the blank line before the
+    prompt was always there; **the room's people are listed newest-first**,
+    because `char_to_room` prepends; and **`score` was missing "It's your
+    birthday today."**.
+  - **What is left**, and the harness's own limitations as much as the port's:
+    three blank-line placements around the menu, and a great deal of noise
+    from **wandering mobiles** — a janitor's position depends on how many
+    mobile pulses have elapsed, which depends on how fast each server booted.
+    Holding mobile activity still on both sides would need another `<DoC>`
+    addition to the C, and is the next thing this harness wants.
 
   The C server needed one addition to make this possible: `-S <seed>` fixes
   the RNG seed, marked `<DoC>` like `-J`, so a session is reproducible. Zero

@@ -370,7 +370,7 @@ Listed here so they are not mistaken for deliberate differences.
   combination, and reports which of them it found the thing in. Here each
   command searches the lists it cares about in the order it wants. The
   behaviour is the same for every command ported so far; the shape is not.
-- **Nine of the C's 318 commands are not implemented**, and the plan's
+- **Eight of the C's 318 commands are not implemented**, and the plan's
   §10 "What is not in it" lists every one with its `interpreter.c` line. In
   brief: the seven OasisOLC editors (Phase 6), plus `slowns` and `color`.
   **`hop` is not among them**: it is the one `do_action` row the shipped
