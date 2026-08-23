@@ -73,18 +73,15 @@ about it.
 
 ## C server only (`reference/moderncserver/`)
 
-These matter only for as long as that tree is the one actually running the
-game. See its `README.md`.
+Nothing is running the game — not that tree, not the Go port, and nothing
+has since 2008. Phase 7 (`docs/proposals/go-port-plan.md` §10) is about
+what would have to be true before anything did again, not about swapping a
+live service. So the C tree has no operational stake at all: its two jobs
+are being the reference implementation and being the parity oracle. A
+problem in it is worth writing down if it would mislead the port, not
+because anyone could reach it. See its `README.md`.
 
-### 5. Audit the build warnings that look like real bugs
-
-It builds with `-w` to suppress 2002-era warning noise. Several of the
-suppressed warnings are `sprintf`-into-shared-`buf` overlap and truncation
-patterns in `db.c`, `improved-edit.c`, `tedit.c`, `zedit.c`, `listrent.c`
-and `shopconv.c`. Old code, apparently never triggered in practice — but
-"apparently never triggered" is not "safe".
-
-### 6. `src/util/*` assume the binary player format
+### 5. `src/util/*` assume the binary player format
 
 `autowiz`, `mudpasswd`, `listrent` and friends build fine (`make utils`) but
 read `struct char_file_u` directly. Anything that changes the player format
@@ -103,6 +100,16 @@ Kept here so it is clear these were decided rather than forgotten.
 - **Deciding how to run it across restarts.** `autorun` and friends are
   superseded by the container runtime's restart policy plus real SIGTERM
   handling; see `docs/operations.md`.
+- **Auditing the C tree's suppressed `sprintf`-overlap build warnings.**
+  `-w` hides genuine overlap and truncation patterns in `db.c`,
+  `improved-edit.c`, `tedit.c`, `zedit.c`, `listrent.c` and `shopconv.c`.
+  Decided against, and issue #143 closed with it. The item's own premise
+  was that it "matters only for as long as that tree is the one actually
+  running the game", and no tree is running the game. They stay listed
+  under "Known problems" in `reference/moderncserver/README.md`, because
+  anyone who builds and runs that tree locally should know they are there
+  — as history, not as a fix to make. The Go port fixes this class of bug
+  where it meets it and records each one (`docs/deviations.md`).
 - **`dlctl lib import`'s five smaller importers not transcoding.** Fixed,
   not decided against: `state import`/`names import`/`messages import`/
   `socials import`/`helpdb import` all take `--encoding` now and decode

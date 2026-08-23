@@ -49,7 +49,7 @@ Builds both servers, has each dump the world it loaded, and diffs them. They
 currently agree on every field of all 3,202 records. This runs in CI.
 
 If it reports a difference, the Go loader is what is wrong: the C server is
-the reference implementation and the one that has been running the game.
+the reference implementation and the one that ran the game.
 
 ## Current state: Phases 0–5 done, Phase 6 declined, Phase 7 not started
 

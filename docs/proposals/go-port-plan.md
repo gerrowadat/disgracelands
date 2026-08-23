@@ -20,7 +20,7 @@ These were settled up front and the rest of the plan assumes them:
 
 | Question | Decision |
 |---|---|
-| **Fidelity** | Faithful core, known bugs fixed. Same game feel, same mechanics (remort bitmask, Paladin alignment, the balance tweaks in `docs/investigations/non-stock-features.md`); the `sprintf`-overlap class of bugs from `TODO.md` §3 and integer-width bugs get fixed as they're encountered, each deviation recorded. Deliberate rules changes are a separate, later conversation. |
+| **Fidelity** | Faithful core, known bugs fixed. Same game feel, same mechanics (remort bitmask, Paladin alignment, the balance tweaks in `docs/investigations/non-stock-features.md`); the `sprintf`-overlap class of bugs (`reference/moderncserver/README.md`'s "Known problems", never audited in the C and now deliberately not going to be) and integer-width bugs get fixed as they're encountered, each deviation recorded. Deliberate rules changes are a separate, later conversation. |
 | **Repo layout** | Same repo, new top-level Go tree. The C tree in `reference/moderncserver/src/` stays buildable and authoritative for the whole port — it is the reference implementation and the parity oracle. |
 | **Scripting** | Design the seam, defer the engine. Trigger/event interfaces get defined so DG Scripts, Lua, or anything else can drop in later; v1 ships no interpreter. The tree that was actually played has no DG Scripts (`docs/investigations/non-stock-features.md`), so nothing regresses. |
 | **Protocols** | TLS-wrapped telnet, WebSocket, and telnet option negotiation (MSSP/MCCP/GMCP/MXP). |
@@ -539,7 +539,7 @@ real attention:
 
 Beyond format-swapping for its own sake: a `Source` interface makes it
 possible to load one of the 1,184 dated nightly world backups in the
-archive (`TODO.md` §4) directly, to load a zone from a tarball for testing,
+archive (`TODO.md` §3) directly, to load a zone from a tarball for testing,
 or to serve an embedded copy of the world in a single-binary demo build.
 Those are the concrete near-term uses; a database-backed world is the
 speculative one and shouldn't drive the design.
@@ -1877,12 +1877,14 @@ sense to start:
    exercise combat, shops, boards, mail and housing before "the two
    servers agree" is a claim covering more than logging in and looking
    around.
-3. **The real archive's non-ASCII text survives conversion.** `TODO.md`
-   §5: five of `dlctl lib import`'s seven sub-importers write source
-   bytes straight through without transcoding. `examples/stock/`'s own
-   world is pure ASCII, so nothing here has ever exercised this against
-   data that matters — the real archive, twenty years old, is not
-   ASCII throughout. Only relevant if reviving the archived roster
+3. **The real archive's non-ASCII text survives conversion.** The
+   importer gap this precondition was first written about is closed —
+   all seven of `dlctl lib import`'s sub-importers take `--encoding` and
+   transcode now (`TODO.md`'s "Superseded", `docs/design/data-format.md`
+   §11.1). What is not closed is the exercise: `examples/stock/`'s own
+   world is pure ASCII, so nothing here has ever run the conversion
+   against data that matters — the real archive, twenty years old, is
+   not ASCII throughout. Only relevant if reviving the archived roster
    (below); irrelevant to a fresh start.
 4. **A decision, not a technical task: revive the archived roster, or
    start clean?** `TODO.md` §1 — the 108 real 2001–2008 characters exist
@@ -2236,8 +2238,11 @@ Background this plan draws on, all under `docs/investigations/`:
 
 And outside `docs/`:
 
-- `TODO.md` — what's left in the C tree; items 1, 3 and 5 are largely
-  superseded by this plan, items 2 and 4 are not.
+- `TODO.md` — what's left that is not a phase: the roster decision,
+  WipeMud, the world snapshot, hosting and exposure, and the one
+  remaining C-tree item. The roster and exposure ones are this plan's
+  business too (Phase 7's preconditions); WipeMud, the snapshot and
+  `src/util/*` are not.
 - `BUILDING.md` — both builds, C and Go.
 - `reference/moderncserver/doc/license.doc` — the CircleMUD + DikuMUD
   licenses the port inherits; see §12.
