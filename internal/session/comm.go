@@ -22,13 +22,12 @@ import (
 // *player* flag rather than a preference — an immortal can silence somebody
 // with it, which is why it lives where a player cannot reach it.
 
-// levelCanShout and hollerMoveCost are config.c:61 and :64. Shouting is free
-// at level one; hollering costs twenty movement points however loud you are.
-const (
-	levelCanShout     int32 = 1
-	hollerMoveCost    int32 = 20
-	drunkEnoughToSlur int32 = 5
-)
+// drunkEnoughToSlur is act.comm.c's own local threshold — not config.c, and
+// not reopened for tunability.
+//
+// LevelCanShout and HollerMoveCost (config.c:61 and :64) live in GameTuning
+// (internal/game/tuning.go) now, a runtime setting rather than a constant.
+const drunkEnoughToSlur int32 = 5
 
 // doSay, porting do_say.
 //
@@ -291,6 +290,8 @@ func (c *Context) genComm(name string) error {
 		return nil
 	}
 
+	tuning := game.Tuning()
+
 	switch {
 	case rec.PlayerFlags.Has(game.PlayerNoShout):
 		c.Send("%s", ch.noshout)
@@ -298,8 +299,8 @@ func (c *Context) genComm(name string) error {
 	case c.roomIsSoundproof(c.Character.Room):
 		c.Send("The walls seem to absorb your words.\r\n")
 		return nil
-	case c.Character.Level() < levelCanShout:
-		c.Send("You must be at least level %d before you can %s.\r\n", levelCanShout, ch.verb)
+	case c.Character.Level() < tuning.LevelCanShout:
+		c.Send("You must be at least level %d before you can %s.\r\n", tuning.LevelCanShout, ch.verb)
 		return nil
 	case ch.mute != 0 && rec.Preferences.Has(ch.mute):
 		c.Send("%s", ch.off)
@@ -313,11 +314,11 @@ func (c *Context) genComm(name string) error {
 	}
 
 	if ch.costsMovement {
-		if rec.Points.Move < hollerMoveCost {
+		if rec.Points.Move < tuning.HollerMoveCost {
 			c.Send("You're too exhausted to holler.\r\n")
 			return nil
 		}
-		rec.Points.Move -= hollerMoveCost
+		rec.Points.Move -= tuning.HollerMoveCost
 	}
 
 	if c.prefers(game.PrefNoRepeat) {

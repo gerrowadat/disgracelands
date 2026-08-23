@@ -715,16 +715,46 @@ Listed here so they are not mistaken for deliberate differences.
   the C's order depends on whether the server has been restarted since the
   message was sent.
 
-- **The rent settings are constants, not options.** `free_rent`,
-  `min_rent_cost` and `max_obj_save` are compiled in at the values
-  `config.c` had. Making them configurable would be a feature; the archive's
-  values are what the game was.
+- **Ten of `config.c`'s constants are runtime settings now, named by name.**
+  `free_rent`, `min_rent_cost`, `max_obj_save`, `auto_save`, `autosave_time`,
+  the two corpse timers, `level_can_shout`, `holler_move_cost` and
+  `max_filesize` moved from a compiled-in value to `game.GameTuning`
+  (`internal/game/tuning.go`), overridable by `--config`'s game.yaml and
+  hot-reloadable on `SIGHUP`. This is a deliberate, field-by-field reversal
+  of "the archive wins" — a decision, not a format pass — made 2026-08-23.
+  Every field still *defaults* to the archive's own `config.c` value, so an
+  unconfigured server is unchanged. Everything else in `config.c`
+  (`pk_allowed`, the room vnums, autowiz, ...) was considered and left a
+  constant on purpose; see `docs/proposals/go-port-plan.md` §9.1 for the
+  full survey.
 
-  The one that matters: **`free_rent` is YES**, so nobody on this server ever
-  paid rent. The receptionist says "Rent is free here.  Just quit, and your
-  objects will be saved!" and stops. Every price in `Crash_offer_rent` is
-  dead code on these settings — and ported anyway, because the setting is one
-  line and the path has to be right if it is ever turned off.
+  The one that mattered most while it was fixed: `free_rent` defaults YES,
+  so nobody on the archived server ever paid rent. The receptionist says
+  "Rent is free here.  Just quit, and your objects will be saved!" and
+  stops. Every price in `Crash_offer_rent` was dead code at that
+  setting — ported anyway, and now genuinely reachable by turning
+  `free_rent` off in `config/game.yaml`.
+
+- **`max_bad_pws` and `tunnel_size` were picked for tunability, then found
+  unbuilt.** `PlayerRecord.BadPasswords` counts consecutive failed logins
+  but nothing reads it to disconnect anyone, and the `TUNNEL` room flag is
+  recognised (parsed, named) but nothing enforces an occupancy limit on it.
+  Both behaviours are missing from the port entirely, not merely hardcoded,
+  so there is no constant to unhardcode yet. Deferred rather than built as
+  a side effect of a config-file change: whoever ports do_gen_comm's tunnel
+  check or the bad-password disconnect should also wire it to
+  `GameTuning.MaxBadPws`/`TunnelSize` at the same time, rather than
+  reopening `config.c` again for it.
+
+- **`auto_save` does not (yet) gate `do_save`.** `config.c`'s comment on
+  `auto_save` is really about two things: the periodic sweep (now tunable,
+  above) and `do_save`'s own duplication guard — "if auto_save, `save`
+  only writes aliases, to stop two clients or a crash duplicating items"
+  (`act.other.c:188-193`). This port's `save` command always does a full
+  save regardless of `auto_save`, a pre-existing simplification independent
+  of today's config-file work. Worth fixing if `auto_save` is ever actually
+  turned off on a live server; until then the periodic sweep being
+  authoritative covers the archive's own settings exactly.
 
 - **Renting empties your bags and strips your body — on `binary` and
   `ascii`.** `USE_AUTOEQ` is 0 in this tree (`structs.h:30`), so

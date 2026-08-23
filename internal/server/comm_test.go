@@ -252,6 +252,48 @@ func TestShoutCarriesOneZone(t *testing.T) {
 	}
 }
 
+// TestLevelCanShoutIsTunable: level_can_shout (config.c:61) is now a runtime
+// setting (internal/game/tuning.go), not a constant — raise it and a brand
+// new, level-one character must be refused.
+func TestLevelCanShoutIsTunable(t *testing.T) {
+	orig := game.Tuning()
+	t.Cleanup(func() { game.SetTuning(orig) })
+	tuning := orig
+	tuning.LevelCanShout = 5
+	game.SetTuning(tuning)
+
+	srv, _ := newTestServer(t)
+	// The first player on the roster is level 34 by init_char
+	// (light_test.go's own note on the same rule), which would sail past
+	// any level_can_shout this test sets. A second character is an
+	// ordinary mortal.
+	dialClient(t, listening(t, srv)).create("Filler", "swordfish", "m", "w")
+	c := dialClient(t, listening(t, srv))
+	c.create("Zod", "swordfish2", "m", "w")
+
+	c.send("shout is anybody here")
+	c.expect("You must be at least level 5 before you can shout.")
+}
+
+// TestHollerMoveCostIsTunable: holler_move_cost (config.c:64) is now a
+// runtime setting too — raise it above what a fresh character has, and
+// holler must refuse for exhaustion rather than deduct movement it does
+// not have.
+func TestHollerMoveCostIsTunable(t *testing.T) {
+	orig := game.Tuning()
+	t.Cleanup(func() { game.SetTuning(orig) })
+	tuning := orig
+	tuning.HollerMoveCost = 1_000_000
+	game.SetTuning(tuning)
+
+	srv, _ := newTestServer(t)
+	c := dialClient(t, listening(t, srv))
+	c.create("Zod", "swordfish", "m", "w")
+
+	c.send("holler is anybody here")
+	c.expect("You're too exhausted to holler.")
+}
+
 // TestWhisperAndAsk, and what the rest of the room sees.
 func TestWhisperAndAsk(t *testing.T) {
 	srv, _ := newTestServer(t)

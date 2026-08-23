@@ -39,6 +39,12 @@ type Config struct {
 	PlayerDir string // empty means "derive from LibDir"
 	WorldDir  string // empty means "derive from LibDir"
 
+	// GameConfigFile is a game.yaml overlaying config.c's runtime-tunable
+	// values (game.GameTuning) on top of their archive defaults. Empty means
+	// no file: pure defaults, which is config.c's own behaviour exactly. See
+	// LoadGameTuning and cmd/dlmud's SIGHUP handling.
+	GameConfigFile string
+
 	// Pluggable format selection (docs/proposals/go-port-plan.md §5, §6).
 	PlayerFormat string
 	WorldFormat  string
@@ -294,6 +300,7 @@ func Load(args []string, lookupEnv func(string) (string, bool), out io.Writer) (
 	str("lib-dir", "Runtime data directory (world, text, player data)", &cfg.LibDir)
 	str("player-dir", "Player-data directory (default: <lib-dir>/pfiles)", &cfg.PlayerDir)
 	str("world-dir", "World-data directory (default: <lib-dir>/world)", &cfg.WorldDir)
+	str("config", "Game-tuning config file, e.g. config/game.yaml (empty = config.c's own defaults)", &cfg.GameConfigFile)
 
 	str("player-format", "Player-file format the server runs on: "+strings.Join(serverPlayerFormats, ", ")+
 		" (the tooling also reads and writes: "+strings.Join(knownPlayerFormats, ", ")+")", &cfg.PlayerFormat)

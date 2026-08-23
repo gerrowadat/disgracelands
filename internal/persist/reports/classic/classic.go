@@ -24,6 +24,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gerrowadat/disgracelands/internal/game"
 	"github.com/gerrowadat/disgracelands/internal/persist/reports"
 )
 
@@ -51,8 +52,14 @@ var kindOrder = []reports.Kind{reports.KindBug, reports.KindIdea, reports.KindTy
 
 // Store is the three report files.
 type Store struct {
-	dir         string
-	readOnly    bool
+	dir      string
+	readOnly bool
+	// maxFileSize is an explicit override — set only when cfg.MaxFileSize
+	// was non-zero, which today is only ever the tests pinning a small size
+	// to exercise the file-full refusal (act.other.c:908-911). Everywhere
+	// else, Append reads game.Tuning().MaxFileSize fresh on every call, so a
+	// SIGHUP reload of config/game.yaml (cmd/dlmud) takes effect on the next
+	// report filed, with no plumbing back into this Store required.
 	maxFileSize int64
 }
 
@@ -62,11 +69,16 @@ func New(cfg reports.Config) (*Store, error) {
 	if cfg.Dir == "" {
 		return nil, fmt.Errorf("reports: no directory configured")
 	}
-	max := cfg.MaxFileSize
-	if max == 0 {
-		max = reports.DefaultMaxFileSize
+	return &Store{dir: cfg.Dir, readOnly: cfg.ReadOnly, maxFileSize: cfg.MaxFileSize}, nil
+}
+
+// currentMaxFileSize is the size gate Append checks: the constructor's
+// explicit override if one was given, otherwise the live game-tuning value.
+func (s *Store) currentMaxFileSize() int64 {
+	if s.maxFileSize != 0 {
+		return s.maxFileSize
 	}
-	return &Store{dir: cfg.Dir, readOnly: cfg.ReadOnly, maxFileSize: max}, nil
+	return game.Tuning().MaxFileSize
 }
 
 // Name implements reports.Store.
@@ -90,7 +102,7 @@ func (s *Store) Append(r reports.Report) (bool, error) {
 	path := filepath.Join(s.dir, name)
 
 	if info, err := os.Stat(path); err == nil {
-		if info.Size() >= s.maxFileSize {
+		if info.Size() >= s.currentMaxFileSize() {
 			return false, nil
 		}
 	} else if !os.IsNotExist(err) {

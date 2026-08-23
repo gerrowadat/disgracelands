@@ -29,6 +29,7 @@ every flag appears here, but it cannot check that the prose is accurate.
 | `--lib-dir` | `lib` | Runtime data directory: world files, help text, boards, player data. The same directory the C server takes with `-d`. |
 | `--player-dir` | *(empty)* | Player-data directory. Empty means `<lib-dir>/pfiles`. |
 | `--world-dir` | *(empty)* | World-data directory. Empty means `<lib-dir>/world`. |
+| `--config` | *(empty)* | Game-tuning config file (see "A config file: `--config`" below). Empty means `config.c`'s own defaults. |
 
 `data/` is **mutable state** — players, houses, boards, mail, and any world
 files edited in-game. Back it up; mount it as a volume in a container.
@@ -335,14 +336,31 @@ Two C options have no flag equivalent:
   pointing at `--listen-telnet`/`--listen-telnets`. There are three
   listeners now and no sensible way to guess which one was meant.
 
-## A config file?
+## A config file: `--config`
 
-There isn't one yet. The precedence chain has a slot for it between
-environment and defaults.
+`--config` (`DL_CONFIG`) names a YAML file of `reference/moderncserver/src/
+config.c`'s runtime-tunable values — ten fields, picked deliberately rather
+than reopening `config.c` wholesale; see `docs/deviations.md` for which
+and why. `config/game.yaml` in this repo is the shipped example, every
+key present but commented out at its `config.c` default, so it can be
+copied and edited rather than written from scratch.
 
-It will arrive with the values that justify it: the game tuning currently
-compiled into `reference/moderncserver/src/config.c` — rent costs, level
-caps, the OK/NOPERSON message strings, autosave behaviour. Those are the
-settings that genuinely want a file rather than fifty flags, and none of
-them exist in the Go tree yet. Choosing a file format before there is
-anything to put in it would have been guessing.
+An empty file, a comments-only file (the shipped example, as-is), or no
+`--config` at all all reproduce `config.c`'s own values exactly — the
+precedence chain's config-file slot sits between environment and defaults
+for exactly this reason.
+
+The running server rereads this file on `SIGHUP` and applies it live, no
+restart needed. A file that fails to parse, or parses but fails validation
+(`autosave_time: 0`, a negative cost, ...), is logged and ignored — the
+server keeps running on whatever tuning it had before.
+
+```yaml
+free_rent: false
+min_rent_cost: 250
+level_can_shout: 5
+```
+
+Everything else in `config.c` — `pk_allowed`, the room vnums, autowiz, the
+OK/NOPERSON message strings — is still a constant. Each was considered and
+left that way on purpose, not overlooked.

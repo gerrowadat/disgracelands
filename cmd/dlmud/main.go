@@ -132,6 +132,19 @@ func run(args []string) error {
 		logger.Warn(w)
 	}
 
+	// config.c's runtime-tunable values (game.GameTuning): --config's file
+	// overlaid on the archive's own defaults. Set before anything below can
+	// read it — SIGHUP reloads this same path later, once the signal
+	// handling below exists to carry it.
+	tuning, err := config.LoadGameTuning(cfg.GameConfigFile)
+	if err != nil {
+		return fmt.Errorf("game tuning: %w", err)
+	}
+	game.SetTuning(tuning)
+	if cfg.GameConfigFile != "" {
+		logger.Info("loaded game tuning", "file", cfg.GameConfigFile)
+	}
+
 	metrics := obs.NewMetrics(cfg.PulseInterval)
 	metrics.BuildInfo.WithLabelValues(info.Version, info.ShortCommit(), info.GoVersion).Set(1)
 
@@ -159,6 +172,36 @@ func run(args []string) error {
 	// listeners still up.
 	ctx, cancel := context.WithCancel(signalCtx)
 	defer cancel()
+
+	// SIGHUP reloads --config's game-tuning file without a restart
+	// (go-port-plan.md §9.1). A no-op, logged rather than silent, if
+	// --config was never set — there is nothing to re-read. A reload that
+	// fails to parse or validate keeps the previous tuning rather than
+	// wedging the game on a typo.
+	hup := make(chan os.Signal, 1)
+	signal.Notify(hup, syscall.SIGHUP)
+	go func() {
+		defer signal.Stop(hup)
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-hup:
+				if cfg.GameConfigFile == "" {
+					logger.Warn("SIGHUP received but no --config is set; nothing to reload")
+					continue
+				}
+				t, err := config.LoadGameTuning(cfg.GameConfigFile)
+				if err != nil {
+					logger.Error("SIGHUP: game tuning reload failed, keeping previous values",
+						"file", cfg.GameConfigFile, "error", err)
+					continue
+				}
+				game.SetTuning(t)
+				logger.Info("SIGHUP: reloaded game tuning", "file", cfg.GameConfigFile)
+			}
+		}
+	}()
 
 	// Load the world before anything can connect to it. A world that will
 	// not load is a boot failure, not something to serve around.

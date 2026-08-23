@@ -29,13 +29,6 @@ const (
 	KindTypo Kind = "typo"
 )
 
-// DefaultMaxFileSize is max_filesize (config.c:233): do_gen_write refuses to
-// append once a report file reaches this many bytes. Out of scope for the
-// game-config refactor (docs/proposals/data-format.md §11 step 6b survey) —
-// kept as a plain constant like every other scattered C tuning value in
-// this tree, ported alone rather than waiting on that refactor.
-const DefaultMaxFileSize = 50000
-
 // Report is one bug/idea/typo submission, the model every format reads and
 // writes.
 type Report struct {
@@ -79,8 +72,11 @@ type Config struct {
 	// reports.yaml.
 	Dir      string
 	ReadOnly bool
-	// MaxFileSize gates classic's per-kind file size. Zero means
-	// DefaultMaxFileSize.
+	// MaxFileSize is an explicit override for classic's per-kind file size
+	// gate. Zero (the normal case) means "read the live
+	// game.Tuning().MaxFileSize instead" — see classic.Store's own doc
+	// comment; this field exists so tests can pin a small size without
+	// touching the process-wide game tuning.
 	MaxFileSize int64
 }
 

@@ -666,10 +666,19 @@ historical 100ms), `--allow-legacy-passwords`, `--max-players`,
 
 Much of `reference/moderncserver/src/config.c` is compile-time game tuning
 (rent costs, level caps, OK/NOPERSON message strings, autosave behaviour).
-That becomes a **config file** — TOML or YAML, `--config`, with every value
-defaulting to today's `config.c` value so an empty file reproduces current
-behaviour exactly. Hot-reload of the safe subset on `SIGHUP` is a
-nice-to-have, not v1.
+**Built 2026-08-23** for the ten fields decided worth it (`docs/deviations.md`
+has the list and the reasoning field by field): a YAML **config file** —
+`--config`, `config/game.yaml` as the shipped, fully-commented example —
+with every value defaulting to today's `config.c` value so an empty (or
+comments-only) file reproduces current behaviour exactly
+(`game.GameTuning`, `internal/game/tuning.go`). Hot-reload on `SIGHUP`
+shipped with it rather than after, since the atomic-pointer publish
+(`game.SetTuning`) that makes the config safe to read from three unrelated
+goroutines (the world goroutine, `RunAutosave`'s own ticker, a report append
+that deliberately does not run through `Server.background`) is the same
+mechanism either way — there was no smaller version to build first. The
+rest of `config.c` (`pk_allowed`, the room vnums, autowiz, ...) is still a
+constant, each one a considered decision rather than an oversight.
 
 ### 9.2 Observability
 
@@ -2020,11 +2029,12 @@ they touch:
    <vnum>` are their own commands, mirroring `reloadmob`'s original shape
    rather than folded into `reloadzone`'s sweep — see Phase 6's own
    write-up for the full account.
-3. **`config/game.yaml`** (§6) — deliberately set aside. Making
-   `config.c`'s tuning configurable at all is a reversal of the "archive
-   wins" fidelity principle (`docs/deviations.md`'s "rent settings are
-   constants, not options" entry), not a format pass, and needs its own
-   decision before any of it is built.
+3. ~~`config/game.yaml` (§6) — deliberately set aside.~~ **Decided and
+   built, 2026-08-23**: §9.1 and `docs/deviations.md` have what moved and
+   why. Two behaviours picked for tunability turned out not to exist yet
+   at all (`max_bad_pws`'s disconnect, `tunnel_size`'s occupancy limit) —
+   `docs/deviations.md` covers those as their own gap, separate from the
+   config-file work.
 4. ~~**Does `background`'s own pager need wiring up?**~~ **Settled: yes,
    and the design cost was smaller than it looked from here.** The
    worry was that `StatePaging` had never had to answer "what state do I

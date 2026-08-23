@@ -591,13 +591,42 @@ func (s *Server) Save(ctx context.Context, c *game.Character) error {
 	return s.players.Save(ctx, &snapshot)
 }
 
+// tickAutosave decides whether one PULSE_AUTOSAVE tick should trigger a save
+// sweep, porting comm.c:928-929's two-part check: does autosave run at all,
+// and has autosave_time minutes' worth of ticks passed. minsSinceCrashsave is
+// the caller's counter, reset to 0 only on a tick that returns true — the
+// same "counter only moves forward while gated on" shape the C's static
+// mins_since_crashsave has. Split out from RunAutosave so the counter logic
+// has a test that does not need a real 60-second ticker.
+func tickAutosave(tuning game.GameTuning, minsSinceCrashsave *int32) bool {
+	if !tuning.AutoSave {
+		return false
+	}
+	*minsSinceCrashsave++
+	if *minsSinceCrashsave < tuning.AutosaveTime {
+		return false
+	}
+	*minsSinceCrashsave = 0
+	return true
+}
+
 // RunAutosave saves every character periodically until ctx is cancelled, and
 // reaps linkdead bodies that nobody came back for.
+//
+// autosaveInterval (PULSE_AUTOSAVE, 60s) is the tick this loop runs on and is
+// not itself tunable; game.Tuning()'s AutoSave and AutosaveTime gate the
+// save sweep within it, porting comm.c:928-929's own two-part check ("does
+// autosave run at all", "has autosave_time minutes' worth of ticks passed")
+// exactly, down to the counter resetting only on a tick that actually saves.
+// Linkdead reaping below is a separate mechanism (config.c's idle_void/
+// idle_rent_time, not reopened for tunability) and runs every tick
+// regardless.
 func (s *Server) RunAutosave(ctx context.Context) {
 	ticker := time.NewTicker(autosaveInterval)
 	defer ticker.Stop()
 
 	linkdeadSince := map[*game.Character]time.Time{}
+	var minsSinceCrashsave int32
 
 	for {
 		select {
@@ -611,10 +640,14 @@ func (s *Server) RunAutosave(ctx context.Context) {
 				return
 			}
 
+			doSave := tickAutosave(game.Tuning(), &minsSinceCrashsave)
+
 			now := time.Now()
 			for _, c := range all {
-				if err := s.Save(ctx, c); err != nil {
-					s.logger.Error("autosave failed", "character", c.Name, "error", err)
+				if doSave {
+					if err := s.Save(ctx, c); err != nil {
+						s.logger.Error("autosave failed", "character", c.Name, "error", err)
+					}
 				}
 
 				if c.Client != nil {

@@ -10,13 +10,11 @@ import "fmt"
 
 // Corpses, ported from make_corpse (fight.c) and the object half of
 // point_update (limits.c:457).
-
-// Corpse timers, from config.c:76. The units are mud hours, so a player's
-// corpse lasts about twelve and a half real minutes and a mobile's about six.
-const (
-	NPCCorpseTime    int32 = 5
-	PlayerCorpseTime int32 = 10
-)
+//
+// The corpse timers themselves (config.c:76, mud hours) live in
+// GameTuning.NPCCorpseTime/PlayerCorpseTime (tuning.go) — a runtime setting,
+// not a constant, since docs/deviations.md's "the archive wins" fidelity
+// default was reopened for this field by name.
 
 // Corpses carry ItemNoDonate (object.go) so that nobody can drop one into the
 // donation room and have it teleport somewhere public with the contents still
@@ -56,9 +54,10 @@ func (l *Live) MakeCorpse(c *Character) *Object {
 		corpse.Weight += c.Record.Weight
 	}
 
-	corpse.Timer = PlayerCorpseTime
+	tuning := Tuning()
+	corpse.Timer = tuning.PlayerCorpseTime
 	if c.IsNPC() {
-		corpse.Timer = NPCCorpseTime
+		corpse.Timer = tuning.NPCCorpseTime
 	}
 
 	// Inventory first, then equipment, which is the order the C does it and

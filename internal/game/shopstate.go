@@ -688,31 +688,18 @@ func hasSameObject(list []*Object, obj *Object) bool {
 // the conversation is in internal/session; this is what a stay costs and what
 // can be stored.
 
-// The rent settings from config.c, at the values this server ran with.
+// The rent settings from config.c: FreeRent, MinRentCost and MaxObjSave now
+// live in GameTuning (tuning.go), a runtime setting rather than a constant —
+// a deliberate, named exception to "the archive wins" (docs/deviations.md).
+// FreeRent defaults true (config.c:133), which was the single most
+// consequential line in that file for as long as it was a constant:
+// **nobody on this server ever paid rent.** The receptionist says "Rent is
+// free here.  Just quit, and your objects will be saved!" and stops there.
+// Everything Crash_offer_rent computes is dead code at that setting — ported
+// anyway, because the path has to be right for an operator who turns it off.
 //
-// They are constants rather than options because that is what the archive
-// says and the port's rule is that the archive wins. Making them
-// configurable would be a feature; see docs/deviations.md.
-// FreeRent is `free_rent = YES` (config.c:133), and it is the single most
-// consequential line in that file: **nobody on this server ever paid rent.**
-// The receptionist says "Rent is free here.  Just quit, and your objects will
-// be saved!" and stops there. Everything Crash_offer_rent computes is dead
-// code at this setting — ported anyway, because the setting is one line and
-// the path has to be right if it is ever turned off.
-//
-// A var rather than a constant, as the C's is: it is what makes the priced
-// path testable, and the tests that flip it restore it.
-var FreeRent = true
-
-const (
-	// MinRentCost is the receptionist's own fee, added to the items
-	// (config.c:139).
-	MinRentCost int32 = 100
-	// MaxObjSave is the most items a rent file will hold (config.c:136).
-	// Crash_load logs a "hoarding check" against it but does not enforce it;
-	// only the receptionist refuses.
-	MaxObjSave = 30
-)
+// MaxObjSave (config.c:136): Crash_load logs a "hoarding check" against it
+// but does not enforce it; only the receptionist refuses.
 
 // Rent factors (objsave.c:22). A cryogenic stay costs four times a day's
 // rent, once, instead of a daily charge.

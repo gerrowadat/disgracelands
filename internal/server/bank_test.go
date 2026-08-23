@@ -134,7 +134,7 @@ func TestRentIsFree(t *testing.T) {
 	c.create("Guest", "roomforone", "m", "m")
 	withReceptionist(t, srv, "Guest", "receptionist")
 
-	if !game.FreeRent {
+	if !game.Tuning().FreeRent {
 		t.Skip("free_rent is off; this test describes the archived setting")
 	}
 
@@ -169,9 +169,11 @@ func TestTheInnCommandsDoNothingAwayFromAnInn(t *testing.T) {
 // covered.
 func withPaidRent(t *testing.T) {
 	t.Helper()
-	was := game.FreeRent
-	game.FreeRent = false
-	t.Cleanup(func() { game.FreeRent = was })
+	was := game.Tuning()
+	t.Cleanup(func() { game.SetTuning(was) })
+	tuned := was
+	tuned.FreeRent = false
+	game.SetTuning(tuned)
 }
 
 func TestOfferPricesEveryItemAndAddsTheFee(t *testing.T) {

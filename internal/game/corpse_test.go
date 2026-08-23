@@ -39,8 +39,8 @@ func TestMakingACorpse(t *testing.T) {
 	if !strings.Contains(corpse.Description, "Welmar") {
 		t.Errorf("room description is %q", corpse.Description)
 	}
-	if corpse.Timer != PlayerCorpseTime {
-		t.Errorf("timer is %d, want a player's %d", corpse.Timer, PlayerCorpseTime)
+	if corpse.Timer != Tuning().PlayerCorpseTime {
+		t.Errorf("timer is %d, want a player's %d", corpse.Timer, Tuning().PlayerCorpseTime)
 	}
 	if !corpse.Takeable() {
 		t.Error("a corpse should be takeable")
@@ -117,10 +117,10 @@ func TestAMobileCorpseRotsFaster(t *testing.T) {
 	}
 
 	corpse := l.MakeCorpse(mob)
-	if corpse.Timer != NPCCorpseTime {
-		t.Errorf("timer is %d, want a mobile's %d", corpse.Timer, NPCCorpseTime)
+	if corpse.Timer != Tuning().NPCCorpseTime {
+		t.Errorf("timer is %d, want a mobile's %d", corpse.Timer, Tuning().NPCCorpseTime)
 	}
-	if NPCCorpseTime >= PlayerCorpseTime {
+	if Tuning().NPCCorpseTime >= Tuning().PlayerCorpseTime {
 		t.Error("a mobile's corpse should not outlast a player's")
 	}
 }
@@ -139,9 +139,9 @@ func TestACorpseDecaysAndSpills(t *testing.T) {
 	corpse := l.MakeCorpse(welmar)
 
 	// Not yet.
-	for i := int32(1); i < PlayerCorpseTime; i++ {
+	for i := int32(1); i < Tuning().PlayerCorpseTime; i++ {
 		if decayed := l.DecayObjects(); len(decayed) != 0 {
-			t.Fatalf("the corpse decayed after %d ticks, want %d", i, PlayerCorpseTime)
+			t.Fatalf("the corpse decayed after %d ticks, want %d", i, Tuning().PlayerCorpseTime)
 		}
 	}
 
@@ -183,7 +183,7 @@ func TestACarriedCorpseDecaysInYourHands(t *testing.T) {
 	l.ObjectToChar(corpse, looter)
 
 	var decayed []DecayResult
-	for i := int32(0); i < PlayerCorpseTime; i++ {
+	for i := int32(0); i < Tuning().PlayerCorpseTime; i++ {
 		decayed = l.DecayObjects()
 	}
 

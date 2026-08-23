@@ -86,7 +86,7 @@ func genReceptionist(sc *SpecialCall, mode RentMode) bool {
 		return true
 	}
 
-	if game.FreeRent {
+	if game.Tuning().FreeRent {
 		sc.tellFrom(recep, "Rent is free here.  Just quit, and your objects will be saved!")
 		return true
 	}
@@ -152,6 +152,7 @@ func genReceptionist(sc *SpecialCall, mode RentMode) bool {
 func offerRent(sc *SpecialCall, recep *game.Character, mode RentMode, display bool) (int32, bool) {
 	who := sc.Actor
 	factor := mode.Factor()
+	tuning := game.Tuning()
 
 	// Anything that cannot be stored stops the whole transaction, and each
 	// one is named. Note this walks *everything*, so a NORENT item at the
@@ -167,7 +168,7 @@ func offerRent(sc *SpecialCall, recep *game.Character, mode RentMode, display bo
 		return 0, false
 	}
 
-	total := game.MinRentCost * factor
+	total := tuning.MinRentCost * factor
 	items := 0
 	for _, obj := range who.Carrying {
 		reportRent(sc, recep, obj, &total, &items, display, factor)
@@ -180,13 +181,13 @@ func offerRent(sc *SpecialCall, recep *game.Character, mode RentMode, display bo
 		sc.tellFrom(recep, "But you are not carrying anything!  Just quit!")
 		return 0, false
 	}
-	if items > game.MaxObjSave {
-		sc.tellFrom(recep, "Sorry, but I cannot store more than %d items.", game.MaxObjSave)
+	if items > int(tuning.MaxObjSave) {
+		sc.tellFrom(recep, "Sorry, but I cannot store more than %d items.", tuning.MaxObjSave)
 		return 0, false
 	}
 
 	if display {
-		sc.tellFrom(recep, "Plus, my %d coin fee..", game.MinRentCost*factor)
+		sc.tellFrom(recep, "Plus, my %d coin fee..", tuning.MinRentCost*factor)
 		perDay := ""
 		if mode == RentModeDay {
 			perDay = " per day"

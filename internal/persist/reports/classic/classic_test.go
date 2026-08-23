@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gerrowadat/disgracelands/internal/game"
 	"github.com/gerrowadat/disgracelands/internal/persist/reports"
 )
 
@@ -100,6 +101,43 @@ func TestAppendRefusesOnceTheFileIsFull(t *testing.T) {
 	}
 	if ok {
 		t.Error("Append succeeded on a file already over MaxFileSize, want a refusal")
+	}
+}
+
+// TestAppendUsesLiveGameTuningWhenNotPinned covers the SIGHUP-reload path:
+// a Store opened with Config.MaxFileSize left at zero (every real server
+// boot; classic_test.go's other tests pin a size instead) reads
+// game.Tuning().MaxFileSize fresh on every Append, so changing the live
+// tuning takes effect without reopening the Store.
+func TestAppendUsesLiveGameTuningWhenNotPinned(t *testing.T) {
+	orig := game.Tuning()
+	t.Cleanup(func() { game.SetTuning(orig) })
+
+	tuning := game.DefaultGameTuning()
+	tuning.MaxFileSize = 10
+	game.SetTuning(tuning)
+
+	s, _ := newStore(t) // Config.MaxFileSize is the zero value here.
+
+	ok, err := s.Append(reports.Report{Kind: reports.KindBug, Reporter: "Zod", Room: 1, Body: "the first one is already over ten bytes"})
+	if err != nil || !ok {
+		t.Fatalf("first Append: ok=%v err=%v", ok, err)
+	}
+	ok, err = s.Append(reports.Report{Kind: reports.KindBug, Reporter: "Zod", Room: 1, Body: "second"})
+	if err != nil {
+		t.Fatalf("second Append: %v", err)
+	}
+	if ok {
+		t.Error("Append succeeded past the live game.Tuning().MaxFileSize, want a refusal")
+	}
+
+	// Raising it live, as a SIGHUP reload would, must unblock the very same
+	// Store without reopening it.
+	tuning.MaxFileSize = 1_000_000
+	game.SetTuning(tuning)
+	ok, err = s.Append(reports.Report{Kind: reports.KindBug, Reporter: "Zod", Room: 1, Body: "third"})
+	if err != nil || !ok {
+		t.Fatalf("third Append after raising the live limit: ok=%v err=%v", ok, err)
 	}
 }
 

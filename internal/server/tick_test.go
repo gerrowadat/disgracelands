@@ -270,7 +270,7 @@ func TestACorpseRotsOnTheTick(t *testing.T) {
 	_, watcherClient := place(t, srv, watcher, MortalStartRoom)
 
 	// Kill them, then wait out the corpse timer.
-	for i := int32(0); i <= game.PlayerCorpseTime; i++ {
+	for i := int32(0); i <= game.Tuning().PlayerCorpseTime; i++ {
 		tick(t, srv)
 	}
 
