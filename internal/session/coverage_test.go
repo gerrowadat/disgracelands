@@ -47,6 +47,15 @@ var notPorted = map[string]string{
 	"slowns": "switches reverse-DNS resolution, which this port does not do at all",
 }
 
+// newCommands is this port's own additions — capability with no
+// interpreter.c row at all, so they cannot appear in notPorted's
+// opposite-direction check and TestEveryCommandsLineIsTheOneTheCHasIt
+// has to be told about them by name instead. Each earns its keep with a
+// real reason, the same discipline notPorted holds every gap to.
+var newCommands = map[string]string{
+	"reloadmob": "hot-reloads a mobile's definition from disk; see docs/deviations.md",
+}
+
 // TestEveryCommandIsPortedOrListed compares the C's table against ours.
 func TestEveryCommandIsPortedOrListed(t *testing.T) {
 	src, err := os.ReadFile("../../reference/moderncserver/src/interpreter.c")

@@ -339,3 +339,110 @@ func TestZoneIsEmpty(t *testing.T) {
 		t.Skip("the test world has no room outside the zone")
 	}
 }
+
+// freshGuardDef is 3060's own definition (resetWorld) with everything
+// changed a builder might change: description, level/stats, and the
+// action flags a live AI check reads continuously (mobflags.go).
+func freshGuardDef() *MobDef {
+	return &MobDef{
+		Vnum: 3060, Keywords: "guard cityguard", ShortDesc: "the reloaded cityguard",
+		LongDesc: "A reloaded cityguard stands here.\r\n",
+		Level:    20, Thac0: 5, ArmorClass: 1,
+		HitDice: Dice{Number: 4, Size: 8, Bonus: 20},
+		Gold:    999, Exp: 5000, Position: int32(PosStanding),
+		ActionFlags: MobIsNPC | 1<<10, // an arbitrary extra bit, not just the always-set one
+	}
+}
+
+func TestReloadMobileUpdatesTheSharedPrototype(t *testing.T) {
+	l := resetWorld(nil)
+	c := l.SpawnMobile(3060, 3001, newRNG())
+	if c == nil {
+		t.Fatal("SpawnMobile returned nil")
+	}
+
+	refreshed, ok := l.ReloadMobile(freshGuardDef(), newRNG())
+	if !ok {
+		t.Fatal("ReloadMobile refused an unengaged instance")
+	}
+	if refreshed != 1 {
+		t.Errorf("refreshed = %d, want 1", refreshed)
+	}
+
+	// Behavioural/descriptive fields are read live from the shared
+	// *MobDef every time, so the existing instance sees them at once —
+	// the whole point of mutating in place rather than swapping the map
+	// entry.
+	if c.MobDef.LongDesc != "A reloaded cityguard stands here.\r\n" {
+		t.Errorf("MobDef.LongDesc = %q, want the reloaded text", c.MobDef.LongDesc)
+	}
+	if c.MobDef.ActionFlags&(1<<10) == 0 {
+		t.Error("MobDef.ActionFlags did not pick up the new flag")
+	}
+
+	// Derived stats were recomputed as if freshly spawned.
+	if c.Record.Points.MaxHit < 20+4 { // HitDice{4,8,20}'s floor
+		t.Errorf("Record.Points.MaxHit = %d, want at least 24 (the new hit dice's floor)", c.Record.Points.MaxHit)
+	}
+	if c.Record.Points.Gold != 999 {
+		t.Errorf("Record.Points.Gold = %d, want 999", c.Record.Points.Gold)
+	}
+	if c.Name != "the reloaded cityguard" {
+		t.Errorf("Name = %q, want the reloaded short description", c.Name)
+	}
+
+	// Identity, room and possessions are untouched.
+	if c.Room != 3001 {
+		t.Errorf("Room = %d, want unchanged at 3001", c.Room)
+	}
+}
+
+func TestReloadMobileRefusesWhileFighting(t *testing.T) {
+	l := resetWorld(nil)
+	c := l.SpawnMobile(3060, 3001, newRNG())
+	if c == nil {
+		t.Fatal("SpawnMobile returned nil")
+	}
+	victim := newCharacter("Welmar")
+	if err := l.Enter(victim, 3001); err != nil {
+		t.Fatal(err)
+	}
+	c.Fighting = victim
+	before := c.MobDef.LongDesc
+
+	refreshed, ok := l.ReloadMobile(freshGuardDef(), newRNG())
+	if ok {
+		t.Fatal("ReloadMobile succeeded against a fighting instance")
+	}
+	if refreshed != 0 {
+		t.Errorf("refreshed = %d, want 0 on refusal", refreshed)
+	}
+	if c.MobDef.LongDesc != before {
+		t.Error("ReloadMobile mutated the shared MobDef despite refusing — partial application")
+	}
+}
+
+func TestReloadMobilePreservesSpecAssignment(t *testing.T) {
+	l := resetWorld(nil)
+	l.mobileDefs[3060].Spec = "cityguard"
+	c := l.SpawnMobile(3060, 3001, newRNG())
+	if c == nil {
+		t.Fatal("SpawnMobile returned nil")
+	}
+
+	// The freshly-parsed def, exactly as a world-file parse would
+	// produce: Spec is never in the file, so it comes back empty.
+	if _, ok := l.ReloadMobile(freshGuardDef(), newRNG()); !ok {
+		t.Fatal("ReloadMobile refused")
+	}
+	if c.MobDef.Spec != "cityguard" {
+		t.Errorf("MobDef.Spec = %q, want the boot-time assignment preserved", c.MobDef.Spec)
+	}
+}
+
+func TestReloadMobileUnknownVnumIsRefused(t *testing.T) {
+	l := resetWorld(nil)
+	if _, ok := l.ReloadMobile(&MobDef{Vnum: 99999}, newRNG()); ok {
+		t.Error("ReloadMobile succeeded for a vnum nothing has")
+	}
+}

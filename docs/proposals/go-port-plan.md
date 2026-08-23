@@ -1376,27 +1376,84 @@ because a command with no slice is a command nobody schedules.
 | Mortal odds and ends | `color` (:258), and only that: the `PRF_COLOR` bits are stored and `set color` works, but nothing emits colour, so the command has nothing to switch. `insult` (:346) and `alias` (:226) are built. **`hop` (:337) was never missing**: it is the one `do_action` row the shipped socials file does not fill, and `RegisterSocials` gives it a command anyway that answers "That action is not supported." — which is what the C does too. |
 | `mudlog`'s in-game half | `syslog` sets `PRF_LOG1`/`PRF_LOG2` and nothing reads them: the `wizvis` attribute on a log record (`internal/obs/log.go`) has no consumer, so gods cannot watch the log from in-game. Wanted whenever the syslog levels are meant to mean something. |
 
-**Phase 6 — Building tools.** OasisOLC equivalent, `Sink` writeback,
-the `gen*` layer. Deferrable — offline editing plus a reboot works
-meanwhile. `dlctl world lint` and the world-parity harness are what make
-that deferral safe.
+**Phase 6 — Building tools.** Originally scoped as an OasisOLC
+equivalent — the seven in-game menu editors (`medit`/`oedit`/`redit`/
+`sedit`/`zedit`/`olc`/`edit`) plus `Sink` writeback and the `gen*`
+layer they need. **Decided against, deliberately, not merely deferred**:
+building lets a builder edit `data/world` directly (by hand, or via
+`dlctl world import`/`fmt` into `native`) and bring a change in without
+restarting — `reloadmob` (below) — rather than reproducing a decades-old
+menu-tree UI screen by screen. `Sink`/`WriteZone` already exist (§6.3,
+landed during Phase 5) and are exactly what a real OLC would have saved
+through; nothing about this decision leaves them stranded, it just means
+nothing in this tree drives them from an in-game menu. `dlctl world
+lint` and the world-parity harness are what make offline editing safe
+either way.
 
-**`tedit` ✅ — the phase's first slice.** `do_tedit`'s nine canned text
-files (`credits`/`news`/`motd`/`imotd`/`help` screen/`info`/`background`/
-`handbook`/`policies`), each at its own C-table level, editable in-game
-through the line editor board `write`/mail already use — extended with a
-seeded-buffer variant (`beginEditorSeeded`) so the file's current content
-starts the edit instead of an empty one, matching `string_write`'s own
-behaviour when the pointer it is handed already points at something. A
-real, previously-undocumented finding along the way: the archived
-server's `CONFIG_IMPROVED_EDITOR` is hardcoded `1` — the improved line
-editor's `/c`/`/l`/`/h`/`/a`/`/s` commands were always on, not stock —
-and this port's line editor has never had them, invisibly until `tedit`
-became the first caller to seed a non-empty buffer. Recorded in
-`docs/deviations.md` as a gap, not fixed here. The seven OLC record
-editors (`medit`/`oedit`/`redit`/`sedit`/`zedit`/`olc`/`edit`) and `Sink`
-writeback are the rest of the phase, not attempted — a larger,
-multi-slice body of work needing its own staged proposal.
+**`tedit` ✅ — the phase's first slice, landed before the OLC decision.**
+`do_tedit`'s nine canned text files (`credits`/`news`/`motd`/`imotd`/
+`help` screen/`info`/`background`/`handbook`/`policies`), each at its own
+C-table level, editable in-game through the line editor board `write`/
+mail already use — extended with a seeded-buffer variant
+(`beginEditorSeeded`) so the file's current content starts the edit
+instead of an empty one, matching `string_write`'s own behaviour when
+the pointer it is handed already points at something. A real,
+previously-undocumented finding along the way: the archived server's
+`CONFIG_IMPROVED_EDITOR` is hardcoded `1` — the improved line editor's
+`/c`/`/l`/`/h`/`/a`/`/s` commands were always on, not stock — and this
+port's line editor has never had them, invisibly until `tedit` became
+the first caller to seed a non-empty buffer. Recorded in
+`docs/deviations.md` as a gap, not fixed here.
+
+**`reloadmob` ✅ — genuinely new capability, not a C port; the shape
+Phase 6 actually took.** `interpreter.c` has nothing like it. An
+implementor types `reloadmob <vnum>`; the server re-reads the world data
+it booted from (whatever `--world-format` is configured), finds that
+vnum's fresh definition, and — provided no current instance of it is
+fighting — applies it to the running world without a restart.
+
+The design turns on one fact about the Go model: `Character.MobDef`
+is a *pointer* to the same object `Live.mobileDefs[vnum]` holds, and a
+lot of live behaviour reads it continuously rather than only at spawn —
+`ActionFlags` (AI), `Spec` (special-procedure dispatch, checked every
+command), `LongDesc`/`Position` (room listings). Mutating that object's
+fields *in place*, rather than replacing the map entry, means every
+existing instance sees a behavioural or descriptive change for free,
+with no per-instance code at all — the same way an affect already
+changes what a live check sees mid-tick. That is also why the "nobody
+fighting it" gate has to be all-or-nothing rather than per-instance:
+there is no way to update a shared object for some readers and not
+others. Numeric stats (`HitDice`/`DamageDice`/`Thac0`/etc.) are
+snapshotted into each instance's own `*PlayerRecord` at spawn time,
+`SpawnMobile`'s own long-standing behaviour (`internal/game/reset.go`)
+— those do *not* update from an in-place `MobDef` mutation, so every
+current, unengaged instance also has its derived stats recomputed
+through the same helper `SpawnMobile` itself now calls
+(`mobileRecord`), factored out for exactly this reuse. `Spec` is the one
+field preserved explicitly across the mutation: it is set once at boot
+from the assignment table (`AssignSpecials`), never from the world file
+at all, so a fresh parse's own empty `Spec` must not overwrite it.
+
+Room, inventory, equipment, followers and position are left exactly as
+they are — refreshing a mob is not respawning it, and a builder fixing a
+stat typo should not cost anybody their dropped loot. One accepted,
+documented edge case: gold and experience reset to the definition's own
+values along with everything else, so a player who stole from an
+about-to-be-reloaded mob moments earlier sees the theft undone. Small,
+honest, not worth engineering around for an implementor-only command.
+
+`reloadmob` is not a real C command, so it needed a small, explicit
+carve-out in `internal/session/coverage_test.go` (`newCommands`,
+mirroring `notPorted`'s own shape in the opposite direction) rather than
+pretending it has an `interpreter.c` line — its `CLine` is synthetic
+(the real `reload`'s own line, 428, plus one), placing it in
+abbreviation-matching order right after the real, ported `reload` so a
+bare `reload` keeps meaning exactly what it always has.
+
+Zone-wide reload (rooms/objects/shops/reset scripts, gated on nobody
+being anywhere in the zone at all) is the natural, larger follow-up,
+reusing this same mechanism at a bigger blast radius — not attempted
+here.
 
 **Phase 7 — Cutover.** Shadow-run both servers against copies of the same
 `data/`, compare. Then run the Go server as primary, keep the C tree as

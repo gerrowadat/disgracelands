@@ -372,16 +372,22 @@ Listed here so they are not mistaken for deliberate differences.
   behaviour is the same for every command ported so far; the shape is not.
 - **Nine of the C's 318 commands are not implemented**, and the plan's
   §10 "What is not in it" lists every one with its `interpreter.c` line. In
-  brief: the seven OasisOLC editors (Phase 6), `slowns`/`trackthru`,
-  and a short tail of `users`, `skillset`, `reload` and `color`. **`hop` is not
-  among them**: it is the one `do_action` row the shipped socials file does not
-  fill, and `RegisterSocials` gives it a command anyway that answers "That
-  action is not supported." — which is what the C does too. `alias`
-  is off this list now — landed with the native player format (step 5 of
-  `docs/proposals/data-format.md`), including `perform_alias`'s complex
-  substitution grammar (`;`/`$1`-`$9`/`$*`/`$$`). `bug`/`idea`/`typo` are
-  off it too — `do_gen_write` (step 6b), see the reports entry below. `tedit`
-  is off it too — Phase 6's first slice, see the improved-editor gap below.
+  brief: the seven OasisOLC editors (Phase 6), plus `slowns` and `color`.
+  **`hop` is not among them**: it is the one `do_action` row the shipped
+  socials file does not fill, and `RegisterSocials` gives it a command
+  anyway that answers "That action is not supported." — which is what the C
+  does too. `alias` is off this list now — landed with the native player
+  format (step 5 of `docs/proposals/data-format.md`), including
+  `perform_alias`'s complex substitution grammar (`;`/`$1`-`$9`/`$*`/`$$`).
+  `bug`/`idea`/`typo` are off it too — `do_gen_write` (step 6b), see the
+  reports entry below. `tedit` is off it too — Phase 6's first slice, see
+  the improved-editor gap below. `trackthru`, `users`, `skillset` and
+  `reload` are off it as well, each its own small slice with nothing more
+  to say about it beyond what its own file's doc comment already does
+  (`internal/session/toggle.go`, `users.go`, `skillset.go`, `wizops.go`)
+  — this paragraph is the record of when they stopped being a list of
+  names and became four working commands, so their being gone from the
+  list is worth noting even without a story attached.
 
   Its persistence is not quite everywhere the roster is, though: an
   alias survives a save under `ascii` (it grew an `Aliases:`-tagged section
@@ -394,15 +400,17 @@ Listed here so they are not mistaken for deliberate differences.
   so it was not attempted; a character loaded from `binary` simply starts
   with no aliases.
 
-  Two of `do_gen_tog`'s seventeen are among them, and both for the same
-  reason: `slowns` and `trackthru` flip a server-wide **global** rather than a
-  preference (act.other.c:1021, :1028). A global is right in the C, which is
-  one server per process; here the tests build several servers in one, each
-  with its own world goroutine, so a command writing a package-level variable
-  is a race between them rather than a setting. Whichever lands first has to
-  decide where the value lives — most likely on `Live`, beside the world it
-  applies to. `slowns` additionally has nothing behind it: this port does no
-  reverse DNS to slow down.
+  One of `do_gen_tog`'s seventeen is among them: `slowns` flips a
+  server-wide **global** rather than a preference (act.other.c:1021), and
+  has nothing behind it besides — this port does no reverse DNS to slow
+  down, so a command that reported success would be lying. `trackthru`
+  (act.other.c:1028) was the same shape of problem — a global is right in
+  the C, which is one server per process; here the tests build several
+  servers in one, each with its own world goroutine, so a command writing
+  a package-level variable would be a race between them rather than a
+  setting — and it is built now: the value lives on `Live`, beside the
+  world it applies to (`internal/session/toggle.go`'s own doc comment on
+  `doTrackThrough`).
 
   One is worth calling out here rather than leaving in the list.
   **`color`** cannot usefully be written yet: the `PRF_COLOR` bits are

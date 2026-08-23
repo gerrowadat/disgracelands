@@ -139,6 +139,12 @@ func TestEveryCommandsLineIsTheOneTheCHasIt(t *testing.T) {
 	}
 
 	for _, cmd := range Commands {
+		if newCommands[cmd.Name] != "" {
+			// This port's own addition, not a C command at all — see
+			// coverage_test.go's newCommands, the opposite-direction
+			// list to notPorted.
+			continue
+		}
 		line, ok := want[cmd.Name]
 		if !ok {
 			t.Errorf("%q is not in the C's command table at all", cmd.Name)
@@ -250,6 +256,13 @@ func TestEveryCommandInTheTableHasItsPosition(t *testing.T) {
 		t.Fatal("the command table is empty")
 	}
 	for _, cmd := range Commands {
+		if newCommands[cmd.Name] != "" {
+			// Not a C command at all — commandTable's own lenient
+			// default (PosDead, "refuses nobody") is what a missing
+			// commandPositions entry already gives it, which is
+			// correct for this port's own additions too.
+			continue
+		}
 		want, ok := commandPositions[cmd.Name]
 		if !ok {
 			t.Errorf("%q is in the table and not in the C's", cmd.Name)

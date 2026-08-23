@@ -8,6 +8,7 @@ package session
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"runtime/debug"
 	"sort"
@@ -98,6 +99,8 @@ type Context struct {
 	SetPassword func(c *game.Character, password string) error
 	// TextEdit reads and writes a canned text file by name, for `tedit`.
 	TextEdit TextEditor
+	// MobReload hot-reloads a mobile prototype from disk, for `reloadmob`.
+	MobReload MobReloader
 	// Arg is everything after the command word, trimmed.
 	Arg string
 	// Social is the social being run, for the commands that are one.
@@ -125,6 +128,20 @@ type Violence interface {
 	// Swing is one weapon attack, taken now rather than on the next round.
 	Swing(w *game.Live, attacker, victim *game.Character)
 }
+
+// MobReloader hot-reloads a mobile prototype from disk, for `reloadmob`
+// — new capability, not a C port; see docs/deviations.md. ok is false
+// (refreshed always 0) if some current instance of vnum is fighting: the
+// update mutates one prototype object every live instance shares, so it
+// is all-or-nothing.
+type MobReloader interface {
+	ReloadMobile(w *game.Live, vnum game.MobVnum) (refreshed int, err error)
+}
+
+// ErrMobEngaged is what a MobReloader returns when some current instance
+// of the vnum is fighting — see MobReloader's own doc comment for why
+// that makes a reload all-or-nothing.
+var ErrMobEngaged = errors.New("in combat")
 
 // TextEditor is tedit's own seam: reading a canned text file's current
 // content and writing a new one back, both by symbolic name — the same
@@ -480,6 +497,12 @@ func init() {
 		{Name: "page", Help: "Send a line straight to somebody.", Run: doPage, CLine: 398, MinLevel: game.LevelGod},
 		{Name: "qecho", Help: "Say something unattributed on the quest channel.", Run: doQuestEcho, CLine: 419, MinLevel: game.LevelImmortal},
 		{Name: "reload", Help: "Re-read one of the canned text files.", Run: doReload, CLine: 428, MinLevel: game.LevelImplementor},
+		// reloadmob is not in the C at all — new capability, not a port
+		// (see docs/deviations.md, coverage_test.go's newCommands). CLine
+		// is synthetic, one past the real "reload" (428), so a bare
+		// "reload" keeps matching the real, ported command first and
+		// only a longer typed prefix ("reloadm...") reaches this one.
+		{Name: "reloadmob", Help: "Re-read a mobile's definition from disk.", Run: doReloadMob, CLine: 429, MinLevel: game.LevelGreaterGod},
 		{Name: "skillset", Help: "Set somebody's skill to a number.", Run: doSkillset, CLine: 469, MinLevel: game.LevelGreaterGod},
 		{Name: "trackthru", Help: "Switch tracking through closed doors.", Run: doTrackThrough, CLine: 517, MinLevel: game.LevelImplementor},
 		{Name: "users", Help: "List every connection, not just the players.", Run: doUsers, CLine: 528, MinLevel: game.LevelImmortal},
@@ -629,6 +652,8 @@ type Dispatcher struct {
 	SetPassword func(c *game.Character, password string) error
 	// TextEdit reads and writes a canned text file by name, for `tedit`.
 	TextEdit TextEditor
+	// MobReload hot-reloads a mobile prototype from disk, for `reloadmob`.
+	MobReload MobReloader
 }
 
 // Do implements CommandHandler.
@@ -688,7 +713,7 @@ func (d *Dispatcher) Do(ctx context.Context, s *Session, line string) error {
 		c := &Context{
 			Ctx: ctx, Session: s, Character: s.Character(),
 			World: w, Text: d.Text, RNG: d.RNG, Violence: d.Violence, Arg: arg,
-			Social: cmd.Social, Save: d.Save, Rent: d.Rent, SaveBoard: d.SaveBoard, Mail: d.Mail, Houses: d.Houses, Operator: d.Operator, Bans: d.Bans, Reports: d.Reports, SetPassword: d.SetPassword, TextEdit: d.TextEdit,
+			Social: cmd.Social, Save: d.Save, Rent: d.Rent, SaveBoard: d.SaveBoard, Mail: d.Mail, Houses: d.Houses, Operator: d.Operator, Bans: d.Bans, Reports: d.Reports, SetPassword: d.SetPassword, TextEdit: d.TextEdit, MobReload: d.MobReload,
 		}
 
 		// A command that panics must not leave the player staring at a dead

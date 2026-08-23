@@ -250,6 +250,32 @@ func (l *Live) SpawnMobile(vnum MobVnum, room RoomVnum, r *rng.Rand) *Character 
 		return nil
 	}
 
+	c := &Character{
+		// Name is what appears in a sentence; Keywords is what a player
+		// types. The C keeps these as short_descr and name respectively, and
+		// conflating them is how you end up with "puff dragon fractal hits
+		// you".
+		Name:     def.ShortDesc,
+		Keywords: def.Keywords,
+		Record:   mobileRecord(def, r),
+		NPC:      true,
+		Position: Position(def.Position),
+		MobDef:   def,
+	}
+
+	if err := l.Enter(c, room); err != nil {
+		return nil
+	}
+	l.mobiles[c] = true
+	return c
+}
+
+// mobileRecord builds a fresh *PlayerRecord from a mobile prototype,
+// porting read_mobile's stat derivation: rolling hit dice and converting
+// thac0/armour class to hitroll/armor, exactly as SpawnMobile always
+// has. Factored out so ReloadMobile can give an *existing* instance the
+// same fresh derivation without duplicating it.
+func mobileRecord(def *MobDef, r *rng.Rand) *PlayerRecord {
 	rec := &PlayerRecord{
 		Name:        def.ShortDesc,
 		Description: def.Description,
@@ -289,25 +315,60 @@ func (l *Live) SpawnMobile(vnum MobVnum, room RoomVnum, r *rng.Rand) *Character 
 	// wears off leaves it as its file describes rather than as nothing.
 	SnapshotReal(rec)
 	RecomputeAffects(rec)
+	return rec
+}
 
-	c := &Character{
-		// Name is what appears in a sentence; Keywords is what a player
-		// types. The C keeps these as short_descr and name respectively, and
-		// conflating them is how you end up with "puff dragon fractal hits
-		// you".
-		Name:     def.ShortDesc,
-		Keywords: def.Keywords,
-		Record:   rec,
-		NPC:      true,
-		Position: Position(def.Position),
-		MobDef:   def,
+// ReloadMobile applies a freshly-parsed definition to the matching
+// prototype already in the world, in place — mutating the shared
+// *MobDef object rather than replacing the map entry, so every live
+// instance's behavioural/descriptive reads (ActionFlags, Spec, LongDesc,
+// Position, Keywords — see mobflags.go, spec.go, commands.go's `look`)
+// see the change immediately, the same way they already see it change
+// mid-tick from an affect. There is no way to update a shared object for
+// some readers and not others, which is why this is all-or-nothing:
+// ok is false, and nothing is touched at all, if any current instance of
+// the vnum is fighting.
+//
+// This is new capability, not a C port — reference/moderncserver has
+// nothing like it. See docs/deviations.md.
+//
+// On success, every current instance's derived stats (hit/mana/move,
+// thac0, armour, damage dice, gold, exp, abilities) are recomputed via
+// mobileRecord, as if freshly spawned — but Room, Carrying, Equipment,
+// Followers and Position are left exactly as they are, and so is Spec
+// (set once at boot from the assignment table, AssignSpecials — never
+// part of the world file, so a fresh parse's own empty Spec must not
+// overwrite it). refreshed is how many instances that applied to.
+func (l *Live) ReloadMobile(fresh *MobDef, r *rng.Rand) (refreshed int, ok bool) {
+	if fresh == nil {
+		return 0, false
+	}
+	existing := l.mobileDefs[fresh.Vnum]
+	if existing == nil {
+		return 0, false
 	}
 
-	if err := l.Enter(c, room); err != nil {
-		return nil
+	var instances []*Character
+	for c := range l.mobiles {
+		if c.MobDef != existing {
+			continue
+		}
+		if c.Fighting != nil {
+			return 0, false
+		}
+		instances = append(instances, c)
 	}
-	l.mobiles[c] = true
-	return c
+
+	spec := existing.Spec
+	*existing = *fresh
+	existing.Spec = spec
+
+	for _, c := range instances {
+		c.Record = mobileRecord(existing, r)
+		c.Name = existing.ShortDesc
+		c.Keywords = existing.Keywords
+	}
+	return len(instances), true
 }
 
 // mobileCount is how many of a prototype exist, which is what the population

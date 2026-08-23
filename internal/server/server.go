@@ -91,6 +91,15 @@ type Server struct {
 	// it always used to, which is what a test world gets by default.
 	clockFormat string
 	clockPath   string
+	// worldFormat/worldDir/worldMini locate the world data on disk, kept
+	// around after boot (the Source itself is closed once Live exists)
+	// so `reloadmob` can re-open the same source and read a definition
+	// back afresh. An empty worldDir disables it — the same posture
+	// clockPath's absence already takes for clock persistence, and what
+	// a test world gets by default.
+	worldFormat string
+	worldDir    string
+	worldMini   bool
 	auth        auth.Verifier
 	text        *Text
 	logger      *slog.Logger
@@ -149,6 +158,13 @@ type Options struct {
 	// later goes back to.
 	ClockFormat string
 	ClockPath   string
+	// WorldFormat/WorldDir/WorldMini locate the world data on disk (see
+	// Server.worldFormat/worldDir/worldMini) — for `reloadmob` to
+	// re-open the same world.Source cmd/dlmud/main.go's own boot path
+	// used, and read one definition back afresh.
+	WorldFormat string
+	WorldDir    string
+	WorldMini   bool
 	Auth        auth.Verifier
 	Text        *Text
 	Logger      *slog.Logger
@@ -174,6 +190,9 @@ func New(opts Options) *Server {
 		names:       opts.Names,
 		clockFormat: opts.ClockFormat,
 		clockPath:   opts.ClockPath,
+		worldFormat: opts.WorldFormat,
+		worldDir:    opts.WorldDir,
+		worldMini:   opts.WorldMini,
 		auth:        opts.Auth,
 		text:        opts.Text,
 		logger:      opts.Logger,
