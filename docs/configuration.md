@@ -61,6 +61,22 @@ other player format's on-disk shape has nowhere to record that, a
 deliberate, documented deviation — see `docs/deviations.md`, "Renting
 empties your bags and strips your body".
 
+Convert a whole `lib/`-shaped directory — world, roster, bans, boards,
+mail, houses, reports, the clock, xnames, damage messages, socials and
+the help database — into one fresh `yaml` directory in a single command:
+
+```sh
+dlctl lib import --from-dir=data --to-dir=data-yaml
+```
+
+This is the seven commands below run in order against `--from-dir`'s own
+subdirectories, plus `text/`'s plain-text files copied across unchanged
+and, once everything else has succeeded, a `.dlversion` stamp written
+into `--to-dir` (see "The yaml format's own version" below). Each of the
+seven is also its own command, for converting one subsystem on its own or
+into a directory laid out differently than `lib import`'s subdirectory
+default:
+
 Convert an existing world directory once:
 
 ```sh

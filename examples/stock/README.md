@@ -21,31 +21,35 @@ them.
 
 ## How `yaml/` was produced
 
-Every subsystem `dlctl` knows how to convert, run against `binary/`:
+One command, converting every subsystem `dlctl` knows how to against
+`binary/` in one go:
 
 ```sh
-go run ./cmd/dlctl world import    --from-dir=examples/stock/binary/world      --to-dir=examples/stock/yaml/world
-go run ./cmd/dlctl state import    --from-dir=examples/stock/binary/etc \
-                                    --from-house-dir=examples/stock/binary/house \
-                                    --from-misc-dir=examples/stock/binary/misc  --to-dir=examples/stock/yaml/state
-go run ./cmd/dlctl names import    --from-path=examples/stock/binary/misc/xnames    --to-dir=examples/stock/yaml/config
-go run ./cmd/dlctl messages import --from-path=examples/stock/binary/misc/messages  --to-dir=examples/stock/yaml/config
-go run ./cmd/dlctl socials import  --from-path=examples/stock/binary/misc/socials   --to-dir=examples/stock/yaml/config
-go run ./cmd/dlctl helpdb import   --from-dir=examples/stock/binary/text/help       --to-dir=examples/stock/yaml/text/help
+go run ./cmd/dlctl lib import --from-dir=examples/stock/binary --to-dir=examples/stock/yaml
 ```
 
-`text/`'s eleven plain-text files (`motd`, `credits`, `greetings`, ...) are
-not a pluggable format — both classic and yaml read them from the same
-`text/<name>` path regardless of `--*-format` (`internal/server/text.go`)
-— so they are copied across unchanged rather than converted. `binary/`'s
-own roster, mail, boards, bans and houses are all empty (a fresh stock
-install has none), so `state import` produced only `clock.yaml` and an
-empty `houses.yaml`; there is no `pfiles/` to convert because there is no
-roster.
+`lib import` is `world import`/`pfile import`/`state import`/`names
+import`/`messages import`/`socials import`/`helpdb import`, run in that
+order against the matching subdirectories of `--from-dir`, plus two things
+none of those seven do on their own: `text/`'s eleven plain-text files
+(`motd`, `credits`, `greetings`, ...) — not a pluggable format, since both
+classic and yaml read them from the same `text/<name>` path regardless of
+`--*-format` (`internal/server/text.go`) — are copied across unchanged
+rather than converted; and, once every step above has actually succeeded,
+`--to-dir` is stamped with a `.dlversion` file
+(`docs/design/data-format-versioning.md`) recording which release of the
+yaml packages wrote it — `examples/stock/yaml/.dlversion` is what that
+stamp looks like. `binary/`'s own roster, mail, boards, bans and houses
+are all empty (a fresh stock install has none), so the state step here
+produced only `clock.yaml` and an empty `houses.yaml`; there is no
+`pfiles/` to convert because there is no roster.
 
-Re-run the commands above after editing anything in `binary/` to keep
+Re-run the command above after editing anything in `binary/` to keep
 `yaml/` in sync — nothing checks the two stay matched automatically, the
-same way nothing checks `data/`'s own single copy against anything.
+same way nothing checks `data/`'s own single copy against anything. The
+seven subsystem commands `lib import` wraps are still there individually,
+for converting just one of them, or into a directory laid out differently
+than `--to-dir`'s own subdirectory-per-subsystem default.
 
 ## Verifying the two are the same world
 

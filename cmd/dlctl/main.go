@@ -59,6 +59,11 @@ var commands = []command{
 		run:     cmdDataVersion,
 	},
 	{
+		name:    "lib import",
+		summary: "Convert a whole classic/binary lib/ directory into one fresh yaml directory in one go",
+		run:     cmdLibImport,
+	},
+	{
 		name:    "parity session",
 		summary: "Play a script against both servers and diff what they say",
 		run:     cmdParitySession,

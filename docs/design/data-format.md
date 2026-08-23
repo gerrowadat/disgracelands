@@ -1391,6 +1391,7 @@ reader does not care about:
 ### 10.4 Tooling
 
 ```
+dlctl lib import --from-dir=data-old --to-dir=data      # every subsystem, one lib/ to one fresh yaml directory
 dlctl world import --from=data-old --format=classic --to=data
 dlctl world export --to=data-classic --format=classic   # refuses on data loss (not built — §11 step 3)
 dlctl world lint                                        # replaces scheck
