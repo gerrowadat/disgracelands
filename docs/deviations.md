@@ -431,7 +431,9 @@ Listed here so they are not mistaken for deliberate differences.
   (act.other.c:904-905) — the in-game echo to online gods — goes nowhere,
   same as every command already on this list.
 - **The pager now covers `credits`/`news`/`info`/`wizlist`/`immlist`/
-  `handbook`/`policy`/`motd`/`imotd`/`help`, not everything `page_string`
+  `handbook`/`policy`/`motd`/`imotd`/`help`, a bulletin board's message
+  list and a message's own body, a shop's `list`, `practice`'s skill
+  list, and three of `show`'s fields — not everything `page_string`
   (`modify.c:436`) does in the C.** Ported: `next_page`/`count_pages`/
   `paginate_string`/`show_string` (`internal/session/pager.go`), a real
   `StatePaging` connection state (mirroring `StateEditing`'s own shape),
@@ -442,18 +444,38 @@ Listed here so they are not mistaken for deliberate differences.
   extra had to be threaded through it. `PAGE_LENGTH`/`PAGE_WIDTH`
   (`comm.h:44-45`) are the C's fixed 22×80, not a per-player preference —
   there is nothing to read back even with this built, only the two
-  constants. **Not ported**: `background` (menu choice 3,
-  `interpreter.c:1713`) also pages in the C, from `CON_MENU` rather than
-  `CON_PLAYING` — every command this port wires through the pager runs
-  from `CON_PLAYING` only, which keeps `StatePaging`'s own "what was I
-  doing before" question moot (the C never changes `STATE(d)` while
-  paging at all, so it never has to ask); adding `background` means
-  deciding what state to return to, which the C never needed and this
-  port has not decided. Board reading, shop listing and a handful of
-  `act.wizard.c` long outputs (`show`/`vstat`-adjacent) page in the C too
-  and are not wired up either — cheap, mechanical follow-ups once wanted,
-  reusing the same mechanism, not attempted because nothing forced the
-  question yet.
+  constants.
+
+  The follow-up pass wired the pager into the call sites `page_string`
+  reaches beyond the canned texts, each checked against the C rather
+  than assumed: `Board_show_board` and `Board_display_msg`
+  (`boards.c:281,338`), `shop.c:874`'s `list` (not `show_shops`'s own
+  separate `page_string` at `shop.c:1242`, which is out of scope because
+  `show shops` itself is not built — see below), and `list_skills`
+  (`spec_procs.c:193`, which builds the whole listing into one buffer
+  and pages it once, not a line at a time — the Go `listSkills` was
+  restructured to match, since sending line-by-line and pretending it
+  was one page would have been a silent behavioural gap). `do_show`
+  (`act.wizard.c:2155`) turned out to be a mix, checked field by field
+  rather than assumed uniform: **paginated** — `zones` (all three of its
+  branches, self/specific-vnum/all, funnel through one shared
+  `page_string` call) and the `errors`/`death`/`godrooms` trio, which
+  share both the C's own `page_string` call and this port's Go helper
+  (`showRooms`); **not paginated** — `player`, `stats` and `snoop`, all
+  three plain `send_to_char` in the C and left as plain `Send` here.
+  `show rent` (`Crash_listrent`) and `show shops` (`show_shops`) are
+  each a separate function with their own `page_string` call and are
+  out of scope for a different reason: neither is built in this port at
+  all (see the `Crash_listrent`/`show_shops` gaps elsewhere in this
+  file).
+
+  **Not ported**: `background` (menu choice 3, `interpreter.c:1713`)
+  also pages in the C, from `CON_MENU` rather than `CON_PLAYING` — every
+  command this port wires through the pager runs from `CON_PLAYING`
+  only, which keeps `StatePaging`'s own "what was I doing before"
+  question moot (the C never changes `STATE(d)` while paging at all, so
+  it never has to ask); adding `background` means deciding what state to
+  return to, which the C never needed and this port has not decided.
 
   A real bug this pass found rather than assumed away: `next_page`'s own
   algorithm only resets its column counter on `\r`, because every string

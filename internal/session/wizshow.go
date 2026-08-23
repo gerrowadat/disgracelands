@@ -236,7 +236,7 @@ func (c *Context) showZones(value string, self bool) {
 
 	if self {
 		if zone := c.World.ZoneOf(c.Character.Room); zone != nil {
-			c.Send("%s", line(zone))
+			c.SendPaged("%s", line(zone))
 		}
 		return
 	}
@@ -244,7 +244,7 @@ func (c *Context) showZones(value string, self bool) {
 		want := game.ZoneVnum(atoi(value))
 		for _, zone := range c.World.Zones() {
 			if zone.Vnum == want {
-				c.Send("%s", line(zone))
+				c.SendPaged("%s", line(zone))
 				return
 			}
 		}
@@ -256,7 +256,7 @@ func (c *Context) showZones(value string, self bool) {
 	for _, zone := range c.World.Zones() {
 		b.WriteString(line(zone))
 	}
-	c.Send("%s", b.String())
+	c.SendPaged("%s", b.String())
 }
 
 // showPlayer reads somebody out of the roster, so it works for a character
@@ -324,7 +324,7 @@ func (c *Context) showRooms(heading string, matches func(*game.RoomDef) bool) {
 		found++
 		fmt.Fprintf(&b, "%2d: [%5d] %s\r\n", found, room.Vnum, room.Name)
 	}
-	c.Send("%s", b.String())
+	c.SendPaged("%s", b.String())
 }
 
 // showSnooping is `show snoop`, and it is the only way to find out that

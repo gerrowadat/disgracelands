@@ -47,9 +47,16 @@ func TestPracticeNeedsAGuildmaster(t *testing.T) {
 	c := dialClient(t, listening(t, srv))
 	c.create("Zod", "swordfish", "m", "c")
 
-	// With nobody to teach, the command only lists.
+	// With nobody to teach, the command only lists. A fresh implementor
+	// (the first character on an empty roster, see newTestServer) knows
+	// every class's spells, which list_skills's own single page_string
+	// call (spec_procs.c:193) is long enough to page — so the pager has
+	// to be closed before the next command, or "practice armor" would be
+	// read as pager input instead of a new command.
 	c.send("practice")
 	c.expect("You know of the following")
+	c.expect("Return to continue")
+	c.send("q")
 
 	c.send("practice armor")
 	c.expect("You can only practice skills in your guild.")

@@ -7,6 +7,7 @@
 package session
 
 import (
+	"fmt"
 	"sort"
 	"strings"
 
@@ -78,17 +79,20 @@ func (c *Context) practise(arg string) error {
 	return nil
 }
 
-// listSkills shows what a character knows, porting list_skills.
+// listSkills shows what a character knows, porting list_skills — which
+// builds the whole listing into one buffer and pages it (spec_procs.c:193),
+// not a line at a time.
 func (c *Context) listSkills() error {
 	rec := c.Character.Record
 
+	var b strings.Builder
 	if rec.SpellsToLearn == 0 {
-		c.Send("You have no practice sessions remaining.\r\n")
+		b.WriteString("You have no practice sessions remaining.\r\n")
 	} else {
-		c.Send("You have %d practice session%s remaining.\r\n",
+		fmt.Fprintf(&b, "You have %d practice session%s remaining.\r\n",
 			rec.SpellsToLearn, plural(int(rec.SpellsToLearn)))
 	}
-	c.Send("You know of the following %ss:\r\n", game.PracticeNoun(rec.Class))
+	fmt.Fprintf(&b, "You know of the following %ss:\r\n", game.PracticeNoun(rec.Class))
 
 	// Sorted by name, as the C does with spell_sort_info.
 	type entry struct {
@@ -112,7 +116,8 @@ func (c *Context) listSkills() error {
 
 	sort.Slice(entries, func(i, j int) bool { return entries[i].name < entries[j].name })
 	for _, e := range entries {
-		c.Send("%-20s %s\r\n", e.name, game.HowGood(e.percent))
+		fmt.Fprintf(&b, "%-20s %s\r\n", e.name, game.HowGood(e.percent))
 	}
+	c.SendPaged("%s", b.String())
 	return nil
 }

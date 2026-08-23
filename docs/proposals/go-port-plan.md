@@ -1482,6 +1482,24 @@ description (unlike a mobile's Record, which is fully re-derived), so
 "what does refreshing an existing object even mean" needs its own answer
 before building it, not assumed from the mobile case.
 
+**The pager ✅ — `page_string`, ported in full, then wired into the rest
+of its own call sites.** `next_page`/`count_pages`/`paginate_string`/
+`show_string` (`modify.c`) landed as `internal/session/pager.go`, with a
+real `StatePaging` connection state and `make_prompt`'s own paging
+branch folded into `prompt(s)` — see `docs/deviations.md` for the two
+real bugs this found (an LF/CRLF column-counting mismatch and
+`isNumber("")`'s vacuous truth) rather than assumed away. First wired
+into the canned texts and `help`; a follow-up pass wired it into the
+call sites `page_string` reaches beyond those — a board's message list
+and a message's own body, a shop's `list`, `practice`'s skill list, and
+`do_show`'s `zones`/`errors`/`death`/`godrooms` fields — checked field
+by field against the C rather than assumed uniform, since `do_show`
+turns out to be a genuine mix of `page_string` and plain
+`send_to_char`. `docs/deviations.md` has the precise per-field list.
+Still not wired: `background`'s own `page_string` call, which pages
+from `CON_MENU` rather than `CON_PLAYING` and so needs a real design
+decision `StatePaging` has so far avoided — see §13.
+
 **Phase 7 — Cutover.** Shadow-run both servers against copies of the same
 `data/`, compare. Then run the Go server as primary, keep the C tree as
 reference. Retire `autorun`/`automaint`/`configure`.
@@ -1711,6 +1729,17 @@ they touch:
    wins" fidelity principle (`docs/deviations.md`'s "rent settings are
    constants, not options" entry), not a format pass, and needs its own
    decision before any of it is built.
+4. **Does `background`'s own pager need wiring up?** It is the one
+   `page_string` call site left unported (§10's pager writeup,
+   `docs/deviations.md`). It runs from `CON_MENU`, not `CON_PLAYING`,
+   which is why it was set aside rather than folded in with the rest:
+   `StatePaging` has never had to answer "what state do I return to when
+   the pager closes" because every other call site's answer is always
+   "back to playing," and `background` is a login-menu screen a
+   not-yet-playing connection reads once. Low value (one screen, read
+   once per character) against a real design cost (the state machine
+   gains a return-to case it has never needed) — parked here rather than
+   built on a guess.
 
 All the others are now decided; see §0.
 

@@ -15,6 +15,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"fmt"
 	"io"
 	"log/slog"
 	"math/big"
@@ -152,6 +153,25 @@ const (
 	testWandVnum     game.ObjVnum = 109
 	testPotionVnum   game.ObjVnum = 110
 	testStaffVnum    game.ObjVnum = 111
+)
+
+// testFillerVnumBase starts a run of otherwise-uninteresting, mutually
+// distinct object prototypes (see the loop in testWorld below). A shop's
+// `list` groups identical items into one line — shop.c:802's
+// same_obj — so forcing it to paginate needs enough *distinct* items on
+// the shelf, not many of a few kinds; nothing else references these.
+const testFillerVnumBase game.ObjVnum = 200
+
+// testFillerVnumCount is how many of them exist.
+const testFillerVnumCount = 20
+
+// testFillerRoomVnumBase and testFillerZoneVnumBase are the same idea for
+// rooms and zones — see the loops in testWorld that use them.
+const (
+	testFillerRoomVnumBase  game.RoomVnum = 3030
+	testFillerRoomVnumCount               = 25
+	testFillerZoneVnumBase  game.ZoneVnum = 9000
+	testFillerZoneVnumCount               = 25
 )
 
 // Mobile prototypes the tests instantiate.
@@ -348,6 +368,23 @@ func testWorld() *game.Live {
 		Spec:        "gen_board",
 	})
 
+	// A run of distinct, otherwise-uninteresting objects — see
+	// testFillerVnumBase — for tests that need a shop shelf or a listing
+	// long enough to paginate.
+	for i := 0; i < testFillerVnumCount; i++ {
+		vnum := testFillerVnumBase + game.ObjVnum(i)
+		objects = append(objects, &game.ObjDef{
+			Vnum:        vnum,
+			Keywords:    fmt.Sprintf("filler filler%d", i),
+			ShortDesc:   fmt.Sprintf("a filler item %d", i),
+			Description: fmt.Sprintf("A filler item %d is lying here.", i),
+			Type:        game.ItemTrash,
+			WearFlags:   game.ItemWearTake,
+			Weight:      1,
+			Cost:        10,
+		})
+	}
+
 	// One shop. It produces the sword, so the supply is endless and `list`
 	// shows "Unlimited"; it buys weapons and wands, which is enough to
 	// exercise trade_with's three refusals.
@@ -407,11 +444,38 @@ func testWorld() *game.Live {
 	houseRoom.Exits[game.North] = &game.ExitDef{ToRoom: AtriumRoom}
 	atriumRoom.Exits[game.South] = &game.ExitDef{ToRoom: HouseRoom}
 
+	rooms := []*game.RoomDef{
+		temple, board, guild, donation, shopRoom, boardRoom, houseRoom,
+		atriumRoom, cellarRoom,
+	}
+	// A run of otherwise-inert rooms — unflagged, no exits — for a test
+	// that needs `show death`/`show godrooms` (act.wizard.c's shared
+	// showRooms case, all through one page_string call) to actually have
+	// enough matches to paginate. Nothing flags these by default, so no
+	// existing "show death"/"show godrooms" expectation sees them.
+	for i := 0; i < testFillerRoomVnumCount; i++ {
+		vnum := testFillerRoomVnumBase + game.RoomVnum(i)
+		rooms = append(rooms, &game.RoomDef{
+			Vnum: vnum, Name: fmt.Sprintf("Filler Room %d", i),
+			Description: fmt.Sprintf("A filler room %d.\r\n", i),
+		})
+	}
+
+	// A run of otherwise-inert zones, ResetMode 0 so BootReset's absence
+	// from the test world costs nothing, for a test that needs `show
+	// zones` (act.wizard.c, all three branches through one page_string
+	// call) to have enough rows to paginate.
+	for i := 0; i < testFillerZoneVnumCount; i++ {
+		vnum := testFillerZoneVnumBase + game.ZoneVnum(i)
+		zones = append(zones, &game.ZoneDef{
+			Vnum: vnum, Name: fmt.Sprintf("Filler Zone %d", i),
+			Bottom: game.RoomVnum(vnum) * 100, Top: game.RoomVnum(vnum)*100 + 99,
+			ResetMode: 0,
+		})
+	}
+
 	live := game.NewLive(&game.World{
-		Rooms: []*game.RoomDef{
-			temple, board, guild, donation, shopRoom, boardRoom, houseRoom,
-			atriumRoom, cellarRoom,
-		},
+		Rooms:   rooms,
 		Objects: objects,
 		Mobiles: mobiles,
 		Zones:   zones,

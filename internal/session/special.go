@@ -78,6 +78,18 @@ func (sc *SpecialCall) Pulse() bool { return sc.Command == "" }
 // message goes nowhere, which is what send_to_char does there too.
 func (sc *SpecialCall) Tell(format string, args ...any) { sc.Actor.Tell(format, args...) }
 
+// SendPaged is Tell for a text long enough to want page_string's pager
+// (pager.go) — a board's message list or one message's body, a shop's
+// inventory. A pulse-driven call (Session nil, a mobile acting on its
+// own) has nowhere to page to, so it falls back to Tell's own posture.
+func (sc *SpecialCall) SendPaged(format string, args ...any) {
+	if sc.Session == nil {
+		sc.Actor.Tell(format, args...)
+		return
+	}
+	sc.Session.SendPaged(format, args...)
+}
+
 // ToRoom sends to everyone in the actor's room except the actor.
 func (sc *SpecialCall) ToRoom(format string, args ...any) {
 	for _, other := range sc.World.Occupants(sc.Actor.Room) {

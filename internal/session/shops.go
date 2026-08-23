@@ -511,7 +511,7 @@ func shoppingList(sc *SpecialCall, shop *game.ShopDef, keeper *game.Character) {
 		sc.Tell("Presently, none of those are for sale.\r\n")
 		return
 	}
-	sc.Tell("%s", b.String())
+	sc.SendPaged("%s", b.String())
 }
 
 // shopListLine is list_object (shop.c:802).

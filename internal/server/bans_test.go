@@ -173,9 +173,16 @@ func TestShowZones(t *testing.T) {
 	c := dialClient(t, listening(t, srv))
 	c.create("Cartographer", "showmethezones", "m", "w")
 
+	// The full listing is long enough to page (act.wizard.c's do_show
+	// pages all three of its zone branches through one page_string call,
+	// and the test world carries enough zones — including filler ones,
+	// see testFillerZoneVnumBase — to actually exercise that), so the
+	// pager has to be closed before the next command.
 	c.send("show zones")
 	c.expect("Midgaard")
 	c.expect("Range:")
+	c.expect("Return to continue")
+	c.send("q")
 
 	c.send("show zones 30")
 	c.expect("Midgaard")

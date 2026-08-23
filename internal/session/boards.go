@@ -158,7 +158,7 @@ func boardShow(sc *SpecialCall, board *game.Board, obj *game.Object) bool {
 			fmt.Fprintf(&b, "%-2d : %s\r\n", i+1, m.Heading)
 		}
 	}
-	sc.Tell("%s", b.String())
+	sc.SendPaged("%s", b.String())
 	return true
 }
 
@@ -199,7 +199,7 @@ func boardRead(sc *SpecialCall, board *game.Board, obj *game.Object) bool {
 		sc.Tell("That message seems to be empty.\r\n")
 		return true
 	}
-	sc.Tell("Message %d : %s\r\n\r\n%s\r\n", msg, m.Heading, m.Body)
+	sc.SendPaged("Message %d : %s\r\n\r\n%s\r\n", msg, m.Heading, m.Body)
 	return true
 }
 
