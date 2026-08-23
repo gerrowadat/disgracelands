@@ -444,9 +444,11 @@ old password hashes. The sane posture for now, and for a while yet:
 - `--metrics-addr` and `--debug-addr` on loopback or not at all.
 - Local, LAN, or VPN-only.
 
-Some of §7 is built: per-address connection limits, a login grace period, a
-handshake timeout, and `data/etc/badsites` honoured at the name prompt with
-`ban`/`unban` to maintain it in-game. `--max-players` is still not enforced,
-and neither is a login-attempt rate limiter — the grace period and the
-per-address cap are what stand in for one. See `docs/configuration.md` for
-which settings are live.
+Most of §7 is built: per-address connection limits, a login grace period, a
+handshake timeout, `--max-players` (checked at accept time, a soft cap —
+see its own entry in `docs/proposals/go-port-plan.md`'s Phase 6 write-up
+for the one race it does not close), and the ban list honoured at the
+name prompt with `ban`/`unban` to maintain it in-game. Still missing: a
+login-attempt rate limiter — the grace period and the per-address cap are
+what stand in for one. See `docs/configuration.md` for which settings are
+live.

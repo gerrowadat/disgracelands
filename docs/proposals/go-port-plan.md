@@ -1850,9 +1850,105 @@ inspected byte for byte in the output. Not fixed in this pass; tracked in
 `TODO.md`, and the getting-started guide tells an operator how to check
 for it (`iconv -f UTF-8 -t UTF-8` over the result) until it is.
 
-**Phase 7 — Cutover.** Shadow-run both servers against copies of the same
-`data/`, compare. Then run the Go server as primary, keep the C tree as
-reference. Retire `autorun`/`automaint`/`configure`.
+**Phase 7 — Cutover. Not started.** The one honest complication this
+section's original two sentences skipped over: "cutover" ordinarily means
+swapping a *running* service, and there is not one. Disgracelands stopped
+being played in 2008; neither the C tree nor the Go port has taken a real
+connection since. What this phase actually has to answer is narrower and
+more concrete than "switch the primary server" — it is *the decision and
+the work that would need to happen before this could ever be exposed to
+real players again*, whether that is a revival with the archived
+2001–2008 characters or a fresh start.
+
+Preconditions — what has to be true before the rest of this phase makes
+sense to start:
+
+1. **World parity clean.** Already true, checked at every release
+   (`release.yml`). Not a gate that needs new work, just the one that
+   must keep passing.
+2. **Session parity triaged, not just run.** `scripts/session-parity.sh`
+   is not a CI gate — "its first run found differences that are not all
+   fixed" (`docs/developer.md`) — and `testdata/parity/` holds exactly
+   one script (`login-and-look.session`). Cutover needs either those
+   differences fixed or each one explicitly triaged and accepted in
+   `docs/deviations.md`, and enough more scripts added to actually
+   exercise combat, shops, boards, mail and housing before "the two
+   servers agree" is a claim covering more than logging in and looking
+   around.
+3. **The real archive's non-ASCII text survives conversion.** `TODO.md`
+   §5: five of `dlctl lib import`'s seven sub-importers write source
+   bytes straight through without transcoding. `examples/stock/`'s own
+   world is pure ASCII, so nothing here has ever exercised this against
+   data that matters — the real archive, twenty years old, is not
+   ASCII throughout. Only relevant if reviving the archived roster
+   (below); irrelevant to a fresh start.
+4. **A decision, not a technical task: revive the archived roster, or
+   start clean?** `TODO.md` §1 — the 108 real 2001–2008 characters exist
+   only in the private archive and have never touched this repo. Reviving
+   them means running the real conversion end to end at least once
+   (which is what makes precondition 3 load-bearing rather than
+   theoretical); starting clean means none of this phase's work is
+   roster-shaped at all. Nothing else in this plan can answer this one —
+   it is not a technical question.
+5. **Exposure hardening actually done, not just designed.** §7 above
+   describes per-address limits, a handshake timeout and the ban list as
+   built; `docs/operations.md`'s own "Exposure" section is where the
+   honest current state lives — check it directly rather than trusting
+   this paragraph's summary of it, since it is exactly the kind of status
+   line that goes stale between phases (its own `--max-players` line
+   already had, once — see this phase's own landing for that fix). A
+   real deployment needs a real hosting decision (this plan does not make
+   one), TLS from a real certificate rather than a dev one, monitoring
+   actually wired to something a person looks at, and a backup schedule
+   for whatever `--lib-dir` the deployment uses — `docs/operations.md`'s
+   own "Backups" section says what that means, `cron` and off-host
+   storage are not built here.
+6. **At least one tagged release exists.** `make release` (`docs/
+   proposals/go-port-plan.md` §9.1's config work, `scripts/release.sh`)
+   is what makes "deploy the Go server" mean something concrete rather
+   than "deploy whatever `main` happens to be."
+
+The cutover itself, once the preconditions hold:
+
+1. **Stand up hosting** — a decision this document defers to whoever is
+   actually doing it, not a default this plan should pick.
+2. **Deploy the tagged release** there, pointed at a real `--lib-dir`
+   (freshly converted from the archive, or an empty one for a fresh
+   start — see precondition 4).
+3. **Run both servers in parallel for a defined soak period.** With no
+   real traffic to mirror, "shadow-run" means: play both, side by side,
+   using the session-parity scripts as the acceptance floor and manual
+   testing above that, watching the Go server's own metrics
+   (`dlmud_pulse_duration_seconds` especially — §9.2) for anything a
+   short local test would not surface.
+4. **Go/no-go.** Any new parity difference found during the soak either
+   gets fixed and the soak repeats, or gets triaged into
+   `docs/deviations.md` the same way every other one has been — cutover
+   is not blocked on zero differences forever, it is blocked on every
+   difference being a *decided* one.
+5. **Cut over.** Point whatever the real listener/domain is at the Go
+   server exclusively. Keep the C tree buildable and runnable — it stays
+   the reference implementation for any future fidelity question
+   (`docs/deviations.md`'s own framing already assumes this, not
+   something cutover changes) — but not serving connections.
+6. **Retire `autorun`/`automaint`/`configure` from the operational
+   path.** Already effectively decided (`TODO.md`'s "Superseded"
+   section): the container runtime's restart policy plus real `SIGTERM`
+   handling replaces what they did. This step is "stop running them,"
+   not new work — they stay in `reference/moderncserver/` as what they
+   always were, historical operational scripts for a tree this port
+   is not the one running anymore.
+
+Rollback, if cutover needs to be undone: the C server tree is still
+buildable and `--lib-dir` is the same directory either format reads
+(§13's "the on-disk contract" note) — falling back is starting the C
+binary against the same data, not a migration in either direction.
+
+Not part of this phase, and worth saying so rather than leaving it
+implicit: this plan does not decide *whether* Disgracelands gets revived
+for real players at all. That is a decision for whoever owns that
+choice, on their own timeline. What this phase describes is what would
+have to be true first, if and when that decision is made.
 
 **Later (explicitly not v1):** a scripting *interpreter* behind the §8 seam —
 the seam itself is Phase 5a and the built-in specials are its first
