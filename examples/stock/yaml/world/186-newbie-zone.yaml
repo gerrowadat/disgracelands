@@ -338,11 +338,7 @@ rooms:
     - sign
     - stairs
     - stairway
-    desc: |
-              The sign next to the stairs says:
-
-              If you are below level 7 and alone, or below level 4 then bugger off!
-              Or else don't blame me if you die...
+    desc: "The sign next to the stairs says:\n\nIf you are below level 7 and alone, or below level 4 then bugger off!\nOr else don't blame me if you die...\n\n"
 - vnum: 18620
   name: A Turn In The Passage
   sector: inside
@@ -772,10 +768,7 @@ rooms:
     - plaque
     - nameplate
     - name
-    desc: |
-              It says:
-
-              Maynard, Death Jester of the Harlequins
+    desc: "It says:\n\nMaynard, Death Jester of the Harlequins\n\n"
   - keywords:
     - statue
     desc: |

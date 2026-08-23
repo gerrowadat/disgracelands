@@ -226,15 +226,7 @@ rooms:
   sector: inside
   flags:
   - indoors
-  desc: |2
-       Here there is a door to the castle to the east.  The castle is 
-    elegantly designed, and looks much like a roll of toilet paper
-    standing  on its end.  There is a sign which says:
-
-                  ******************************************
-                  *  WELCOME TO THE CASTLE OF STRANGELOVE  *
-                  *      Here, celibacy is uninvited       *
-                  ******************************************
+  desc: "   Here there is a door to the castle to the east.  The castle is \nelegantly designed, and looks much like a roll of toilet paper\nstanding  on its end.  There is a sign which says:\n\n              ******************************************\n              *  WELCOME TO THE CASTLE OF STRANGELOVE  *\n              *      Here, celibacy is uninvited       *\n              ******************************************\n\n"
   exits:
     east:
       to: 6525
@@ -577,25 +569,7 @@ rooms:
   sector: inside
   flags:
   - indoors
-  desc: |2
-       This is the Queen's bedroom.  The bed is all ruffled, and there
-    is a stack of dirty sheets piled in the corner.  There is a ladder
-    that leads down, out of the castle, and you can leave the room
-    to the south.  There is also a small wooden door to the west.
-    There is a sign that says:
-
-          -------------------------
-          |  I'm busy right now,  |
-          |  and don't know when  |
-          |  Ill be back, but if  |
-          |  there is a key here  |
-          |  take it and PLEASE,  |
-          |  try to get my birth  |
-          |  control pills back!  |
-          |  I've heard they can  |
-          |  be found somewhere,  |
-          |  deep in the mines..  |
-          -------------------------
+  desc: "   This is the Queen's bedroom.  The bed is all ruffled, and there\nis a stack of dirty sheets piled in the corner.  There is a ladder\nthat leads down, out of the castle, and you can leave the room\nto the south.  There is also a small wooden door to the west.\nThere is a sign that says:\n\n      -------------------------\n      |  I'm busy right now,  |\n      |  and don't know when  |\n      |  Ill be back, but if  |\n      |  there is a key here  |\n      |  take it and PLEASE,  |\n      |  try to get my birth  |\n      |  control pills back!  |\n      |  I've heard they can  |\n      |  be found somewhere,  |\n      |  deep in the mines..  |\n      -------------------------\n\n"
   exits:
     south:
       to: 6531
@@ -874,15 +848,7 @@ rooms:
   flags:
   - dark
   - indoors
-  desc: |2
-       You have solved the maze.  You can tell by the last few moves
-    that there is no way that a dumb worker could have figured that
-    out.  It seems pretty desolate here.  To the south is a bleak
-    room.  To the north, you see the maze.  There is a sign above
-    the south exit:
-
-    THOSE WHO ENTER, PLAN ON A TIMELY DEATH.
-    (ESPECIALLY IF YOU'RE LOYAL TO THE QUEEN)
+  desc: "   You have solved the maze.  You can tell by the last few moves\nthat there is no way that a dumb worker could have figured that\nout.  It seems pretty desolate here.  To the south is a bleak\nroom.  To the north, you see the maze.  There is a sign above\nthe south exit:\n\nTHOSE WHO ENTER, PLAN ON A TIMELY DEATH.\n(ESPECIALLY IF YOU'RE LOYAL TO THE QUEEN)\n\n"
   exits:
     north:
       to: 6550

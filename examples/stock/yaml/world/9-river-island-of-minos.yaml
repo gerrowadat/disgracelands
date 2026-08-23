@@ -251,11 +251,7 @@ rooms:
   - keywords:
     - sign
     - cave
-    desc: |
-              A sign beside the dark cave opening reads:
-
-                 WARNING! Only fools and dead people pass this way.
-                 The tests of Minos, our glorious ruler, await.
+    desc: "A sign beside the dark cave opening reads:\n\n   WARNING! Only fools and dead people pass this way.\n   The tests of Minos, our glorious ruler, await.\n\n"
 - vnum: 915
   name: The First Trial Of Minos
   sector: city
@@ -870,12 +866,7 @@ objects:
     - ring
     - platinum
     - inscription
-    desc: |
-              The inscription on the ring reads:
-
-              Cursed be the gods that supply coins to mortals!
-              And cursed be the mortal that accepts valuable gifts from the gods!
-              Especially cursed are those who do not leave the toilet seat up!
+    desc: "The inscription on the ring reads:\n\nCursed be the gods that supply coins to mortals!\nAnd cursed be the mortal that accepts valuable gifts from the gods!\nEspecially cursed are those who do not leave the toilet seat up!\n\n"
 - vnum: 905
   keywords:
   - flail

@@ -808,11 +808,7 @@ rooms:
   flags:
   - death
   - indoors
-  desc: |2
-       As you climb down into the pit, thousands of spiders cover you, tearing
-    your fragile body to shreds.  
-     
-    Lloth thanks you for your sacrifice.
+  desc: "   As you climb down into the pit, thousands of spiders cover you, tearing\nyour fragile body to shreds.  \n \nLloth thanks you for your sacrifice.\n\n"
 - vnum: 5144
   name: The Western Side Of The Main Chamber
   sector: inside

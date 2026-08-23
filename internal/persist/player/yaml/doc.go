@@ -32,7 +32,24 @@ import (
 // fidelity requirements a room's is. worldtext is internal/persist/
 // world/yaml under an alias, since both packages are named yaml and
 // Go allows but does not disambiguate that on its own.
-type Text = worldtext.Text
+//
+// It aliases NestedText, not Text, and the distinction is the whole
+// difference between a file that parses and one that does not. worldtext's
+// own doc comment is explicit that Text is validated at exactly one depth
+// — a field written directly on a top-level list item, which is where
+// every world string lives because `rooms:`/`mobiles:`/`objects:` are all
+// top-level lists. A player file is not a list of anything: it is one
+// mapping per character, and `description` hangs off the `identity:`
+// sub-mapping. Text's hand-built two-space content indent is wrong there,
+// and goccy's re-print emits the block's content at the *parent's* column,
+// which is not valid YAML for a block scalar. NestedText is the type that
+// is safe at arbitrary depth, which is what this field needs.
+//
+// Nothing caught this before because it takes a character who has actually
+// set a description to reach it, and Save does not re-read what it wrote —
+// so the failure was not an error at import time, it was a well-formed
+// report of success next to a file that no longer parses.
+type Text = worldtext.NestedText
 
 // playerDoc is one player.yaml, field order matching the document shape
 // docs/design/data-format.md §8 shows.

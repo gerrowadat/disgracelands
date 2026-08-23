@@ -732,10 +732,7 @@ rooms:
   extra_descs:
   - keywords:
     - sign
-    desc: |
-              The sign says:
-
-              DANGER!!
+    desc: "The sign says:\n\nDANGER!!\n\n"
 - vnum: 7328
   name: The Dragon's Lair
   sector: field
@@ -778,10 +775,7 @@ rooms:
   extra_descs:
   - keywords:
     - writing
-    desc: |
-              The writing says:
-
-                                      DANGER
+    desc: "The writing says:\n\n                        DANGER\n\n"
 - vnum: 7330
   name: The Windy Tunnel
   sector: city

@@ -129,6 +129,16 @@ func TypedValues(objType int32, values [game.NumObjValues]int32) (typed any, unu
 		}, false, true
 
 	case game.ItemDrinkCon:
+		// The C reads value 3 as a truth value and nothing else
+		// (act.item.c's drink handler tests it with a bare if), so `poisoned`
+		// is the honest name for it — but the *file* can hold any int, a
+		// builder's file does, and folding 5 down to 1 is a silent edit to
+		// world data whether or not the game can tell the difference. The
+		// raw form is §4.3's answer for exactly this: a value the typed
+		// schema cannot carry back unchanged is not typed.
+		if values[3] != 0 && values[3] != 1 {
+			return nil, true, false
+		}
 		liquid, known := game.NameByValue(values[2], game.YamlLiquidNames())
 		if !known {
 			return nil, false, false

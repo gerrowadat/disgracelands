@@ -1446,15 +1446,7 @@ rooms:
   - indoors
   - no_track
   - private
-  desc: |2
-      You fall through the illusionary floor.
-
-      You hit the poisoned spikes below.
-
-      You die very slowly of bloodloss, your head impaled at 
-    an awkward angle.
-
-      
+  desc: "  You fall through the illusionary floor.\n\n  You hit the poisoned spikes below.\n\n  You die very slowly of bloodloss, your head impaled at \nan awkward angle.\n\n  \n\n\n\n\n\n"
   exits:
     south:
       to: 3371

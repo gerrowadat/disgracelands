@@ -8,7 +8,6 @@ package yaml
 
 import (
 	"context"
-	"strings"
 	"testing"
 
 	"github.com/gerrowadat/disgracelands/internal/persist/world"
@@ -87,12 +86,10 @@ func TestTextRoundTripsRealCorpus(t *testing.T) {
 		}
 		got := FromStored(stored)
 		if got != s {
-			// The one documented, accepted lossy transform (TrimsTrailingBlankLines):
-			// a string with 2+ trailing newlines normalises down to exactly one.
-			// Anything else is a real failure.
-			if TrimsTrailingBlankLines(ToStored(s)) && got == FromStored(strings.TrimRight(ToStored(s), "\n")+"\n") {
-				continue
-			}
+			// No exemptions. There used to be one here, for a string with
+			// 2+ trailing newlines normalising down to one; the format
+			// carries those unchanged now (text.go's needsQuoting), so any
+			// difference at all is a real failure.
 			t.Errorf("round trip mismatch:\n input:  %q\n output: %q", s, got)
 			failed++
 			if failed > 40 {
@@ -100,5 +97,5 @@ func TestTextRoundTripsRealCorpus(t *testing.T) {
 			}
 		}
 	}
-	t.Logf("round-tripped %d strings from the real corpus, %d failed (excluding the documented trailing-blank-line normalisation)", tested, failed)
+	t.Logf("round-tripped %d strings from the real corpus, %d failed", tested, failed)
 }
