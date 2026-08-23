@@ -750,13 +750,6 @@ Listed here so they are not mistaken for deliberate differences.
   format, `native` included; see `internal/persist/player/native/doc.go`'s
   package comment for why there is deliberately no `equipment:` section.
 
-- **Rent files are never swept.** `update_obj_file()` (objsave.c:332) runs at
-  boot unless `-q` was given (db.c:457) and deletes any rent file older than
-  `rent_file_timeout` days — 30 for a rent, 10 for a crash save. Nothing here
-  does, so a character who stopped playing in 2003 still has their things.
-  `--skip-rent-check` is accepted and marked *(inert)* in
-  `docs/configuration.md` because this is what it would have skipped.
-
 - **A dropped link crash-saves.** The C leaves a linkdead body standing and
   only writes its objects when the idle timeout forces a rent
   (`Crash_idlesave`). This port crash-saves on any disconnect, quit or not.

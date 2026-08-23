@@ -254,7 +254,7 @@ These correspond one-to-one with the C server's single-letter options.
 | Flag | C equivalent | Meaning |
 |---|---|---|
 | `--mini-mud` | `-m` | Load a minimal world, for testing. |
-| `--skip-rent-check` | `-q` | Skip the rent scan on boot (faster startup). *(inert)* |
+| `--skip-rent-check` | `-q` | Skip the rent scan on boot (faster startup). |
 | `--restrict` | `-r` | Allow no new player registrations. |
 | `--no-specials` | `-s` | Suppress special procedure assignment. |
 
@@ -263,11 +263,10 @@ These correspond one-to-one with the C server's single-letter options.
 `--no-specials` skips the assignment table entirely, so guildmasters,
 shopkeepers, bankers and the rest are ordinary mobiles.
 
-`--skip-rent-check` is the one still inert. The rent files themselves are
-built and wired in, but the thing the flag turns off — `update_obj_file()`
-(objsave.c:332), the boot-time sweep that deletes rent files older than
-`rent_file_timeout` days, called from `db.c:457` under exactly this
-condition — has no equivalent here. There is nothing yet for the flag to skip.
+`--skip-rent-check` skips `Server.SweepRentFiles`
+(`internal/server/rentsweep.go`), the boot-time deletion of rent files
+older than 30 real days and crash files older than 10 — `update_obj_file()`
+(objsave.c:332), called from `db.c:457` under exactly this condition.
 
 ## Security
 

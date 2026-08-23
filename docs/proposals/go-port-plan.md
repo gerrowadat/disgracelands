@@ -1729,6 +1729,24 @@ rather than a blanket "Playing" — `Session.ConnectedName` consults
 `State.ConnectedName` as the fallback the coverage test's own C-table
 comparison still uses.
 
+**Rent files are swept at boot ✅ — `--skip-rent-check` had nothing to
+skip until now.** `update_obj_file()` (objsave.c:332) is a boot-time pass
+over the whole roster deleting whichever rent or crash file has sat
+unclaimed past its own kind's timeout — 30 real days for a rent, 10 for
+a crash, forced rent or idle-timeout save. `Server.SweepRentFiles`
+(`internal/server/rentsweep.go`) ports it directly on top of
+`player.ObjectStore`'s existing `LoadObjects`/`DeleteObjects`, needing no
+interface changes at all: `Crash_clean_file`'s per-character logic is a
+read, a switch on the rentcode, and a conditional delete, and this port
+already had both halves. `RentCryo` has no case in the C's own
+if/else-if, so a cryo-frozen character's things are never swept
+regardless of age — checked against the C rather than assumed, since
+"sweep everything eventually" would have been the obvious wrong guess.
+Wired in from `cmd/dlmud/main.go` right after `BootReset`, gated on
+`!cfg.SkipRentCheck` the same way the C gates it on `!no_rent_check`
+(`db.c:456`) — `--skip-rent-check`'s own entry in `docs/configuration.md`
+no longer says *(inert)*.
+
 **Phase 7 — Cutover.** Shadow-run both servers against copies of the same
 `data/`, compare. Then run the Go server as primary, keep the C tree as
 reference. Retire `autorun`/`automaint`/`configure`.
@@ -1944,53 +1962,45 @@ they touch:
    into the running server without a restart. `Sink`/`WriteZone` (§6.3)
    are unaffected either way; nothing in this tree just happens to drive
    them from an in-game menu.
-2. **What does reloading an object or a shop mean?** Looked at closely
-   enough to say *why* it is harder than `reloadmob`, not just that it
-   is. `Object.Def` is a shared pointer the same shape as
-   `Character.MobDef`, and a handful of fields already read it live at
-   runtime (`Spec`, `MinLevel`, `RentPerDay`, the fallback `ActionDesc`)
-   — mutating the prototype in place would refresh those for every
-   instance for free, exactly like a mobile's `ActionFlags`. The harder
-   part is everything else: `Keywords`/`ShortDesc`/`Description`/`Type`/
-   `ExtraFlags`/`WearFlags`/`Values`/`Weight`/`Cost`/`Affects`/
-   `PermAffect` are all copied at spawn (`Object`'s own doc comment: "so
-   that one object can differ from its prototype"), the same shape as a
-   mobile's derived `Record` — but a mobile's derived stats are
-   *disposable*, rerolled at every spawn with nothing lost by rerolling
-   them again on reload. An object's shadow fields are not: `Values`
-   alone holds a wand's remaining charges, a container's open/closed/
-   locked state, a light source's hours left — real, player-relevant
-   state a blanket refresh would silently erase across *every* live
-   instance of that vnum in the world at once, not just reset one
-   mobile's hit points. That is a materially bigger blast radius than
-   `reloadmob`'s own accepted "gold/exp resets" footgun, and is the
-   actual reason this needs a real decision rather than an extension of
-   the mobile case: does a rebuilt sword definition's fixed hit/damage
-   dice change on every sword in the world, while every wand's charge
-   count is left alone? Both, picked per-field by some rule, or neither
-   — refresh nothing an instance could have diverged from, and accept
-   that only the shared-pointer fields (and new spawns) ever see a
-   change? A shop's keeper-bank balance is simpler by comparison — pure
-   runtime state with nothing in any file to reload it *from* at all, so
-   reloading a shop can only ever mean its `BuyTypes`/`Rooms`/messages/
-   markup, never its till. (Phase 6, the reload family's own next
-   slice, if it happens at all.)
+2. ~~**What does reloading an object or a shop mean?**~~ **Settled:
+   refresh nothing an instance could have diverged from.** The question
+   was real — `Object`'s shadow fields (`Keywords`/`ShortDesc`/
+   `Description`/`Type`/`ExtraFlags`/`WearFlags`/`Values`/`Weight`/`Cost`/
+   `Affects`/`PermAffect`) hold player-relevant state a mobile's
+   disposable `Record` does not: a wand's remaining charges, a
+   container's lock state, a light source's hours left. `ReloadObject`
+   (`internal/game/reset.go`) answers by touching only the prototype —
+   existing instances keep whatever they currently are, and pick up only
+   the handful of fields `Object` already read live from `Def` before
+   this (`Spec`, `MinLevel`, `RentPerDay`, the fallback `ActionDesc`); a
+   fresh spawn gets the new definition in full. A shop turned out simpler
+   than expected, for a reason not fully anticipated here: `shopState`'s
+   own comment already says "there is exactly one of each shop", so
+   there is no shared-prototype-versus-instance question for it at all —
+   `ReloadShop` copies the whole configuration across and leaves only the
+   till (`Bank`/`Sorted`) alone. `reloadobj <vnum>` and `reloadshop
+   <vnum>` are their own commands, mirroring `reloadmob`'s original shape
+   rather than folded into `reloadzone`'s sweep — see Phase 6's own
+   write-up for the full account.
 3. **`config/game.yaml`** (§6) — deliberately set aside. Making
    `config.c`'s tuning configurable at all is a reversal of the "archive
    wins" fidelity principle (`docs/deviations.md`'s "rent settings are
    constants, not options" entry), not a format pass, and needs its own
    decision before any of it is built.
-4. **Does `background`'s own pager need wiring up?** It is the one
-   `page_string` call site left unported (§10's pager writeup,
-   `docs/deviations.md`). It runs from `CON_MENU`, not `CON_PLAYING`,
-   which is why it was set aside rather than folded in with the rest:
-   `StatePaging` has never had to answer "what state do I return to when
-   the pager closes" because every other call site's answer is always
-   "back to playing," and `background` is a login-menu screen a
-   not-yet-playing connection reads once. Low value (one screen, read
-   once per character) against a real design cost (the state machine
-   gains a return-to case it has never needed) — parked here rather than
-   built on a guess.
+4. ~~**Does `background`'s own pager need wiring up?**~~ **Settled: yes,
+   and the design cost was smaller than it looked from here.** The
+   worry was that `StatePaging` had never had to answer "what state do I
+   return to when the pager closes," since every other call site's
+   answer was always "back to playing." `Session.pagerReturn` answers it
+   generically — `sendPaged` captures `s.state` before overwriting it
+   with `StatePaging`, `handlePaging` restores it — rather than needing
+   a `background`-specific case at all; `menu.go`'s own choice-3 handler
+   just has to set `s.state = StateReadMOTD` before calling `SendPaged`,
+   matching what the C leaves `STATE(d)` as once `background`'s own
+   `page_string` call returns. See Phase 6's own write-up for the two
+   things a naive version would have gotten wrong silently (the ordinary
+   game prompt appearing where it should not, `users` misreporting the
+   state).
 
 All the others are now decided; see §0.
 

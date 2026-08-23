@@ -346,6 +346,12 @@ func run(args []string) error {
 	// Nothing else can touch the world at this point, so this is safe.
 	srv.BootReset(live)
 
+	// update_obj_file (objsave.c:332), skipped by -q there and
+	// --skip-rent-check here (db.c:456's own `if (!no_rent_check)`).
+	if !cfg.SkipRentCheck {
+		srv.SweepRentFiles(ctx)
+	}
+
 	eng.SetPeriodic(srv.Periodic())
 	go eng.Run(ctx)
 
