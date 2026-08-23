@@ -1,0 +1,35 @@
+#1
+The Testing Grounds~
+100 3099 20 2
+* The training dummy, and the loot cache beside it.
+M 0 130 1 3008
+O 0 151 1 3008
+O 0 152 1 3008
+O 0 153 1 3008
+O 0 154 1 3008
+O 0 155 1 3008
+* Items to find and use along the way.
+O 0 149 1 3003
+O 0 140 1 3005
+O 0 141 1 3005
+O 0 142 1 3005
+O 0 143 1 3006
+O 0 144 1 3006
+P 0 145 1 144
+O 0 146 1 3007
+O 0 147 1 3007
+O 0 148 1 3007
+* The specialists.
+M 0 3020 1 3010
+M 0 180 1 3011
+G 1 157 500
+G 1 158 500
+O 0 3034 1 3012
+M 0 1200 1 3013
+M 0 1201 1 3014
+O 0 3099 1 3015
+* Doors: closed at the Door Room, closed and locked at the Vault.
+D 0 3003 0 1
+D 0 3004 0 2
+S
+$

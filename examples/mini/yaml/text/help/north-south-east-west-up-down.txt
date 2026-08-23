@@ -1,0 +1,10 @@
+NORTH SOUTH EAST WEST UP DOWN
+
+Usage: north
+       south
+       east
+       west
+       up
+       down
+
+To travel in a given direction.

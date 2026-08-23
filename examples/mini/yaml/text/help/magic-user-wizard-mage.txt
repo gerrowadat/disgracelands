@@ -1,0 +1,10 @@
+"MAGIC USER" WIZARD MAGE
+
+This is the class of powerful and violent magic, but the magic user do not
+control the nature, and can therefore not bless and such.
+
+You can improve your spells by using the practice command.
+
+See 'help spells' for a list of spells available.
+
+See also: PRACTICE, SPELLS

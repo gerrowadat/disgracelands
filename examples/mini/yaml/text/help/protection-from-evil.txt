@@ -1,0 +1,8 @@
+"PROTECTION FROM EVIL"
+
+Usage       : cast 'protection from evil' [self]
+Accumulative: Yes (Duration)
+Duration    : 24 hours
+Level       : Cleric level 8.
+
+The meaning of this spell is not yet fully defined.

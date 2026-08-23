@@ -1,0 +1,885 @@
+schema: dl/world@1
+zone:
+  vnum: 1
+  name: The Testing Grounds
+  range:
+  - 100
+  - 3099
+  lifespan: 20
+  reset: always
+rooms:
+- vnum: 3001
+  name: The Testing Grounds
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       Welcome to the Testing Grounds, a small tutorial built to walk a new
+    character through the game one feature at a time. Nothing here can hurt
+    you badly, nothing here is required, and everything here can be tried
+    more than once - the whole zone resets itself regularly.
+       To the north is the Hall of Movement, the first stop on the tour. Type
+    'north' (or just 'n') to head that way, and 'look' at any time to see a
+    room's description again.
+  exits:
+    north:
+      to: 3002
+      desc: |
+            The tour continues north into the Hall of Movement.
+      key: -1
+- vnum: 3002
+  name: Hall of Movement
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       This plain hall exists to teach the words you will use every time you
+    play: 'north', 'south', 'east', 'west', 'up' and 'down' (or their short
+    forms 'n', 's', 'e', 'w', 'u', 'd') move you between rooms; 'look' (or
+    'l') shows you a room again; 'exits' lists which directions go anywhere
+    at all; 'score' shows your own condition.
+       A corridor leads south back to the start, and continues north toward
+    the Door Room.
+  exits:
+    north:
+      to: 3003
+      desc: |
+            Onward to the Door Room.
+      key: -1
+    south:
+      to: 3001
+      desc: |
+            Back to the Testing Grounds.
+      key: -1
+- vnum: 3003
+  name: The Door Room
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       A stout wooden door, closed for the moment, blocks the way north. This
+    is where 'open door' and 'close door' are worth learning - a shut door
+    stops you walking through it until you open it, the same as it would
+    stop anyone else. There is a rusty-looking key on the floor here; you
+    may want it before you go much further.
+  exits:
+    north:
+      to: 3004
+      desc: |
+            A closed door blocks the way.
+      door: regular
+      key: -1
+      keywords: door
+    south:
+      to: 3002
+      desc: |
+            Back toward the Hall of Movement.
+      key: -1
+- vnum: 3004
+  name: The Locked Vault
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       Rather than a plain door, the one to the north is shut *and* locked.
+    'unlock door with key' (with the rusty key from the room before this one
+    in your inventory) undoes the lock, and 'open door' still has to be typed
+    separately afterward - locking and opening are two different states. A
+    thief could instead try 'pick door'.
+  exits:
+    north:
+      to: 3005
+      desc: |
+            A locked door blocks the way.
+      door: regular
+      key: 149
+      keywords: door
+    south:
+      to: 3003
+      desc: |
+            Back toward the Door Room.
+      key: -1
+- vnum: 3005
+  name: The Armory
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       Racked along the walls is a small armory's worth of gear: a plain
+    sword, a suit of leather, and a small brass lantern. 'get sword' (or
+    'get all') picks something up, 'wear tunic' or 'wield sword' puts it to
+    use, 'inventory' (or 'i') lists what you are carrying, and 'equipment'
+    (or 'eq') lists what you have on. 'remove sword' and 'drop sword' undo
+    both.
+  exits:
+    north:
+      to: 3006
+      desc: |
+            Onward to the Cluttered Closet.
+      key: -1
+    south:
+      to: 3004
+      desc: |
+            Back to the Locked Vault.
+      key: -1
+- vnum: 3006
+  name: The Cluttered Closet
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       A leather bag lies open on the floor beside a small wooden chest.
+    'put ring in bag' and 'get ring from bag' move things into and out of a
+    container you are carrying; the chest works the same way once you 'open
+    chest' first. 'examine bag' or 'examine chest' shows what is inside
+    either one - plain 'look' only describes a container, it does not open
+    it.
+  exits:
+    north:
+      to: 3007
+      desc: |
+            Onward to the Dining Hall.
+      key: -1
+    south:
+      to: 3005
+      desc: |
+            Back to the Armory.
+      key: -1
+- vnum: 3007
+  name: The Dining Hall
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       A loaf of bread sits on the table, an empty waterskin hangs from a
+    hook, and a stone fountain bubbles quietly in the corner. 'eat bread'
+    takes care of hunger, 'fill waterskin from fountain' takes care of an
+    empty skin, and 'drink waterskin' (or just 'drink fountain') takes care
+    of thirst.
+  exits:
+    north:
+      to: 3008
+      desc: |
+            Onward to the Sparring Ring.
+      key: -1
+    south:
+      to: 3006
+      desc: |
+            Back to the Cluttered Closet.
+      key: -1
+- vnum: 3008
+  name: The Sparring Ring
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       A straw-stuffed training dummy stands in the middle of the ring,
+    patiently waiting to be hit. 'kill dummy' starts a fight - it barely
+    fights back, so this is a safe place to see combat, a corpse, and
+    'get all corpse' happen for the first time. If you know any skills or
+    spells from a guild (the next room north teaches that), this is the
+    place to 'kick dummy', 'cast 'magic missile' dummy', or similar. A small
+    pile of loot sits against the wall: a scroll, a potion, a wand, a staff,
+    and some gold coins - 'recite scroll', 'quaff potion', and 'use wand' (or
+    'use staff') are worth trying on whatever is left of the dummy.
+  exits:
+    north:
+      to: 3009
+      desc: |
+            Onward toward the Guildhall.
+      key: -1
+    south:
+      to: 3007
+      desc: |
+            Back to the Dining Hall.
+      key: -1
+- vnum: 3009
+  name: The Resting Room
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       A few plain cots line the walls. 'rest' sits you down and recovers
+    hit points, mana and movement faster than standing around; 'sleep' does
+    the same faster still, but you cannot see or fight while asleep; 'wake'
+    and 'stand' bring you back up either way.
+  exits:
+    north:
+      to: 3010
+      desc: |
+            Onward to the Guildhall.
+      key: -1
+    south:
+      to: 3008
+      desc: |
+            Back to the Sparring Ring.
+      key: -1
+- vnum: 3010
+  name: Outside the Guildhall
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       A guildmaster waits here, ready to teach anyone who asks. 'practice'
+    on its own lists what you already know and what you could learn next;
+    'practice <name>' spends practice sessions to improve it. This
+    guildmaster teaches whatever your own class knows, not one fixed list -
+    try it and see what it offers you.
+  exits:
+    north:
+      to: 3011
+      desc: |
+            Onward to the General Store.
+      key: -1
+    south:
+      to: 3009
+      desc: |
+            Back to the Resting Room.
+      key: -1
+- vnum: 3011
+  name: The General Store
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       A shopkeeper stands behind a well-stocked counter. 'list' shows what
+    is for sale and for how much; 'buy dagger' (or 'buy cloak') pays for it;
+    'sell' offers something you are carrying back for a fraction of its
+    price; 'value sword' asks what the shopkeeper would give for an item
+    without actually selling it.
+  exits:
+    north:
+      to: 3012
+      desc: |
+            Onward to the Bank.
+      key: -1
+    south:
+      to: 3010
+      desc: |
+            Back to the Guildhall.
+      key: -1
+- vnum: 3012
+  name: The Bank of Testing
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       An automatic teller machine is bolted to the wall - there is no
+    teller here, just the machine itself, the same as the real game's own
+    bank counters. 'balance' shows what you have on deposit; 'deposit 50'
+    puts fifty coins in the bank, safe from anyone who might rob you;
+    'withdraw 50' takes them back out again.
+  exits:
+    north:
+      to: 3013
+      desc: |
+            Onward to the Travelers' Rest.
+      key: -1
+    south:
+      to: 3011
+      desc: |
+            Back to the General Store.
+      key: -1
+- vnum: 3013
+  name: The Travelers' Rest
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       A receptionist offers a place to stay. 'rent' explains the price of a
+    room and, on this server, that there usually is not one - free_rent is
+    turned on here, the same way it is on the real game, so 'rent' mostly
+    just saves what you are carrying and lets you 'quit' without losing it.
+    Logging back in picks up exactly where you left off.
+  exits:
+    north:
+      to: 3014
+      desc: |
+            Onward to the Post Office.
+      key: -1
+    south:
+      to: 3012
+      desc: |
+            Back to the Bank.
+      key: -1
+- vnum: 3014
+  name: The Post Office
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       A postmaster sorts letters behind the counter. 'mail send Someone'
+    starts a letter to another character (even yourself, to see how it
+    works); 'check' asks whether anything has arrived; 'receive' collects
+    it once it has.
+  exits:
+    north:
+      to: 3015
+      desc: |
+            Onward to the Notice Board.
+      key: -1
+    south:
+      to: 3013
+      desc: |
+            Back to the Post Office.
+      key: -1
+- vnum: 3015
+  name: The Notice Board
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       A board is mounted on the wall, its cork covered in old pins.
+    'look board' or 'read board' shows what has been posted; 'write board'
+    opens an editor to post something of your own; 'remove board <number>'
+    takes down a message you posted.
+  exits:
+    north:
+      to: 3016
+      desc: |
+            On to the last room: Graduation Hall.
+      key: -1
+    south:
+      to: 3014
+      desc: |
+            Back to the Post Office.
+      key: -1
+- vnum: 3016
+  name: Graduation Hall
+  sector: inside
+  flags:
+  - indoors
+  desc: |2
+       That is the whole tour. A few things had no room of their own because
+    they need no room at all: 'smile', 'wave' and the rest of the socials
+    work anywhere, on anyone; 'say hello' and 'tell someone hello' talk to
+    whoever can hear you; 'group' and 'follow' need a second character to
+    try with. 'help' lists everything this tutorial did not cover.
+       The way back is south, all the way to the Testing Grounds - nothing
+    here is one-way.
+  exits:
+    south:
+      to: 3015
+      desc: |
+            Back the way you came.
+      key: -1
+mobiles:
+- vnum: 130
+  keywords:
+  - dummy
+  - training
+  short: a training dummy
+  long: A straw-stuffed training dummy stands here, patiently waiting to be hit.
+  act:
+  - sentinel
+  alignment: 0
+  level: 1
+  thac0: 30
+  ac: 10
+  hp: 2d4+4
+  damage: 1d1
+  gold: 5
+  exp: 20
+  position: standing
+  default_position: standing
+  sex: neutral
+- vnum: 180
+  keywords:
+  - shopkeeper
+  short: a shopkeeper
+  long: A shopkeeper stands behind the counter, tallying the day's takings.
+  act:
+  - sentinel
+  alignment: 0
+  level: 15
+  thac0: 10
+  ac: 0
+  hp: 8d8+40
+  damage: 3d4+3
+  gold: 500
+  exp: 1000
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 1200
+  keywords:
+  - receptionist
+  short: the receptionist
+  long: The receptionist is here, ready to offer you a place to stay.
+  act:
+  - sentinel
+  alignment: 0
+  level: 15
+  thac0: 10
+  ac: 0
+  hp: 8d8+40
+  damage: 3d4+3
+  gold: 100
+  exp: 500
+  position: standing
+  default_position: standing
+  sex: female
+- vnum: 1201
+  keywords:
+  - postmaster
+  short: the postmaster
+  long: The postmaster stands behind the counter, sorting letters.
+  act:
+  - sentinel
+  alignment: 0
+  level: 15
+  thac0: 10
+  ac: 0
+  hp: 8d8+40
+  damage: 3d4+3
+  gold: 100
+  exp: 500
+  position: standing
+  default_position: standing
+  sex: male
+- vnum: 3020
+  keywords:
+  - guildmaster
+  short: a guildmaster
+  long: A guildmaster stands here, ready to teach.
+  act:
+  - sentinel
+  alignment: 0
+  level: 15
+  thac0: 10
+  ac: 0
+  hp: 8d8+40
+  damage: 3d4+3
+  gold: 100
+  exp: 500
+  position: standing
+  default_position: standing
+  sex: male
+objects:
+- vnum: 140
+  keywords:
+  - sword
+  - training
+  short: a training sword
+  desc: A plain, unadorned training sword has been left on the ground.
+  type: weapon
+  wear:
+  - take
+  - wield
+  weapon:
+    dice: 2d4
+    damage_type: slash
+  weight: 6
+  cost: 50
+  rent: 10
+- vnum: 141
+  keywords:
+  - tunic
+  - leather
+  short: a leather tunic
+  desc: A leather tunic is folded neatly on a rack.
+  type: armor
+  wear:
+  - take
+  - body
+  armor:
+    ac_apply: 2
+  weight: 5
+  cost: 40
+  rent: 8
+- vnum: 142
+  keywords:
+  - lantern
+  - brass
+  - small
+  short: a small brass lantern
+  desc: A small brass lantern sits here, ready to be lit.
+  type: light
+  wear:
+  - take
+  light:
+    hours: -1
+  weight: 2
+  cost: 30
+  rent: 5
+- vnum: 143
+  keywords:
+  - bag
+  - leather
+  short: a leather bag
+  desc: A leather bag lies open on the floor.
+  type: container
+  wear:
+  - take
+  container:
+    capacity: 50
+    closeable: true
+    key: -1
+  weight: 2
+  cost: 20
+  rent: 5
+- vnum: 144
+  keywords:
+  - chest
+  - wooden
+  - small
+  short: a small wooden chest
+  desc: A small wooden chest sits against the wall, its lid closed.
+  type: container
+  container:
+    capacity: 50
+    closeable: true
+    closed: true
+    key: -1
+  weight: 20
+  cost: 0
+  rent: 0
+- vnum: 145
+  keywords:
+  - ring
+  - gold
+  short: a gold ring
+  desc: A gold ring is here, small enough to have been overlooked.
+  type: armor
+  wear:
+  - take
+  - finger
+  armor:
+    ac_apply: 1
+  weight: 1
+  cost: 100
+  rent: 20
+- vnum: 146
+  keywords:
+  - bread
+  - loaf
+  short: a loaf of bread
+  desc: A loaf of bread sits on the table, still faintly warm.
+  type: food
+  wear:
+  - take
+  values:
+  - 4
+  - 0
+  - 0
+  - 0
+  weight: 1
+  cost: 5
+  rent: 1
+- vnum: 147
+  keywords:
+  - waterskin
+  short: a waterskin
+  desc: An empty waterskin hangs from a hook on the wall.
+  type: drink_container
+  wear:
+  - take
+  - hold
+  drink:
+    capacity: 20
+    current: 0
+    liquid: water
+  weight: 2
+  cost: 15
+  rent: 3
+- vnum: 148
+  keywords:
+  - fountain
+  - stone
+  short: a stone fountain
+  desc: A stone fountain bubbles quietly in the corner.
+  type: fountain
+  values:
+  - 1000
+  - 1000
+  - 0
+  - 0
+  weight: 1005
+  cost: 0
+  rent: 0
+- vnum: 149
+  keywords:
+  - key
+  - rusty
+  short: a rusty key
+  desc: A rusty key is lying on the floor here.
+  type: key
+  wear:
+  - take
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 1
+  cost: 10
+  rent: 2
+- vnum: 151
+  keywords:
+  - scroll
+  - parchment
+  short: a scroll
+  desc: A single scroll lies here, its edges curling.
+  type: scroll
+  wear:
+  - take
+  values:
+  - 15
+  - 32
+  - 0
+  - 0
+  weight: 1
+  cost: 50
+  rent: 10
+- vnum: 152
+  keywords:
+  - potion
+  - vial
+  short: a potion
+  desc: A small vial of potion sits here, corked and labelled.
+  type: potion
+  wear:
+  - take
+  values:
+  - 10
+  - 16
+  - 0
+  - 0
+  weight: 1
+  cost: 40
+  rent: 8
+- vnum: 153
+  keywords:
+  - wand
+  short: a wand
+  desc: A slender wand rests here, humming faintly.
+  type: wand
+  wear:
+  - take
+  - hold
+  charges:
+    spell: magic missile
+    level: 12
+    max: 3
+    remaining: 3
+  weight: 3
+  cost: 200
+  rent: 40
+- vnum: 154
+  keywords:
+  - staff
+  short: a staff
+  desc: A stout wooden staff leans against the wall.
+  type: staff
+  wear:
+  - take
+  - hold
+  charges:
+    spell: magic missile
+    level: 12
+    max: 3
+    remaining: 3
+  weight: 5
+  cost: 250
+  rent: 50
+- vnum: 155
+  keywords:
+  - pouch
+  - coins
+  - gold
+  short: a pouch of gold coins
+  desc: A small pouch, heavy with coins, sits here.
+  type: money
+  wear:
+  - take
+  values:
+  - 75
+  - 0
+  - 0
+  - 0
+  weight: 1
+  cost: 0
+  rent: 0
+- vnum: 157
+  keywords:
+  - dagger
+  - shiny
+  short: a shiny dagger
+  desc: A shiny dagger is displayed on the counter.
+  type: weapon
+  wear:
+  - take
+  - wield
+  weapon:
+    dice: 1d4
+    damage_type: pierce
+  weight: 2
+  cost: 30
+  rent: 6
+- vnum: 158
+  keywords:
+  - cloak
+  - warm
+  short: a warm cloak
+  desc: A warm cloak hangs on a rack behind the counter.
+  type: armor
+  wear:
+  - take
+  - about
+  armor:
+    ac_apply: 1
+  weight: 3
+  cost: 60
+  rent: 12
+- vnum: 3034
+  keywords:
+  - atm
+  - teller
+  - bank
+  - machine
+  short: an automatic teller machine
+  desc: An automatic teller machine is bolted to the wall here.
+  type: other
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 5000
+  cost: 0
+  rent: 0
+  extra_descs:
+  - keywords:
+    - atm
+    - teller
+    - bank
+    - machine
+    desc: |
+              A small note on the machine reads: to use, type 'balance', 'deposit
+              <amount>', or 'withdraw <amount>'.
+- vnum: 3099
+  keywords:
+  - board
+  - bulletin
+  short: a bulletin board
+  desc: A bulletin board is mounted on the wall here.
+  type: trash
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 0
+  cost: 0
+  rent: 0
+  extra_descs:
+  - keywords:
+    - bulletin
+    desc: |
+              Use 'look board' or 'read board' to read what has been posted.
+  - keywords:
+    - board
+    desc: |
+              If you can read this, the board is working. Try 'write board'.
+shops:
+- vnum: 180
+  keeper: 180
+  rooms:
+  - 3011
+  sells:
+  - 157
+  - 158
+  buys:
+  - type: weapon
+  - type: armor
+  markup: 1.2
+  markdown: 0.5
+  hours:
+  - - 0
+    - 28
+  messages:
+    no_such_item_keeper: "%s Sorry, I don't have that."
+    no_such_item_player: "%s You don't seem to have that."
+    do_not_buy: "%s I don't buy that here."
+    keeper_broke: "%s I can't afford that right now!"
+    player_broke: "%s You can't afford that!"
+    buy: "%s That'll be %d coins, thanks."
+    sell: "%s I'll give you %d coins for it."
+resets:
+- mob: 130
+  room: 3008
+  max: 1
+- room: 3008
+  object: 151
+  max: 1
+- room: 3008
+  object: 152
+  max: 1
+- room: 3008
+  object: 153
+  max: 1
+- room: 3008
+  object: 154
+  max: 1
+- room: 3008
+  object: 155
+  max: 1
+- room: 3003
+  object: 149
+  max: 1
+- room: 3005
+  object: 140
+  max: 1
+- room: 3005
+  object: 141
+  max: 1
+- room: 3005
+  object: 142
+  max: 1
+- room: 3006
+  object: 143
+  max: 1
+- room: 3006
+  object: 144
+  max: 1
+- put: 145
+  into: 144
+  max: 1
+- room: 3007
+  object: 146
+  max: 1
+- room: 3007
+  object: 147
+  max: 1
+- room: 3007
+  object: 148
+  max: 1
+- mob: 3020
+  room: 3010
+  max: 1
+- mob: 180
+  room: 3011
+  max: 1
+  then:
+  - give: 157
+    max: 500
+  - give: 158
+    max: 500
+- room: 3012
+  object: 3034
+  max: 1
+- mob: 1200
+  room: 3013
+  max: 1
+- mob: 1201
+  room: 3014
+  max: 1
+- room: 3015
+  object: 3099
+  max: 1
+- door: 3003
+  dir: north
+  state: closed
+- door: 3004
+  dir: north
+  state: locked

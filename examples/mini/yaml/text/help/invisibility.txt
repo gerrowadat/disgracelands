@@ -1,0 +1,13 @@
+INVISIBILITY
+
+Usage       : cast 'invisibility' <victim | object>
+Accumulative: Yes (Duration)
+Duration    : 24 hours, permanent on objects.
+Level       : Mage level 4.
+
+Makes the target of the spell invisible to everyone except those who have
+the "detect invisibility" spell.
+
+Attacking while invisible will immediately break the spell.
+
+See also: "DETECT INVISIBILITY"

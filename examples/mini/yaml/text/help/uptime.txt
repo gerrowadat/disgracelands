@@ -1,0 +1,5 @@
+UPTIME
+
+Usage: uptime
+
+Displays when the game was booted and calculates how long ago that was.

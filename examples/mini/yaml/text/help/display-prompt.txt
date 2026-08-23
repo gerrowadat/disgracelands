@@ -1,0 +1,12 @@
+DISPLAY PROMPT
+
+Usage: display < H | M | V | all | auto | off >
+
+Modify your prompt to show your hit points, mana, and/or movement points.
+
+  > display hv          Display hit points and movement points
+  > display off         Return to normal display
+  > display all         Display hit, mana, and move points
+  > display auto        Display hit, mana, and move when they are below 30%
+
+See also: TOGGLE

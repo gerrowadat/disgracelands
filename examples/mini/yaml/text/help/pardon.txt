@@ -1,0 +1,5 @@
+PARDON
+
+Usage: pardon <victim>
+
+Removes killer and thief flags from a player.

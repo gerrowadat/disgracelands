@@ -1,0 +1,3 @@
+CLEAR CLS
+
+Clears the screen.

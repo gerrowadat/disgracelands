@@ -1,0 +1,8 @@
+"DETECT INVISIBILITY"
+
+Usage       : cast 'detect invisibility' [self]
+Accumulative: Yes (Duration)
+Duration    : 12 hours + level/4
+Level       : Mage level 2, Cleric level 6.
+
+This spell enables you to see invisible items and players.

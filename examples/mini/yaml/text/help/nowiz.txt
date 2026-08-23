@@ -1,0 +1,7 @@
+NOWIZ
+
+Usage: nowiz
+
+Allows you to hear or ignore messages coming over the wiznet.
+
+See also: WIZNET

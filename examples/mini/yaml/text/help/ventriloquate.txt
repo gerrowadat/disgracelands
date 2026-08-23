@@ -1,0 +1,14 @@
+VENTRILOQUATE
+
+Usage       : cast 'ventriloquate' <victim | object> <text>
+Accumulative: -
+Duration    : Instantaneous
+Level       : Mage level 1.
+Save        : Versus spell victim only sees attempted cast.
+
+For all people in the same room as the caster that fail a saving throw, the
+spell will make the object or victim appear to say the text written.
+
+Example:
+
+  > cast 'vent' Mirlen I got 399,823 coins, don't even consider killing me!

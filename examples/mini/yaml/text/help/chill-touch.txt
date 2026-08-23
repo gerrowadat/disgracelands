@@ -1,0 +1,13 @@
+"CHILL TOUCH"
+
+Usage       : cast 'chill touch' <victim>
+Accumulative: -
+Duration    : Instantaneous
+Level       : Mage level 3.
+Save        : Versus spell for half damage.
+
+This spell is more powerful than the magic missile spell.
+A victim failing its saving throw will get its strength
+reduced by one.
+
+See also: "MAGIC MISSILE"

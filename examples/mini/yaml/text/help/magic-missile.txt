@@ -1,0 +1,10 @@
+"MAGIC MISSILE"
+
+Usage       : cast 'magic missile' <victim>
+Accumulative: -
+Duration    : Instantaneous
+Level       : Mage level 1.
+Save        : Versus spell for half damage.
+
+Causes a bolt of magical energy to be thrown from the casters hands at the
+victim.

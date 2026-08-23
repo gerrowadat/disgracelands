@@ -1,0 +1,14 @@
+RESCUE
+
+Fighters Only.
+
+Usage: rescue <victim>
+
+This command is useful if you want to try and make an attacker hit you
+instead of your poor friend who is being pummeled.  You can only 'turn'
+one monster for each rescue attempt.  This is very useful when playing
+in groups, of course.
+
+Example:
+
+  > rescue Yankee

@@ -1,0 +1,5 @@
+HANDBOOK
+
+Usage: handbook
+
+Guidelines for having an Immortal character -- you should read it.

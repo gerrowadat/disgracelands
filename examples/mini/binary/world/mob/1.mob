@@ -1,0 +1,46 @@
+#130
+dummy training~
+a training dummy~
+A straw-stuffed training dummy stands here, patiently waiting to be hit.~
+~
+2 0 0 S
+1 30 10 2d4+4 1d1+0
+5 20
+8 8 0
+#180
+shopkeeper~
+a shopkeeper~
+A shopkeeper stands behind the counter, tallying the day's takings.~
+~
+2 0 0 S
+15 10 0 8d8+40 3d4+3
+500 1000
+8 8 1
+#1200
+receptionist~
+the receptionist~
+The receptionist is here, ready to offer you a place to stay.~
+~
+2 0 0 S
+15 10 0 8d8+40 3d4+3
+100 500
+8 8 2
+#1201
+postmaster~
+the postmaster~
+The postmaster stands behind the counter, sorting letters.~
+~
+2 0 0 S
+15 10 0 8d8+40 3d4+3
+100 500
+8 8 1
+#3020
+guildmaster~
+a guildmaster~
+A guildmaster stands here, ready to teach.~
+~
+2 0 0 S
+15 10 0 8d8+40 3d4+3
+100 500
+8 8 1
+$

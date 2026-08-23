@@ -1,0 +1,8 @@
+"CURE LIGHT"
+
+Usage       : cast 'cure light' <victim>
+Accumulative: -
+Duration    : Instantaneous
+Level       : Cleric level 1.
+
+Cures minor wounds and scratches.

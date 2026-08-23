@@ -1,0 +1,320 @@
+#3001
+The Testing Grounds~
+   Welcome to the Testing Grounds, a small tutorial built to walk a new
+character through the game one feature at a time. Nothing here can hurt
+you badly, nothing here is required, and everything here can be tried
+more than once - the whole zone resets itself regularly.
+   To the north is the Hall of Movement, the first stop on the tour. Type
+'north' (or just 'n') to head that way, and 'look' at any time to see a
+room's description again.
+~
+1 8 0
+D0
+The tour continues north into the Hall of Movement.
+~
+~
+0 -1 3002
+S
+#3002
+Hall of Movement~
+   This plain hall exists to teach the words you will use every time you
+play: 'north', 'south', 'east', 'west', 'up' and 'down' (or their short
+forms 'n', 's', 'e', 'w', 'u', 'd') move you between rooms; 'look' (or
+'l') shows you a room again; 'exits' lists which directions go anywhere
+at all; 'score' shows your own condition.
+   A corridor leads south back to the start, and continues north toward
+the Door Room.
+~
+1 8 0
+D0
+Onward to the Door Room.
+~
+~
+0 -1 3003
+D2
+Back to the Testing Grounds.
+~
+~
+0 -1 3001
+S
+#3003
+The Door Room~
+   A stout wooden door, closed for the moment, blocks the way north. This
+is where 'open door' and 'close door' are worth learning - a shut door
+stops you walking through it until you open it, the same as it would
+stop anyone else. There is a rusty-looking key on the floor here; you
+may want it before you go much further.
+~
+1 8 0
+D0
+A closed door blocks the way.
+~
+door~
+1 -1 3004
+D2
+Back toward the Hall of Movement.
+~
+~
+0 -1 3002
+S
+#3004
+The Locked Vault~
+   Rather than a plain door, the one to the north is shut *and* locked.
+'unlock door with key' (with the rusty key from the room before this one
+in your inventory) undoes the lock, and 'open door' still has to be typed
+separately afterward - locking and opening are two different states. A
+thief could instead try 'pick door'.
+~
+1 8 0
+D0
+A locked door blocks the way.
+~
+door~
+1 149 3005
+D2
+Back toward the Door Room.
+~
+~
+0 -1 3003
+S
+#3005
+The Armory~
+   Racked along the walls is a small armory's worth of gear: a plain
+sword, a suit of leather, and a small brass lantern. 'get sword' (or
+'get all') picks something up, 'wear tunic' or 'wield sword' puts it to
+use, 'inventory' (or 'i') lists what you are carrying, and 'equipment'
+(or 'eq') lists what you have on. 'remove sword' and 'drop sword' undo
+both.
+~
+1 8 0
+D0
+Onward to the Cluttered Closet.
+~
+~
+0 -1 3006
+D2
+Back to the Locked Vault.
+~
+~
+0 -1 3004
+S
+#3006
+The Cluttered Closet~
+   A leather bag lies open on the floor beside a small wooden chest.
+'put ring in bag' and 'get ring from bag' move things into and out of a
+container you are carrying; the chest works the same way once you 'open
+chest' first. 'examine bag' or 'examine chest' shows what is inside
+either one - plain 'look' only describes a container, it does not open
+it.
+~
+1 8 0
+D0
+Onward to the Dining Hall.
+~
+~
+0 -1 3007
+D2
+Back to the Armory.
+~
+~
+0 -1 3005
+S
+#3007
+The Dining Hall~
+   A loaf of bread sits on the table, an empty waterskin hangs from a
+hook, and a stone fountain bubbles quietly in the corner. 'eat bread'
+takes care of hunger, 'fill waterskin from fountain' takes care of an
+empty skin, and 'drink waterskin' (or just 'drink fountain') takes care
+of thirst.
+~
+1 8 0
+D0
+Onward to the Sparring Ring.
+~
+~
+0 -1 3008
+D2
+Back to the Cluttered Closet.
+~
+~
+0 -1 3006
+S
+#3008
+The Sparring Ring~
+   A straw-stuffed training dummy stands in the middle of the ring,
+patiently waiting to be hit. 'kill dummy' starts a fight - it barely
+fights back, so this is a safe place to see combat, a corpse, and
+'get all corpse' happen for the first time. If you know any skills or
+spells from a guild (the next room north teaches that), this is the
+place to 'kick dummy', 'cast 'magic missile' dummy', or similar. A small
+pile of loot sits against the wall: a scroll, a potion, a wand, a staff,
+and some gold coins - 'recite scroll', 'quaff potion', and 'use wand' (or
+'use staff') are worth trying on whatever is left of the dummy.
+~
+1 8 0
+D0
+Onward toward the Guildhall.
+~
+~
+0 -1 3009
+D2
+Back to the Dining Hall.
+~
+~
+0 -1 3007
+S
+#3009
+The Resting Room~
+   A few plain cots line the walls. 'rest' sits you down and recovers
+hit points, mana and movement faster than standing around; 'sleep' does
+the same faster still, but you cannot see or fight while asleep; 'wake'
+and 'stand' bring you back up either way.
+~
+1 8 0
+D0
+Onward to the Guildhall.
+~
+~
+0 -1 3010
+D2
+Back to the Sparring Ring.
+~
+~
+0 -1 3008
+S
+#3010
+Outside the Guildhall~
+   A guildmaster waits here, ready to teach anyone who asks. 'practice'
+on its own lists what you already know and what you could learn next;
+'practice <name>' spends practice sessions to improve it. This
+guildmaster teaches whatever your own class knows, not one fixed list -
+try it and see what it offers you.
+~
+1 8 0
+D0
+Onward to the General Store.
+~
+~
+0 -1 3011
+D2
+Back to the Resting Room.
+~
+~
+0 -1 3009
+S
+#3011
+The General Store~
+   A shopkeeper stands behind a well-stocked counter. 'list' shows what
+is for sale and for how much; 'buy dagger' (or 'buy cloak') pays for it;
+'sell' offers something you are carrying back for a fraction of its
+price; 'value sword' asks what the shopkeeper would give for an item
+without actually selling it.
+~
+1 8 0
+D0
+Onward to the Bank.
+~
+~
+0 -1 3012
+D2
+Back to the Guildhall.
+~
+~
+0 -1 3010
+S
+#3012
+The Bank of Testing~
+   An automatic teller machine is bolted to the wall - there is no
+teller here, just the machine itself, the same as the real game's own
+bank counters. 'balance' shows what you have on deposit; 'deposit 50'
+puts fifty coins in the bank, safe from anyone who might rob you;
+'withdraw 50' takes them back out again.
+~
+1 8 0
+D0
+Onward to the Travelers' Rest.
+~
+~
+0 -1 3013
+D2
+Back to the General Store.
+~
+~
+0 -1 3011
+S
+#3013
+The Travelers' Rest~
+   A receptionist offers a place to stay. 'rent' explains the price of a
+room and, on this server, that there usually is not one - free_rent is
+turned on here, the same way it is on the real game, so 'rent' mostly
+just saves what you are carrying and lets you 'quit' without losing it.
+Logging back in picks up exactly where you left off.
+~
+1 8 0
+D0
+Onward to the Post Office.
+~
+~
+0 -1 3014
+D2
+Back to the Bank.
+~
+~
+0 -1 3012
+S
+#3014
+The Post Office~
+   A postmaster sorts letters behind the counter. 'mail send Someone'
+starts a letter to another character (even yourself, to see how it
+works); 'check' asks whether anything has arrived; 'receive' collects
+it once it has.
+~
+1 8 0
+D0
+Onward to the Notice Board.
+~
+~
+0 -1 3015
+D2
+Back to the Post Office.
+~
+~
+0 -1 3013
+S
+#3015
+The Notice Board~
+   A board is mounted on the wall, its cork covered in old pins.
+'look board' or 'read board' shows what has been posted; 'write board'
+opens an editor to post something of your own; 'remove board <number>'
+takes down a message you posted.
+~
+1 8 0
+D0
+On to the last room: Graduation Hall.
+~
+~
+0 -1 3016
+D2
+Back to the Post Office.
+~
+~
+0 -1 3014
+S
+#3016
+Graduation Hall~
+   That is the whole tour. A few things had no room of their own because
+they need no room at all: 'smile', 'wave' and the rest of the socials
+work anywhere, on anyone; 'say hello' and 'tell someone hello' talk to
+whoever can hear you; 'group' and 'follow' need a second character to
+try with. 'help' lists everything this tutorial did not cover.
+   The way back is south, all the way to the Testing Grounds - nothing
+here is one-way.
+~
+1 8 0
+D2
+Back the way you came.
+~
+~
+0 -1 3015
+S
+$

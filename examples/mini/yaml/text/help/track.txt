@@ -1,0 +1,10 @@
+TRACK
+
+Usage: track <victim>
+
+Used for finding the first step on the shortest route to a monster.
+
+Example:
+
+  > track fido
+  You sense a trail south from here!

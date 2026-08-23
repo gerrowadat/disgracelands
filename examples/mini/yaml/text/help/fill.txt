@@ -1,0 +1,12 @@
+FILL
+
+Usage: fill <item> <object to fill from>
+
+If you want to fill a container you're holding with liquid from a fountain
+in the same room as you.
+
+Example:
+
+  > fill canteen fountain
+
+See also: POUR

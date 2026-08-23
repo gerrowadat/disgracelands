@@ -1,0 +1,12 @@
+VSTAT
+
+Usage: vstat < mob | obj > <virtual number>
+
+Used to stat a prototypical mobile or object by virtual number.
+
+Examples:
+
+  > vstat obj 3000
+  > vstat mob 3001
+
+See also: LOAD, STAT, VNUM

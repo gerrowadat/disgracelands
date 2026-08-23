@@ -1,0 +1,8 @@
+KILL HIT
+
+Usage: kill <victim>
+       hit <victim>
+
+A good way to start a fight.  Not a good idea to hit other players.
+
+See also: FLEE, WIMPY

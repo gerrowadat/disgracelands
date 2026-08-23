@@ -1,0 +1,166 @@
+#140
+sword training~
+a training sword~
+A plain, unadorned training sword has been left on the ground.~
+~
+5 0 8193 0
+0 2 4 3
+6 50 10 0
+#141
+tunic leather~
+a leather tunic~
+A leather tunic is folded neatly on a rack.~
+~
+9 0 9 0
+2 0 0 0
+5 40 8 0
+#142
+lantern brass small~
+a small brass lantern~
+A small brass lantern sits here, ready to be lit.~
+~
+1 0 1 0
+0 0 -1 0
+2 30 5 0
+#143
+bag leather~
+a leather bag~
+A leather bag lies open on the floor.~
+~
+15 0 1 0
+50 1 -1 0
+2 20 5 0
+#144
+chest wooden small~
+a small wooden chest~
+A small wooden chest sits against the wall, its lid closed.~
+~
+15 0 0 0
+50 5 -1 0
+20 0 0 0
+#145
+ring gold~
+a gold ring~
+A gold ring is here, small enough to have been overlooked.~
+~
+9 0 3 0
+1 0 0 0
+1 100 20 0
+#146
+bread loaf~
+a loaf of bread~
+A loaf of bread sits on the table, still faintly warm.~
+~
+19 0 1 0
+4 0 0 0
+1 5 1 0
+#147
+waterskin~
+a waterskin~
+An empty waterskin hangs from a hook on the wall.~
+~
+17 0 16385 0
+20 0 0 0
+2 15 3 0
+#148
+fountain stone~
+a stone fountain~
+A stone fountain bubbles quietly in the corner.~
+~
+23 0 0 0
+1000 1000 0 0
+1005 0 0 0
+#149
+key rusty~
+a rusty key~
+A rusty key is lying on the floor here.~
+~
+18 0 1 0
+0 0 0 0
+1 10 2 0
+#151
+scroll parchment~
+a scroll~
+A single scroll lies here, its edges curling.~
+~
+2 0 1 0
+15 32 0 0
+1 50 10 0
+#152
+potion vial~
+a potion~
+A small vial of potion sits here, corked and labelled.~
+~
+10 0 1 0
+10 16 0 0
+1 40 8 0
+#153
+wand~
+a wand~
+A slender wand rests here, humming faintly.~
+~
+3 0 16385 0
+12 3 3 32
+3 200 40 0
+#154
+staff~
+a staff~
+A stout wooden staff leans against the wall.~
+~
+4 0 16385 0
+12 3 3 32
+5 250 50 0
+#155
+pouch coins gold~
+a pouch of gold coins~
+A small pouch, heavy with coins, sits here.~
+~
+20 0 1 0
+75 0 0 0
+1 0 0 0
+#157
+dagger shiny~
+a shiny dagger~
+A shiny dagger is displayed on the counter.~
+~
+5 0 8193 0
+0 1 4 11
+2 30 6 0
+#158
+cloak warm~
+a warm cloak~
+A warm cloak hangs on a rack behind the counter.~
+~
+9 0 1025 0
+1 0 0 0
+3 60 12 0
+#3034
+atm teller bank machine~
+an automatic teller machine~
+An automatic teller machine is bolted to the wall here.~
+~
+12 0 0 0
+0 0 0 0
+5000 0 0 0
+E
+atm teller bank machine~
+A small note on the machine reads: to use, type 'balance', 'deposit
+<amount>', or 'withdraw <amount>'.
+~
+#3099
+board bulletin~
+a bulletin board~
+A bulletin board is mounted on the wall here.~
+~
+13 0 0 0
+0 0 0 0
+0 0 0 0
+E
+board~
+If you can read this, the board is working. Try 'write board'.
+~
+E
+bulletin~
+Use 'look board' or 'read board' to read what has been posted.
+~
+$

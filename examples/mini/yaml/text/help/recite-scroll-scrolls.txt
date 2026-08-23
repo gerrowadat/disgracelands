@@ -1,0 +1,8 @@
+RECITE SCROLL SCROLLS
+
+Usage: recite <scroll> [Target]
+
+Is used to "read" a magical scroll.  Target can be an object, character or
+nothing (which may be yourself).
+
+See also: SPELLS

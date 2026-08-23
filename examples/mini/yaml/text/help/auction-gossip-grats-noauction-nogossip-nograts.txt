@@ -1,0 +1,18 @@
+AUCTION GOSSIP GRATS NOAUCTION NOGOSSIP NOGRATS
+
+Usage: auction <message>
+       gossip <message>
+       grats <message>
+
+These are channels reserved for specific purposes.  Messages on these
+channels reach everyone who is monitoring them.  You must be at least level
+three to use these channels.
+
+Examples:
+
+  > auction short sword -- minimum bid 100k
+  > gossip Hey, is that a short sword on your belt or are you happy to see me?
+  > grats LEVEL!!!!!!!!
+  > grats GRATS CATJE!!!!!!!!
+
+See also: EMOTE, GSAY, HOLLER, NOREPEAT, SAY, SHOUT

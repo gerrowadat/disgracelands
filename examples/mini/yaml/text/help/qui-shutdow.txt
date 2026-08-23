@@ -1,0 +1,9 @@
+QUI SHUTDOW
+
+Just to prevent accidental quittings and/or shutdowns.
+This command doesn't DO anything, it simply is.
+
+Note to immortals: If you type QUI, you will quit and all your items will
+                   drop to the ground. 
+
+See also: QUIT

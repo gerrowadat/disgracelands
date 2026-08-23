@@ -1,0 +1,10 @@
+ARMOR
+
+Usage       : cast 'armor' [target]
+Accumulative: No
+Duration    : 24 Hours
+Level       : Mage level 4, Cleric level 1.
+
+The Armor spell will improve your AC by 2.
+
+See also: AC

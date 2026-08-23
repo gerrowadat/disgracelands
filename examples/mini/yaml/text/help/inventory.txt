@@ -1,0 +1,8 @@
+INVENTORY
+
+Usage: inventory
+
+If you're uncertain about what you're carrying, or simply want to check
+that no thieves have got to your backpack.
+
+See also: EQUIPMENT, GRAB, HOLD, REMOVE, WEAR

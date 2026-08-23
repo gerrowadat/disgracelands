@@ -1,0 +1,8 @@
+"CURE CRITIC"
+
+Usage       : cast 'cure critic' <victim>
+Accumulative: -
+Duration    : Instantaneous
+Level       : Cleric level 9.
+
+This spell cures 3d8+3 hitpoints of damage.

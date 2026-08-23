@@ -1,0 +1,7 @@
+GOLD
+
+Usage: gold
+
+Displays how much gold your carrying.
+
+See also: BALANCE, DEPOSIT, WITHDRAW

@@ -1,0 +1,14 @@
+"PICK LOCKS"
+
+Thieves only.
+
+Usage: pick <lock name> [direction]
+
+For picking locks.  Not all locks can be picked.
+
+Examples:
+
+  > pick door south
+  > pick safe
+
+See Also : OPEN, CLOSE, LOCK, UNLOCK

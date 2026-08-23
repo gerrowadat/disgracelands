@@ -1,0 +1,6 @@
+QUAFF POTION POTIONS
+
+Usage: quaff <potion>
+
+Quaff is used to "drink" a (magical) potion.  The magic will take effect
+immediately, for better or for worse...

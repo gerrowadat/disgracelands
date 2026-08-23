@@ -23,6 +23,23 @@ import (
 // importer's own tests do individually.
 const stockBinaryDir = "../../examples/stock/binary"
 
+// libImportFixtures is every checked-in binary/yaml pair `lib import`'s
+// own tests hold to the same standard: regenerate yaml from binary, and
+// it must match what is checked in byte for byte. examples/mini is the
+// second entry, added once it existed — its own README has the story of
+// what building it against these same tests actually caught (the room
+// vnums needed to include game.MortalStartRoom, and a zone's yaml file
+// only carries a mobile or object whose vnum falls inside that zone's own
+// bot–top range).
+var libImportFixtures = []struct {
+	name      string
+	binaryDir string
+	yamlDir   string
+}{
+	{"stock", stockBinaryDir, "../../examples/stock/yaml"},
+	{"mini", "../../examples/mini/binary", "../../examples/mini/yaml"},
+}
+
 func TestLibImportRequiresBothDirs(t *testing.T) {
 	if err := run([]string{"lib", "import"}); err == nil {
 		t.Error("run([lib import]) with neither flag succeeded, want an error")
@@ -35,90 +52,97 @@ func TestLibImportRequiresBothDirs(t *testing.T) {
 	}
 }
 
-func TestLibImportConvertsStockEndToEnd(t *testing.T) {
-	to := t.TempDir()
-	if err := run([]string{"lib", "import", "--from-dir", stockBinaryDir, "--to-dir", to}); err != nil {
-		t.Fatalf("run([lib import]): %v", err)
-	}
+func TestLibImportConvertsEndToEnd(t *testing.T) {
+	for _, fx := range libImportFixtures {
+		t.Run(fx.name, func(t *testing.T) {
+			to := t.TempDir()
+			if err := run([]string{"lib", "import", "--from-dir", fx.binaryDir, "--to-dir", to}); err != nil {
+				t.Fatalf("run([lib import]): %v", err)
+			}
 
-	// One file or directory per subsystem `lib import` wraps, matching
-	// what examples/stock/yaml itself already holds.
-	for _, want := range []string{
-		"world/zones.yaml",
-		"state/clock.yaml",
-		"state/houses.yaml",
-		"config/names.yaml",
-		"config/messages.yaml",
-		"config/socials.yaml",
-		"text/help/help.yaml",
-		"text/credits",
-		"text/motd",
-	} {
-		if _, err := os.Stat(filepath.Join(to, want)); err != nil {
-			t.Errorf("expected %s to exist: %v", want, err)
-		}
-	}
+			// One file or directory per subsystem `lib import` wraps,
+			// matching what the checked-in yaml/ itself already holds.
+			for _, want := range []string{
+				"world/zones.yaml",
+				"state/clock.yaml",
+				"state/houses.yaml",
+				"config/names.yaml",
+				"config/messages.yaml",
+				"config/socials.yaml",
+				"text/help/help.yaml",
+				"text/credits",
+				"text/motd",
+			} {
+				if _, err := os.Stat(filepath.Join(to, want)); err != nil {
+					t.Errorf("expected %s to exist: %v", want, err)
+				}
+			}
 
-	// players/ is not produced at all: examples/stock/binary's own roster
-	// is empty (a fresh stock install has none), and pfile import does
-	// not create an empty directory for zero characters — asserting this
-	// the same way examples/stock/README.md's own prose does, rather
-	// than assuming it.
-	if _, err := os.Stat(filepath.Join(to, "players")); !os.IsNotExist(err) {
-		t.Errorf("players/ exists with an empty roster to import: %v", err)
-	}
+			// players/ is not produced at all: neither fixture's binary/
+			// roster has anyone in it (a fresh stock install has none,
+			// and this is invented from scratch), and pfile import does
+			// not create an empty directory for zero characters —
+			// asserting this rather than assuming it.
+			if _, err := os.Stat(filepath.Join(to, "players")); !os.IsNotExist(err) {
+				t.Errorf("players/ exists with an empty roster to import: %v", err)
+			}
 
-	stamp, err := os.ReadFile(filepath.Join(to, dataversion.FileName))
-	if err != nil {
-		t.Fatalf("reading %s: %v", dataversion.FileName, err)
-	}
-	if got := string(stamp); !strings.Contains(got, dataversion.Current.String()) {
-		t.Errorf("%s = %q, want it to contain %q", dataversion.FileName, got, dataversion.Current.String())
+			stamp, err := os.ReadFile(filepath.Join(to, dataversion.FileName))
+			if err != nil {
+				t.Fatalf("reading %s: %v", dataversion.FileName, err)
+			}
+			if got := string(stamp); !strings.Contains(got, dataversion.Current.String()) {
+				t.Errorf("%s = %q, want it to contain %q", dataversion.FileName, got, dataversion.Current.String())
+			}
+		})
 	}
 }
 
-func TestLibImportMatchesTheCheckedInExample(t *testing.T) {
-	// examples/stock/yaml is examples/stock/binary converted exactly this
-	// way (its own README says so) — regenerating it and diffing against
-	// what is checked in is what proves that claim rather than assuming
-	// it, and catches the fixture and the command drifting apart from
-	// each other silently.
-	to := t.TempDir()
-	if err := run([]string{"lib", "import", "--from-dir", stockBinaryDir, "--to-dir", to}); err != nil {
-		t.Fatalf("run([lib import]): %v", err)
-	}
+func TestLibImportMatchesTheCheckedInExamples(t *testing.T) {
+	// Each yaml/ is its own binary/ converted exactly this way (both
+	// READMEs say so) — regenerating it and diffing against what is
+	// checked in is what proves that claim rather than assuming it, and
+	// catches the fixture and the command drifting apart from each other
+	// silently.
+	for _, fx := range libImportFixtures {
+		t.Run(fx.name, func(t *testing.T) {
+			to := t.TempDir()
+			if err := run([]string{"lib", "import", "--from-dir", fx.binaryDir, "--to-dir", to}); err != nil {
+				t.Fatalf("run([lib import]): %v", err)
+			}
 
-	const checkedIn = "../../examples/stock/yaml"
-	var mismatches []string
-	err := filepath.WalkDir(checkedIn, func(path string, d os.DirEntry, err error) error {
-		if err != nil || d.IsDir() {
-			return err
-		}
-		rel, err := filepath.Rel(checkedIn, path)
-		if err != nil {
-			return err
-		}
-		if rel == dataversion.FileName {
-			return nil // not produced by a fresh checkout of the fixture itself
-		}
-		want, err := os.ReadFile(path)
-		if err != nil {
-			return err
-		}
-		got, err := os.ReadFile(filepath.Join(to, rel))
-		if err != nil {
-			mismatches = append(mismatches, rel+": "+err.Error())
-			return nil
-		}
-		if string(got) != string(want) {
-			mismatches = append(mismatches, rel+": content differs")
-		}
-		return nil
-	})
-	if err != nil {
-		t.Fatalf("walking %s: %v", checkedIn, err)
-	}
-	for _, m := range mismatches {
-		t.Error(m)
+			var mismatches []string
+			err := filepath.WalkDir(fx.yamlDir, func(path string, d os.DirEntry, err error) error {
+				if err != nil || d.IsDir() {
+					return err
+				}
+				rel, err := filepath.Rel(fx.yamlDir, path)
+				if err != nil {
+					return err
+				}
+				if rel == dataversion.FileName {
+					return nil // not produced by a fresh checkout of the fixture itself
+				}
+				want, err := os.ReadFile(path)
+				if err != nil {
+					return err
+				}
+				got, err := os.ReadFile(filepath.Join(to, rel))
+				if err != nil {
+					mismatches = append(mismatches, rel+": "+err.Error())
+					return nil
+				}
+				if string(got) != string(want) {
+					mismatches = append(mismatches, rel+": content differs")
+				}
+				return nil
+			})
+			if err != nil {
+				t.Fatalf("walking %s: %v", fx.yamlDir, err)
+			}
+			for _, m := range mismatches {
+				t.Error(m)
+			}
+		})
 	}
 }

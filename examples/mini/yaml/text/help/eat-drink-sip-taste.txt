@@ -1,0 +1,13 @@
+EAT DRINK SIP TASTE
+
+Usage: eat <item>
+       taste [from] <item>
+       drink [from] <item>
+       sip [from] <item>
+
+If you're hungry or thirsty, these commands are for you!
+
+  > eat bread
+  > taste bread
+  > drink from cup
+  > sip fountain

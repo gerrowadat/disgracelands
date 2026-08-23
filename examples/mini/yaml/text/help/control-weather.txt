@@ -1,0 +1,12 @@
+"CONTROL WEATHER"
+
+Usage       : cast 'control weather' <'better' | 'worse'>
+Accumulative: Yes
+Duration    : -
+Level       : Cleric level 17.
+
+This spell will change the "course" of the current weather.
+
+Example:
+
+  > cast 'control wea' worse

@@ -1,0 +1,6 @@
+LEVELS
+
+Usage: levels
+
+Lists the levels of your class and the experience required to attain each
+level.

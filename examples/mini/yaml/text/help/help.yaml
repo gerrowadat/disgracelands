@@ -1,0 +1,764 @@
+schema: dl/help@1
+entries:
+- keywords:
+  - "!"
+  - ^
+  file: entry-1.txt
+- keywords:
+  - ALIAS
+  - ALIASES
+  file: alias-aliases.txt
+- keywords:
+  - ANSI
+  - COLOR
+  file: ansi-color.txt
+- keywords:
+  - ASSIST
+  file: assist.txt
+- keywords:
+  - AUCTION
+  - GOSSIP
+  - GRATS
+  - NOAUCTION
+  - NOGOSSIP
+  - NOGRATS
+  file: auction-gossip-grats-noauction-nogossip-nograts.txt
+- keywords:
+  - AUTOEXIT
+  file: autoexit.txt
+- keywords:
+  - BACKSTAB
+  file: backstab.txt
+- keywords:
+  - BANK
+  - WITHDRAW
+  - DEPOSIT
+  - BALANCE
+  file: bank-withdraw-deposit-balance.txt
+- keywords:
+  - BASH
+  file: bash.txt
+- keywords:
+  - BRIEF
+  file: brief.txt
+- keywords:
+  - BUG
+  - TYPO
+  - IDEA
+  file: bug-typo-idea.txt
+- keywords:
+  - BUY
+  file: buy.txt
+- keywords:
+  - CLEAR
+  - CLS
+  file: clear-cls.txt
+- keywords:
+  - COMMANDS
+  file: commands.txt
+- keywords:
+  - COMPACT
+  file: compact.txt
+- keywords:
+  - CONSIDER
+  file: consider.txt
+- keywords:
+  - DIAGNOSE
+  file: diagnose.txt
+- keywords:
+  - DISPLAY
+  - PROMPT
+  file: display-prompt.txt
+- keywords:
+  - DONATE
+  file: donate.txt
+- keywords:
+  - DROP
+  file: drop.txt
+- keywords:
+  - EAT
+  - DRINK
+  - SIP
+  - TASTE
+  file: eat-drink-sip-taste.txt
+- keywords:
+  - EMOTE
+  - ":"
+  file: emote.txt
+- keywords:
+  - ENTER
+  file: enter.txt
+- keywords:
+  - EQUIPMENT
+  file: equipment.txt
+- keywords:
+  - EXAMINE
+  file: examine.txt
+- keywords:
+  - EXITS
+  file: exits.txt
+- keywords:
+  - FILL
+  file: fill.txt
+- keywords:
+  - FLEE
+  file: flee.txt
+- keywords:
+  - FOLLOW
+  file: follow.txt
+- keywords:
+  - GET
+  - TAKE
+  file: get-take.txt
+- keywords:
+  - GIVE
+  file: give.txt
+- keywords:
+  - GOLD
+  file: gold.txt
+- keywords:
+  - GRAB
+  - HOLD
+  file: grab-hold.txt
+- keywords:
+  - GROUP
+  file: group.txt
+- keywords:
+  - GSAY
+  - GTELL
+  file: gsay-gtell.txt
+- keywords:
+  - HELP
+  file: help.txt
+- keywords:
+  - HIDE
+  file: hide.txt
+- keywords:
+  - HOUSE
+  file: house.txt
+- keywords:
+  - INFO
+  - NEWS
+  - POLICY
+  - VERSION
+  file: info-news-policy-version.txt
+- keywords:
+  - INVENTORY
+  file: inventory.txt
+- keywords:
+  - JUNK
+  file: junk.txt
+- keywords:
+  - KICK
+  file: kick.txt
+- keywords:
+  - KILL
+  - HIT
+  file: kill-hit.txt
+- keywords:
+  - LEAVE
+  file: leave.txt
+- keywords:
+  - LEVELS
+  file: levels.txt
+- keywords:
+  - LIST
+  file: list.txt
+- keywords:
+  - LOOK
+  file: look.txt
+- keywords:
+  - CHECK
+  - MAIL
+  - RECEIVE
+  file: check-mail-receive.txt
+- keywords:
+  - MOTD
+  file: motd.txt
+- keywords:
+  - MURDER
+  file: murder.txt
+- keywords:
+  - NOREPEAT
+  file: norepeat.txt
+- keywords:
+  - NORTH
+  - SOUTH
+  - EAST
+  - WEST
+  - UP
+  - DOWN
+  file: north-south-east-west-up-down.txt
+- keywords:
+  - NOSHOUT
+  file: noshout.txt
+- keywords:
+  - NOSUMMON
+  file: nosummon.txt
+- keywords:
+  - NOTELL
+  file: notell.txt
+- keywords:
+  - OFFER
+  - RENT
+  file: offer-rent.txt
+- keywords:
+  - OPEN
+  - CLOSE
+  - LOCK
+  - UNLOCK
+  file: open-close-lock-unlock.txt
+- keywords:
+  - ORDER
+  file: order.txt
+- keywords:
+  - "\"PICK"
+  - LOCKS"
+  file: pick-locks.txt
+- keywords:
+  - POUR
+  file: pour.txt
+- keywords:
+  - PRACTICE
+  - PRACTISE
+  file: practice-practise.txt
+- keywords:
+  - PUT
+  file: put.txt
+- keywords:
+  - QSAY
+  file: qsay.txt
+- keywords:
+  - QUAFF
+  - POTION
+  - POTIONS
+  file: quaff-potion-potions.txt
+- keywords:
+  - QUEST
+  file: quest.txt
+- keywords:
+  - QUI
+  - SHUTDOW
+  file: qui-shutdow.txt
+- keywords:
+  - QUIT
+  file: quit.txt
+- keywords:
+  - READ
+  file: read.txt
+- keywords:
+  - RECITE
+  - SCROLL
+  - SCROLLS
+  file: recite-scroll-scrolls.txt
+- keywords:
+  - REMOVE
+  file: remove.txt
+- keywords:
+  - REPLY
+  file: reply.txt
+- keywords:
+  - REPORT
+  file: report.txt
+- keywords:
+  - RESCUE
+  file: rescue.txt
+- keywords:
+  - SAVE
+  file: save.txt
+- keywords:
+  - SAY
+  - TELL
+  - ASK
+  - WHISPER
+  - SHOUT
+  - YELL
+  - HOLLER
+  - "'"
+  file: say-tell-ask-whisper-shout-yell-holler.txt
+- keywords:
+  - SCORE
+  file: score.txt
+- keywords:
+  - SELL
+  file: sell.txt
+- keywords:
+  - SLEEP
+  file: sleep.txt
+- keywords:
+  - SNEAK
+  file: sneak.txt
+- keywords:
+  - SPLIT
+  file: split.txt
+- keywords:
+  - STEAL
+  file: steal.txt
+- keywords:
+  - TIME
+  file: time.txt
+- keywords:
+  - TITLE
+  file: title.txt
+- keywords:
+  - TOGGLE
+  file: toggle.txt
+- keywords:
+  - TRACK
+  file: track.txt
+- keywords:
+  - UNGROUP
+  file: ungroup.txt
+- keywords:
+  - USE
+  - WAND
+  - STAFF
+  - STAFFS
+  - WANDS
+  file: use-wand-staff-staffs-wands.txt
+- keywords:
+  - VALUE
+  file: value.txt
+- keywords:
+  - VISIBLE
+  file: visible.txt
+- keywords:
+  - WAKE
+  - SLEEPING
+  - REST
+  - SIT
+  - STAND
+  file: wake-sleeping-rest-sit-stand.txt
+- keywords:
+  - WEAR
+  file: wear.txt
+- keywords:
+  - WEATHER
+  file: weather.txt
+- keywords:
+  - WHERE
+  file: where.txt
+- keywords:
+  - WHO
+  file: who.txt
+- keywords:
+  - WHOAMI
+  file: whoami.txt
+- keywords:
+  - WIELD
+  file: wield.txt
+- keywords:
+  - WIMPY
+  file: wimpy.txt
+- keywords:
+  - WIZLIST
+  - IMMLIST
+  file: wizlist-immlist.txt
+- keywords:
+  - WRITE
+  file: write.txt
+- keywords:
+  - AC
+  file: ac.txt
+- keywords:
+  - AREAS
+  file: areas.txt
+- keywords:
+  - BOARDS
+  file: boards.txt
+- keywords:
+  - CLERIC
+  file: cleric.txt
+- keywords:
+  - EXPERIENCE
+  - XP
+  file: experience-xp.txt
+- keywords:
+  - FLAGS
+  file: flags.txt
+- keywords:
+  - GUILD
+  file: guild.txt
+- keywords:
+  - HOUSES
+  file: houses.txt
+- keywords:
+  - IMPLEMENTOR
+  file: implementor.txt
+- keywords:
+  - INN
+  - INNS
+  - CRYOGENIC
+  - CRYO
+  - RECEPTION
+  file: inn-inns-cryogenic-cryo-reception.txt
+- keywords:
+  - LINK
+  file: link.txt
+- keywords:
+  - "\"MAGIC"
+  - USER"
+  - WIZARD
+  - MAGE
+  file: magic-user-wizard-mage.txt
+- keywords:
+  - MANA
+  file: mana.txt
+- keywords:
+  - MIDGAARD
+  - MAP
+  file: midgaard-map.txt
+- keywords:
+  - SHOPS
+  file: shops.txt
+- keywords:
+  - SPELL
+  - SPELLS
+  file: spell-spells.txt
+- keywords:
+  - THIEF
+  - THIEVES
+  file: thief-thieves.txt
+- keywords:
+  - WARRIOR
+  - FIGHTER
+  file: warrior-fighter.txt
+- keywords:
+  - CIRCLE
+  - CIRCLEMUD
+  - CREDITS
+  file: circle-circlemud-credits.txt
+- keywords:
+  - FRENCH
+  file: french.txt
+- keywords:
+  - KISS
+  file: kiss.txt
+- keywords:
+  - SMILE
+  file: smile.txt
+- keywords:
+  - SOCIALS
+  file: socials.txt
+- keywords:
+  - ARMOR
+  file: armor.txt
+- keywords:
+  - BLESS
+  file: bless.txt
+- keywords:
+  - BLINDNESS
+  file: blindness.txt
+- keywords:
+  - "\"BURNING"
+  - HANDS"
+  file: burning-hands.txt
+- keywords:
+  - "\"CALL"
+  - LIGHTNING"
+  file: call-lightning.txt
+- keywords:
+  - CAST
+  file: cast.txt
+- keywords:
+  - "\"CHARM"
+  - PERSON"
+  file: charm-person.txt
+- keywords:
+  - "\"CHILL"
+  - TOUCH"
+  file: chill-touch.txt
+- keywords:
+  - COLORSPRAY
+  - "\"COLOR"
+  - SPRAY"
+  file: colorspray-color-spray.txt
+- keywords:
+  - "\"CONTROL"
+  - WEATHER"
+  file: control-weather.txt
+- keywords:
+  - "\"CREATE"
+  - FOOD"
+  file: create-food.txt
+- keywords:
+  - "\"CREATE"
+  - WATER"
+  file: create-water.txt
+- keywords:
+  - "\"CURE"
+  - BLIND"
+  file: cure-blind.txt
+- keywords:
+  - "\"CURE"
+  - CRITIC"
+  file: cure-critic.txt
+- keywords:
+  - "\"CURE"
+  - LIGHT"
+  file: cure-light.txt
+- keywords:
+  - CURSE
+  file: curse.txt
+- keywords:
+  - "\"DETECT"
+  - ALIGNMENT"
+  file: detect-alignment.txt
+- keywords:
+  - "\"DETECT"
+  - INVISIBILITY"
+  file: detect-invisibility.txt
+- keywords:
+  - "\"DETECT"
+  - MAGIC"
+  file: detect-magic.txt
+- keywords:
+  - "\"DETECT"
+  - POISON"
+  file: detect-poison.txt
+- keywords:
+  - "\"DISPEL"
+  - EVIL"
+  file: dispel-evil.txt
+- keywords:
+  - "\"DISPEL"
+  - GOOD"
+  file: dispel-good.txt
+- keywords:
+  - EARTHQUAKE
+  file: earthquake.txt
+- keywords:
+  - "\"ENCHANT"
+  - WEAPON"
+  file: enchant-weapon.txt
+- keywords:
+  - "\"ENERGY"
+  - DRAIN"
+  file: energy-drain.txt
+- keywords:
+  - FIREBALL
+  file: fireball.txt
+- keywords:
+  - HARM
+  file: harm.txt
+- keywords:
+  - HEAL
+  file: heal.txt
+- keywords:
+  - INFRAVISION
+  file: infravision.txt
+- keywords:
+  - INVISIBILITY
+  file: invisibility.txt
+- keywords:
+  - "\"LIGHTNING"
+  - BOLT"
+  file: lightning-bolt.txt
+- keywords:
+  - "\"LOCATE"
+  - OBJECT"
+  file: locate-object.txt
+- keywords:
+  - "\"MAGIC"
+  - MISSILE"
+  file: magic-missile.txt
+- keywords:
+  - POISON
+  file: poison.txt
+- keywords:
+  - "\"PROTECTION"
+  - FROM
+  - EVIL"
+  file: protection-from-evil.txt
+- keywords:
+  - "\"REMOVE"
+  - CURSE"
+  file: remove-curse.txt
+- keywords:
+  - "\"REMOVE"
+  - POISON"
+  file: remove-poison.txt
+- keywords:
+  - SANCTUARY
+  file: sanctuary.txt
+- keywords:
+  - "\"SHOCKING"
+  - GRASP"
+  file: shocking-grasp.txt
+- keywords:
+  - "\"SENSE"
+  - LIFE"
+  file: sense-life.txt
+- keywords:
+  - STRENGTH
+  file: strength.txt
+- keywords:
+  - SUMMON
+  file: summon.txt
+- keywords:
+  - VENTRILOQUATE
+  file: ventriloquate.txt
+- keywords:
+  - "\"WORD"
+  - OF
+  - RECALL"
+  file: word-of-recall.txt
+- keywords:
+  - ADVANCE
+  file: advance.txt
+- keywords:
+  - WIZAT
+  file: wizat.txt
+- keywords:
+  - BAN
+  - UNBAN
+  file: ban-unban.txt
+- keywords:
+  - DATE
+  file: date.txt
+- keywords:
+  - DC
+  file: dc.txt
+- keywords:
+  - ECHO
+  - GECHO
+  - QECHO
+  - SEND
+  file: echo-gecho-qecho-send.txt
+- keywords:
+  - FORCE
+  file: force.txt
+- keywords:
+  - FREEZE
+  - THAW
+  file: freeze-thaw.txt
+- keywords:
+  - GOTO
+  - TRANS
+  - WIZTELEPORT
+  file: goto-trans-wizteleport.txt
+- keywords:
+  - HANDBOOK
+  file: handbook.txt
+- keywords:
+  - HCONTROL
+  file: hcontrol.txt
+- keywords:
+  - HOLYLIGHT
+  file: holylight.txt
+- keywords:
+  - IMOTD
+  file: imotd.txt
+- keywords:
+  - INVIS
+  file: invis.txt
+- keywords:
+  - LAST
+  file: last.txt
+- keywords:
+  - LOAD
+  file: load.txt
+- keywords:
+  - MUTE
+  file: mute.txt
+- keywords:
+  - NOHASSLE
+  file: nohassle.txt
+- keywords:
+  - NOTITLE
+  file: notitle.txt
+- keywords:
+  - NOWIZ
+  file: nowiz.txt
+- keywords:
+  - OLC
+  file: olc.txt
+- keywords:
+  - PAGE
+  file: page.txt
+- keywords:
+  - PARDON
+  file: pardon.txt
+- keywords:
+  - POOFIN
+  - POOFOUT
+  file: poofin-poofout.txt
+- keywords:
+  - PURGE
+  file: purge.txt
+- keywords:
+  - RELOAD
+  file: reload.txt
+- keywords:
+  - REROLL
+  file: reroll.txt
+- keywords:
+  - RESTORE
+  file: restore.txt
+- keywords:
+  - RETURN
+  file: return.txt
+- keywords:
+  - ROOMFLAGS
+  file: roomflags.txt
+- keywords:
+  - SET
+  file: set.txt
+- keywords:
+  - SHOW
+  file: show.txt
+- keywords:
+  - SHUTDOWN
+  file: shutdown.txt
+- keywords:
+  - SKILLSET
+  file: skillset.txt
+- keywords:
+  - SLOWNS
+  file: slowns.txt
+- keywords:
+  - SNOOP
+  file: snoop.txt
+- keywords:
+  - SNOWBALL
+  file: snowball.txt
+- keywords:
+  - STAT
+  file: stat.txt
+- keywords:
+  - STRING
+  file: string.txt
+- keywords:
+  - SWITCH
+  file: switch.txt
+- keywords:
+  - SYSLOG
+  file: syslog.txt
+- keywords:
+  - UNAFFECT
+  file: unaffect.txt
+- keywords:
+  - UPTIME
+  file: uptime.txt
+- keywords:
+  - USERS
+  file: users.txt
+- keywords:
+  - VNUM
+  file: vnum.txt
+- keywords:
+  - VSTAT
+  file: vstat.txt
+- keywords:
+  - WIZHELP
+  file: wizhelp.txt
+- keywords:
+  - WIZLOCK
+  file: wizlock.txt
+- keywords:
+  - WIZNET
+  - ;
+  file: wiznet.txt
+- keywords:
+  - ZRESET
+  file: zreset.txt

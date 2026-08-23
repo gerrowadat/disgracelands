@@ -1,0 +1,23 @@
+CHECK MAIL RECEIVE
+
+Usage: check
+       mail <person>
+       receive
+       
+
+The commands used by the Midgaard Mail System (MMS) are MAIL, CHECK, and
+RECEIVE.  These commands can only be used while in an Official MMS Post
+Office.  You must be at least second level in order to use the MMS.
+
+Examples:
+
+  To check and see if you have any mail waiting:
+  > check
+
+  To write mail to Niandra:
+  > mail Niandra
+
+  To ask the Postmaster to give you your mail, if you have any waiting:
+  > receive
+
+Stamps cost 150 coins.

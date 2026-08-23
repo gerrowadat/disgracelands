@@ -1,0 +1,9 @@
+"WORD OF RECALL"
+
+Usage       : cast 'word of recall' 
+Accumulative: -
+Duration    : Instantaneous
+Level       : Cleric level 12.
+
+The caster will be transferred back to his hometown sanctuary (usually the
+Temple of Midgaard).

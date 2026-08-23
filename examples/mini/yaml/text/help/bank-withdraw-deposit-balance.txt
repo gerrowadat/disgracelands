@@ -1,0 +1,13 @@
+BANK WITHDRAW DEPOSIT BALANCE
+
+Commands to take money out of the bank, put money in the bank, or see how
+much money you have in the bank.  Can be used at any branch of the First
+National Bank of CircleMUD (wherever you see an automatic teller machine).
+
+Examples:
+
+  > deposit 400
+  > withdraw 1000
+  > balance
+
+See also: GOLD, SCORE
