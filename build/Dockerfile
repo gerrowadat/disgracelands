@@ -8,7 +8,14 @@
 # a shell, and this replaces that with the container runtime's restart policy
 # plus proper SIGTERM handling in the server itself.
 
-FROM golang:1.25-alpine AS build
+# --platform=$BUILDPLATFORM pins the *builder* stage to the machine doing the
+# building, and GOOS/GOARCH below come from the target instead. Without it, a
+# multi-architecture build (release.yml pushes linux/amd64 and linux/arm64)
+# would run an emulated arm64 toolchain under QEMU to produce the arm64 image,
+# which is minutes of emulated compilation for a binary Go will cross-compile
+# natively in seconds. CGO_ENABLED=0 is what makes that legitimate rather than
+# a shortcut: there is no C toolchain in play to have to match.
+FROM --platform=$BUILDPLATFORM golang:1.25-alpine AS build
 
 WORKDIR /src
 
@@ -24,10 +31,16 @@ ARG VERSION=devel
 ARG COMMIT=unknown
 ARG DATE=unknown
 
+# Set by buildx from the platform being built for. Empty under the legacy
+# (non-BuildKit) builder, and an empty GOOS/GOARCH is the same as an unset one
+# to the go command, so a plain `docker build` still builds for the host.
+ARG TARGETOS
+ARG TARGETARCH
+
 # CGO_ENABLED=0 for a static binary: it is what lets the runtime image be
 # distroless/static, and it is also why the pluggable formats are a compiled-in
 # registry rather than Go plugins (see docs/proposals/go-port-plan.md §5.1).
-ENV CGO_ENABLED=0
+ENV CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH}
 RUN go build -trimpath \
       -ldflags="-s -w \
         -X github.com/gerrowadat/disgracelands/internal/buildinfo.version=${VERSION} \
