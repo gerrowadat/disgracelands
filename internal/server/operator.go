@@ -12,6 +12,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/gerrowadat/disgracelands/internal/game"
+	"github.com/gerrowadat/disgracelands/internal/persist/player"
 	"github.com/gerrowadat/disgracelands/internal/session"
 )
 
@@ -109,6 +111,50 @@ func (s *Server) LastLogin(name string) (session.LastLogin, bool) {
 		Host:  rec.Host,
 		When:  rec.LastLogon,
 	}, true
+}
+
+// ShowRent implements session.Operator: `show rent`, reading a name's rent
+// file without loading it — s.objects is the same ObjectStore rent.go itself
+// reads and writes, and this never calls anything that would spend the file
+// the way entering the world does.
+func (s *Server) ShowRent(name string) (session.RentListing, bool) {
+	if s.objects == nil {
+		return session.RentListing{}, false
+	}
+	f, err := s.objects.LoadObjects(context.Background(), name)
+	if err != nil {
+		// Both of Crash_listrent's failure cases — no file at all
+		// (player.ErrNotFound) and a file that exists but would not read
+		// — answer the same way here: there is nothing to list. The C's
+		// own two messages ("has no rent file" vs "Error reading rent
+		// information") differ only in wording, not in what a caller
+		// should do next.
+		return session.RentListing{}, false
+	}
+
+	vnums := make([]game.ObjVnum, len(f.Objects))
+	for i, obj := range f.Objects {
+		vnums[i] = obj.Vnum
+	}
+	return session.RentListing{Code: rentListingCode(f.Code), Vnums: vnums}, true
+}
+
+// rentListingCode is Crash_listrent's own rentcode switch (objsave.c:368-385):
+// RENT_FORCED shares TimedOut's word with RENT_TIMEDOUT, and anything else —
+// RENT_UNDEF included — is "Undef".
+func rentListingCode(code player.RentCode) string {
+	switch code {
+	case player.RentRented:
+		return "Rent"
+	case player.RentCrash:
+		return "Crash"
+	case player.RentCryo:
+		return "Cryo"
+	case player.RentTimedOut, player.RentForced:
+		return "TimedOut"
+	default:
+		return "Undef"
+	}
 }
 
 // ReloadText implements session.Operator: `reload`.

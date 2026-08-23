@@ -208,10 +208,12 @@ func doShow(c *Context) error {
 		})
 	case "snoop":
 		c.showSnooping()
-	case "rent", "shops", "houses":
-		// `show houses` is hcontrol_list_houses, which is already a command
-		// of its own; `show shops` and `show rent` are the two that are not
-		// ported. See docs/deviations.md.
+	case "rent":
+		c.showRent(value)
+	case "shops":
+		c.showShops(value, self)
+	case "houses":
+		// hcontrol_list_houses is already a command of its own.
 		c.Send("Sorry, I don't understand that.\r\n")
 	}
 	return nil
@@ -284,6 +286,37 @@ func (c *Context) showPlayer(name string) {
 	c.Send("Started: %-20.16s  Last: %-20.16s  Played: %3dh %2dm\r\n",
 		clockTime(entry.Born), clockTime(entry.LastLogon),
 		int64(entry.Played/time.Hour), int64(entry.Played/time.Minute)%60)
+}
+
+// showRent is Crash_listrent (objsave.c:342): what a name's rent file holds,
+// read without loading it into the world. Not paginated — the C sends it
+// with one plain send_to_char, unlike show's other listings.
+func (c *Context) showRent(name string) {
+	if name == "" {
+		c.Send("A name would help.\r\n")
+		return
+	}
+	if c.Operator == nil {
+		return
+	}
+	listing, ok := c.Operator.ShowRent(name)
+	if !ok {
+		c.Send("%s has no rent file.\r\n", name)
+		return
+	}
+
+	var b strings.Builder
+	fmt.Fprintf(&b, "%s\r\n", listing.Code)
+	for _, vnum := range listing.Vnums {
+		def := c.World.ObjectDef(vnum)
+		if def == nil {
+			// real_object(object.item_number) != NOTHING: the prototype is
+			// gone, and read_object would have nothing to read.
+			continue
+		}
+		fmt.Fprintf(&b, " [%5d] (%5dau) %-20s\r\n", vnum, def.RentPerDay, def.ShortDesc)
+	}
+	c.Send("%s", b.String())
 }
 
 // showStats is the counts, which is what a god types when somebody asks how

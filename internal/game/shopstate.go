@@ -227,6 +227,36 @@ func ShopWillDealWith(shop *ShopDef, c *Character) (bool, string) {
 	return true, ""
 }
 
+// tradeLetters is trade_letters[] (shop.c:98), in the same order as the
+// tradeNo* bits: alignment first, then class.
+var tradeLetters = []string{"Good", "Evil", "Neutral", "Magic User", "Cleric", "Thief", "Warrior"}
+
+// CustomerString is customer_string (shop.c:1198), used by `show shops`:
+// a set tradeNo* bit means the shop *refuses* that category, so this lists
+// what it will trade with. detailed spells the words out, comma-separated,
+// for a single shop's own detail view; the summary form instead prints one
+// letter per category, always in the same seven columns — an underscore
+// where the shop refuses, so shops line up under `show shops`' own header
+// regardless of which categories any one of them serves.
+func CustomerString(shop *ShopDef, detailed bool) string {
+	var out strings.Builder
+	for i, name := range tradeLetters {
+		bit := int32(1 << i)
+		switch {
+		case shop.TradeWith&bit == 0 && detailed:
+			if out.Len() > 0 {
+				out.WriteString(", ")
+			}
+			out.WriteString(name)
+		case shop.TradeWith&bit == 0:
+			out.WriteString(name[:1])
+		case !detailed:
+			out.WriteString("_")
+		}
+	}
+	return out.String()
+}
+
 // TradeWith reports what a shop makes of an object somebody wants to sell,
 // porting trade_with (shop.c:291).
 func TradeWith(shop *ShopDef, obj *Object) TradeResult {

@@ -306,6 +306,77 @@ func TestShowPlayer(t *testing.T) {
 	god.expect("Played:")
 }
 
+// `show rent`, ported from Crash_listrent (objsave.c:342): a header word
+// for why the file was written, then one line per object still resolvable
+// against a live prototype.
+func TestShowRent(t *testing.T) {
+	srv, _ := newTestServer(t)
+	addr := listening(t, srv)
+
+	god := dialClient(t, addr)
+	god.create("Landlord", "whoownsit", "m", "w")
+
+	god.send("show rent")
+	god.expect("A name would help.")
+
+	god.send("show rent nobodyatall")
+	god.expect("nobodyatall has no rent file.")
+
+	c := dialClient(t, addr)
+	c.create("Tenant", "leavingsoon", "m", "w")
+	inWorld(t, srv, func(w *game.Live) {
+		who := w.Find("Tenant")
+		if who == nil {
+			t.Error("the character is not in the world")
+			return
+		}
+		if obj := w.NewObject(testSwordVnum); obj != nil {
+			w.ObjectToChar(obj, who)
+		}
+	})
+
+	c.send("quit")
+	c.expect("Goodbye")
+	c.close()
+	waitForLogout(t, srv, "Tenant")
+
+	// Quitting always writes a crash file, free and unpaid-for — the same
+	// fixture TestWhatYouCarryOutIsWhatYouCarryBackIn checks by reading the
+	// file directly; this checks the same file through the command that
+	// reports it.
+	god.send("show rent tenant")
+	god.expect("Crash")
+	god.expect("a long sword")
+}
+
+// `show shops`, ported from show_shops (shop.c:1350): the summary table
+// with no argument, and one shop's detail view given its number.
+func TestShowShops(t *testing.T) {
+	srv, _ := newTestServer(t)
+	addr := listening(t, srv)
+
+	god := dialClient(t, addr)
+	god.create("Auctioneer", "whatssforsale", "m", "w")
+
+	god.send("show shops")
+	god.expect("##   Virtual   Where    Keeper    Buy   Sell   Customers")
+	god.expect("9001")
+
+	god.send("show shops 1")
+	god.expect("Vnum:       [ 9001], Rnum: [    1]")
+	god.expect("Shopkeeper:")
+	god.expect("Produces:   a long sword")
+	god.expect("Buys:")
+	// Buy at:/Sell at: carries the C's own swapped-column bug (shop.c:1338):
+	// ProfitSell (0.15) prints under "Buy at:" and ProfitBuy (1.15) under
+	// "Sell at:", reproduced rather than fixed — see docs/weirdnumbers.md.
+	god.expect("Buy at:     [0.15], Sell at: [1.15]")
+	god.expect("Bits:")
+
+	god.send("show shops 999")
+	god.expect("Illegal shop number.")
+}
+
 func TestShowRoomLists(t *testing.T) {
 	srv, _ := newTestServer(t)
 	c := dialClient(t, listening(t, srv))

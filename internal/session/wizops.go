@@ -52,6 +52,23 @@ type Operator interface {
 	// reports whether the name was one it knows, so the command can print the
 	// C's "Unknown reload option." without knowing what the names are.
 	ReloadText(what string) (known bool, err error)
+	// ShowRent reads a character's rent file without loading it into the
+	// world, for `show rent` — Crash_listrent's own way of looking at what
+	// somebody left behind. false is "no rent file", the same case the C
+	// answers with "%s has no rent file.\r\n" rather than a listing.
+	ShowRent(name string) (RentListing, bool)
+}
+
+// RentListing is what `show rent` reports, porting Crash_listrent's own
+// two-part output (objsave.c:342): the header word the C's own rentcode
+// switch produces ("Rent"/"Crash"/"Cryo"/"TimedOut"/"Undef") and the vnums
+// the file held, in file order. The rent file's own path is not part of it —
+// unlike the C's single fixed format, this port's player format is pluggable
+// (binary/ascii/native), so there is no one filesystem path to print; see
+// docs/deviations.md.
+type RentListing struct {
+	Code  string
+	Vnums []game.ObjVnum
 }
 
 // PlayerSummary is what `show player` reports.

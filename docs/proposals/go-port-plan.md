@@ -1597,6 +1597,39 @@ one. Only an existing record nobody has cleared is ever refused, and
 `TestASelectBanChecksSiteOKAfterThePassword` (`internal/server/
 bans_test.go`) exercises end to end, refusal and clearance both.
 
+**`show rent` and `show shops` ✅ — the two listings 5i-g left out because
+nothing needed them to run.** Neither turned out to need new modelling:
+`show rent` (`Crash_listrent`, objsave.c:342) is a thin read of the same
+`player.ObjectStore` `internal/server/rent.go` already reads and writes,
+resolving each stored vnum's description and rent cost against the live
+world's own object prototypes rather than a spent `read_object`/
+`extract_obj` pair — `session.Operator` grew `ShowRent`, returning a small
+`RentListing` DTO rather than the store's own types, the same seam
+`ShowPlayer` already crosses the same way. `show shops` (`show_shops`,
+shop.c:1350) needed only a `CustomerString` helper alongside
+`internal/game/shopstate.go`'s existing shop rules (`ShopServesRoom`,
+`ShopBank`, `BuyPrice`'s and `SellPrice`'s own `ProfitBuy`/`ProfitSell`) —
+everything else `list_all_shops` and `list_detailed_shop` print was already
+sitting in `ShopDef` from 5f-i.
+
+Reading `buy_price`/`sell_price` right next to `list_all_shops`'s own
+`sprintf` turned up a real bug in the stock C, not a port mistake: the
+summary table's header reads "Buy" then "Sell", but the values plugged in
+are `SHOP_SELLPROFIT` first and `SHOP_BUYPROFIT` second — swapped relative
+to their own headings, and the same swap recurs in `list_detailed_shop`'s
+"Buy at:/Sell at:" line. Reproduced rather than fixed, per §0, and written
+up in `docs/weirdnumbers.md` with both call sites cited — the kind of
+finding the fidelity rule exists for, just in a comparison of two
+functions rather than an arithmetic one.
+
+Two small, genuine differences, both in `docs/deviations.md`: `show rent`
+does not print the rent file's own path, since the player format is
+pluggable and there is no one filesystem path a `native` store necessarily
+has; and `show shops`' detail view does not reproduce
+`handle_detailed_list`'s column-wrapping, since nothing in this port's
+world data has a `Rooms:`/`Produces:`/`Buys:` list long enough for the
+C's own wrap to trigger either.
+
 **Phase 7 — Cutover.** Shadow-run both servers against copies of the same
 `data/`, compare. Then run the Go server as primary, keep the C tree as
 reference. Retire `autorun`/`automaint`/`configure`.

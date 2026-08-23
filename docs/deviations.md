@@ -139,6 +139,24 @@ would need its own scoping pass.
 | **Why** | Plan §0. Transcoding is a property of a connection, not of the data. |
 | **Where** | `internal/telnet/charset.go`. |
 
+### `show rent` does not print the rent file's own path
+
+| | |
+|---|---|
+| **C** | `Crash_listrent`'s first line of output is `fname` — the on-disk path `get_filename` built for this exact rent-file format, e.g. `plrobjs/A-E/tenant.objs`. |
+| **Go** | The listing starts straight from the rent code ("Rent"/"Crash"/"Cryo"/"TimedOut"/"Undef"); no path line at all. |
+| **Why** | The player format is pluggable (`binary`/`ascii`/`native`), each with its own `ObjectStore` and its own idea of where a rent file lives — some of which, `native`'s, may not be a bare filesystem path at all. There is no one path to print without `session.Operator.ShowRent` reaching past the seam into a specific store's internals, which the interface exists to prevent. |
+| **Where** | `internal/session/wizshow.go`'s `showRent`, `internal/server/operator.go`'s `Server.ShowRent`. |
+
+### `show shops`'s detail view does not wrap long lists
+
+| | |
+|---|---|
+| **C** | `handle_detailed_list` (shop.c:1246) breaks a `Rooms:`/`Produces:`/`Buys:` line once it would run past roughly 78 columns, continuing on the next line with a 12-space indent. |
+| **Go** | Each list is one comma-joined line, however long. |
+| **Why** | Every shop this port's world data actually defines has a short enough list that the C's own wrap would never trigger either — the C's threshold is on rendered width, this port's is "none" — so there is no behaviour difference for any real shop, only for a hypothetical one with enough rooms or products to run past a terminal's width. Reproducing an exact break column for a case nothing exercises was not worth the code. |
+| **Where** | `internal/session/wizshops.go`'s `listDetailedShop`. |
+
 ---
 
 ## Protocol
@@ -596,12 +614,11 @@ Listed here so they are not mistaken for deliberate differences.
   `docs/operations.md` — so `reboot` and `now` ask to come back and `die` and
   `pause` ask not to, and the answer is an exit code rather than a file.
 
-- **`show rent` and `show shops` are not ported.** The first is
-  `Crash_listrent`, which lists a rent file without loading it; the second is
-  `show_shops` in shop.c. Both are listings of their own and neither is
-  needed to run the server. `show houses` is `hcontrol show`, which is
-  ported, so `show houses` answers "Sorry, I don't understand that." rather
-  than duplicating it.
+- **`show houses` is not ported**, on its own: `hcontrol show` already
+  answers the same question, so `show houses` says "Sorry, I don't
+  understand that." rather than duplicating it. `show rent` and `show
+  shops` are off this list — see "Player-visible behaviour" above for the
+  two small differences building them turned up.
 
 - **`show stats` does not report buffer counts.** `buf_largecount`,
   `buf_switches` and `buf_overflows` count the C's own string-buffer

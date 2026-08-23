@@ -1010,6 +1010,32 @@ approach in one function.
 12,006 price pairs, built `-m32 -mfpmath=387`. CI installs the toolchain for
 any change that can reach it.
 
+### `show shops`'s Buy and Sell columns show the wrong number
+
+```c
+strcat(buf, " ##   Virtual   Where    Keeper    Buy   Sell   Customers\r\n");
+...
+sprintf(END_OF(buf2), "%s   %3.2f   %3.2f    ", buf1,
+        SHOP_SELLPROFIT(shop_nr), SHOP_BUYPROFIT(shop_nr));
+```
+
+The header reads "Buy" then "Sell", but the values plugged in are
+`SHOP_SELLPROFIT` first and `SHOP_BUYPROFIT` second — the two swapped
+relative to their own column headings. `buy_price` and `sell_price`
+(immediately above, in this same file) confirm which is which: a player's
+*buy* price is `GET_OBJ_COST(obj) * SHOP_BUYPROFIT(shop_nr)`, so the column
+headed "Buy" is showing the *sell* multiplier, and vice versa. The same swap
+recurs in `list_detailed_shop`'s "Buy at: […], Sell at: […]" line
+(`shop.c:1338-1339`), so it is systematic rather than a one-off typo.
+
+Reproduced rather than fixed, in both places: §0's fidelity rule does not
+carve out a display bug just because it is easy to spot once the two
+neighbouring functions are read side by side.
+
+*Source*: `shop.c:1227,1236-1237,1338-1339`, `shop.c:474-477,632-635`
+(`buy_price`/`sell_price`). Ported as `internal/session/wizshops.go`'s
+`listAllShops`/`listDetailedShop`.
+
 ### A board post's date has a weekday and no year
 
 ```c
