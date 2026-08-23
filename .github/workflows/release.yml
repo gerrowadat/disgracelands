@@ -15,6 +15,12 @@
 # answer on all of them at once is exactly the point at which "slow but
 # thorough" is worth more than "fast".
 #
+# Once that passes, two things get published: the GitHub release itself,
+# and the container image, to ghcr.io/gerrowadat/disgracelands for
+# linux/amd64 and linux/arm64. Neither needs a secret configured —
+# GITHUB_TOKEN covers both — and neither needs the repository to be
+# public; see the `image` job for what that does mean.
+#
 # Triggered by pushing a tag matching v*.*.* (see scripts/release.sh,
 # which computes the next semver version and pushes that tag) or by
 # hand via workflow_dispatch, for testing this workflow without cutting
@@ -252,3 +258,89 @@ jobs:
           gh release create "${{ needs.full-suite.outputs.version }}" \
             --title "${{ needs.full-suite.outputs.version }}" \
             --generate-notes
+
+  # The container image, published to GitHub's own registry under the same
+  # account as the repository: ghcr.io/gerrowadat/disgracelands.
+  #
+  # full-suite above has already built this image once for the runner's own
+  # architecture and checked that it starts and reports the version being
+  # released. This job builds it again, for two architectures, and pushes it;
+  # the duplicated build is a couple of minutes once per release, which is
+  # cheaper than making the smoke test depend on a registry push having
+  # already happened.
+  #
+  # Same `if` as `publish`: a workflow_dispatch run exists to test this
+  # workflow, and a test run must not overwrite a published tag. It is also
+  # what stops `act` (which runs jobs locally as workflow_dispatch) from
+  # trying to log in to ghcr.io.
+  #
+  # The registry needs no secret of its own. GITHUB_TOKEN can write packages
+  # owned by the same account as the repository, which is why `packages:
+  # write` below is the entire configuration -- and why none of this requires
+  # the repository to be public. A package published from a private repository
+  # is created private, inheriting the repository's visibility, and can be
+  # made public on its own later from the package's settings page without the
+  # repository following it.
+  image:
+    needs: full-suite
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    # Not inherited from the top-level `permissions:` block: naming any
+    # permission there sets every unnamed one to none, so contents: read has
+    # to be repeated here alongside the one this job actually needs.
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Tags and labels for the image
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ghcr.io/${{ github.repository }}
+          # v1.2.3 publishes 1.2.3, 1.2 and latest. No major-only tag: while
+          # this is 0.x that would be `0`, which promises rather more than it
+          # can keep. `latest` is not listed because the default flavor
+          # (latest=auto) already applies it to any non-prerelease semver tag.
+          #
+          # The labels matter as much as the tags: metadata-action sets
+          # org.opencontainers.image.source from the repository, and that
+          # label is what links the package to this repo in the GitHub UI --
+          # inheriting its permissions, and showing its README on the package
+          # page. Without it the package is an orphan nobody can trace back.
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+
+      - uses: docker/setup-buildx-action@v4
+
+      - name: Log in to ghcr.io
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # No setup-qemu-action, deliberately. The arm64 image is cross-compiled
+      # by the Go toolchain running natively on the amd64 runner (see
+      # build/Dockerfile's --platform=$BUILDPLATFORM comment), and nothing in
+      # either image is executed during the build, so there is no foreign
+      # binary for QEMU to run.
+      - name: Build and push
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: build/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            VERSION=${{ needs.full-suite.outputs.version }}
+            COMMIT=${{ github.sha }}
+
+      - name: Say what was published
+        run: |
+          echo "Pushed:"
+          echo "${{ steps.meta.outputs.tags }}"

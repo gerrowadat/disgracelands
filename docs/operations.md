@@ -58,6 +58,35 @@ dlmud: --listen-telnets needs a certificate: set --tls-cert and --tls-key, or --
 
 ## Containers
 
+Every release publishes an image to GitHub's container registry, built for
+`linux/amd64` and `linux/arm64`:
+
+```sh
+docker pull ghcr.io/gerrowadat/disgracelands:latest
+docker run -v /srv/disgracelands/lib:/lib -p 4443:4443 \
+  ghcr.io/gerrowadat/disgracelands:latest \
+  --lib-dir=/lib --tls-cert=/lib/cert.pem --tls-key=/lib/key.pem
+```
+
+The tags are `X.Y.Z`, `X.Y` and `latest`. There is deliberately no `X`
+tag: while this is 0.x, `0` would promise a compatibility guarantee it
+cannot keep.
+
+**While the repository is private the package is too.** A package takes
+the visibility of the repository it was first published from, so pulling
+it needs a login with a token that has `read:packages`:
+
+```sh
+echo "$GITHUB_TOKEN" | docker login ghcr.io -u <your-username> --password-stdin
+```
+
+Package visibility is independent of the repository's after that first
+publish — the package can be made public on its own, from its page under
+the account's *Packages* tab, without the repository following it.
+
+Or build it yourself. A plain `docker build` produces an image for the
+architecture you are on:
+
 ```sh
 docker build -f build/Dockerfile -t disgracelands .
 docker run -v /srv/disgracelands/lib:/lib -p 4443:4443 disgracelands \

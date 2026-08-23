@@ -230,7 +230,8 @@ answer:
   world parity (`make parity`), the license check, the two doc-coverage
   checks, a check that `examples/stock/yaml`/`examples/mini/yaml` still
   match a fresh `dlctl lib import` of their binary source, and a container
-  build — then creates the GitHub release. See "Cutting a release" below.
+  build — then creates the GitHub release and pushes the container image
+  to `ghcr.io/gerrowadat/disgracelands`. See "Cutting a release" below.
 
 **Session parity** (`scripts/session-parity.sh`) is in neither workflow.
 Boots *both* servers on throwaway copies of `examples/stock/binary/` with
@@ -324,6 +325,16 @@ Worth knowing before you trust a green run:
   container job logs `Unable to get the ACTIONS_RUNTIME_TOKEN`; that is the
   build-summary upload, and the build and the image it produces are
   unaffected.
+- **The two publishing jobs never run under act**, deliberately. `publish`
+  (the GitHub release) and `image` (the push to ghcr.io) are both `if:
+  github.event_name == 'push'`, and act runs jobs as a `workflow_dispatch`.
+  So a local `CI_WORKFLOW=.github/workflows/release.yml` run tells you the
+  image *builds* — `full-suite` does that for the runner's own architecture,
+  and checks the version it reports — and nothing at all about whether the
+  push works. A release-candidate tag will not stand in for a real one
+  either: the trigger pattern is `v[0-9]+.[0-9]+.[0-9]+`, so `v0.0.0-rc1`
+  triggers nothing. A real patch bump is the only test of the push path, and
+  it is reversible: delete the release, the tag and the package version.
 - **A workflow bug can sit unnoticed for a while either way now.** `go.yml`
   runs on every push and PR, so a break there surfaces immediately; a
   break in something that only lives in `release.yml` surfaces at the next

@@ -713,6 +713,14 @@ constant, each one a considered decision rather than an oversight.
   losing up to a minute of play (`PULSE_AUTOSAVE` is 60s).
 - Reproducible builds, version/commit stamped via `-ldflags`, exposed in
   the `version` command and in MSSP output.
+- **Published on every `v*.*.*` tag** to `ghcr.io/gerrowadat/disgracelands`,
+  for `linux/amd64` and `linux/arm64`, tagged `X.Y.Z`/`X.Y`/`latest`
+  (`release.yml`'s `image` job). `GITHUB_TOKEN` is the only credential
+  involved, and the repository does not have to be public for it: a package
+  is created with its repository's visibility and can be made public
+  separately. The arm64 image is cross-compiled by the Go toolchain running
+  natively on the amd64 runner rather than built under QEMU, which
+  `CGO_ENABLED=0` is what makes possible.
 
 ---
 
