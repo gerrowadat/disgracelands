@@ -176,31 +176,51 @@ formats have no trailing period.
   ```
   make lint                       # must be 0 issues
   go test -race -count=1 ./...    # must be green, and re-run if a race appears
+  make ci                         # runs go.yml itself, in containers, via act -- see below
   ```
 - Wait for CI green, then squash-merge and delete the branch.
 
 ### CI
 
-Two workflows, split by how often each needs to run. `.github/workflows/
-go.yml` runs on every push and pull request — build, vet, gofmt, lint,
-`go test -race`. That is the whole of it: fast, and every commit gets an
-answer. `.github/workflows/release.yml` runs only when a tag matching
-`v*.*.*` is pushed (or by hand via `workflow_dispatch`) and runs
-everything else — the 32-bit ILP32/shop-price checks (`gcc-multilib`,
-installed unconditionally there, not path-filtered: a release is exactly
-the point where "probably didn't touch the layout code" stops being good
-enough), the C-vs-Go world-parity check, the licence check, two
-doc-coverage checks, a check that `examples/stock/yaml`/`examples/mini/
-yaml` still match a fresh `dlctl lib import` of their binary source, and
-a container build. `scripts/release.sh` (`make release BUMP=patch`)
-is what actually cuts a release: it bumps the semver tag, regenerates the
-example yaml worlds if they have drifted, runs the fast local checks,
-and pushes the tag that triggers `release.yml`.
+**Verify locally with `act`, not by pushing and watching GitHub.** GitHub
+Actions is where a push or PR gets its *final* answer, not where it should
+be discovered for the first time — `make ci` runs the actual
+`.github/workflows/go.yml` file, in containers, via
+[`act`](https://github.com/nektos/act) (`docs/developer.md` has the full
+detail: `.actrc`'s defaults, the `act-*` volume-staleness trap, `make
+ci-clean`). Run it before pushing, the same way `make lint`/`go test
+-race` already are — a green `make ci` locally is what a green PR check
+should be confirming, not the first place either gets checked. This
+applies to an agent working on this repo exactly as much as it does to a
+human: do not treat GitHub's own run as the place to find out whether
+something works.
 
-`make ci` runs `go.yml` locally in containers via `act`; see
-`docs/developer.md` for `release.yml`'s own local equivalent. Do not
-assume a slow or flaky check belongs back in `go.yml` because it used to
-live there — that consolidation is why the split exists at all.
+This is also a scope rule, not just a practice one: **day-to-day GitHub
+Actions runs (`go.yml`, every push and pull request) are correctness and
+lint only — build, vet, gofmt, lint, `go test -race`. Nothing broader runs
+there, ever, except when a release is actually being cut.** `.github/
+workflows/release.yml` runs only when a tag matching `v*.*.*` is pushed
+(or by hand via `workflow_dispatch`) and runs everything else — the
+32-bit ILP32/shop-price checks (`gcc-multilib`, installed unconditionally
+there, not path-filtered: a release is exactly the point where "probably
+didn't touch the layout code" stops being good enough), the C-vs-Go
+world-parity check, the licence check, two doc-coverage checks, a check
+that `examples/stock/yaml`/`examples/mini/yaml` still match a fresh
+`dlctl lib import` of their binary source, and a container build.
+`scripts/release.sh` (`make release BUMP=patch`) is what actually cuts a
+release: it bumps the semver tag, regenerates the example yaml worlds if
+they have drifted, runs the fast local checks, and pushes the tag that
+triggers `release.yml`.
+
+If a check feels like it is missing from day-to-day CI, that is very
+likely correct, not an oversight — it moved to `release.yml` on purpose
+(2026-08-23, the same change that added this rule). **Do not add it back
+to `go.yml`, and do not "run the release checks too, just to be safe" on
+an ordinary PR** — run `make ci-job JOB=full-suite
+CI_WORKFLOW=.github/workflows/release.yml` (or just `make check`/`make
+parity` directly) locally instead, if a change genuinely needs that
+broader verification before it lands. Pushing a real `v*.*.*` tag is the
+only thing that should trigger `release.yml` on GitHub itself.
 
 The licence check (`scripts/license-check.sh`) is not decorative: CircleMUD's
 licence is non-commercial and requires credits intact and the creators named

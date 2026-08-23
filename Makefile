@@ -227,7 +227,21 @@ ACT_VERSION ?= v0.2.89
 
 # Same reasoning as GOLANGCI_VERSION above: fetch the pinned version rather
 # than skip. `act` is a single Go binary, so `go run` is a fine way to get it.
-ACT = $(shell command -v act 2>/dev/null || echo "$(GO) run github.com/nektos/act@$(ACT_VERSION)")
+ACT_BIN = $(shell command -v act 2>/dev/null || echo "$(GO) run github.com/nektos/act@$(ACT_VERSION)")
+
+# This repo is routinely developed from git worktrees, whose own `.git` is a
+# *file* ("gitdir: /path/to/real/.git/worktrees/name"), not a directory.
+# act's checkout copies the working tree into the job container, but that
+# pointer's target is a host path the container has no other way to see --
+# so any step that runs git (the "Verify go.mod is tidy" step's `git diff`)
+# fails with "fatal: not a git repository: (null)" the moment `make ci` is
+# run from anywhere but the primary checkout. --git-common-dir resolves the
+# indirection to the one real .git regardless, so bind-mounting *that* into
+# the container at the same path fixes it -- and is a harmless mount of a
+# directory onto itself for a plain clone, where --git-common-dir is just
+# $(CURDIR)/.git.
+GIT_COMMON_DIR := $(shell git rev-parse --git-common-dir 2>/dev/null)
+ACT = $(ACT_BIN) --container-options "-v $(GIT_COMMON_DIR):$(GIT_COMMON_DIR):ro"
 
 # Scoped to go.yml, the day-to-day workflow (build/vet/lint/test on every
 # push and pull request). release.yml -- the full regression suite --
