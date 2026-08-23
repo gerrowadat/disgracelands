@@ -427,9 +427,11 @@ It builds both servers if needed, dumps from each, and diffs:
     identical
 ```
 
-This runs in CI. If you change the Go loader and it starts reporting
-differences, the Go loader is wrong — the C server is the reference
-implementation, and it is the one that has been running the game.
+This runs at every release (`.github/workflows/release.yml`, not the
+day-to-day `go.yml` — see `docs/developer.md`). If you change the Go
+loader and it starts reporting differences, the Go loader is wrong — the
+C server is the reference implementation, and it is the one that has been
+running the game.
 
 ## Exposure
 

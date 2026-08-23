@@ -65,7 +65,7 @@ file per zone and per character — with `dlctl lib import`. See
 `docs/design/data-format.md` and `docs/operations.md`.
 
 The two servers load the world identically — every field of all 3,202
-records — and `scripts/world-parity.sh` checks that in CI.
+records — and `scripts/world-parity.sh` checks that at every release (`.github/workflows/release.yml`).
 
 ## Where to start
 

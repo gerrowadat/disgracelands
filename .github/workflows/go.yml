@@ -1,5 +1,17 @@
-# CI for the Go port. The C tree has its own build (BUILDING.md) and is not
-# covered here; see docs/proposals/go-port-plan.md §2 for why both exist.
+# Day-to-day CI for the Go port: correctness and lint, nothing else.
+#
+# This used to also run the 32-bit layout/price checks, the C-vs-Go world
+# parity check, the license check, a container build and two doc-coverage
+# checks, on every push and pull request. All of that moved to
+# release.yml, which runs the same things (plus a version bump and a
+# release) but only when a release is actually being cut — see that file's
+# own header for why. What is left here answers exactly one question:
+# "does this compile, pass its own tests, and meet the lint bar" — the
+# thing every single commit needs answered fast, not the thing only a
+# release needs answered thoroughly.
+#
+# The C tree has its own build (BUILDING.md) and is not covered here; see
+# docs/proposals/go-port-plan.md §2 for why both exist.
 name: go
 
 on:
@@ -14,11 +26,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      # Full history, so the step below can diff against the base of the pull
-      # request rather than guessing.
       - uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
 
       - uses: actions/setup-go@v7
         with:
@@ -29,58 +37,6 @@ jobs:
         run: |
           go mod tidy
           git diff --exit-code go.mod go.sum
-
-      # Installing gcc-multilib takes longer than everything else in this job
-      # put together, and on a bad day apt stalls outright. It exists for two
-      # sets of tests - the ILP32 player-file layout, and the shop prices,
-      # which come out differently on the x87 because of its excess precision
-      # - so it is installed only for a change that could affect them.
-      #
-      # The paths below are everything those tests read: the packages
-      # themselves, the C programs they compile, and the headers those
-      # include. A change to any of them changes an answer that can only be
-      # verified against a 32-bit build.
-      #
-      # Anything that is not a pull request runs them regardless. main is the
-      # branch that has to be verified in full, and a decision made from a
-      # diff is only as good as the diff.
-      - name: Decide whether the 32-bit checks are in scope
-        id: ilp32
-        run: |
-          run_them() {
-            echo "needed=true" >> "$GITHUB_OUTPUT"
-            echo "32-bit checks: running ($1)"
-            exit 0
-          }
-
-          [ "${{ github.event_name }}" = "pull_request" ] || run_them "not a pull request"
-
-          base='${{ github.event.pull_request.base.sha }}'
-          git cat-file -e "$base^{commit}" 2>/dev/null || run_them "base commit unavailable"
-
-          changed=$(git diff --name-only "$base"...HEAD)
-          echo "$changed" | grep -qE '^(internal/persist/player/binary/|reference/tools/(pfile(layout|gen)|objfile(layout|gen)|shopprice|boardlayout|maillayout|houselayout)\.c$|internal/game/shopstate\.go$|internal/persist/(boards|mail|houses)/|reference/moderncserver/src/(structs\.h|sysdep\.h|conf\.h\.in)$|\.github/workflows/go\.yml$)' \
-            && run_them "the change touches the 32-bit layout or price checks, or their inputs"
-
-          echo "needed=false" >> "$GITHUB_OUTPUT"
-          echo "32-bit checks: skipping (nothing in this change can affect the ILP32 layout or the shop prices)"
-
-      # The player-file codec checks itself against C programs compiled for
-      # both data models. The 32-bit one is the layout the archived player
-      # database is actually in, and without multilib those checks skip -
-      # which would mean the format that matters is never verified anywhere.
-      - name: Install 32-bit toolchain
-        if: steps.ilp32.outputs.needed == 'true'
-        timeout-minutes: 5
-        run: sudo apt-get update && sudo apt-get install -y gcc-multilib
-
-      # The C tree's configure generates conf.h, which the layout and fixture
-      # programs include.
-      - name: Configure the C tree
-        if: steps.ilp32.outputs.needed == 'true'
-        run: |
-          cd reference/moderncserver
-          CFLAGS="-std=gnu89 -fcommon -w" CC=gcc ./configure >/dev/null
 
       - name: Build
         run: go build ./...
@@ -98,172 +54,17 @@ jobs:
           fi
 
       # -race is not optional here. The port keeps the C server's single
-      # game goroutine (docs/proposals/go-port-plan.md §3.1), and the whole safety
-      # argument for that design rests on nothing else touching world state.
+      # game goroutine (docs/proposals/go-port-plan.md §3.1), and the whole
+      # safety argument for that design rests on nothing else touching
+      # world state.
+      #
+      # This runs without the 32-bit toolchain, so the four tests that
+      # need it (the player/board/mail/house layout checks, the shop-price
+      # check) skip here exactly as they would on any contributor's own
+      # 64-bit machine — correct, not a gap: release.yml is where they run
+      # for real and where a silent skip is caught rather than allowed.
       - name: Test
         run: go test -race -count=1 ./...
-
-      # A skipped test is not a passing test. These two verify the things
-      # that cannot be verified by reading the code - the layout the real
-      # player data is in, and a hand-written implementation of a cipher -
-      # and both skip silently where their toolchain is missing. CI is where
-      # they have to actually run.
-      #
-      # Every one of these greps a package path recursively (`/...`), and that
-      # is not incidental. They were written against non-recursive paths, the
-      # layout tests later moved down into `classic/` subpackages, and
-      # `go test ./internal/persist/boards/` started reporting "no test files"
-      # - so the grep for the success marker found nothing and the step failed.
-      # main was red for five merges before anything noticed, because the gate
-      # above skips these steps on most pull requests and only a push runs
-      # them. Keep the `/...`, and if you move one of these tests again, check
-      # it with `make ci` rather than by reading.
-      - name: The 32-bit codec checks must not have skipped
-        if: steps.ilp32.outputs.needed == 'true'
-        run: |
-          go test -count=1 -v ./internal/persist/player/... > out.txt 2>&1 || { cat out.txt; exit 1; }
-          if grep -q -- "--- SKIP.*ilp32" out.txt; then
-            echo "the ilp32 checks skipped; they must run in CI:"
-            grep -A2 -- "--- SKIP" out.txt
-            exit 1
-          fi
-          grep -c -- "--- PASS.*ilp32" out.txt
-
-      # And the board files, which have a live `char *` written into the
-      # middle of them. Its width moves every field after it, so a 64-bit
-      # build reads the poster's level out of half a pointer.
-      - name: The 32-bit board layout check must not have skipped
-        if: steps.ilp32.outputs.needed == 'true'
-        run: |
-          go test -count=1 -v ./internal/persist/boards/... > boards.txt 2>&1 || { cat boards.txt; exit 1; }
-          if grep -q -- "--- SKIP" boards.txt; then
-            echo "the 32-bit board layout check skipped; it must run in CI:"
-            grep -A2 -- "--- SKIP" boards.txt
-            exit 1
-          fi
-          grep -- "struct members against the 32-bit C" boards.txt
-
-      # And the mail blocks. This one gives nothing away when it is wrong:
-      # the block size is 100 under every data model, so a file written by
-      # the wrong build lines up perfectly and every message comes out with
-      # its middle shuffled.
-      - name: The 32-bit mail layout check must not have skipped
-        if: steps.ilp32.outputs.needed == 'true'
-        run: |
-          go test -count=1 -v ./internal/persist/mail/... > mail.txt 2>&1 || { cat mail.txt; exit 1; }
-          if grep -q -- "--- SKIP" mail.txt; then
-            echo "the 32-bit mail layout check skipped; it must run in CI:"
-            grep -A2 -- "--- SKIP" mail.txt
-            exit 1
-          fi
-          grep -- "mail block values against the 32-bit C" mail.txt
-
-      # And the house control record, which has a padding hole in the middle
-      # of it that the C never writes.
-      - name: The 32-bit house layout check must not have skipped
-        if: steps.ilp32.outputs.needed == 'true'
-        run: |
-          go test -count=1 -v ./internal/persist/houses/... > houses.txt 2>&1 || { cat houses.txt; exit 1; }
-          if grep -q -- "--- SKIP" houses.txt; then
-            echo "the 32-bit house layout check skipped; it must run in CI:"
-            grep -A2 -- "--- SKIP" houses.txt
-            exit 1
-          fi
-          grep -- "struct members against the 32-bit C" houses.txt
-
-      # Same argument for the shop prices. This one is not a layout, it is an
-      # arithmetic width: buy_price truncates a float product, and the answer
-      # differs between an SSE build and the x87 build the archive came from.
-      # A silent skip here means the port charges 115 where players paid 114.
-      - name: The 32-bit shop price check must not have skipped
-        if: steps.ilp32.outputs.needed == 'true'
-        run: |
-          go test -count=1 -v -run TestShopPricesMatchA32BitBuildOfTheC ./internal/game/ > shop.txt 2>&1 || { cat shop.txt; exit 1; }
-          if grep -q -- "--- SKIP" shop.txt; then
-            echo "the 32-bit shop price check skipped; it must run in CI:"
-            grep -A2 -- "--- SKIP" shop.txt
-            exit 1
-          fi
-          grep -- "price pairs against the 32-bit C" shop.txt
-
-      # The DES implementation is hand-written, so the comparison against the
-      # system libcrypt is the only thing standing between it and "probably
-      # right". If this runner's libcrypt has traditional DES disabled the
-      # test skips by design - correct locally, useless here.
-      - name: The libcrypt comparison must not have skipped
-        run: |
-          go test -count=1 -v ./internal/auth/... > crypt.txt 2>&1 || { cat crypt.txt; exit 1; }
-          if grep -q -- "--- SKIP.*TestAgainstSystemCrypt" crypt.txt; then
-            echo "the libcrypt comparison skipped; it must run in CI:"
-            grep -B2 -A4 -- "--- SKIP" crypt.txt
-            exit 1
-          fi
-          grep -- "matched the system libcrypt" crypt.txt
-
-      - name: Phase 0 acceptance - dlmud --help lists the full option set
-        run: |
-          go run ./cmd/dlmud --help > help.txt 2>&1 || true
-          for opt in lib-dir player-format world-format listen-telnet listen-telnets \
-                     listen-ws tls-cert pulse-interval log-format metrics-addr \
-                     allow-legacy-passwords; do
-            grep -q -- "-$opt" help.txt || { echo "missing --$opt in --help"; exit 1; }
-          done
-          grep -q 'DL_LIB_DIR' help.txt || { echo "--help does not document env vars"; exit 1; }
-
-      # docs/configuration.md is the operator-facing copy of the flag set, and
-      # a settings reference that silently drops a flag is worse than none.
-      # This cannot check the prose is accurate, only that nothing is missing.
-      # The world files are data, and data rots: an exit to a deleted room or
-      # a reset command for a mob that no longer exists is invisible until a
-      # player walks into it. Linting in CI catches that at the commit that
-      # causes it. Errors fail the build; warnings do not, because the
-      # shipped world has had several since long before this repo existed.
-      - name: Lint the world files
-        run: go run ./cmd/dlctl world lint --world-dir=examples/stock/binary/world
-
-      - name: docs/configuration.md covers every flag
-        run: |
-          go run ./cmd/dlmud --help 2>&1 \
-            | sed -n 's/^  -\([a-z][a-z0-9-]*\).*/\1/p' \
-            | sort -u > flags.txt
-          missing=0
-          while read -r flag; do
-            # Single-letter names are the C-compatibility aliases, documented
-            # as a group rather than one row each.
-            [ "${#flag}" -le 1 ] && continue
-            grep -q -- "--$flag" docs/configuration.md || {
-              echo "docs/configuration.md does not mention --$flag"; missing=1; }
-          done < flags.txt
-          exit $missing
-
-  # The acceptance criterion for Phase 1: both servers load the world and must
-  # hold the same thing afterwards. It runs here rather than in the Go test
-  # job because it needs the C tree built, which needs a C toolchain and about
-  # a minute.
-  parity:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-
-      - uses: actions/setup-go@v7
-        with:
-          go-version: '1.25'
-
-      - name: World parity - the Go and C loaders must agree
-        run: ./scripts/world-parity.sh
-
-  # The CircleMUD and DikuMUD licenses are the terms this repository exists
-  # under at all (docs/proposals/go-port-plan.md §12), and their requirements
-  # are mechanical: keep the license verbatim, keep the headers, keep the
-  # credits. Checking them here means compliance is a build failure rather
-  # than an assurance.
-  license:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-
-      - name: License compliance
-        run: ./scripts/license-check.sh
 
   lint:
     runs-on: ubuntu-latest
@@ -278,23 +79,3 @@ jobs:
           # v1 binary rejects it outright rather than degrading. The action
           # major version and the tool major version have to agree.
           version: v2.12.2
-
-  container:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-
-      - name: Build image
-        uses: docker/build-push-action@v7
-        with:
-          context: .
-          file: build/Dockerfile
-          push: false
-          load: true
-          tags: disgracelands:ci
-          build-args: |
-            VERSION=ci
-            COMMIT=${{ github.sha }}
-
-      - name: Image runs and reports its version
-        run: docker run --rm --entrypoint /usr/local/bin/dlctl disgracelands:ci version

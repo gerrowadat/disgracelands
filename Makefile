@@ -199,7 +199,7 @@ tidy: ## go mod tidy
 # how a clean `make check` and a red CI happen at the same time.
 GOLANGCI_VERSION ?= v2.12.2
 
-check: ## Build, vet, format-check, lint, test and lint the world -- roughly what CI runs
+check: ## Build, vet, format-check, lint, test, license and world-lint -- the full local check `make release` runs before tagging
 	@unformatted=$$(gofmt -l .); \
 	  if [ -n "$$unformatted" ]; then echo "These files need gofmt:"; echo "$$unformatted"; exit 1; fi
 	$(GO) build $(PKG)
@@ -213,6 +213,11 @@ parity: ## Check the Go and C world loaders agree (builds the C server; slow)
 license: ## Check the CircleMUD/DikuMUD license obligations
 	./scripts/license-check.sh
 
+.PHONY: release
+release: ## Cut a release: make release BUMP=patch|minor|major (or BUMP=v1.2.3)
+	@test -n "$(BUMP)" || { echo "usage: make release BUMP=patch|minor|major|v1.2.3"; exit 2; }
+	./scripts/release.sh $(BUMP)
+
 # `make check` is an approximation of CI assembled by hand, and an
 # approximation drifts: it does not run the actions, the 32-bit steps or the
 # container build, and it cannot notice a workflow change at all. These
@@ -222,40 +227,43 @@ ACT_VERSION ?= v0.2.89
 
 # Same reasoning as GOLANGCI_VERSION above: fetch the pinned version rather
 # than skip. `act` is a single Go binary, so `go run` is a fine way to get it.
-ACT = $(shell command -v act 2>/dev/null || echo "$(GO) run github.com/nektos/act@$(ACT_VERSION)")
+ACT_BIN = $(shell command -v act 2>/dev/null || echo "$(GO) run github.com/nektos/act@$(ACT_VERSION)")
+
+# This repo is routinely developed from git worktrees, whose own `.git` is a
+# *file* ("gitdir: /path/to/real/.git/worktrees/name"), not a directory.
+# act's checkout copies the working tree into the job container, but that
+# pointer's target is a host path the container has no other way to see --
+# so any step that runs git (the "Verify go.mod is tidy" step's `git diff`)
+# fails with "fatal: not a git repository: (null)" the moment `make ci` is
+# run from anywhere but the primary checkout. --git-common-dir resolves the
+# indirection to the one real .git regardless, so bind-mounting *that* into
+# the container at the same path fixes it -- and is a harmless mount of a
+# directory onto itself for a plain clone, where --git-common-dir is just
+# $(CURDIR)/.git.
+GIT_COMMON_DIR := $(shell git rev-parse --git-common-dir 2>/dev/null)
+ACT = $(ACT_BIN) --container-options "-v $(GIT_COMMON_DIR):$(GIT_COMMON_DIR):ro"
+
+# Scoped to go.yml, the day-to-day workflow (build/vet/lint/test on every
+# push and pull request). release.yml -- the full regression suite --
+# runs the 32-bit toolchain, a C build and a container build
+# unconditionally; act can run it too (`make ci-job JOB=full-suite
+# WORKFLOW=.github/workflows/release.yml`), but it is slow enough, and
+# close enough to release.sh's own local pre-flight, that it is rarely
+# worth reaching for over just pushing a test tag.
+CI_WORKFLOW ?= .github/workflows/go.yml
 
 .PHONY: ci
-ci: ## Run the whole GitHub Actions workflow locally, in containers (needs Docker; slow)
-	$(ACT)
+ci: ## Run go.yml locally, in containers (needs Docker; slow)
+	$(ACT) -W $(CI_WORKFLOW)
 
 .PHONY: ci-job
-ci-job: ## Run one CI job: make ci-job JOB=test (test|parity|license|lint|container)
+ci-job: ## Run one job: make ci-job JOB=test (test|lint; add WORKFLOW=... for release.yml's jobs)
 	@test -n "$(JOB)" || { echo "usage: make ci-job JOB=<name>; try 'make ci-list'"; exit 1; }
-	$(ACT) -j $(JOB)
+	$(ACT) -W $(CI_WORKFLOW) -j $(JOB)
 
 .PHONY: ci-list
 ci-list: ## List the jobs `make ci` would run
-	$(ACT) --list
-
-# act's default event is `push`, and the test job's 32-bit gate short-circuits
-# on "not a pull request" -- so `make ci` always runs the ILP32 and shop-price
-# checks in full. This target is the other half: it synthesises a
-# pull_request event so the path filter in that gate actually gets evaluated,
-# which is the only way to test the regex before pushing. CLAUDE.md's warning
-# is that a file missing from it does not fail, it silently stops checking.
-#
-#   make ci-pr                      # against origin/main
-#   make ci-pr BASE=HEAD~3          # against something else
-CI_PR_EVENT = $(OUT)/act-pull-request.json
-BASE ?= origin/main
-
-.PHONY: ci-pr
-ci-pr: ## Run the test job as a pull_request, to exercise the 32-bit path filter
-	@mkdir -p $(OUT)
-	@base=$$(git rev-parse $(BASE)) && \
-	  printf '{"pull_request":{"base":{"sha":"%s"}}}\n' "$$base" > $(CI_PR_EVENT) && \
-	  echo "pull_request base: $(BASE) ($$base)"
-	$(ACT) pull_request -j test -e $(CI_PR_EVENT)
+	$(ACT) -W $(CI_WORKFLOW) --list
 
 # .actrc passes --reuse, so the job containers survive between runs and carry
 # their caches with them. That is the difference between a second run taking
