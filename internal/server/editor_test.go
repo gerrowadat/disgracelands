@@ -13,17 +13,20 @@ import (
 	"github.com/gerrowadat/disgracelands/internal/game"
 )
 
-// These exercise the five improved-editor commands this port answers —
-// /a, /c, /h, /l and /s (internal/session/menu.go's editorCommand,
-// improved-edit.c) — through `tedit`, which needs no setup beyond a
-// logged-in character. docs/deviations.md's "improved line editor" entry
-// has the fuller story: CONFIG_IMPROVED_EDITOR was hardcoded on in the
-// archived server, so these were never a stock/optional feature.
+// These exercise the improved editor's own commands end to end, through
+// `tedit`, which needs no setup beyond a logged-in character.
+// internal/session/editor.go is the port and
+// internal/session/editoracle_test.go is where each command is checked
+// against the C case by case; what these add is that the wiring — the
+// StateEditing dispatch, the buffer surviving between commands, the save
+// actually landing — works over a socket.
+//
+// docs/deviations.md's "improved line editor" entry has the fuller story:
+// CONFIG_IMPROVED_EDITOR was hardcoded on in the archived server, so these
+// were never a stock/optional feature.
 
-// TestImprovedEditorHelpAndInvalidOption: /h lists only the five commands
-// this port answers, not the six (/d, /e, /f, /i, /n, /r) it does not —
-// advertising one of those would promise something that then says
-// "Invalid option." when typed, which /x proves it does.
+// TestImprovedEditorHelpAndInvalidOption: /h lists all eleven commands,
+// every one of which works, and anything else is "Invalid option."
 func TestImprovedEditorHelpAndInvalidOption(t *testing.T) {
 	srv, _ := newTestServer(t)
 	addr := listening(t, srv)
@@ -36,19 +39,97 @@ func TestImprovedEditorHelpAndInvalidOption(t *testing.T) {
 
 	c.send("/h")
 	c.expect("Editor command formats:")
-	for _, want := range []string{"/a ", "/c ", "/h ", "/l ", "/s "} {
+	for _, want := range []string{"/a ", "/c ", "/d#", "/e#", "/f ", "/fi ", "/h ", "/i#", "/l ", "/n ", "/r ", "/ra ", "/s "} {
 		if !c.seen(want) {
-			t.Errorf("editor help dropped %q, one of the five commands this port answers:\n%s", want, c.transcript())
-		}
-	}
-	for _, unwanted := range []string{"/d ", "/e ", "/f ", "/i ", "/n ", "/r "} {
-		if c.seen(unwanted) {
-			t.Errorf("editor help advertised %q, which this port does not implement:\n%s", unwanted, c.transcript())
+			t.Errorf("editor help dropped %q:\n%s", want, c.transcript())
 		}
 	}
 
 	c.send("/x")
 	c.expect("Invalid option.")
+}
+
+// TestImprovedEditorLineCommands walks /n, /i, /e and /d over one buffer, in
+// that order, so each sees what the last one left behind.
+func TestImprovedEditorLineCommands(t *testing.T) {
+	srv, _ := newTestServer(t)
+	addr := listening(t, srv)
+
+	c := dialClient(t, addr)
+	c.create("Zod", "swordfish", "m", "w")
+
+	c.send("tedit motd")
+	c.expect("Edit file below:")
+	c.send("/c")
+	c.expect("Current buffer cleared.")
+
+	c.send("alpha")
+	c.send("beta")
+	c.send("gamma")
+
+	// The line number goes on a line of its own: that is the C's
+	// "%4d:\r\n" (improved-edit.c:325), not a transcription slip.
+	c.send("/n")
+	c.expect("   1:\r\nalpha\r\n   2:\r\nbeta\r\n   3:\r\ngamma\r\n")
+
+	c.send("/i 2 inserted")
+	c.expect("Line inserted.")
+	c.send("/e 4 replaced")
+	c.expect("Line changed.")
+	c.send("/d 1")
+	c.expect("1 line deleted.")
+
+	c.send("/l")
+	c.expect("inserted\r\nbeta\r\nreplaced\r\n\r\n3 lines shown.")
+
+	c.send("/s")
+	c.expect("Saved.")
+
+	var motd string
+	inWorld(t, srv, func(_ *game.Live) { motd = srv.text.MOTD() })
+	if motd != "inserted\r\nbeta\r\nreplaced\r\n" {
+		t.Errorf("Text.MOTD() = %q, want what the line commands left in the buffer", motd)
+	}
+}
+
+// TestImprovedEditorFormatAndReplace: /f rewraps the whole buffer and /r
+// substitutes across it, both of which need the buffer to be one string
+// rather than a list of lines.
+func TestImprovedEditorFormatAndReplace(t *testing.T) {
+	srv, _ := newTestServer(t)
+	addr := listening(t, srv)
+
+	c := dialClient(t, addr)
+	c.create("Zod", "swordfish", "m", "w")
+
+	c.send("tedit motd")
+	c.expect("Edit file below:")
+	c.send("/c")
+	c.expect("Current buffer cleared.")
+
+	c.send("the quick brown")
+	c.send("fox. it jumped")
+
+	// Three lines' worth of words become one, capitalised at the start and
+	// after the full stop, with the C's two spaces between sentences.
+	c.send("/f")
+	c.expect("Text formatted without indent.")
+	c.send("/l")
+	c.expect("The quick brown fox.  It jumped")
+
+	c.send("/ra 'o' '0'")
+	c.expect("Replaced 2 occurances of 'o' with '0'.")
+	c.send("/r 'quick' 'slow'")
+	c.expect("Replaced 1 occurance of 'quick' with 'slow'.")
+
+	c.send("/s")
+	c.expect("Saved.")
+
+	var motd string
+	inWorld(t, srv, func(_ *game.Live) { motd = srv.text.MOTD() })
+	if !strings.Contains(motd, "The slow br0wn f0x.  It jumped") {
+		t.Errorf("Text.MOTD() = %q, want the formatted and substituted text", motd)
+	}
 }
 
 // TestImprovedEditorClearAndList: /c reports differently on an empty

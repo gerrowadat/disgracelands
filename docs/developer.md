@@ -397,15 +397,32 @@ describing numbers gets an oracle rather than a reading.**
 dereferences substituted and nothing else changed. The Go tests compile them
 and compare across the whole input space where that is affordable — 30,000 RNG
 draws, 1,512,000 to-hit values, 36,288 regeneration values, 1,125 saving
-throws, 9,680 DES `crypt(3)` pairs, 168 `isname` pairings, and shop prices
-against a 32-bit x87 build of the C, because there `int * float` truncated to
-`int` gives a different answer than the same line built for SSE.
+throws, 9,680 DES `crypt(3)` pairs, 168 `isname` pairings, 805 line-editor
+commands, and shop prices against a 32-bit x87 build of the C, because there
+`int * float` truncated to `int` gives a different answer than the same line
+built for SSE.
 
 **An oracle is worth writing for string code too, not only arithmetic.**
 `isname` has no numbers in it at all and was still read wrong for four phases:
 its loop has the shape of a prefix match and the semantics of a whole-word one.
-The rule is really *anything whose behaviour you would have to simulate in your
-head to be sure of*.
+The improved line editor's eleven commands are the same lesson at length:
+`editoracle.c` turned up seven separate things a careful reading had got
+wrong, including a three-line buffer having a fourth line and a `/ra` that
+runs out of room silently truncating the player's text
+(`docs/weirdnumbers.md`, "The line editor"). The rule is really *anything
+whose behaviour you would have to simulate in your head to be sure of*.
+
+**Watch what optimisation level you build an oracle at.** These are twenty-
+year-old C, and some of it is undefined behaviour that a compiler of the
+period resolved one way and a modern one resolves another. `editoracle.c` is
+built `-O0` because `PARSE_LIST_NUM` accumulates with `sprintf(buf,
+"%s%4d:\r\n", buf, i - 1)` — destination and `%s` argument the same buffer —
+and gcc at `-O2` turns that into something that keeps only the last line,
+where `-O0` calls glibc and the self-copy at offset zero is a no-op. `-O2`'s
+answer would have made `/n` a broken command in this port for no reason but
+the compiler being new. An oracle's job is to say what the archived server
+did; where the C is undefined, that has to be decided deliberately rather
+than inherited from whatever gcc is installed.
 
 Where a table is transcribed rather than computed, the test re-parses the C
 source and compares entry by entry, so a typo in a table is a failing test

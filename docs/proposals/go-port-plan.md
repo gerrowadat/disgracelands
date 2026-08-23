@@ -1426,8 +1426,8 @@ previously-undocumented finding along the way: the archived server's
 `CONFIG_IMPROVED_EDITOR` is hardcoded `1` — the improved line editor's
 `/c`/`/l`/`/h`/`/a`/`/s` commands were always on, not stock — and this
 port's line editor has never had them, invisibly until `tedit` became
-the first caller to seed a non-empty buffer. Recorded in
-`docs/deviations.md` as a gap, not fixed here.
+the first caller to seed a non-empty buffer. Five landed in the slice
+below and the remaining six followed it; all eleven work now.
 
 **`reloadmob` ✅ — genuinely new capability, not a C port; the shape
 Phase 6 actually took.** `interpreter.c` has nothing like it. An
@@ -1590,19 +1590,32 @@ player's own move gets (no movement-point cost, no boat/tunnel/atrium/
 godroom checks), documented as inert against the real data rather than
 a risk quietly taken. `docs/deviations.md` has the full writeup of both.
 
-**The improved line editor's `/a`/`/c`/`/h`/`/l`/`/s` ✅ — five of the
-eleven commands `tedit`'s own landing found missing.** `editorCommand`
-(`internal/session/menu.go`) ports `improved_editor_execute`
-(`improved-edit.c:27`) for the five that need no line-range editing
-machinery of their own: abort, clear, help, list and save. `/d`, `/e`,
-`/f`, `/i`, `/n` and `/r` — delete, edit, format, insert, numbered list
-and replace — stay unbuilt, and typing one (or anything else after a
-leading `/`) gets the C's own "Invalid option." rather than silently
-doing nothing; `/h`'s own text lists only the five that work rather than
-the C's full eleven, so it never promises what it cannot do. `tedit`'s
-instructions line now says what the C's `send_editor_help` actually said
-("/s or @ to save, /h for more options."), which stopped being a lie the
-moment `/s` and `/h` became real.
+**The improved line editor, all eleven commands ✅ — the gap `tedit`'s
+own landing found.** `internal/session/editor.go` ports
+`improved_editor_execute` (`improved-edit.c:27`), `parse_action`,
+`format_text` and `replace_str`. `/a` `/c` `/h` `/l` `/s` — abort, clear,
+help, list, save — landed first, being the five that need no line-range
+editing machinery of their own; `/d` `/e` `/f` `/i` `/n` `/r` — delete,
+edit, format, insert, numbered list, replace — followed. Anything else
+after a leading `/` gets the C's own "Invalid option.", and `/h`'s text
+is now the C's own, unedited, because every command it lists works.
+`tedit`'s instructions line says what the C's `send_editor_help` actually
+said ("/s or @ to save, /h for more options."), which stopped being a lie
+the moment `/s` and `/h` became real.
+
+The six needed a `reference/tools/editoracle.c` and would have been wrong
+without it. Line-range string surgery is not arithmetic, and it turned
+out to be wrong in a different way at nearly every turn: a three-line
+buffer has a fourth line, so `/d 4` answers "0 lines deleted."; a buffer
+emptied by `/d` is not the same object as one freed by `/c`, and the
+guards on `/f` `/i` `/l` `/n` test the pointer; `/n` prints its line
+number on a line of its own; a `/r` pattern longer than the buffer wraps
+an unsigned subtraction and reports the buffer as full; and a `/ra` that
+runs out of room leaves the player's text truncated at the match it gave
+up on and then says the string was not found. `docs/weirdnumbers.md`'s
+"The line editor" section has all of them with citations; the buffer is
+held flat rather than as a `[]string` because that is what the commands
+are defined against.
 
 Abort needed a real design decision the plain `@`-terminated loop never
 had to make: what to hand back when there is nothing to save.
