@@ -448,6 +448,149 @@ func specPetShop(sc *SpecialCall) bool {
 // petPrice is PET_PRICE (spec_procs.c:949).
 func petPrice(pet *game.Character) int32 { return pet.Level() * 300 }
 
+// mayorOpenPath and mayorClosePath are SPECIAL(mayor)'s own two route
+// strings, verbatim (spec_procs.c:281-284): a scripted patrol around
+// Midgaard, twice a day. Digits are directions — game.Direction's own file
+// order matches `path[index] - '0'` exactly — and the letters are the
+// mayor doing something other than walking at that point in the route: the
+// only difference between the two paths is 'e' versus 'E', two different
+// things the mayor says.
+//
+// The switch below still has cases for 'O'/'C' — gate open/close, the
+// behaviour the special's own name in the specials list ("opening and
+// closing the gates") describes — because the C's switch does. Neither
+// letter ever actually appears in open_path or close_path above, though:
+// checked character by character rather than assumed from the folklore,
+// since CLAUDE.md's whole point is that a description of what code does is
+// not the code. The port keeps the dead cases anyway, for the same reason
+// the C does: a hand-edited path in the world data could still use them,
+// and reproducing the switch whole costs nothing extra.
+//
+// Reproduced literally rather than decoded into named waypoints: nothing
+// here needs to know *where* on the route each step lands, only what to do
+// there, and the C never named them either.
+const (
+	mayorOpenPath  = "W3a3003b33000c111d0d111e333333e22c222112212111a1S."
+	mayorClosePath = "W3a3003b33000c111d0d111E333333E22c222112212111a1S."
+)
+
+// mayorWalk is one mobile's progress along mayorOpenPath/mayorClosePath.
+//
+// The C keeps this in three `static` locals inside SPECIAL(mayor) itself,
+// shared across every call regardless of which mobile makes it — which
+// only works because the real archived world spawns exactly one mayor
+// (data/world/zon/31.zon). A map keyed by the mobile keeps each instance's
+// walk independent instead of relying on that going on being true, without
+// changing anything the real, single-mayor world can ever observe. The one
+// cost: an entry here outlives a mayor who is ever extracted from the
+// world rather than merely idle between patrols — one small, bounded
+// leak (there is only ever one mayor) that a restart clears, not worth a
+// finalizer for.
+var mayorState = map[*game.Character]*mayorWalk{}
+
+type mayorWalk struct {
+	path  string
+	index int
+}
+
+// specMayor is SPECIAL(mayor) (spec_procs.c:277), assigned to mob 3105.
+//
+// Like pet_shops it always returns false — the C's own `return (FALSE)` at
+// the end of every branch, `cmd` never being set on a pulse call — so
+// mobile_activity's ordinary wander/scavenge/aggressive checks still run
+// for the mayor on the same pulse it takes a scripted step. Inert against
+// the real data: mob 3105 carries MOB_SENTINEL (data/world/mob/31.mob,
+// flags "ablno" — 'b' is bit 1), which is what stops wander competing with
+// the script, and carries neither MOB_SCAVENGER nor MOB_AGGRESSIVE either.
+func specMayor(sc *SpecialCall) bool {
+	if !sc.Pulse() {
+		return false
+	}
+
+	walk := mayorState[sc.Actor]
+	if walk == nil {
+		switch sc.World.MudTime().Hours {
+		case 6:
+			walk = &mayorWalk{path: mayorOpenPath}
+		case 20:
+			walk = &mayorWalk{path: mayorClosePath}
+		default:
+			return false
+		}
+		mayorState[sc.Actor] = walk
+	}
+
+	// GET_POS(ch) < POS_SLEEPING || GET_POS(ch) == POS_FIGHTING: retried
+	// on the same step next pulse rather than skipped, exactly as the C's
+	// own static index does — a mayor stunned mid-patrol picks up where it
+	// left off once it can act again, not further along.
+	if sc.Actor.Position < game.PosSleeping || sc.Actor.Position == game.PosFighting {
+		return false
+	}
+	if walk.index >= len(walk.path) {
+		delete(mayorState, sc.Actor)
+		return false
+	}
+
+	switch step := walk.path[walk.index]; step {
+	case '0', '1', '2', '3':
+		sc.World.MoveMobile(sc.Actor, game.Direction(step-'0'))
+
+	case 'W':
+		sc.Actor.Position = game.PosStanding
+		sc.ToRoom("%s awakens and groans loudly.\r\n", sc.Actor.Name)
+
+	case 'S':
+		sc.Actor.Position = game.PosSleeping
+		sc.ToRoom("%s lies down and instantly falls asleep.\r\n", sc.Actor.Name)
+
+	case 'a':
+		sc.ToRoom("%s says 'Hello Honey!'\r\n", sc.Actor.Name)
+		sc.ToRoom("%s smirks.\r\n", sc.Actor.Name)
+
+	case 'b':
+		sc.ToRoom("%s says 'What a view!  I must get something done about that dump!'\r\n",
+			sc.Actor.Name)
+
+	case 'c':
+		sc.ToRoom("%s says 'Vandals!  Youngsters nowadays have no respect for anything!'\r\n",
+			sc.Actor.Name)
+
+	case 'd':
+		sc.ToRoom("%s says 'Good day, citizens!'\r\n", sc.Actor.Name)
+
+	case 'e':
+		sc.ToRoom("%s says 'I love this town!'\r\n", sc.Actor.Name)
+
+	case 'E':
+		sc.ToRoom("%s says 'I hereby declare, oh, My, I forget!'\r\n", sc.Actor.Name)
+
+	case 'O':
+		sc.gateDoor(doorUnlock)
+		sc.gateDoor(doorOpen)
+
+	case 'C':
+		sc.gateDoor(doorClose)
+		sc.gateDoor(doorLock)
+
+	case '.':
+		delete(mayorState, sc.Actor)
+		return false
+	}
+
+	walk.index++
+	return false
+}
+
+// gateDoor runs one of the five door actions against "gate", the way the
+// mayor's own do_gen_door(ch, "gate", 0, SCMD_*) calls do — a Context built
+// around the mobile itself, the same shape cast (below) and dropForDump
+// build for their own mobile-acting-as-player calls.
+func (sc *SpecialCall) gateDoor(action doorAction) {
+	ctx := &Context{World: sc.World, Character: sc.Actor, Arg: "gate"}
+	_ = ctx.door(action)
+}
+
 // dropForDump runs the drop and returns what landed on the floor, so the
 // caller can price it. Simpler than the C's arrangement, which drops and then
 // walks the room again — the answer is the same because the sweep above left

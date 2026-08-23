@@ -201,6 +201,12 @@ const (
 	// the room the player is standing in, not a lookup.
 	PetShopRoom     game.RoomVnum = 3023
 	PetShopBackRoom game.RoomVnum = 3024
+	// MayorLoopRoom's four horizontal exits all lead back to itself.
+	// specMayor's scripted path doesn't care where each step actually
+	// lands, only that a direction gets tried, so a self-loop exercises
+	// that without reproducing the real archived room graph the path was
+	// actually written against.
+	MayorLoopRoom game.RoomVnum = 3025
 )
 
 // MageGuildRoom is guild_info's first row: the magic-user guild, whose door
@@ -458,9 +464,16 @@ func testWorld() *game.Live {
 		Vnum: PetShopBackRoom, Name: "Pet Shop Store", Description: "Where the pets are kept.\r\n",
 	}
 
+	mayorLoopRoom := &game.RoomDef{
+		Vnum: MayorLoopRoom, Name: "A Featureless Plaza", Description: "A plaza.\r\n",
+	}
+	for _, dir := range []game.Direction{game.North, game.East, game.South, game.West} {
+		mayorLoopRoom.Exits[dir] = &game.ExitDef{ToRoom: MayorLoopRoom}
+	}
+
 	rooms := []*game.RoomDef{
 		temple, board, guild, donation, shopRoom, boardRoom, houseRoom,
-		atriumRoom, cellarRoom, petShopRoom, petShopBackRoom,
+		atriumRoom, cellarRoom, petShopRoom, petShopBackRoom, mayorLoopRoom,
 	}
 	// A run of otherwise-inert rooms — unflagged, no exits — for a test
 	// that needs `show death`/`show godrooms` (act.wizard.c's shared

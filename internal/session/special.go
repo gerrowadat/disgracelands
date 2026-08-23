@@ -126,6 +126,7 @@ func init() {
 		"gen_board":    specGenBoard,
 		"postmaster":   specPostmaster,
 		"pet_shops":    specPetShop,
+		"mayor":        specMayor,
 	}
 }
 

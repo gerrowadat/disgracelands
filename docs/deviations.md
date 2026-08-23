@@ -510,35 +510,58 @@ Listed here so they are not mistaken for deliberate differences.
   confirmed, not assumed: `MobDef` has no such field, and nothing reads
   one — so there was nothing to resolve it from. Worth a note when the
   world format's mob fields are next revisited.
-- **One special procedure is left.** The subsystems that were blocking the
-  rest all landed in 5f and 5g, so the seam now carries the guildmasters,
-  guild guards, Puff, fidos, janitors, cityguards, snakes, mobile mages,
-  thieves, the dump, the shopkeeper, the banker, the receptionist, the
-  cryogenicist, the postmaster, the boards and the **pet shop**
-  (`pet_shops`, `spec_procs.c:951`) — seventeen in all. The pet shop is
-  assigned to room 3031 itself rather than to a mobile — Midgaard's has no
-  keeper standing in it, just a sign — and the animals for sale live in
-  room 3032, found by `IN_ROOM(ch) + 1` rather than any lookup, which the
-  port reproduces the same blunt way (`internal/session/specprocs.go`'s
-  `specPetShop`). One accepted gap in what it does once bought: the C also
-  sets `IS_CARRYING_W`/`IS_CARRYING_N` on the new pet to already-maxed
-  values, a cache-poisoning trick that stops it being given, wearing or
-  wielding anything without needing a real "no carrying" mechanism. This
-  port computes carried weight and count from what a character actually
-  holds rather than caching them on the character, so there is no field to
+- **Every stock special procedure the archived world actually uses is
+  built.** The subsystems that were blocking the rest all landed in 5f and
+  5g, so the seam now carries the guildmasters, guild guards, Puff, fidos,
+  janitors, cityguards, snakes, mobile mages, thieves, the dump, the
+  shopkeeper, the banker, the receptionist, the cryogenicist, the
+  postmaster, the boards, the pet shop and the mayor — eighteen in all.
+  **`assign_kings_castle`** is a zone-sized script rather than a special
+  and stays untouched. The local ones (`talkera`, `marblesa`, `remmob`,
+  `cerberus`, `teleporter` and the rest) are attached to vnums that exist
+  only in the archived world, so there is nothing here to attach them to.
+
+  The **pet shop** (`pet_shops`, `spec_procs.c:951`) is assigned to room
+  3031 itself rather than to a mobile — Midgaard's has no keeper standing
+  in it, just a sign — and the animals for sale live in room 3032, found
+  by `IN_ROOM(ch) + 1` rather than any lookup, which the port reproduces
+  the same blunt way (`internal/session/specprocs.go`'s `specPetShop`).
+  One accepted gap in what it does once bought: the C also sets
+  `IS_CARRYING_W`/`IS_CARRYING_N` on the new pet to already-maxed values,
+  a cache-poisoning trick that stops it being given, wearing or wielding
+  anything without needing a real "no carrying" mechanism. This port
+  computes carried weight and count from what a character actually holds
+  rather than caching them on the character, so there is no field to
   poison the same way — a bought pet here can, in principle, be handed an
   item and carry it, which the real game's pets never could. Small and
   cosmetic (nobody plays with a charmed puppy's inventory), not worth a
   new mechanism invented solely to reproduce a cache trick this port's
   model does not have.
 
-  The **mayor** (mob 3105, a scripted walk around Midgaard on a timer,
-  opening and closing the gates) is the one left, and does not block
-  anything else. **`assign_kings_castle`** is a zone-sized script rather
-  than a special and stays untouched. The local ones (`talkera`,
-  `marblesa`, `remmob`, `cerberus`, `teleporter` and the rest) are attached
-  to vnums that exist only in the archived world, so there is nothing here
-  to attach them to.
+  The **mayor** (mob 3105, `spec_procs.c:277`) is a scripted patrol around
+  Midgaard, twice a day. What it is commonly described as doing —
+  "opening and closing the gates" — turns out not to be what its own data
+  does: the switch has cases for opening/closing a door named "gate", but
+  neither of the mayor's two path strings (`open_path`/`close_path`,
+  hand-checked character by character rather than assumed from the
+  description) ever contains the letters that would reach them. The only
+  difference between the dawn and dusk walks is two lines of dialogue
+  ('e' versus 'E'). The port keeps the dead door-opening cases anyway —
+  `internal/session/specprocs.go`'s `specMayor`, `gateDoor` — the same
+  reason the C does: a hand-edited path in the world data could still use
+  them, and reproducing the switch whole costs nothing extra; they are
+  not separately tested, since nothing in the real archive reaches them
+  either. The C keeps the walk's own progress in three `static` locals
+  inside the special, shared across every call regardless of which
+  mobile makes it — which only works because the real world spawns
+  exactly one mayor. This port uses a map keyed by the mobile instead, so
+  each instance's walk would stay independent if that ever stopped being
+  true, without changing anything the real, single-mayor world can
+  observe. `MoveMobile` (`internal/game/live.go`), the mayor's own
+  movement, is shared with `wander`'s (`internal/server/mobact.go`) — see
+  its doc comment for the corners cut relative to a player's own
+  `do_simple_move` (no movement-point cost, no boat/tunnel/atrium/godroom
+  checks), inert against the real data either way.
 - **`goto <object>` picks an arbitrary one when several answer to the name.**
   `find_target_room` falls back to `get_obj_vis`, which walks the C's
   `object_list` in creation order; this port walks a map, which has no order

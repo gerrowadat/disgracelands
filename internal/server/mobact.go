@@ -89,7 +89,10 @@ func (s *Server) scavenge(w *game.Live, mob *game.Character) {
 	}
 }
 
-// wander moves a mobile one room, porting the movement branch.
+// wander moves a mobile one room, porting the movement branch. The move
+// itself, and what it does and does not check, is game.Live.MoveMobile —
+// shared with the mayor's own scripted patrol (specprocs.go), the other
+// caller that needed a mobile's do_simple_move rather than a player's.
 func (s *Server) wander(w *game.Live, mob *game.Character) {
 	if mob.HasMobFlag(game.MobSentinel) || mob.Position != game.PosStanding {
 		return
@@ -102,39 +105,7 @@ func (s *Server) wander(w *game.Live, mob *game.Character) {
 	if roll < 0 || roll >= game.NumDirections {
 		return
 	}
-	dir := game.Direction(roll)
-
-	exit := w.Exit(mob.Room, dir)
-	if exit == nil || exit.ToRoom == game.NoRoom {
-		return
-	}
-	// A closed door stops a mobile, which is what doors are for.
-	if exit.State.Has(game.ExitClosed) {
-		return
-	}
-
-	destination := w.Room(exit.ToRoom)
-	if destination == nil || destination.Flags.HasAny(game.RoomNoMob|game.RoomDeathTrap) {
-		return
-	}
-	if mob.HasMobFlag(game.MobStayZone) {
-		if here := w.Room(mob.Room); here == nil || here.Zone != destination.Zone {
-			return
-		}
-	}
-
-	from := mob.Room
-	if err := w.Enter(mob, exit.ToRoom); err != nil {
-		return
-	}
-	for _, other := range w.Occupants(from) {
-		other.Tell("%s leaves %s.\r\n", mob.Name, dir)
-	}
-	for _, other := range w.Occupants(mob.Room) {
-		if other != mob {
-			other.Tell("%s has arrived.\r\n", mob.Name)
-		}
-	}
+	w.MoveMobile(mob, game.Direction(roll))
 }
 
 // beAggressive attacks somebody, porting the aggressive branch.

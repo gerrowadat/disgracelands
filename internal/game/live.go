@@ -629,6 +629,52 @@ func (l *Live) Exit(from RoomVnum, dir Direction) *ExitDef {
 	return room.Exits[dir]
 }
 
+// MoveMobile moves a mobile one room in dir if it can, announcing the leave
+// and arrival the way a player's own move does. It reports whether the move
+// happened.
+//
+// This is a mobile's own do_simple_move, not a player's — and deliberately
+// smaller than one: a closed door blocks it, and it will not walk into
+// ROOM_NOMOB/ROOM_DEATHTRAP or, if the mobile carries MOB_STAY_ZONE, out of
+// its own zone, but there is no movement-point cost, no boat check for
+// SECT_WATER_NOSWIM, and no tunnel/atrium/godroom refusal. A mobile never
+// runs its own move points down at the game's normal pace (do_simple_move
+// only spends them for a player, `!IS_NPC(ch)`, act.movement.c:155) and none
+// of the real archived world's scripted mobile paths — session's `wander`
+// and the mayor's patrol — cross a boat, a tunnel, a house atrium or a
+// godroom, so the gap is inert against the actual data rather than a risk
+// silently taken. Written down because a reader diffing this against
+// do_simple_move should not have to find it themselves.
+func (l *Live) MoveMobile(mob *Character, dir Direction) bool {
+	exit := l.Exit(mob.Room, dir)
+	if exit == nil || exit.ToRoom == NoRoom || exit.State.Has(ExitClosed) {
+		return false
+	}
+	destination := l.Room(exit.ToRoom)
+	if destination == nil || destination.Flags.HasAny(RoomNoMob|RoomDeathTrap) {
+		return false
+	}
+	if mob.HasMobFlag(MobStayZone) {
+		if here := l.Room(mob.Room); here == nil || here.Zone != destination.Zone {
+			return false
+		}
+	}
+
+	from := mob.Room
+	if err := l.Enter(mob, exit.ToRoom); err != nil {
+		return false
+	}
+	for _, other := range l.Occupants(from) {
+		other.Tell("%s leaves %s.\r\n", mob.Name, dir)
+	}
+	for _, other := range l.Occupants(mob.Room) {
+		if other != mob {
+			other.Tell("%s has arrived.\r\n", mob.Name)
+		}
+	}
+	return true
+}
+
 // MaxRent is structs.h:1141, and it is not the rent *cost* cap it sounds like:
 // it is the number of items a rent file can hold, and therefore the number a
 // character may quit carrying.
