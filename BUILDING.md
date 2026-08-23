@@ -46,7 +46,10 @@ scripts/world-parity.sh
 ```
 
 Builds both servers, has each dump the world it loaded, and diffs them. They
-currently agree on every field of all 3,202 records. This runs in CI.
+currently agree on every field of all 3,202 records of `examples/stock/binary`.
+This runs at every release (`.github/workflows/release.yml`), not on every
+push — day-to-day CI is correctness and lint only, and a full C build is not
+that. Run it by hand (`make parity`) after touching either loader.
 
 If it reports a difference, the Go loader is what is wrong: the C server is
 the reference implementation and the one that ran the game.

@@ -782,8 +782,9 @@ both servers, has each dump the world it loaded, and diffs the results:
     identical
 ```
 
-Zero differing fields across all 5,248 records. It runs in CI, so it stays
-true.
+Zero differing fields across all 5,248 records. It runs at every release
+(`.github/workflows/release.yml` — it needs a full C build, which is more
+than day-to-day CI does), and `make parity` runs it by hand.
 
 **Those numbers are of the Disgracelands world**, which was what `data/` held
 when this was written. The repo now ships stock CircleMUD 3.0 bpl20's `lib/`
@@ -907,8 +908,9 @@ black box because the salt perturbs the E expansion *inside* the round
 function, and cgo is ruled out by the static container build — which left a
 dependency for an algorithm being actively retired, or 300 self-contained
 lines that get deleted with it. Correctness is not argued: the tests compare
-it against the system libcrypt over **9,680 password/salt pairs**, and that
-runs in CI.
+it against the system libcrypt over **9,680 password/salt pairs**, wherever
+`gcc` and the libcrypt headers are present — and a release fails if it
+skipped rather than ran (`release.yml`).
 
 §5.3.1's warning earned its place twice over. The verifier compares only the
 stored 10 characters, and there is a test that fails if it ever compares 13.
@@ -920,9 +922,11 @@ that reason before the property sank in.
 **Phase 2 is complete.**
 
 **A note on verification.** The 32-bit checks skip on a machine without
-32-bit libc headers, which is most of them. CI installs `gcc-multilib` and
-fails if those checks skipped, so the layout the real data is in is verified
-on every change even though it cannot be verified locally.
+32-bit libc headers, which is most of them. `release.yml` installs
+`gcc-multilib` and fails if those checks skipped, so the layout the real data
+is in is verified at every release even though it cannot be verified locally.
+Day-to-day CI lets them skip exactly as a contributor's own 64-bit machine
+does; a release is where a silent skip is caught.
 
 **Phase 3 — Server skeleton. ✅ Done.** Pulse loop, session lifecycle,
 listeners, negotiation, the login `nanny` state machine including the main
@@ -2090,7 +2094,8 @@ than asserted. `data/text/greetings` carries both sets of creators above the
 name prompt, `data/text/credits` is the stock text with Disgracelands'
 additions after it, and the `CIRCLEMUD` help entry is intact.
 
-`scripts/license-check.sh` runs in CI and verifies the five requirements
+`scripts/license-check.sh` runs at every release (`release.yml`, not the
+day-to-day `go.yml`) and verifies the five requirements
 that can be verified from the tree: that `LICENSE` still ends with
 `doc/license.doc` byte for byte, that no stock C file's leading comment
 block differs from the pre-upgrade baseline import (78 files), that every

@@ -1399,7 +1399,11 @@ describing numbers gets an oracle rather than a reading.**
 `reference/tools/*.c` holds the original function bodies with the `char_data`
 dereferences substituted and nothing else changed, and the Go tests compare
 against them across the whole input space where that is affordable. Every
-entry above marked *verified* is checked on every CI run.
+entry above marked *verified* is checked by `go test`, so on every CI run —
+except the ones needing a 32-bit C build (the shop prices, the ILP32
+layouts), which skip without `gcc-multilib` the same way they do on any
+64-bit machine and are required not to skip at every release
+(`.github/workflows/release.yml`).
 
 It is not that the C is hard to read. It is that the wrong answer looks
 exactly like the right one.

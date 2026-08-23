@@ -152,7 +152,9 @@ intact and reachable in-game, and this licence shipped with any copy.
 files written for this project carry a header saying the same; new ones must
 too. `scripts/license-check.sh` checks all of it — the verbatim licence
 text, the untouched stock C headers, our own headers, the credit files and
-the login sequence — and runs in CI.
+the login sequence — and runs at every release rather than on every push
+(`.github/workflows/release.yml`; `docs/developer.md`'s "What runs when" has
+the split and why). `make check` runs it locally.
 
 See `docs/proposals/go-port-plan.md` §12 for the reasoning and for what
 compliance still requires of the unwritten parts of the port.

@@ -20,7 +20,9 @@ the game rather than serving it.
 
 It has two active jobs: it is the reference implementation the
 port is written against, and it is the parity oracle
-`scripts/world-parity.sh` checks the port against on every CI run.
+`scripts/world-parity.sh` checks the port against at every release
+(day-to-day CI is correctness and lint only; `make parity` runs it by
+hand).
 
 See `moderncserver/README.md` for how to build and run it, what the `-J`
 world dump is for, and the known problems it carries.
