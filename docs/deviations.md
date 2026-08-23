@@ -4,6 +4,14 @@ The fidelity decision in [the port plan](proposals/go-port-plan.md) §0 says the
 patched C server wins wherever it and modern design disagree. This file is
 where the exceptions are written down.
 
+**Since 2026-08-23** (§0's "Fidelity, phase two"), that rule covers
+*gameplay and compatibility*, not the implementation as a whole: the port is
+playable, and new work may modernise the stack — architecture, dependencies,
+protocols, tooling — without an entry here, as long as it doesn't change
+what a player experiences or what data the server reads and writes. Every
+entry below this line, and everything already ported, was made under the
+stricter rule that came before and is unaffected by the narrowing.
+
 Every entry names what the C does, with a line reference, what the Go server
 does instead, and why. That last column is the point of the file: under a
 "fix known bugs" fidelity rule, the only thing keeping *fixed a bug*

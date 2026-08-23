@@ -5,20 +5,24 @@ Reviving Disgracelands, a CircleMUD-based MUD played (mostly via
 society) from roughly 2001 to 2008. This repo is the revived codebase,
 seeded from the archive of the original server.
 
-The project is a **Go port** of that server. The root of this repository is
-that port; the original C server lives in `reference/moderncserver/`, where
-it stays buildable, runnable and authoritative — it is what the game was,
-and it is what answers any fidelity question the port raises.
+The project is a **Go port** of that server, and, as of 2026-08-23, a
+playable one. The root of this repository is that port; the original C
+server lives in `reference/moderncserver/`, where it stays buildable,
+runnable and authoritative — it is what the game was, and it is what
+answers any gameplay or compatibility question the port raises.
 
 ## Status
 
-**The C server works.** It compiles and boots on modern Linux and would
-serve a playable game if anyone started it. Nobody is: nothing is running
-Disgracelands in either language, and nothing has since 2008. What that
-tree is for is being *right* — where it and the port disagree, the C wins
-by definition, because it is the one that was played. Phase 7
-(`docs/proposals/go-port-plan.md` §10) is what would have to be true before
-anything took real connections again.
+**Both servers work; neither is live.** The C server compiles and boots on
+modern Linux and would serve a playable game if anyone started it; the Go
+port, as of 2026-08-23, does too, in its own right — see below for what's
+built. Nobody is running either for real players, and nothing has, in any
+language, since 2008. What the C tree is for is being *right*: where it and
+the port disagree about gameplay or compatibility, the C wins by
+definition, because it is the one that was played — that's narrower than it
+used to be, though, see "From here, the two servers are allowed to differ"
+below. Phase 7 (`docs/proposals/go-port-plan.md` §10) is what would have to
+be true before anything took real connections again, and it hasn't started.
 
 **The data in this repo is stock.** `examples/stock/binary/` is CircleMUD
 3.0 bpl20's `lib/`, unmodified — Midgaard, not Disgracelands — and it is
@@ -31,14 +35,13 @@ not committed here; point `--lib-dir` at a converted copy to run the real
 thing (`dlctl convert`, see `docs/operations.md`). Everything in
 `docs/investigations/` describes that archive rather than what ships.
 
-**The Go port is playable.** Phases 0–4 of
-`docs/proposals/go-port-plan.md` are done and Phase 5 is all but finished. It
-loads the world, listens on TLS or plaintext telnet, negotiates telnet
-properly (hidden passwords, CHARSET, GMCP), logs in an archived character or
-creates a new one through the full C creation flow, and shows the main menu —
-description editor, background story, change password, delete character —
-before putting them in the world. Characters autosave, and a dropped link
-leaves the body in the world to reconnect to.
+**Phases 0–5 of `docs/proposals/go-port-plan.md` are done**, every slice of
+Phase 5 included. It loads the world, listens on TLS or plaintext telnet,
+negotiates telnet properly (hidden passwords, CHARSET, GMCP), logs in an
+archived character or creates a new one through the full C creation flow,
+and shows the main menu — description editor, background story, change
+password, delete character — before putting them in the world. Characters
+autosave, and a dropped link leaves the body in the world to reconnect to.
 
 The rules core is there: zones reset and mobiles wander, scavenge and attack;
 combat runs on the two-second round with the C's own to-hit and damage
@@ -54,18 +57,30 @@ renting at an inn and the rent files behind it; bulletin boards, mud mail and
 player housing; and the immortal commands, from `goto` and `stat` through
 `set`, `snoop`, `switch` and the site bans.
 
-**310 of the C's 318 commands answer**, and every slice of Phase 5 is built.
-Of the 8 that do not, seven are the OasisOLC editors — decided against,
-in favour of editing `data/world` directly and reloading it into the
-running server without a restart (`reloadmob`/`reloadzone`/`reloadobj`/
-`reloadshop`) — and the eighth, `slowns`, is declined for the same reason
-its own entry in `docs/deviations.md` gives: this server does no reverse
-DNS to slow down.
+**310 of the C's 318 commands answer.** Of the 8 that do not, seven are the
+OasisOLC editors — decided against, in favour of editing `data/world`
+directly and reloading it into the running server without a restart
+(`reloadmob`/`reloadzone`/`reloadobj`/`reloadshop`) — and the eighth,
+`slowns`, is declined for the same reason its own entry in
+`docs/deviations.md` gives: this server does no reverse DNS to slow down.
+Phase 6 (OasisOLC) was decided against on those terms.
 
 The data itself is pluggable: run on the original `classic`/`ascii`
 file shapes, or convert a whole `lib/` into one `yaml` directory — one
 file per zone and per character — with `dlctl lib import`. See
 `docs/design/data-format.md` and `docs/operations.md`.
+
+**From here, the two servers are allowed to differ.** Reaching playable was
+the point at which strict fidelity stopped being the right default for
+everything: `docs/proposals/go-port-plan.md` §0 ("Fidelity, phase two") now
+lets new work modernise the implementation — architecture, dependencies,
+protocols, tooling, roughly a decade and a half of how server software has
+moved on since this stack was designed — freely, holding only two things
+fixed: **compatibility** (the on-disk formats and archived credentials the
+port already reads and writes) and **gameplay** (the mechanics and balance a
+returning player would recognise). Anything that touches either of those is
+still recorded in `docs/deviations.md`, exactly as every deliberate
+difference has been from the start.
 
 The two servers load the world identically — every field of all 3,202
 records — and `scripts/world-parity.sh` checks that at every release (`.github/workflows/release.yml`).
@@ -109,9 +124,9 @@ examples/       Runtime game data, not the port's own code. stock/binary/
                 below.
 
 reference/      Everything that is not the Go port.
-  moderncserver/  The C server: the game as it actually is, and the
-                  reference implementation the port is written against.
-                  Buildable and runnable. See its README.md.
+  moderncserver/  The C server: the reference implementation and the
+                  compatibility/gameplay parity oracle. Buildable and
+                  runnable. See its README.md.
   tools/          C helper programs written for this revival (the binary
                   player-database-to-ascii_pfiles converter and a dumper).
                   Superseded by dlctl's pfile subcommands.

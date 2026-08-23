@@ -1,35 +1,40 @@
 # moderncserver — the C server
 
-This is the Disgracelands game as it actually is: CircleMUD 3.0 patchlevel 20
-plus OasisOLC plus years of local modification, patched to compile and run on
-a modern 64-bit Linux box.
+This is CircleMUD 3.0 patchlevel 20 plus OasisOLC plus years of local
+modification, patched to compile and run on a modern 64-bit Linux box: the
+codebase that was played from roughly 2001 to 2008.
 
-It is the codebase that was played from roughly 2001 to 2008. It still
-builds and still works. Nothing is running it, though — nothing has been
-running Disgracelands in either language since 2008 — so "the real server"
-is a statement about *authority*, not about operation: where this tree and
-the Go port disagree about the game, **this tree is what the game was**.
+It still builds and still works. Nothing is running it, though — nothing
+has been running Disgracelands in either language since 2008 — so "the
+real server" is a statement about *authority*, not about operation: where
+this tree and the Go port disagree about the game, **this tree is what the
+game was**. As of 2026-08-23 the Go port at the repository root is
+playable, and is the server being developed and played going forward — see
+the top-level `README.md`'s "Status" section.
 
 ## Why it lives in reference/
 
 `reference/` is the only place C code lives in this repository. The root is
 the Go port and nothing else.
 
-That is a statement about where the project is going, not a demotion. This
-tree has two active jobs, and it will keep both for a long time:
+This tree has two active jobs, and it will keep both for a long time:
 
-1. **It is the reference implementation.** Where the Go port and this tree
-   disagree about anything, this tree is right by definition — it is the one
-   that ran the game. Every parser in the Go port was written by
-   reading the corresponding function here.
+1. **It is the reference implementation for gameplay and compatibility.**
+   Where a returning player would notice the difference, or where the two
+   servers would read or write data differently, this tree is right by
+   definition — it is the one that ran the game. Every parser in the Go
+   port was written by reading the corresponding function here.
+   (Implementation choices that aren't gameplay- or compatibility-shaped are
+   a different question now — `docs/proposals/go-port-plan.md` §0's
+   "Fidelity, phase two" — and this tree doesn't settle those.)
 2. **It is the parity oracle.** `scripts/world-parity.sh` builds this server,
    has it dump the world it loaded, and diffs that against the Go server's
    dump. That check runs at every release — `.github/workflows/release.yml`,
    not the day-to-day `go.yml`, which is correctness and lint only — and by
    hand with `make parity`. See "The world dump" below.
 
-Nothing here should be deleted. Even after the Go port is the only thing
-anyone would start, this tree is the answer to every future fidelity
+Nothing here should be deleted. Even now that the Go port is the one being
+played, this tree is the answer to every future gameplay or compatibility
 question, and deleting it would throw that away for nothing — it costs a
 directory.
 
@@ -110,8 +115,9 @@ The Go server produces the same format with `dlctl world dump --parity`, and
 `scripts/world-parity.sh` at the repository root diffs the two. They
 currently agree on every field of all 3,202 records of what ships
 (`examples/stock/binary`: 1878 rooms, 569 mobiles, 679 objects, 30 zones, 46
-shops). The Disgracelands world itself is 5,248 records and also agreed, back
-when `data/` held it — `docs/proposals/go-port-plan.md` §10's Phase 1
+shops). The Disgracelands world itself is 5,248 records and also agreed,
+back when `data/` held it, before this repo switched to shipping stock
+CircleMUD's `lib/` — `docs/proposals/go-port-plan.md` §10's Phase 1
 write-up keeps both counts.
 
 If you change a parser here, that check will tell you whether the Go port

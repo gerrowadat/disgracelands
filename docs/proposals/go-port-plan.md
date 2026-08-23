@@ -12,6 +12,13 @@ Each built phase carries a retrospective in §10 saying what actually landed
 and where it diverged from what was planned. See `BUILDING.md` for how to
 build and run what exists.
 
+**As of 2026-08-23, the port is playable, and §0's fidelity decision has a
+second half ("Fidelity, phase two") that narrows what it still governs.**
+Read that row before assuming everything below still describes a strict
+port — the phase write-ups in §10 are a historical record of how fidelity
+was reached and stay accurate as history; they are not a live constraint on
+work that starts from here.
+
 ---
 
 ## 0. Decisions already taken
@@ -34,6 +41,7 @@ These were settled up front and the rest of the plan assumes them:
 | **Legacy passwords** | **Accepted and upgraded on login; nobody is reset.** Answers what was §13.5. |
 | **Fidelity, restated** | **As faithful to the patched C server as possible.** The row above says "faithful core"; this sharpens it. Where a choice exists between what the C server does and what a modern design would prefer, the C server wins, and a deviation needs a reason written down next to it. The existing exceptions stand — bugs are fixed, integer widths are made honest, credentials are modernised — but each is a deliberate, recorded departure rather than licence to redesign. When in doubt, read the C and do that. |
 | **Old data directories** | **Converted, not carried.** `dlctl convert` takes an original CircleMUD `lib/` and produces a directory the server runs on. It refuses to guess: the binary formats it does not yet understand are copied byte for byte and reported, because a byte-level transcode of a struct dump corrupts it twice over. |
+| **Fidelity, phase two (2026-08-23)** | **Narrowed, not dropped.** Phases 0–5 reached byte-for-byte behavioural agreement with the C server, and that work is not being revisited on fidelity grounds alone — the C oracles, table re-parsing and layout tools that got it there keep protecting it, and `docs/deviations.md`/`docs/weirdnumbers.md` stay the record of every departure made getting here. The port is playable now, and from this point new work is free to diverge from the C server to modernise the implementation — architecture, dependencies, protocols, tooling, roughly the decade and a half of how server software has moved on since this stack was designed — without needing a reason recorded anywhere. Two things stay fixed, not up for modernisation: **compatibility** (the on-disk formats, `--lib-dir` contents and archived credentials this repo already reads and writes) and **gameplay** (the mechanics and balance a returning player would recognise — the to-hit and damage tables, remort, alignment, the tweaks in `docs/investigations/non-stock-features.md`). A change that touches either of those is still a deviation, in `docs/deviations.md`, with its reasoning, exactly as before; a change that only touches implementation is not. |
 
 **One assumption flagged:** plain unencrypted telnet was *not* selected in
 that list. This plan keeps a plaintext telnet listener implemented and

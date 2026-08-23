@@ -21,7 +21,9 @@ does, how to configure it, how to run it.
 - **[deviations.md](deviations.md)** — every intentional difference from the
   C server's behaviour, with the C line reference and the reasoning. The
   other half of the fidelity decision: it is what keeps "fixed a bug"
-  distinguishable from "accidentally changed the game".
+  distinguishable from "accidentally changed the game". Since 2026-08-23
+  that decision covers gameplay and compatibility rather than the whole
+  implementation — see the file's own header and the plan's §0.
 - **[weirdnumbers.md](weirdnumbers.md)** — the catalogue of places where
   CircleMUD's arithmetic does not do what it appears to. Truncation nobody
   intended, comments describing numbers the code never produced, and the
@@ -47,7 +49,9 @@ both the C tree and the Go tree.
 The phase order, still future tense for whatever has not landed yet. Partly
 a record now: each finished phase carries a note of what it actually
 contained, what it did not, and what reading the C changed about the plan.
-The unfinished phases are still expected to change.
+The unfinished phases are still expected to change. §0's own "Fidelity,
+phase two" is the exception to "still future tense" — it's a decision
+already taken, dated 2026-08-23, about how work from here relates to the C.
 
 - **[go-port-plan.md](proposals/go-port-plan.md)** — the design and phasing
   for reimplementing the engine in Go: 64-bit safety, pluggable player- and
