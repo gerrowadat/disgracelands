@@ -24,7 +24,9 @@ tree has two active jobs, and it will keep both for a long time:
    reading the corresponding function here.
 2. **It is the parity oracle.** `scripts/world-parity.sh` builds this server,
    has it dump the world it loaded, and diffs that against the Go server's
-   dump. That check runs in CI on every change. See "The world dump" below.
+   dump. That check runs at every release — `.github/workflows/release.yml`,
+   not the day-to-day `go.yml`, which is correctness and lint only — and by
+   hand with `make parity`. See "The world dump" below.
 
 Nothing here should be deleted. Even after the Go port is the only thing
 anyone would start, this tree is the answer to every future fidelity
@@ -106,7 +108,11 @@ normal operation.
 
 The Go server produces the same format with `dlctl world dump --parity`, and
 `scripts/world-parity.sh` at the repository root diffs the two. They
-currently agree on every field of all 5,248 records.
+currently agree on every field of all 3,202 records of what ships
+(`examples/stock/binary`: 1878 rooms, 569 mobiles, 679 objects, 30 zones, 46
+shops). The Disgracelands world itself is 5,248 records and also agreed, back
+when `data/` held it — `docs/proposals/go-port-plan.md` §10's Phase 1
+write-up keeps both counts.
 
 If you change a parser here, that check will tell you whether the Go port
 still matches. If you change one there and the check fails, the Go port is
