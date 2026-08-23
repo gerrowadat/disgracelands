@@ -37,9 +37,12 @@ Three patterns catch what reading misses. Use them.
 against the Go. Existing ones cover the RNG (30,000 draws over 6 seeds),
 to-hit (1,512,000 values), regeneration (36,288), saving throws (1,125), DES
 crypt (9,680 pairs), shop prices (which need `-m32 -mfpmath=387`, because the
-answer depends on the width the multiplication happens at) and `isname`/
-`get_number` (168 pairings). Adding one is cheap; see
-`reference/tools/README.md`.
+answer depends on the width the multiplication happens at), `isname`/
+`get_number` (168 pairings) and the improved line editor's eleven commands
+(805 command-against-buffer cases, and built `-O0` on purpose: one of the C's
+`sprintf`s has its destination as its own `%s` argument, and modern gcc
+resolves that undefined behaviour differently from the compiler the archived
+server used). Adding one is cheap; see `reference/tools/README.md`.
 
 **Not only arithmetic.** `isname` has no numbers in it and was still read wrong
 for four phases — its loop has the shape of a prefix match and the semantics of
