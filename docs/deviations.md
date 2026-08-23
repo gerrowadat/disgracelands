@@ -372,7 +372,10 @@ Listed here so they are not mistaken for deliberate differences.
   behaviour is the same for every command ported so far; the shape is not.
 - **Eight of the C's 318 commands are not implemented**, and the plan's
   §10 "What is not in it" lists every one with its `interpreter.c` line. In
-  brief: the seven OasisOLC editors (Phase 6), plus `slowns` and `color`.
+  brief: the seven OasisOLC editors (Phase 6), plus `slowns`. `color` is
+  off this list — the `internal/colour` engine landed and every outgoing
+  line renders through it (`Session.SendAt`), so `color`'s own command has
+  something to switch now; see go-port-plan.md's write-up of that work.
   **`hop` is not among them**: it is the one `do_action` row the shipped
   socials file does not fill, and `RegisterSocials` gives it a command
   anyway that answers "That action is not supported." — which is what the C
@@ -412,12 +415,13 @@ Listed here so they are not mistaken for deliberate differences.
   world it applies to (`internal/session/toggle.go`'s own doc comment on
   `doTrackThrough`).
 
-  One is worth calling out here rather than leaving in the list.
-  **`color`** cannot usefully be written yet: the `PRF_COLOR` bits are
-  stored and `set color` works, but nothing in a live session emits colour
-  — `internal/game/colour.go`'s `{{...}}` engine (data-format.md §5) is
-  data-format machinery for the world/player files, not something a
-  session renders with yet — so the command would have nothing to switch.
+  **`color`** used to be worth calling out here the same way: the
+  `PRF_COLOR` bits were stored and `set color` worked, but nothing in a
+  live session emitted colour, so the command had nothing to switch. The
+  `internal/colour` engine and `Session.SendAt` routing it through on
+  every outgoing line closed that gap, and `color` moved off this list
+  entirely — see go-port-plan.md's own write-up of that work for what it
+  brought with it.
 
 - **`syslog` sets a preference nothing reads.** `mudlog()` had two jobs: write
   the line, and echo it to online immortals at or above a level. The second

@@ -1746,15 +1746,37 @@ they touch:
    into the running server without a restart. `Sink`/`WriteZone` (§6.3)
    are unaffected either way; nothing in this tree just happens to drive
    them from an in-game menu.
-2. **What does reloading an object or a shop mean?** `reloadmob`'s design
-   turns on `Character.MobDef` being a shared pointer and `Record` being
-   a full, independently-derived snapshot; `Object` is neither — it holds
-   a shadow copy of its own prototype's name/description fields (so one
-   object can differ from its kind: a corpse's name, a wand's remaining
-   charges), and a shop keeper's bank balance is runtime state with
-   nothing in the file to reload it from at all. Needs its own design
-   pass, not an assumption that the mobile case generalises. (Phase 6,
-   the reload family's own next slice.)
+2. **What does reloading an object or a shop mean?** Looked at closely
+   enough to say *why* it is harder than `reloadmob`, not just that it
+   is. `Object.Def` is a shared pointer the same shape as
+   `Character.MobDef`, and a handful of fields already read it live at
+   runtime (`Spec`, `MinLevel`, `RentPerDay`, the fallback `ActionDesc`)
+   — mutating the prototype in place would refresh those for every
+   instance for free, exactly like a mobile's `ActionFlags`. The harder
+   part is everything else: `Keywords`/`ShortDesc`/`Description`/`Type`/
+   `ExtraFlags`/`WearFlags`/`Values`/`Weight`/`Cost`/`Affects`/
+   `PermAffect` are all copied at spawn (`Object`'s own doc comment: "so
+   that one object can differ from its prototype"), the same shape as a
+   mobile's derived `Record` — but a mobile's derived stats are
+   *disposable*, rerolled at every spawn with nothing lost by rerolling
+   them again on reload. An object's shadow fields are not: `Values`
+   alone holds a wand's remaining charges, a container's open/closed/
+   locked state, a light source's hours left — real, player-relevant
+   state a blanket refresh would silently erase across *every* live
+   instance of that vnum in the world at once, not just reset one
+   mobile's hit points. That is a materially bigger blast radius than
+   `reloadmob`'s own accepted "gold/exp resets" footgun, and is the
+   actual reason this needs a real decision rather than an extension of
+   the mobile case: does a rebuilt sword definition's fixed hit/damage
+   dice change on every sword in the world, while every wand's charge
+   count is left alone? Both, picked per-field by some rule, or neither
+   — refresh nothing an instance could have diverged from, and accept
+   that only the shared-pointer fields (and new spawns) ever see a
+   change? A shop's keeper-bank balance is simpler by comparison — pure
+   runtime state with nothing in any file to reload it *from* at all, so
+   reloading a shop can only ever mean its `BuyTypes`/`Rooms`/messages/
+   markup, never its till. (Phase 6, the reload family's own next
+   slice, if it happens at all.)
 3. **`config/game.yaml`** (§6) — deliberately set aside. Making
    `config.c`'s tuning configurable at all is a reversal of the "archive
    wins" fidelity principle (`docs/deviations.md`'s "rent settings are
