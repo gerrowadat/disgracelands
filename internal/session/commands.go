@@ -102,6 +102,9 @@ type Context struct {
 	TextEdit TextEditor
 	// MobReload hot-reloads a mobile prototype from disk, for `reloadmob`.
 	MobReload MobReloader
+	// ZoneReload hot-reloads a zone's rooms and mobiles from disk, for
+	// `reloadzone`.
+	ZoneReload ZoneReloader
 	// Arg is everything after the command word, trimmed.
 	Arg string
 	// Social is the social being run, for the commands that are one.
@@ -143,6 +146,20 @@ type MobReloader interface {
 // of the vnum is fighting — see MobReloader's own doc comment for why
 // that makes a reload all-or-nothing.
 var ErrMobEngaged = errors.New("in combat")
+
+// ZoneReloader hot-reloads a zone's rooms and mobiles from disk, for
+// `reloadzone` — new capability, not a C port; see docs/deviations.md.
+// ErrZoneEngaged is returned when a player is anywhere in the zone or
+// some mobile within its vnum range is fighting — game.Live.ReloadZone's
+// own doc comment explains why that makes it all-or-nothing, the same
+// reasoning ReloadMobile already has at a bigger blast radius.
+type ZoneReloader interface {
+	ReloadZone(w *game.Live, vnum game.ZoneVnum) (game.ReloadZoneResult, error)
+}
+
+// ErrZoneEngaged is what a ZoneReloader returns when a player is
+// anywhere in the zone, or a mobile within its range is fighting.
+var ErrZoneEngaged = errors.New("occupied")
 
 // TextEditor is tedit's own seam: reading a canned text file's current
 // content and writing a new one back, both by symbolic name — the same
@@ -516,6 +533,11 @@ func init() {
 		// "reload" keeps matching the real, ported command first and
 		// only a longer typed prefix ("reloadm...") reaches this one.
 		{Name: "reloadmob", Help: "Re-read a mobile's definition from disk.", Run: doReloadMob, CLine: 429, MinLevel: game.LevelGreaterGod},
+		// reloadzone shares reloadmob's own synthetic CLine: the C
+		// order test only requires non-decreasing values (equal is
+		// fine), and both sort after the real "reload" (428) and
+		// before the real "redeem" (430) either way.
+		{Name: "reloadzone", Help: "Re-read a zone's rooms and mobiles from disk.", Run: doReloadZone, CLine: 429, MinLevel: game.LevelGreaterGod},
 		{Name: "skillset", Help: "Set somebody's skill to a number.", Run: doSkillset, CLine: 469, MinLevel: game.LevelGreaterGod},
 		{Name: "trackthru", Help: "Switch tracking through closed doors.", Run: doTrackThrough, CLine: 517, MinLevel: game.LevelImplementor},
 		{Name: "users", Help: "List every connection, not just the players.", Run: doUsers, CLine: 528, MinLevel: game.LevelImmortal},
@@ -667,6 +689,9 @@ type Dispatcher struct {
 	TextEdit TextEditor
 	// MobReload hot-reloads a mobile prototype from disk, for `reloadmob`.
 	MobReload MobReloader
+	// ZoneReload hot-reloads a zone's rooms and mobiles from disk, for
+	// `reloadzone`.
+	ZoneReload ZoneReloader
 }
 
 // Do implements CommandHandler.
@@ -726,7 +751,7 @@ func (d *Dispatcher) Do(ctx context.Context, s *Session, line string) error {
 		c := &Context{
 			Ctx: ctx, Session: s, Character: s.Character(),
 			World: w, Text: d.Text, RNG: d.RNG, Violence: d.Violence, Arg: arg,
-			Social: cmd.Social, Save: d.Save, Rent: d.Rent, SaveBoard: d.SaveBoard, Mail: d.Mail, Houses: d.Houses, Operator: d.Operator, Bans: d.Bans, Reports: d.Reports, SetPassword: d.SetPassword, TextEdit: d.TextEdit, MobReload: d.MobReload,
+			Social: cmd.Social, Save: d.Save, Rent: d.Rent, SaveBoard: d.SaveBoard, Mail: d.Mail, Houses: d.Houses, Operator: d.Operator, Bans: d.Bans, Reports: d.Reports, SetPassword: d.SetPassword, TextEdit: d.TextEdit, MobReload: d.MobReload, ZoneReload: d.ZoneReload,
 		}
 
 		// A command that panics must not leave the player staring at a dead

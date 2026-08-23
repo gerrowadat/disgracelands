@@ -446,3 +446,101 @@ func TestReloadMobileUnknownVnumIsRefused(t *testing.T) {
 		t.Error("ReloadMobile succeeded for a vnum nothing has")
 	}
 }
+
+// freshTemple is resetWorld's own zone 30 (Bottom 3000, Top 3099), room
+// 3001 and mob 3060, all changed the way a builder editing the world
+// file would change them.
+func freshTemple() (*ZoneDef, []*RoomDef, []*MobDef) {
+	zone := &ZoneDef{Vnum: 30, Name: "Midgaard Reloaded", Bottom: 3000, Top: 3099, Lifespan: 20, ResetMode: 1}
+	room := &RoomDef{Vnum: 3001, Name: "The Reloaded Temple"}
+	mob := freshGuardDef()
+	return zone, []*RoomDef{room}, []*MobDef{mob}
+}
+
+func TestReloadZoneUpdatesRoomsAndMobiles(t *testing.T) {
+	l := resetWorld(nil)
+	l.SpawnMobile(3060, 3001, newRNG())
+
+	zone, rooms, mobs := freshTemple()
+	result, ok := l.ReloadZone(zone, rooms, mobs, newRNG())
+	if !ok {
+		t.Fatal("ReloadZone refused an empty, unengaged zone")
+	}
+	if result.Rooms != 1 {
+		t.Errorf("Rooms = %d, want 1", result.Rooms)
+	}
+	if result.Mobiles != 1 {
+		t.Errorf("Mobiles = %d, want 1", result.Mobiles)
+	}
+
+	if got := l.Room(3001).Name; got != "The Reloaded Temple" {
+		t.Errorf("room 3001's name = %q, want the reloaded text", got)
+	}
+	if got := l.Zones()[0].Name; got != "Midgaard Reloaded" {
+		t.Errorf("zone name = %q, want the reloaded text", got)
+	}
+	if got := l.Zones()[0].Lifespan; got != 20 {
+		t.Errorf("zone lifespan = %d, want 20", got)
+	}
+}
+
+func TestReloadZoneRefusesWithAPlayerPresent(t *testing.T) {
+	l := resetWorld(nil)
+	player := newCharacter("Welmar")
+	if err := l.Enter(player, 3001); err != nil {
+		t.Fatal(err)
+	}
+
+	zone, rooms, mobs := freshTemple()
+	_, ok := l.ReloadZone(zone, rooms, mobs, newRNG())
+	if ok {
+		t.Fatal("ReloadZone succeeded with a player standing in the zone")
+	}
+	if l.Room(3001).Name == "The Reloaded Temple" {
+		t.Error("ReloadZone applied despite a player present — partial application")
+	}
+}
+
+func TestReloadZoneRefusesWithAFightingMobile(t *testing.T) {
+	l := resetWorld(nil)
+	c := l.SpawnMobile(3060, 3001, newRNG())
+	victim := newCharacter("Welmar")
+	if err := l.Enter(victim, 3001); err != nil {
+		t.Fatal(err)
+	}
+	c.Fighting = victim
+
+	zone, rooms, mobs := freshTemple()
+	_, ok := l.ReloadZone(zone, rooms, mobs, newRNG())
+	if ok {
+		t.Fatal("ReloadZone succeeded with a mobile fighting in the zone")
+	}
+}
+
+func TestReloadZoneSkipsVnumsTheWorldDoesNotAlreadyHave(t *testing.T) {
+	l := resetWorld(nil)
+	zone, rooms, mobs := freshTemple()
+	// A room and a mob the running world has never heard of — reload
+	// updates what exists, it does not import what is new.
+	rooms = append(rooms, &RoomDef{Vnum: 3005, Name: "A brand new room"})
+	mobs = append(mobs, &MobDef{Vnum: 3062, ShortDesc: "a brand new mob"})
+
+	result, ok := l.ReloadZone(zone, rooms, mobs, newRNG())
+	if !ok {
+		t.Fatal("ReloadZone refused")
+	}
+	if result.Rooms != 1 || result.Mobiles != 0 {
+		t.Errorf("Rooms=%d Mobiles=%d, want 1 and 0 (only the pre-existing room updated, the new room and mob skipped)",
+			result.Rooms, result.Mobiles)
+	}
+	if l.Room(3005) != nil {
+		t.Error("a brand new room vnum was created by reload")
+	}
+}
+
+func TestReloadZoneUnknownVnumIsRefused(t *testing.T) {
+	l := resetWorld(nil)
+	if _, ok := l.ReloadZone(&ZoneDef{Vnum: 9999}, nil, nil, newRNG()); ok {
+		t.Error("ReloadZone succeeded for a zone vnum nothing has")
+	}
+}

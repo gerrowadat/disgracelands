@@ -52,7 +52,8 @@ var notPorted = map[string]string{
 // has to be told about them by name instead. Each earns its keep with a
 // real reason, the same discipline notPorted holds every gap to.
 var newCommands = map[string]string{
-	"reloadmob": "hot-reloads a mobile's definition from disk; see docs/deviations.md",
+	"reloadmob":  "hot-reloads a mobile's definition from disk; see docs/deviations.md",
+	"reloadzone": "reloadmob's own zone-wide extension; see docs/deviations.md",
 }
 
 // TestEveryCommandIsPortedOrListed compares the C's table against ours.

@@ -371,6 +371,103 @@ func (l *Live) ReloadMobile(fresh *MobDef, r *rng.Rand) (refreshed int, ok bool)
 	return len(instances), true
 }
 
+// ReloadZoneResult reports what a zone reload actually changed.
+type ReloadZoneResult struct {
+	// Rooms is how many room prototypes were updated.
+	Rooms int
+	// Mobiles is how many live mobile instances had their derived stats
+	// refreshed — the same count ReloadMobile reports, summed across
+	// every mobile vnum in the zone's range.
+	Mobiles int
+}
+
+// ReloadZone is ReloadMobile's zone-wide extension: applies a
+// freshly-parsed zone, plus every room and mobile whose vnum falls in
+// its range, to the running world, in place. New capability, not a C
+// port — see docs/deviations.md and docs/proposals/go-port-plan.md.
+//
+// Refuses outright (ok=false, nothing touched) if a player is anywhere
+// in the zone (ZoneIsEmpty) or any live mobile instance whose vnum falls
+// in the zone's range is fighting — the same all-or-nothing reasoning
+// ReloadMobile already documents, now at a bigger blast radius: a room's
+// exits or description changing under a standing player is exactly the
+// kind of surprise this whole feature exists to avoid.
+//
+// Deliberately conservative in what it applies: a room or mobile vnum
+// this reload's fresh data introduces that the running world does not
+// already have is skipped, not created — reload updates what exists,
+// it does not import what is new. A vnum the fresh data no longer has
+// (deleted from the file) is left as a stale entry rather than removed.
+// Both are real limitations, not oversights, and both need a restart
+// still — see the open questions this leaves, noted where this is
+// wired into the command.
+func (l *Live) ReloadZone(fresh *ZoneDef, freshRooms []*RoomDef, freshMobiles []*MobDef, r *rng.Rand) (ReloadZoneResult, bool) {
+	if fresh == nil {
+		return ReloadZoneResult{}, false
+	}
+	var existing *ZoneDef
+	for _, z := range l.defs.Zones {
+		if z.Vnum == fresh.Vnum {
+			existing = z
+			break
+		}
+	}
+	if existing == nil {
+		return ReloadZoneResult{}, false
+	}
+	if !l.ZoneIsEmpty(existing) {
+		return ReloadZoneResult{}, false
+	}
+	for c := range l.mobiles {
+		if c.MobDef == nil {
+			continue
+		}
+		v := RoomVnum(c.MobDef.Vnum)
+		if v >= existing.Bottom && v <= existing.Top && c.Fighting != nil {
+			return ReloadZoneResult{}, false
+		}
+	}
+
+	var result ReloadZoneResult
+	for _, fr := range freshRooms {
+		if fr.Vnum < existing.Bottom || fr.Vnum > existing.Top {
+			continue
+		}
+		if _, ok := l.rooms[fr.Vnum]; !ok {
+			continue
+		}
+		l.rooms[fr.Vnum] = fr
+		result.Rooms++
+	}
+	for _, fm := range freshMobiles {
+		if RoomVnum(fm.Vnum) < existing.Bottom || RoomVnum(fm.Vnum) > existing.Top {
+			continue
+		}
+		if _, ok := l.mobileDefs[fm.Vnum]; !ok {
+			continue
+		}
+		n, ok := l.ReloadMobile(fm, r)
+		if !ok {
+			// Already confirmed nothing in range is fighting, above —
+			// this would mean the world changed under us mid-call,
+			// which cannot happen on the single-threaded world
+			// goroutine this always runs on. Kept as a guard, not a
+			// reachable path.
+			continue
+		}
+		result.Mobiles += n
+	}
+
+	existing.Name = fresh.Name
+	existing.Bottom = fresh.Bottom
+	existing.Top = fresh.Top
+	existing.Lifespan = fresh.Lifespan
+	existing.ResetMode = fresh.ResetMode
+	existing.Commands = fresh.Commands
+
+	return result, true
+}
+
 // mobileCount is how many of a prototype exist, which is what the population
 // caps are measured against.
 func (l *Live) mobileCount(vnum MobVnum) int32 {

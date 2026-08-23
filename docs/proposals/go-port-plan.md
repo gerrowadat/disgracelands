@@ -1458,10 +1458,29 @@ pretending it has an `interpreter.c` line — its `CLine` is synthetic
 abbreviation-matching order right after the real, ported `reload` so a
 bare `reload` keeps meaning exactly what it always has.
 
-Zone-wide reload (rooms/objects/shops/reset scripts, gated on nobody
-being anywhere in the zone at all) is the natural, larger follow-up,
-reusing this same mechanism at a bigger blast radius — not attempted
-here.
+**`reloadzone` ✅ — the natural, larger follow-up, landed the same day.**
+`reloadzone <vnum>` extends the same mechanism to every room and mobile
+in a zone's vnum range at once, gated on `Live.ZoneIsEmpty` (already
+built for `zreset`'s reset-mode-1 check, reused rather than
+reimplemented) — no player anywhere in the zone — and the same "nothing
+in range is fighting" check `ReloadMobile` already makes, now scanning
+the whole range rather than one vnum. `Character.MobDef` being a shared
+pointer is what makes mobile reload work; rooms turn out simpler still —
+nothing outside `Live.rooms` holds a `*RoomDef` across a tick (checked,
+not assumed), so a room's map entry can just be replaced outright rather
+than mutated in place.
+
+Deliberately conservative in what it applies, and worth stating plainly
+rather than leaving implicit: a room or mobile vnum the fresh data
+introduces that the running world does not already have is **skipped,
+not created** — reload updates what exists, it does not import what is
+new — and a vnum the fresh data no longer has (deleted from the file) is
+**left as a stale entry**, not removed. Both still need a restart. Object
+and shop reload, and reset-script re-application, are not attempted —
+objects carry `Object`'s own shadow-field copy of their prototype's name/
+description (unlike a mobile's Record, which is fully re-derived), so
+"what does refreshing an existing object even mean" needs its own answer
+before building it, not assumed from the mobile case.
 
 **Phase 7 — Cutover.** Shadow-run both servers against copies of the same
 `data/`, compare. Then run the Go server as primary, keep the C tree as
@@ -1672,8 +1691,26 @@ tree is the one being ported.
 Not blocking the plan, but they need answers before or during the phases
 they touch:
 
-1. **How faithful does OLC need to be** — a port of OasisOLC's exact menu
-   trees, or a modern equivalent that produces the same files? (Phase 6.)
+1. ~~**How faithful does OLC need to be**~~ **Settled: not built at all.**
+   Decided against, in favour of `reloadmob`/`reloadzone` — edit the world
+   data directly (by hand or via `dlctl world import`/`fmt`), reload it
+   into the running server without a restart. `Sink`/`WriteZone` (§6.3)
+   are unaffected either way; nothing in this tree just happens to drive
+   them from an in-game menu.
+2. **What does reloading an object or a shop mean?** `reloadmob`'s design
+   turns on `Character.MobDef` being a shared pointer and `Record` being
+   a full, independently-derived snapshot; `Object` is neither — it holds
+   a shadow copy of its own prototype's name/description fields (so one
+   object can differ from its kind: a corpse's name, a wand's remaining
+   charges), and a shop keeper's bank balance is runtime state with
+   nothing in the file to reload it from at all. Needs its own design
+   pass, not an assumption that the mobile case generalises. (Phase 6,
+   the reload family's own next slice.)
+3. **`config/game.yaml`** (§6) — deliberately set aside. Making
+   `config.c`'s tuning configurable at all is a reversal of the "archive
+   wins" fidelity principle (`docs/deviations.md`'s "rent settings are
+   constants, not options" entry), not a format pass, and needs its own
+   decision before any of it is built.
 
 All the others are now decided; see §0.
 
