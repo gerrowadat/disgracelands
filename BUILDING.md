@@ -32,7 +32,9 @@ Two binaries:
   environment > default. `--help` lists the lot.
 - **`dlctl`** — offline tooling: world linting and dumping, player-file
   conversion, inspection and password setting, and converting a whole
-  original data directory.
+  original data directory — into the classic/ascii shapes the server runs
+  on by default (`dlctl convert`), or straight into `yaml` (`dlctl lib
+  import`, `docs/design/data-format.md`).
   The jobs `reference/moderncserver/src/util/` and `reference/tools/` do
   today. Any subcommand added before the layer it needs reports which plan
   phase implements it rather than pretending to work.
@@ -49,7 +51,7 @@ currently agree on every field of all 3,202 records. This runs in CI.
 If it reports a difference, the Go loader is what is wrong: the C server is
 the reference implementation and the one that has been running the game.
 
-## Current state: Phases 0–4 done, Phase 5 all but finished
+## Current state: Phases 0–5 done, Phase 6 declined, Phase 7 not started
 
 `dlmud` loads the world, takes connections over TLS or plaintext telnet, runs
 the login, character-creation and main-menu sequence, resets zones, and runs
@@ -59,8 +61,12 @@ renting, boards, mail, houses, and the immortal commands. Characters autosave,
 a linkdead body stays to reconnect to, and it shuts down cleanly on SIGTERM.
 
 310 of the C's 318 commands answer and every slice of Phase 5 is built. What is
-left — the OasisOLC editors and a tail of small commands — is listed one by one
-in `docs/proposals/go-port-plan.md` §10.
+left — seven OasisOLC editors and `slowns` — is declined rather than pending:
+Phase 6 was decided against, in favour of editing `data/world` directly and
+reloading it into the running server without a restart
+(`reloadmob`/`reloadzone`/`reloadobj`/`reloadshop`) — see
+`docs/proposals/go-port-plan.md` §10 for the eight, and its own Phase 6
+write-up for what it became instead. Phase 7 (cutover) has not started.
 
 It needs at least one listener, and the TLS listener (on by default) needs a
 certificate, so the shortest thing that actually starts is:

@@ -1456,6 +1456,36 @@ the only format that can read the archived roster and rent files at all,
 and remains the tooling's own path for reading them, even once a server
 is running on `yaml`.
 
+### 11.1 `dlctl lib import` — all seven at once, and an honest gap it exposed
+
+`dlctl lib import --from-dir=X --to-dir=Y` runs the seven importers above
+in order, against `X`'s own `world/`/`etc/`/`misc/`/`house/`/`text/`
+subdirectories, plus copying `text/`'s plain-prose files unchanged and
+stamping `Y` with a `.dlversion` (`docs/design/data-format-versioning.md`)
+once everything else has succeeded — see `docs/operations.md`'s own
+getting-started walkthrough for running it against a real archive.
+
+Found while writing that walkthrough, checked with a synthetic CP1252
+fixture rather than assumed: **only two of the seven importers transcode
+non-UTF-8 text on their own.** `world import` and `pfile import` each
+have their own `--encoding` flag and decode CP1252 (or whatever is
+named) the same way `dlctl convert` does. `state import`/`names import`/
+`messages import`/`socials import`/`helpdb import` do not — they read
+whatever bytes are in the source file and write them straight into the
+`yaml` output, UTF-8 declaration and all. Pointed at a source file that
+is genuinely CP1252 (a curly quote in a social, an accented name on the
+xnames list), the result is a `.yaml` file that is not valid UTF-8
+despite saying it is. `examples/stock/` never surfaces this, because
+stock CircleMUD's own text is pure ASCII throughout and ASCII is valid
+UTF-8 unchanged — the gap is real but inert against every fixture in
+this repo, which is exactly the kind of thing worth writing down rather
+than leaving for the first real archive to find silently.
+
+Not fixed here — the docs-and-tooling pass this landed in did not touch
+the five importers' own decoding, which is a small, contained, separate
+change once made deliberately rather than as a side effect of a
+getting-started guide. Tracked in `TODO.md`.
+
 ---
 
 ## 12. Open questions

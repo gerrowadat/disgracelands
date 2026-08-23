@@ -294,6 +294,15 @@ convert: ## Convert an original data directory: make convert FROM=/path/to/lib T
 	@test -n "$(FROM)" && test -n "$(TO)" || { echo 'usage: make convert FROM=/path/to/lib TO=out/converted'; exit 2; }
 	$(GO) run ./cmd/dlctl convert --from=$(FROM) --to=$(TO)
 
+# The yaml equivalent: every subsystem, one lib/ to one fresh yaml
+# directory, in one command. Point it at the original archive, not at
+# $(TO) above — the two do not chain, see docs/operations.md. Then
+# `make run LIB=$(TO) FLAGS="--world-format=yaml --state-format=yaml --names-format=yaml --messages-format=yaml --socials-format=yaml --help-format=yaml"`.
+.PHONY: lib-import
+lib-import: ## Convert an original data directory into yaml: make lib-import FROM=/path/to/lib TO=out/yaml
+	@test -n "$(FROM)" && test -n "$(TO)" || { echo 'usage: make lib-import FROM=/path/to/lib TO=out/yaml'; exit 2; }
+	$(GO) run ./cmd/dlctl lib import --from-dir=$(FROM) --to-dir=$(TO)
+
 .PHONY: roster
 roster: ## List the characters in the player directory under LIB
 	$(GO) run ./cmd/dlctl pfile dump --player-dir=$(LIB)/pfiles

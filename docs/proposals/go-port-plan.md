@@ -1794,6 +1794,62 @@ would have run through `mudlog()` remains a would-be producer — see
 `docs/deviations.md`'s own entry for the honest count of how many that
 still is.
 
+**`native` is `yaml` throughout ✅ — a rename, not a redesign, because the
+name stopped being true.** §5.7/§5.8/§6.3 already called the format
+`native`, back when it was the only alternative to `classic`/`ascii`/
+`binary`; `docs/design/data-format.md` §0 had said "the format registers
+as `yaml`" since it was written, and the code had simply never caught up.
+Every `internal/persist/*/native` package is `*/yaml`; every
+`--*-format=native` value, `FormatName` constant and `case "native"`
+branch is `yaml`; `internal/game/nativenames.go` is `yamlnames.go`.
+Mechanical, but not risk-free — "native" and "yaml" both appear as
+substrings inside other words (`alternative`, `natively`, and this
+document's own §4 "a native 64-bit build", about the ILP32/LP64
+discussion, nothing to do with the data format at all), so a first pass
+done as a bare word-boundary substitution corrupted several of them,
+found and reverted by diffing against what the words were before rather
+than trusting the regex.
+
+**Versioning the yaml format ✅ — `docs/design/data-format-versioning.md`,
+a `major.minor.patch` stamp for the format as a whole, distinct from
+§10.1's existing per-file `schema: dl/<kind>@<major>` tag.**
+`internal/persist/dataversion` reads and writes `.dlversion` at a data
+directory's root; `dlmud`'s boot sequence refuses to start on a stamp
+whose major is newer than this build understands, logs a warning and
+starts anyway on a newer minor ("own risk"), and says nothing about a
+newer patch or no stamp at all. `dlctl data version --dir=X` answers the
+same question offline, and `--write` stamps a directory that predates
+the mechanism. `Current` is `1.0.0` — there has been exactly one version
+so far, which this work is what establishes; the minor-version warning
+has no per-feature detail to give yet, and nothing stamps a directory
+automatically, both named as real, current gaps rather than built ahead
+of a second version to test them against.
+
+**`dlctl lib import` ✅ — the seven format-specific importers, run
+together against one `lib/`-shaped source, in one command.** `world
+import`/`pfile import`/`state import`/`names import`/`messages import`/
+`socials import`/`helpdb import`, run in that order against
+`--from-dir`'s own subdirectories, plus `text/`'s plain-prose files
+copied unchanged (never a pluggable format) and, once every step has
+actually succeeded, a `.dlversion` stamp written into `--to-dir`.
+Verified against `examples/stock/`, not a synthetic fixture: regenerating
+`examples/stock/yaml` from `examples/stock/binary` and diffing every file
+against what is checked in is what proved the recipe, not an assumption,
+and is now a standing test (`TestLibImportMatchesTheCheckedInExample`).
+
+Writing the getting-started walkthrough this landed with
+(`docs/operations.md`) found a real, current gap rather than assuming the
+seven importers were uniform: only `world`/`pfile import` transcode
+non-UTF-8 source text on their own (`--encoding`, the same flag `dlctl
+convert` uses); the other five assume the source is already UTF-8 and
+carry a raw CP1252 byte straight through into a `.yaml` file that then
+claims to be UTF-8 and is not. `examples/stock/`'s own world is pure
+ASCII throughout, so nothing here has ever exercised the gap — found with
+a synthetic fixture instead, a curly quote fed to `names import` and
+inspected byte for byte in the output. Not fixed in this pass; tracked in
+`TODO.md`, and the getting-started guide tells an operator how to check
+for it (`iconv -f UTF-8 -t UTF-8` over the result) until it is.
+
 **Phase 7 — Cutover.** Shadow-run both servers against copies of the same
 `data/`, compare. Then run the Go server as primary, keep the C tree as
 reference. Retire `autorun`/`automaint`/`configure`.

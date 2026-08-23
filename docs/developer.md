@@ -111,6 +111,20 @@ make run LIB=out/converted
 understand alone; `--dry-run` shows you the report without writing. There is
 more on it in `docs/operations.md`.
 
+For the `yaml` format instead — one file per zone and per character,
+rather than the original CircleMUD file shapes `convert` above keeps —
+point `make lib-import` at the *original* archive directly, not at
+`out/converted`:
+
+```sh
+make lib-import FROM=/path/to/old/lib TO=out/yaml
+make run LIB=out/yaml FLAGS="--world-format=yaml --state-format=yaml --names-format=yaml --messages-format=yaml --socials-format=yaml --help-format=yaml"
+```
+
+`docs/operations.md`'s own "Converting into the yaml format" section has
+the full walkthrough, including a real, current gap worth knowing about
+before trusting the result on an archive with actual accented text in it.
+
 ### TLS
 
 TLS is the default transport in production, so it is worth exercising
@@ -457,7 +471,9 @@ one thing, and the mistakes it catches all look right.
 
 ```
 cmd/dlmud/          the server binary
-cmd/dlctl/          offline tooling: convert, world lint/dump, pfile commands
+cmd/dlctl/          offline tooling: convert, lib import, world/pfile/state/
+                    names/messages/socials/helpdb import and fmt, lint/dump,
+                    pfile commands, data version
 internal/config/    every setting, declared once
 internal/persist/   world and player formats, one package per format
 internal/game/      the game model and the rules ported from the C server
@@ -472,4 +488,5 @@ internal/buildinfo/ version stamping
 data/               runtime data: world, text, and (never committed) players
 reference/          the C server and other lineage codebases, for comparison
 docs/proposals/go-port-plan.md   the design and the phase order
+docs/design/                     design decisions that have actually landed
 ```

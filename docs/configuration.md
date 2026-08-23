@@ -15,12 +15,20 @@ environment variable name in brackets after each description. If the two
 ever disagree, `--help` is right and this file is stale — CI checks that
 every flag appears here, but it cannot check that the prose is accurate.
 
-> **Current state:** Phase 5 is finished bar one slice, so the rules core, the
-> economy, communication, boards, mail, houses, special procedures and the
-> immortal commands are all built. Settings marked *(inert)* are accepted and
-> validated but do not yet affect anything, because the subsystem they
-> configure does not exist. They are here because the configuration surface was
-> built first, deliberately — see `docs/proposals/go-port-plan.md` §10.
+> **Current state:** Phase 5 (the rest of the game) is done, so the rules
+> core, the economy, communication, boards, mail, houses, special
+> procedures and the immortal commands are all built. Phase 6 (OasisOLC)
+> was decided against, in favour of `reloadmob`/`reloadzone`/`reloadobj`/
+> `reloadshop` — edit `data/world` directly and reload it into the running
+> server without a restart; see `docs/proposals/go-port-plan.md`'s own
+> Phase 6 write-up. Phase 7 (cutover) has not started. Settings marked
+> *(inert)* are accepted and
+> validated but do not yet affect anything, for reasons of their own —
+> `--listen-ws` has no browser client yet to talk to it, `--tls-acme-*`
+> needs an ACME client, `--trust-proxy-headers` needs an actual proxy in
+> front — not because a phase is unfinished. They are here because the
+> configuration surface was built first, deliberately — see
+> `docs/proposals/go-port-plan.md` §10.
 
 ## Data locations
 

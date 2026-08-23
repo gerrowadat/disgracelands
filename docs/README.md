@@ -10,7 +10,10 @@ does, how to configure it, how to run it.
 - **[configuration.md](configuration.md)** — every flag and environment
   variable, what it does, and what the defaults are.
 - **[operations.md](operations.md)** — starting it, containers, graceful
-  shutdown, health and readiness, metrics, logs, backups, exposure.
+  shutdown, health and readiness, metrics, logs, backups, exposure, and
+  getting started from an original CircleMUD directory: `dlctl convert`
+  into the classic/ascii shapes the server already runs on by default, or
+  `dlctl lib import` straight into `yaml`.
 - **[developer.md](developer.md)** — working on the port: the `Makefile`'s
   dev targets, getting a server running locally against a tiny world or a
   throwaway data directory, poking at it by hand, and what to run before
@@ -33,9 +36,11 @@ both the C tree and the Go tree.
 > equipment, containers, food and drink, following and grouping; special
 > procedures, the channels and socials, shops, banks, rent, boards, mail,
 > houses, the immortal commands and remorting. 310 of the C's 318 commands
-> answer, and the plan's §10 lists the other 8 one by one.
-> `configuration.md` and `operations.md` mark which settings are *(inert)*
-> pending later phases.
+> answer, and the plan's §10 lists the other 8 one by one — seven OasisOLC
+> editors and `slowns`, both declined rather than pending (Phase 6's own
+> write-up in `proposals/go-port-plan.md` covers what got built instead).
+> `configuration.md` and `operations.md` mark the handful of settings
+> still *(inert)* for reasons of their own, unrelated to phase status.
 
 ## `docs/proposals/` — the plan, still moving
 
@@ -47,10 +52,12 @@ The unfinished phases are still expected to change.
 - **[go-port-plan.md](proposals/go-port-plan.md)** — the design and phasing
   for reimplementing the engine in Go: 64-bit safety, pluggable player- and
   world-file formats, the concurrency model, licensing constraints, and the
-  phase-by-phase sequence. Phases 0–4 are built and marked done with what
-  each one did and did not contain; Phase 5 is mapped into slices, all but one
-  of them finished, with its gaps listed command by command; 6 and 7 are not
-  started.
+  phase-by-phase sequence. Phases 0–5 are built and marked done with what
+  each one did and did not contain, Phase 5's own slices and gaps listed
+  command by command; Phase 6 (OasisOLC) was decided against, in favour of
+  reloading edited world data into a running server without a restart —
+  its own write-up covers what that became instead; Phase 7 (cutover) has
+  not started.
 
 ## `docs/design/` — decisions that landed
 

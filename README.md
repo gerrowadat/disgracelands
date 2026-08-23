@@ -48,9 +48,17 @@ player housing; and the immortal commands, from `goto` and `stat` through
 `set`, `snoop`, `switch` and the site bans.
 
 **310 of the C's 318 commands answer**, and every slice of Phase 5 is built.
-Of the 8 that do not, eight are the OasisOLC editors that belong to Phase 6
-and the rest is a tail of small things listed command by command in the plan's
-§10.
+Of the 8 that do not, seven are the OasisOLC editors — decided against,
+in favour of editing `data/world` directly and reloading it into the
+running server without a restart (`reloadmob`/`reloadzone`/`reloadobj`/
+`reloadshop`) — and the eighth, `slowns`, is declined for the same reason
+its own entry in `docs/deviations.md` gives: this server does no reverse
+DNS to slow down.
+
+The data itself is pluggable: run on the original `classic`/`ascii`
+file shapes, or convert a whole `lib/` into one `yaml` directory — one
+file per zone and per character — with `dlctl lib import`. See
+`docs/design/data-format.md` and `docs/operations.md`.
 
 The two servers load the world identically — every field of all 3,202
 records — and `scripts/world-parity.sh` checks that in CI.
@@ -63,6 +71,8 @@ records — and `scripts/world-parity.sh` checks that in CI.
 - **Working on the Go port**: `docs/developer.md` (and `make` for the dev
   targets it describes)
 - **The port's design and phasing**: `docs/proposals/go-port-plan.md`
+- **Design decisions that have actually landed**: `docs/design/`, starting
+  with the `yaml` data format
 - **The C server**: `reference/moderncserver/README.md`
 - **What's left that isn't a phase**: `TODO.md`
 - **All documentation, with a map**: `docs/README.md`
@@ -78,8 +88,9 @@ build/          Dockerfile and compose file.
 scripts/        Development scripts, notably world-parity.sh.
 docs/           This project's own documentation. The root is operator
                 docs for the Go server; docs/proposals/ is work not yet
-                done; docs/investigations/ is archaeology on the original
-                codebase. See docs/README.md.
+                done; docs/design/ is design decisions that have actually
+                landed; docs/investigations/ is archaeology on the
+                original codebase. See docs/README.md.
 
 data/           Runtime game data: stock CircleMUD 3.0 bpl20 lib/, world
                 files, help text and socials. Read by both servers, so it

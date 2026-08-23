@@ -5,12 +5,16 @@ How to run `dlmud`, what it exposes while running, and what to watch.
 For the full settings list see `docs/configuration.md`. For building from
 source see `BUILDING.md`.
 
-> **Current state:** Phase 5 is finished bar one slice. The world resets,
-> mobiles act, characters fight, cast, level and die, guildmasters teach,
-> shopkeepers trade, and the boards, mail, houses, rent and the immortal
-> commands all work. What is left is listed command by command in
-> `docs/proposals/go-port-plan.md` §10. Everything below about process
-> management, health checking, logging and player data is real and works.
+> **Current state:** Phase 5 (the rest of the game) is done. The world
+> resets, mobiles act, characters fight, cast, level and die, guildmasters
+> teach, shopkeepers trade, and the boards, mail, houses, rent and the
+> immortal commands all work. Phase 6 (OasisOLC) was decided against, in
+> favour of editing `data/world` directly and reloading it live
+> (`reloadmob`/`reloadzone`/`reloadobj`/`reloadshop`); Phase 7 (cutover)
+> has not started. What is left of Phase 5 itself is a handful of small,
+> named commands, listed one by one in `docs/proposals/go-port-plan.md`
+> §10. Everything below about process management, health checking,
+> logging and player data is real and works.
 
 ## Starting it
 
@@ -154,17 +158,24 @@ WebSocket listener with neither TLS nor a trusted proxy in front.
 ### Watching the game from in-game
 
 The C server's `mudlog()` did two things: wrote to the log, and echoed the
-message to online immortals above a given level. That second job is how
-gods actually watch a running game, and it is preserved — log records carry
-a `wizvis` attribute holding the minimum level that should see them
-in-game.
+message to online immortals above a given level whose own `syslog`
+verbosity (`PRF_LOG1`/`PRF_LOG2`, set by the in-game `syslog` command)
+was high enough. Both jobs are real: log records carry a `wizvis`
+attribute holding the minimum level and type a message needs, and
+`obs.WithWizVisEcho` calls back into `Server.echoWizVis` for any record
+that has one — applying the C's exact selection (online, playing, not
+switched into an NPC, not mid-edit, syslog verbosity high enough) and
+sending it in green to whoever qualifies.
 
-**Nothing consumes it yet, and the immortal half is now the only piece
-missing.** `syslog` is ported — it sets `PRF_LOG1`/`PRF_LOG2`, so every god has
-a stored preference for how much of the log they want — but nothing reads
-either the preference or the `wizvis` attribute, so no log line reaches
-anybody in-game. Until that is wired up, watching the game means watching the
-log the server writes. Recorded as a gap in `docs/deviations.md`.
+**`bug`/`idea`/`typo` are the one real producer so far.** The mechanism
+is generic — anything that logs through `internal/obs` with a `wizvis`
+attribute reaches an online god exactly the way it would in the C — but
+auditing every other command that logs something the C would have run
+through `mudlog()` and wiring it up is its own pass, not yet done.
+Watching the game today mostly still means watching the log the server
+writes; only reports reach an online god's screen live. See
+`docs/deviations.md` for the exact mechanism and the honest count of how
+many call sites are still would-be producers.
 
 ## Backups
 
@@ -276,6 +287,54 @@ is a per-format job rather than something a directory-level converter can do.
 Converting into a directory that already has something in it needs
 `--force`, and converting a directory into itself is refused outright — a
 conversion that failed part way would otherwise leave it half done.
+
+### Converting into the yaml format
+
+`dlctl convert` (above) modernises a `lib/` in place — CP1252 to UTF-8,
+the player database reformatted as `ascii` pfiles — but keeps everything
+in the original CircleMUD file shapes: `classic` world files, one board
+per file, a struct-dump mail file. `dlctl lib import` goes further and
+produces a single `yaml` directory instead — one file per zone and per
+character, `config/`/`state/`/`text/help/help.yaml` for the rest — read
+and written directly by the server with no further conversion step. See
+`docs/design/data-format.md`.
+
+Point it straight at the original archive, not at `dlctl convert`'s own
+output — the two do not chain, since `dlctl convert` relocates the
+roster to `pfiles/` and `lib import` expects it where the archive itself
+keeps it:
+
+```sh
+dlctl lib import --from-dir=/path/to/old/lib --to-dir=data-yaml
+```
+
+That is the seven `world import`/`pfile import`/`state import`/`names
+import`/`messages import`/`socials import`/`helpdb import` commands, run
+in order against `--from-dir`'s own `world/`/`etc/`/`misc/`/`house/`/
+`text/` subdirectories, plus the plain-text files under `text/` copied
+across unchanged and, once everything else has succeeded, `--to-dir`
+stamped with this build's own format version
+(`docs/design/data-format-versioning.md`).
+
+**Check the result for text that did not get transcoded.** Only two of
+the seven importers — `world` and `pfile` — have their own `--encoding`
+flag and decode CP1252 the way `dlctl convert` does; the other five
+assume the source is already UTF-8. A real archive with a curly quote in
+a social or an accented name on the disallowed-name list will carry that
+byte straight through into a `.yaml` file that is not actually valid
+UTF-8. This is real and current, not a hypothetical — see
+`docs/design/data-format.md` §11.1 and `TODO.md` for the exact gap and
+which importers still need it. Check with:
+
+```sh
+find data-yaml/config data-yaml/state data-yaml/text/help -type f \
+  -exec sh -c 'iconv -f UTF-8 -t UTF-8 "$1" >/dev/null || echo "not valid UTF-8: $1"' _ {} \;
+```
+
+Nothing printed means nothing slipped through. `world` and `pfile`'s own
+output needs no such check — `dlctl world lint` already reports invalid
+UTF-8 in world text, and covers `--to-dir/world` the same way it covers
+any other `--world-dir`.
 
 ### Converting only the player roster
 
