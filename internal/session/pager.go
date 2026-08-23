@@ -21,15 +21,13 @@ import (
 // whole, in one write, which is exactly the gap docs/deviations.md's
 // "Nothing paginates" entry names.
 //
-// Deliberately narrower than the C in one respect: `background` (menu
-// choice 3, interpreter.c:1713) also pages there, but every command this
-// pass wires up runs from CON_PLAYING only, which keeps StatePaging's own
-// "what were you doing before" question moot — the C never changes
-// STATE(d) at all while paging (comm.c:811's showstr_count check runs
-// *before* the state switch), so nothing needs to remember. `background`
-// pages from the menu, CON_MENU, and adding it now would mean deciding
-// what state to return to once the C never had to — left for its own
-// pass rather than guessed at here.
+// The C never changes STATE(d) at all while paging (comm.c:811's
+// showstr_count check runs *before* the state switch), so it never has
+// to remember what a reader was doing beforehand. This port does have a
+// real StatePaging, so sendPaged captures the state it interrupted —
+// Session.pagerReturn — and restores it once the last page is shown or
+// the reader quits. Every caller gets this for free, `background` (menu
+// choice 3, pages from CON_MENU rather than CON_PLAYING) included.
 
 // pageLength and pageWidth are PAGE_LENGTH/PAGE_WIDTH (comm.h:44-45).
 const (
@@ -138,6 +136,7 @@ func (s *Session) sendPaged(want colour.Level, format string, args ...any) {
 	s.pagerPages = pages
 	s.sendRendered(pages[0])
 	s.pagerIndex = 1
+	s.pagerReturn = s.state
 	s.state = StatePaging
 }
 
@@ -149,8 +148,8 @@ func (s *Session) handlePaging(line string) error {
 	case strings.EqualFold(arg, "q"):
 		s.pagerPages = nil
 		s.pagerIndex = 0
-		s.state = StatePlaying
-		s.Send("%s", prompt(s))
+		s.state = s.pagerReturn
+		s.sendPromptIfPlaying()
 		return nil
 	case strings.EqualFold(arg, "r"):
 		s.pagerIndex = max(0, s.pagerIndex-1)
@@ -174,8 +173,8 @@ func (s *Session) handlePaging(line string) error {
 		s.sendRendered(s.pagerPages[s.pagerIndex])
 		s.pagerPages = nil
 		s.pagerIndex = 0
-		s.state = StatePlaying
-		s.Send("%s", prompt(s))
+		s.state = s.pagerReturn
+		s.sendPromptIfPlaying()
 		return nil
 	}
 
@@ -188,4 +187,18 @@ func (s *Session) handlePaging(line string) error {
 	// through that tail at all (login.go's handle() calls it directly).
 	s.Send("%s", prompt(s))
 	return nil
+}
+
+// sendPromptIfPlaying shows the ordinary game prompt once paging ends and
+// s.pagerReturn was StatePlaying — the same prompt Dispatcher.Do's own
+// tail already shows after any other command. Every other state's own
+// handler decides for itself what to print next (StateReadMOTD's on the
+// very next line typed, for `background`'s own pager use), the same way
+// nanny never prints anything extra outside CON_PLAYING either; sending a
+// game-style HP/mana/move prompt there would be nonsense — nobody is
+// playing yet.
+func (s *Session) sendPromptIfPlaying() {
+	if s.state == StatePlaying {
+		s.Send("%s", prompt(s))
+	}
 }

@@ -91,6 +91,45 @@ func TestMenuChoiceThreeShowsTheBackground(t *testing.T) {
 	c.expectCount("Make your choice:", 2)
 }
 
+// TestMenuChoiceThreeWithLongBackgroundPaginates: page_string
+// (interpreter.c:1713) pages `background` too, from CON_MENU rather than
+// CON_PLAYING — the one caller docs/deviations.md's pager entry used to
+// name as "not ported". Confirms the pager's own return-state tracking
+// (Session.pagerReturn) rather than only the short-text path
+// TestMenuChoiceThreeShowsTheBackground already covers: the menu comes
+// back once paging finishes, not the ordinary game prompt.
+func TestMenuChoiceThreeWithLongBackgroundPaginates(t *testing.T) {
+	srv, _ := newTestServer(t)
+	if !srv.SetTextField("background", longNews()) {
+		t.Fatal("SetTextField(background) refused")
+	}
+
+	c := newMenuClient(t, srv, "Zod")
+
+	c.send("3")
+	c.expect("News item 1.")
+	c.expect("Return to continue")
+	if c.seen("News item 23.") {
+		t.Error("the first page already shows content past PAGE_LENGTH (22)")
+	}
+
+	c.send("")
+	c.expect("News item 23.")
+
+	// StateReadMOTD, restored once the pager closes, shows the menu on
+	// the *next* line typed rather than automatically — CON_RMOTD's own
+	// behaviour, unchanged by paging having been in the way.
+	c.send("")
+	// The menu, not the ordinary game prompt: the C leaves the
+	// connection in CON_RMOTD once background's own paging finishes, and
+	// so does this — the same thing the short-text path already proves,
+	// now proven through a pager that actually opened.
+	c.expectCount("Make your choice:", 2)
+	if c.seen("V > ") {
+		t.Error("the ordinary game prompt appeared after background's own pager closed")
+	}
+}
+
 // TestTheDescriptionEditor covers menu choice 2 end to end, including that
 // what was typed is what `look` will show.
 func TestTheDescriptionEditor(t *testing.T) {

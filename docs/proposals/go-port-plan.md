@@ -1699,6 +1699,36 @@ overshooting the limit by at most the number of listeners running. A soft
 capacity guard rather than a hard security boundary, and not worth
 synchronising across listeners for.
 
+**`background` pages too ✅ — the pager's last named caller, and the
+design question its own write-up left open.** Every other command this
+port paginates runs from `CON_PLAYING` only, which is what let
+`StatePaging` get away without an answer to "what was I doing before"
+for as long as it did — the C never changes `STATE(d)` while paging
+either, so it never had to ask. `background` pages from `CON_MENU`
+(`interpreter.c:1712-1714`), and answering the question turned out to
+be mechanical rather than a real fork in the road: `Session.pagerReturn`
+is what `sendPaged` (`internal/session/pager.go`) captures `s.state` as
+before overwriting it with `StatePaging`, and `handlePaging` restores
+it — instead of the hardcoded `StatePlaying` that had been correct for
+every caller but this one — once the last page is shown or the reader
+quits. `menu.go`'s own choice-3 handler sets `s.state = StateReadMOTD`
+*before* calling `SendPaged`, matching exactly what the C leaves
+`STATE(d)` as once `background`'s own paging returns, so `sendPaged`
+captures the right value without needing to special-case this caller at
+all.
+
+Two things fell out of generalising this that a version hardcoded to
+`StatePlaying` would have gotten wrong silently: the ordinary game
+prompt must not appear once paging closes back into a non-`CON_PLAYING`
+state (`Session.sendPromptIfPlaying` checks `pagerReturn ==
+StatePlaying` before sending one — nobody is playing yet, and a fake
+HP/mana/move prompt between menu screens would be nonsense), and
+`users`' own listing must show the state paging actually interrupted
+rather than a blanket "Playing" — `Session.ConnectedName` consults
+`pagerReturn` for exactly that, leaving the pure, session-less
+`State.ConnectedName` as the fallback the coverage test's own C-table
+comparison still uses.
+
 **Phase 7 — Cutover.** Shadow-run both servers against copies of the same
 `data/`, compare. Then run the Go server as primary, keep the C tree as
 reference. Retire `autorun`/`automaint`/`configure`.

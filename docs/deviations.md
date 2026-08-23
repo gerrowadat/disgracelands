@@ -471,9 +471,7 @@ Listed here so they are not mistaken for deliberate differences.
   The follow-up pass wired the pager into the call sites `page_string`
   reaches beyond the canned texts, each checked against the C rather
   than assumed: `Board_show_board` and `Board_display_msg`
-  (`boards.c:281,338`), `shop.c:874`'s `list` (not `show_shops`'s own
-  separate `page_string` at `shop.c:1242`, which is out of scope because
-  `show shops` itself is not built — see below), and `list_skills`
+  (`boards.c:281,338`), `shop.c:874`'s `list`, and `list_skills`
   (`spec_procs.c:193`, which builds the whole listing into one buffer
   and pages it once, not a line at a time — the Go `listSkills` was
   restructured to match, since sending line-by-line and pretending it
@@ -485,19 +483,35 @@ Listed here so they are not mistaken for deliberate differences.
   share both the C's own `page_string` call and this port's Go helper
   (`showRooms`); **not paginated** — `player`, `stats` and `snoop`, all
   three plain `send_to_char` in the C and left as plain `Send` here.
-  `show rent` (`Crash_listrent`) and `show shops` (`show_shops`) are
-  each a separate function with their own `page_string` call and are
-  out of scope for a different reason: neither is built in this port at
-  all (see the `Crash_listrent`/`show_shops` gaps elsewhere in this
-  file).
+  `show shops`' own summary table (`list_all_shops`, `shop.c:1242`) was
+  built later, once `show shops` itself landed, and pages the same way;
+  its detail view (`list_detailed_shop`) is a series of plain
+  `send_to_char` calls in the C, not paginated, and is not here either.
+  `show rent` (`Crash_listrent`) has no `page_string` call in the C at
+  all — a single plain `send_to_char` — so it is not paginated here
+  either, faithfully rather than by omission.
 
-  **Not ported**: `background` (menu choice 3, `interpreter.c:1713`)
-  also pages in the C, from `CON_MENU` rather than `CON_PLAYING` — every
-  command this port wires through the pager runs from `CON_PLAYING`
-  only, which keeps `StatePaging`'s own "what was I doing before"
-  question moot (the C never changes `STATE(d)` while paging at all, so
-  it never has to ask); adding `background` means deciding what state to
-  return to, which the C never needed and this port has not decided.
+  **`background`'s own pager use (menu choice 3, `interpreter.c:1713`)
+  is wired up too, from `CON_MENU` rather than `CON_PLAYING`.**
+  Every *other* caller this port paginates runs from `CON_PLAYING`
+  only, which is what let `StatePaging` get away without an answer to
+  "what was I doing before" for as long as it did — the C never changes
+  `STATE(d)` while paging at all, so it never had to ask either.
+  `Session.pagerReturn` is the answer: `sendPaged` captures `s.state`
+  before overwriting it with `StatePaging`, and `handlePaging` restores
+  it — rather than the hardcoded `StatePlaying` every caller but this
+  one would have been happy with — once the last page is shown or the
+  reader quits. `menu.go`'s own handler for choice 3 sets `s.state =
+  StateReadMOTD` *before* calling `SendPaged`, matching exactly what the
+  C leaves `STATE(d)` as once `background`'s own `page_string` call
+  returns (`interpreter.c:1712-1714`) — so `sendPaged` captures the
+  right value without needing to know anything about this one caller in
+  particular. The ordinary game prompt is not shown once paging closes
+  back into a non-`CON_PLAYING` state — `Session.sendPromptIfPlaying`
+  only sends it when `pagerReturn` actually was `StatePlaying` — and
+  `users`' own listing shows the state paging really interrupted
+  (`Session.ConnectedName`, consulting `pagerReturn`) rather than a
+  blanket "Playing" that would be wrong for a reader still on the menu.
 
   A real bug this pass found rather than assumed away: `next_page`'s own
   algorithm only resets its column counter on `\r`, because every string

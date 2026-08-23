@@ -201,6 +201,13 @@ type Session struct {
 	// past every one shown so far.
 	pagerPages []string
 	pagerIndex int
+	// pagerReturn is the state paging interrupted, restored when the last
+	// page has been shown or the reader quits — this port's own way of
+	// reproducing the fact that the C never changes STATE(d) while paging
+	// at all (comm.c:811's showstr_count check runs before the state
+	// switch). Captured by sendPaged from s.state itself, so every caller
+	// gets this for free.
+	pagerReturn State
 
 	// proto is the telnet state: options, charset, GMCP.
 	proto protocol
@@ -852,17 +859,35 @@ var connectedNames = map[State]string{ //nolint:gosec // prompt labels, not cred
 	StateEditing: "Get descript.",
 	// StatePaging has no CON_ of its own either — the C's showstr_count
 	// check runs *before* the STATE(d) switch entirely (comm.c:811), so
-	// STATE(d) never changes while paging at all. Every command this
-	// port paginates only runs from CON_PLAYING, so "Playing" is exactly
-	// what the C would still show, not a stand-in the way "Get descript."
-	// is for StateEditing.
+	// STATE(d) never changes while paging at all, and `users` would still
+	// show whatever state paging interrupted. This entry is only the
+	// fallback for State.ConnectedName's own pure, session-less callers
+	// (the coverage test below among them); users.go calls
+	// Session.ConnectedName instead, which reads pagerReturn and shows
+	// the *real* interrupted state — "Playing" for the ordinary case,
+	// since every paginated command but `background` runs from
+	// StatePlaying, but "Reading MOTD" while `background`'s own page is
+	// open.
 	StatePaging: "Playing",
 }
 
-// ConnectedName is what `users` calls this state.
+// ConnectedName is what `users` calls this state, as a pure function of
+// the enum alone — see Session.ConnectedName for the version that knows
+// which state StatePaging actually interrupted.
 func (s State) ConnectedName() string {
 	if name, ok := connectedNames[s]; ok {
 		return name
 	}
 	return "Unknown"
+}
+
+// ConnectedName is `users`' own lookup: State.ConnectedName, except for
+// StatePaging, which reports whatever state paging interrupted
+// (pagerReturn) rather than the fallback "Playing" every other caller of
+// State.ConnectedName has to live with.
+func (s *Session) ConnectedName() string {
+	if s.state == StatePaging {
+		return s.pagerReturn.ConnectedName()
+	}
+	return s.state.ConnectedName()
 }

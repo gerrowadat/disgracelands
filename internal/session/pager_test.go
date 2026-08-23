@@ -96,3 +96,37 @@ func TestPaginateSkipsAnsiCodesWhenCountingColumns(t *testing.T) {
 		t.Errorf("got %d pages, want 1 — the ANSI codes must not count as columns", len(pages))
 	}
 }
+
+// TestSessionConnectedNameDuringPaging: users.go calls Session.ConnectedName
+// rather than the pure State.ConnectedName precisely so that a reader mid-page
+// shows what paging actually interrupted (pagerReturn) rather than the
+// fallback "Playing" every other caller of State.ConnectedName has to live
+// with — real once `background` could page from the menu rather than only
+// from CON_PLAYING. A single Session value, set up directly rather than
+// through a live connection: the field this depends on (pagerReturn) is
+// Session-private, and nothing about the check needs a socket.
+func TestSessionConnectedNameDuringPaging(t *testing.T) {
+	// Ordinary case: every paginated command but `background` runs from
+	// StatePlaying, so a reader mid-page still shows "Playing".
+	ordinary := &Session{state: StatePaging, pagerReturn: StatePlaying}
+	if got := ordinary.ConnectedName(); got != "Playing" {
+		t.Errorf("ConnectedName() = %q, want %q for an ordinary paginated command", got, "Playing")
+	}
+
+	// background's own case: handleMenu sets state to StateReadMOTD before
+	// calling SendPaged (menu.go), the same state the C leaves the
+	// connection in once background's own paging finishes (CON_RMOTD) —
+	// so that is what pagerReturn captures, and what a reader mid-page
+	// should show, not "Playing".
+	fromBackground := &Session{state: StatePaging, pagerReturn: StateReadMOTD}
+	if got := fromBackground.ConnectedName(); got != "Reading MOTD" {
+		t.Errorf("ConnectedName() = %q, want %q while background's own page is open", got, "Reading MOTD")
+	}
+
+	// Not paging at all: ConnectedName is just State.ConnectedName, same
+	// as it always was.
+	playing := &Session{state: StatePlaying}
+	if got := playing.ConnectedName(); got != "Playing" {
+		t.Errorf("ConnectedName() = %q, want %q outside the pager entirely", got, "Playing")
+	}
+}

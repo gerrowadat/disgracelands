@@ -181,7 +181,7 @@ func doUsers(c *Context) error {
 			name = who.Name
 		}
 
-		state := s.State().ConnectedName()
+		state := s.ConnectedName()
 		if playing && s.Original() != nil {
 			state = "Switched"
 		}

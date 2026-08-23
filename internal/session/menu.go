@@ -64,10 +64,23 @@ func (s *Session) handleMenu(ctx context.Context, deps Deps, line string) error 
 		return nil
 
 	case '3':
-		s.Send("%s", ensureTrailingNewline(deps.Text.Background()))
-		// The C leaves the connection in CON_RMOTD, so the next line typed
-		// brings the menu back. Same here.
+		// The C leaves the connection in CON_RMOTD once background's own
+		// page_string call finishes (interpreter.c:1712-1714), so the next
+		// line typed brings the menu back — set first, so sendPaged
+		// captures it as what paging interrupted (Session.pagerReturn)
+		// rather than the menu state background is actually being run
+		// from.
 		s.state = StateReadMOTD
+		s.SendPaged("%s", ensureTrailingNewline(deps.Text.Background()))
+		// sendPaged never sends the pager's own "Return to continue" line
+		// itself — every other caller relies on Dispatcher.Do's own tail
+		// for that (prompt(s) resolves to pagingPrompt() once StatePaging
+		// is set), and this menu handler is not run through it. A short
+		// background leaves s.state exactly as StateReadMOTD, set above,
+		// so this only fires when pagination actually happened.
+		if s.state == StatePaging {
+			s.Send("%s", prompt(s))
+		}
 		return nil
 
 	case '4':
