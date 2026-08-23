@@ -13,6 +13,9 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+	"unicode/utf8"
+
+	"golang.org/x/text/encoding/charmap"
 
 	"github.com/gerrowadat/disgracelands/internal/game"
 	"github.com/gerrowadat/disgracelands/internal/persist/bans"
@@ -22,6 +25,7 @@ import (
 	boardsclassic "github.com/gerrowadat/disgracelands/internal/persist/boards/classic"
 	boardsyaml "github.com/gerrowadat/disgracelands/internal/persist/boards/yaml"
 	"github.com/gerrowadat/disgracelands/internal/persist/clock"
+	"github.com/gerrowadat/disgracelands/internal/persist/convert"
 	"github.com/gerrowadat/disgracelands/internal/persist/houses"
 	housesclassic "github.com/gerrowadat/disgracelands/internal/persist/houses/classic"
 	housesyaml "github.com/gerrowadat/disgracelands/internal/persist/houses/yaml"
@@ -33,6 +37,23 @@ import (
 	reportsyaml "github.com/gerrowadat/disgracelands/internal/persist/reports/yaml"
 )
 
+// transcodeString converts s from enc to UTF-8, leaving it alone if it is
+// empty or already valid UTF-8 — shared by importBoards/importMail/
+// importReports below, the three state subsystems that carry free text.
+// bans (a hostname substring and an admin's name) and houses (numeric
+// fields and a StoredObject identified only by vnum, never by name or
+// description) have nothing to transcode, so neither calls this.
+func transcodeString(s *string, enc *charmap.Charmap) bool {
+	if *s == "" || utf8.ValidString(*s) {
+		return false
+	}
+	if out, err := enc.NewDecoder().String(*s); err == nil {
+		*s = out
+		return true
+	}
+	return false
+}
+
 // cmdStateImport converts bans, boards, mail, houses, the clock and the
 // bug/idea/typo reports into yaml together, per step 6a/6b of
 // docs/design/data-format.md §9 — one command, since they end up in one
@@ -43,8 +64,15 @@ func cmdStateImport(args []string) error {
 	fromHouseDir := fs.String("from-house-dir", "data/house", "Source (classic) directory for the per-room house object files")
 	fromMiscDir := fs.String("from-misc-dir", "data/misc", "Source (classic) directory for the bug/idea/typo report files")
 	toDir := fs.String("to-dir", "data/state", "Destination (yaml) directory")
+	encName := fs.String("encoding", convert.DefaultEncoding,
+		fmt.Sprintf("Source text encoding: %v", encodingNames()))
 	if err := fs.Parse(args); err != nil {
 		return err
+	}
+
+	enc, ok := convert.Encodings[*encName]
+	if !ok {
+		return fmt.Errorf("unknown encoding %q (have: %v)", *encName, encodingNames())
 	}
 
 	out := bufio.NewWriter(os.Stdout)
@@ -53,16 +81,16 @@ func cmdStateImport(args []string) error {
 	if err := importBans(*fromDir, *toDir, out); err != nil {
 		return fmt.Errorf("bans: %w", err)
 	}
-	if err := importBoards(*fromDir, *toDir, out); err != nil {
+	if err := importBoards(*fromDir, *toDir, enc, *encName, out); err != nil {
 		return fmt.Errorf("boards: %w", err)
 	}
-	if err := importMail(*fromDir, *toDir, out); err != nil {
+	if err := importMail(*fromDir, *toDir, enc, *encName, out); err != nil {
 		return fmt.Errorf("mail: %w", err)
 	}
 	if err := importHouses(*fromDir, *fromHouseDir, *toDir, out); err != nil {
 		return fmt.Errorf("houses: %w", err)
 	}
-	if err := importReports(*fromMiscDir, *toDir, out); err != nil {
+	if err := importReports(*fromMiscDir, *toDir, enc, *encName, out); err != nil {
 		return fmt.Errorf("reports: %w", err)
 	}
 	if err := importClock(*fromDir, *toDir, out); err != nil {
@@ -94,7 +122,7 @@ func importBans(fromDir, toDir string, out *bufio.Writer) error {
 	return nil
 }
 
-func importBoards(fromDir, toDir string, out *bufio.Writer) error {
+func importBoards(fromDir, toDir string, enc *charmap.Charmap, encName string, out *bufio.Writer) error {
 	src, err := boardsclassic.New(boards.Config{Dir: fromDir, ReadOnly: true})
 	if err != nil {
 		return err
@@ -106,7 +134,7 @@ func importBoards(fromDir, toDir string, out *bufio.Writer) error {
 	}
 	defer func() { _ = dst.Close() }()
 
-	boardsImported, messages := 0, 0
+	boardsImported, messages, transcoded := 0, 0, 0
 	for _, def := range game.Boards {
 		msgs, err := src.Load(def.File)
 		if err != nil {
@@ -115,6 +143,18 @@ func importBoards(fromDir, toDir string, out *bufio.Writer) error {
 			}
 			return fmt.Errorf("%s: %w", def.File, err)
 		}
+		for i := range msgs {
+			// Heading is the whole formatted line ("Aug 20 2026 (Zod)  ::
+			// headline"), not just the poster's own typed headline after
+			// "::" — transcoding the whole string is still correct, since
+			// the date/name half is always ASCII and decodes to itself.
+			if transcodeString(&msgs[i].Heading, enc) {
+				transcoded++
+			}
+			if transcodeString(&msgs[i].Body, enc) {
+				transcoded++
+			}
+		}
 		if err := dst.Save(def.File, msgs); err != nil {
 			return fmt.Errorf("%s: %w", def.File, err)
 		}
@@ -122,10 +162,13 @@ func importBoards(fromDir, toDir string, out *bufio.Writer) error {
 		messages += len(msgs)
 	}
 	_, _ = fmt.Fprintf(out, "boards: imported %d board(s), %d message(s)\n", boardsImported, messages)
+	if transcoded > 0 {
+		_, _ = fmt.Fprintf(out, "boards: transcoded %d string(s) from %s to UTF-8\n", transcoded, encName)
+	}
 	return nil
 }
 
-func importMail(fromDir, toDir string, out *bufio.Writer) error {
+func importMail(fromDir, toDir string, enc *charmap.Charmap, encName string, out *bufio.Writer) error {
 	src, err := mailclassic.New(mail.Config{Path: filepath.Join(fromDir, "plrmail"), ReadOnly: true})
 	if err != nil {
 		return err
@@ -137,14 +180,20 @@ func importMail(fromDir, toDir string, out *bufio.Writer) error {
 	}
 	defer func() { _ = dst.Close() }()
 
-	n := 0
+	n, transcoded := 0, 0
 	for _, m := range src.All() {
+		if transcodeString(&m.Text, enc) {
+			transcoded++
+		}
 		if err := dst.Send(m); err != nil {
 			return err
 		}
 		n++
 	}
 	_, _ = fmt.Fprintf(out, "mail: imported %d message(s)\n", n)
+	if transcoded > 0 {
+		_, _ = fmt.Fprintf(out, "mail: transcoded %d message(s) from %s to UTF-8\n", transcoded, encName)
+	}
 	return nil
 }
 
@@ -187,7 +236,7 @@ func importHouses(fromDir, fromHouseDir, toDir string, out *bufio.Writer) error 
 	return nil
 }
 
-func importReports(fromMiscDir, toDir string, out *bufio.Writer) error {
+func importReports(fromMiscDir, toDir string, enc *charmap.Charmap, encName string, out *bufio.Writer) error {
 	src, err := reportsclassic.New(reports.Config{Dir: fromMiscDir, ReadOnly: true})
 	if err != nil {
 		return err
@@ -203,12 +252,19 @@ func importReports(fromMiscDir, toDir string, out *bufio.Writer) error {
 	if err != nil {
 		return err
 	}
+	transcoded := 0
 	for _, r := range all {
+		if transcodeString(&r.Body, enc) {
+			transcoded++
+		}
 		if _, err := dst.Append(r); err != nil {
 			return err
 		}
 	}
 	_, _ = fmt.Fprintf(out, "reports: imported %d\n", len(all))
+	if transcoded > 0 {
+		_, _ = fmt.Fprintf(out, "reports: transcoded %d from %s to UTF-8\n", transcoded, encName)
+	}
 	return nil
 }
 

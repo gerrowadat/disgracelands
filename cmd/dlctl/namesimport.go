@@ -12,7 +12,9 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"unicode/utf8"
 
+	"github.com/gerrowadat/disgracelands/internal/persist/convert"
 	"github.com/gerrowadat/disgracelands/internal/persist/names"
 )
 
@@ -24,13 +26,30 @@ func cmdNamesImport(args []string) error {
 	fs := flag.NewFlagSet("names import", flag.ContinueOnError)
 	fromPath := fs.String("from-path", "data/misc/xnames", "Source (classic) xnames file")
 	toDir := fs.String("to-dir", "data/config", "Destination (yaml) directory")
+	encName := fs.String("encoding", convert.DefaultEncoding,
+		fmt.Sprintf("Source text encoding: %v", encodingNames()))
 	if err := fs.Parse(args); err != nil {
 		return err
+	}
+
+	enc, ok := convert.Encodings[*encName]
+	if !ok {
+		return fmt.Errorf("unknown encoding %q (have: %v)", *encName, encodingNames())
 	}
 
 	list, err := names.Load("classic", *fromPath)
 	if err != nil {
 		return fmt.Errorf("reading %s: %w", *fromPath, err)
+	}
+	transcoded := 0
+	for i := range list {
+		if utf8.ValidString(list[i]) {
+			continue
+		}
+		if out, err := enc.NewDecoder().String(list[i]); err == nil {
+			list[i] = out
+			transcoded++
+		}
 	}
 	if err := names.Save("yaml", *toDir, list); err != nil {
 		return fmt.Errorf("writing %s: %w", filepath.Join(*toDir, names.YamlFile), err)
@@ -38,6 +57,9 @@ func cmdNamesImport(args []string) error {
 
 	out := bufio.NewWriter(os.Stdout)
 	_, _ = fmt.Fprintf(out, "names: imported %d\n", len(list))
+	if transcoded > 0 {
+		_, _ = fmt.Fprintf(out, "transcoded %d string(s) from %s to UTF-8\n", transcoded, *encName)
+	}
 	return out.Flush()
 }
 

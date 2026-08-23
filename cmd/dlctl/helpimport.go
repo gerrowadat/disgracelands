@@ -12,7 +12,9 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"unicode/utf8"
 
+	"github.com/gerrowadat/disgracelands/internal/persist/convert"
 	"github.com/gerrowadat/disgracelands/internal/persist/help"
 )
 
@@ -36,13 +38,30 @@ func cmdHelpImport(args []string) error {
 	fs := flag.NewFlagSet("helpdb import", flag.ContinueOnError)
 	fromDir := fs.String("from-dir", "data/text/help", "Source (classic) help directory")
 	toDir := fs.String("to-dir", "data/text/help", "Destination (yaml) help directory")
+	encName := fs.String("encoding", convert.DefaultEncoding,
+		fmt.Sprintf("Source text encoding: %v", encodingNames()))
 	if err := fs.Parse(args); err != nil {
 		return err
+	}
+
+	enc, ok := convert.Encodings[*encName]
+	if !ok {
+		return fmt.Errorf("unknown encoding %q (have: %v)", *encName, encodingNames())
 	}
 
 	entries, err := help.Load("classic", *fromDir)
 	if err != nil {
 		return fmt.Errorf("reading %s: %w", *fromDir, err)
+	}
+	transcoded := 0
+	for i := range entries {
+		if entries[i].Body == "" || utf8.ValidString(entries[i].Body) {
+			continue
+		}
+		if out, err := enc.NewDecoder().String(entries[i].Body); err == nil {
+			entries[i].Body = out
+			transcoded++
+		}
 	}
 	if err := help.Save("yaml", *toDir, entries); err != nil {
 		return fmt.Errorf("writing %s: %w", filepath.Join(*toDir, help.YamlFile), err)
@@ -50,6 +69,9 @@ func cmdHelpImport(args []string) error {
 
 	out := bufio.NewWriter(os.Stdout)
 	_, _ = fmt.Fprintf(out, "help: imported %d\n", len(entries))
+	if transcoded > 0 {
+		_, _ = fmt.Fprintf(out, "transcoded %d help entries from %s to UTF-8\n", transcoded, *encName)
+	}
 	return out.Flush()
 }
 

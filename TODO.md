@@ -71,29 +71,12 @@ there is something to expose and a reason not to yet:
 `docs/proposals/go-port-plan.md` §7 covers what the network layer will do
 about it.
 
-### 5. `dlctl lib import`'s five smaller importers don't transcode
-
-Found while writing `docs/operations.md`'s getting-started walkthrough for
-converting a real archive, and checked with a synthetic CP1252 fixture
-rather than assumed: `dlctl lib import` wraps seven importers, and only
-two of them — `world import` and `pfile import` — have their own
-`--encoding` flag and transcode non-UTF-8 text on the way in. `state
-import`/`names import`/`messages import`/`socials import`/`helpdb import`
-read whatever bytes are in the source file and write them straight into
-the `yaml` output. Pointed at a genuinely CP1252 source (a curly quote in
-a social, an accented name), the result is a `.yaml` file that is not
-valid UTF-8 despite saying it is. `examples/stock/` never surfaces this
-— stock CircleMUD's own text is pure ASCII — but a real, twenty-year-old
-archive usually is not. See `docs/design/data-format.md` §11.1 for the
-full write-up; the fix is giving those five importers the same
-`--encoding` flag and decode step `world`/`pfile import` already have.
-
 ## C server only (`reference/moderncserver/`)
 
 These matter only for as long as that tree is the one actually running the
 game. See its `README.md`.
 
-### 6. Audit the build warnings that look like real bugs
+### 5. Audit the build warnings that look like real bugs
 
 It builds with `-w` to suppress 2002-era warning noise. Several of the
 suppressed warnings are `sprintf`-into-shared-`buf` overlap and truncation
@@ -101,7 +84,7 @@ patterns in `db.c`, `improved-edit.c`, `tedit.c`, `zedit.c`, `listrent.c`
 and `shopconv.c`. Old code, apparently never triggered in practice — but
 "apparently never triggered" is not "safe".
 
-### 7. `src/util/*` assume the binary player format
+### 6. `src/util/*` assume the binary player format
 
 `autowiz`, `mudpasswd`, `listrent` and friends build fine (`make utils`) but
 read `struct char_file_u` directly. Anything that changes the player format
@@ -120,3 +103,9 @@ Kept here so it is clear these were decided rather than forgotten.
 - **Deciding how to run it across restarts.** `autorun` and friends are
   superseded by the container runtime's restart policy plus real SIGTERM
   handling; see `docs/operations.md`.
+- **`dlctl lib import`'s five smaller importers not transcoding.** Fixed,
+  not decided against: `state import`/`names import`/`messages import`/
+  `socials import`/`helpdb import` all take `--encoding` now and decode
+  the same way `world`/`pfile import` already did, `lib import` passing
+  its own flag through to all seven. See `docs/design/data-format.md`
+  §11.1 for what each importer's free-text fields turned out to be.
