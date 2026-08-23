@@ -181,22 +181,34 @@ formats have no trailing period.
 
 ### CI
 
-`.github/workflows/go.yml` runs lint, test, parity, licence and container
-jobs. The **32-bit toolchain is installed only when the change can affect the
-ILP32 layout** — `gcc-multilib` was hanging the runner otherwise. The gate is
-a path filter in the `ilp32` step: if you add a reference tool or a source
-file that feeds the binary layouts, add it to that regex or your layout check
-silently will not run.
+Two workflows, split by how often each needs to run. `.github/workflows/
+go.yml` runs on every push and pull request — build, vet, gofmt, lint,
+`go test -race`. That is the whole of it: fast, and every commit gets an
+answer. `.github/workflows/release.yml` runs only when a tag matching
+`v*.*.*` is pushed (or by hand via `workflow_dispatch`) and runs
+everything else — the 32-bit ILP32/shop-price checks (`gcc-multilib`,
+installed unconditionally there, not path-filtered: a release is exactly
+the point where "probably didn't touch the layout code" stops being good
+enough), the C-vs-Go world-parity check, the licence check, two
+doc-coverage checks, a check that `examples/stock/yaml`/`examples/mini/
+yaml` still match a fresh `dlctl lib import` of their binary source, and
+a container build. `scripts/release.sh` (`make release BUMP=patch`)
+is what actually cuts a release: it bumps the semver tag, regenerates the
+example yaml worlds if they have drifted, runs the fast local checks,
+and pushes the tag that triggers `release.yml`.
 
-That is testable rather than something to get right by inspection. `make ci`
-runs the whole workflow locally in containers via `act`, and `make ci-pr`
-runs the test job as a *pull request* so the path filter is actually
-evaluated — check both branches of it, not just the one you expect. See
-`docs/developer.md`.
+`make ci` runs `go.yml` locally in containers via `act`; see
+`docs/developer.md` for `release.yml`'s own local equivalent. Do not
+assume a slow or flaky check belongs back in `go.yml` because it used to
+live there — that consolidation is why the split exists at all.
 
 The licence check (`scripts/license-check.sh`) is not decorative: CircleMUD's
 licence is non-commercial and requires credits intact and the creators named
-in the greeting.
+in the greeting. It runs at release time now, not on every push — a real
+tradeoff (a stripped header could sit unnoticed for many commits between
+releases), made deliberately because the check almost never trips and
+releases are frequent enough that it does not sit long either way. Move it
+back into `go.yml` if that assumption stops holding.
 
 ## Where to write things down
 

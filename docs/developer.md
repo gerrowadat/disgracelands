@@ -202,78 +202,97 @@ make check
 
 Format check, `go build`, `go vet`, `golangci-lint` (skipped with a note if
 it is not installed), `go test -race`, world lint, and the license check.
-Green here does not guarantee CI is green, but red here guarantees it is not.
-
-Four things CI does that `make check` does not — all of which you can also
-just run, workflow and all, with `make ci` (see below):
-
-- **World parity** — `make parity`. Builds the C server and diffs the world
-  each loader holds. It needs a C toolchain and about a minute, which is why
-  it is a separate target. Run it after touching `internal/persist/world/`.
-  If it reports a difference, the Go loader is what is wrong.
-- **Session parity** — `scripts/session-parity.sh`. Boots *both* servers on
-  throwaway copies of `examples/stock/binary/` with the same fixed RNG seed, plays a script from
-  `testdata/parity/` at each, and diffs what they said. Where they differ, the
-  C server is right.
-
-  Not in CI: its first run found differences that are not all fixed, so it
-  would be a permanently red job. Run it by hand after changing anything a
-  player reads, which is most things. `--ignore-colour` sets aside the one
-  systematic difference — the C emits ANSI and this port does not — so the
-  rest is legible.
-
-  Adding a script is a file of lines to type in `testdata/parity/`. Two things
-  to avoid, both of which produce differences that are not differences:
-
-  - **Dice.** The seed is fixed on both sides, but the two servers do not
-    consume the sequence in the same order, so a script that fights something
-    is comparing rolls rather than wording.
-  - **Rooms that wandering mobiles pass through.** A janitor's position
-    depends on how many mobile-activity pulses have elapsed, which depends on
-    how fast each server booted. The Midgaard temple and the immortal rooms
-    are all on a janitor's route. This is the harness's sharpest limitation
-    and the obvious fix is a way to hold mobile activity still on both sides —
-    the C has no flag for it, so it would be another `<DoC>` addition.
-- **The 32-bit codec checks** in `internal/persist/player`, which skip
-  silently without `gcc-multilib`. They verify the layout the archived player
-  database is actually in — and CI installs that toolchain **only for a change
-  that could affect them**: the `binary` package itself, the two C programs it
-  compiles, the headers those include, or the workflow. Everything else skips
-  the install, which is otherwise the slowest thing in the job by a wide
-  margin. A push to `main` always runs them, because a decision made from a
-  diff is only as good as the diff.
-- **The libcrypt comparison** in `internal/auth`, which skips unless the
-  system libcrypt still does traditional DES. It is the only thing standing
-  between a hand-written DES and "probably right".
-- **`docs/configuration.md` covers every flag**, and the container build.
+Green here does not guarantee CI (`.github/workflows/go.yml`) is green, but
+red here guarantees it is not.
 
 `-race` is not optional in the test target. The port keeps the C server's
 single game goroutine (`docs/proposals/go-port-plan.md` §3.1), and the whole
 safety argument for that design rests on nothing else touching world state —
 which only the race detector can actually check.
 
-## Running CI itself, locally
+### What runs when
 
-`make check` is a hand-assembled approximation of CI, and the list above is
-what it approximates *away*. Approximations drift, and this one cannot notice
-a change to the workflow at all.
+CI used to run everything on every push and pull request, and got slow and
+occasionally flaky doing it — `gcc-multilib` alone "takes longer than
+everything else in this job put together, and on a bad day apt stalls
+outright." Now it is split by how often each thing actually needs an
+answer:
+
+- **`go.yml`, every push and pull request:** `go build`, `go vet`, gofmt,
+  `golangci-lint`, `go test -race`. Fast, and every commit gets an answer.
+  The 32-bit-only tests (in `internal/persist/player`, `boards`, `mail`,
+  `houses`, and the shop-price test in `internal/game`) skip here exactly
+  as they would on your own 64-bit machine without `gcc-multilib` — that is
+  expected, not a gap.
+- **`release.yml`, only when a `v*.*.*` tag is pushed** (or by hand via
+  `workflow_dispatch`): everything above, unconditionally installing the
+  32-bit toolchain and enforcing that those tests did *not* skip, plus
+  world parity (`make parity`), the license check, the two doc-coverage
+  checks, a check that `examples/stock/yaml`/`examples/mini/yaml` still
+  match a fresh `dlctl lib import` of their binary source, and a container
+  build — then creates the GitHub release. See "Cutting a release" below.
+
+**Session parity** (`scripts/session-parity.sh`) is in neither workflow.
+Boots *both* servers on throwaway copies of `examples/stock/binary/` with
+the same fixed RNG seed, plays a script from `testdata/parity/` at each,
+and diffs what they said. Where they differ, the C server is right. Its
+first run found differences that are not all fixed, so it would be a
+permanently red job either way — run it by hand after changing anything a
+player reads, which is most things. `--ignore-colour` sets aside the one
+systematic difference — the C emits ANSI and this port does not — so the
+rest is legible.
+
+Adding a script is a file of lines to type in `testdata/parity/`. Two things
+to avoid, both of which produce differences that are not differences:
+
+- **Dice.** The seed is fixed on both sides, but the two servers do not
+  consume the sequence in the same order, so a script that fights something
+  is comparing rolls rather than wording.
+- **Rooms that wandering mobiles pass through.** A janitor's position
+  depends on how many mobile-activity pulses have elapsed, which depends on
+  how fast each server booted. The Midgaard temple and the immortal rooms
+  are all on a janitor's route. This is the harness's sharpest limitation
+  and the obvious fix is a way to hold mobile activity still on both sides —
+  the C has no flag for it, so it would be another `<DoC>` addition.
+
+## Cutting a release
 
 ```sh
-make ci                    # every job, in containers
-make ci-job JOB=test       # one job: test | parity | license | lint | container
+make release BUMP=patch      # or minor | major | v1.2.3
+```
+
+`scripts/release.sh`: checks you are on `main`, clean, and up to date with
+`origin/main`; works out the next semver tag from the latest `v*.*.*` tag
+reachable from `HEAD` (`v0.0.0` if there is none yet); regenerates
+`examples/stock/yaml` and `examples/mini/yaml` from their `binary/` source
+via `dlctl lib import` and commits the result if anything had drifted (a
+`dataversion` bump, an edited binary source with no matching
+regeneration); runs `make check` and, if a C compiler is available,
+`make parity`, as a fast local pre-flight; then tags and pushes. The tag
+push is what triggers `release.yml`, which is the authoritative gate — the
+local pre-flight exists to fail fast, not to replace it.
+
+## Running CI itself, locally
+
+```sh
+make ci                    # go.yml, every job, in containers
+make ci-job JOB=test       # one job: test | lint
 make ci-list               # what `make ci` would run
 make ci-clean              # throw away the reused containers
 ```
 
-This runs `.github/workflows/go.yml` itself with
-[`act`](https://github.com/nektos/act), which starts a container per job and
-executes the real steps and the real actions. It needs Docker. If `act` is
-not on your `PATH` the Makefile fetches the pinned version with `go run`, the
-same way `make lint` handles `golangci-lint`.
+This runs `.github/workflows/go.yml` (set `CI_WORKFLOW=.github/workflows/
+release.yml` to run that one instead — slower, needs `gcc-multilib` and a C
+build inside the container, and close enough to `release.sh`'s own local
+pre-flight that it is rarely worth reaching for over just pushing a test
+tag) with [`act`](https://github.com/nektos/act), which starts a container
+per job and executes the real steps and the real actions. It needs Docker.
+If `act` is not on your `PATH` the Makefile fetches the pinned version with
+`go run`, the same way `make lint` handles `golangci-lint`.
 
 Defaults live in `.actrc`, which is tracked. The runner image is
 `catthehacker/ubuntu:act-latest` — act's own default for `ubuntu-latest` is a
-Node slim image with no `sudo` and no `apt`, and the test job installs
+Node slim image with no `sudo` and no `apt`, and `release.yml`'s jobs install
 `gcc-multilib`. It is about 1GB and is pulled once.
 
 `--reuse` is on, so job containers survive between runs and keep their Go
@@ -301,59 +320,34 @@ Worth knowing before you trust a green run:
   `docker cp`s the directory in, uncommitted changes and all. Usually what you
   want locally; it does mean a green `make ci` says nothing about whether you
   remembered to `git add`.
-- **The 32-bit checks always run.** act's default event is `push`, and the
-  test job's gate short-circuits on "not a pull request". So `make ci-job
-  JOB=test` runs the ILP32 layout and shop-price checks in full — including on
-  a change where a real PR would skip them — without `gcc-multilib` on your
-  host. This is the cheapest way to run those checks locally.
-- **Artifact upload does not work**, and does not need to. The container job
-  logs `Unable to get the ACTIONS_RUNTIME_TOKEN`; that is the build-summary
-  upload, and the build and the image it produces are unaffected.
-
-### Testing the 32-bit path filter
-
-The gate that decides whether the 32-bit checks run is a regex over changed
-paths, and `CLAUDE.md` gives the reason to be careful with it: a file missing
-from that regex does not fail the build, it silently stops checking. That
-branch only executes for a `pull_request`, so:
-
-```sh
-make ci-pr                 # as a PR against origin/main
-make ci-pr BASE=HEAD~5     # against something else
-```
-
-which synthesises a `pull_request` event with the right base SHA and runs the
-test job under it. Watch for the line the gate prints:
-
-```
-32-bit checks: running (the change touches the 32-bit layout or price checks, or their inputs)
-32-bit checks: skipping (nothing in this change can affect the ILP32 layout or the shop prices)
-```
-
-If you add a reference tool or a source file that feeds the binary layouts,
-extend the regex and then check it with `make ci-pr` — both branches, not just
-the one you expect.
-
-The same gate is why a workflow bug can sit on `main` for a long time. The
-32-bit steps run on a push and on a pull request that touches those paths, and
-on nothing else — so a PR that breaks one of them goes green, and `main` goes
-red the moment it merges. That is not hypothetical: it is how the three layout
-checks came to be pointing at package paths their tests had moved out of, red
-for five merges. `make ci` reproduces a push, which is exactly the case those
-PRs were not running.
+- **Artifact upload does not work**, and does not need to. `release.yml`'s
+  container job logs `Unable to get the ACTIONS_RUNTIME_TOKEN`; that is the
+  build-summary upload, and the build and the image it produces are
+  unaffected.
+- **A workflow bug can sit unnoticed for a while either way now.** `go.yml`
+  runs on every push and PR, so a break there surfaces immediately; a
+  break in something that only lives in `release.yml` surfaces at the next
+  release instead. That is the trade this split makes on purpose — see
+  `CLAUDE.md`'s own note on it — but it is worth remembering *why* three
+  layout checks once sat red on `main` for five merges: a gate that only
+  fires sometimes is a gate that can go quietly wrong. Every one of those
+  checks greps a package path recursively (`/...`); keep it that way if you
+  ever move one of the tests again, and check with `make ci-job
+  JOB=full-suite CI_WORKFLOW=.github/workflows/release.yml` rather than by
+  reading.
 
 ### Secrets
 
 Do not put `GITHUB_TOKEN=""` in `.actrc` to quieten the warnings. act uses
 that token to `git clone` the actions themselves, and an empty one is worse
 than an absent one: it turns anonymous cloning into a failed password
-authentication, and the container job dies fetching
-`docker/build-push-action`. Nothing in these workflows needs API access. If
-the clones ever start getting rate-limited, pass a real token for the run
-rather than storing one:
+authentication, and `release.yml`'s `full-suite` job (the one that builds
+a container) dies fetching `docker/build-push-action`. Nothing in these
+workflows needs API access beyond that. If the clones ever start getting
+rate-limited, pass a real token for the run rather than storing one:
 
 ```sh
-act -j container -s GITHUB_TOKEN="$(gh auth token)"
+act -W .github/workflows/release.yml -j full-suite -s GITHUB_TOKEN="$(gh auth token)"
 ```
 
 `.secrets`, `.vars` and `.env.act` — the files act reads secrets from by
@@ -463,8 +457,9 @@ one thing, and the mistakes it catches all look right.
 | `make roster` | The characters in the player directory. |
 | `make ctl ARGS="pfile dump --name=Someone"` | Any `dlctl` command. |
 | `make docker` / `make compose-up` / `make compose-down` | The container image and the local stack. |
-| `make ci` / `make ci-job JOB=…` / `make ci-pr` | The GitHub Actions workflow, locally, in containers. |
+| `make ci` / `make ci-job JOB=…` | `go.yml`, locally, in containers (`CI_WORKFLOW=...` for `release.yml`). |
 | `make ci-list` / `make ci-clean` | What `make ci` would run; discard its reused containers. |
+| `make release BUMP=patch\|minor\|major` | Bump the semver tag, regenerate the example worlds if stale, and push — see "Cutting a release". |
 | `make clean` | Removes `out/`: binaries, scratch data directory, dev certificate. |
 
 ## Where things are

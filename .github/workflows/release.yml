@@ -1,0 +1,254 @@
+# The full regression suite, run once per release rather than on every
+# push and pull request.
+#
+# go.yml covers correctness and lint on every commit — build, vet, gofmt,
+# lint, go test -race. Everything below used to run there too, on every
+# push and PR, and got expensive and occasionally flaky (the 32-bit
+# toolchain install "takes longer than everything else in this job put
+# together, and on a bad day apt stalls outright" — see the comment that
+# used to sit above that step in go.yml's history): the ILP32
+# player/board/mail/house layout checks and the shop-price check (both
+# need a 32-bit C build to compare against), the C-vs-Go world-parity
+# check (needs a full C build), the license check, two doc-coverage
+# checks, and a container build. All real, none of them cheap, none of
+# them needing an answer on every single commit — a release needing an
+# answer on all of them at once is exactly the point at which "slow but
+# thorough" is worth more than "fast".
+#
+# Triggered by pushing a tag matching v*.*.* (see scripts/release.sh,
+# which computes the next semver version and pushes that tag) or by
+# hand via workflow_dispatch, for testing this workflow without cutting
+# a real release.
+name: release
+
+on:
+  push:
+    tags: ['v[0-9]+.[0-9]+.[0-9]+']
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to stamp into the build (e.g. v0.0.0-test), if run by hand rather than from a tag push'
+        required: false
+        default: 'v0.0.0-manual'
+
+permissions:
+  contents: write
+
+jobs:
+  full-suite:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Determine the version being released
+        id: version
+        run: |
+          v="${{ github.event_name == 'workflow_dispatch' && inputs.version || github.ref_name }}"
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+          echo "Releasing $v"
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version: '1.25'
+          check-latest: true
+
+      - name: Verify go.mod is tidy
+        run: |
+          go mod tidy
+          git diff --exit-code go.mod go.sum
+
+      # Every release runs the 32-bit checks in full, unconditionally —
+      # unlike go.yml's old path-filtered version of this step, a release
+      # is exactly the point where "probably didn't touch the layout code"
+      # is not good enough.
+      - name: Install 32-bit toolchain
+        timeout-minutes: 5
+        run: sudo apt-get update && sudo apt-get install -y gcc-multilib
+
+      # The C tree's configure generates conf.h, which the layout and
+      # fixture programs include.
+      - name: Configure the C tree
+        run: |
+          cd reference/moderncserver
+          CFLAGS="-std=gnu89 -fcommon -w" CC=gcc ./configure >/dev/null
+
+      - name: Build
+        run: go build ./...
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Check formatting
+        run: |
+          unformatted=$(gofmt -l .)
+          if [ -n "$unformatted" ]; then
+            echo "These files need gofmt:"
+            echo "$unformatted"
+            exit 1
+          fi
+
+      - name: Test
+        run: go test -race -count=1 ./...
+
+      # A skipped test is not a passing test. These verify the things that
+      # cannot be verified by reading the code — the layout the real
+      # player data is in, and a hand-written implementation of a cipher —
+      # and skip silently where their toolchain is missing. Every one of
+      # these greps a package path recursively (`/...`): see go.yml's git
+      # history ("main was red for five merges before anything noticed")
+      # for why that is not incidental.
+      - name: The 32-bit codec checks must not have skipped
+        run: |
+          go test -count=1 -v ./internal/persist/player/... > out.txt 2>&1 || { cat out.txt; exit 1; }
+          if grep -q -- "--- SKIP.*ilp32" out.txt; then
+            echo "the ilp32 checks skipped; they must run for a release:"
+            grep -A2 -- "--- SKIP" out.txt
+            exit 1
+          fi
+          grep -c -- "--- PASS.*ilp32" out.txt
+
+      - name: The 32-bit board layout check must not have skipped
+        run: |
+          go test -count=1 -v ./internal/persist/boards/... > boards.txt 2>&1 || { cat boards.txt; exit 1; }
+          if grep -q -- "--- SKIP" boards.txt; then
+            echo "the 32-bit board layout check skipped; it must run for a release:"
+            grep -A2 -- "--- SKIP" boards.txt
+            exit 1
+          fi
+          grep -- "struct members against the 32-bit C" boards.txt
+
+      - name: The 32-bit mail layout check must not have skipped
+        run: |
+          go test -count=1 -v ./internal/persist/mail/... > mail.txt 2>&1 || { cat mail.txt; exit 1; }
+          if grep -q -- "--- SKIP" mail.txt; then
+            echo "the 32-bit mail layout check skipped; it must run for a release:"
+            grep -A2 -- "--- SKIP" mail.txt
+            exit 1
+          fi
+          grep -- "mail block values against the 32-bit C" mail.txt
+
+      - name: The 32-bit house layout check must not have skipped
+        run: |
+          go test -count=1 -v ./internal/persist/houses/... > houses.txt 2>&1 || { cat houses.txt; exit 1; }
+          if grep -q -- "--- SKIP" houses.txt; then
+            echo "the 32-bit house layout check skipped; it must run for a release:"
+            grep -A2 -- "--- SKIP" houses.txt
+            exit 1
+          fi
+          grep -- "struct members against the 32-bit C" houses.txt
+
+      - name: The 32-bit shop price check must not have skipped
+        run: |
+          go test -count=1 -v -run TestShopPricesMatchA32BitBuildOfTheC ./internal/game/ > shop.txt 2>&1 || { cat shop.txt; exit 1; }
+          if grep -q -- "--- SKIP" shop.txt; then
+            echo "the 32-bit shop price check skipped; it must run for a release:"
+            grep -A2 -- "--- SKIP" shop.txt
+            exit 1
+          fi
+          grep -- "price pairs against the 32-bit C" shop.txt
+
+      - name: The libcrypt comparison must not have skipped
+        run: |
+          go test -count=1 -v ./internal/auth/... > crypt.txt 2>&1 || { cat crypt.txt; exit 1; }
+          if grep -q -- "--- SKIP.*TestAgainstSystemCrypt" crypt.txt; then
+            echo "the libcrypt comparison skipped; it must run for a release:"
+            grep -B2 -A4 -- "--- SKIP" crypt.txt
+            exit 1
+          fi
+          grep -- "matched the system libcrypt" crypt.txt
+
+      - name: Phase 0 acceptance - dlmud --help lists the full option set
+        run: |
+          go run ./cmd/dlmud --help > help.txt 2>&1 || true
+          for opt in lib-dir player-format world-format listen-telnet listen-telnets \
+                     listen-ws tls-cert pulse-interval log-format metrics-addr \
+                     allow-legacy-passwords; do
+            grep -q -- "-$opt" help.txt || { echo "missing --$opt in --help"; exit 1; }
+          done
+          grep -q 'DL_LIB_DIR' help.txt || { echo "--help does not document env vars"; exit 1; }
+
+      - name: Lint the world files
+        run: go run ./cmd/dlctl world lint --world-dir=examples/stock/binary/world
+
+      - name: docs/configuration.md covers every flag
+        run: |
+          go run ./cmd/dlmud --help 2>&1 \
+            | sed -n 's/^  -\([a-z][a-z0-9-]*\).*/\1/p' \
+            | sort -u > flags.txt
+          missing=0
+          while read -r flag; do
+            [ "${#flag}" -le 1 ] && continue
+            grep -q -- "--$flag" docs/configuration.md || {
+              echo "docs/configuration.md does not mention --$flag"; missing=1; }
+          done < flags.txt
+          exit $missing
+
+      - name: World parity - the Go and C loaders must agree
+        run: ./scripts/world-parity.sh
+
+      - name: License compliance
+        run: ./scripts/license-check.sh
+
+      # examples/stock/yaml/ and examples/mini/yaml/ are generated
+      # (`dlctl lib import`) from examples/*/binary/, checked in rather
+      # than built on demand, same reasoning data/world's own tracked
+      # files have (docs/developer.md: "the world is source"). A release
+      # is where drift between the two gets caught: regenerate both fresh
+      # and diff against what is checked in. scripts/release.sh already
+      # does this regeneration locally before tagging, so a difference
+      # here means the tag was pushed without running it, not that the
+      # examples are actually stale — either way, the release should not
+      # continue on a mismatch it did not expect.
+      - name: Example worlds must match dlctl lib import's output
+        run: |
+          set -e
+          for pair in stock mini; do
+            rm -rf "/tmp/regen-$pair"
+            go run ./cmd/dlctl lib import \
+              --from-dir="examples/$pair/binary" --to-dir="/tmp/regen-$pair" >/dev/null
+            if ! diff -rq "examples/$pair/yaml" "/tmp/regen-$pair"; then
+              echo "examples/$pair/yaml does not match a fresh dlctl lib import;"
+              echo "run scripts/release.sh, which regenerates and commits this before tagging."
+              exit 1
+            fi
+          done
+          echo "both example yaml worlds match their binary source exactly"
+
+      - name: Build image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: build/Dockerfile
+          push: false
+          load: true
+          tags: disgracelands:release
+          build-args: |
+            VERSION=${{ steps.version.outputs.version }}
+            COMMIT=${{ github.sha }}
+
+      - name: Image runs and reports its version
+        run: |
+          got=$(docker run --rm --entrypoint /usr/local/bin/dlctl disgracelands:release version)
+          echo "$got"
+          echo "$got" | grep -q -- "${{ steps.version.outputs.version }}"
+
+  publish:
+    needs: full-suite
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Create the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ needs.full-suite.outputs.version }}" \
+            --title "${{ needs.full-suite.outputs.version }}" \
+            --generate-notes
