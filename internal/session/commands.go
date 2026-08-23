@@ -96,6 +96,8 @@ type Context struct {
 	// A seam rather than a field write, because hashing a password is the
 	// auth package's business and not the session's.
 	SetPassword func(c *game.Character, password string) error
+	// TextEdit reads and writes a canned text file by name, for `tedit`.
+	TextEdit TextEditor
 	// Arg is everything after the command word, trimmed.
 	Arg string
 	// Social is the social being run, for the commands that are one.
@@ -122,6 +124,20 @@ type Violence interface {
 	SkillDamage(w *game.Live, attacker, victim *game.Character, amount, skillType int32) int32
 	// Swing is one weapon attack, taken now rather than on the next round.
 	Swing(w *game.Live, attacker, victim *game.Character)
+}
+
+// TextEditor is tedit's own seam: reading a canned text file's current
+// content and writing a new one back, both by symbolic name — the same
+// belongs-with-the-server shape BoardSaver already has for a board.
+type TextEditor interface {
+	// TextField returns a canned text file's current content, and
+	// whether name is one tedit recognises at all.
+	TextField(name string) (text string, ok bool)
+	// SetTextField writes a new value for name, both in memory (so
+	// every other command sees it immediately) and to disk, pushed off
+	// the world goroutine — see Server.background's own doc comment.
+	// False means name was not recognised.
+	SetTextField(name, text string) bool
 }
 
 // Send writes to the player who typed the command.
@@ -282,6 +298,11 @@ func init() {
 		{Name: "poofin", Help: "Set what the room sees when you arrive.", Run: doPoofIn, CLine: 406, MinLevel: game.LevelImmortal},
 		{Name: "poofout", Help: "Set what the room sees when you leave.", Run: doPoofOut, CLine: 407, MinLevel: game.LevelImmortal},
 		{Name: "teleport", Help: "Send somebody somewhere.", Run: doTeleport, CLine: 507, MinLevel: game.LevelGod},
+		// tedit's own field table gates each file at its own level
+		// (LVL_IMPL/LVL_GRGOD); this is the command-table gate at the
+		// lower of the two, matching the C's own two-stage check
+		// (interpreter.c:508, tedit.c's own per-field level test).
+		{Name: "tedit", Help: "Edit one of the server's canned text files.", Run: doTedit, CLine: 508, MinLevel: game.LevelGreaterGod},
 		{Name: "transfer", Help: "Bring somebody to you.", Run: doTransfer, CLine: 518, MinLevel: game.LevelGod},
 
 		// Looking at the innards (interpreter.c:494, :528, :529).
@@ -606,6 +627,8 @@ type Dispatcher struct {
 	Reports ReportWriter
 	// SetPassword replaces somebody's credential.
 	SetPassword func(c *game.Character, password string) error
+	// TextEdit reads and writes a canned text file by name, for `tedit`.
+	TextEdit TextEditor
 }
 
 // Do implements CommandHandler.
@@ -665,7 +688,7 @@ func (d *Dispatcher) Do(ctx context.Context, s *Session, line string) error {
 		c := &Context{
 			Ctx: ctx, Session: s, Character: s.Character(),
 			World: w, Text: d.Text, RNG: d.RNG, Violence: d.Violence, Arg: arg,
-			Social: cmd.Social, Save: d.Save, Rent: d.Rent, SaveBoard: d.SaveBoard, Mail: d.Mail, Houses: d.Houses, Operator: d.Operator, Bans: d.Bans, Reports: d.Reports, SetPassword: d.SetPassword,
+			Social: cmd.Social, Save: d.Save, Rent: d.Rent, SaveBoard: d.SaveBoard, Mail: d.Mail, Houses: d.Houses, Operator: d.Operator, Bans: d.Bans, Reports: d.Reports, SetPassword: d.SetPassword, TextEdit: d.TextEdit,
 		}
 
 		// A command that panics must not leave the player staring at a dead

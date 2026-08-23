@@ -372,6 +372,62 @@ func (t *Text) Help(query string) (string, bool) {
 	return e.Body, ok
 }
 
+// teditFields is do_tedit's own field table (tedit.c), the nine canned
+// text files an implementor can edit in-game — a narrower set than
+// Reload's, since wizlist/immlist/greeting/xhelp are not among them in
+// the C either, not an oversight here. Level gating (LVL_IMPL/LVL_GRGOD
+// per field) lives with the command in internal/session/tedit.go, not
+// here — this table is purely "what is this name, and where does it
+// live," the same split Reload's swap map keeps between "which name" and
+// "what to do about it."
+var teditFields = map[string]struct {
+	get  func(t *Text) string
+	set  func(t *Text, v string)
+	file string
+}{
+	"credits": {func(t *Text) string { return t.credits }, func(t *Text, v string) { t.credits = v }, creditsFile},
+	"news":    {func(t *Text) string { return t.news }, func(t *Text, v string) { t.news = v }, newsFile},
+	"motd":    {func(t *Text) string { return t.motd }, func(t *Text, v string) { t.motd = v }, motdFile},
+	// imotd here is the *raw* field, not ImmortalMOTD()'s motd-fallback:
+	// what do_tedit edits and what a mortal falls back to seeing are two
+	// different concerns that happen to share a variable in the C too.
+	"imotd":      {func(t *Text) string { return t.imotd }, func(t *Text, v string) { t.imotd = v }, imotdFile},
+	"help":       {func(t *Text) string { return t.helpScreen }, func(t *Text, v string) { t.helpScreen = v }, helpScreenFile},
+	"info":       {func(t *Text) string { return t.info }, func(t *Text, v string) { t.info = v }, infoFile},
+	"background": {func(t *Text) string { return t.background }, func(t *Text, v string) { t.background = v }, backgroundFile},
+	"handbook":   {func(t *Text) string { return t.handbook }, func(t *Text, v string) { t.handbook = v }, handbookFile},
+	"policies":   {func(t *Text) string { return t.policies }, func(t *Text, v string) { t.policies = v }, policiesFile},
+}
+
+// TextField returns a canned text file's current content — what tedit
+// shows before editing it — and whether name is one it recognises at
+// all.
+func (t *Text) TextField(name string) (string, bool) {
+	spec, ok := teditFields[name]
+	if !ok {
+		return "", false
+	}
+	t.mu.RLock()
+	defer t.mu.RUnlock()
+	return spec.get(t), true
+}
+
+// SetTextField writes a new value for name in memory and reports the
+// file it belongs to, so the caller can persist it — the write itself is
+// not this method's job, the same boundary SaveBoard draws between
+// updating state and saving it (internal/server/boards.go). False means
+// name was not one of teditFields.
+func (t *Text) SetTextField(name, text string) (path string, ok bool) {
+	spec, ok := teditFields[name]
+	if !ok {
+		return "", false
+	}
+	t.mu.Lock()
+	spec.set(t, text)
+	t.mu.Unlock()
+	return filepath.Join(t.dir, spec.file), true
+}
+
 // Reload re-reads one of the canned files, porting do_reboot (db.c:195).
 //
 // The C's body is an else-if chain over the argument, one file each, plus

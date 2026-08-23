@@ -312,7 +312,32 @@ func ensureTrailingNewline(s string) string {
 
 // beginEditor puts the session into the line editor.
 func (s *Session) beginEditor(maxLength int, done func(text string)) {
-	s.editorLines = nil
+	s.beginEditorSeeded(maxLength, "", done)
+}
+
+// beginEditorSeeded is beginEditor with existing content already in the
+// buffer, porting string_write's own plain-editor behaviour when the
+// pointer it is handed already points at something: string_add's
+// non-empty branch (RECREATE+strcat) appends each typed line onto what
+// was already there rather than starting fresh. tedit is the first
+// caller with anything to seed — do_tedit shows the file's current
+// content before handing the descriptor to string_write with that same
+// buffer — so board `write`/mail/description, which always compose new
+// text, keep going through beginEditor and see no change at all.
+//
+// seed is split on \r\n, the same line-ending Text's fields and
+// game.HelpEntry.Body both already use; a trailing empty element (a seed
+// that already ends in \r\n, which every one of Text's fields does) is
+// dropped so an empty line is not appended for free.
+func (s *Session) beginEditorSeeded(maxLength int, seed string, done func(text string)) {
+	var lines []string
+	if seed != "" {
+		lines = strings.Split(seed, "\r\n")
+		if len(lines) > 0 && lines[len(lines)-1] == "" {
+			lines = lines[:len(lines)-1]
+		}
+	}
+	s.editorLines = lines
 	s.editorMax = maxLength
 	s.editorDone = done
 	s.state = StateEditing

@@ -40,7 +40,7 @@ var notPorted = map[string]string{
 	// Phase 6, by design.
 	"medit": "OasisOLC", "oedit": "OasisOLC", "redit": "OasisOLC",
 	"sedit": "OasisOLC", "zedit": "OasisOLC", "olc": "OasisOLC",
-	"edit": "OasisOLC", "tedit": "the in-game text-file editor",
+	"edit": "OasisOLC",
 
 	// Blocked on something.
 	"color":  "the PRF_COLOR bits are stored and set color works, but nothing emits colour",

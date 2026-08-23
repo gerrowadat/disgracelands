@@ -16,6 +16,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"os"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -209,6 +210,28 @@ func (s *Server) WaitForWrites() { s.writes.Wait() }
 
 // Text returns the canned files.
 func (s *Server) Text() *Text { return s.text }
+
+// TextField implements session.TextEditor: tedit's own read of a canned
+// text file's current content.
+func (s *Server) TextField(name string) (string, bool) { return s.text.TextField(name) }
+
+// SetTextField implements session.TextEditor: tedit's own save. The
+// in-memory update happens now, so every other command sees it
+// immediately (the same posture SaveBoard's caller already takes,
+// mutating the board before calling this at all); the disk write is
+// pushed off the world goroutine, mirroring SaveBoard exactly.
+func (s *Server) SetTextField(name, text string) bool {
+	path, ok := s.text.SetTextField(name, text)
+	if !ok {
+		return false
+	}
+	s.background(func() {
+		if err := os.WriteFile(path, []byte(text), 0o600); err != nil { //nolint:gosec // operator-configured data directory
+			s.logger.Error("writing a canned text file", "file", path, "error", err)
+		}
+	})
+	return true
+}
 
 // Exists implements session.LoginHandler.
 func (s *Server) Exists(ctx context.Context, name string) (bool, error) {

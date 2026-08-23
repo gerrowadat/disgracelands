@@ -1160,10 +1160,12 @@ except build.*
 
 **Met, with the tail named rather than waved at.** Every slice below is built,
 including the three mechanisms that were never slices at all and had to be
-found. 308 of the C's 318 commands answer. Of the 10 that do not, nine are the
-OasisOLC and text editors that belong to Phase 6 by design, and the other
-nine are listed one by one under "What is not in it" — none of them a
-subsystem, none of them blocking anything, all of them an afternoon.
+found. 308 of the C's 318 commands answered when Phase 5 finished. Of the 10
+that did not, nine were the OasisOLC and text editors that belong to Phase 6
+by design (`tedit` has since landed as Phase 6's own first slice — see
+below), and the other nine are listed one by one under "What is not in it" —
+none of them a subsystem, none of them blocking anything, all of them an
+afternoon.
 
 **Counted rather than remembered, and the earlier figures here were wrong.**
 `cmd_info[]` holds 319 rows before the `"\n"` sentinel, one of which is
@@ -1172,8 +1174,10 @@ is not typeable — so **318 commands**. 105 of them are `do_action`, and the
 shipped socials file fills 104 of those (it also carries a `you` entry with no
 table slot, which the C drops with a log and so does this port).
 
-**308 of the 318 are implemented**: 203 in `internal/session/commands.go` plus
-the 105 socials. **Every slice below is built.** The 10 left are listed under
+**308 of the 318 were implemented when Phase 5 finished**: 203 in
+`internal/session/commands.go` plus the 105 socials — 309 now that `tedit`
+has landed. **Every slice below is built.** The 10 left when Phase 5 finished
+are listed under
 "What is not in it" — the OLC editors that belong to Phase 6, and a scattering
 of small commands that never had a slice of their own.
 
@@ -1376,6 +1380,23 @@ because a command with no slice is a command nobody schedules.
 the `gen*` layer. Deferrable — offline editing plus a reboot works
 meanwhile. `dlctl world lint` and the world-parity harness are what make
 that deferral safe.
+
+**`tedit` ✅ — the phase's first slice.** `do_tedit`'s nine canned text
+files (`credits`/`news`/`motd`/`imotd`/`help` screen/`info`/`background`/
+`handbook`/`policies`), each at its own C-table level, editable in-game
+through the line editor board `write`/mail already use — extended with a
+seeded-buffer variant (`beginEditorSeeded`) so the file's current content
+starts the edit instead of an empty one, matching `string_write`'s own
+behaviour when the pointer it is handed already points at something. A
+real, previously-undocumented finding along the way: the archived
+server's `CONFIG_IMPROVED_EDITOR` is hardcoded `1` — the improved line
+editor's `/c`/`/l`/`/h`/`/a`/`/s` commands were always on, not stock —
+and this port's line editor has never had them, invisibly until `tedit`
+became the first caller to seed a non-empty buffer. Recorded in
+`docs/deviations.md` as a gap, not fixed here. The seven OLC record
+editors (`medit`/`oedit`/`redit`/`sedit`/`zedit`/`olc`/`edit`) and `Sink`
+writeback are the rest of the phase, not attempted — a larger,
+multi-slice body of work needing its own staged proposal.
 
 **Phase 7 — Cutover.** Shadow-run both servers against copies of the same
 `data/`, compare. Then run the Go server as primary, keep the C tree as

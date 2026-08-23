@@ -370,9 +370,9 @@ Listed here so they are not mistaken for deliberate differences.
   combination, and reports which of them it found the thing in. Here each
   command searches the lists it cares about in the order it wants. The
   behaviour is the same for every command ported so far; the shape is not.
-- **Ten of the C's 318 commands are not implemented**, and the plan's
+- **Nine of the C's 318 commands are not implemented**, and the plan's
   §10 "What is not in it" lists every one with its `interpreter.c` line. In
-  brief: the nine OasisOLC and text editors (Phase 6), `slowns`/`trackthru`,
+  brief: the seven OasisOLC editors (Phase 6), `slowns`/`trackthru`,
   and a short tail of `users`, `skillset`, `reload` and `color`. **`hop` is not
   among them**: it is the one `do_action` row the shipped socials file does not
   fill, and `RegisterSocials` gives it a command anyway that answers "That
@@ -380,7 +380,8 @@ Listed here so they are not mistaken for deliberate differences.
   is off this list now — landed with the native player format (step 5 of
   `docs/proposals/data-format.md`), including `perform_alias`'s complex
   substitution grammar (`;`/`$1`-`$9`/`$*`/`$$`). `bug`/`idea`/`typo` are
-  off it too — `do_gen_write` (step 6b), see the reports entry below.
+  off it too — `do_gen_write` (step 6b), see the reports entry below. `tedit`
+  is off it too — Phase 6's first slice, see the improved-editor gap below.
 
   Its persistence is not quite everywhere the roster is, though: an
   alias survives a save under `ascii` (it grew an `Aliases:`-tagged section
@@ -658,3 +659,25 @@ Listed here so they are not mistaken for deliberate differences.
   up.** `Crash_save_all` writes for characters with `PLR_CRASH` set, a bit
   raised by `obj_to_char`. That is an optimisation for a machine that counted
   disk writes; a few hundred small files cannot miss anybody.
+
+- **The improved line editor's own commands are not implemented.** The
+  archived server's `improved-edit.h` has `CONFIG_IMPROVED_EDITOR`
+  hardcoded to `1` — `/c` (clear), `/l` (list so far), `/h` (help), `/a`
+  (abort) and `/s` (save) were always on, not a stock/optional feature,
+  found while porting `tedit` (Phase 6's first slice). This port's line
+  editor (`internal/session/menu.go`'s `beginEditor`/`beginEditorSeeded`,
+  used by board `write`, mail and now `tedit`) implements only the plain
+  `@`-terminated accumulate loop `string_add` falls back to when none of
+  those commands are typed — which is the core of what every caller so
+  far actually needs, `tedit` included: `string_write`'s own behaviour
+  when the buffer it is handed already has content is to *append*
+  whatever is typed onto the end of it, and `beginEditorSeeded` (new,
+  this pass) reproduces exactly that by pre-loading the buffer with the
+  file's current text. What is missing is only the `/`-commands
+  themselves — there is no way to clear the buffer mid-edit and start
+  over, or list what has been typed so far, without disconnecting and
+  starting again. `tedit`'s own instructions line says so honestly
+  ("Type @ on a line by itself to end.", the C's own plain-editor text,
+  not the improved editor's "/s or @ to save, /h for more options." that
+  the real server actually showed) rather than promising commands that
+  do not work.
