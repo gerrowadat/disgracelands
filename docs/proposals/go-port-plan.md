@@ -1838,17 +1838,19 @@ against what is checked in is what proved the recipe, not an assumption,
 and is now a standing test (`TestLibImportMatchesTheCheckedInExample`).
 
 Writing the getting-started walkthrough this landed with
-(`docs/operations.md`) found a real, current gap rather than assuming the
-seven importers were uniform: only `world`/`pfile import` transcode
-non-UTF-8 source text on their own (`--encoding`, the same flag `dlctl
-convert` uses); the other five assume the source is already UTF-8 and
-carry a raw CP1252 byte straight through into a `.yaml` file that then
-claims to be UTF-8 and is not. `examples/stock/`'s own world is pure
-ASCII throughout, so nothing here has ever exercised the gap — found with
-a synthetic fixture instead, a curly quote fed to `names import` and
-inspected byte for byte in the output. Not fixed in this pass; tracked in
-`TODO.md`, and the getting-started guide tells an operator how to check
-for it (`iconv -f UTF-8 -t UTF-8` over the result) until it is.
+(`docs/operations.md`) found a real gap rather than assuming the seven
+importers were uniform: only `world`/`pfile import` transcoded non-UTF-8
+source text on their own (`--encoding`, the same flag `dlctl convert`
+uses); the other five assumed the source was already UTF-8 and carried a
+raw CP1252 byte straight through into a `.yaml` file that then claimed to
+be UTF-8 and was not. `examples/stock/`'s own world is pure ASCII
+throughout, so nothing here had ever exercised the gap — found with a
+synthetic fixture instead, a curly quote fed to `names import` and
+inspected byte for byte in the output. **Fixed since**: all seven
+importers take `--encoding` now, each decoding the specific free-text
+fields its own format actually carries (see `docs/design/data-format.md`
+§11.1 for the full field-by-field account) — `TODO.md`'s own entry for
+this moved from "still open" to "superseded" accordingly.
 
 **Phase 7 — Cutover. Not started.** The one honest complication this
 section's original two sentences skipped over: "cutover" ordinarily means

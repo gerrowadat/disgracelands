@@ -82,22 +82,27 @@ func cmdLibImport(args []string) error {
 			"--from-house-dir", filepath.Join(*fromDir, "house"),
 			"--from-misc-dir", filepath.Join(*fromDir, "misc"),
 			"--to-dir", filepath.Join(*toDir, "state"),
+			"--encoding", *encName,
 		}, cmdStateImport},
 		{"names", []string{
 			"--from-path", filepath.Join(*fromDir, "misc", "xnames"),
 			"--to-dir", filepath.Join(*toDir, "config"),
+			"--encoding", *encName,
 		}, cmdNamesImport},
 		{"messages", []string{
 			"--from-path", filepath.Join(*fromDir, "misc", "messages"),
 			"--to-dir", filepath.Join(*toDir, "config"),
+			"--encoding", *encName,
 		}, cmdMessagesImport},
 		{"socials", []string{
 			"--from-path", filepath.Join(*fromDir, "misc", "socials"),
 			"--to-dir", filepath.Join(*toDir, "config"),
+			"--encoding", *encName,
 		}, cmdSocialsImport},
 		{"helpdb", []string{
 			"--from-dir", filepath.Join(*fromDir, "text", "help"),
 			"--to-dir", filepath.Join(*toDir, "text", "help"),
+			"--encoding", *encName,
 		}, cmdHelpImport},
 	}
 

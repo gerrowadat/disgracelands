@@ -1456,7 +1456,7 @@ the only format that can read the archived roster and rent files at all,
 and remains the tooling's own path for reading them, even once a server
 is running on `yaml`.
 
-### 11.1 `dlctl lib import` — all seven at once, and an honest gap it exposed
+### 11.1 `dlctl lib import` — all seven at once, and a gap it exposed and closed
 
 `dlctl lib import --from-dir=X --to-dir=Y` runs the seven importers above
 in order, against `X`'s own `world/`/`etc/`/`misc/`/`house/`/`text/`
@@ -1466,25 +1466,34 @@ once everything else has succeeded — see `docs/operations.md`'s own
 getting-started walkthrough for running it against a real archive.
 
 Found while writing that walkthrough, checked with a synthetic CP1252
-fixture rather than assumed: **only two of the seven importers transcode
+fixture rather than assumed: **only two of the seven importers transcoded
 non-UTF-8 text on their own.** `world import` and `pfile import` each
-have their own `--encoding` flag and decode CP1252 (or whatever is
-named) the same way `dlctl convert` does. `state import`/`names import`/
-`messages import`/`socials import`/`helpdb import` do not — they read
-whatever bytes are in the source file and write them straight into the
-`yaml` output, UTF-8 declaration and all. Pointed at a source file that
-is genuinely CP1252 (a curly quote in a social, an accented name on the
-xnames list), the result is a `.yaml` file that is not valid UTF-8
-despite saying it is. `examples/stock/` never surfaces this, because
-stock CircleMUD's own text is pure ASCII throughout and ASCII is valid
-UTF-8 unchanged — the gap is real but inert against every fixture in
-this repo, which is exactly the kind of thing worth writing down rather
-than leaving for the first real archive to find silently.
+had their own `--encoding` flag and decoded CP1252 (or whatever was
+named) the same way `dlctl convert` does; `state import`/`names import`/
+`messages import`/`socials import`/`helpdb import` read whatever bytes
+were in the source file and wrote them straight into the `yaml` output,
+UTF-8 declaration and all. Pointed at a source file that is genuinely
+CP1252 (a curly quote in a social, an accented name on the `xnames`
+list), the result was a `.yaml` file that was not valid UTF-8 despite
+saying it was. `examples/stock/` never surfaced this, because stock
+CircleMUD's own text is pure ASCII throughout and ASCII is valid UTF-8
+unchanged — the gap was real but inert against every fixture in this
+repo, which is exactly the kind of thing worth writing down rather than
+leaving for the first real archive to find silently.
 
-Not fixed here — the docs-and-tooling pass this landed in did not touch
-the five importers' own decoding, which is a small, contained, separate
-change once made deliberately rather than as a side effect of a
-getting-started guide. Tracked in `TODO.md`.
+**Closed**: all seven importers now take `--encoding` and decode the same
+way, `lib import` passing its own flag through to every one of them.
+Each of the five gained a `transcode*` helper mirroring `world import`'s
+own `transcodeWorldStrings` — walking each format's actual free-text
+fields (a board's `Heading`/`Body`, a mail message's `Text`, a report's
+`Body`, a fight message's `Attacker`/`Victim`/`Room` per die/miss/hit/god
+set, a social's eight message fields, an `xnames` entry, a help entry's
+`Body`) and leaving alone what is not prose (a ban's hostname or admin
+name, a house's numeric fields and vnum-only stored objects — checked
+field by field, not assumed uniform with the ones that do carry text).
+Verified against a genuinely non-ASCII fixture, not just a re-run of the
+always-ASCII `examples/stock/` corpus, the same reasoning the original
+finding used.
 
 ---
 
