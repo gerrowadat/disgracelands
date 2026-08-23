@@ -219,7 +219,7 @@ jobs:
       # causes it. Errors fail the build; warnings do not, because the
       # shipped world has had several since long before this repo existed.
       - name: Lint the world files
-        run: go run ./cmd/dlctl world lint --world-dir=data/world
+        run: go run ./cmd/dlctl world lint --world-dir=examples/stock/binary/world
 
       - name: docs/configuration.md covers every flag
         run: |
