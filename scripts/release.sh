@@ -6,16 +6,21 @@
 # (Copyright (C) 1990, 1991). Use of this file is governed by the CircleMUD
 # and DikuMUD licenses; see LICENSE. Non-commercial use only.
 #
-# Cut a release: bump the semver tag, regenerate the example yaml worlds
-# from their binary source (catching any drift between the two before it
-# ships rather than after), run the local checks -- including the play
-# regression suite, which is release-only -- then tag and push.
+# Cut a release: work out the next semver version, regenerate the example
+# yaml worlds from their binary source (catching any drift between the two
+# before it ships rather than after), run the local checks -- including the
+# play regression suite, which is release-only -- then hand the version to
+# .github/workflows/release.yml and wait for it.
 #
-# .github/workflows/release.yml is what actually runs the full regression
-# suite and creates the GitHub release — this script's job is everything
-# that has to happen *before* a tag exists for that workflow to trigger
-# on: computing the next version, and making sure what gets tagged is
-# what the tag claims it is.
+# Nothing here tags anything. release.yml runs the full regression suite
+# and only then, in its publish and image jobs, creates the tag, the
+# GitHub release and the container image. A failed suite therefore leaves
+# no trace at all: no tag, no release, no notes, no package, and the same
+# version number free for the next attempt. This script used to tag and
+# push first and let the tag push trigger the workflow, which meant every
+# failed release left a real vX.Y.Z tag on a commit that had just been
+# proved not to release -- fetchable by anyone, and awkward to retract
+# once it had been.
 #
 # Usage: scripts/release.sh patch|minor|major
 #        scripts/release.sh v1.2.3        # an explicit version, skipping the bump math
@@ -33,8 +38,20 @@ usage() {
 [ $# -eq 1 ] || usage
 ARG=$1
 
-# 1. Preconditions. A release built from anything else is a release nobody
-# can reproduce from git history alone.
+# 1. Preconditions. gh does the dispatching and the waiting, so find out
+# it is missing now rather than after `make check` and `make play` have
+# spent twenty minutes earning the right to use it.
+if ! command -v gh >/dev/null 2>&1; then
+	echo "release.sh: gh (the GitHub CLI) is required to dispatch the release workflow" >&2
+	exit 1
+fi
+if ! gh auth status >/dev/null 2>&1; then
+	echo "release.sh: gh is not authenticated; run 'gh auth login'" >&2
+	exit 1
+fi
+
+# main, clean, and level with origin. A release built from anything else
+# is a release nobody can reproduce from git history alone.
 branch=$(git rev-parse --abbrev-ref HEAD)
 if [ "$branch" != "main" ]; then
 	echo "release.sh: on branch '$branch', not main" >&2
@@ -83,8 +100,16 @@ major)
 esac
 tag="v$next"
 
-if git rev-parse "$tag" >/dev/null 2>&1; then
-	echo "release.sh: $tag already exists" >&2
+if git rev-parse -q --verify "refs/tags/$tag" >/dev/null 2>&1; then
+	echo "release.sh: $tag already exists locally" >&2
+	exit 1
+fi
+
+# The tag is created on the runner now, not here, so origin's copy is the
+# one that matters -- a tag this clone has never fetched would otherwise
+# get all the way to the workflow before failing.
+if [ -n "$(git ls-remote --tags origin "refs/tags/$tag" 2>/dev/null)" ]; then
+	echo "release.sh: $tag already exists on origin" >&2
 	exit 1
 fi
 
@@ -126,9 +151,9 @@ else
 	echo "    both example yaml worlds already match; nothing to regenerate"
 fi
 
-# 4. The fast local checks. release.yml's full-suite job is the
-# authoritative gate -- this is a chance to fail fast, locally, before
-# pushing a tag that triggers it, not a replacement for it.
+# 4. The local checks. release.yml's full-suite job is the authoritative
+# gate -- these are a chance to fail locally, before a runner spends half
+# an hour reaching the same answer, not a replacement for it.
 echo "==> make check"
 make check
 
@@ -153,16 +178,58 @@ else
 	echo "==> skipping make parity locally (no C compiler here); release.yml runs it for real"
 fi
 
-# 5. Tag and push. The tag push is what triggers release.yml.
-git tag -a "$tag" -m "Release $tag"
+# 5. Push main, then hand the version to release.yml and wait. The
+# workflow tags, releases and pushes the image only if its suite passes;
+# if it does not, this exits non-zero having changed nothing on origin
+# except main, which was already pushed and already green on go.yml.
 git push origin main
-git push origin "$tag"
-
+head=$(git rev-parse HEAD)
 repo=$(git remote get-url origin | sed -E 's#.*/([^/]+/[^/.]+)(\.git)?$#\1#')
 
+# Run IDs increase monotonically per repository, so the newest one that
+# exists *before* dispatching is the watermark for finding the run we are
+# about to create. `gh workflow run` prints nothing identifying -- that is
+# the documented gap in it, and every other way of matching (by branch, by
+# sha, by timestamp) misidentifies a concurrent run sooner or later.
+before=$(gh run list --workflow=release.yml --limit 1 \
+	--json databaseId --jq '.[0].databaseId // 0' 2>/dev/null || echo 0)
+[ -n "$before" ] || before=0
+
+echo "==> Dispatching release.yml for $tag at $head"
+gh workflow run release.yml --ref main \
+	-f version="$tag" -f commit="$head" -f publish=true
+
+run_id=""
+waited=0
+while [ "$waited" -lt 120 ]; do
+	run_id=$(gh run list --workflow=release.yml --event=workflow_dispatch --limit 20 \
+		--json databaseId \
+		--jq "[.[] | select(.databaseId > $before)] | sort_by(.databaseId) | .[0].databaseId // empty")
+	[ -n "$run_id" ] && break
+	sleep 3
+	waited=$((waited + 3))
+done
+
+if [ -z "$run_id" ]; then
+	echo "release.sh: dispatched, but no new release.yml run appeared within ${waited}s" >&2
+	echo "nothing has been tagged or published. Find the run and watch it by hand:" >&2
+	echo "    gh run list --workflow=release.yml -R $repo" >&2
+	exit 1
+fi
+
+echo "==> Watching run $run_id"
+if ! gh run watch "$run_id" --exit-status; then
+	echo >&2
+	echo "release.sh: the release suite failed. $tag was NOT tagged, released or pushed." >&2
+	echo "Fix it, merge the fix, and run this again for the same version:" >&2
+	echo "    make release BUMP=$tag" >&2
+	echo "    gh run view $run_id --log-failed -R $repo" >&2
+	exit 1
+fi
+
+git fetch origin --tags >/dev/null 2>&1 || true
+
 echo
-echo "==> Pushed $tag. Watch the release workflow:"
-echo "    gh run watch -R $repo"
-echo
-echo "    It creates the GitHub release and pushes the container image:"
+echo "==> Released $tag"
+gh release view "$tag" --json url --jq '"    " + .url' 2>/dev/null || true
 echo "    ghcr.io/$repo:$next  (also :${next%.*} and :latest)"

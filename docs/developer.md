@@ -251,14 +251,16 @@ answer:
   `houses`, and the shop-price test in `internal/game`) skip here exactly
   as they would on your own 64-bit machine without `gcc-multilib` — that is
   expected, not a gap.
-- **`release.yml`, only when a `v*.*.*` tag is pushed** (or by hand via
+- **`release.yml`, only when a release is being cut** (dispatched by
+  `scripts/release.sh`, or by a `v*.*.*` tag push, or by hand via
   `workflow_dispatch`): everything above, unconditionally installing the
   32-bit toolchain and enforcing that those tests did *not* skip, plus
   world parity (`make parity`), the license check, the two doc-coverage
   checks, a check that `examples/stock/yaml`/`examples/mini/yaml` still
   match a fresh `dlctl lib import` of their binary source, the play
-  regression suite (`make play`, below), and a container build — then
-  creates the GitHub release. See "Cutting a release" below.
+  regression suite (`make play`, below), and a container build — and only
+  once all of that is green does it tag the commit, create the GitHub
+  release and push the image. See "Cutting a release" below.
 
 ### The play regression suite
 
@@ -354,15 +356,48 @@ make release BUMP=patch      # or minor | major | v1.2.3
 ```
 
 `scripts/release.sh`: checks you are on `main`, clean, and up to date with
-`origin/main`; works out the next semver tag from the latest `v*.*.*` tag
-reachable from `HEAD` (`v0.0.0` if there is none yet); regenerates
-`examples/stock/yaml` and `examples/mini/yaml` from their `binary/` source
-via `dlctl lib import` and commits the result if anything had drifted (a
-`dataversion` bump, an edited binary source with no matching
-regeneration); runs `make check` and, if a C compiler is available,
-`make parity`, as a fast local pre-flight; then tags and pushes. The tag
-push is what triggers `release.yml`, which is the authoritative gate — the
-local pre-flight exists to fail fast, not to replace it.
+`origin/main`, and that `gh` is present and logged in; works out the next
+semver version from the latest `v*.*.*` tag reachable from `HEAD`
+(`v0.0.0` if there is none yet); regenerates `examples/stock/yaml` and
+`examples/mini/yaml` from their `binary/` source via `dlctl lib import`
+and commits the result if anything had drifted (a `dataversion` bump, an
+edited binary source with no matching regeneration); runs `make check`,
+`make play` and, if a C compiler is available, `make parity`, as a local
+pre-flight; then pushes `main`, dispatches `release.yml` with that
+version, and watches the run. `release.yml` is the authoritative gate —
+the local pre-flight exists to fail sooner, not to replace it.
+
+**The script does not tag anything.** `release.yml`'s `publish` job
+creates the tag, after `full-suite` has gone green, and both `publish` and
+`image` are `needs:`-gated on it. So a failed release leaves *nothing*
+behind: no tag, no GitHub release, no generated notes, no package, and the
+version number still free — fix the problem, merge the fix, and run `make
+release BUMP=v1.2.3` again for the same version. It used to work the other
+way round, tagging and pushing first and letting the tag push trigger the
+workflow, which meant every failed release run left a real `v1.2.3` tag on
+a commit that had just been proved not to release. A tag is the one part of
+a release that other people fetch, and deleting a pushed one does not
+reliably un-fetch it.
+
+Two consequences of dispatching rather than tag-pushing, both handled in
+the workflow and both easy to reintroduce:
+
+- **`github.ref` is `refs/heads/main`, not a tag.** `docker/metadata-
+  action`'s `type=semver` patterns read the version out of `github.ref`
+  by default and match *nothing* on a branch — which is not a build
+  failure, it is an empty tag list and a push of nothing. Both patterns in
+  the `image` job pass `value=` explicitly instead.
+- **Nothing pins which commit the runner checks out.** `--ref main` means
+  main's tip *when the run starts*, so a merge landing in between would be
+  released instead. `release.sh` passes the commit it checked, and
+  `full-suite`'s first step refuses to go on if the checkout is anything
+  else.
+
+The `v*.*.*` tag-push trigger still exists, for re-verifying and releasing
+a commit that is already tagged. On that path the tag necessarily comes
+first; `publish` checks it points at the commit that was tested and skips
+creating it. A `workflow_dispatch` without `publish` set runs the suite and
+stops, which is how to exercise the workflow without cutting a release.
 
 ## Running CI itself, locally
 
@@ -455,9 +490,10 @@ Worth knowing before you trust a green run:
   build-summary upload, and the build and the image it produces are
   unaffected.
 - **The two publishing jobs never run under act**, deliberately. `publish`
-  (the GitHub release) and `image` (the push to ghcr.io) are both `if:
-  github.event_name == 'push'`, and act runs jobs as a `workflow_dispatch`.
-  So a local `CI_WORKFLOW=.github/workflows/release.yml` run tells you the
+  (the tag and the GitHub release) and `image` (the push to ghcr.io) both
+  require either a tag push or a `workflow_dispatch` with `publish` set,
+  and act runs jobs as a plain `workflow_dispatch` with no inputs. So a
+  local `CI_WORKFLOW=.github/workflows/release.yml` run tells you the
   image *builds* — `full-suite` does that for the runner's own architecture,
   and checks the version it reports — and nothing at all about whether the
   push works. A release-candidate tag will not stand in for a real one
@@ -623,7 +659,7 @@ one thing, and the mistakes it catches all look right.
 | `make docker` / `make compose-up` / `make compose-down` | The container image and the local stack. |
 | `make ci` / `make ci-job JOB=…` | `go.yml`, locally, in containers (`CI_WORKFLOW=...` for `release.yml`). |
 | `make ci-list` / `make ci-clean` | What `make ci` would run; discard its reused containers. |
-| `make release BUMP=patch\|minor\|major` | Bump the semver tag, regenerate the example worlds if stale, and push — see "Cutting a release". |
+| `make release BUMP=patch\|minor\|major` | Regenerate the example worlds if stale, check locally, then dispatch `release.yml` and wait — see "Cutting a release". |
 | `make clean` | Removes `out/`: binaries, scratch data directory, dev certificate. |
 
 ## Where things are
