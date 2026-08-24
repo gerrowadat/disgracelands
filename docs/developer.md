@@ -246,7 +246,10 @@ outright." Now it is split by how often each thing actually needs an
 answer:
 
 - **`go.yml`, every push and pull request:** `go build`, `go vet`, gofmt,
-  `golangci-lint`, `go test -race`. Fast, and every commit gets an answer.
+  `golangci-lint`, `go test -race`, and `license-check.sh --notices` (that
+  every file written for this project carries its licence notice — the one
+  part of the licence check a newly added file can fail, and the only part
+  cheap enough to run this often). Fast, and every commit gets an answer.
   The 32-bit-only tests (in `internal/persist/player`, `boards`, `mail`,
   `houses`, and the shop-price test in `internal/game`) skip here exactly
   as they would on your own 64-bit machine without `gcc-multilib` — that is
@@ -258,7 +261,8 @@ answer:
   world parity (`make parity`), the license check, the two doc-coverage
   checks, a check that `examples/stock/yaml`/`examples/mini/yaml` still
   match a fresh `dlctl lib import` of their binary source, the play
-  regression suite (`make play`, below), and a container build — and only
+  regression suite (`make play`, below), and a container build — the
+  licence check here is the full five, not just the notices — and only
   once all of that is green does it tag the commit, create the GitHub
   release and push the image. See "Cutting a release" below.
 
@@ -627,8 +631,10 @@ one thing, and the mistakes it catches all look right.
 - **Every file written for this project carries the license notice** — the
   five-line header at the top of any `.go`, `reference/tools/*.c` or
   `scripts/*.sh`. `scripts/license-check.sh` fails the build on a missing
-  one, including for files added but not yet committed. Copy the header from
-  a neighbouring file when you add one. The `Makefile` carries one too,
+  one, including for files added but not yet committed, and `go.yml` runs
+  that check (`--notices`) on every push and PR — a new file without a
+  header turns the branch red rather than waiting for the next release.
+  Copy the header from a neighbouring file when you add one. The `Makefile` carries one too,
   unchecked, on the same principle: a copy of any single file should still
   point at the terms it is under.
 - **The C tree in `reference/` is reference, not a dependency.** It has its

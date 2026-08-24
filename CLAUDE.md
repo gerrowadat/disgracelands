@@ -273,11 +273,24 @@ on GitHub itself.
 
 The licence check (`scripts/license-check.sh`) is not decorative: CircleMUD's
 licence is non-commercial and requires credits intact and the creators named
-in the greeting. It runs at release time now, not on every push — a real
-tradeoff (a stripped header could sit unnoticed for many commits between
-releases), made deliberately because the check almost never trips and
-releases are frequent enough that it does not sit long either way. Move it
-back into `go.yml` if that assumption stops holding.
+in the greeting. It is **split across both workflows**, and the split is the
+point:
+
+- `go.yml`, every push and PR, runs `--notices` alone — check 3, that every
+  file written for this project carries its notice. One grep over files git
+  already lists; no C tree, no baseline diff.
+- `release.yml` runs all five, as part of the release-only suite.
+
+That asymmetry is the whole reasoning. A *newly added file* is what fails
+the notice check, so it goes wrong on ordinary PRs — which is every PR —
+whereas the other four go wrong only when someone edits `LICENSE`, the
+credits or the greeting, which is almost never. The original 2026-08-23
+split moved all five to release time on the reasoning that the check
+"almost never trips", with a note to move it back if that stopped holding.
+It stopped holding on 2026-08-24: #164 merged green with
+`scripts/act-guard.sh` missing its notice, and the v0.1.0 release attempt
+was what found it. **Only the notice loop came back — do not read this as
+the day-to-day/release split being reversible piecemeal.**
 
 ## Where to write things down
 

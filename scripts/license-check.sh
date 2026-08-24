@@ -27,7 +27,8 @@
 # greeting. Those are Phase 3 commands and get their own tests when they
 # land.
 #
-# Usage: scripts/license-check.sh
+# Usage: scripts/license-check.sh            # all five
+#        scripts/license-check.sh --notices  # check 3 alone
 
 set -eu
 
@@ -41,6 +42,49 @@ fail=0
 
 note() { echo "    $*"; }
 bad() { echo "FAIL: $*"; fail=1; }
+
+# Check 3, hoisted into a function so `--notices` can run it without the
+# four around it. It is the only one of the five that costs nothing --
+# no C tree, no baseline diff, just a grep over files git already lists --
+# and the only one a *newly added* file can fail, which is exactly the
+# failure mode a release-time-only check is worst at catching. go.yml runs
+# this form on every push; release.yml still runs all five.
+#
+# Rule 5 of the license's credit terms cuts both ways: the notices in
+# CircleMUD's files stay, and the files written here carry notices of their
+# own, so that a copy of any one file still points at the terms it is under.
+check_notices() {
+	echo "==> Files written for this project carry a notice"
+	missing=0
+	# --others so that a file added but not yet committed is checked too: the
+	# point is to catch a missing notice before it lands, not after.
+	for f in $(git ls-files --cached --others --exclude-standard \
+		'*.go' 'reference/tools/*.c' 'scripts/*.sh'); do
+		head -40 "$f" | grep -q "$NOTICE" ||
+			{ bad "$f has no license notice"; missing=$((missing + 1)); }
+	done
+	if [ "$missing" -eq 0 ]; then
+		note "every tracked .go, reference/tools/*.c and scripts/*.sh"
+	fi
+}
+
+case "${1-}" in
+"")
+	;;
+--notices)
+	check_notices
+	if [ "$fail" -eq 0 ]; then
+		echo "==> Every file carries its notice"
+		exit 0
+	fi
+	echo "==> NOT compliant - see docs/proposals/go-port-plan.md §12"
+	exit 1
+	;;
+*)
+	echo "usage: $0 [--notices]" >&2
+	exit 2
+	;;
+esac
 
 # 1. LICENSE = our notice, then the upstream license byte for byte.
 #
@@ -99,22 +143,9 @@ for f in $(git ls-files "$CSRC/*.c" "$CSRC/*.h"); do
 done
 note "$checked stock source files, headers identical to the baseline import"
 
-# 3. Our own files say who owns them and under what terms.
-#
-# Rule 5 of the license's credit terms cuts both ways: the notices in
-# CircleMUD's files stay, and the files written here carry notices of their
-# own, so that a copy of any one file still points at the terms it is under.
-echo "==> Files written for this project carry a notice"
-missing=0
-# --others so that a file added but not yet committed is checked too: the point
-# is to catch a missing notice before it lands, not after.
-for f in $(git ls-files --cached --others --exclude-standard \
-	'*.go' 'reference/tools/*.c' 'scripts/*.sh'); do
-	head -40 "$f" | grep -q "$NOTICE" || { bad "$f has no license notice"; missing=$((missing + 1)); }
-done
-if [ "$missing" -eq 0 ]; then
-	note "every tracked .go, reference/tools/*.c and scripts/*.sh"
-fi
+# 3. Our own files say who owns them and under what terms. Defined above,
+# because go.yml runs this one on its own.
+check_notices
 
 # 4. The credit files, which the license requires be preserved and displayed.
 echo "==> Credit text is present and intact"
