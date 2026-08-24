@@ -10,6 +10,14 @@
 # thing every single commit needs answered fast, not the thing only a
 # release needs answered thoroughly.
 #
+# One piece came back, on 2026-08-24: the license *notice* check
+# (`license-check.sh --notices`, one grep, no C build). It is the only
+# part of that suite a newly added file can fail, so it goes wrong on
+# ordinary PRs rather than on release-shaped changes, and it had already
+# let one through. The step's own comment has the history. The rest of
+# license-check.sh stays release-only, and so does everything else in the
+# list above — do not read this as the split being reversible piecemeal.
+#
 # The C tree has its own build (BUILDING.md) and is not covered here; see
 # docs/proposals/go-port-plan.md §2 for why both exist.
 name: go
@@ -65,6 +73,27 @@ jobs:
       # for real and where a silent skip is caught rather than allowed.
       - name: Test
         run: go test -race -count=1 ./...
+
+      # Only check 3 of the five, via --notices: that every file written
+      # for this project carries its license notice. The other four need a
+      # C tree or a baseline diff and stay in release.yml with the rest of
+      # the release-only suite.
+      #
+      # This one is back here because the release-only arrangement has now
+      # failed once in the way CLAUDE.md predicted it might. The split on
+      # 2026-08-23 reasoned the check "almost never trips and releases are
+      # frequent enough that it does not sit long either way", with a note
+      # to move it back if that stopped holding. #164 then merged green
+      # with scripts/act-guard.sh missing its notice, and the next release
+      # attempt (v0.1.0) was what found it.
+      #
+      # Note the asymmetry that makes this one worth the seconds and the
+      # other four not: a *new file* fails it, so it goes wrong exactly
+      # when someone adds something — which is every PR — rather than when
+      # someone edits LICENSE or the credits, which is almost never. It
+      # costs a grep over files git already lists.
+      - name: Every file carries its license notice
+        run: ./scripts/license-check.sh --notices
 
   lint:
     runs-on: ubuntu-latest
