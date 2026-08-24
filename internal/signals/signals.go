@@ -17,7 +17,7 @@
 // publishes an atomic value or hands a closure to engine.DoSync, and never
 // reaches into the world itself.
 //
-// docs/proposals/signal-handling.md is the design: what each signal does,
+// docs/design/signal-handling.md is the design: what each signal does,
 // what a signal may reload and what only an in-game command may, and why
 // SIGQUIT is deliberately absent from every table here.
 package signals

@@ -466,7 +466,7 @@ func (m *mud) wait() int {
 
 // signal sends the running server a signal, the way an operator does with
 // `docker kill --signal=...` or `kill -HUP`. Everything the server does with
-// one is in internal/signals and docs/proposals/signal-handling.md.
+// one is in internal/signals and docs/design/signal-handling.md.
 func (m *mud) signal(sig syscall.Signal) {
 	m.t.Helper()
 	if m.cmd == nil || m.cmd.Process == nil {

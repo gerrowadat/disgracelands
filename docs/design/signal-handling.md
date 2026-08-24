@@ -1,17 +1,20 @@
 # Signal handling
 
-**Status: proposal, 2026-08-24.** Parts of this are built — the dispatcher
-(`internal/signals`), `SIGTERM`/`SIGINT` shutdown, `SIGHUP` game-tuning
-reload and the exit codes — and this document is what makes them one design
-rather than several decisions taken at different times. §9 tracks the rest.
+**Decided 2026-08-24.** This is what the signals mean and why, settled as a
+set rather than one decision at a time. The dispatcher
+(`internal/signals`), `SIGTERM`/`SIGINT` shutdown, `SIGHUP` configuration
+reload and the exit codes are built; §9 lists the items still to build
+against this design, each of which is scope rather than an open question.
+`docs/operations.md` is the operator-facing half — what to send and what it
+does — and this is the reasoning under it.
 
-Under §0's "Fidelity, phase two" this is implementation, not gameplay and
-not compatibility: nothing here changes an on-disk format or anything a
-returning player would notice, so none of it needs a `docs/deviations.md`
-entry on fidelity grounds. The C is cited throughout because it is the
-thing being replaced, not because it is being reproduced.
+Under the plan's §0 "Fidelity, phase two" this is implementation, not
+gameplay and not compatibility: nothing here changes an on-disk format or
+anything a returning player would notice, so none of it needs a
+`docs/deviations.md` entry on fidelity grounds. The C is cited throughout
+because it is the thing being replaced, not because it is being reproduced.
 
-## 1. Where this starts from
+## 1. What this replaces
 
 The C traps eight signals in `signal_setup` (`comm.c:2165`): `SIGUSR1`
 rereads the wizlists for autowiz, `SIGUSR2` unrestricts the game in an
@@ -23,13 +26,12 @@ the `autorun` shell script's job, and the in-game `shutdown` variants
 communicated with it by touching files (`.killscript`, `.fastboot`,
 `pause` — `act.wizard.c:1082`, `autorun:143`).
 
-The Go server today wires two of those: `signal.NotifyContext` for
-`SIGINT`/`SIGTERM` (`cmd/dlmud/main.go:181`) and a separate goroutine for
-`SIGHUP`, which re-reads `--config`'s game tuning (`main.go:197`). There is
-no `SIGUSR1`, no `SIGUSR2`, no watchdog, and no exit code that distinguishes
-`shutdown reboot` from `shutdown die` — despite `Server.RebootWanted`'s own
-doc comment saying the answer is an exit code (`internal/server/
-operator.go:101`).
+Two of those had Go counterparts before this document existed, wired
+independently: `signal.NotifyContext` for `SIGINT`/`SIGTERM`, and a
+goroutine of its own for the `SIGHUP` that re-reads `--config`. Both worked,
+and neither said what should happen to the other six, what a reload was
+allowed to touch, or what an operator sends a server that has stopped
+responding. Those are the questions this settles.
 
 ## 2. Four principles
 
@@ -76,11 +78,13 @@ able to stop a running game.
 | `SIGCHLD` | Nothing | `reap` (`comm.c:2101`), for autowiz children | Nothing forks |
 | `SIGALRM`, `SIGVTALRM` | Nothing | Ignored / the watchdog | The pulse is a Go ticker, not an interval timer. See §6 for what replaces the watchdog |
 
-One dispatcher owns all of this: a single `signal.Notify` over one channel,
-one goroutine, a `map[os.Signal]func()` of handlers, replacing the two
-independent wirings in `main.go` today. `SIGTERM`/`SIGINT` keep cancelling
-the context they cancel now — the shutdown ordering in §5 is hard-won and
-does not change.
+One dispatcher owns all of this: `internal/signals`, a single
+`signal.Notify` over one channel, one goroutine, one handler per signal,
+with `cmd/dlmud` supplying the handlers. Handlers run one at a time and must
+return promptly — the signal that must not be delayed is the second
+`SIGINT`, the one sent because the first shutdown is wedged — and stopping
+the dispatcher restores the default dispositions, which is what makes that
+second `SIGINT` fatal rather than swallowed.
 
 ## 4. What a reload may touch
 
@@ -96,8 +100,9 @@ to refuse, which is what makes them expressible as a signal at all.
 
 `SIGHUP` does the lot, in one pass, each independently: a broken `bans` file
 does not stop the tuning reload. One log line per subsystem, plus a summary.
-A `SIGHUP` with no `--config` set still reloads the other three rather than
-warning and doing nothing, which is what it does today.
+*Built so far: the game tuning. The other three are §9 item 3, and until it
+lands a `SIGHUP` with no `--config` set warns that there is nothing to
+re-read rather than reloading the rest.*
 
 **B. World data — only commands may reload this.** Rooms, mobiles, objects,
 zones, shops. Reloading a prototype is surgery on live instances, not a
@@ -132,12 +137,11 @@ is to name it as a contract so it is not quietly reordered later:
    here, and nothing short of a real binary and a real `SIGTERM` can see it.
 7. Stop the diagnostics server.
 
-**The budget becomes a flag.** `shutdownTimeout` is a 30-second constant
-(`main.go:88`) and `docs/operations.md` already asks operators to set a
-container grace period above it. Something that has to agree with an
-external setting should not be a constant: `--shutdown-timeout`, defaulting
-to 30s. (`docs/configuration.md` gets an entry with it; `release.yml`
-checks flag coverage flag by flag.)
+**The budget is a setting, not a constant.** `shutdownTimeout` is 30
+seconds and `docs/operations.md` asks operators to set a container grace
+period above it. Something that has to agree with an external setting has no
+business being compiled in, so it becomes `--shutdown-timeout`, defaulting
+to the same 30s. *§9 item 5; it is still a constant in `main.go` until then.*
 
 **Exit codes.** Three of them:
 
@@ -146,6 +150,12 @@ checks flag coverage flag by flag.)
 | 0 | Clean stop: `SIGTERM`, `SIGINT`, `shutdown`, `shutdown die`, `shutdown pause` |
 | 1 | Boot failure, or a fatal error while running |
 | 2 | Reboot requested: `shutdown reboot`, `shutdown now` |
+
+`Server.RebootWanted` had said since it was written that "the answer is an
+exit code instead" of the C's file-touching, and for a while there was no
+exit code: both spellings exited 0, so the distinction the two commands are
+named for did not survive the process. It does now, and
+`test/play`'s `TestTheExitCodeSaysWhetherToComeBack` is what keeps it.
 
 This is the replacement for the C's `.killscript`/`.fastboot`/`pause` files.
 With `restart: on-failure`, `shutdown reboot` comes back by itself and
@@ -162,13 +172,15 @@ form of that is a liveness probe, and we do not currently have one that can
 fail: `/healthz` answers 200 if the process answers at all, so a deadlocked
 world goroutine looks healthy forever while every player sits frozen.
 
-`/healthz` should assert that the world goroutine turned recently — last
-pulse within some multiple of `--pulse-interval`, generous enough that a
-long zone reset or a slow disk is not a restart, tight enough that a real
-deadlock is caught in under a minute. `/readyz` keeps its current meaning
-(booted, listening, not shutting down). That, plus `SIGQUIT` for the
-post-mortem, is the C's `abort()` with a stack trace attached and a
-supervisor that brings it back.
+So `/healthz` asserts that the world goroutine turned recently — last pulse
+within some multiple of `--pulse-interval`, generous enough that a long zone
+reset or a slow disk is not a restart, tight enough that a real deadlock is
+caught in under a minute. `/readyz` keeps its current meaning (booted,
+listening, not shutting down). That, plus `SIGQUIT` for the post-mortem, is
+the C's `abort()` with a stack trace attached and a supervisor that brings
+it back. *§9 item 6; `/healthz` still answers 200 unconditionally until
+then, which is the one place this document describes something the server
+does not yet do.*
 
 ## 7. Containers
 
@@ -191,33 +203,43 @@ supervisor that brings it back.
 
 ## 8. Testing
 
-`test/play` is the only place in the tree where a real process receives a
-real signal (`harness_test.go:417` already sends `SIGTERM`), and that is
-where these belong — the same reasoning that made the play suite worth
-building. Add: a `SIGHUP` that changes tuning a running player can observe;
-a `SIGHUP` with a corrupt config file that leaves the old values in place
-and the server up; a `SIGUSR2` that clears a `wizlock` nobody can log in
-past; exit code 2 from `shutdown reboot` against 0 from `shutdown die`; and
-a second `SIGINT` during shutdown.
+A signal has no other kind of test than a real process receiving a real
+one, so `test/play` is where these live — the same reasoning that made the
+play suite worth building at all. `internal/signals` covers the dispatcher
+itself (delivery, `Stop` restoring the default, handlers not overlapping),
+and every test there signals the test binary with `SIGWINCH`: putting the
+default disposition back is the thing under test, and a test that then sent
+`SIGHUP` would kill the test binary rather than fail it. `SIGURG` looks
+equally safe and is not — the runtime preempts goroutines with it.
 
-## 9. Work items
+`test/play` covers the wiring: the exit codes over all four spellings of
+`shutdown`, a `SIGHUP` that changes tuning a player can feel in the same
+session, and a `SIGHUP` with a corrupt file that leaves the old values in
+place, the player connected and exactly one ERROR logged. Still to add with
+the features they belong to: a `SIGUSR2` that clears a `wizlock` nobody can
+log in past, and a second `SIGINT` during shutdown.
 
-Ordered, each landable on its own.
+## 9. Still to build
 
-1. ~~One signal dispatcher, replacing the two wirings in `main.go`.~~
-   **Built 2026-08-24**: `internal/signals`, one channel and one goroutine,
-   with `cmd/dlmud` supplying the handlers.
-2. ~~Exit codes 0/1/2, honouring `RebootWanted`; `operations.md` with it.~~
-   **Built 2026-08-24**, with `test/play`'s
-   `TestTheExitCodeSaysWhetherToComeBack` — the exit code is a contract with
-   whatever restarts the server, and only a real process has one.
-3. `SIGHUP` widened from tuning to all four class-A files (§4).
-4. `SIGUSR1` (wizlists) and `SIGUSR2` (emergency unrestrict).
-5. `--shutdown-timeout`, plus `configuration.md`.
-6. `/healthz` asserting world liveness (§6).
-7. `dlctl signal <name>`.
-8. `STOPSIGNAL` in the Dockerfile, grace-period guidance in `operations.md`.
-9. Play tests throughout (§8).
+**Built 2026-08-24**, in the change this document landed with: the
+dispatcher (`internal/signals`, one channel and one goroutine, with
+`cmd/dlmud` supplying the handlers), the `SIGTERM`/`SIGINT` shutdown it
+took over, the `SIGHUP` configuration reload, and the exit codes — with
+`test/play`'s `TestTheExitCodeSaysWhetherToComeBack` and the three
+`SIGHUP` tests beside it.
+
+The rest of the design is scope rather than an open question. Ordered, each
+landable on its own:
+
+1. `SIGHUP` widened from the game tuning to all four class-A files (§4).
+2. `SIGUSR1` (wizlists) and `SIGUSR2` (emergency unrestrict), §3.
+3. `--shutdown-timeout`, plus its `docs/configuration.md` entry — which
+   `release.yml` checks flag by flag.
+4. `/healthz` asserting world liveness (§6).
+5. `dlctl signal <name>`, the no-shell escape hatch §2 requires.
+6. `STOPSIGNAL` in the Dockerfile.
+7. The two play tests §8 names as still missing, with the features they
+   belong to.
 
 ## 10. Explicitly not doing
 
@@ -227,5 +249,6 @@ Ordered, each landable on its own.
 - **A signal that reloads the world.** §4B.
 - **An HTTP admin API for reload or shutdown.** Unauthenticated mutation on
   a debug port is worse than a signal, and an authenticated one is a
-  credential to manage for something `dlctl signal` already does.
+  credential to manage for something a signal and an in-game command
+  already do between them.
 - **`SIGCHLD` handling.** Nothing forks.

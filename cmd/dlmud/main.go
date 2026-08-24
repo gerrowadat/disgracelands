@@ -113,7 +113,7 @@ const (
 // game.SetTuning is an atomic publish, which is what makes this safe to
 // call from the signal goroutine while the world goroutine is mid-pulse.
 // Reloading world *data* is a different thing with different rules; see
-// docs/proposals/signal-handling.md §4 for why no signal does it.
+// docs/design/signal-handling.md §4 for why no signal does it.
 func reloadGameTuning(logger *slog.Logger, cfg *config.Config) {
 	if cfg.GameConfigFile == "" {
 		logger.Warn("SIGHUP received but no --config is set; nothing to reload")
@@ -231,7 +231,7 @@ func run(args []string) (int, error) {
 	// Signal handling before the world loads, so a SIGTERM arriving during
 	// a slow boot is honoured rather than killing the process outright.
 	// Everything about what each signal does and why lives in
-	// docs/proposals/signal-handling.md; internal/signals is the whole
+	// docs/design/signal-handling.md; internal/signals is the whole
 	// disposition, and anything absent from this list keeps its default —
 	// SIGQUIT deliberately so.
 	sigs := signals.Install(logger,

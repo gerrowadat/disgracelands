@@ -116,26 +116,65 @@ Notes that matter:
 
 ## Signals
 
-| Signal | What it does |
-|---|---|
-| `SIGTERM` | Graceful shutdown. What `docker stop`, `systemctl stop` and a pod delete send |
-| `SIGINT` | The same. A second one during shutdown kills the process instead of being swallowed, so a wedged shutdown can still be interrupted from a terminal |
-| `SIGHUP` | Re-reads `--config`'s game tuning and applies it live. Not a shutdown — the C server's own `SIGHUP` was, this one is the conventional Unix meaning |
-| `SIGQUIT` | Deliberately not handled: the Go runtime dumps every goroutine's stack and exits. This is what to send a server that has stopped responding, and the stacks are what to attach to the bug report |
+Everything an operator does to a running server that is not typed in the
+game is a signal. `docs/design/signal-handling.md` is the reasoning; this is
+the use.
 
-Anything else keeps its default. There is no signal that reloads world data
-— rooms, mobiles, objects, zones and shops are reloaded from inside the game
-with `reloadmob`, `reloadzone`, `reloadobj` and `reloadshop`, because
-reloading one can *refuse* (a mobile in combat) and a signal has nobody to
-tell. `docs/proposals/signal-handling.md` is the full design.
+| Signal | What it does | When you send it |
+|---|---|---|
+| `SIGTERM` | Graceful shutdown: stop accepting, tell everyone connected, save, exit | Stopping the server. What `docker stop`, `systemctl stop` and a pod delete send for you |
+| `SIGINT` | The same | Ctrl-C at a terminal. A *second* one during shutdown kills the process instead of being swallowed, so a shutdown that will not finish can still be interrupted |
+| `SIGHUP` | Re-reads `--config` and applies it live | After editing the game tuning file. No restart, nobody disconnected |
+| `SIGQUIT` | Not handled, on purpose: the Go runtime dumps every goroutine's stack and the process dies | The server has stopped responding. The stacks name the goroutine that is stuck, and they are what to attach to the bug report |
 
-A `SIGHUP` whose file will not parse, or parses and will not validate, is
-logged and ignored: the server keeps the tuning it already had and the
-players stay connected. A typo cannot take the game down.
+Anything else keeps its default disposition. In particular there is no
+signal that reloads world data, and that is a deliberate line rather than a
+gap — see "Reloading without a restart" below.
 
-**The image has no shell**, so `docker exec ... kill` will not work. Send
-signals with the runtime instead: `docker kill --signal=HUP <container>`, or
-`systemctl reload` given `ExecReload=/bin/kill -HUP $MAINPID`.
+### Sending them
+
+The image is **distroless and has no shell**, so `docker exec ... kill` and
+`kubectl exec ... kill` do not work. Use the runtime's own mechanism:
+
+| Running under | Reload (`SIGHUP`) | Stop (`SIGTERM`) | Stack dump (`SIGQUIT`) |
+|---|---|---|---|
+| Docker | `docker kill --signal=HUP <container>` | `docker stop <container>` | `docker kill --signal=QUIT <container>` |
+| Compose | `docker compose kill -s HUP dlmud` | `docker compose stop` | `docker compose kill -s QUIT dlmud` |
+| systemd | `systemctl reload dlmud` (with `ExecReload=/bin/kill -HUP $MAINPID`) | `systemctl stop dlmud` | `systemctl kill -s QUIT dlmud` |
+| Kubernetes | no built-in path; `kubectl delete pod` restarts instead | `kubectl delete pod` | `kubectl delete pod` loses the stacks — prefer reproducing it somewhere you can signal |
+| A bare process | `kill -HUP <pid>` | `kill <pid>` | `kill -QUIT <pid>` |
+
+The stack dump goes to stderr, which means it lands wherever the rest of the
+log does (`--log-file`, or the container's log). It is **fatal** — the
+process is gone afterwards and whatever was in the world goroutine's queue
+is lost, which is the right trade for a server that had already stopped
+turning, and the wrong one for a server that is merely slow.
+
+### Reloading without a restart
+
+Three different things can be reloaded, by three different mechanisms, and
+which one you get depends on what is being reloaded rather than on
+preference.
+
+| What | How | Notes |
+|---|---|---|
+| Game tuning (`--config`'s `game.yaml`) | `SIGHUP` | Takes effect on the next thing that reads it. See `docs/configuration.md` |
+| The canned text: `greetings`, `motd`, `imotd`, `credits`, `news`, `wizlist`, `immlist`, `info`, `policy`, `handbook`, `background`, `help` | `reload <name>` in-game (implementor) | `reload all` does all twelve. It does **not** include the help database — that is `reload xhelp`, separately, exactly as in the C |
+| World data: rooms, mobiles, objects, zones, shops | `reloadmob`, `reloadzone`, `reloadobj`, `reloadshop` in-game (greater god) | By vnum, after editing the files on disk |
+
+**Why world data has no signal.** Reloading a mobile prototype is surgery on
+the copies already walking around, and it can *refuse* — a mobile in combat
+is not replaced underneath the fight. That needs a vnum to act on and
+somebody to give the answer to, and a signal has neither.
+
+Everything else — the flags, the listeners, `--lib-dir`, the data formats —
+needs a restart.
+
+**A reload that fails changes nothing.** A `--config` file that will not
+parse, or parses and will not validate (`autosave_time: 0`, a negative
+cost), is logged as an error and ignored: the server keeps the values it
+already had, and the players stay connected. A typo in a file you are
+editing on a live server costs you the reload and nothing else.
 
 ## Shutdown
 

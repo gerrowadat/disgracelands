@@ -138,7 +138,7 @@ func TestTheServerRefusesToBootWithoutAWorld(t *testing.T) {
 // and the autorun shell script read them after the process was gone
 // (act.wizard.c:1082, autorun:143). There is no wrapper here, so the same
 // distinction is carried by the exit code and read by the container
-// runtime's restart policy instead (docs/proposals/signal-handling.md §5).
+// runtime's restart policy instead (docs/design/signal-handling.md §5).
 //
 // Which makes the exit code an operator-visible contract, and one that only
 // a real process has at all: run() returning nil says nothing about what

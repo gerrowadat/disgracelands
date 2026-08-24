@@ -22,7 +22,7 @@ import (
 // delivers to a handler; only this proves the handler is wired to something
 // a player can feel.
 //
-// docs/proposals/signal-handling.md is the design. The shutdown signals live
+// docs/design/signal-handling.md is the design. The shutdown signals live
 // in shutdown_test.go, next to what they have to save.
 
 // writeConfig writes a game-tuning file and returns its path, overwriting
@@ -83,7 +83,7 @@ func TestSIGHUPReloadsTheConfiguration(t *testing.T) {
 // TestSIGHUPKeepsTheOldConfigurationWhenTheNewOneIsBroken.
 //
 // The rule a reload lives by: it may fail, and failing may not take the game
-// with it (docs/proposals/signal-handling.md §2). A typo in a file an
+// with it (docs/design/signal-handling.md §2). A typo in a file an
 // operator is editing on a live server must cost them the reload and nothing
 // else -- not the players who are logged in, and not the values that were
 // already working.

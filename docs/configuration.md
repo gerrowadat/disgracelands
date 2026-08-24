@@ -401,7 +401,9 @@ for exactly this reason.
 The running server rereads this file on `SIGHUP` and applies it live, no
 restart needed. A file that fails to parse, or parses but fails validation
 (`autosave_time: 0`, a negative cost, ...), is logged and ignored — the
-server keeps running on whatever tuning it had before.
+server keeps running on whatever tuning it had before. `docs/operations.md`
+has how to send a signal under each runtime, and what else can be reloaded
+without a restart.
 
 ```yaml
 free_rent: false

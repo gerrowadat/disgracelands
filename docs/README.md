@@ -62,13 +62,6 @@ already taken, dated 2026-08-23, about how work from here relates to the C.
   reloading edited world data into a running server without a restart —
   its own write-up covers what that became instead; Phase 7 (cutover) has
   not started.
-- **[signal-handling.md](proposals/signal-handling.md)** — what each signal
-  does and why: `SIGTERM`/`SIGINT` shutdown and its ordering contract,
-  `SIGHUP` as a reload rather than the C's "die", `SIGUSR1`/`SIGUSR2` from
-  `signal_setup`, `SIGQUIT` and the liveness probe as the replacement for
-  the C's deadlock watchdog, and exit codes in place of `autorun`'s
-  `.killscript` files. Also the line this port draws between files a signal
-  may reload and world data only an in-game command may.
 
 ## `docs/design/` — decisions that landed
 
@@ -93,6 +86,14 @@ hide that it started as a proposal.
   data-format.md §10.1's own per-file `schema: dl/<kind>@<major>` tag,
   which says what shape one file is in rather than what release the whole
   directory was last written by.
+- **[signal-handling.md](design/signal-handling.md)** — what each signal
+  does and why: `SIGTERM`/`SIGINT` shutdown and its ordering contract,
+  `SIGHUP` as a reload rather than the C's "die", `SIGUSR1`/`SIGUSR2` from
+  `signal_setup`, `SIGQUIT` left unhandled so the runtime dumps stacks, and
+  exit codes in place of `autorun`'s `.killscript` files. Also the line this
+  port draws between the files a signal may reload and the world data only
+  an in-game command may. The dispatcher, the shutdown signals, the
+  configuration reload and the exit codes are built; §9 tracks the rest.
 
 ## `docs/investigations/` — what we found out
 
