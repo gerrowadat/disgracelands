@@ -22,10 +22,25 @@
 # GITHUB_TOKEN covers both — and neither needs the repository to be
 # public; see the `image` job for what that does mean.
 #
-# Triggered by pushing a tag matching v*.*.* (see scripts/release.sh,
-# which computes the next semver version and pushes that tag) or by
-# hand via workflow_dispatch, for testing this workflow without cutting
-# a real release.
+# Nothing is published until the suite above it has passed, and that
+# includes the tag. scripts/release.sh dispatches this workflow with
+# publish=true and waits; full-suite runs; only then do publish (tag,
+# then GitHub release) and image (ghcr.io) run, both `needs:`-gated on
+# it. It used to be the other way round -- release.sh tagged and pushed,
+# and the tag push triggered this workflow -- which meant a failed
+# release left a real vX.Y.Z tag pointing at a commit that had just been
+# proved not to release. The release and the image were already gated;
+# the tag was not, and a tag is the one part of a release that other
+# people fetch and that you cannot quietly take back.
+#
+# The tag-push trigger is still here, so an already-tagged commit can be
+# re-verified and released by hand (`git push origin v1.2.3`), and so a
+# tag pushed by any other route still gets the full suite run against it.
+# In that direction the tag necessarily exists first; publish notices and
+# skips creating it.
+#
+# workflow_dispatch without publish=true runs the suite and stops --
+# for testing this workflow without cutting a release.
 name: release
 
 on:
@@ -34,9 +49,18 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to stamp into the build (e.g. v0.0.0-test), if run by hand rather than from a tag push'
+        description: 'Version to release (e.g. v1.2.3), or something throwaway like v0.0.0-test when only exercising this workflow'
         required: false
         default: 'v0.0.0-manual'
+      publish:
+        description: 'Tag the commit, create the GitHub release and push the image -- if and only if the full suite passes. Leave off to run the suite alone.'
+        type: boolean
+        required: false
+        default: false
+      commit:
+        description: 'The commit this release was cut from. If set, the suite refuses to run against anything else -- guards against main moving between release.sh dispatching and the runner checking out.'
+        required: false
+        default: ''
 
 permissions:
   contents: write
@@ -51,12 +75,50 @@ jobs:
         with:
           fetch-depth: 0
 
+      # Fail before the expensive steps, not after them, on the two
+      # things that would make the whole run meaningless: releasing a
+      # commit nobody asked for, or releasing under a version that is not
+      # one.
       - name: Determine the version being released
         id: version
+        # Through the environment rather than interpolated into the
+        # script: workflow_dispatch inputs are attacker-controlled as far
+        # as this shell is concerned, even if only someone with write
+        # access can set them.
+        env:
+          RAW_VERSION: ${{ github.event_name == 'workflow_dispatch' && inputs.version || github.ref_name }}
+          WANT_COMMIT: ${{ inputs.commit }}
+          # Both comparisons on purpose: the UI sends a real boolean for a
+          # `type: boolean` input, but `gh workflow run` sends every input
+          # as a string, and GitHub's `==` casts across types by number --
+          # so `true` and `'true'` each match exactly one of these and
+          # neither matches both. Relying on truthiness instead would let
+          # the string `'false'` publish a release.
+          PUBLISHING: ${{ inputs.publish == true || inputs.publish == 'true' || github.event_name == 'push' }}
         run: |
-          v="${{ github.event_name == 'workflow_dispatch' && inputs.version || github.ref_name }}"
+          set -eu
+          v="$RAW_VERSION"
+          want="$WANT_COMMIT"
+          if [ -n "$want" ] && [ "$want" != "$GITHUB_SHA" ]; then
+            echo "asked to release $want, but this run checked out $GITHUB_SHA."
+            echo "main moved between release.sh dispatching and this run starting;"
+            echo "nothing has been tagged or published. Re-run scripts/release.sh."
+            exit 1
+          fi
+          # Anchored, and a regex rather than a `case` glob: `v[0-9]*.`
+          # matches a digit followed by anything at all, so the default
+          # workflow_dispatch version `v0.0.0-manual` sails straight
+          # through one. Strict vX.Y.Z, matching the tag filter this
+          # workflow triggers on, which takes no prerelease suffix either
+          # -- and matching what docker/metadata-action's type=semver will
+          # accept in the image job.
+          if [ "$PUBLISHING" = "true" ] &&
+             ! printf '%s' "$v" | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "'$v' is not a vX.Y.Z version; refusing to publish it"
+            exit 1
+          fi
           echo "version=$v" >> "$GITHUB_OUTPUT"
-          echo "Releasing $v"
+          echo "Releasing $v from $GITHUB_SHA"
 
       - uses: actions/setup-go@v7
         with:
@@ -224,8 +286,8 @@ jobs:
       # files have (docs/developer.md: "the world is source"). A release
       # is where drift between the two gets caught: regenerate both fresh
       # and diff against what is checked in. scripts/release.sh already
-      # does this regeneration locally before tagging, so a difference
-      # here means the tag was pushed without running it, not that the
+      # does this regeneration locally before dispatching, so a difference
+      # here means the workflow was triggered without running it, not that the
       # examples are actually stale — either way, the release should not
       # continue on a mismatch it did not expect.
       - name: Example worlds must match dlctl lib import's output
@@ -237,7 +299,7 @@ jobs:
               --from-dir="examples/$pair/binary" --to-dir="/tmp/regen-$pair" >/dev/null
             if ! diff -rq "examples/$pair/yaml" "/tmp/regen-$pair"; then
               echo "examples/$pair/yaml does not match a fresh dlctl lib import;"
-              echo "run scripts/release.sh, which regenerates and commits this before tagging."
+              echo "run scripts/release.sh, which regenerates and commits this before dispatching this workflow."
               exit 1
             fi
           done
@@ -261,22 +323,50 @@ jobs:
           echo "$got"
           echo "$got" | grep -q -- "${{ steps.version.outputs.version }}"
 
+  # `needs: full-suite` is the whole gate. A red suite means this job
+  # never starts, so there is no tag, no release and no notes -- the
+  # commit is just a commit that failed its release, and the next attempt
+  # can reuse the same version number. Nothing here undoes anything,
+  # because nothing was done.
   publish:
     needs: full-suite
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' || inputs.publish == true || inputs.publish == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
+      # An annotated tag, as `git tag -a` makes -- release.sh used to
+      # create this itself before the suite ran, and `gh release create
+      # --target` would only leave a lightweight one behind.
+      #
+      # On the tag-push path the tag already exists and is what triggered
+      # the run, so there is nothing to create; asserting it points where
+      # this run thinks it does is still worth the two lines.
+      - name: Tag the release
+        env:
+          VERSION: ${{ needs.full-suite.outputs.version }}
+        run: |
+          set -eu
+          if git rev-parse -q --verify "refs/tags/$VERSION" >/dev/null; then
+            at=$(git rev-list -n1 "$VERSION")
+            [ "$at" = "$GITHUB_SHA" ] || {
+              echo "$VERSION already exists and points at $at, not $GITHUB_SHA"; exit 1; }
+            echo "$VERSION already tags this commit; nothing to create"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$VERSION" -m "Release $VERSION" "$GITHUB_SHA"
+          git push origin "$VERSION"
+
       - name: Create the GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.full-suite.outputs.version }}
         run: |
-          gh release create "${{ needs.full-suite.outputs.version }}" \
-            --title "${{ needs.full-suite.outputs.version }}" \
-            --generate-notes
+          gh release create "$VERSION" --title "$VERSION" --generate-notes
 
   # The container image, published to GitHub's own registry under the same
   # account as the repository: ghcr.io/gerrowadat/disgracelands.
@@ -288,10 +378,17 @@ jobs:
   # cheaper than making the smoke test depend on a registry push having
   # already happened.
   #
-  # Same `if` as `publish`: a workflow_dispatch run exists to test this
-  # workflow, and a test run must not overwrite a published tag. It is also
-  # what stops `act` (which runs jobs locally as workflow_dispatch) from
-  # trying to log in to ghcr.io.
+  # Same `if` as `publish`: a workflow_dispatch run without publish set
+  # exists to test this workflow, and a test run must not overwrite a
+  # published tag. It is also what stops `act` (which runs jobs locally as
+  # workflow_dispatch, and cannot set the input) from trying to log in to
+  # ghcr.io.
+  #
+  # `needs` names publish as well as full-suite, so the image is pushed
+  # only after the tag exists. Ordering rather than gating -- full-suite
+  # is what actually decides whether anything gets published -- but a
+  # published image whose version tag is not in the repository is a
+  # confusing thing to leave behind if the tag push itself fails.
   #
   # The registry needs no secret of its own. GITHUB_TOKEN can write packages
   # owned by the same account as the repository, which is why `packages:
@@ -301,8 +398,8 @@ jobs:
   # made public on its own later from the package's settings page without the
   # repository following it.
   image:
-    needs: full-suite
-    if: github.event_name == 'push'
+    needs: [full-suite, publish]
+    if: github.event_name == 'push' || inputs.publish == true || inputs.publish == 'true'
     runs-on: ubuntu-latest
     # Not inherited from the top-level `permissions:` block: naming any
     # permission there sets every unnamed one to none, so contents: read has
@@ -311,6 +408,9 @@ jobs:
       contents: read
       packages: write
     steps:
+      # No `ref:`. On the tag-push path this checks out the tag; on the
+      # dispatch path it checks out main, which full-suite's version step
+      # has already asserted is the commit being released.
       - uses: actions/checkout@v7
 
       - name: Tags and labels for the image
@@ -328,9 +428,17 @@ jobs:
           # label is what links the package to this repo in the GitHub UI --
           # inheriting its permissions, and showing its README on the package
           # page. Without it the package is an orphan nobody can trace back.
+          #
+          # `value=` on both, rather than letting type=semver read the
+          # version out of github.ref: a release is normally cut by
+          # dispatching this workflow against main, where github.ref is
+          # refs/heads/main and semver patterns match nothing at all --
+          # which is not a build failure, it is an empty tag list and a
+          # push of nothing. The version the suite agreed on is the one
+          # thing here that is right on both trigger paths.
           tags: |
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{version}},value=${{ needs.full-suite.outputs.version }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ needs.full-suite.outputs.version }}
 
       - uses: docker/setup-buildx-action@v4
 

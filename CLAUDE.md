@@ -220,8 +220,8 @@ This is also a scope rule, not just a practice one: **day-to-day GitHub
 Actions runs (`go.yml`, every push and pull request) are correctness and
 lint only — build, vet, gofmt, lint, `go test -race`. Nothing broader runs
 there, ever, except when a release is actually being cut.** `.github/
-workflows/release.yml` runs only when a tag matching `v*.*.*` is pushed
-(or by hand via `workflow_dispatch`) and runs everything else — the
+workflows/release.yml` runs only when a release is being cut, and runs
+everything else — the
 32-bit ILP32/shop-price checks (`gcc-multilib`, installed unconditionally
 there, not path-filtered: a release is exactly the point where "probably
 didn't touch the layout code" stops being good enough), the C-vs-Go
@@ -229,9 +229,18 @@ world-parity check, the licence check, two doc-coverage checks, a check
 that `examples/stock/yaml`/`examples/mini/yaml` still match a fresh
 `dlctl lib import` of their binary source, and a container build.
 `scripts/release.sh` (`make release BUMP=patch`) is what actually cuts a
-release: it bumps the semver tag, regenerates the example yaml worlds if
-they have drifted, runs the fast local checks, and pushes the tag that
-triggers `release.yml`.
+release: it works out the next semver version, regenerates the example
+yaml worlds if they have drifted, runs the local checks, pushes `main`,
+then dispatches `release.yml` with that version and waits for it.
+**It does not tag.** `release.yml`'s `publish` job creates the tag, the
+GitHub release and the notes, and its `image` job pushes to ghcr.io; both
+are `needs:`-gated on the full suite, so a failed release leaves no tag,
+no release, no notes and no package behind, and the version number is
+still free for the next attempt. (Before 2026-08-24 it was the other way
+round — tag first, tag push triggers the workflow — so every failed
+release run left a real `v*.*.*` tag on a commit that had just been proved
+not to release.) The tag-push trigger is still wired up, for re-verifying
+a commit that is already tagged.
 
 **The play regression suite is release-only too, and for a reason worth
 knowing.** `test/play` (`make play`) builds `cmd/dlmud`, boots it on a
@@ -258,8 +267,9 @@ to `go.yml`, and do not "run the release checks too, just to be safe" on
 an ordinary PR** — run `make ci-job JOB=full-suite
 CI_WORKFLOW=.github/workflows/release.yml` (or just `make check`/`make
 parity` directly) locally instead, if a change genuinely needs that
-broader verification before it lands. Pushing a real `v*.*.*` tag is the
-only thing that should trigger `release.yml` on GitHub itself.
+broader verification before it lands. Cutting a real release
+(`scripts/release.sh`) is the only thing that should trigger `release.yml`
+on GitHub itself.
 
 The licence check (`scripts/license-check.sh`) is not decorative: CircleMUD's
 licence is non-commercial and requires credits intact and the creators named
