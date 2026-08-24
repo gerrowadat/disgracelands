@@ -79,6 +79,7 @@ func cmdLibImport(args []string) error {
 			// the rent files are lib/plrobjs and not lib/etc/plrobjs
 			// (db.h's LIB_PLROBJS, resolved against the mud's cwd).
 			"--from-objs-dir", filepath.Join(*fromDir, "plrobjs"),
+			"--from-alias-dir", filepath.Join(*fromDir, "plralias"),
 			"--to-dir", filepath.Join(*toDir, "players"),
 			"--encoding", *encName,
 		}, cmdPfileImport},

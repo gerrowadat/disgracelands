@@ -531,16 +531,31 @@ Listed here so they are not mistaken for deliberate differences.
   names and became four working commands, so their being gone from the
   list is worth noting even without a story attached.
 
-  Its persistence is not quite everywhere the roster is, though: an
-  alias survives a save under `ascii` (it grew an `Aliases:`-tagged section
-  for exactly this) and `yaml` (folded into the one file, §8), but
-  **`binary` has no `plralias`-equivalent codec at all** — `alias.c`'s
-  format is a separate file the C keeps regardless of pfile format, and
-  zero archived instances of it exist anywhere in the surviving archive to build or
-  verify one against. Building a format with no corpus behind it is what
-  the "do not read the C and transcribe it" testing discipline warns off,
-  so it was not attempted; a character loaded from `binary` simply starts
-  with no aliases.
+  Its persistence is everywhere the roster is: an alias survives a save
+  under `ascii` (it grew an `Aliases:`-tagged section for exactly this),
+  `yaml` (folded into the one file, §8) and `binary` (`plralias/`, one
+  file per character beside the rent files).
+
+  `binary` was the late one, and this paragraph used to record why it had
+  been skipped: "zero archived instances of it exist anywhere in the
+  surviving archive to build or verify one against", and building a format
+  with no corpus behind it is what the "do not read the C and transcribe
+  it" discipline warns off. That premise was simply wrong — the archive
+  has alias files, and they hold hundreds of aliases. With a corpus the
+  objection went away, and the codec was written against
+  `reference/tools/aliasoracle.c` (`write_aliases` and `read_aliases`
+  themselves) rather than by reading `alias.c` across, which is the point
+  the discipline was making.
+
+  Worth writing down, since it is what an eye would get wrong: the
+  in-memory replacement always begins with the space `any_one_arg` stopped
+  on and did not skip, and the file stores it without — `write_aliases`
+  writes `strlen(replacement) - 1` and `replacement + 1`, `read_aliases`
+  puts the space back with `*xbuf = ' '`. The `type` field is read and
+  recomputed rather than stored, because this port derives simple-vs-complex
+  from the replacement at use the same way `do_alias` derives it at
+  creation (`interpreter.c:737`); no file `write_aliases` produced can
+  disagree, and none in the archive does.
 
   One of `do_gen_tog`'s seventeen is among them: `slowns` flips a
   server-wide **global** rather than a preference (act.other.c:1021), and

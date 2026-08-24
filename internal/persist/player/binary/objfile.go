@@ -266,12 +266,20 @@ func ObjectsPath(cfg player.Config) string {
 }
 
 // pathFor is get_filename(name, ..., CRASH_FILE) (utils.c:518).
+func (s *ObjectStore) pathFor(name string) (string, error) {
+	return bucketedPath(s.dir, name, objsSuffix, "rent file")
+}
+
+// bucketedPath is get_filename (utils.c:518) itself, shared by every
+// per-character file the C buckets this way: the rent files under plrobjs/
+// and the alias files under plralias/ differ only in their directory and
+// their suffix.
 //
 // The bucket is by first letter, in five ranges, with anything that does not
 // start with a letter going to `ZZZ`. No name can reach ZZZ, because
 // _parse_name rejects a name with a non-alphabetic character in it — but the
 // C has the branch and so does this, since a hand-made file is still a file.
-func (s *ObjectStore) pathFor(name string) (string, error) {
+func bucketedPath(dir, name, suffix, what string) (string, error) {
 	name = strings.ToLower(strings.TrimSpace(name))
 	if name == "" {
 		return "", fmt.Errorf("binary: empty character name")
@@ -283,7 +291,7 @@ func (s *ObjectStore) pathFor(name string) (string, error) {
 	// that.
 	for _, r := range name {
 		if r < 'a' || r > 'z' {
-			return "", fmt.Errorf("binary: %q is not a valid character name for a rent file", name)
+			return "", fmt.Errorf("binary: %q is not a valid character name for a %s", name, what)
 		}
 	}
 
@@ -300,7 +308,7 @@ func (s *ObjectStore) pathFor(name string) (string, error) {
 	default:
 		bucket = "U-Z"
 	}
-	return filepath.Join(s.dir, bucket, name+"."+objsSuffix), nil
+	return filepath.Join(dir, bucket, name+"."+suffix), nil
 }
 
 // LoadObjects implements player.ObjectStore.
