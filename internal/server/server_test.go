@@ -216,6 +216,21 @@ const MageGuildRoom game.RoomVnum = 3017
 
 // testWorld is the two start rooms, joined so a character can walk between
 // them, plus the mage guild, a few objects to pick up and two mobiles.
+//
+// Built in Go rather than read off disk, and deliberately so: every test in
+// this package can then put exactly what it needs in front of a character
+// without a world file to keep in step, and the whole package runs in
+// seconds on every push. What that buys is precision; what it costs is that
+// nothing here ever exercises the boot sequence — no world file is parsed,
+// no zone reset runs, no special procedure is attached by vnum, no shop
+// keeper is resolved, no text/ is read, no flag is parsed and no signal is
+// handled. A world that no longer loads passes every test in this file.
+//
+// test/play is the other half of that trade: a real dlmud process on
+// examples/mini, driven over a socket, release-only (`make play`). Neither
+// replaces the other. When a change is about a *rule*, it belongs here;
+// when it is about the server or its data actually working end to end, it
+// belongs there.
 func testWorld() *game.Live {
 	temple := &game.RoomDef{Vnum: MortalStartRoom, Name: "The Temple Of Midgaard", Description: "A temple.\r\n"}
 	board := &game.RoomDef{Vnum: ImmortStartRoom, Name: "The Immortal Board Room", Description: "A board room.\r\n"}

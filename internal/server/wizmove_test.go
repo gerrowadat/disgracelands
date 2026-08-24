@@ -285,9 +285,17 @@ func TestGoingInvisibleTellsThePeopleItAffects(t *testing.T) {
 		t.Error("the mortal was not told the god vanished")
 	}
 
+	// Coming back is appear()'s message, not perform_immort_invis's. The
+	// two are easy to confuse and this test had them confused: `invis 0`
+	// goes to perform_immort_vis (act.wizard.c:1562), which calls appear
+	// (fight.c:91), which for anybody at or above LVL_IMMORT says this.
+	// "You suddenly realize that $n is standing beside you." is what
+	// perform_immort_invis says when a god *lowers* their invis level far
+	// enough for somebody to start seeing them — a different event, and
+	// still tested by the `invis 20`-shaped cases.
 	c.send("invis 0")
 	c.settle()
-	if !mortal.said("You suddenly realize that Fader is standing beside you.") {
+	if !mortal.said("You feel a strange presence as Fader appears, seemingly from nowhere.") {
 		t.Error("the mortal was not told the god came back")
 	}
 }

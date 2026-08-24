@@ -22,22 +22,24 @@ classic CircleMUD file shapes, hand-written directly against
 | The Locked Vault | `unlock ... with <key>`, then `open` — two different states. |
 | The Armory | `get`, `wear`, `wield`, `inventory`, `equipment`, `remove`, `drop`. |
 | The Cluttered Closet | `put`/`get ... from` a container; `examine` to see what is inside one (plain `look` only describes a container, it does not open it — a real gap between what the room used to say and what `do_look` actually does, found by testing rather than assumed; see below). |
-| The Dining Hall | `eat`, `fill ... from`, `drink`. |
+| The Dining Hall | `get` then `eat`, `fill ... from`, `drink`. |
 | The Sparring Ring | `kill`, a corpse, `get all corpse`, `recite`/`quaff`/`use` a scroll/potion/wand/staff. |
 | The Resting Room | `rest`, `sleep`, `wake`, `stand`. |
 | Outside the Guildhall | `practice`, against a guildmaster who teaches whatever the caller's own class knows. |
 | The General Store | `list`, `buy`, `sell`, `value`, against a real shop with real stock. |
 | The Bank of Testing | `balance`, `deposit`, `withdraw` — against an ATM, not a teller; see below. |
 | The Travelers' Rest | `rent`, and why it says rent is free here (`free_rent`, same as the real game). |
-| The Post Office | `mail send`, `check`, `receive`. |
+| The Post Office | `mail <name>`, `check`, `receive`. |
 | The Notice Board | `look board`/`read board`/`write board`/`remove board <n>`. |
 | Graduation Hall | The end, and a note that socials, `say`/`tell`, and `group`/`follow` were never given a room because they do not need one. |
 
-## Two things this was wrong about before being tested
+## Four things this was wrong about before being tested
 
-Both are recorded here rather than silently fixed, because CLAUDE.md's own
-rule — test rather than read — is exactly what caught them, and losing the
-story would be losing the reason the rule is there.
+All four are recorded here rather than silently fixed, because CLAUDE.md's
+own rule — test rather than read — is exactly what caught them, and losing
+the story would be losing the reason the rule is there. Two were found the
+first time this zone was played by hand; two more only turned up when
+`test/play` started typing every command in the table above on every run.
 
 **`look in <container>` does not list what is inside it.** The room text
 used to say it did. Reading `internal/session/informative.go` first would
@@ -58,9 +60,21 @@ machine, wear flags `0` so it cannot be carried off, exactly the shape the
 real archive's own ATM object already has
 (`examples/stock/binary/world/obj/30.obj`, the real `#3034`).
 
-Both were found by connecting a real client and typing every command this
-README claims works, not by reading the world files and assuming they
-would. The `internal/game/specassign.go`/`internal/game/board.go` tables
+**The post office was documenting a command that does not exist.** The
+room text said `mail send Someone`; the command is `mail Someone`
+(`postmaster_send_mail`, `mail.c`, ported in `internal/session/mail.go`),
+and `one_argument` reads `send` as the addressee, so the tutorial's own
+instruction answered "No one by that name is registered here!". **And
+`eat bread` off the floor does not work either** -- `do_eat` wants the
+food in your inventory, so the Dining Hall needed a `get` in front of it.
+Both were found the third time round, by `test/play` typing every quoted
+command in this table against a real server (`tourCommands` in
+`test/play/tour_test.go` is that list, and is what stops it happening a
+fourth time).
+
+All of these were found by connecting a real client and typing every
+command this README claims works, not by reading the world files and
+assuming they would. The `internal/game/specassign.go`/`internal/game/board.go` tables
 are the reason the mail room, the post office and the notice board *did*
 work first try: `1200`/`1201`/`3020` (receptionist/postmaster/guild) and
 `3099` (the mortal board, matching `board.mort` in

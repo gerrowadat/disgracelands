@@ -67,12 +67,65 @@ func cmdHelpImport(args []string) error {
 		return fmt.Errorf("writing %s: %w", filepath.Join(*toDir, help.YamlFile), err)
 	}
 
+	// text/help/screen is HELP_PAGE_FILE (db.h:78) -- what bare `help`
+	// prints -- and it is not a help *entry*, so nothing above carries it.
+	// That is right when converting in place, where it simply stays put,
+	// and wrong when --to-dir is a different tree: `lib import` gives every
+	// step its own destination, so a converted directory came out with no
+	// screen in it at all, and bare `help` on a yaml server printed the
+	// command list instead of the help screen. Copied rather than
+	// converted, since internal/server/text.go reads it as plain prose from
+	// the same path under either format.
+	copied, err := copyHelpScreen(*fromDir, *toDir)
+	if err != nil {
+		return err
+	}
+
 	out := bufio.NewWriter(os.Stdout)
 	_, _ = fmt.Fprintf(out, "help: imported %d\n", len(entries))
 	if transcoded > 0 {
 		_, _ = fmt.Fprintf(out, "transcoded %d help entries from %s to UTF-8\n", transcoded, *encName)
 	}
+	if copied {
+		_, _ = fmt.Fprintf(out, "copied %s unchanged (not a help entry)\n", helpScreenName)
+	}
 	return out.Flush()
+}
+
+// helpScreenName is HELP_PAGE_FILE's own basename.
+const helpScreenName = "screen"
+
+// copyHelpScreen copies text/help/screen from one directory to another,
+// reporting whether there was one to copy.
+//
+// A missing screen is not an error, for the same reason a missing motd is
+// not: the server treats absent canned text as a poorer game and still a
+// game (internal/server/text.go). Nothing happens when the two directories
+// are the same, which is `helpdb import`'s own default.
+func copyHelpScreen(fromDir, toDir string) (bool, error) {
+	if fromDir == toDir {
+		return false, nil
+	}
+	src := filepath.Join(fromDir, helpScreenName)
+	if _, err := os.Stat(src); err != nil {
+		if os.IsNotExist(err) {
+			return false, nil
+		}
+		return false, fmt.Errorf("reading %s: %w", src, err)
+	}
+	// 0o750, matching copyTextFiles' own choice for the plain prose beside
+	// this (cmd/dlctl/libimport.go): canned text is not a secret, but
+	// nothing here has to be world-readable to be served.
+	if err := os.MkdirAll(toDir, 0o750); err != nil {
+		return false, fmt.Errorf("creating %s: %w", toDir, err)
+	}
+	// copyFile rather than ReadFile/WriteFile, for the same reason
+	// `lib import`'s own text/ step uses it: one way of copying a file
+	// across in this command, already the shape the linter is happy with.
+	if err := copyFile(src, filepath.Join(toDir, helpScreenName)); err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 // cmdHelpFmt canonicalises a yaml help directory in place.

@@ -323,6 +323,41 @@ never reads past the array — but reading off the end of a table is not
 behaviour worth reproducing faithfully. `abilityIndex` clamps.
 (`internal/game/apply.go`.)
 
+### perform_dupe_check keeps the C's answers and not its mechanics
+
+`perform_dupe_check` (`interpreter.c:1184`) is ported and behaves as the C
+does: one character means one body on one socket, a dropped link
+reconnects, a live connection is usurped, a switched one is unswitched, and
+the losers are told "Multiple login detected -- disconnecting." Three of
+its mechanics have no counterpart here, all for the same underlying reason
+— the C is one thread and this is not.
+
+- **The old descriptor's character pointer is not nulled.** The C's
+  `k->character = NULL` (`:1211`, `:1218`) exists so that closing the
+  displaced socket cannot extract, save or crash-save a body somebody else
+  now owns. Here the dupe check runs on the world goroutine on behalf of a
+  *different* connection, and `Session.character` is a plain field its own
+  goroutine reads — so it sets an atomic flag instead
+  (`Session.MarkDisplaced`), and the teardown checks it before calling
+  `Leave`. Same effect, no write across the boundary.
+- **"Is somebody playing this?" is asked of the body, not the
+  connection.** The C tests `STATE(k) == CON_PLAYING`, because
+  `d->character` and `ch->desc` are kept in exact correspondence and a dead
+  socket is unlinked from `descriptor_list` in the same pass of the game
+  loop that notices it. Here a disconnect is asynchronous on purpose (see
+  above), so those two come apart for as long as the teardown takes, and a
+  link that dropped a second ago would be found still "playing" and
+  usurped — telling a returning player their own body had been stolen. The
+  port adds `body.Client == that session` and `!session.Closed()` to the
+  test, which routes both of those to the reconnect path where they belong.
+- **The surplus-body extraction loop has no counterpart** (`:1312-1265`).
+  The C walks `character_list` destroying every extra body with the same
+  id, under its own comment that "theoretically none should be able to
+  exist". None can exist here for a stronger reason than theory:
+  `game.Live` indexes players by lowercased name, so two bodies of one
+  name cannot be in the world at once — and with the check in place, a
+  second body is never put there to begin with.
+
 ### Saving happens off the world goroutine
 
 `advance_level` and `do_start` call `save_char` themselves. In the port they

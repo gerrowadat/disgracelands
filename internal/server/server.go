@@ -405,15 +405,178 @@ func (s *Server) isRosterEmpty(ctx context.Context) (bool, error) {
 	return true, nil
 }
 
-// Reconnect implements session.LoginHandler.
-func (s *Server) Reconnect(ctx context.Context, name string) *game.Character {
-	var found *game.Character
+// ownerID is the identity a connection's character belongs to, or -1 for a
+// character with no record (a mobile, or one that failed to load).
+func ownerID(c *game.Character) int64 {
+	if c == nil || c.Record == nil {
+		return -1
+	}
+	return c.Record.IDNum
+}
+
+// DupeCheck implements session.LoginHandler: perform_dupe_check
+// (interpreter.c:1184).
+//
+// Everything here runs inside one DoSync, and that is not incidental. It
+// reads and writes the world *and* other sessions' state, and every command
+// in the game runs on the world goroutine (Dispatcher.Do) — so the only way
+// this is serialised against a `dc`, a `switch`, or the victim's own next
+// command is to run in the same place they do.
+//
+// What it does not do is attach the body to the new session: that is the
+// caller's, because a Session's own state belongs to its own goroutine. What
+// it hands back is the body to adopt and which of the C's three modes got us
+// there.
+func (s *Server) DupeCheck(ctx context.Context, sess *session.Session, c *game.Character) (*game.Character, session.DupeMode) {
+	id := ownerID(c)
+	if id < 0 {
+		return nil, session.DupeNone
+	}
+
+	var (
+		target *game.Character
+		mode   = session.DupeNone
+	)
+
 	_ = s.engine.DoSync(ctx, func(w *game.Live) {
-		if c := w.Find(name); c != nil && c.Client == nil {
-			found = c
+		// Pass one: the other live connections. Every one of them claiming
+		// this identity is disconnected, and the first one that was
+		// *playing* donates its body.
+		for _, other := range s.connections.list() {
+			if other == sess {
+				continue
+			}
+
+			switched, body := other.Original(), other.Character()
+			switch {
+			case ownerID(switched) == id:
+				// A connection switched into somebody else (do_switch).
+				// What it really is, is this player; what it is driving is
+				// a borrowed body, which is set loose here rather than
+				// handed over.
+				if target == nil {
+					target, mode = switched, session.DupeUnswitch
+				}
+				if body != nil && body.Client == game.Client(other) {
+					body.Client = nil
+				}
+			case switched == nil && ownerID(body) == id:
+				// Somebody is logged in as this character. Every such
+				// connection is disconnected below whatever state it is in
+				// — one sitting at the menu is just as much a duplicate as
+				// one in the world — but only a connection actually
+				// *driving a body* has one to donate.
+				//
+				// Three things have to be true for that, and each rules out
+				// a different near-miss. StatePlaying rules out the menu,
+				// where a character is loaded and standing nowhere.
+				// `body.Client == other` rules out a link that has already
+				// dropped: the C keeps `d->character` and `ch->desc` in
+				// exact correspondence and can test either, but here they
+				// come apart for as long as a disconnect takes, because
+				// Leave releases the body while the session's own teardown
+				// runs on. And Closed() rules out the same situation caught
+				// even earlier, before Leave has run at all.
+				//
+				// The C never sees either of those last two: a dead socket
+				// is noticed and its descriptor unlinked in one pass of the
+				// game loop, so by the time anyone can log in again there is
+				// nothing left in descriptor_list to find. Here the teardown
+				// is asynchronous, deliberately, so that a slow disk cannot
+				// stall the game. Get this wrong and a player whose wifi
+				// dropped is told their own body has been stolen, and
+				// "This body has been usurped!" is shouted down a socket
+				// nobody is reading. Either way the body is reached by the
+				// RECON pass below instead, which is what it is.
+				if target == nil && other.State() == session.StatePlaying &&
+					body.Client == game.Client(other) && !other.Closed() {
+					other.Send("\r\nThis body has been usurped!\r\n")
+					target, mode = body, session.DupeUsurp
+				}
+				if body != nil && body.Client == game.Client(other) {
+					body.Client = nil
+				}
+			default:
+				continue
+			}
+
+			// Marked before the close, so the teardown that the close is
+			// about to start cannot save or crash-save a body that is no
+			// longer this connection's. Marked for an already-closed
+			// session too, and that is the case it matters most for: its
+			// teardown has not reached Leave yet, and Leave would announce
+			// a lost link and crash-save a body somebody else is now
+			// standing in.
+			other.MarkDisplaced()
+			if !other.Closed() {
+				other.Send("\r\nMultiple login detected -- disconnecting.\r\n")
+				other.Close()
+			}
+			s.logger.Info("disconnecting a duplicate login",
+				"character", c.Name, "mode", mode)
+		}
+
+		// Pass two: a body left standing in the world when a connection
+		// dropped. This is the everyday case — somebody's wifi went — and
+		// it is the C's RECON.
+		if target == nil {
+			for _, p := range w.Players() {
+				if ownerID(p) == id && p.Client == nil {
+					target, mode = p, session.DupeReconnect
+					break
+				}
+			}
+		}
+
+		if target == nil {
+			return
+		}
+
+		// The C follows this with a loop that extracts every *surplus* body
+		// with the same id, guarded by its own "theoretically none should
+		// be able to exist". None can exist here either, and for a stronger
+		// reason than theory: game.Live indexes players by lowercased name
+		// (Live.byName), so a second body of the same name cannot be in the
+		// world at once — and with this function in place, no second body is
+		// ever put there to begin with. The loop has no counterpart.
+
+		target.Client = sess
+
+		// PLR_MAILING and PLR_WRITING are cleared because the editor they
+		// refer to went with the socket that was just closed; AFF_GROUP
+		// because a group whose members can no longer see each other is
+		// worse than no group (interpreter.c:1277-1278). The C also zeroes
+		// char_specials.timer, the idle counter — this port has no
+		// per-character idle counter at all (docs/deviations.md), so there
+		// is nothing here to zero.
+		if rec := target.Record; rec != nil {
+			rec.PlayerFlags = rec.PlayerFlags.Clear(game.PlayerMailing | game.PlayerWriting)
+			rec.BaseAffectFlags = rec.BaseAffectFlags.Clear(game.AffectGroup)
+			rec.AffectFlags = rec.AffectFlags.Clear(game.AffectGroup)
+		}
+
+		// And what the room sees. The C announces both of these and this
+		// port announced neither, which made a reconnection invisible to
+		// everybody but the person doing it.
+		announcement := ""
+		switch mode {
+		case session.DupeReconnect:
+			announcement = "$n has reconnected."
+		case session.DupeUsurp:
+			announcement = "$n suddenly keels over in pain, surrounded by a white aura...\r\n" +
+				"$n's body has been taken over by a new spirit!"
+		}
+		if announcement != "" {
+			for _, bystander := range w.Occupants(target.Room) {
+				if bystander == target {
+					continue
+				}
+				bystander.Tell("%s", w.Act(announcement, game.ActArgs{Actor: target}, bystander))
+			}
 		}
 	})
-	return found
+
+	return target, mode
 }
 
 // AllowedIn reports whether somebody of this level may enter, porting the

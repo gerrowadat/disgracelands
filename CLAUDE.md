@@ -71,6 +71,7 @@ are not doing one of these three things, expect to be wrong.
 | `internal/game` | The world and the rules. Pure logic, no I/O, no sessions. |
 | `internal/session` | Commands and the login/menu state machine. |
 | `internal/server` | The world goroutine, ticks, and the integration tests. |
+| `test/play` | The play regression suite: a real `dlmud`, booted on `examples/mini`, driven over a socket. Build-tagged `play`, release-only, `make play`. |
 | `internal/persist/world` | Zone/mob/obj/shop file readers. |
 | `internal/persist/player` | The roster and the rent files, behind interfaces. |
 | `reference/` | The original C, the modernised C build, and the oracle tools. |
@@ -211,6 +212,24 @@ that `examples/stock/yaml`/`examples/mini/yaml` still match a fresh
 release: it bumps the semver tag, regenerates the example yaml worlds if
 they have drifted, runs the fast local checks, and pushes the tag that
 triggers `release.yml`.
+
+**The play regression suite is release-only too, and for a reason worth
+knowing.** `test/play` (`make play`) builds `cmd/dlmud`, boots it on a
+throwaway copy of `examples/mini`, and drives it over a real socket with
+a client that types what a player types. It is the only thing in the
+tree that runs the boot sequence at all — reading the world off disk,
+resetting zones into it, attaching specials by vnum, loading `text/`,
+parsing a flag, handling a signal — because `internal/server`'s tests
+build their world in Go and wire the server up field by field. That is
+what makes those tests fast and what makes them blind: a world that no
+longer loads, a zone that no longer populates, a special that stopped
+being assigned, or a converted directory that lost a file all pass every
+test in `internal/server` and fail the first thing a player types. It
+found six bugs before it was finished being written, including a
+shutdown that saved nobody and a missing `perform_dupe_check` that let
+one character be logged in twice, as two bodies, saving over each
+other. **Add to it when you add a feature a player can type**;
+`docs/developer.md` has the how.
 
 If a check feels like it is missing from day-to-day CI, that is very
 likely correct, not an oversight — it moved to `release.yml` on purpose
