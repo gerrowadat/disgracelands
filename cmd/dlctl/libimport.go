@@ -74,6 +74,11 @@ func cmdLibImport(args []string) error {
 		{"pfile", []string{
 			"--from", *playerFrom,
 			"--from-dir", filepath.Join(*fromDir, "etc"),
+			// Named outright rather than left to be found: this command is
+			// the one that knows it was handed a whole lib/, so it knows
+			// the rent files are lib/plrobjs and not lib/etc/plrobjs
+			// (db.h's LIB_PLROBJS, resolved against the mud's cwd).
+			"--from-objs-dir", filepath.Join(*fromDir, "plrobjs"),
 			"--to-dir", filepath.Join(*toDir, "players"),
 			"--encoding", *encName,
 		}, cmdPfileImport},

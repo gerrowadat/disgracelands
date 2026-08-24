@@ -33,7 +33,10 @@ import (
 // letter. That split is not decoration: this is a filesystem from 1993 and a
 // directory with two thousand entries in it was slow to open.
 
-// objsDir is LIB_PLROBJS (db.h:37), relative to the player data directory.
+// objsDir is LIB_PLROBJS (db.h:37). The C resolves it against the mud's
+// own cwd, which is lib/, so in an archived tree it sits beside etc/ rather
+// than inside it — see player.Config.ObjectsDir, which is how a caller says
+// so.
 const objsDir = "plrobjs"
 
 // objsSuffix is SUF_OBJS (db.h:45).
@@ -240,16 +243,26 @@ type ObjectStore struct {
 	mu sync.RWMutex
 }
 
-// NewObjectStore opens the rent files under a player data directory.
+// NewObjectStore opens the rent files under a player data directory, or
+// under cfg.ObjectsDir if the caller has said where they really are.
 func NewObjectStore(cfg player.Config) (*ObjectStore, error) {
 	if cfg.Dir == "" {
 		return nil, fmt.Errorf("binary: no player directory configured")
 	}
 	return &ObjectStore{
-		dir:      filepath.Join(cfg.Dir, objsDir),
+		dir:      ObjectsPath(cfg),
 		readOnly: cfg.ReadOnly,
 		codec:    newObjCodec(ilp32),
 	}, nil
+}
+
+// ObjectsPath is the plrobjs/ directory a configuration names: cfg.ObjectsDir
+// when it is set, and Dir/plrobjs when it is not.
+func ObjectsPath(cfg player.Config) string {
+	if cfg.ObjectsDir != "" {
+		return cfg.ObjectsDir
+	}
+	return filepath.Join(cfg.Dir, objsDir)
 }
 
 // pathFor is get_filename(name, ..., CRASH_FILE) (utils.c:518).
