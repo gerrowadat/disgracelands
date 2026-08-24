@@ -404,6 +404,44 @@ So: **if a job fails for a reason you cannot find on disk, run `make ci-clean`
 before believing it.** That removes the containers *and* the `act-*` volumes,
 which is what makes it work — removing the containers alone does not.
 
+#### Worktrees, and the two ways act runs somebody else's code
+
+This repo is routinely developed from several git worktrees at once, and
+`act` has no idea they are different. Both halves of that are handled in the
+Makefile now; both are worth knowing about, because the symptom is a CI
+result that has nothing to do with your tree.
+
+**The container is named after the workflow and the job, and nothing else.**
+`createContainerName("act", "<workflow>/<job>")`, hashed — the working
+directory is not in it (`pkg/runner/run_context.go:92`). With `--reuse`, the
+container outlives the run that made it and keeps the workspace mount it was
+*created* with, so every worktree on the machine shares one container per job
+and all but the first get a run whose workspace belongs to somebody else.
+act still copies the current tree in on top, so several checkouts of this
+repo end up side by side in one container. `scripts/act-guard.sh` runs before
+every act invocation and drops any act container whose workspace is a
+different checkout of *this* repo, leaving unrelated projects' containers
+alone. Switching worktrees therefore costs one cold run rather than a wrong
+one. `flock` on the shared `.git` serialises runs, since two checkouts
+sharing one container name cannot safely run at once whatever directory each
+thinks it is in.
+
+**golangci-lint's cache is keyed by package content, and records absolute
+paths.** Two checkouts of the same repo at the same commit produce the same
+keys, so one legitimately hits the other's entries — and replays them with
+the *other* checkout's filenames. What that looks like is a lint failure in
+`../<some-other-worktree>/internal/game/apply.go`, in a file the container
+does not have and you cannot fix from where you are, sitting underneath
+`failed to parse file: no such file or directory` warnings. `make ci` gives
+each checkout its own cache store (`--cache-server-path`, under the shared
+`.git`), and `make ci-clean` removes this checkout's.
+
+That second one is the one that will waste your afternoon, because it
+survives `make ci-clean` as it was before this — the containers are gone, the
+volumes are gone, and the stale findings come back anyway from a cache
+`actions/cache` restores into the fresh container. It reads exactly like the
+volume-staleness trap above and is not it.
+
 ### What this reproduces, and what it does not
 
 Worth knowing before you trust a green run:

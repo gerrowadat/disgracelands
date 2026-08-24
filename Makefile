@@ -262,7 +262,59 @@ ACT_BIN = $(shell command -v act 2>/dev/null || echo "$(GO) run github.com/nekto
 # directory onto itself for a plain clone, where --git-common-dir is just
 # $(CURDIR)/.git.
 GIT_COMMON_DIR := $(shell git rev-parse --git-common-dir 2>/dev/null)
-ACT = $(ACT_BIN) --container-options "-v $(GIT_COMMON_DIR):$(GIT_COMMON_DIR):ro"
+
+# act names a job's container after the workflow and the job and nothing
+# else -- createContainerName("act", "<workflow>/<job>"), hashed
+# (pkg/runner/run_context.go:92). The working directory is not part of it, and
+# --reuse above means a container outlives the run that made it, keeping the
+# workspace mount it was *created* with.
+#
+# In a repo developed from worktrees that is not a corner case, it is the
+# normal state: every worktree plus the primary checkout share one container
+# per job, and all but the first get a run whose workspace belongs to
+# somebody else -- with the current tree copied in on top, so several
+# checkouts of this repo end up side by side in one container. That is how a
+# lint run comes back with findings in files that are not in your tree, and
+# how vet fails on an identifier that is on nobody's branch but the one next
+# door. It can as easily produce a *green* run that never looked at your code.
+#
+# So each act invocation is guarded twice:
+#
+#   - scripts/act-guard.sh drops any act container whose workspace is a
+#     different checkout of this same repo, leaving unrelated projects alone.
+#     Switching worktrees therefore costs one cold run, not a wrong one.
+#   - flock serialises runs across every checkout on the machine, because two
+#     of them sharing one container name cannot run at the same time
+#     regardless of which directory each thinks it is in.
+ACT_LOCK = $(GIT_COMMON_DIR)/act.lock
+ACT_GUARD = ./scripts/act-guard.sh $(CURDIR)
+
+# The container is only half of it. act runs a cache server for
+# actions/cache, and its default store (~/.cache/actcache) is shared by every
+# checkout on the machine -- while the keys the actions compute
+# ("golangci-lint.cache-Linux-<n>-<hash of go.sum>", setup-go's equivalent)
+# are identical across worktrees of the same repo, because the inputs they
+# hash are. So a lint run restores the *analysis results* another worktree
+# cached and replays its findings, in files this tree does not have:
+# `../bridge-cse_<other>/internal/game/apply.go:322: G115 ...`, reported
+# against a checkout you are not in and cannot fix from here.
+#
+# That is what survived cleaning the containers and made this look for a
+# while like a stale-volume problem. One cache store per checkout, kept in
+# the shared .git so it is neither in the tree nor in the way of git.
+ACT_CACHE = $(GIT_COMMON_DIR)/act-cache/$(notdir $(CURDIR))
+ACT_RAW = $(ACT_BIN) --container-options "-v $(GIT_COMMON_DIR):$(GIT_COMMON_DIR):ro" \
+	--cache-server-path "$(ACT_CACHE)"
+
+# flock is util-linux and not everywhere. Without it the guard still does the
+# useful half: a run against the wrong checkout is prevented, and only two
+# genuinely simultaneous runs can still collide.
+ACT_FLOCK := $(shell command -v flock 2>/dev/null)
+ifeq ($(ACT_FLOCK),)
+ACT = $(ACT_GUARD) && $(ACT_RAW)
+else
+ACT = $(ACT_GUARD) && $(ACT_FLOCK) $(ACT_LOCK) $(ACT_RAW)
+endif
 
 # Scoped to go.yml, the day-to-day workflow (build/vet/lint/test on every
 # push and pull request). release.yml -- the full regression suite --
@@ -284,7 +336,7 @@ ci-job: ## Run one job: make ci-job JOB=test (test|lint; add WORKFLOW=... for re
 
 .PHONY: ci-list
 ci-list: ## List the jobs `make ci` would run
-	$(ACT) -W $(CI_WORKFLOW) --list
+	$(ACT_RAW) -W $(CI_WORKFLOW) --list
 
 # .actrc passes --reuse, so the job containers survive between runs and carry
 # their caches with them. That is the difference between a second run taking
@@ -298,11 +350,18 @@ ci-list: ## List the jobs `make ci` would run
 # -- `undefined: New` in a _test.go that is not on disk -- and it could as
 # easily read as a pass. Removing the containers alone does not fix it.
 .PHONY: ci-clean
-ci-clean: ## Remove the containers *and volumes* act reuses between runs
+ci-clean: ## Remove the containers, volumes and cache act reuses between runs
 	@ids=$$(docker ps -aq --filter "name=act-"); \
 	  if [ -n "$$ids" ]; then docker rm -f $$ids; else echo "no act containers"; fi
 	@vols=$$(docker volume ls -q --filter "name=act-"); \
 	  if [ -n "$$vols" ]; then docker volume rm -f $$vols; else echo "no act volumes"; fi
+	@# And this checkout's cache store. golangci-lint's cache is keyed by
+	@# package *content* and records absolute paths, so an entry saved by one
+	@# checkout is a legitimate hit for another with the same content -- and
+	@# replays that checkout's filenames. Clearing the containers without
+	@# clearing this leaves exactly the symptom that sent this looking at
+	@# volumes in the first place.
+	@rm -rf "$(ACT_CACHE)" && echo "removed $(ACT_CACHE)"
 
 ##@ Data and tooling
 
