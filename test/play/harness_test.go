@@ -34,6 +34,7 @@ package play
 import (
 	"bufio"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -180,6 +181,10 @@ type mud struct {
 	// stopped makes stop idempotent: a test that shuts the server down
 	// itself still has the cleanup registered behind it.
 	stopped bool
+	// exit is what the process exited with, once it has. Only meaningful
+	// after wait; see cmd/dlmud's exit code constants for what each one
+	// means.
+	exit int
 
 	mu sync.Mutex
 	// logs is every structured log line the server emitted, kept whole for
@@ -418,8 +423,33 @@ func (m *mud) stop() {
 	if m.cmd == nil || m.cmd.Process == nil || m.stopped {
 		return
 	}
-	m.stopped = true
 	_ = m.cmd.Process.Signal(syscall.SIGTERM)
+	m.wait()
+
+	if m.t.Failed() {
+		m.t.Logf("server log:\n%s", m.logText())
+	}
+}
+
+// wait blocks until the server process has exited and returns its exit
+// status, killing it if it will not go.
+//
+// The exit status is part of the contract with whatever restarts the
+// server: `shutdown reboot` exits 2 and asks to come back, everything else
+// that worked exits 0 (cmd/dlmud's exit code constants, and
+// docs/operations.md for the container settings that read them). Nothing
+// short of a real process can observe that, which is why it is asserted
+// here and not in internal/server.
+//
+// Idempotent, and it has to be: a test that stops the server itself still
+// has stop registered as cleanup behind it, and os/exec's Wait may only be
+// called once.
+func (m *mud) wait() int {
+	m.t.Helper()
+	if m.stopped {
+		return m.exit
+	}
+	m.stopped = true
 
 	select {
 	case <-m.done:
@@ -427,10 +457,28 @@ func (m *mud) stop() {
 		m.t.Errorf("the server did not shut down within 30s; killing it. Its log was:\n%s", m.logText())
 		_ = m.cmd.Process.Kill()
 	}
-	_ = m.cmd.Wait()
 
-	if m.t.Failed() {
-		m.t.Logf("server log:\n%s", m.logText())
+	if err := m.cmd.Wait(); err != nil {
+		var exited *exec.ExitError
+		if !errors.As(err, &exited) {
+			m.t.Errorf("waiting for the server to exit: %v", err)
+			return m.exit
+		}
+		m.exit = exited.ExitCode()
+	}
+	return m.exit
+}
+
+// signal sends the running server a signal, the way an operator does with
+// `docker kill --signal=...` or `kill -HUP`. Everything the server does with
+// one is in internal/signals and docs/design/signal-handling.md.
+func (m *mud) signal(sig syscall.Signal) {
+	m.t.Helper()
+	if m.cmd == nil || m.cmd.Process == nil {
+		m.t.Fatal("the server is not running")
+	}
+	if err := m.cmd.Process.Signal(sig); err != nil {
+		m.t.Fatalf("sending the server %v: %v", sig, err)
 	}
 }
 

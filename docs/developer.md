@@ -163,6 +163,21 @@ mean the world is lagging behind real time for everyone at once. If you have
 just written something that runs per pulse, look at it here before assuming
 it is free.
 
+Signals work the same locally as they do in a container, and two of them
+are worth knowing while developing:
+
+```sh
+kill -HUP  $(pgrep -f 'dlmud .*--config')   # re-read --config, live
+kill -QUIT $(pgrep dlmud)                   # dump every goroutine's stack
+```
+
+`SIGHUP` is how to try a `config/game.yaml` change without losing the
+character you are logged in as. `SIGQUIT` is what to reach for when the
+server stops answering: it is not handled, so the Go runtime prints every
+goroutine's stack and dies, and the stack sitting in `engine.DoSync` or on
+the world goroutine is usually the whole answer. `docs/operations.md` has
+the full set and `docs/design/signal-handling.md` the reasoning.
+
 Useful `FLAGS` when reproducing something specific:
 
 | Flag | Why |

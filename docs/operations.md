@@ -114,10 +114,73 @@ Notes that matter:
   external check at `/readyz` on `--metrics-addr`, or use the `dlctl`
   binary in the image.
 
+## Signals
+
+Everything an operator does to a running server that is not typed in the
+game is a signal. `docs/design/signal-handling.md` is the reasoning; this is
+the use.
+
+| Signal | What it does | When you send it |
+|---|---|---|
+| `SIGTERM` | Graceful shutdown: stop accepting, tell everyone connected, save, exit | Stopping the server. What `docker stop`, `systemctl stop` and a pod delete send for you |
+| `SIGINT` | The same | Ctrl-C at a terminal. A *second* one during shutdown kills the process instead of being swallowed, so a shutdown that will not finish can still be interrupted |
+| `SIGHUP` | Re-reads `--config` and applies it live | After editing the game tuning file. No restart, nobody disconnected |
+| `SIGQUIT` | Not handled, on purpose: the Go runtime dumps every goroutine's stack and the process dies | The server has stopped responding. The stacks name the goroutine that is stuck, and they are what to attach to the bug report |
+
+Anything else keeps its default disposition. In particular there is no
+signal that reloads world data, and that is a deliberate line rather than a
+gap — see "Reloading without a restart" below.
+
+### Sending them
+
+The image is **distroless and has no shell**, so `docker exec ... kill` and
+`kubectl exec ... kill` do not work. Use the runtime's own mechanism:
+
+| Running under | Reload (`SIGHUP`) | Stop (`SIGTERM`) | Stack dump (`SIGQUIT`) |
+|---|---|---|---|
+| Docker | `docker kill --signal=HUP <container>` | `docker stop <container>` | `docker kill --signal=QUIT <container>` |
+| Compose | `docker compose kill -s HUP dlmud` | `docker compose stop` | `docker compose kill -s QUIT dlmud` |
+| systemd | `systemctl reload dlmud` (with `ExecReload=/bin/kill -HUP $MAINPID`) | `systemctl stop dlmud` | `systemctl kill -s QUIT dlmud` |
+| Kubernetes | no built-in path; `kubectl delete pod` restarts instead | `kubectl delete pod` | `kubectl delete pod` loses the stacks — prefer reproducing it somewhere you can signal |
+| A bare process | `kill -HUP <pid>` | `kill <pid>` | `kill -QUIT <pid>` |
+
+The stack dump goes to stderr, which means it lands wherever the rest of the
+log does (`--log-file`, or the container's log). It is **fatal** — the
+process is gone afterwards and whatever was in the world goroutine's queue
+is lost, which is the right trade for a server that had already stopped
+turning, and the wrong one for a server that is merely slow.
+
+### Reloading without a restart
+
+Three different things can be reloaded, by three different mechanisms, and
+which one you get depends on what is being reloaded rather than on
+preference.
+
+| What | How | Notes |
+|---|---|---|
+| Game tuning (`--config`'s `game.yaml`) | `SIGHUP` | Takes effect on the next thing that reads it. See `docs/configuration.md` |
+| The canned text: `greetings`, `motd`, `imotd`, `credits`, `news`, `wizlist`, `immlist`, `info`, `policy`, `handbook`, `background`, `help` | `reload <name>` in-game (implementor) | `reload all` does all twelve. It does **not** include the help database — that is `reload xhelp`, separately, exactly as in the C |
+| World data: rooms, mobiles, objects, zones, shops | `reloadmob`, `reloadzone`, `reloadobj`, `reloadshop` in-game (greater god) | By vnum, after editing the files on disk |
+
+**Why world data has no signal.** Reloading a mobile prototype is surgery on
+the copies already walking around, and it can *refuse* — a mobile in combat
+is not replaced underneath the fight. That needs a vnum to act on and
+somebody to give the answer to, and a signal has neither.
+
+Everything else — the flags, the listeners, `--lib-dir`, the data formats —
+needs a restart.
+
+**A reload that fails changes nothing.** A `--config` file that will not
+parse, or parses and will not validate (`autosave_time: 0`, a negative
+cost), is logged as an error and ignored: the server keeps the values it
+already had, and the players stay connected. A typo in a file you are
+editing on a live server costs you the reload and nothing else.
+
 ## Shutdown
 
-`SIGTERM` (what `docker stop` and `systemctl stop` send) and `SIGINT`
-trigger a graceful shutdown: stop accepting, save, close, exit 0.
+`SIGTERM` and `SIGINT` trigger a graceful shutdown: stop accepting, tell
+everyone still connected, save the world, drain the writes already in
+flight, exit.
 
 **Give it time to finish.** The C server autosaved every 60 seconds, so an
 ungraceful kill could lose up to a minute of play; handling `SIGTERM`
@@ -128,8 +191,29 @@ Configure your supervisor to allow at least that:
 - systemd: `TimeoutStopSec=45`.
 - Kubernetes: `terminationGracePeriodSeconds: 45`.
 
-A second `SIGINT` during shutdown kills the process rather than being
-swallowed, so a wedged shutdown can still be interrupted from a terminal.
+### Exit codes
+
+| Code | Meaning |
+|---|---|
+| `0` | A clean stop: a signal, or `shutdown` / `shutdown die` / `shutdown pause` typed in the game |
+| `1` | Boot failure, or a fatal error while running. The reason is on stderr, prefixed `dlmud:` |
+| `2` | `shutdown reboot` or `shutdown now`: it stopped cleanly and is asking to be started again |
+
+The 0/2 split is how an implementor inside the game reaches the thing that
+restarts the server. The C did this by touching `.killscript` or
+`.fastboot` for the `autorun` shell script to find afterwards; there is no
+wrapper script here, so the exit code carries it and the restart policy
+reads it.
+
+**Which means the restart policy decides whether `shutdown die` is
+obeyed.** Under `restart: on-failure`, `shutdown reboot` comes back by
+itself and `shutdown die` stays down, which is the behaviour the two
+commands are named for. Under `restart: always` or `unless-stopped` — and
+under Kubernetes, where a `Deployment` restarts a pod whatever it exited
+with — both come back and `die` is only a slow `reboot`. Pick `on-failure`
+if the distinction matters to you; `build/docker-compose.yml` ships
+`unless-stopped`, because a development server should come back from
+anything.
 
 ## Health and readiness
 

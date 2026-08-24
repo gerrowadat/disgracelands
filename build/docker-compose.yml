@@ -31,6 +31,11 @@ services:
     # docker stop sends SIGTERM, which the server handles by saving and
     # shutting down cleanly. Give it room to finish.
     stop_grace_period: 45s
+    # unless-stopped restarts the server whatever it exited with, which is
+    # what a development compose file wants. It also means `shutdown die`
+    # typed in the game comes straight back: the exit code that says "stay
+    # down" (0, against 2 for `shutdown reboot`) is only read by
+    # `restart: on-failure`. See docs/operations.md, "Exit codes".
     restart: unless-stopped
     healthcheck:
       # distroless has no shell and no curl, so the check runs the server
