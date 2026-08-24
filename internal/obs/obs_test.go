@@ -41,8 +41,11 @@ func TestNewLoggerWritesJSON(t *testing.T) {
 	if err := json.Unmarshal(data, &rec); err != nil {
 		t.Fatalf("log line is not JSON: %v\n%s", err, data)
 	}
-	if rec["msg"] != "boot" || rec["lib_dir"] != "data" {
-		t.Errorf("log record = %v, want msg=boot lib_dir=lib", rec)
+	// The shape itself is otel_test.go's subject; this is only that the
+	// file destination and the JSON format compose.
+	attrs, _ := rec["attributes"].(map[string]any)
+	if rec["_msg"] != "boot" || attrs["lib_dir"] != "data" {
+		t.Errorf("log record = %v, want _msg=boot attributes.lib_dir=data", rec)
 	}
 }
 

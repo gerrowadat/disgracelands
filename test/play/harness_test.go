@@ -190,10 +190,15 @@ type mud struct {
 
 // logLine is one JSON log record, decoded only as far as this suite cares.
 type logLine struct {
-	Level string `json:"level"`
-	Msg   string `json:"msg"`
-	Addr  string `json:"addr"`
-	raw   string
+	Severity string `json:"severity_text"`
+	Msg      string `json:"_msg"`
+	// The server's JSON format is OpenTelemetry-shaped (internal/obs/
+	// otel.go), so a record's own attributes are nested under `attributes`
+	// rather than sitting at the top level.
+	Attrs struct {
+		Addr string `json:"addr"`
+	} `json:"attributes"`
+	raw string
 }
 
 // startOptions are the knobs a test can turn before boot.
@@ -378,8 +383,8 @@ func (m *mud) readLog(r io.Reader, ready chan<- string) {
 		m.logs = append(m.logs, line)
 		m.mu.Unlock()
 
-		if line.Msg == "listening" && line.Addr != "" {
-			addr = line.Addr
+		if line.Msg == "listening" && line.Attrs.Addr != "" {
+			addr = line.Attrs.Addr
 		}
 		if line.Msg == "ready" && addr != "" {
 			select {
@@ -457,7 +462,7 @@ func (m *mud) errorLines() []string {
 
 	var out []string
 	for _, l := range m.logs {
-		if l.Level == "ERROR" {
+		if l.Severity == "ERROR" {
 			out = append(out, l.raw)
 		}
 	}

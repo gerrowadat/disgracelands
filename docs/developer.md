@@ -170,7 +170,7 @@ Useful `FLAGS` when reproducing something specific:
 | `--restrict` | No new players — the `-r` of old runbooks. |
 | `--no-specials` | Suppress special procedures, so guildmasters, shopkeepers and the rest are ordinary mobiles. |
 | `--pulse-interval=1s` | Slows the game loop to human speed; makes pulse-driven behaviour observable. |
-| `--log-format=json` | What production logs look like. |
+| `--log-format=json` | What production logs look like: the OpenTelemetry envelope, one record per line. |
 | `--debug-addr=127.0.0.1:6060` | pprof. Never anywhere but loopback. |
 | `--allow-legacy-passwords=false` | Reject pre-2008 DES hashes, to check the upgrade path's other branch. |
 

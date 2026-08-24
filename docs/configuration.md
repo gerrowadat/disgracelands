@@ -343,7 +343,7 @@ password.
 | Flag | Default | Meaning |
 |---|---|---|
 | `--log-file` | `-` | Log destination. `-` means stderr. |
-| `--log-format` | `text` | `text` or `json`. |
+| `--log-format` | `text` | `text` for a terminal, `json` for OpenTelemetry-shaped records ([operations.md](operations.md#the-json-format)). |
 | `--log-level` | `info` | `debug`, `info`, `warn`, `error`. `debug` also adds source file and line. |
 | `--metrics-addr` | *(disabled)* | Serves `/metrics`, `/healthz`, `/readyz`. |
 | `--debug-addr` | *(disabled)* | Serves `/debug/pprof`. **Never expose this**; the server warns when it is set. |

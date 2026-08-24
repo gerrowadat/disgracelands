@@ -179,6 +179,60 @@ connecting hosts and player names. `-` (the default) writes to stderr,
 which is usually what you want under a container runtime or systemd — let
 the supervisor handle rotation and shipping.
 
+### The JSON format
+
+One OpenTelemetry [log record][otel-logs] per line, not slog's own
+envelope:
+
+```json
+{"_time":"2026-08-24T09:14:02.417365991Z","severity_text":"INFO","severity_number":9,"_msg":"entered the world","resource":{"host.name":"mud1","process.pid":"7","service.name":"dlmud","service.version":"v0.1.0"},"attributes":{"character":"Zod","room":3001}}
+```
+
+| Field | What it is |
+|---|---|
+| `_time` | The record's timestamp, RFC 3339 in UTC with a fixed nine fractional digits, so the raw text sorts in time order. |
+| `_msg` | The data model's Body. |
+| `severity_text` / `severity_number` | `INFO` and 9, `WARN` and 13, and so on — the data model's [severity ranges][otel-severity]. |
+| `resource` | What emitted the record: `service.name`, `service.version`, `host.name`, `process.pid`, plus anything from `OTEL_RESOURCE_ATTRIBUTES`. |
+| `attributes` | Everything the call site logged. Grouped, so a command logging something called `severity_text` cannot collide with the record's own fields. |
+| `code` | Caller file, line and function. Only at `--log-level=debug`. |
+
+**`_time` and `_msg` are VictoriaLogs' names, not OpenTelemetry's** (which
+calls them Timestamp and Body). They are the two fields VictoriaLogs will
+not guess at — its `_time_field` and `_msg_field`, defaulting to exactly
+these — so a line ingests with no per-source configuration at all:
+
+```
+dlmud --log-format=json --log-file=- 2>&1 | \
+  curl -s -T - http://victorialogs:9428/insert/jsonline?_stream_fields=resource.service.name
+```
+
+In practice something else does the tailing — vector, vmagent, promtail,
+the Docker or journald driver — and all any of them need is the same URL.
+VictoriaLogs flattens nested JSON on ingestion, so the two grouped blocks
+arrive as ordinary fields: `resource.service.name`, `attributes.character`.
+A backend that wants OpenTelemetry's own names instead is one rename rule
+away, and everything other than those two fields already carries a
+[semantic convention][otel-semconv] name.
+
+`service.name` defaults to `dlmud`. Two servers sharing a log backend
+should differ, and the standard environment variables are how — there are
+deliberately no flags for this, so the labels come from wherever the rest
+of the deployment's labels do:
+
+```
+OTEL_SERVICE_NAME=dlmud-staging
+OTEL_RESOURCE_ATTRIBUTES=deployment.environment=staging,service.namespace=mud
+```
+
+There is no trace correlation on the records, because nothing in the server
+opens a span yet. When something does, `trace_id`/`span_id` belong on the
+record alongside `severity_text`.
+
+[otel-logs]: https://opentelemetry.io/docs/specs/otel/logs/data-model/
+[otel-severity]: https://opentelemetry.io/docs/specs/otel/logs/data-model/#field-severitynumber
+[otel-semconv]: https://opentelemetry.io/docs/specs/semconv/
+
 Startup warnings are worth reading rather than filtering. The server warns
 about exactly the things that are safe-but-questionable: plaintext telnet
 enabled, legacy DES password verification enabled, pprof listening, a
