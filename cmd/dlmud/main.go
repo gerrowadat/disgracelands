@@ -21,8 +21,8 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"log/slog"
 	"os"
-	"os/signal"
 	"path/filepath"
 	"syscall"
 	"time"
@@ -46,6 +46,7 @@ import (
 	"github.com/gerrowadat/disgracelands/internal/persist/world"
 	"github.com/gerrowadat/disgracelands/internal/rng"
 	"github.com/gerrowadat/disgracelands/internal/server"
+	"github.com/gerrowadat/disgracelands/internal/signals"
 
 	// Register the formats the server can be configured to use.
 	_ "github.com/gerrowadat/disgracelands/internal/persist/bans/classic"
@@ -86,26 +87,71 @@ func tlsConfig(cfg *config.Config) (*tls.Config, error) {
 // of handling SIGTERM is to save instead, and that needs room to finish.
 const shutdownTimeout = 30 * time.Second
 
-func main() {
-	if err := run(os.Args[1:]); err != nil {
-		if errors.Is(err, flag.ErrHelp) {
-			return
-		}
-		fmt.Fprintf(os.Stderr, "dlmud: %v\n", err)
-		os.Exit(1)
+// What the process exits with, and the only three answers there are.
+//
+// This is the replacement for the way the C told its wrapper script what it
+// wanted: do_shutdown touches .killscript or .fastboot on the way out
+// (act.wizard.c:1082) and the autorun shell script reads them afterwards to
+// decide whether to start the server again (autorun:143). There is no
+// wrapper here — the container runtime restarts it — so the same
+// distinction is carried by the exit code, which is the mechanism that
+// runtime already has: under `restart: on-failure`, exitReboot comes back
+// by itself and exitOK stays down. docs/operations.md says so to operators.
+const (
+	exitOK     = 0 // A clean stop: a signal, `shutdown`, `shutdown die`.
+	exitFailed = 1 // Boot failure, or a fatal error while running.
+	exitReboot = 2 // `shutdown reboot` / `shutdown now`: start me again.
+)
+
+// reloadGameTuning is what SIGHUP does: re-read --config's game-tuning file
+// and publish it, without a restart (go-port-plan.md §9.1).
+//
+// Two things it deliberately does not do. It does not fail: a file that
+// will not parse, or parses and will not validate, is logged and the
+// previous tuning kept, because a typo in a config file must never be able
+// to stop a game that is already running. And it does not touch the world —
+// game.SetTuning is an atomic publish, which is what makes this safe to
+// call from the signal goroutine while the world goroutine is mid-pulse.
+// Reloading world *data* is a different thing with different rules; see
+// docs/proposals/signal-handling.md §4 for why no signal does it.
+func reloadGameTuning(logger *slog.Logger, cfg *config.Config) {
+	if cfg.GameConfigFile == "" {
+		logger.Warn("SIGHUP received but no --config is set; nothing to reload")
+		return
 	}
+	t, err := config.LoadGameTuning(cfg.GameConfigFile)
+	if err != nil {
+		logger.Error("SIGHUP: game tuning reload failed, keeping previous values",
+			"file", cfg.GameConfigFile, "error", err)
+		return
+	}
+	game.SetTuning(t)
+	logger.Info("SIGHUP: reloaded game tuning", "file", cfg.GameConfigFile)
 }
 
-func run(args []string) error {
+func main() {
+	code, err := run(os.Args[1:])
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "dlmud: %v\n", err)
+	}
+	os.Exit(code)
+}
+
+func run(args []string) (int, error) {
 	cfg, err := config.Load(args, os.LookupEnv, os.Stderr)
 	if err != nil {
-		return err
+		// `--help` has already printed the usage the caller asked for,
+		// and asking for it is not a failure.
+		if errors.Is(err, flag.ErrHelp) {
+			return exitOK, nil
+		}
+		return exitFailed, err
 	}
 
 	info := buildinfo.Get()
 	if cfg.ShowVersion {
 		fmt.Println(info)
-		return nil
+		return exitOK, nil
 	}
 
 	logger, closer, err := obs.NewLogger(obs.LogOptions{
@@ -115,7 +161,7 @@ func run(args []string) error {
 		AddSource: cfg.LogLevel <= -4, // debug
 	})
 	if err != nil {
-		return err
+		return exitFailed, err
 	}
 	if closer != nil {
 		defer func() { _ = closer.Close() }()
@@ -143,7 +189,7 @@ func run(args []string) error {
 	// silently; see dataversion.Check's own doc comment for what the
 	// other two outcomes mean.
 	if warning, err := dataversion.Check(cfg.LibDir, dataversion.Current); err != nil {
-		return err
+		return exitFailed, err
 	} else if warning != "" {
 		logger.Warn(warning)
 	}
@@ -154,7 +200,7 @@ func run(args []string) error {
 	// handling below exists to carry it.
 	tuning, err := config.LoadGameTuning(cfg.GameConfigFile)
 	if err != nil {
-		return fmt.Errorf("game tuning: %w", err)
+		return exitFailed, fmt.Errorf("game tuning: %w", err)
 	}
 	game.SetTuning(tuning)
 	if cfg.GameConfigFile != "" {
@@ -173,64 +219,41 @@ func run(args []string) error {
 		Logger:      logger,
 	})
 	if err != nil {
-		return err
+		return exitFailed, err
 	}
 
-	// Signal handling first, so a SIGTERM arriving during a slow boot is
-	// honoured rather than killing the process outright.
-	signalCtx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer stop()
-
-	// A second context on top, so a god typing `shutdown` can stop the
-	// listeners the same way a signal does. NotifyContext's stop() only stops
-	// the *signal relaying* — it does not cancel anything — so without this
-	// an in-game shutdown would run the saves and then sit there with the
-	// listeners still up.
-	ctx, cancel := context.WithCancel(signalCtx)
+	// One context for the whole server, cancelled either by a signal or by
+	// a god typing `shutdown`. Both run the same shutdown for the same
+	// reason: one that skipped the saves would be worse than none.
+	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// SIGHUP reloads --config's game-tuning file without a restart
-	// (go-port-plan.md §9.1). A no-op, logged rather than silent, if
-	// --config was never set — there is nothing to re-read. A reload that
-	// fails to parse or validate keeps the previous tuning rather than
-	// wedging the game on a typo.
-	hup := make(chan os.Signal, 1)
-	signal.Notify(hup, syscall.SIGHUP)
-	go func() {
-		defer signal.Stop(hup)
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-hup:
-				if cfg.GameConfigFile == "" {
-					logger.Warn("SIGHUP received but no --config is set; nothing to reload")
-					continue
-				}
-				t, err := config.LoadGameTuning(cfg.GameConfigFile)
-				if err != nil {
-					logger.Error("SIGHUP: game tuning reload failed, keeping previous values",
-						"file", cfg.GameConfigFile, "error", err)
-					continue
-				}
-				game.SetTuning(t)
-				logger.Info("SIGHUP: reloaded game tuning", "file", cfg.GameConfigFile)
-			}
-		}
-	}()
+	// Signal handling before the world loads, so a SIGTERM arriving during
+	// a slow boot is honoured rather than killing the process outright.
+	// Everything about what each signal does and why lives in
+	// docs/proposals/signal-handling.md; internal/signals is the whole
+	// disposition, and anything absent from this list keeps its default —
+	// SIGQUIT deliberately so.
+	sigs := signals.Install(logger,
+		signals.Handler{Signal: syscall.SIGTERM, Does: "graceful shutdown", Run: cancel},
+		signals.Handler{Signal: syscall.SIGINT, Does: "graceful shutdown", Run: cancel},
+		signals.Handler{Signal: syscall.SIGHUP, Does: "reload the configuration",
+			Run: func() { reloadGameTuning(logger, cfg) }},
+	)
+	defer sigs.Stop()
 
 	// Load the world before anything can connect to it. A world that will
 	// not load is a boot failure, not something to serve around.
 	logger.Info("loading the world", "dir", cfg.WorldPath(), "format", cfg.WorldFormat)
 	worldSrc, err := world.Open(cfg.WorldFormat, world.Config{Dir: cfg.WorldPath(), Mini: cfg.MiniMUD})
 	if err != nil {
-		return err
+		return exitFailed, err
 	}
 	defer func() { _ = worldSrc.Close() }()
 
 	defs, err := worldSrc.Load(ctx)
 	if err != nil {
-		return err
+		return exitFailed, err
 	}
 	live := game.NewLive(defs)
 
@@ -244,7 +267,7 @@ func run(args []string) error {
 	}
 	epoch, err := clock.Load(cfg.StateFormat, clockPath)
 	if err != nil {
-		return err
+		return exitFailed, err
 	}
 	live.SetBooted(epoch)
 
@@ -254,7 +277,7 @@ func run(args []string) error {
 
 	players, err := player.Open(cfg.PlayerFormat, player.Config{Dir: cfg.PlayerPath()})
 	if err != nil {
-		return err
+		return exitFailed, err
 	}
 	defer func() { _ = players.Close() }()
 
@@ -277,7 +300,7 @@ func run(args []string) error {
 	if !ok {
 		objects, err = binary.NewObjectStore(player.Config{Dir: cfg.PlayerPath()})
 		if err != nil {
-			return err
+			return exitFailed, err
 		}
 	}
 
@@ -289,7 +312,7 @@ func run(args []string) error {
 	}
 	boardStore, err := boards.Open(cfg.StateFormat, boards.Config{Dir: boardDir})
 	if err != nil {
-		return err
+		return exitFailed, err
 	}
 
 	// The mud mail file: classic's block-allocator file, or
@@ -300,7 +323,7 @@ func run(args []string) error {
 	}
 	mailStore, err := mail.Open(cfg.StateFormat, mail.Config{Path: mailPath})
 	if err != nil {
-		return err
+		return exitFailed, err
 	}
 
 	// The house control file and the per-house object files: classic's two
@@ -315,7 +338,7 @@ func run(args []string) error {
 	}
 	houseStore, err := houses.Open(cfg.StateFormat, houseCfg)
 	if err != nil {
-		return err
+		return exitFailed, err
 	}
 
 	// The site ban list — the one archive file that is plain text, under
@@ -326,7 +349,7 @@ func run(args []string) error {
 	}
 	banStore, err := bans.Open(cfg.StateFormat, bans.Config{Path: banPath})
 	if err != nil {
-		return err
+		return exitFailed, err
 	}
 
 	// The bug/idea/typo log: misc/{bugs,ideas,typos} under classic, or the
@@ -338,7 +361,7 @@ func run(args []string) error {
 	}
 	reportStore, err := reports.Open(cfg.StateFormat, reports.Config{Dir: reportsDir})
 	if err != nil {
-		return err
+		return exitFailed, err
 	}
 
 	// The disallowed-name list: misc/xnames under classic, or
@@ -351,14 +374,14 @@ func run(args []string) error {
 	}
 	disallowedNames, err := names.Load(cfg.NamesFormat, namesPath)
 	if err != nil {
-		return err
+		return exitFailed, err
 	}
 
 	// The greeting and the credits are licence obligations; LoadText refuses
 	// to return if either is missing, which is deliberate.
 	text, err := server.LoadText(cfg.LibDir, cfg.MessagesFormat, cfg.SocialsFormat, cfg.HelpFormat)
 	if err != nil {
-		return err
+		return exitFailed, err
 	}
 
 	eng := engine.New(engine.Options{
@@ -375,7 +398,7 @@ func run(args []string) error {
 	}
 	source, err := rng.New(cfg.RNG, seed)
 	if err != nil {
-		return err
+		return exitFailed, err
 	}
 	logger.Info("random number generator", "source", source.Name(),
 		"seed", seed, "reproducible", cfg.RNGSeed != 0)
@@ -452,23 +475,23 @@ func run(args []string) error {
 	if cfg.TelnetAddr != "" {
 		ln, err := server.ListenTelnet(cfg.TelnetAddr)
 		if err != nil {
-			return err
+			return exitFailed, err
 		}
 		listeners = append(listeners, ln)
 	}
 	if cfg.TelnetsAddr != "" {
 		tlsCfg, err := tlsConfig(cfg)
 		if err != nil {
-			return err
+			return exitFailed, err
 		}
 		ln, err := server.ListenTLS(cfg.TelnetsAddr, tlsCfg)
 		if err != nil {
-			return err
+			return exitFailed, err
 		}
 		listeners = append(listeners, ln)
 	}
 	if len(listeners) == 0 {
-		return fmt.Errorf("no listeners could be started")
+		return exitFailed, fmt.Errorf("no listeners could be started")
 	}
 
 	for _, ln := range listeners {
@@ -497,7 +520,7 @@ func run(args []string) error {
 
 	// Stop treating further signals specially: a second Ctrl-C should kill a
 	// wedged shutdown rather than being swallowed.
-	stop()
+	sigs.Stop()
 	logger.Info("shutting down")
 
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
@@ -524,5 +547,12 @@ func run(args []string) error {
 	}
 
 	logger.Info("stopped")
-	return nil
+
+	// The only place the exit code is anything but exitOK on a shutdown
+	// that worked: `shutdown reboot` and `shutdown now` ask to come back,
+	// and this is how they say so. See the exit code constants.
+	if srv.RebootWanted() {
+		return exitReboot, nil
+	}
+	return exitOK, nil
 }

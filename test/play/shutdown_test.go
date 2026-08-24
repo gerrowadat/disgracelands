@@ -130,3 +130,47 @@ func TestTheServerRefusesToBootWithoutAWorld(t *testing.T) {
 
 	t.Logf("refused an empty --lib-dir with:\n%s", out)
 }
+
+// TestTheExitCodeSaysWhetherToComeBack.
+//
+// The C told its wrapper script what it wanted by touching a file on the way
+// out -- .killscript for "stay down", .fastboot for "come back quickly" --
+// and the autorun shell script read them after the process was gone
+// (act.wizard.c:1082, autorun:143). There is no wrapper here, so the same
+// distinction is carried by the exit code and read by the container
+// runtime's restart policy instead (docs/proposals/signal-handling.md §5).
+//
+// Which makes the exit code an operator-visible contract, and one that only
+// a real process has at all: run() returning nil says nothing about what
+// `docker stop` or `restart: on-failure` will do next.
+func TestTheExitCodeSaysWhetherToComeBack(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		want int
+		how  func(*mud)
+	}{
+		{"SIGTERM", 0, func(m *mud) { m.stop() }},
+		{"shutdown", 0, func(m *mud) { m.god().send("shutdown") }},
+		{"shutdown die", 0, func(m *mud) { m.god().send("shutdown die") }},
+		{"shutdown reboot", 2, func(m *mud) { m.god().send("shutdown reboot") }},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			m := start(t, miniClassic)
+			tc.how(m)
+
+			if got := m.wait(); got != tc.want {
+				t.Errorf("exited %d, want %d. Its log was:\n%s", got, tc.want, m.logText())
+			}
+			// A shutdown that asked to come back still has to be a
+			// *clean* one: the saves ran, the writes drained, run()
+			// returned of its own accord. An exit code alone cannot
+			// tell those apart from a crash that happened to exit 2.
+			if _, ok := m.find("stopped"); !ok {
+				t.Errorf("the server did not finish shutting down. Its log was:\n%s", m.logText())
+			}
+			for _, line := range m.errorLines() {
+				t.Errorf("the shutdown logged an error: %s", line)
+			}
+		})
+	}
+}

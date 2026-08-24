@@ -114,10 +114,34 @@ Notes that matter:
   external check at `/readyz` on `--metrics-addr`, or use the `dlctl`
   binary in the image.
 
+## Signals
+
+| Signal | What it does |
+|---|---|
+| `SIGTERM` | Graceful shutdown. What `docker stop`, `systemctl stop` and a pod delete send |
+| `SIGINT` | The same. A second one during shutdown kills the process instead of being swallowed, so a wedged shutdown can still be interrupted from a terminal |
+| `SIGHUP` | Re-reads `--config`'s game tuning and applies it live. Not a shutdown — the C server's own `SIGHUP` was, this one is the conventional Unix meaning |
+| `SIGQUIT` | Deliberately not handled: the Go runtime dumps every goroutine's stack and exits. This is what to send a server that has stopped responding, and the stacks are what to attach to the bug report |
+
+Anything else keeps its default. There is no signal that reloads world data
+— rooms, mobiles, objects, zones and shops are reloaded from inside the game
+with `reloadmob`, `reloadzone`, `reloadobj` and `reloadshop`, because
+reloading one can *refuse* (a mobile in combat) and a signal has nobody to
+tell. `docs/proposals/signal-handling.md` is the full design.
+
+A `SIGHUP` whose file will not parse, or parses and will not validate, is
+logged and ignored: the server keeps the tuning it already had and the
+players stay connected. A typo cannot take the game down.
+
+**The image has no shell**, so `docker exec ... kill` will not work. Send
+signals with the runtime instead: `docker kill --signal=HUP <container>`, or
+`systemctl reload` given `ExecReload=/bin/kill -HUP $MAINPID`.
+
 ## Shutdown
 
-`SIGTERM` (what `docker stop` and `systemctl stop` send) and `SIGINT`
-trigger a graceful shutdown: stop accepting, save, close, exit 0.
+`SIGTERM` and `SIGINT` trigger a graceful shutdown: stop accepting, tell
+everyone still connected, save the world, drain the writes already in
+flight, exit.
 
 **Give it time to finish.** The C server autosaved every 60 seconds, so an
 ungraceful kill could lose up to a minute of play; handling `SIGTERM`
@@ -128,8 +152,29 @@ Configure your supervisor to allow at least that:
 - systemd: `TimeoutStopSec=45`.
 - Kubernetes: `terminationGracePeriodSeconds: 45`.
 
-A second `SIGINT` during shutdown kills the process rather than being
-swallowed, so a wedged shutdown can still be interrupted from a terminal.
+### Exit codes
+
+| Code | Meaning |
+|---|---|
+| `0` | A clean stop: a signal, or `shutdown` / `shutdown die` / `shutdown pause` typed in the game |
+| `1` | Boot failure, or a fatal error while running. The reason is on stderr, prefixed `dlmud:` |
+| `2` | `shutdown reboot` or `shutdown now`: it stopped cleanly and is asking to be started again |
+
+The 0/2 split is how an implementor inside the game reaches the thing that
+restarts the server. The C did this by touching `.killscript` or
+`.fastboot` for the `autorun` shell script to find afterwards; there is no
+wrapper script here, so the exit code carries it and the restart policy
+reads it.
+
+**Which means the restart policy decides whether `shutdown die` is
+obeyed.** Under `restart: on-failure`, `shutdown reboot` comes back by
+itself and `shutdown die` stays down, which is the behaviour the two
+commands are named for. Under `restart: always` or `unless-stopped` — and
+under Kubernetes, where a `Deployment` restarts a pod whatever it exited
+with — both come back and `die` is only a slow `reboot`. Pick `on-failure`
+if the distinction matters to you; `build/docker-compose.yml` ships
+`unless-stopped`, because a development server should come back from
+anything.
 
 ## Health and readiness
 
