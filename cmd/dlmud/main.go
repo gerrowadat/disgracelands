@@ -262,10 +262,17 @@ func run(args []string) error {
 	// exception: yaml folds them into the same file as the roster
 	// (docs/design/data-format.md §8, "one player, one file"), so a
 	// Store that is also an ObjectStore serves both — there is no separate
-	// plrobjs/ to point a second store at. Every other format still uses
-	// `plrobjs/` in the layout the archived files are in, whatever the
-	// roster is kept as, since the C has one format for them and ascii's
-	// own roster format is this port's own addition.
+	// plrobjs/ to point a second store at. Every other format keeps them in
+	// `plrobjs/` in the C's own file format, whatever the roster is kept as,
+	// since the C has one format for them and ascii's own roster format is
+	// this port's own addition.
+	//
+	// Under the player directory, not beside it: a served lib/ keeps a
+	// roster and its rent files together, which is this port's layout and
+	// not the C's. The C builds `etc/players` and `plrobjs/` from its own
+	// cwd, so an *archived* tree has them as siblings — that is a
+	// conversion-time concern (player.Config.ObjectsDir, and `dlctl pfile
+	// import --from-objs-dir`), not one for a directory this server wrote.
 	objects, ok := players.(player.ObjectStore)
 	if !ok {
 		objects, err = binary.NewObjectStore(player.Config{Dir: cfg.PlayerPath()})
