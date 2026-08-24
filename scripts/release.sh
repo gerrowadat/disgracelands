@@ -8,7 +8,8 @@
 #
 # Cut a release: bump the semver tag, regenerate the example yaml worlds
 # from their binary source (catching any drift between the two before it
-# ships rather than after), run the fast local checks, then tag and push.
+# ships rather than after), run the local checks -- including the play
+# regression suite, which is release-only -- then tag and push.
 #
 # .github/workflows/release.yml is what actually runs the full regression
 # suite and creates the GitHub release — this script's job is everything
@@ -130,6 +131,16 @@ fi
 # pushing a tag that triggers it, not a replacement for it.
 echo "==> make check"
 make check
+
+# The play regression suite. Slower than everything above put together
+# -- it builds a server binary and then starts one process per test --
+# and worth it here for the same reason release.yml runs it: it is the
+# only thing that exercises the boot sequence, the zone resets, the
+# specials and the shutdown saves at all, and a release is exactly when
+# "the world still loads and you can still play it" should be checked
+# rather than assumed.
+echo "==> make play"
+make play
 
 # world-parity.sh builds the C reference server natively -- no 32-bit
 # toolchain needed for this one, unlike the ilp32 checks `make check`

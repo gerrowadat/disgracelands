@@ -419,7 +419,25 @@ func run(args []string) error {
 	}
 
 	eng.SetPeriodic(srv.Periodic())
-	go eng.Run(ctx)
+
+	// The world goroutine gets a context of its own, deliberately not
+	// derived from ctx, because it has to outlive the thing that cancels
+	// ctx. Everything on the way down -- Crash_save_all, the changed
+	// houses, save_mud_time -- reaches the world through engine.DoSync,
+	// and DoSync is a handshake with a running loop: hand the task over,
+	// wait for it to run. Cancel the loop first and there is nobody left
+	// to take the task, so every one of those saves sits in its select
+	// until the shutdown deadline expires and then returns "context
+	// deadline exceeded". That is not a slow shutdown, it is a silent one
+	// -- every character still logged in loses whatever they did since the
+	// last autosave, the mud clock stops advancing across restarts, and
+	// the only trace is one ERROR line at the very end. Found by
+	// test/play's TestShutdownSavesEveryoneStillInTheWorld, because
+	// nothing that stops short of running the real binary and sending it a
+	// real SIGTERM can see it.
+	worldCtx, stopWorld := context.WithCancel(context.Background())
+	defer stopWorld()
+	go eng.Run(worldCtx)
 
 	go srv.RunAutosave(ctx)
 	go srv.RunClockSave(ctx)
@@ -496,6 +514,10 @@ func run(args []string) error {
 	// them off the world goroutine is that nothing waits for them *during*
 	// play.
 	srv.WaitForWrites()
+
+	// Only now is the world finished with. Everything above this line
+	// needed it turning; nothing below it does.
+	stopWorld()
 
 	if err := diag.Shutdown(shutdownCtx); err != nil {
 		logger.Error("diagnostics shutdown failed", "error", err)

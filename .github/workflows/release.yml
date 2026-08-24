@@ -10,10 +10,11 @@
 # player/board/mail/house layout checks and the shop-price check (both
 # need a 32-bit C build to compare against), the C-vs-Go world-parity
 # check (needs a full C build), the license check, two doc-coverage
-# checks, and a container build. All real, none of them cheap, none of
-# them needing an answer on every single commit — a release needing an
-# answer on all of them at once is exactly the point at which "slow but
-# thorough" is worth more than "fast".
+# checks, a container build, and the play regression suite (test/play,
+# a real server on examples/mini driven over a socket). All real, none
+# of them cheap, none of them needing an answer on every single commit
+# — a release needing an answer on all of them at once is exactly the
+# point at which "slow but thorough" is worth more than "fast".
 #
 # Once that passes, two things get published: the GitHub release itself,
 # and the container image, to ghcr.io/gerrowadat/disgracelands for
@@ -176,6 +177,24 @@ jobs:
             grep -q -- "-$opt" help.txt || { echo "missing --$opt in --help"; exit 1; }
           done
           grep -q 'DL_LIB_DIR' help.txt || { echo "--help does not document env vars"; exit 1; }
+
+      # The play regression suite: a real dlmud, booted on examples/mini,
+      # driven over a real socket by a client that types what a player
+      # types. This is the only thing in the tree that runs the boot
+      # sequence at all -- reading the world off disk, resetting the
+      # zones into it, attaching specials by vnum, loading text/ -- and
+      # the only thing that sends the server a real SIGTERM and then
+      # looks at what it saved. `go test -race` above covers none of it:
+      # internal/server builds its world in Go and wires the server up
+      # field by field, which is what makes those tests fast and what
+      # makes them blind to a world that no longer loads.
+      #
+      # -race is passed to the test binary, and test/play then builds the
+      # child server with it too (test/play/race_on_test.go): the world
+      # goroutine lives in the child, so instrumenting only the driver
+      # would watch the half that has no concurrency in it.
+      - name: The play regression suite
+        run: go test -tags=play -race -count=1 -timeout 30m ./test/play/...
 
       - name: Lint the world files
         run: go run ./cmd/dlctl world lint --world-dir=examples/stock/binary/world

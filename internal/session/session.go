@@ -219,7 +219,10 @@ type Session struct {
 	closed atomic.Bool
 	quit   atomic.Bool
 	rented atomic.Bool
-	closer sync.Once
+	// displaced is set when perform_dupe_check has taken this connection's
+	// character away from it — see MarkDisplaced.
+	displaced atomic.Bool
+	closer    sync.Once
 	// done is closed when the session ends. The output channel deliberately
 	// is not: Send runs on whichever goroutine is talking to this player —
 	// the world's, a shutdown watcher's, a timer's — and closing a channel
@@ -252,6 +255,22 @@ func (s *Session) Rented() bool { return s.rented.Load() }
 
 // Quit reports whether the player left deliberately.
 func (s *Session) Quit() bool { return s.quit.Load() }
+
+// MarkDisplaced records that somebody has logged in as this connection's
+// character and taken the body over, so the teardown must not touch it.
+//
+// This is `k->character = NULL` in perform_dupe_check (interpreter.c:1211,
+// :1218) — the C nulls the old descriptor's pointer precisely so that
+// closing it does not extract, save or crash-save a character that now
+// belongs to somebody else. Doing it as a flag rather than by clearing
+// s.character is not squeamishness: the dupe check runs on the world
+// goroutine, on behalf of a *different* connection, and s.character is a
+// plain field this session's own goroutine reads. An atomic flag says the
+// same thing without writing across that boundary.
+func (s *Session) MarkDisplaced() { s.displaced.Store(true) }
+
+// Displaced reports whether this connection's character was taken over.
+func (s *Session) Displaced() bool { return s.displaced.Load() }
 
 // Deps are what a session needs from the rest of the server.
 type Deps struct {
@@ -308,6 +327,26 @@ type TextFiles interface {
 	Help(query string) (string, bool)
 }
 
+// DupeMode is which of perform_dupe_check's outcomes happened, and decides
+// what the new connection is told (interpreter.c:1281-1301).
+type DupeMode int
+
+const (
+	// DupeNone: nobody else was logged in as this character. The ordinary
+	// case, and the only one where the caller carries on into the menu.
+	DupeNone DupeMode = iota
+	// DupeReconnect is the C's RECON: a body left standing when a
+	// connection dropped. "Reconnecting."
+	DupeReconnect
+	// DupeUsurp is the C's USURP: a body somebody was *playing* when this
+	// login arrived. Their socket is closed and this one takes the body.
+	DupeUsurp
+	// DupeUnswitch is the C's UNSWITCH: the older connection was switched
+	// into somebody else (do_switch), so what is handed back is the
+	// character it switched *from*.
+	DupeUnswitch
+)
+
 // LoginHandler performs the steps that need more than the connection.
 type LoginHandler interface {
 	// Exists reports whether a character is known.
@@ -326,11 +365,21 @@ type LoginHandler interface {
 	// Create makes a new character. The request carries everything the C's
 	// creation sequence gathers before a character exists.
 	Create(ctx context.Context, req CreateRequest) (*game.Character, error)
-	// Reconnect returns a character already in the world under this name,
-	// whose connection has dropped, or nil. The C keeps a linkdead body
-	// standing rather than removing it, so a dropped connection can be
-	// resumed; this is how the login sequence finds it again.
-	Reconnect(ctx context.Context, name string) *game.Character
+	// DupeCheck is perform_dupe_check (interpreter.c:1184), the last thing
+	// nanny does once a password has been accepted (:1500).
+	//
+	// It answers one question — "is this player already here?" — and the
+	// answer has three shapes, because there are three ways to be. A body
+	// standing linkdead is reconnected to. A body somebody is actively
+	// playing is *taken over*, and their connection closed. A connection
+	// switched into something else is unswitched. In every case the older
+	// connections are disconnected and any surplus bodies destroyed, so
+	// that one character means one body and one socket.
+	//
+	// The implementation disconnects the losers and hands back the body to
+	// adopt, or nil and DupeNone for an ordinary first login. Attaching to
+	// it is the caller's half: the session owns its own state.
+	DupeCheck(ctx context.Context, s *Session, c *game.Character) (*game.Character, DupeMode)
 	// Enter puts an authenticated character into the world, and reports what
 	// happened to the things they left with. The C's CON_MENU has one line
 	// that depends on it (interpreter.c:1690).
@@ -647,7 +696,13 @@ func (s *Session) Serve(ctx context.Context, deps Deps) {
 		s.logger.Info("session ended", "error", err)
 	}
 
-	if s.character != nil {
+	// Not for a connection whose character has been taken over by a newer
+	// login: the body is somebody else's now, and Leave would save it,
+	// crash-save it and announce it as having lost its link. The worst of
+	// those is the crash-save — a duplicate sitting at the menu carries
+	// nothing, so it would write an empty rent file over the real one and
+	// cost the player everything they owned.
+	if s.character != nil && !s.Displaced() {
 		if err := deps.Login.Leave(context.WithoutCancel(ctx), s, s.character); err != nil {
 			s.logger.Error("removing the character from the world", "error", err)
 		}

@@ -489,6 +489,19 @@ func doWhoAmI(c *Context) error {
 
 // doVisible, porting do_visible: drop invisibility deliberately.
 func doVisible(c *Context) error {
+	// The immortal branch is the whole first half of the C's function
+	// (act.other.c:404): at or above LVL_IMMORT, `visible` means
+	// perform_immort_vis and has nothing to do with the invisibility
+	// *spell*. It was missing, and the consequence was not subtle — a
+	// wizinvis god typing `visible` fell through to the mortal path below,
+	// which tests AFF_INVISIBLE, a flag they do not have, and was told
+	// "You are already visible." while staying invisible. Toggling `invis`
+	// a second time was the only way back. Found by test/play.
+	if levelOf(c.Character) >= game.LevelImmortal {
+		c.becomeVisible()
+		return nil
+	}
+
 	rec := c.Character.Record
 	if rec == nil {
 		return nil
@@ -498,11 +511,12 @@ func doVisible(c *Context) error {
 		return nil
 	}
 
-	game.RemoveAffectsOf(rec, game.SpellInvisible)
-	rec.BaseAffectFlags = rec.BaseAffectFlags.Clear(game.AffectInvisible)
-	game.RecomputeAffects(rec)
+	// appear() and then the message, in that order, as the C has it. The
+	// room's half used to be "snaps into visibility", which is in neither
+	// C tree — appear is where the wording lives, and both halves of
+	// do_visible go through it.
+	c.appear()
 	c.Send("You break the spell of invisibility.\r\n")
-	c.announce("%s snaps into visibility.\r\n", c.Character.Name)
 	return nil
 }
 

@@ -122,10 +122,10 @@ S
 #3007
 The Dining Hall~
    A loaf of bread sits on the table, an empty waterskin hangs from a
-hook, and a stone fountain bubbles quietly in the corner. 'eat bread'
-takes care of hunger, 'fill waterskin from fountain' takes care of an
-empty skin, and 'drink waterskin' (or just 'drink fountain') takes care
-of thirst.
+hook, and a stone fountain bubbles quietly in the corner. 'get bread'
+and then 'eat bread' takes care of hunger - you cannot eat food you are
+not holding. 'get waterskin', 'fill waterskin from fountain' and 'drink
+waterskin' (or just 'drink fountain') take care of thirst.
 ~
 1 8 0
 D0
@@ -264,10 +264,10 @@ Back to the Bank.
 S
 #3014
 The Post Office~
-   A postmaster sorts letters behind the counter. 'mail send Someone'
-starts a letter to another character (even yourself, to see how it
-works); 'check' asks whether anything has arrived; 'receive' collects
-it once it has.
+   A postmaster sorts letters behind the counter. 'mail Someone' starts
+a letter to another character - there is no 'send' in it, and a stamp
+costs 150 coins; 'check' asks whether anything has arrived; 'receive'
+collects it once it has.
 ~
 1 8 0
 D0

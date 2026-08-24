@@ -164,6 +164,27 @@ test: ## go test -race (the race detector is not optional here; see the plan's Â
 test-fast: ## go test without -race, for a quick inner loop
 	$(GO) test $(PKG)
 
+# The play regression suite: a real dlmud process, booted on
+# examples/mini, driven over a real socket by a client that types what a
+# player types. Release-only on purpose -- it builds a binary, starts a
+# server per test and talks to it over TCP, so it costs a couple of
+# minutes rather than a couple of seconds, and the day-to-day rule
+# (CLAUDE.md, "CI") is that every push gets correctness and lint and
+# nothing broader. Behind a build tag rather than -short so that a bare
+# `go test ./...` does not even build it.
+#
+# -race by default, and the suite builds the *server* with -race too when
+# the test binary has it (test/play/race_on_test.go): the world goroutine
+# and the per-connection goroutines are all in the child process, so an
+# uninstrumented child would be the half that matters going unwatched.
+.PHONY: play
+play: ## Run the play regression suite against examples/mini (slow; release-only)
+	$(GO) test -tags=play -race -count=1 -timeout 30m ./test/play/...
+
+.PHONY: play-fast
+play-fast: ## The play suite without the race detector, for a quicker answer
+	$(GO) test -tags=play -count=1 -timeout 30m ./test/play/...
+
 .PHONY: cover
 cover: ## Run the tests with coverage and open the HTML report
 	$(GO) test -coverprofile=$(OUT)/coverage.out $(PKG)

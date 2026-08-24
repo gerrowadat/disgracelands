@@ -197,15 +197,30 @@ func (s *Session) handlePassword(ctx context.Context, deps Deps, line string) er
 		return nil
 	}
 
-	// If their previous connection dropped, their character is still
-	// standing where they left it. Reconnect to that body rather than
-	// putting a second copy of them into the world.
-	if existing := deps.Login.Reconnect(ctx, character.Name); existing != nil {
-		s.logger.Info("reconnecting to a linkdead character", "character", existing.Name)
+	// perform_dupe_check, the last thing nanny does with an accepted
+	// password (interpreter.c:1500). If this player is already here in any
+	// sense — a body left standing by a dropped link, a body somebody is
+	// playing right now, a connection switched into something else — this
+	// is where that is resolved into one body on one socket, and the older
+	// sockets are disconnected. `character`, the record just loaded from
+	// disk, is dropped on the floor in that case: the body already in the
+	// world is the live one, and it is the one with the last half hour of
+	// play in it. (The C is explicit about this — `free_char(d->character)`
+	// before `d->character = target`, interpreter.c:1272.)
+	if existing, mode := deps.Login.DupeCheck(ctx, s, character); existing != nil {
+		s.logger.Info("taking over an existing body",
+			"character", existing.Name, "mode", mode)
 		s.character = existing
 		s.state = StatePlaying
-		existing.Client = s
-		s.Send("Reconnecting.\r\n")
+
+		switch mode {
+		case DupeUsurp:
+			s.Send("You take over your own body, already in use!\r\n")
+		case DupeUnswitch:
+			s.Send("Reconnecting to unswitched char.")
+		default:
+			s.Send("Reconnecting.\r\n")
+		}
 		return deps.Commands.Do(ctx, s, "look")
 	}
 

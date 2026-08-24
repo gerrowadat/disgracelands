@@ -256,9 +256,73 @@ answer:
   32-bit toolchain and enforcing that those tests did *not* skip, plus
   world parity (`make parity`), the license check, the two doc-coverage
   checks, a check that `examples/stock/yaml`/`examples/mini/yaml` still
-  match a fresh `dlctl lib import` of their binary source, and a container
-  build — then creates the GitHub release and pushes the container image
-  to `ghcr.io/gerrowadat/disgracelands`. See "Cutting a release" below.
+  match a fresh `dlctl lib import` of their binary source, the play
+  regression suite (`make play`, below), and a container build — then
+  creates the GitHub release. See "Cutting a release" below.
+
+### The play regression suite
+
+```sh
+make play          # -race, server included; a couple of minutes
+make play-fast     # the same thing without the race detector
+```
+
+`test/play` builds `cmd/dlmud`, starts it on a throwaway copy of
+`examples/mini/` — the tutorial world, one feature per room — and drives
+it over a real socket with a client that types what a player types. Every
+assertion is a string a player would have seen.
+
+It is deliberately the opposite of `internal/server`'s tests, and the two
+are not interchangeable:
+
+|  | `internal/server` | `test/play` |
+| --- | --- | --- |
+| The world | built in Go by `testWorld()` | read off disk, zones reset into it |
+| The server | a `Server` struct wired field by field | the `dlmud` binary, flags and all |
+| Reaches into the world goroutine | yes, via `inWorld` | no — socket in, socket out |
+| Runs | every push | releases only |
+| Costs | seconds | minutes |
+
+That first row is the point. Nothing in `internal/server` loads a world
+file, runs a zone reset, attaches a special procedure by vnum, resolves a
+shop's keeper, reads `text/` off disk, parses a flag, or handles a signal.
+A world that no longer boots, a zone that no longer populates, a special
+that stopped being assigned, a converted directory that lost a file: all of
+those pass every test in `internal/server` and fail the first thing a
+player types. The suite found six bugs before it was finished being
+written — a shutdown that saved nobody and took thirty seconds to do it, a
+`dlctl lib import` that dropped `text/help/screen`, two commands the
+tutorial told players to type that the server does not accept,
+`perform_dupe_check` never having been ported (so a second login made a
+*second body*, and both saved over the same pfile), and `do_visible`
+missing its immortal branch.
+
+Some things worth knowing before adding to it:
+
+- **`c.do("look")` is the primitive**, not `send`+`expect`. It types a
+  command and returns everything printed before the *next* prompt, so an
+  assertion is about the command just typed. `internal/server`'s
+  longest-running trap — an `expect` written after a second command
+  matching the first command's reply, which has recurred at least nine
+  times — cannot happen here.
+- **`doUntil(cmd, marker)`** is for the commands that do not come back to a
+  prompt: the editor, the pager, the menu.
+- **`m.noServerErrors()`** at the end of anything that exercises a feature.
+  A command that panics is contained by the world goroutine's `recover` and
+  logged at ERROR (`internal/engine/engine.go:227`) — a player sees very
+  little and a test asserting on output sees nothing at all. This is the
+  cheap net that catches it anyway.
+- **`bothFormats`** runs a test on `examples/mini/binary` and
+  `examples/mini/yaml`. Use it for anything about the *data*; a test about
+  a rule does not need to pay for a second boot.
+- **`tourCommands`** in `tour_test.go` is the list of commands
+  `examples/mini`'s own room descriptions tell a player to type. Two
+  entries in it turned out to be commands the server does not accept. Add a
+  room, add its quoted commands there.
+- The suite creates an implementor called `Founder` before every test, so
+  that the character the test creates is an ordinary mortal — `db.c`'s "if
+  this is our first player --- he be God" would otherwise make the first
+  one level 34. `m.god()` logs that implementor in when a test needs one.
 
 **Session parity** (`scripts/session-parity.sh`) is in neither workflow.
 Boots *both* servers on throwaway copies of `examples/stock/binary/` with

@@ -354,15 +354,54 @@ func (c *Context) becomeInvisible(level int32) {
 
 // becomeVisible is perform_immort_vis (act.wizard.c:1554).
 func (c *Context) becomeVisible() {
-	if invisLevel(c.Character) == 0 {
+	rec := c.Character.Record
+	// The guard is both halves of the C's: an immortal is "already fully
+	// visible" only when their wizinvis level is zero *and* they are not
+	// hidden or spell-invisible (act.wizard.c:1557). A god who cast
+	// invisibility on themselves and typed `visible` used to be told there
+	// was nothing to do.
+	hidden := rec != nil && (rec.AffectFlags.Has(game.AffectHide) ||
+		rec.AffectFlags.Has(game.AffectInvisible))
+	if invisLevel(c.Character) == 0 && !hidden {
 		c.Send("You are already fully visible.\r\n")
 		return
 	}
-	if c.Character.Record != nil {
-		c.Character.Record.InvisLevel = 0
+	if rec != nil {
+		rec.InvisLevel = 0
 	}
+	// GET_INVIS_LEV = 0, then appear(), then the message: the order in the
+	// C, and it matters, because appear is what tells the room. This used
+	// to announce "You suddenly realize that $n is standing beside you."
+	// — which is perform_immort_*invis*'s message for a god who lowered
+	// their level far enough to be seen, not this one.
+	c.appear()
 	c.Send("You are now fully visible.\r\n")
-	c.announce("You suddenly realize that %s is standing beside you.\r\n", c.Character.Name)
+}
+
+// appear is appear() (fight.c:91): stop being invisible, by every means at
+// once, and let the room know.
+//
+// The C calls it from perform_immort_vis, from do_visible's mortal half and
+// from the moment somebody attacks; the wording depends on who is appearing,
+// which is why an immortal materialising reads differently from a thief
+// coming out of hiding.
+func (c *Context) appear() {
+	if rec := c.Character.Record; rec != nil {
+		game.RemoveAffectsOf(rec, game.SpellInvisible)
+		rec.BaseAffectFlags = rec.BaseAffectFlags.Clear(game.AffectInvisible)
+		game.RecomputeAffects(rec)
+	}
+	// The AFF_HIDE half of the C's one REMOVE_BIT. SetHidden clears it on
+	// both the base and the computed flags, which is what the affect
+	// machinery here needs and what a bare Clear on one of them would miss.
+	c.Character.SetHidden(false)
+
+	if levelOf(c.Character) < game.LevelImmortal {
+		c.announce("%s slowly fades into existence.\r\n", c.Character.Name)
+		return
+	}
+	c.announce("You feel a strange presence as %s appears, seemingly from nowhere.\r\n",
+		c.Character.Name)
 }
 
 func invisLevel(who *game.Character) int32 {
