@@ -121,6 +121,25 @@ type Config struct {
 	// business: the binary format expects a single `players` file inside it,
 	// the ascii format a tree of one file per character.
 	Dir string
+	// ObjectsDir is the `plrobjs/` directory holding the rent and crash
+	// files, for the formats that keep them in separate files. Empty means
+	// `Dir/plrobjs`, which is this port's own layout — one directory holding
+	// a roster and the rent files that go with it.
+	//
+	// It is a separate setting because the C's layout is not that one. The
+	// C runs with its cwd set to lib/ and builds both paths from there:
+	// `etc/players` (PLAYER_FILE, db.h) and `plrobjs/` (LIB_PLROBJS,
+	// db.h:37). So in an archived lib/ the rent files are a *sibling* of the
+	// directory the roster is in, not a child of it, and a tool pointed at
+	// the roster the way `dlctl pfile convert --from-dir=lib/etc` is finds
+	// no rent files at all unless it is told where they are.
+	ObjectsDir string
+	// AliasDir is the `plralias/` directory holding the per-character alias
+	// files (alias.c). Empty means `Dir/plralias`, and it is a separate
+	// setting for exactly the reason ObjectsDir is: LIB_PLRALIAS (db.h:38)
+	// is resolved against the mud's own cwd, so in an archived lib/ it is a
+	// sibling of the roster's directory rather than a child of it.
+	AliasDir string
 	// ReadOnly opens the store for inspection only, so a tool that only
 	// reads cannot damage a roster by accident.
 	ReadOnly bool

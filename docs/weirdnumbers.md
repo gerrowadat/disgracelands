@@ -1085,6 +1085,40 @@ checksum anywhere in the format to catch it.
 
 *Source*: `mail.h:71`.
 
+### A mail block points at the next one by byte offset, in a field that looks like an index
+
+```c
+void push_free_list(long pos)   /* #1 - What byte offset into the file the block resides. */
+...
+    data.block_type = target_address;       /* mail.c:375 */
+    write_to_file(&data, BLOCK_SIZE, last_address);
+```
+
+A message longer than one block is a chain, joined through `next_block` in
+the header and through `block_type` itself in each data block — "this works
+much like DOS' FAT", as the comment above it says. What that field holds is
+a **byte offset into the file**: `target_address` comes from
+`pop_free_list`, and `scan_file` indexes with `block_num * BLOCK_SIZE`
+(`mail.c:260`). So the second block of a message is 100, the third 200, and
+a chain in a file that has had mail deleted from it can run *backwards* —
+the free list is a stack, so blocks come back in reverse order.
+
+Nothing in the format says so. The field is a `long` beside three other
+`long`s, the values are small, and reading it as a block number gives 1, 2,
+3 for exactly the case a fresh file produces — a hand-written test file, for
+instance. A port that makes that assumption is perfectly self-consistent and
+cannot read a single multi-block message the C ever wrote: the link is a
+hundred times too large, fails a bounds check, and the chain stops at the
+header, leaving the message truncated to 79 characters with no error
+anywhere. `write_to_file` refuses a position that is not a whole number of
+blocks (`mail.c:162`), which is the check that gives the units away if
+anything does.
+
+*Verified*: `reference/tools/mailoracle.c` — `store_mail`'s own body, run to
+write a real file — against `internal/persist/mail/classic`, built `-m32`.
+
+*Source*: `mail.c:76`, `mail.c:346`, `mail.c:375`.
+
 ### Which piece of mail you get next depends on how long the server has been up
 
 `index_mail` pushes each new message onto the *front* of a per-player list
@@ -1338,6 +1372,171 @@ once and not going back for the rest.
 
 ---
 
+## The line editor
+
+Every entry here is *verified* against `reference/tools/editoracle.c`, which
+holds `improved_editor_execute`, `parse_action`, `format_text` and
+`replace_str` unchanged; `internal/session/editoracle_test.go` compares 805
+command-against-buffer cases with it, both what is sent and what the buffer
+is left holding. The oracle is built `-O0` on purpose — see
+[`deviations.md`](deviations.md) for why, and for the three memory-safety
+places this port cannot follow.
+
+### A three-line buffer has a fourth line
+
+Every one of `/d` `/e` `/i` `/l` `/n` opens by walking to a line number the
+same way:
+
+```c
+i = 1; s = *d->str;
+while (s && i < line_low)
+  if ((s = strchr(s, '\n')) != NULL) { i++; s++; }
+if (s == NULL || i < line_low) { /* out of range */ }
+```
+
+`s++` past the buffer's final `'\n'` lands on the terminator, and a pointer
+to `""` is not NULL. So line *N+1* of an *N*-line buffer exists, is empty,
+and is perfectly editable. On three lines:
+
+- `/d 4` answers **"0 lines deleted."** — `total_len` starts at 1, finds no
+  `'\n'` to consume, and comes back down by one.
+- `/e 4 text` and `/i 4 text` **append** a fourth line rather than refusing.
+- `/l 4` prints the range header, a blank line and "0 lines shown."
+- `/n 4` prints **nothing at all**: the tail it would emit is empty, and
+  `page_string` sends nothing for an empty string (`modify.c:443-446`).
+
+Line 5 is the first that is out of range.
+
+*Source*: `improved-edit.c:174-183,342-360,390-412`. *Reproduced* —
+`lineStart` (`internal/session/editor.go`) and
+`TestEditorLineAfterTheLastOneExists`.
+
+### An empty buffer and no buffer are different things
+
+`if (*(d->str))` — the guard `/f` `/i` `/l` and `/n` are dispatched behind
+(`improved-edit.c:55,61,70,76`) — is a NULL-*pointer* test, not a
+"is there any text" test. `/c` frees the buffer and sets the pointer to NULL;
+`/d 1-<last>` writes a `'\0'` at the front and leaves the pointer alone.
+
+So after `/c`, `/l` says "Current buffer empty."; after deleting every line,
+the same `/l` prints a blank line and "0 lines shown." Nothing on screen
+distinguishes the two states beforehand.
+
+*Source*: `improved-edit.c:41-48,196-208`. *Reproduced* — `editText`'s
+`present` field, and `TestEditorEmptyIsNotAbsent`.
+
+### `/n` puts the line number on a line of its own, and prints no footer
+
+```c
+sprintf(buf, "%s%4d:\r\n", buf, (i - 1));
+strcat(buf, t);
+```
+
+`"%4d:\r\n"`, not `"%4d: "`. A numbered listing is twice as tall as the text
+it lists:
+
+```
+   1:
+First line.
+   2:
+Second line.
+```
+
+`PARSE_LIST_NUM` also tallies `total_len` up exactly as `PARSE_LIST_NORM`
+does and then never prints it, so `/l` ends with "2 lines shown." and `/n`
+does not.
+
+*Source*: `improved-edit.c:325-326`. *Reproduced* — `editorListNumbered`,
+and `TestEditorNumberedListing`.
+
+### A `/r` pattern longer than the buffer means "not enough space"
+
+```c
+} else if ((total_len = ((strlen(t) - strlen(s)) + strlen(*d->str))) <= d->max_str) {
+```
+
+`strlen` returns `size_t` and `total_len` is `unsigned int`, so when the
+replacement is shorter than the pattern the subtraction wraps. If the
+pattern is longer than the entire buffer the sum is genuinely negative, comes
+out near `UINT_MAX`, and fails the `<= d->max_str` test. The player is told
+**"Not enough space left in buffer."** about a substitution that would have
+made the buffer *smaller*, and never finds out the pattern simply was not
+there.
+
+The truncation width does not matter: `2^64 - k` narrowed to 32 bits is
+`2^32 - k`, so ILP32 and LP64 agree.
+
+*Source*: `improved-edit.c:148`. *Reproduced* — `editorReplace`'s `uint32`
+arithmetic, and `TestEditorReplaceUnsignedSpaceCheck`.
+
+### The same arithmetic makes one of `/r`'s three answers unreachable
+
+`replace_str`'s own guard is `(strlen(*string) - strlen(pattern)) +
+strlen(replacement) > max_size` — the same three terms as the check above,
+in a different order, which modular arithmetic does not care about. So
+anything that would make `replace_str` return `-1` has already been answered
+"Not enough space left in buffer." by the caller, and **"ERROR: Replacement
+string causes buffer overflow, aborted replace."** cannot be printed.
+
+*Source*: `improved-edit.c:148,578-579`. *Reproduced*, in the sense that the
+branch is ported and is equally unreachable here.
+
+### A `/ra` that runs out of room truncates the buffer and denies it happened
+
+`replace_str`'s `rep_all` loop measures each segment by writing a `'\0'` into
+the caller's buffer and putting the character back afterwards. Its size check
+sits between those two steps, and what it does on failure is `break`:
+
+```c
+temp = *flow; *flow = '\0';
+if ((strlen(replace_buffer) + strlen(jetsam) + strlen(replacement)) > max_size) {
+  i = -1;
+  break;
+}
+```
+
+The `'\0'` is never put back, so **the player's buffer is left cut off at the
+match that overflowed**. And `i = -1` then meets the function's tail, `if (i
+<= 0) return 0;` — which the caller reads as "no matches", so the message is
+**"String 'e' not found."** about a string it found seven times before giving
+up.
+
+`PARSE_REPLACE`'s own check only ever budgets for a *single* replacement, so
+this is exactly the branch that several substitutions at once run into.
+
+*Source*: `improved-edit.c:590-597,613-618`. *Reproduced* — `replaceStr`
+returns `(text[:flow], 0)`, and `TestEditorReplaceAllOverflowTruncates`.
+
+### `/fi` indents and `/f i` does not
+
+```c
+while (isalpha(string[j]) && j < 2)
+  if (string[j++] == 'i' && !indent) { indent = TRUE; flags += FORMAT_INDENT; }
+```
+
+`string` is `str + 2`, so for `/fi` it is `"i"` and for `/f i` it is `" i"` —
+and a space is not a letter, so the loop ends before the option is seen. The
+same scan gives `/r` its `a`: `/ra` replaces every occurrence and `/r a` does
+not.
+
+*Source*: `improved-edit.c:124-128,134-136`. *Reproduced* —
+`TestEditorFormatOptionScan`.
+
+### `/f` leaves four trailing spaces after a sentence
+
+`format_text` sets `cap_next_next` when it steps off a `.`, `!` or `?`, and
+the bottom of its loop turns that into two spaces before the next word. On
+the *last* word of the buffer there is no next word, but the flag is only
+cleared at the top of the following iteration's `if (*flow)` — which does not
+run, because what is left is whitespace. So the two spaces are appended, the
+loop goes round once more over the trailing `"\r\n"`, and appends two more.
+
+`/f` on `"One line.\r\n"` produces `"One line.    \r\n"`.
+
+*Source*: `improved-edit.c:558-567`. *Reproduced* — `formatText`.
+
+---
+
 ## Time
 
 ### The clock's fallback epoch is a magic number with no explanation
@@ -1399,7 +1598,11 @@ describing numbers gets an oracle rather than a reading.**
 `reference/tools/*.c` holds the original function bodies with the `char_data`
 dereferences substituted and nothing else changed, and the Go tests compare
 against them across the whole input space where that is affordable. Every
-entry above marked *verified* is checked on every CI run.
+entry above marked *verified* is checked by `go test`, so on every CI run —
+except the ones needing a 32-bit C build (the shop prices, the ILP32
+layouts), which skip without `gcc-multilib` the same way they do on any
+64-bit machine and are required not to skip at every release
+(`.github/workflows/release.yml`).
 
 It is not that the C is hard to read. It is that the wrong answer looks
 exactly like the right one.

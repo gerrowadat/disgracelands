@@ -158,6 +158,11 @@ git tag -a "$tag" -m "Release $tag"
 git push origin main
 git push origin "$tag"
 
+repo=$(git remote get-url origin | sed -E 's#.*/([^/]+/[^/.]+)(\.git)?$#\1#')
+
 echo
 echo "==> Pushed $tag. Watch the release workflow:"
-echo "    gh run watch -R $(git remote get-url origin | sed -E 's#.*/([^/]+/[^/.]+)(\.git)?$#\1#')"
+echo "    gh run watch -R $repo"
+echo
+echo "    It creates the GitHub release and pushes the container image:"
+echo "    ghcr.io/$repo:$next  (also :${next%.*} and :latest)"

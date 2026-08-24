@@ -736,10 +736,7 @@ rooms:
   extra_descs:
   - keywords:
     - sign
-    desc: |
-              The sign reads:
-
-                 The Woodsman
+    desc: "The sign reads:\n\n   The Woodsman\n\n"
 - vnum: 3571
   name: North Of The Inn
   sector: forest

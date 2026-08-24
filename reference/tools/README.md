@@ -49,6 +49,20 @@ wrong. Every oracle written so far has caught at least one real mistake.
   at*: `int * float` truncated back to `int` is 115 with SSE and 114 in the
   x87's 80-bit registers, and the archived server was i386. Built `-m32
   -mfpmath=387` for that reason.
+- **`editoracle.c`** — `improved_editor_execute`, `parse_action`,
+  `format_text` and `replace_str` from `improved-edit.c`: the whole of the
+  improved line editor's eleven commands. Line-range and whole-buffer string
+  surgery rather than arithmetic, and wrong in a different way at nearly
+  every turn — a three-line buffer has a fourth line, an emptied buffer is
+  not a freed one, `/n` prints its line number on a line of its own, and a
+  `/ra` that runs out of room truncates the player's text and then reports
+  the string as not found. Checked over 805 command-against-buffer cases,
+  comparing both the text sent and the buffer left behind. **Built `-O0`,
+  not `-O2`**: `PARSE_LIST_NUM`'s `sprintf(buf, "%s%4d:\r\n", buf, i - 1)`
+  has its destination as its own `%s` argument, and modern gcc resolves that
+  undefined behaviour into something that keeps only the last line, where
+  `-O0` calls glibc and the accumulation works — which is what the archived
+  server's compiler did.
 - **`nameoracle.c`** — `isname` and `get_number` from `handler.c`, the two
   functions that decide what a typed word means. `isname` reads like a prefix
   match and is a whole-word one, which this port got wrong for four phases;
@@ -80,6 +94,20 @@ only for changes that can affect these — see the `ilp32` step in
 - **`maillayout.c`** — the mud mail file's header and data blocks. `BLOCK_SIZE`
   does not change with the data model but the split *inside* a block does, so
   the same file means different things to a 32- and a 64-bit server.
+- **`mailoracle.c`** — `store_mail`'s own body, run to write a real mail
+  file for the Go to read back. Where `maillayout.c` says where a block's
+  fields are, this says what goes in them: the link joining a message's
+  blocks is a byte offset into the file rather than a block number, which no
+  struct layout reveals and which a port can get wrong while passing all of
+  its own round-trip tests. Build `-m32`, for the same reason
+  `maillayout.c` needs it.
+- **`aliasoracle.c`** — `write_aliases` and `read_aliases`, run over aliases
+  given on the command line. Not a layout tool: this format is `fprintf` and
+  `fgets` rather than an `fwrite` of a struct, so it needs no `-m32` and
+  runs anywhere `gcc` does. What it pins is the length-prefix convention and
+  the leading space that goes with it — the file stores
+  `strlen(replacement) - 1` bytes from `replacement + 1`, and the reader
+  puts the space back.
 - **`houselayout.c`** — `struct house_control_rec`, the house control file. It
   has a padding hole at offset 6 under ILP32 that nothing ever writes.
 

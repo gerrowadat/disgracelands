@@ -64,8 +64,13 @@ func TestKickLands(t *testing.T) {
 	c.send("kick dog")
 	waitForPrompt(c, beforePrompts+1)
 
+	// Counted in rounds rather than seconds: a round is testRoundLength here
+	// (see its comment) and the real two seconds in play, and what kick
+	// imposes is three of them either way. Two is the threshold rather than
+	// three because the wait started running down the moment it was set, and
+	// the prompt above had to make a round trip before this could read it.
 	if err := srv.engine.DoSync(context.Background(), func(w *game.Live) {
-		if remaining := w.Find("Zod").WaitRemaining(); remaining < 4*time.Second {
+		if remaining := w.Find("Zod").WaitRemaining(); remaining < 2*testRoundLength {
 			t.Errorf("kick left %s of lag, want three combat rounds", remaining)
 		}
 	}); err != nil {

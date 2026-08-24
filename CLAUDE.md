@@ -10,20 +10,37 @@ file is the working practice around them.
 
 Disgracelands was a MUD played from 2001 to 2008: CircleMUD 3.0 bpl20, plus
 OasisOLC, plus a pile of local modifications. `reference/` holds the original
-source. We are porting it to Go.
+source. We ported it to Go, and as of 2026-08-23 that port is playable.
 
-**The governing rule is fidelity (plan §0): where the patched C server and
-modern good design disagree, the C wins.** The bugs are part of it. If the C
-computes something in a way that looks wrong, the port computes it that way
-too, and the reason goes in `docs/weirdnumbers.md` with a `file:line`.
+**Through Phase 5, the governing rule was fidelity (plan §0): where the
+patched C server and modern good design disagreed, the C won.** The bugs
+were part of it — if the C computed something in a way that looked wrong,
+the port computed it that way too, with the reason in `docs/weirdnumbers.md`
+and a `file:line`. That work is done, it stays done, and nothing already
+ported gets revisited on fidelity grounds alone — the practices below still
+protect it.
 
-The only exceptions are safety and correctness-of-the-port issues — a buffer
-overrun, an unescaped path — and every one of those goes in
-`docs/deviations.md` with its reasoning. If you are about to "fix" something
-in the C's behaviour, you are about to make a deviation; write it down or
-don't do it.
+**Now that the port is playable, that rule narrows (plan §0, "Fidelity,
+phase two").** New work is free to diverge from the C server to modernise
+the implementation — architecture, dependencies, protocols, tooling — with
+no sign-off and no entry anywhere required for that alone. Two things stay
+fixed: **compatibility** (the on-disk formats, `--lib-dir` contents and
+archived credentials this repo already reads and writes) and **gameplay**
+(the mechanics and balance a returning player would recognise). A change
+that touches either of those is a deviation and goes in
+`docs/deviations.md` with its reasoning, exactly as before; a change that
+only touches implementation does not. If you're not sure which bucket a
+change is in, err on the side of writing it down — the file exists so that
+question never has to be settled from memory later.
 
 ## Do not read the C and transcribe it
+
+This still applies in full to anything gameplay- or compatibility-shaped —
+touching combat, spells, saves, regen, the RNG, or any on-disk or wire
+format. It has nothing to say about work that's purely architecture or
+tooling and doesn't change what the C computed or stored, which is exactly
+the kind of change the phase-two fidelity narrowing above now allows without
+this machinery.
 
 This is the single most useful thing learned so far. Reading C arithmetic
 across into Go is unreliable — not occasionally, but routinely. All 57
@@ -37,9 +54,12 @@ Three patterns catch what reading misses. Use them.
 against the Go. Existing ones cover the RNG (30,000 draws over 6 seeds),
 to-hit (1,512,000 values), regeneration (36,288), saving throws (1,125), DES
 crypt (9,680 pairs), shop prices (which need `-m32 -mfpmath=387`, because the
-answer depends on the width the multiplication happens at) and `isname`/
-`get_number` (168 pairings). Adding one is cheap; see
-`reference/tools/README.md`.
+answer depends on the width the multiplication happens at), `isname`/
+`get_number` (168 pairings) and the improved line editor's eleven commands
+(805 command-against-buffer cases, and built `-O0` on purpose: one of the C's
+`sprintf`s has its destination as its own `%s` argument, and modern gcc
+resolves that undefined behaviour differently from the compiler the archived
+server used). Adding one is cheap; see `reference/tools/README.md`.
 
 **Not only arithmetic.** `isname` has no numbers in it and was still read wrong
 for four phases — its loop has the shape of a prefix match and the semantics of

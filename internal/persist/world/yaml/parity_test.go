@@ -11,7 +11,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/gerrowadat/disgracelands/internal/game"
@@ -61,13 +60,11 @@ func TestClassicYamlParity(t *testing.T) {
 		}
 	}
 
-	// The one documented, accepted lossy transform (TrimsTrailingBlankLines
-	// in text.go): a string with 2+ trailing newlines normalises to
-	// exactly one. Applied to cw's own fields, after WriteZone already
-	// captured the pre-normalisation originals, so the parity comparison
-	// below is between two worlds that agree on what the format can
-	// actually represent.
-	normalizeTrailingBlankLines(cw)
+	// Nothing is normalised before comparing any more. This test used to
+	// pre-trim cw's trailing blank lines to match what the format could
+	// represent; the format represents them now (text.go's needsQuoting),
+	// so the comparison is between the two worlds exactly as each loader
+	// produced them.
 
 	cDump := world.BuildDumpWithOptions(cw, world.Options{Parity: true})
 	nDump := world.BuildDumpWithOptions(nw, world.Options{Parity: true})
@@ -148,56 +145,6 @@ func writeImportedManifest(t *testing.T, dir string, w *game.World) {
 	}
 	if err := writeManifest(dir, doc); err != nil {
 		t.Fatalf("write manifest: %v", err)
-	}
-}
-
-// normalizeTrailingBlankLines applies the one documented lossy transform
-// (text.go's TrimsTrailingBlankLines) to every prose field a zone file
-// carries, matching exactly what a value goes through on its way to and
-// from a yaml YAML document.
-//
-// Text (room/mob/obj top-level fields) always encodes multi-line content
-// through literalBlock, so the transform always applies there. NestedText
-// (exit and extra-description fields) only goes through literalBlock when
-// the content does *not* need an indentation indicator — content that does
-// falls back to a quoted scalar instead (see NestedText's doc comment),
-// which is lossless and must not be normalised here, or this helper would
-// "fix" a field the real round trip never actually touches.
-func normalizeTrailingBlankLines(w *game.World) {
-	fixAlways := func(s *string) {
-		stored := ToStored(*s)
-		if TrimsTrailingBlankLines(stored) {
-			*s = FromStored(strings.TrimRight(stored, "\n") + "\n")
-		}
-	}
-	fixNested := func(s *string) {
-		stored := ToStored(*s)
-		if needsIndentIndicator(strings.Split(strings.TrimRight(stored, "\n"), "\n")) {
-			return // takes the lossless quoted fallback; nothing to normalise
-		}
-		fixAlways(s)
-	}
-	for _, r := range w.Rooms {
-		fixAlways(&r.Description)
-		for _, e := range r.Exits {
-			if e != nil {
-				fixNested(&e.Description)
-			}
-		}
-		for i := range r.ExtraDescs {
-			fixNested(&r.ExtraDescs[i].Description)
-		}
-	}
-	for _, m := range w.Mobiles {
-		fixAlways(&m.LongDesc)
-		fixAlways(&m.Description)
-	}
-	for _, o := range w.Objects {
-		fixAlways(&o.Description)
-		fixAlways(&o.ActionDesc)
-		for i := range o.ExtraDescs {
-			fixNested(&o.ExtraDescs[i].Description)
-		}
 	}
 }
 

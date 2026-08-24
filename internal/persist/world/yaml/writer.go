@@ -46,22 +46,80 @@ func zoneDocFrom(zone *game.ZoneDef, w *game.World) zoneDoc {
 		}
 	}
 	for _, m := range w.Mobiles {
-		if int32(m.Vnum) >= int32(zone.Bottom) && int32(m.Vnum) <= int32(zone.Top) {
+		if writtenUnder(w.Zones, zone, int32(m.Vnum)) {
 			doc.Mobiles = append(doc.Mobiles, mobDocFrom(m))
 		}
 	}
 	for _, o := range w.Objects {
-		if int32(o.Vnum) >= int32(zone.Bottom) && int32(o.Vnum) <= int32(zone.Top) {
+		if writtenUnder(w.Zones, zone, int32(o.Vnum)) {
 			doc.Objects = append(doc.Objects, objDocFrom(o))
 		}
 	}
 	for _, sh := range w.Shops {
-		if int32(sh.Vnum) >= int32(zone.Bottom) && int32(sh.Vnum) <= int32(zone.Top) {
+		if writtenUnder(w.Zones, zone, int32(sh.Vnum)) {
 			doc.Shops = append(doc.Shops, shopDocFrom(sh))
 		}
 	}
 	doc.Resets = resetsToDoc(NestResets(zone.Commands))
 	return doc
+}
+
+// writtenUnder reports whether a mobile, object or shop with this vnum
+// belongs in zone's file.
+//
+// A room carries its own zone (db.c's boot_world stamps every room with the
+// zone it was read under), so rooms need none of this. A mobile, object or
+// shop carries nothing but its vnum, and the C never needs it to: db.c
+// reads every file named in an index into one flat table keyed by vnum, and
+// zone_table's bottom/top only ever decide which *resets* run and which
+// builder may edit what. Which file a record physically sat in has no
+// meaning to the loader at all.
+//
+// A per-zone format has to invent that meaning, and the range is the
+// obvious way to. It is also not always true: a builder can put a record in
+// a zone's file with a vnum outside that zone's declared range, nothing in
+// the C stops them or notices, and it happens. Matching on range alone
+// dropped those records — silently, because the writer works zone by zone
+// and no zone ever claimed them, so nothing was there to report a loss.
+//
+// So an unclaimed vnum falls to the zone whose range *starts* nearest below
+// it, and to the lowest zone if it is below every range. That is not a
+// recovery of the record's original file — nothing in memory remembers it —
+// but it lands the common case in exactly the file it came from, since a
+// vnum that overshoots its zone's top usually overshoots by less than the
+// gap to the next zone. What matters for fidelity is only that it lands
+// somewhere: the reader rebuilds the same flat table the C does, and a
+// record's file is not part of what the game sees.
+func writtenUnder(zones []*game.ZoneDef, zone *game.ZoneDef, vnum int32) bool {
+	if vnum >= int32(zone.Bottom) && vnum <= int32(zone.Top) {
+		return true
+	}
+	for _, z := range zones {
+		if vnum >= int32(z.Bottom) && vnum <= int32(z.Top) {
+			return false // claimed by a zone, and not this one
+		}
+	}
+	return zone == fallbackZone(zones, vnum)
+}
+
+// fallbackZone picks the zone an unclaimed vnum is written under: the one
+// whose range begins nearest below it, or the lowest-numbered zone if it
+// begins below them all. Ties go to the earlier zone in the slice, which is
+// index order, so the choice does not depend on map iteration.
+func fallbackZone(zones []*game.ZoneDef, vnum int32) *game.ZoneDef {
+	var best, lowest *game.ZoneDef
+	for _, z := range zones {
+		if lowest == nil || z.Bottom < lowest.Bottom {
+			lowest = z
+		}
+		if int32(z.Bottom) <= vnum && (best == nil || z.Bottom > best.Bottom) {
+			best = z
+		}
+	}
+	if best != nil {
+		return best
+	}
+	return lowest
 }
 
 func resetModeName(mode int32) string {

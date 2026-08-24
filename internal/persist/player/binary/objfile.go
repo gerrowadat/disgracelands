@@ -33,7 +33,10 @@ import (
 // letter. That split is not decoration: this is a filesystem from 1993 and a
 // directory with two thousand entries in it was slow to open.
 
-// objsDir is LIB_PLROBJS (db.h:37), relative to the player data directory.
+// objsDir is LIB_PLROBJS (db.h:37). The C resolves it against the mud's
+// own cwd, which is lib/, so in an archived tree it sits beside etc/ rather
+// than inside it — see player.Config.ObjectsDir, which is how a caller says
+// so.
 const objsDir = "plrobjs"
 
 // objsSuffix is SUF_OBJS (db.h:45).
@@ -240,25 +243,43 @@ type ObjectStore struct {
 	mu sync.RWMutex
 }
 
-// NewObjectStore opens the rent files under a player data directory.
+// NewObjectStore opens the rent files under a player data directory, or
+// under cfg.ObjectsDir if the caller has said where they really are.
 func NewObjectStore(cfg player.Config) (*ObjectStore, error) {
 	if cfg.Dir == "" {
 		return nil, fmt.Errorf("binary: no player directory configured")
 	}
 	return &ObjectStore{
-		dir:      filepath.Join(cfg.Dir, objsDir),
+		dir:      ObjectsPath(cfg),
 		readOnly: cfg.ReadOnly,
 		codec:    newObjCodec(ilp32),
 	}, nil
 }
 
+// ObjectsPath is the plrobjs/ directory a configuration names: cfg.ObjectsDir
+// when it is set, and Dir/plrobjs when it is not.
+func ObjectsPath(cfg player.Config) string {
+	if cfg.ObjectsDir != "" {
+		return cfg.ObjectsDir
+	}
+	return filepath.Join(cfg.Dir, objsDir)
+}
+
 // pathFor is get_filename(name, ..., CRASH_FILE) (utils.c:518).
+func (s *ObjectStore) pathFor(name string) (string, error) {
+	return bucketedPath(s.dir, name, objsSuffix, "rent file")
+}
+
+// bucketedPath is get_filename (utils.c:518) itself, shared by every
+// per-character file the C buckets this way: the rent files under plrobjs/
+// and the alias files under plralias/ differ only in their directory and
+// their suffix.
 //
 // The bucket is by first letter, in five ranges, with anything that does not
 // start with a letter going to `ZZZ`. No name can reach ZZZ, because
 // _parse_name rejects a name with a non-alphabetic character in it — but the
 // C has the branch and so does this, since a hand-made file is still a file.
-func (s *ObjectStore) pathFor(name string) (string, error) {
+func bucketedPath(dir, name, suffix, what string) (string, error) {
 	name = strings.ToLower(strings.TrimSpace(name))
 	if name == "" {
 		return "", fmt.Errorf("binary: empty character name")
@@ -270,7 +291,7 @@ func (s *ObjectStore) pathFor(name string) (string, error) {
 	// that.
 	for _, r := range name {
 		if r < 'a' || r > 'z' {
-			return "", fmt.Errorf("binary: %q is not a valid character name for a rent file", name)
+			return "", fmt.Errorf("binary: %q is not a valid character name for a %s", name, what)
 		}
 	}
 
@@ -287,7 +308,7 @@ func (s *ObjectStore) pathFor(name string) (string, error) {
 	default:
 		bucket = "U-Z"
 	}
-	return filepath.Join(s.dir, bucket, name+"."+objsSuffix), nil
+	return filepath.Join(dir, bucket, name+"."+suffix), nil
 }
 
 // LoadObjects implements player.ObjectStore.

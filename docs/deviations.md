@@ -4,6 +4,14 @@ The fidelity decision in [the port plan](proposals/go-port-plan.md) §0 says the
 patched C server wins wherever it and modern design disagree. This file is
 where the exceptions are written down.
 
+**Since 2026-08-23** (§0's "Fidelity, phase two"), that rule covers
+*gameplay and compatibility*, not the implementation as a whole: the port is
+playable, and new work may modernise the stack — architecture, dependencies,
+protocols, tooling — without an entry here, as long as it doesn't change
+what a player experiences or what data the server reads and writes. Every
+entry below this line, and everything already ported, was made under the
+stricter rule that came before and is unaffected by the narrowing.
+
 Every entry names what the C does, with a line reference, what the Go server
 does instead, and why. That last column is the point of the file: under a
 "fix known bugs" fidelity rule, the only thing keeping *fixed a bug*
@@ -66,6 +74,98 @@ are fidelity, not deviation, and they live in the tests that assert them.
 | **Go** | The old text is kept until a new one replaces it. |
 | **Why** | Nothing is gained by the early free, and the failure mode is silent data loss on a dropped connection. |
 | **Where** | `internal/session/menu.go`. |
+
+### The improved line editor is all eleven commands, with three memory-safety exceptions
+
+| | |
+|---|---|
+| **C** | `improved-edit.h` hardcodes `CONFIG_IMPROVED_EDITOR` to `1`, so `/a` `/c` `/d` `/e` `/f` `/h` `/i` `/l` `/n` `/r` `/s` were always available. |
+| **Go** | All eleven, checked against the C command by command. |
+| **Why** | Not a deviation in itself — it is here as the context for the entries that follow, and because "the improved editor is an optional feature" is the wrong assumption to start from. |
+| **Where** | `internal/session/editor.go`, `reference/tools/editoracle.c`, `internal/session/editoracle_test.go`. |
+
+That the editor was always on was found while porting `tedit` (Phase 6's
+first slice), when it became the first caller to seed a non-empty buffer.
+`internal/session/editor.go` ports `improved_editor_execute`
+(`improved-edit.c:27`), `parse_action`, `format_text` and `replace_str`, wired
+into `handleEditing` ahead of the plain `@`-terminated accumulate loop every
+caller already had (`beginEditor`/`beginEditorSeeded`, used by board `write`,
+mail, a note's own `write` and `tedit`). `/h`'s text is the C's own, unedited,
+because every command it lists works.
+
+The buffer is held flat — one string, `"\r\n"` between the lines and after
+the last — rather than as a `[]string`, because `*d->str` is and because most
+of what these commands do is defined against that: `/f` reflows across line
+boundaries, `/r` substitutes across the whole thing, and `/d` `/e` `/i` `/l`
+`/n` count `'\n'` characters rather than indexing a list. `editText` also
+carries the C's own distinction between an *empty* buffer and *no* buffer,
+which is not cosmetic: `if (*(d->str))` is a NULL-pointer test, so `/c` (which
+frees) and `/d 1-<last>` (which truncates in place) leave the editor in states
+that `/f` `/i` `/l` `/n` answer differently.
+
+`reference/tools/editoracle.c` holds the four original bodies and
+`internal/session/editoracle_test.go` compares 805 command-against-buffer
+cases with it, both the text sent and the buffer left behind. The C's own
+surprises that came out of it are in
+[`weirdnumbers.md`](weirdnumbers.md#the-line-editor) and are reproduced, not
+deviated from. The oracle is built `-O0`, not `-O2`: `PARSE_LIST_NUM`
+accumulates with `sprintf(buf, "%s%4d:\r\n", buf, i - 1)`, whose destination
+is also its `%s` argument, and modern gcc resolves that undefined behaviour
+into something that keeps only the last line, where `-O0` calls glibc and the
+self-copy at offset zero is a no-op — which is what the archived server's own
+compiler did, and the only reading under which `/n` is a usable command.
+
+The three exceptions follow. `format_text` carries a fourth of the same kind,
+unreachable rather than deviated from: `while (strchr(".!?", *flow))` has no
+guard on `*flow`, and `strchr(s, '\0')` finds the terminator and returns
+non-NULL, so a buffer whose last word is not followed by whitespace walks off
+the end of the allocation. Every buffer this editor builds ends `"\r\n"`, so
+the C never gets there, and a Go string simply ends.
+
+### A line-range argument with no number in it is read as no argument
+
+| | |
+|---|---|
+| **C** | `sscanf(string, " %d - %d ", &line_low, &line_high)` (improved-edit.c:163,222,284) returns `EOF`, not `0`, when its argument is empty or all whitespace. All three switches reading it have cases `0`, `1` and `2` and no `default`, so a bare `/d`, or a `/l `/`/n ` whose argument is a lone space, goes on to use two uninitialised stack `int`s. |
+| **Go** | `scanLineRange` reports zero conversions for that case, which is the `case 0` every one of those switches already has: "You must specify a line number or range to delete." for `/d`, the whole buffer for `/l` and `/n`. |
+| **Why** | Undefined behaviour is not behaviour to reproduce, and this is what the code plainly meant — it is exactly what the same commands do with no argument at all. |
+| **Where** | `scanLineRange` in `internal/session/editor.go`; the case shapes the oracle deliberately does not emit, in `reference/tools/editoracle.c`'s `main`. |
+
+### `/r` on an editor buffer that does not exist yet
+
+| | |
+|---|---|
+| **C** | `/r` is the one command `improved_editor_execute` does not wrap in `if (*(d->str))`, and `PARSE_REPLACE` dereferences the buffer unconditionally — `strlen(*d->str)` in its own space check (improved-edit.c:148). A fresh editor has no buffer until the first line is typed (`string_add`, modify.c:132), so `/r 'a' 'b'` as the very first thing typed is a NULL dereference. |
+| **Go** | An absent buffer is treated as an empty one. |
+| **Why** | The oracle segfaulted on exactly this before it learned to skip the case. Treating it as empty is the answer the same code gives one line later, once the buffer exists and holds nothing. |
+| **Where** | `editorReplace` in `internal/session/editor.go`. |
+
+### `/ra` does not write off the end of its own replace buffer
+
+| | |
+|---|---|
+| **C** | `replace_str` allocates `replace_buffer` at exactly `max_size`, and after its `rep_all` loop — whose in-loop check budgets only up to `max_size` and does not count whatever is left after the last match — comes an unchecked `strcat(replace_buffer, jetsam)` (improved-edit.c:578,610). A `/ra` that grows the buffer past `max_size` writes past the allocation; the oracle died with `free(): invalid next size (fast)` on its own cases. |
+| **Go** | A slice cannot overrun. The answer the code was trying to compute is produced instead. |
+| **Why** | The oracle gives that one allocation slack so it survives to print an answer, every comparison it makes still being against `max_size`, so which branch it takes is unchanged. The *visible* half of the same bug is well-defined and is reproduced exactly: a `/ra` that runs out of room leaves the player's buffer truncated at the match it gave up on and reports the string as not found. See [`weirdnumbers.md`](weirdnumbers.md#a-ra-that-runs-out-of-room-truncates-the-buffer-and-denies-it-happened). |
+| **Where** | `replaceStr` in `internal/session/editor.go`; `ORACLE_SLACK` in `reference/tools/editoracle.c`. |
+
+### `/l` and `/n` do not go through the pager
+
+| | |
+|---|---|
+| **C** | `PARSE_LIST_NORM` and `PARSE_LIST_NUM` both end in `page_string` (improved-edit.c:274,338). |
+| **Go** | The listing is sent directly. |
+| **Why** | Paging mid-edit would need `StatePaging` to remember what state to return to, which it does not — `session/pager.go`'s own doc comment names the identical gap for `background` — and a buffer within any caller's own length limit rarely runs past a screen. Separately, `%d` saturates at `INT_MAX` here where the C's overflows it; both put the line number far past the end of any buffer the editor can hold, so the answer is "out of range" either way. |
+| **Where** | `editorList` and `editorListNumbered` in `internal/session/editor.go`. |
+
+### The line editor's abort message is caller-specific
+
+| | |
+|---|---|
+| **C** | `string_add`'s cleanup table (modify.c:191-205) picks a per-state function, so what an abort says depends on what was being edited. |
+| **Go** | The same, through the `done` callback's `saved bool`, which is what `/a` needed: `tedit` prints `tedit_string_cleanup`'s "Edit aborted." and the room announcement (tedit.c:54-57); `mail` prints `playing_string_cleanup`'s "Mail aborted." (modify.c:226-231), which this port also prints for a `@`-terminated save with nothing typed, matching the same C branch; a note's own `write` stays silent, matching the C exactly (neither `PLR_MAILING` nor `mail_to >= BOARD_MAGIC` applies to it). |
+| **Why** | The one difference is a board `write`, which prints "Post aborted." rather than the C's "Post not aborted, use REMOVE <post #>." (modify.c:239-243). That message assumes the empty-bodied post was already in the board's list — true in the C, where `Board_write_message` inserts it before editing starts, and not here, where the post is appended only on save. That is an earlier, separate choice, recorded in `boardWrite`'s own doc comment. |
+| **Where** | `finishEditing` in `internal/session/editor.go`; `internal/session/boards.go`, `mail.go`, `tedit.go`. |
 
 ### Attacking an immortal doubles the damage
 
@@ -388,6 +488,25 @@ The binary format can still be read and written, because `dlctl` needs both
 directions to convert between them. But a live server refuses to run on it.
 (Plan §5.2.)
 
+### The yaml format re-spaces a keyword list
+
+Keywords are a list in the yaml format (`keywords: [gate, door]`, §4 of
+`docs/design/data-format.md`) and a single space-separated string in the
+classic files and in memory. Converting to yaml splits on whitespace and
+converting back joins with one space, so a classic keyword string with a
+trailing space or a doubled space between two words does not come back the
+way it went in: `"cape wool woolen "` becomes `"cape wool woolen"`.
+
+Nothing can observe the difference. The only consumer of the string is
+`isname`, which walks it word by word (and had its own semantics pinned by
+an oracle — see `reference/tools/`); a run of spaces yields no word, and a
+trailing space yields no trailing word, so no keyword is gained or lost.
+The alternative is storing keywords as an opaque string, which would give
+up the readability and the per-keyword validation the list form exists
+for, to preserve whitespace that has no meaning to the server. Four
+records in the real world data have it, all trailing spaces a builder left
+behind. (`internal/persist/world/yaml`.)
+
 ### A password can be set from outside the game
 
 The C has no way for anyone but the owner to change a password: `set`
@@ -447,16 +566,31 @@ Listed here so they are not mistaken for deliberate differences.
   names and became four working commands, so their being gone from the
   list is worth noting even without a story attached.
 
-  Its persistence is not quite everywhere the roster is, though: an
-  alias survives a save under `ascii` (it grew an `Aliases:`-tagged section
-  for exactly this) and `yaml` (folded into the one file, §8), but
-  **`binary` has no `plralias`-equivalent codec at all** — `alias.c`'s
-  format is a separate file the C keeps regardless of pfile format, and
-  zero archived instances of it exist anywhere in the surviving archive to build or
-  verify one against. Building a format with no corpus behind it is what
-  the "do not read the C and transcribe it" testing discipline warns off,
-  so it was not attempted; a character loaded from `binary` simply starts
-  with no aliases.
+  Its persistence is everywhere the roster is: an alias survives a save
+  under `ascii` (it grew an `Aliases:`-tagged section for exactly this),
+  `yaml` (folded into the one file, §8) and `binary` (`plralias/`, one
+  file per character beside the rent files).
+
+  `binary` was the late one, and this paragraph used to record why it had
+  been skipped: "zero archived instances of it exist anywhere in the
+  surviving archive to build or verify one against", and building a format
+  with no corpus behind it is what the "do not read the C and transcribe
+  it" discipline warns off. That premise was simply wrong — the archive
+  has alias files, and they hold hundreds of aliases. With a corpus the
+  objection went away, and the codec was written against
+  `reference/tools/aliasoracle.c` (`write_aliases` and `read_aliases`
+  themselves) rather than by reading `alias.c` across, which is the point
+  the discipline was making.
+
+  Worth writing down, since it is what an eye would get wrong: the
+  in-memory replacement always begins with the space `any_one_arg` stopped
+  on and did not skip, and the file stores it without — `write_aliases`
+  writes `strlen(replacement) - 1` and `replacement + 1`, `read_aliases`
+  puts the space back with `*xbuf = ' '`. The `type` field is read and
+  recomputed rather than stored, because this port derives simple-vs-complex
+  from the replacement at use the same way `do_alias` derives it at
+  creation (`interpreter.c:737`); no file `write_aliases` produced can
+  disagree, and none in the archive does.
 
   One of `do_gen_tog`'s seventeen is among them: `slowns` flips a
   server-wide **global** rather than a preference (act.other.c:1021), and
@@ -835,60 +969,3 @@ Listed here so they are not mistaken for deliberate differences.
   raised by `obj_to_char`. That is an optimisation for a machine that counted
   disk writes; a few hundred small files cannot miss anybody.
 
-- **The improved line editor's own commands are implemented, five of
-  eleven.** The archived server's `improved-edit.h` has
-  `CONFIG_IMPROVED_EDITOR` hardcoded to `1` — `/a` (abort), `/c` (clear),
-  `/h` (help), `/l` (list) and `/s` (save) were always on, not a
-  stock/optional feature, found while porting `tedit` (Phase 6's first
-  slice). `internal/session/menu.go`'s `editorCommand` ports
-  `improved_editor_execute` (`improved-edit.c:27`) for exactly those
-  five — the ones that need no line-range editing machinery of their
-  own — wired into `handleEditing` ahead of the plain `@`-terminated
-  accumulate loop every caller already had (`beginEditor`/
-  `beginEditorSeeded`, used by board `write`, mail, a note's own `write`
-  and `tedit`). `/d` (delete), `/e` (edit a line), `/f` (format/word-wrap),
-  `/i` (insert before a line), `/n` (numbered list) and `/r` (replace)
-  are not built; typing one of those, or any other letter after a
-  leading `/`, gets the C's own default case, "Invalid option." — and
-  `/h`'s own text lists only the five that work, rather than advertising
-  ones that do not (the C's own help text, `improved-edit.c:104-120`,
-  lists all eleven regardless of `CONFIG_IMPROVED_EDITOR`, since it never
-  varies with anything).
-
-  `/l`'s optional line-range argument (`parse_action`'s
-  `sscanf(string, " %d - %d ", &line_low, &line_high)`,
-  `improved-edit.c:222`) is ported closely rather than exactly: Go's
-  `strconv.Atoi` on the text either side of a `-`, not a literal
-  re-implementation of scanf's own partial-match semantics. A leading
-  digit run followed by garbage (`sscanf`'s own "parse what you can, stop
-  at the first non-digit" behaviour) is not reproduced; `/l 3x` is treated
-  as "not a number" here and falls back to listing the whole buffer, where
-  the C would read `3` and list just that line. Typing a clean number is
-  the overwhelmingly likely case and both readings still produce a
-  listing rather than an error, so the difference was not judged worth
-  the extra parsing code.
-
-  `/l` also does not go through the pager (`page_string`, which the C's
-  own `PARSE_LIST_NORM`/`PARSE_LIST_NUM` call): paging mid-edit would need
-  `StatePaging` to remember what state to return to, which it does not —
-  `session/pager.go`'s own doc comment names the identical gap for
-  `background` — and a buffer within any caller's own length limit rarely
-  runs past a screen anyway, so the listing is sent directly instead.
-
-  `/a`'s abort message is caller-specific, because what "discard this
-  edit" means differs by what the edit was for: `tedit` prints
-  `tedit_string_cleanup`'s own "Edit aborted." and the room announcement
-  (`tedit.c:54-57`); `mail` prints `playing_string_cleanup`'s "Mail
-  aborted." (`modify.c:226-231`), which this port now also prints for a
-  `@`-terminated save with nothing typed, matching the same C branch — a
-  small fix alongside the main one, not a new gap; a board `write` prints
-  "Post aborted." rather than the C's own "Post not aborted, use REMOVE
-  <post #>." (`modify.c:239-243`), because that message assumes the
-  empty-bodied post was already in the board's list, true in the C
-  (`Board_write_message` inserts it before editing starts) and not here
-  — this port appends only on save, an earlier, separate choice recorded
-  in `boardWrite`'s own doc comment (`internal/session/boards.go`); a
-  note's own `write`
-  stays silent on abort, matching the C exactly (neither `PLR_MAILING`
-  nor `mail_to >= BOARD_MAGIC` applies to it, so `playing_string_cleanup`
-  has nothing to say either).

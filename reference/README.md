@@ -4,7 +4,8 @@ Everything in this repository that is not the Go port. **C code lives here
 and nowhere else.**
 
 ```
-moderncserver/    The C server: the game as it actually is.
+moderncserver/    The C server: the reference implementation and the
+                  compatibility/gameplay parity oracle.
 tools/            C helper programs written for this revival.
 CircleMUD3-src/   Code-only snapshot of the pre-upgrade baseline.
 WipeMud-src/      Code-only snapshot of the abandoned 3.1 upgrade attempt.
@@ -14,12 +15,18 @@ WipeMud-src/      Code-only snapshot of the abandoned 3.1 upgrade attempt.
 
 CircleMUD 3.0 patchlevel 20 plus OasisOLC plus years of local modification,
 patched to build and run on modern 64-bit Linux. This is the codebase that
-was played from 2001 to 2008, and until the Go port can do everything it
-does, it is the real server.
+was played from 2001 to 2008. Nothing runs it now — nothing has run
+Disgracelands in any language since then — so it is authoritative about
+the game rather than serving it; as of 2026-08-23 the Go port is playable
+and is the one being developed going forward (see the top-level
+`README.md`'s "Status" section), but this tree stays buildable and runnable
+deliberately.
 
-It has two active jobs beyond that: it is the reference implementation the
-port is written against, and it is the parity oracle
-`scripts/world-parity.sh` checks the port against on every CI run.
+It has two active jobs that don't go away: it is the reference
+implementation for any gameplay or compatibility question the port raises,
+and it is the parity oracle `scripts/world-parity.sh` checks the port
+against at every release (day-to-day CI is correctness and lint only;
+`make parity` runs it by hand).
 
 See `moderncserver/README.md` for how to build and run it, what the `-J`
 world dump is for, and the known problems it carries.

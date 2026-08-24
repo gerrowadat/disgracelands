@@ -529,6 +529,39 @@ func testWorld() *game.Live {
 	return live
 }
 
+// testAuth is the credential policy every test server runs under: legacy DES
+// still accepted, and a work factor small enough to be worth paying several
+// hundred times.
+//
+// The real factor is 64 MiB over three passes, about 140ms a hash on a
+// laptop. This package creates or logs in a character in nearly every one of
+// its tests, and that alone was more than half the suite's runtime — a
+// profile of `go test ./internal/server` put 94% of its CPU samples inside
+// argon2. Nothing here is testing the work factor; internal/auth is, both
+// that DefaultCost is still the RFC 9106 recommendation and that hashes made
+// under it verify.
+//
+// The scheme is unchanged: these are real argon2id hashes, made and verified
+// by the same code the server uses, just cheap ones.
+var testAuth = auth.Verifier{
+	AllowLegacy: true,
+	Cost:        auth.Cost{Time: 1, Memory: 8 * 1024, Threads: 4},
+}
+
+// testRoundLength is how long a combat round lasts in the tests.
+//
+// A wait state is real elapsed time (game.Character.Wait stores a deadline,
+// and the dispatcher sleeps until it passes), so at the real two seconds a
+// single `kick` costs its test six of them. A twentieth of that keeps the
+// tests that assert on lag meaningful — the shortest wait anything imposes is
+// one round, and 100ms is far enough clear of scheduler noise to assert
+// against — while taking a dozen combat tests from two seconds each to a
+// tenth.
+//
+// The real length is session.DefaultRoundLength, which is asserted to be
+// PULSE_VIOLENCE in internal/session.
+const testRoundLength = 100 * time.Millisecond
+
 // newTestServer builds a server on a temporary player directory and starts
 // its engine, on ascii/binary — the server's real defaults.
 func newTestServer(t *testing.T) (*Server, player.Store) {
@@ -613,10 +646,14 @@ func newTestServerWith(t *testing.T, store player.Store, objects player.ObjectSt
 		Mail:    mailStore,
 		Houses:  houseStore,
 		Bans:    banStore,
-		Auth:    auth.Verifier{AllowLegacy: true},
+		Auth:    testAuth,
 		Text:    text,
 		Logger:  logger,
 		RNG:     testRNG(),
+		// See testRoundLength: wait states are wall-clock, and at the real
+		// two seconds a round the combat tests spend most of their time
+		// asleep.
+		RoundLength: testRoundLength,
 	})
 
 	// Every background write must finish before the test's t.TempDir() is
@@ -876,7 +913,7 @@ func TestAWrongPasswordIsRefused(t *testing.T) {
 	addr := listening(t, srv)
 
 	rec := &game.PlayerRecord{Name: "Welmar", Class: game.ClassThief}
-	cred, err := auth.NewCredential("swordfish")
+	cred, err := testAuth.NewCredential("swordfish")
 	if err != nil {
 		t.Fatal(err)
 	}

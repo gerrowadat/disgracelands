@@ -1474,10 +1474,7 @@ objects:
   - keywords:
     - letters
     - letter
-    desc: |
-              They read:
-
-              Hold me
+    desc: "They read:\n\nHold me\n\n"
   - keywords:
     - small
     - stick

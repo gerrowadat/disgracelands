@@ -1,31 +1,42 @@
 # moderncserver — the C server
 
-This is the Disgracelands game as it actually is: CircleMUD 3.0 patchlevel 20
-plus OasisOLC plus years of local modification, patched to compile and run on
-a modern 64-bit Linux box.
+This is CircleMUD 3.0 patchlevel 20 plus OasisOLC plus years of local
+modification, patched to compile and run on a modern 64-bit Linux box: the
+codebase that was played from roughly 2001 to 2008.
 
-It is the codebase that was played from roughly 2001 to 2008. It works. Until
-the Go port at the repository root can do everything it does, **this is the
-real server** and the Go tree is the project.
+It still builds and still works. Nothing is running it, though — nothing
+has been running Disgracelands in either language since 2008 — so "the
+real server" is a statement about *authority*, not about operation: where
+this tree and the Go port disagree about the game, **this tree is what the
+game was**. As of 2026-08-23 the Go port at the repository root is
+playable, and is the server being developed and played going forward — see
+the top-level `README.md`'s "Status" section.
 
 ## Why it lives in reference/
 
 `reference/` is the only place C code lives in this repository. The root is
 the Go port and nothing else.
 
-That is a statement about where the project is going, not a demotion. This
-tree has two active jobs, and it will keep both for a long time:
+This tree has two active jobs, and it will keep both for a long time:
 
-1. **It is the reference implementation.** Where the Go port and this tree
-   disagree about anything, this tree is right by definition — it is the one
-   that has been running the game. Every parser in the Go port was written by
-   reading the corresponding function here.
+1. **It is the reference implementation for gameplay and compatibility.**
+   Where a returning player would notice the difference, or where the two
+   servers would read or write data differently, this tree is right by
+   definition — it is the one that ran the game. Every parser in the Go
+   port was written by reading the corresponding function here.
+   (Implementation choices that aren't gameplay- or compatibility-shaped are
+   a different question now — `docs/proposals/go-port-plan.md` §0's
+   "Fidelity, phase two" — and this tree doesn't settle those.)
 2. **It is the parity oracle.** `scripts/world-parity.sh` builds this server,
    has it dump the world it loaded, and diffs that against the Go server's
-   dump. That check runs in CI on every change. See "The world dump" below.
+   dump. That check runs at every release — `.github/workflows/release.yml`,
+   not the day-to-day `go.yml`, which is correctness and lint only — and by
+   hand with `make parity`. See "The world dump" below.
 
-Nothing here should be deleted until the Go port has been running the real
-game for a while.
+Nothing here should be deleted. Even now that the Go port is the one being
+played, this tree is the answer to every future gameplay or compatibility
+question, and deleting it would throw that away for nothing — it costs a
+directory.
 
 ## What is in here
 
@@ -102,7 +113,12 @@ normal operation.
 
 The Go server produces the same format with `dlctl world dump --parity`, and
 `scripts/world-parity.sh` at the repository root diffs the two. They
-currently agree on every field of all 5,248 records.
+currently agree on every field of all 3,202 records of what ships
+(`examples/stock/binary`: 1878 rooms, 569 mobiles, 679 objects, 30 zones, 46
+shops). The Disgracelands world itself is 5,248 records and also agreed,
+back when `data/` held it, before this repo switched to shipping stock
+CircleMUD's `lib/` — `docs/proposals/go-port-plan.md` §10's Phase 1
+write-up keeps both counts.
 
 If you change a parser here, that check will tell you whether the Go port
 still matches. If you change one there and the check fails, the Go port is
@@ -110,13 +126,22 @@ what is wrong.
 
 ## Known problems
 
-Inherited, not introduced, and none of them fixed:
+Inherited, not introduced, and none of them fixed — nor going to be. None
+of these have an operational stake: nothing is exposing this tree to
+anybody, so they are documented because a reader building it locally
+should know what they are running, and because the Go port has to decide
+what to do about each one, not because there is a risk here to close.
+Where the port does fix one, that is a deviation and gets recorded
+(`docs/deviations.md`).
 
 - **The `sprintf`-into-shared-`buf` patterns** throughout `db.c`,
   `improved-edit.c`, `tedit.c`, `zedit.c`, `listrent.c` and `shopconv.c`.
-  Several look like genuine buffer-overflow-shaped bugs — old, apparently
-  never triggered, but "apparently never triggered" is not "safe". The `-w`
-  flag is hiding them.
+  Several look like genuine buffer-overflow-shaped bugs — old and
+  apparently never triggered. Auditing them was an open item until it was
+  decided against (issue #143, `TODO.md`'s "Superseded"): a bug reachable
+  only by someone who chose to build and run this tree themselves is
+  history, not a vulnerability. The `-w` flag is hiding them; that is the
+  thing to know if you build it.
 - **No 64-bit audit** of anything touching saved binary data. The player
   database is a raw `fwrite()` of a struct whose `long` fields changed width
   when the world moved to 64-bit; see
@@ -127,8 +152,9 @@ Inherited, not introduced, and none of them fixed:
   of a password ever mattered.
 - **Telnet only.** No TLS, no rate limiting, no modern connection hygiene.
 
-None of this has been hardened for 2026. Local, LAN, or VPN-only remains the
-sane posture for this tree.
+None of this has been hardened for 2026, and none of it will be. If you
+run this tree at all, run it locally — it exists to be read, dumped and
+diffed against the port, not to take connections.
 
 ## Licence
 

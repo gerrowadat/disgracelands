@@ -222,6 +222,7 @@ func (s *Server) serve(ctx context.Context, sess *session.Session, limits Limits
 			RNG:          s.rng,
 			Violence:     s,
 			NoSpecials:   s.noSpecials,
+			RoundLength:  s.roundLength,
 			Rent:         s.RentCharacter,
 			SaveBoard:    s.SaveBoard,
 			Mail:         mailOrNil(s),

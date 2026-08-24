@@ -14,6 +14,7 @@ import (
 
 	"github.com/gerrowadat/disgracelands/internal/game"
 	"github.com/gerrowadat/disgracelands/internal/persist/player"
+	worldtext "github.com/gerrowadat/disgracelands/internal/persist/world/yaml"
 )
 
 // recordFromDoc is docFromRecord's inverse. unknown collects every name
@@ -78,7 +79,7 @@ func recordFromDoc(doc *playerDoc) (*game.PlayerRecord, []string, error) {
 		Name:        doc.Name,
 		Credential:  parseCredentialString(doc.Credential),
 		Title:       doc.Identity.Title,
-		Description: string(doc.Identity.Description),
+		Description: worldtext.FromStored(string(doc.Identity.Description)),
 		Sex:         sex,
 		Class:       class,
 		Race:        doc.Identity.Race,

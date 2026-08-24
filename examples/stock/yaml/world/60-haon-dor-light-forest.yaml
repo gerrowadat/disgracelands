@@ -2979,10 +2979,7 @@ objects:
   extra_descs:
   - keywords:
     - letters
-    desc: |
-              The letters say:
-
-              Use 'hold lantern' to activate.
+    desc: "The letters say:\n\nUse 'hold lantern' to activate.\n\n"
   - keywords:
     - lantern
     - brass
@@ -3129,15 +3126,7 @@ objects:
   extra_descs:
   - keywords:
     - sign
-    desc: |
-              It says :-
-
-                                       Haon-Dor
-                                       --------
-
-               This is the Forest of Haon-Dor.  Enter at your own risk.
-                   Please report any strange occurrences to Furry,
-                   as Quifael and Derkhil are currently indisposed.
+    desc: "It says :-\n\n                         Haon-Dor\n                         --------\n\n This is the Forest of Haon-Dor.  Enter at your own risk.\n     Please report any strange occurrences to Furry,\n     as Quifael and Derkhil are currently indisposed.\n\n"
   - keywords:
     - pole
     desc: |

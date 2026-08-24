@@ -59,11 +59,9 @@ func teditLookup(field string) (teditField, bool) {
 //
 // The C's own instructions line ("/s or @ to save, /h for more options.",
 // send_editor_help's using_improved_editor branch, improved-edit.c:20) is
-// what this now prints too, now that /s and /h are both real
-// (menu.go's editorCommand) — /h's own text is what actually tells the
-// truth about which further `/`-commands exist (docs/deviations.md's
-// "improved line editor" entry has the ones still missing: /d, /e, /f,
-// /i, /n, /r).
+// what this prints too, and /h's own text lists all eleven of the
+// improved editor's commands (internal/session/editor.go), every one of
+// which works.
 func doTedit(c *Context) error {
 	field := strings.TrimSpace(c.Arg)
 	level := c.Character.Level()

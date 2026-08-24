@@ -855,23 +855,7 @@ rooms:
   extra_descs:
   - keywords:
     - sign
-    desc: |
-              The sign reads:
-
-                Use 'List' to see the available pets.
-                Use 'Buy <pet>' to buy yourself a pet.
-
-                Instructions for having pets:
-
-                You can use 'order <pet> <instructions>' to order your pets around.
-                If you abuse your pet, it will no longer regard you as its master.
-                If you have several pets you may use 'order followers <instructions>'
-
-                You can name the pet you buy with: 'buy <pet> <name>'
-
-               Regards,
-
-               The Shopkeeper
+    desc: "The sign reads:\n\n  Use 'List' to see the available pets.\n  Use 'Buy <pet>' to buy yourself a pet.\n\n  Instructions for having pets:\n\n  You can use 'order <pet> <instructions>' to order your pets around.\n  If you abuse your pet, it will no longer regard you as its master.\n  If you have several pets you may use 'order followers <instructions>'\n\n  You can name the pet you buy with: 'buy <pet> <name>'\n\n Regards,\n\n The Shopkeeper\n\n"
 - vnum: 3032
   name: Pet Shop Store
   sector: inside
@@ -3268,11 +3252,7 @@ objects:
     - teller
     - bank
     - machine
-    desc: |
-              There is a small note on the machine which says:
-
-              To use, type 'BALANCE', 'WITHDRAW <amount>', or 'DEPOSIT <amount>'.
-              Please report any strange occurrences to the bank manager.
+    desc: "There is a small note on the machine which says:\n\nTo use, type 'BALANCE', 'WITHDRAW <amount>', or 'DEPOSIT <amount>'.\nPlease report any strange occurrences to the bank manager.\n\n"
 - vnum: 3035
   keywords:
   - fountain
@@ -3332,11 +3312,7 @@ objects:
     - cashcard
     - card
     - atm
-    desc: |
-              There is some writing on the back of the card which reads:
-
-              To use, type 'BALANCE', 'WITHDRAW <amount>', or 'DEPOSIT <amount>'.
-              Please report any strange occurrences to the bank manager.
+    desc: "There is some writing on the back of the card which reads:\n\nTo use, type 'BALANCE', 'WITHDRAW <amount>', or 'DEPOSIT <amount>'.\nPlease report any strange occurrences to the bank manager.\n\n"
 - vnum: 3037
   keywords:
   - candle
@@ -3529,15 +3505,7 @@ objects:
   - keywords:
     - scroll
     - identify
-    desc: |
-              The scroll has a magic formula drawn upon it:
-
-                   ???
-                  ?   ?
-                     ?
-                    ?
-                    ?
-                    *
+    desc: "The scroll has a magic formula drawn upon it:\n\n     ???\n    ?   ?\n       ?\n      ?\n      ?\n      *\n\n"
 - vnum: 3051
   keywords:
   - potion
@@ -3614,13 +3582,7 @@ objects:
   - keywords:
     - wand
     - grey
-    desc: |
-              The wand is an old dark grey stick.  You notice a small symbol etched at
-              the base of the wand.  It looks like this:
-
-                   \ /
-                  - O -
-                   / \
+    desc: "The wand is an old dark grey stick.  You notice a small symbol etched at\nthe base of the wand.  It looks like this:\n\n     \\ /\n    - O -\n     / \\\n\n"
 - vnum: 3054
   keywords:
   - staff
@@ -3645,16 +3607,7 @@ objects:
   - keywords:
     - staff
     - gnarled
-    desc: |
-              The staff is made of old oak, and is around five feet long. It fits
-              perfectly into your hand. You notice a small symbol etched at the
-              base of the staff, it looks like:
-
-                ZZZZZ
-                   Z
-                  Z
-                 Z
-                ZZZZZ  z   z
+    desc: "The staff is made of old oak, and is around five feet long. It fits\nperfectly into your hand. You notice a small symbol etched at the\nbase of the staff, it looks like:\n\n  ZZZZZ\n     Z\n    Z\n   Z\n  ZZZZZ  z   z\n\n"
 - vnum: 3055
   keywords:
   - staff

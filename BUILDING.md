@@ -3,8 +3,9 @@
 This repository holds two servers. This document is about the Go one, which
 is what the root of the repository is.
 
-For the **C server** — the game as it actually is, and the reference the Go
-port is written against — see `reference/moderncserver/README.md`. It needs
+For the **C server** — the reference implementation and the compatibility/
+gameplay parity oracle the Go port is checked against — see
+`reference/moderncserver/README.md`. It needs
 pre-C99 compiler flags and its own `configure` run, and none of that
 interacts with anything here.
 
@@ -46,10 +47,13 @@ scripts/world-parity.sh
 ```
 
 Builds both servers, has each dump the world it loaded, and diffs them. They
-currently agree on every field of all 3,202 records. This runs in CI.
+currently agree on every field of all 3,202 records of `examples/stock/binary`.
+This runs at every release (`.github/workflows/release.yml`), not on every
+push — day-to-day CI is correctness and lint only, and a full C build is not
+that. Run it by hand (`make parity`) after touching either loader.
 
 If it reports a difference, the Go loader is what is wrong: the C server is
-the reference implementation and the one that has been running the game.
+the reference implementation and the one that ran the game.
 
 ## Current state: Phases 0–5 done, Phase 6 declined, Phase 7 not started
 

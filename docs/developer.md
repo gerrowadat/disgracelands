@@ -210,6 +210,33 @@ single game goroutine (`docs/proposals/go-port-plan.md` §3.1), and the whole
 safety argument for that design rests on nothing else touching world state —
 which only the race detector can actually check.
 
+### Two things the server's tests deliberately run cheap
+
+`internal/server` is the big suite — several hundred tests, each of which
+stands a real server up, dials it over a real socket and logs a character in.
+Two of the game's own costs are turned down for it, both through options that
+production never sets:
+
+- **The password work factor.** `auth.Verifier.Cost` — `testAuth` in
+  `server_test.go` — hashes at 8 MiB and one pass instead of the real 64 MiB
+  and three. At the real factor a hash is about 140ms, and the suite makes
+  several hundred of them; a CPU profile put 94% of its samples inside
+  argon2. The hashes are still real argon2id, made and checked by the same
+  code the server uses, and the parameters travel in the hash, so verifying
+  is unaffected. `auth.DefaultCost` is what every non-test caller gets, and
+  `internal/auth` asserts it is still RFC 9106's recommendation.
+- **The combat round.** `server.Options.RoundLength` — `testRoundLength` —
+  is 100ms instead of two seconds. A wait state is real elapsed time
+  (`game.Character.Wait` stores a deadline and the dispatcher sleeps until it
+  passes), so at the real length a single `kick` cost its test six seconds of
+  doing nothing. `session.DefaultRoundLength` is what everything else gets,
+  and `internal/session` asserts it is still PULSE_VIOLENCE.
+
+Together these took the package from about 250 seconds under `-race` to about
+35. Both knobs default to the real value when left zero, so the way to get
+this wrong is to *set* one, not to forget to — which is the right way round.
+A test that asserts on lag should count in `testRoundLength`, not in seconds.
+
 ### What runs when
 
 CI used to run everything on every push and pull request, and got slow and
@@ -389,6 +416,16 @@ Worth knowing before you trust a green run:
   container job logs `Unable to get the ACTIONS_RUNTIME_TOKEN`; that is the
   build-summary upload, and the build and the image it produces are
   unaffected.
+- **The two publishing jobs never run under act**, deliberately. `publish`
+  (the GitHub release) and `image` (the push to ghcr.io) are both `if:
+  github.event_name == 'push'`, and act runs jobs as a `workflow_dispatch`.
+  So a local `CI_WORKFLOW=.github/workflows/release.yml` run tells you the
+  image *builds* — `full-suite` does that for the runner's own architecture,
+  and checks the version it reports — and nothing at all about whether the
+  push works. A release-candidate tag will not stand in for a real one
+  either: the trigger pattern is `v[0-9]+.[0-9]+.[0-9]+`, so `v0.0.0-rc1`
+  triggers nothing. A real patch bump is the only test of the push path, and
+  it is reversible: delete the release, the tag and the package version.
 - **A workflow bug can sit unnoticed for a while either way now.** `go.yml`
   runs on every push and PR, so a break there surfaces immediately; a
   break in something that only lives in `release.yml` surfaces at the next
@@ -455,22 +492,46 @@ Nearly all the remaining work is "port one more command", and it has a shape.
 
 ### Testing against the C rather than against your reading of it
 
-The rule that has held: **anything with a division, a cast, or a comment
-describing numbers gets an oracle rather than a reading.**
+This still applies in full to anything gameplay- or compatibility-shaped.
+It has nothing to say about work that's purely architecture or tooling and
+doesn't change what the C computed or stored — see `CLAUDE.md` and the
+plan's §0, "Fidelity, phase two", for what that distinction means and why
+it changed on 2026-08-23.
+
+The rule that has held, for the code this applies to: **anything with a
+division, a cast, or a comment describing numbers gets an oracle rather
+than a reading.**
 
 `reference/tools/*.c` holds original C function bodies with the `char_data`
 dereferences substituted and nothing else changed. The Go tests compile them
 and compare across the whole input space where that is affordable — 30,000 RNG
 draws, 1,512,000 to-hit values, 36,288 regeneration values, 1,125 saving
-throws, 9,680 DES `crypt(3)` pairs, 168 `isname` pairings, and shop prices
-against a 32-bit x87 build of the C, because there `int * float` truncated to
-`int` gives a different answer than the same line built for SSE.
+throws, 9,680 DES `crypt(3)` pairs, 168 `isname` pairings, 805 line-editor
+commands, and shop prices against a 32-bit x87 build of the C, because there
+`int * float` truncated to `int` gives a different answer than the same line
+built for SSE.
 
 **An oracle is worth writing for string code too, not only arithmetic.**
 `isname` has no numbers in it at all and was still read wrong for four phases:
 its loop has the shape of a prefix match and the semantics of a whole-word one.
-The rule is really *anything whose behaviour you would have to simulate in your
-head to be sure of*.
+The improved line editor's eleven commands are the same lesson at length:
+`editoracle.c` turned up seven separate things a careful reading had got
+wrong, including a three-line buffer having a fourth line and a `/ra` that
+runs out of room silently truncating the player's text
+(`docs/weirdnumbers.md`, "The line editor"). The rule is really *anything
+whose behaviour you would have to simulate in your head to be sure of*.
+
+**Watch what optimisation level you build an oracle at.** These are twenty-
+year-old C, and some of it is undefined behaviour that a compiler of the
+period resolved one way and a modern one resolves another. `editoracle.c` is
+built `-O0` because `PARSE_LIST_NUM` accumulates with `sprintf(buf,
+"%s%4d:\r\n", buf, i - 1)` — destination and `%s` argument the same buffer —
+and gcc at `-O2` turns that into something that keeps only the last line,
+where `-O0` calls glibc and the self-copy at offset zero is a no-op. `-O2`'s
+answer would have made `/n` a broken command in this port for no reason but
+the compiler being new. An oracle's job is to say what the archived server
+did; where the C is undefined, that has to be decided deliberately rather
+than inherited from whatever gcc is installed.
 
 Where a table is transcribed rather than computed, the test re-parses the C
 source and compares entry by entry, so a typo in a table is a failing test

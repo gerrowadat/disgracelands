@@ -12,6 +12,13 @@ Each built phase carries a retrospective in §10 saying what actually landed
 and where it diverged from what was planned. See `BUILDING.md` for how to
 build and run what exists.
 
+**As of 2026-08-23, the port is playable, and §0's fidelity decision has a
+second half ("Fidelity, phase two") that narrows what it still governs.**
+Read that row before assuming everything below still describes a strict
+port — the phase write-ups in §10 are a historical record of how fidelity
+was reached and stay accurate as history; they are not a live constraint on
+work that starts from here.
+
 ---
 
 ## 0. Decisions already taken
@@ -20,7 +27,7 @@ These were settled up front and the rest of the plan assumes them:
 
 | Question | Decision |
 |---|---|
-| **Fidelity** | Faithful core, known bugs fixed. Same game feel, same mechanics (remort bitmask, Paladin alignment, the balance tweaks in `docs/investigations/non-stock-features.md`); the `sprintf`-overlap class of bugs from `TODO.md` §3 and integer-width bugs get fixed as they're encountered, each deviation recorded. Deliberate rules changes are a separate, later conversation. |
+| **Fidelity** | Faithful core, known bugs fixed. Same game feel, same mechanics (remort bitmask, Paladin alignment, the balance tweaks in `docs/investigations/non-stock-features.md`); the `sprintf`-overlap class of bugs (`reference/moderncserver/README.md`'s "Known problems", never audited in the C and now deliberately not going to be) and integer-width bugs get fixed as they're encountered, each deviation recorded. Deliberate rules changes are a separate, later conversation. |
 | **Repo layout** | Same repo, new top-level Go tree. The C tree in `reference/moderncserver/src/` stays buildable and authoritative for the whole port — it is the reference implementation and the parity oracle. |
 | **Scripting** | Design the seam, defer the engine. Trigger/event interfaces get defined so DG Scripts, Lua, or anything else can drop in later; v1 ships no interpreter. The tree that was actually played has no DG Scripts (`docs/investigations/non-stock-features.md`), so nothing regresses. |
 | **Protocols** | TLS-wrapped telnet, WebSocket, and telnet option negotiation (MSSP/MCCP/GMCP/MXP). |
@@ -34,6 +41,7 @@ These were settled up front and the rest of the plan assumes them:
 | **Legacy passwords** | **Accepted and upgraded on login; nobody is reset.** Answers what was §13.5. |
 | **Fidelity, restated** | **As faithful to the patched C server as possible.** The row above says "faithful core"; this sharpens it. Where a choice exists between what the C server does and what a modern design would prefer, the C server wins, and a deviation needs a reason written down next to it. The existing exceptions stand — bugs are fixed, integer widths are made honest, credentials are modernised — but each is a deliberate, recorded departure rather than licence to redesign. When in doubt, read the C and do that. |
 | **Old data directories** | **Converted, not carried.** `dlctl convert` takes an original CircleMUD `lib/` and produces a directory the server runs on. It refuses to guess: the binary formats it does not yet understand are copied byte for byte and reported, because a byte-level transcode of a struct dump corrupts it twice over. |
+| **Fidelity, phase two (2026-08-23)** | **Narrowed, not dropped.** Phases 0–5 reached byte-for-byte behavioural agreement with the C server, and that work is not being revisited on fidelity grounds alone — the C oracles, table re-parsing and layout tools that got it there keep protecting it, and `docs/deviations.md`/`docs/weirdnumbers.md` stay the record of every departure made getting here. The port is playable now, and from this point new work is free to diverge from the C server to modernise the implementation — architecture, dependencies, protocols, tooling, roughly the decade and a half of how server software has moved on since this stack was designed — without needing a reason recorded anywhere. Two things stay fixed, not up for modernisation: **compatibility** (the on-disk formats, `--lib-dir` contents and archived credentials this repo already reads and writes) and **gameplay** (the mechanics and balance a returning player would recognise — the to-hit and damage tables, remort, alignment, the tweaks in `docs/investigations/non-stock-features.md`). A change that touches either of those is still a deviation, in `docs/deviations.md`, with its reasoning, exactly as before; a change that only touches implementation is not. |
 
 **One assumption flagged:** plain unencrypted telnet was *not* selected in
 that list. This plan keeps a plaintext telnet listener implemented and
@@ -539,7 +547,7 @@ real attention:
 
 Beyond format-swapping for its own sake: a `Source` interface makes it
 possible to load one of the 1,184 dated nightly world backups in the
-archive (`TODO.md` §4) directly, to load a zone from a tarball for testing,
+archive (`TODO.md` §3) directly, to load a zone from a tarball for testing,
 or to serve an embedded copy of the world in a single-binary demo build.
 Those are the concrete near-term uses; a database-backed world is the
 speculative one and shouldn't drive the design.
@@ -713,6 +721,14 @@ constant, each one a considered decision rather than an oversight.
   losing up to a minute of play (`PULSE_AUTOSAVE` is 60s).
 - Reproducible builds, version/commit stamped via `-ldflags`, exposed in
   the `version` command and in MSSP output.
+- **Published on every `v*.*.*` tag** to `ghcr.io/gerrowadat/disgracelands`,
+  for `linux/amd64` and `linux/arm64`, tagged `X.Y.Z`/`X.Y`/`latest`
+  (`release.yml`'s `image` job). `GITHUB_TOKEN` is the only credential
+  involved, and the repository does not have to be public for it: a package
+  is created with its repository's visibility and can be made public
+  separately. The arm64 image is cross-compiled by the Go toolchain running
+  natively on the amd64 runner rather than built under QEMU, which
+  `CGO_ENABLED=0` is what makes possible.
 
 ---
 
@@ -782,8 +798,9 @@ both servers, has each dump the world it loaded, and diffs the results:
     identical
 ```
 
-Zero differing fields across all 5,248 records. It runs in CI, so it stays
-true.
+Zero differing fields across all 5,248 records. It runs at every release
+(`.github/workflows/release.yml` — it needs a full C build, which is more
+than day-to-day CI does), and `make parity` runs it by hand.
 
 **Those numbers are of the Disgracelands world**, which was what `data/` held
 when this was written. The repo now ships stock CircleMUD 3.0 bpl20's `lib/`
@@ -907,8 +924,9 @@ black box because the salt perturbs the E expansion *inside* the round
 function, and cgo is ruled out by the static container build — which left a
 dependency for an algorithm being actively retired, or 300 self-contained
 lines that get deleted with it. Correctness is not argued: the tests compare
-it against the system libcrypt over **9,680 password/salt pairs**, and that
-runs in CI.
+it against the system libcrypt over **9,680 password/salt pairs**, wherever
+`gcc` and the libcrypt headers are present — and a release fails if it
+skipped rather than ran (`release.yml`).
 
 §5.3.1's warning earned its place twice over. The verifier compares only the
 stored 10 characters, and there is a test that fails if it ever compares 13.
@@ -920,9 +938,11 @@ that reason before the property sank in.
 **Phase 2 is complete.**
 
 **A note on verification.** The 32-bit checks skip on a machine without
-32-bit libc headers, which is most of them. CI installs `gcc-multilib` and
-fails if those checks skipped, so the layout the real data is in is verified
-on every change even though it cannot be verified locally.
+32-bit libc headers, which is most of them. `release.yml` installs
+`gcc-multilib` and fails if those checks skipped, so the layout the real data
+is in is verified at every release even though it cannot be verified locally.
+Day-to-day CI lets them skip exactly as a contributor's own 64-bit machine
+does; a release is where a silent skip is caught.
 
 **Phase 3 — Server skeleton. ✅ Done.** Pulse loop, session lifecycle,
 listeners, negotiation, the login `nanny` state machine including the main
@@ -1426,8 +1446,8 @@ previously-undocumented finding along the way: the archived server's
 `CONFIG_IMPROVED_EDITOR` is hardcoded `1` — the improved line editor's
 `/c`/`/l`/`/h`/`/a`/`/s` commands were always on, not stock — and this
 port's line editor has never had them, invisibly until `tedit` became
-the first caller to seed a non-empty buffer. Recorded in
-`docs/deviations.md` as a gap, not fixed here.
+the first caller to seed a non-empty buffer. Five landed in the slice
+below and the remaining six followed it; all eleven work now.
 
 **`reloadmob` ✅ — genuinely new capability, not a C port; the shape
 Phase 6 actually took.** `interpreter.c` has nothing like it. An
@@ -1590,19 +1610,32 @@ player's own move gets (no movement-point cost, no boat/tunnel/atrium/
 godroom checks), documented as inert against the real data rather than
 a risk quietly taken. `docs/deviations.md` has the full writeup of both.
 
-**The improved line editor's `/a`/`/c`/`/h`/`/l`/`/s` ✅ — five of the
-eleven commands `tedit`'s own landing found missing.** `editorCommand`
-(`internal/session/menu.go`) ports `improved_editor_execute`
-(`improved-edit.c:27`) for the five that need no line-range editing
-machinery of their own: abort, clear, help, list and save. `/d`, `/e`,
-`/f`, `/i`, `/n` and `/r` — delete, edit, format, insert, numbered list
-and replace — stay unbuilt, and typing one (or anything else after a
-leading `/`) gets the C's own "Invalid option." rather than silently
-doing nothing; `/h`'s own text lists only the five that work rather than
-the C's full eleven, so it never promises what it cannot do. `tedit`'s
-instructions line now says what the C's `send_editor_help` actually said
-("/s or @ to save, /h for more options."), which stopped being a lie the
-moment `/s` and `/h` became real.
+**The improved line editor, all eleven commands ✅ — the gap `tedit`'s
+own landing found.** `internal/session/editor.go` ports
+`improved_editor_execute` (`improved-edit.c:27`), `parse_action`,
+`format_text` and `replace_str`. `/a` `/c` `/h` `/l` `/s` — abort, clear,
+help, list, save — landed first, being the five that need no line-range
+editing machinery of their own; `/d` `/e` `/f` `/i` `/n` `/r` — delete,
+edit, format, insert, numbered list, replace — followed. Anything else
+after a leading `/` gets the C's own "Invalid option.", and `/h`'s text
+is now the C's own, unedited, because every command it lists works.
+`tedit`'s instructions line says what the C's `send_editor_help` actually
+said ("/s or @ to save, /h for more options."), which stopped being a lie
+the moment `/s` and `/h` became real.
+
+The six needed a `reference/tools/editoracle.c` and would have been wrong
+without it. Line-range string surgery is not arithmetic, and it turned
+out to be wrong in a different way at nearly every turn: a three-line
+buffer has a fourth line, so `/d 4` answers "0 lines deleted."; a buffer
+emptied by `/d` is not the same object as one freed by `/c`, and the
+guards on `/f` `/i` `/l` `/n` test the pointer; `/n` prints its line
+number on a line of its own; a `/r` pattern longer than the buffer wraps
+an unsigned subtraction and reports the buffer as full; and a `/ra` that
+runs out of room leaves the player's text truncated at the match it gave
+up on and then says the string was not found. `docs/weirdnumbers.md`'s
+"The line editor" section has all of them with citations; the buffer is
+held flat rather than as a `[]string` because that is what the commands
+are defined against.
 
 Abort needed a real design decision the plain `@`-terminated loop never
 had to make: what to hand back when there is nothing to save.
@@ -1877,12 +1910,14 @@ sense to start:
    exercise combat, shops, boards, mail and housing before "the two
    servers agree" is a claim covering more than logging in and looking
    around.
-3. **The real archive's non-ASCII text survives conversion.** `TODO.md`
-   §5: five of `dlctl lib import`'s seven sub-importers write source
-   bytes straight through without transcoding. `examples/stock/`'s own
-   world is pure ASCII, so nothing here has ever exercised this against
-   data that matters — the real archive, twenty years old, is not
-   ASCII throughout. Only relevant if reviving the archived roster
+3. **The real archive's non-ASCII text survives conversion.** The
+   importer gap this precondition was first written about is closed —
+   all seven of `dlctl lib import`'s sub-importers take `--encoding` and
+   transcode now (`TODO.md`'s "Superseded", `docs/design/data-format.md`
+   §11.1). What is not closed is the exercise: `examples/stock/`'s own
+   world is pure ASCII, so nothing here has ever run the conversion
+   against data that matters — the real archive, twenty years old, is
+   not ASCII throughout. Only relevant if reviving the archived roster
    (below); irrelevant to a fresh start.
 4. **A decision, not a technical task: revive the archived roster, or
    start clean?** `TODO.md` §1 — the 108 real 2001–2008 characters exist
@@ -2088,7 +2123,8 @@ than asserted. `data/text/greetings` carries both sets of creators above the
 name prompt, `data/text/credits` is the stock text with Disgracelands'
 additions after it, and the `CIRCLEMUD` help entry is intact.
 
-`scripts/license-check.sh` runs in CI and verifies the five requirements
+`scripts/license-check.sh` runs at every release (`release.yml`, not the
+day-to-day `go.yml`) and verifies the five requirements
 that can be verified from the tree: that `LICENSE` still ends with
 `doc/license.doc` byte for byte, that no stock C file's leading comment
 block differs from the pre-upgrade baseline import (78 files), that every
@@ -2236,8 +2272,11 @@ Background this plan draws on, all under `docs/investigations/`:
 
 And outside `docs/`:
 
-- `TODO.md` — what's left in the C tree; items 1, 3 and 5 are largely
-  superseded by this plan, items 2 and 4 are not.
+- `TODO.md` — what's left that is not a phase: the roster decision,
+  WipeMud, the world snapshot, hosting and exposure, and the one
+  remaining C-tree item. The roster and exposure ones are this plan's
+  business too (Phase 7's preconditions); WipeMud, the snapshot and
+  `src/util/*` are not.
 - `BUILDING.md` — both builds, C and Go.
 - `reference/moderncserver/doc/license.doc` — the CircleMUD + DikuMUD
   licenses the port inherits; see §12.

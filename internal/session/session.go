@@ -184,9 +184,13 @@ type Session struct {
 	pendingPassword string
 	pendingSex      int32
 
-	// editorLines buffers a multi-line entry — currently only the
-	// description — until its terminator arrives.
-	editorLines []string
+	// editorBuf holds a multi-line entry — a description, or anything the
+	// improved editor is open on — until its terminator arrives. It is
+	// flat rather than a list of lines because the C's `*d->str` is, and
+	// the improved editor's commands are defined against that: see
+	// editor.go's editText, which also carries the C's own distinction
+	// between an empty buffer and no buffer at all.
+	editorBuf editText
 	// editorMax and editorDone belong to StateEditing: the length limit and
 	// what to do with the finished text. saved is false only for an
 	// improved-editor /a (abort, improved-edit.c:39-40) — text is then
