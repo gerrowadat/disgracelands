@@ -125,8 +125,13 @@ type LogOptions struct {
 	// File is the log destination. "-" or "" means stderr, matching the C
 	// server's default of writing to stderr when -o is absent.
 	File string
-	// Format is "text" or "json".
+	// Format is "text" or "json". "json" is the OpenTelemetry-shaped
+	// envelope described in otel.go, not slog's own.
 	Format string
+	// Resource labels every JSON record with what emitted it — see
+	// [DetectResource]. Ignored by the text format, which is read by
+	// somebody who already knows which server they are looking at.
+	Resource Resource
 	// Level is the minimum level to emit.
 	Level slog.Level
 	// AddSource includes the emitting file and line. Useful at debug level.
@@ -158,7 +163,7 @@ func NewLogger(opts LogOptions) (*slog.Logger, io.Closer, error) {
 	var h slog.Handler
 	switch strings.ToLower(opts.Format) {
 	case "json":
-		h = slog.NewJSONHandler(w, handlerOpts)
+		h = newOTelHandler(w, opts)
 	case "text", "":
 		h = slog.NewTextHandler(w, handlerOpts)
 	default:

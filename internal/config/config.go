@@ -339,7 +339,7 @@ func Load(args []string, lookupEnv func(string) (string, bool), out io.Writer) (
 	boolean("allow-legacy-passwords", "Accept pre-2008 DES crypt(3) password hashes", &cfg.AllowLegacyPasswords)
 
 	str("log-file", "Log destination, or - for stdout (C: -o)", &cfg.LogFile)
-	str("log-format", "Log format: "+strings.Join(knownLogFormats, ", "), &cfg.LogFormat)
+	str("log-format", "Log format: text for a terminal, json for OpenTelemetry-shaped records", &cfg.LogFormat)
 	str("metrics-addr", "Prometheus/health listen address (empty = disabled)", &cfg.MetricsAddr)
 	str("debug-addr", "pprof listen address (empty = disabled; never expose)", &cfg.DebugAddr)
 

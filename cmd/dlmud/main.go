@@ -81,6 +81,12 @@ func tlsConfig(cfg *config.Config) (*tls.Config, error) {
 	return nil, fmt.Errorf("the TLS listener needs --tls-cert and --tls-key")
 }
 
+// serviceName is this process's OpenTelemetry service.name, and the default
+// for the `resource` block on every JSON log line. OTEL_SERVICE_NAME
+// overrides it, which is how two servers sharing a log backend tell
+// themselves apart.
+const serviceName = "dlmud"
+
 // shutdownTimeout bounds the graceful shutdown. The C server's autosave pulse
 // was 60s, so an ungraceful stop could lose a minute of play; the whole point
 // of handling SIGTERM is to save instead, and that needs room to finish.
@@ -113,6 +119,11 @@ func run(args []string) error {
 		Format:    cfg.LogFormat,
 		Level:     cfg.LogLevel,
 		AddSource: cfg.LogLevel <= -4, // debug
+		// Only the JSON format uses this, and only for its `resource`
+		// block; OTEL_SERVICE_NAME and OTEL_RESOURCE_ATTRIBUTES are read
+		// here rather than being given flags of their own, so a deployment
+		// labels these logs the same way it labels everything else.
+		Resource: obs.DetectResource(os.LookupEnv, serviceName, info.Version),
 	})
 	if err != nil {
 		return err
