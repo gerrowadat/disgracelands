@@ -134,6 +134,12 @@ type Config struct {
 	// the roster the way `dlctl pfile convert --from-dir=lib/etc` is finds
 	// no rent files at all unless it is told where they are.
 	ObjectsDir string
+	// AliasDir is the `plralias/` directory holding the per-character alias
+	// files (alias.c). Empty means `Dir/plralias`, and it is a separate
+	// setting for exactly the reason ObjectsDir is: LIB_PLRALIAS (db.h:38)
+	// is resolved against the mud's own cwd, so in an archived lib/ it is a
+	// sibling of the roster's directory rather than a child of it.
+	AliasDir string
 	// ReadOnly opens the store for inspection only, so a tool that only
 	// reads cannot damage a roster by accident.
 	ReadOnly bool

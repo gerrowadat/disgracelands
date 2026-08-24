@@ -47,6 +47,17 @@ func writeRosterWithRent(t *testing.T, rosterDir, objsDir string) string {
 	if err != nil {
 		t.Fatalf("open object store: %v", err)
 	}
+	// The alias files sit beside the rent files, under the same root and
+	// with the same bucketing, so they follow the layout in lockstep.
+	aliases, err := binary.NewAliasStore(player.Config{
+		Dir: rosterDir, AliasDir: filepath.Join(filepath.Dir(objsDir), "plralias"),
+	})
+	if err != nil {
+		t.Fatalf("open alias store: %v", err)
+	}
+	if err := aliases.SaveAliases(rec.Name, []game.Alias{{Name: "h", Replacement: " track nobleman"}}); err != nil {
+		t.Fatalf("save aliases: %v", err)
+	}
 	rent := &player.RentFile{
 		Code: player.RentRented, Written: time.Unix(1000000, 0).UTC(), CostPerDay: 10,
 		Objects: []player.StoredObject{{Vnum: 3001, Weight: 4}},
@@ -55,6 +66,21 @@ func writeRosterWithRent(t *testing.T, rosterDir, objsDir string) string {
 		t.Fatalf("save rent file: %v", err)
 	}
 	return rec.Name
+}
+
+func importedAliases(t *testing.T, dir, name string) []game.Alias {
+	t.Helper()
+	dst, err := playeryaml.New(player.Config{Dir: dir, ReadOnly: true})
+	if err != nil {
+		t.Fatalf("open imported roster: %v", err)
+	}
+	defer func() { _ = dst.Close() }()
+
+	rec, err := dst.Load(context.Background(), name)
+	if err != nil {
+		t.Fatalf("load imported record: %v", err)
+	}
+	return rec.Aliases
 }
 
 func importedInventory(t *testing.T, dir, name string) int {
@@ -91,6 +117,9 @@ func TestPfileImportFindsRentFilesBesideTheRoster(t *testing.T) {
 	}
 	if got := importedInventory(t, to, name); got != 1 {
 		t.Errorf("imported inventory: got %d objects, want 1", got)
+	}
+	if got := importedAliases(t, to, name); len(got) != 1 {
+		t.Errorf("imported aliases: got %d, want 1", len(got))
 	}
 }
 

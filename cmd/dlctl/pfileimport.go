@@ -37,6 +37,8 @@ func cmdPfileImport(args []string) error {
 	toDir := fs.String("to-dir", "data/players", "Destination (yaml) player directory")
 	fromObjsDir := fs.String("from-objs-dir", "",
 		"Source plrobjs/ directory (default: beside or inside --from-dir, whichever exists)")
+	fromAliasDir := fs.String("from-alias-dir", "",
+		"Source plralias/ directory (default: beside or inside --from-dir, whichever exists)")
 	encName := fs.String("encoding", convert.DefaultEncoding,
 		fmt.Sprintf("Source text encoding: %v", encodingNames()))
 	if err := fs.Parse(args); err != nil {
@@ -54,9 +56,17 @@ func cmdPfileImport(args []string) error {
 	}
 	defer func() { _ = src.Close() }()
 
-	objsDir, objsNote := resolveObjectsDir(*fromObjsDir, *fromDir)
+	objsDir, objsNote := resolveSubdir(*fromObjsDir, *fromDir, "plrobjs")
 	objSrc, err := binary.NewObjectStore(player.Config{
 		Dir: *fromDir, ObjectsDir: objsDir, ReadOnly: true,
+	})
+	if err != nil {
+		return err
+	}
+
+	aliasDir, aliasNote := resolveSubdir(*fromAliasDir, *fromDir, "plralias")
+	aliasSrc, err := binary.NewAliasStore(player.Config{
+		Dir: *fromDir, AliasDir: aliasDir, ReadOnly: true,
 	})
 	if err != nil {
 		return err
@@ -70,12 +80,14 @@ func cmdPfileImport(args []string) error {
 
 	out := bufio.NewWriter(os.Stdout)
 	defer func() { _ = out.Flush() }()
-	if objsNote != "" {
-		_, _ = fmt.Fprintln(out, objsNote)
+	for _, note := range []string{objsNote, aliasNote} {
+		if note != "" {
+			_, _ = fmt.Fprintln(out, note)
+		}
 	}
 
 	ctx := context.Background()
-	characters, withObjects, transcoded := 0, 0, 0
+	characters, withObjects, withAliases, transcoded := 0, 0, 0, 0
 	for entry, err := range src.List(ctx) {
 		if err != nil {
 			_, _ = fmt.Fprintf(out, "listing: %v\n", err)
@@ -86,6 +98,19 @@ func cmdPfileImport(args []string) error {
 			_, _ = fmt.Fprintf(out, "%s: %v\n", entry.Name, err)
 			continue
 		}
+		// Aliases live in their own file per character, so they are folded
+		// into the record before it is saved rather than arriving with it.
+		// A character with none has no file at all (write_aliases removes
+		// it), which is the ordinary case and not a failure.
+		switch as, aerr := aliasSrc.LoadAliases(entry.Name); {
+		case aerr == nil:
+			rec.Aliases = as
+			withAliases++
+		case errors.Is(aerr, player.ErrNotFound):
+		default:
+			_, _ = fmt.Fprintf(out, "%s: aliases: %v\n", entry.Name, aerr)
+		}
+
 		transcoded += transcodePlayerStrings(rec, enc)
 		if err := dst.Save(ctx, rec); err != nil {
 			_, _ = fmt.Fprintf(out, "%s: writing: %v\n", entry.Name, err)
@@ -109,7 +134,8 @@ func cmdPfileImport(args []string) error {
 		}
 	}
 
-	_, _ = fmt.Fprintf(out, "\nimported %d character(s), %d with a rent/crash file\n", characters, withObjects)
+	_, _ = fmt.Fprintf(out, "\nimported %d character(s), %d with a rent/crash file, %d with aliases\n",
+		characters, withObjects, withAliases)
 	if transcoded > 0 {
 		_, _ = fmt.Fprintf(out, "transcoded %d string(s) from %s to UTF-8\n", transcoded, *encName)
 	}
@@ -178,8 +204,8 @@ func transcodePlayerStrings(rec *game.PlayerRecord, enc *charmap.Charmap) int {
 	return n
 }
 
-// resolveObjectsDir finds the plrobjs/ directory that goes with a roster
-// directory, and says which one it picked.
+// resolveSubdir finds a per-character subdirectory (plrobjs/, plralias/)
+// that goes with a roster directory, and says which one it picked.
 //
 // Two layouts are both real and neither is wrong. This port keeps a roster
 // and the rent files that belong to it in one directory, so plrobjs/ is a
@@ -194,19 +220,20 @@ func transcodePlayerStrings(rec *game.PlayerRecord, enc *charmap.Charmap) int {
 // and was actually a fact about the path. A character with no rent file is
 // completely ordinary, so there was nothing here to look wrong.
 //
-// --from-objs-dir overrides, for a layout that is neither.
-func resolveObjectsDir(explicit, fromDir string) (dir string, note string) {
+// --from-objs-dir / --from-alias-dir override, for a layout that is
+// neither.
+func resolveSubdir(explicit, fromDir, name string) (dir string, note string) {
 	if explicit != "" {
 		return explicit, ""
 	}
-	own := filepath.Join(fromDir, "plrobjs")
+	own := filepath.Join(fromDir, name)
 	if isDir(own) {
 		return own, ""
 	}
-	sibling := filepath.Join(filepath.Dir(filepath.Clean(fromDir)), "plrobjs")
+	sibling := filepath.Join(filepath.Dir(filepath.Clean(fromDir)), name)
 	if isDir(sibling) {
-		return sibling, fmt.Sprintf("rent files: reading %s (the C's lib/ layout, beside %s rather than inside it)",
-			sibling, fromDir)
+		return sibling, fmt.Sprintf("%s: reading %s (the C's lib/ layout, beside %s rather than inside it)",
+			name, sibling, fromDir)
 	}
 	// Neither exists. Keep the port's own layout, so the message a caller
 	// gets names the place they most likely meant.

@@ -101,6 +101,13 @@ only for changes that can affect these — see the `ilp32` step in
   struct layout reveals and which a port can get wrong while passing all of
   its own round-trip tests. Build `-m32`, for the same reason
   `maillayout.c` needs it.
+- **`aliasoracle.c`** — `write_aliases` and `read_aliases`, run over aliases
+  given on the command line. Not a layout tool: this format is `fprintf` and
+  `fgets` rather than an `fwrite` of a struct, so it needs no `-m32` and
+  runs anywhere `gcc` does. What it pins is the length-prefix convention and
+  the leading space that goes with it — the file stores
+  `strlen(replacement) - 1` bytes from `replacement + 1`, and the reader
+  puts the space back.
 - **`houselayout.c`** — `struct house_control_rec`, the house control file. It
   has a padding hole at offset 6 under ILP32 that nothing ever writes.
 
