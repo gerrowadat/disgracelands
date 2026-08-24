@@ -190,11 +190,13 @@ func (s *Store) Send(m mail.Message) error {
 	for text != "" {
 		next := s.alloc()
 		// Link the previous block to this one. In a header block the link is
-		// next_block; in a data block it is the block type itself.
+		// next_block; in a data block it is the block type itself. Either
+		// way the value written is a byte offset, not a block number --
+		// see linkOffset.
 		if prev == head {
-			putInt32(s.blocks[prev][offNextBlock:], int32(next)) //nolint:gosec // a block index
+			putInt32(s.blocks[prev][offNextBlock:], linkOffset(next))
 		} else {
-			putInt32(s.blocks[prev][offBlockType:], int32(next)) //nolint:gosec // ditto
+			putInt32(s.blocks[prev][offBlockType:], linkOffset(next))
 		}
 
 		data := make([]byte, BlockSize)
@@ -264,14 +266,18 @@ func (s *Store) readChainLocked(head int) (mail.Message, []int) {
 	}
 
 	span := []int{head}
-	next := int(int32(byteOrder.Uint32(block[offNextBlock:]))) //nolint:gosec // reinterpretation
+	link := int32(byteOrder.Uint32(block[offNextBlock:])) //nolint:gosec // reinterpretation
 	seen := map[int]bool{head: true}
-	for next >= 0 && next < len(s.blocks) && !seen[next] {
+	for {
+		next, ok := linkIndex(link, len(s.blocks))
+		if !ok || seen[next] {
+			break
+		}
 		seen[next] = true
 		data := s.blocks[next]
 		m.Text += readText(data[offDataTxt:], DataTextSize)
 		span = append(span, next)
-		next = int(blockType(data))
+		link = blockType(data)
 	}
 	return m, span
 }
@@ -334,6 +340,47 @@ func (s *Store) flushLocked() error {
 
 func blockType(block []byte) int32 {
 	return int32(byteOrder.Uint32(block[offBlockType:])) //nolint:gosec // reinterpretation
+}
+
+// linkOffset converts a block index into the value the format stores to
+// point at that block, and linkIndex converts one back.
+//
+// The stored value is a **byte offset into the file**, not a block number.
+// The C is unambiguous about it and says so twice: push_free_list's own
+// comment is "#1 - What byte offset into the file the block resides"
+// (mail.c:76), and the value that ends up in a link comes either from
+// pop_free_list or from index_mail(..., block_num * BLOCK_SIZE)
+// (mail.c:260). write_to_file takes the same units and refuses anything
+// that is not a whole number of blocks -- "fatal error #2!!! (invalid file
+// position %ld)" (mail.c:162).
+//
+// This port wrote and read a block *index* instead, which is
+// self-consistent and so round-trips its own files perfectly. It is wrong
+// against every file the C ever wrote, in both directions: reading one,
+// a link of 4600 in a 49-block file fails the bounds check and the chain
+// simply stops, silently truncating the message to the 79 characters the
+// header block holds; writing one, the C would follow a link 100 times too
+// short. Since --lib-dir is the same directory either server reads
+// (data-format.md's "the on-disk contract"), that is a real divergence and
+// not a theoretical one -- a real archived mail file is what demonstrated
+// it.
+func linkOffset(index int) int32 {
+	return int32(index * BlockSize) //nolint:gosec // a file this size cannot overflow
+}
+
+// linkIndex is linkOffset's inverse. It reports ok=false for a value that
+// is not a whole number of blocks, which is the check write_to_file makes
+// before it will use one (mail.c:162) -- a malformed link stops a chain
+// rather than indexing somewhere arbitrary.
+func linkIndex(offset int32, blocks int) (int, bool) {
+	if offset < 0 || offset%BlockSize != 0 {
+		return 0, false
+	}
+	index := int(offset) / BlockSize
+	if index >= blocks {
+		return 0, false
+	}
+	return index, true
 }
 
 func putInt32(b []byte, v int32) { byteOrder.PutUint32(b, uint32(v)) } //nolint:gosec // reinterpretation

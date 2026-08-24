@@ -94,6 +94,13 @@ only for changes that can affect these — see the `ilp32` step in
 - **`maillayout.c`** — the mud mail file's header and data blocks. `BLOCK_SIZE`
   does not change with the data model but the split *inside* a block does, so
   the same file means different things to a 32- and a 64-bit server.
+- **`mailoracle.c`** — `store_mail`'s own body, run to write a real mail
+  file for the Go to read back. Where `maillayout.c` says where a block's
+  fields are, this says what goes in them: the link joining a message's
+  blocks is a byte offset into the file rather than a block number, which no
+  struct layout reveals and which a port can get wrong while passing all of
+  its own round-trip tests. Build `-m32`, for the same reason
+  `maillayout.c` needs it.
 - **`houselayout.c`** — `struct house_control_rec`, the house control file. It
   has a padding hole at offset 6 under ILP32 that nothing ever writes.
 

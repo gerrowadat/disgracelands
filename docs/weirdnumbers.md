@@ -1085,6 +1085,40 @@ checksum anywhere in the format to catch it.
 
 *Source*: `mail.h:71`.
 
+### A mail block points at the next one by byte offset, in a field that looks like an index
+
+```c
+void push_free_list(long pos)   /* #1 - What byte offset into the file the block resides. */
+...
+    data.block_type = target_address;       /* mail.c:375 */
+    write_to_file(&data, BLOCK_SIZE, last_address);
+```
+
+A message longer than one block is a chain, joined through `next_block` in
+the header and through `block_type` itself in each data block — "this works
+much like DOS' FAT", as the comment above it says. What that field holds is
+a **byte offset into the file**: `target_address` comes from
+`pop_free_list`, and `scan_file` indexes with `block_num * BLOCK_SIZE`
+(`mail.c:260`). So the second block of a message is 100, the third 200, and
+a chain in a file that has had mail deleted from it can run *backwards* —
+the free list is a stack, so blocks come back in reverse order.
+
+Nothing in the format says so. The field is a `long` beside three other
+`long`s, the values are small, and reading it as a block number gives 1, 2,
+3 for exactly the case a fresh file produces — a hand-written test file, for
+instance. A port that makes that assumption is perfectly self-consistent and
+cannot read a single multi-block message the C ever wrote: the link is a
+hundred times too large, fails a bounds check, and the chain stops at the
+header, leaving the message truncated to 79 characters with no error
+anywhere. `write_to_file` refuses a position that is not a whole number of
+blocks (`mail.c:162`), which is the check that gives the units away if
+anything does.
+
+*Verified*: `reference/tools/mailoracle.c` — `store_mail`'s own body, run to
+write a real file — against `internal/persist/mail/classic`, built `-m32`.
+
+*Source*: `mail.c:76`, `mail.c:346`, `mail.c:375`.
+
 ### Which piece of mail you get next depends on how long the server has been up
 
 `index_mail` pushes each new message onto the *front* of a per-player list
