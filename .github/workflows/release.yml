@@ -133,43 +133,32 @@ jobs:
           go mod tidy
           git diff --exit-code go.mod go.sum
 
-      # Every release runs the 32-bit checks in full, unconditionally —
-      # unlike go.yml's old path-filtered version of this step, a release
-      # is exactly the point where "probably didn't touch the layout code"
-      # is not good enough.
-      - name: Install 32-bit toolchain
-        timeout-minutes: 5
-        run: sudo apt-get update && sudo apt-get install -y gcc-multilib
-
-      # The C tree's configure generates conf.h, which the layout and
-      # fixture programs include.
-      - name: Configure the C tree
-        run: |
-          cd reference/moderncserver
-          CFLAGS="-std=gnu89 -fcommon -w" CC=gcc ./configure >/dev/null
-
-      - name: Build
-        run: go build ./...
-
-      - name: Vet
-        run: go vet ./...
-
-      - name: Check formatting
-        run: |
-          unformatted=$(gofmt -l .)
-          if [ -n "$unformatted" ]; then
-            echo "These files need gofmt:"
-            echo "$unformatted"
-            exit 1
-          fi
-
       # Both the cross-platform build check and the artifacts themselves.
       # scripts/build-dist.sh builds dlmud and dlctl for every platform a
       # release ships — linux/amd64, linux/arm64, windows/amd64 — and
-      # packages each pair with LICENSE and the docs. It sits here rather
-      # than beside the upload at the end of the job because it is also
-      # the check: a platform that has stopped compiling should fail
-      # before the twenty minutes of tests below it, not after them.
+      # packages each pair with LICENSE and the docs.
+      #
+      # First, and deliberately: everything below this point writes into
+      # the checkout. The C tree's ./configure substitutes the CFLAGS it
+      # is given into reference/moderncserver/src/Makefile and
+      # src/util/Makefile, which are *tracked* files carrying different
+      # values — so from that step onward the working tree is dirty, and
+      # v0.1.1 shipped binaries stamped "f161334-dirty" from a clean
+      # tagged commit because the archives were built after it. Building
+      # them from a pristine checkout is the fix that does not depend on
+      # remembering anything; -buildvcs=false in the script is the one
+      # that does not depend on this ordering being preserved. Both,
+      # because neither is worth relying on alone.
+      #
+      # Nothing the C tree does is a build product of this release. It is
+      # the oracle the Go port is checked against — ./configure generates
+      # src/conf.h, which the layout and fixture programs include, and
+      # those are what the ILP32 checks, the shop-price check and
+      # world-parity.sh compile to compare against. No C binary ships.
+      #
+      # It is also the check, not just the packaging: a platform that has
+      # stopped compiling fails here, in the first minute, rather than
+      # after the twenty minutes of tests below.
       #
       # No cross toolchain and no emulation. CGO_ENABLED=0 throughout, so
       # the runner's own Go produces all three natively in well under a
@@ -207,6 +196,36 @@ jobs:
           unzip -q "dist/disgracelands-$VERSION-windows-amd64.zip" -d "$work"
           file "$work/disgracelands-$VERSION-windows-amd64/dlmud.exe" | grep -q 'PE32+'
           (cd dist && sha256sum -c SHA256SUMS)
+
+      # Every release runs the 32-bit checks in full, unconditionally —
+      # unlike go.yml's old path-filtered version of this step, a release
+      # is exactly the point where "probably didn't touch the layout code"
+      # is not good enough.
+      - name: Install 32-bit toolchain
+        timeout-minutes: 5
+        run: sudo apt-get update && sudo apt-get install -y gcc-multilib
+
+      # The C tree's configure generates conf.h, which the layout and
+      # fixture programs include.
+      - name: Configure the C tree
+        run: |
+          cd reference/moderncserver
+          CFLAGS="-std=gnu89 -fcommon -w" CC=gcc ./configure >/dev/null
+
+      - name: Build
+        run: go build ./...
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Check formatting
+        run: |
+          unformatted=$(gofmt -l .)
+          if [ -n "$unformatted" ]; then
+            echo "These files need gofmt:"
+            echo "$unformatted"
+            exit 1
+          fi
 
       - name: Test
         run: go test -race -count=1 ./...

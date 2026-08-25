@@ -400,10 +400,28 @@ Two things about it are worth knowing before changing it:
   | --- | --- |
   | `-trimpath` | absolute paths of the build directory |
   | The build date | it is the *commit's*, not the wall clock — a binary stamped with the minute the runner started undoes the rest from the inside |
-  | `-buildvcs=false` | Go stamps `vcs.revision`/`vcs.time`/`vcs.modified` from the working tree, and `release.yml` runs the C tree's `./configure` several steps earlier. v0.1.1 shipped binaries reporting `f161334-dirty` from a clean tagged commit because of it |
+  | `-buildvcs=false` | Go stamps `vcs.revision`/`vcs.time`/`vcs.modified` from the working tree. v0.1.1 shipped binaries reporting `f161334-dirty` from a clean tagged commit because of it — see below |
   | mtimes, at 1980-01-01 | not the epoch: a zip's DOS timestamp cannot represent anything earlier and clamps silently, so 1970 made the tar and the zip disagree about the same file |
   | Permissions | `go build` and `cp` both mask against the builder's umask |
   | Member order, and `TZ=UTC` | `zip -r` walks in readdir order, which is the filesystem's to choose; a zip records local time with no zone alongside it |
+
+  **Two things dirtied that stamp, and they are worth knowing separately.**
+  On the runner, the C tree's `./configure` substitutes the `CFLAGS` it is
+  given into `reference/moderncserver/src/Makefile` and
+  `src/util/Makefile` — *tracked* files, checked in carrying different
+  values — so every step after it sees a dirty tree. The archives are now
+  built before it, from a pristine checkout, which is the fix that does
+  not rely on remembering anything.
+
+  Locally it is worse and quieter: **Go's VCS stamping does not follow
+  linked git worktrees.** Building from one of `.claude/worktrees/*`
+  stamps the *primary* checkout's `HEAD` and *its* dirtiness, whatever
+  this worktree is on — a clean tree at `f2053fc` producing a binary that
+  says `c1b87f0`, `modified=true`. Since this repo is routinely developed
+  from worktrees, that alone would mean nobody could reproduce a release
+  archive from a worktree at all. `-buildvcs=false` is what makes the
+  stamp irrelevant in both cases; the reordering is what makes the
+  release right even without it.
 
   **The Go toolchain version is the one input still left to the caller.**
   `release.yml` uses `setup-go` with `check-latest: true`, so a release
