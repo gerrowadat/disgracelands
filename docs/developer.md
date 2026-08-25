@@ -391,20 +391,29 @@ Two things about it are worth knowing before changing it:
   *only* thing in the tree that builds for anything but the host —
   `go test ./...` cannot notice a Windows build break, and neither can
   `make check`.
-- **The archives are reproducible, and that is load-bearing for
-  `SHA256SUMS`.** `-trimpath` and pinned `-ldflags` do the binaries —
-  including the build date, which is the *commit's* date and not the wall
-  clock, because a binary stamped with the minute the runner started
-  would undo the packaging work below from the inside. The script does
-  the containers around them, by fixing every staged file's
-  mtime (1980-01-01, because a zip's DOS timestamp cannot represent
-  anything earlier and would silently clamp), setting permissions rather
-  than inheriting them from the builder's umask, feeding `zip` a sorted
-  file list rather than letting `zip -r` use readdir order, and
-  `TZ=UTC`, because a zip records local time with no zone. Any one of
-  those left out and the same commit packages to different bytes on a
-  different machine — at which point publishing a checksum says only that
-  the runner agrees with itself.
+- **The archives are reproducible given the same Go toolchain, and that
+  is load-bearing for `SHA256SUMS`.** Six things had to be pinned, and
+  every one of them was a real difference between two runs before it was
+  fixed:
+
+  | Pinned | Because |
+  | --- | --- |
+  | `-trimpath` | absolute paths of the build directory |
+  | The build date | it is the *commit's*, not the wall clock — a binary stamped with the minute the runner started undoes the rest from the inside |
+  | `-buildvcs=false` | Go stamps `vcs.revision`/`vcs.time`/`vcs.modified` from the working tree, and `release.yml` runs the C tree's `./configure` several steps earlier. v0.1.1 shipped binaries reporting `f161334-dirty` from a clean tagged commit because of it |
+  | mtimes, at 1980-01-01 | not the epoch: a zip's DOS timestamp cannot represent anything earlier and clamps silently, so 1970 made the tar and the zip disagree about the same file |
+  | Permissions | `go build` and `cp` both mask against the builder's umask |
+  | Member order, and `TZ=UTC` | `zip -r` walks in readdir order, which is the filesystem's to choose; a zip records local time with no zone alongside it |
+
+  **The Go toolchain version is the one input still left to the caller.**
+  `release.yml` uses `setup-go` with `check-latest: true`, so a release
+  is built by whatever 1.25.x was newest that day, and a different patch
+  release produces different code. The binary names its own, which is
+  what makes this workable rather than merely honest — `dlctl version`
+  ends in `go1.25.14`, and `GOTOOLCHAIN=go1.25.14 VERSION=v1.2.3
+  COMMIT=<sha> ./scripts/build-dist.sh` reproduces that release's
+  archives exactly. Pinning it in `go.mod` instead would make the claim
+  unconditional, at the cost of a toolchain bump becoming a commit.
 
 ## Cutting a release
 

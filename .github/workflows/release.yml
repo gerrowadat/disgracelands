@@ -450,10 +450,11 @@ jobs:
       # upload.
       #
       # SHA256SUMS is in dist/ and gets attached with the rest.
-      # scripts/build-dist.sh pins the mtimes, permissions and member
-      # order inside every archive, so those checksums are reproducible
-      # from this tag by anyone running the same script — which is the
-      # only thing that makes publishing them worth anything.
+      # scripts/build-dist.sh pins everything inside the archives that
+      # would otherwise vary — mtimes, permissions, member order, the
+      # build date, the VCS stamp — so those checksums are reproducible
+      # from this tag by anyone running the same script under the same Go
+      # toolchain, which the binary itself names. See BUILDING.md.
       - name: Create the GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
