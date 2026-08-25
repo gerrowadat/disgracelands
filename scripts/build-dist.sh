@@ -108,7 +108,7 @@ for platform in $PLATFORMS; do
 	mkdir -p "$stage"
 	for bin in dlmud dlctl; do
 		CGO_ENABLED=0 GOOS="$os" GOARCH="$arch" \
-			go build -trimpath \
+			go build -trimpath -buildvcs=false \
 			-ldflags="-s -w \
 				-X $BUILDINFO.version=$VERSION \
 				-X $BUILDINFO.commit=$COMMIT \
@@ -138,6 +138,16 @@ for platform in $PLATFORMS; do
 	# 1980-01-01, not the epoch: a zip's DOS timestamp cannot represent
 	# anything earlier, so zip would silently clamp 1970 to 1980 and the
 	# tar and the zip would disagree about the same file.
+	#
+	# (-buildvcs=false above is the same argument one layer in. Go
+	# stamps vcs.revision, vcs.time and vcs.modified into the binary
+	# from the working tree, and release.yml runs the C tree's
+	# ./configure several steps before this one -- so v0.1.1 shipped
+	# binaries that report "f161334-dirty" from a clean tagged commit,
+	# and no two runs could agree on the bytes. The three values are
+	# already passed explicitly as -ldflags above, which is what
+	# buildinfo prefers anyway, so the stamp contributed nothing but
+	# the runner's housekeeping.)
 	find "$stage" -exec touch -h -d "@315532800" {} + 2>/dev/null ||
 		find "$stage" -exec touch -h -t 198001010000.00 {} +
 

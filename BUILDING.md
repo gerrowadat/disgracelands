@@ -51,9 +51,22 @@ make dist          # all three, into out/dist, with checksums
 script — so `make dist` is how to find out about a broken cross-compile
 before a release does. It needs `zip` for the Windows archive; everything
 else is Go and `tar`. Each archive holds `dlmud`, `dlctl`, `LICENSE`,
-`README.md` and this file, and the mtimes, permissions and member order
-inside are pinned, so the published `SHA256SUMS` is reproducible from the
-tag rather than being a checksum of trust in the runner.
+`README.md` and this file.
+
+The archives are reproducible, with one input you have to supply
+yourself. Everything inside is pinned — mtimes, permissions, member
+order, the build date, and no VCS stamp — so the bytes are a function of
+the commit, the version and **the Go toolchain that built them**. That
+last one is not pinned by this repository, and a different patch release
+of Go produces different code; the binary names the one it was built
+with, so reproducing a published archive is:
+
+```sh
+dlctl version                       # ... go1.25.14
+GOTOOLCHAIN=go1.25.14 VERSION=v1.2.3 COMMIT=<sha> ./scripts/build-dist.sh
+```
+
+Without that, `SHA256SUMS` would be a checksum of trust in the runner.
 
 Other targets build and are simply not published — `linux/386`,
 `linux/arm`, `darwin/amd64` and `darwin/arm64` all compile today. Adding
