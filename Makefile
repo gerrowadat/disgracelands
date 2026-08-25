@@ -156,6 +156,21 @@ build: ## Build both binaries into out/, version-stamped
 	$(GO) build -trimpath -ldflags='$(LDFLAGS)' -o $(OUT)/dlmud ./cmd/dlmud
 	$(GO) build -trimpath -ldflags='$(LDFLAGS)' -o $(OUT)/dlctl ./cmd/dlctl
 
+# The same script release.yml runs -- so `make dist` locally produces the
+# archives a release would, and is the way to find out about a broken
+# cross-compile before a release does. Needs `zip` for the Windows
+# archive and nothing else: CGO_ENABLED=0 means the host's own Go
+# toolchain targets every published platform, with no cross toolchain and
+# no emulation.
+#
+# Note what is *not* passed: DATE. `build` above stamps the wall clock,
+# which is right for a binary you are about to run; the script defaults
+# it to the commit's date instead, which is what makes the archives
+# reproducible. Overriding it here would quietly undo that.
+.PHONY: dist
+dist: ## Cross-compile the release archives (linux/amd64, linux/arm64, windows/amd64) into out/dist
+	VERSION=$(VERSION) COMMIT=$(COMMIT) ./scripts/build-dist.sh $(OUT)/dist
+
 .PHONY: test
 test: ## go test -race (the race detector is not optional here; see the plan's §3.1)
 	$(GO) test -race -count=1 $(PKG)

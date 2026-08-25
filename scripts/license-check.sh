@@ -110,6 +110,13 @@ grep -q 'DikuMud License' LICENSE || bad "LICENSE has no DikuMUD License section
 grep -q 'LICENSE /LICENSE' build/Dockerfile ||
 	bad "build/Dockerfile does not copy LICENSE into the runtime image"
 
+# So is a release archive, which is the copy most people will actually
+# take: release.yml attaches scripts/build-dist.sh's output to every
+# GitHub release, and that script stages a fixed list of files alongside
+# the two binaries.
+grep -q '^EXTRAS=.*LICENSE' scripts/build-dist.sh ||
+	bad "scripts/build-dist.sh does not put LICENSE in the release archives"
+
 # 2. Stock C files keep the headers they came with.
 #
 # "You must not remove, change, or modify any notices of copyright, licensing

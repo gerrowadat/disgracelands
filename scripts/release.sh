@@ -9,7 +9,8 @@
 # Cut a release: work out the next semver version, regenerate the example
 # yaml worlds from their binary source (catching any drift between the two
 # before it ships rather than after), run the local checks -- including the
-# play regression suite, which is release-only -- then hand the version to
+# play regression suite and the cross-compile of the published platforms,
+# both release-only -- then hand the version to
 # .github/workflows/release.yml and wait for it.
 #
 # Nothing here tags anything. release.yml runs the full regression suite
@@ -176,6 +177,19 @@ if command -v gcc >/dev/null 2>&1 || command -v cc >/dev/null 2>&1; then
 	make parity
 else
 	echo "==> skipping make parity locally (no C compiler here); release.yml runs it for real"
+fi
+
+# The cross-compile. Cheap next to everything above -- three targets,
+# no cgo, so it is the host's own Go toolchain three times -- and it is
+# the only check anywhere that builds for a platform other than this one:
+# neither `make check` nor `make play` can notice that dlmud has stopped
+# compiling for Windows. release.yml runs the same script and would catch
+# it, twenty minutes further in.
+if command -v zip >/dev/null 2>&1; then
+	echo "==> make dist"
+	make dist
+else
+	echo "==> skipping make dist locally (no zip here); release.yml runs it for real"
 fi
 
 # 5. Push main, then hand the version to release.yml and wait. The

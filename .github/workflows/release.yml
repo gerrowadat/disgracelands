@@ -17,10 +17,13 @@
 # point at which "slow but thorough" is worth more than "fast".
 #
 # Once that passes, two things get published: the GitHub release itself,
-# and the container image, to ghcr.io/gerrowadat/disgracelands for
-# linux/amd64 and linux/arm64. Neither needs a secret configured —
-# GITHUB_TOKEN covers both — and neither needs the repository to be
-# public; see the `image` job for what that does mean.
+# with the cross-compiled binaries attached to it — linux/amd64,
+# linux/arm64 and windows/amd64, built and packaged in full-suite by
+# scripts/build-dist.sh — and the container image, to
+# ghcr.io/gerrowadat/disgracelands for linux/amd64 and linux/arm64.
+# Neither needs a secret configured — GITHUB_TOKEN covers both — and
+# neither needs the repository to be public; see the `image` job for what
+# that does mean.
 #
 # Nothing is published until the suite above it has passed, and that
 # includes the tag. scripts/release.sh dispatches this workflow with
@@ -159,6 +162,51 @@ jobs:
             echo "$unformatted"
             exit 1
           fi
+
+      # Both the cross-platform build check and the artifacts themselves.
+      # scripts/build-dist.sh builds dlmud and dlctl for every platform a
+      # release ships — linux/amd64, linux/arm64, windows/amd64 — and
+      # packages each pair with LICENSE and the docs. It sits here rather
+      # than beside the upload at the end of the job because it is also
+      # the check: a platform that has stopped compiling should fail
+      # before the twenty minutes of tests below it, not after them.
+      #
+      # No cross toolchain and no emulation. CGO_ENABLED=0 throughout, so
+      # the runner's own Go produces all three natively in well under a
+      # minute — the same property that lets the `image` job build arm64
+      # without QEMU, and the reason neither needs anything from apt.
+      - name: Cross-compile and package the release archives
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          COMMIT: ${{ github.sha }}
+        # No DATE: the script defaults it to the commit's own date, so
+        # every archive is a pure function of the commit and the version.
+        # A wall-clock build date would make the published SHA256SUMS
+        # unreproducible from inside the binary, whatever the packaging
+        # around it does.
+        run: ./scripts/build-dist.sh dist
+
+      # Each archive answers for itself. `dlctl version` out of the
+      # unpacked tarball is the same smoke test the container image gets
+      # at the end of this job, and it is the one thing a stamping
+      # mistake — an unset ldflag, a renamed -X path — cannot survive.
+      # Only the host-architecture archive can actually be run here, so
+      # the other two are checked for being what they say they are.
+      - name: The packaged binaries are what they claim to be
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -eu
+          work=$(mktemp -d)
+          tar -xzf "dist/disgracelands-$VERSION-linux-amd64.tar.gz" -C "$work"
+          got=$("$work/disgracelands-$VERSION-linux-amd64/dlctl" version)
+          echo "$got"
+          echo "$got" | grep -q -- "$VERSION"
+          tar -xzf "dist/disgracelands-$VERSION-linux-arm64.tar.gz" -C "$work"
+          file "$work/disgracelands-$VERSION-linux-arm64/dlmud" | grep -q 'ARM aarch64'
+          unzip -q "dist/disgracelands-$VERSION-windows-amd64.zip" -d "$work"
+          file "$work/disgracelands-$VERSION-windows-amd64/dlmud.exe" | grep -q 'PE32+'
+          (cd dist && sha256sum -c SHA256SUMS)
 
       - name: Test
         run: go test -race -count=1 ./...
@@ -323,6 +371,27 @@ jobs:
           echo "$got"
           echo "$got" | grep -q -- "${{ steps.version.outputs.version }}"
 
+      # Handed to `publish` rather than rebuilt there. Building them in
+      # the job that gates the release is what makes them the *same*
+      # bytes the suite above just checked: a second build in the publish
+      # job would be a second set of binaries nothing had run.
+      #
+      # This runs whether or not the release is being published — a
+      # workflow_dispatch without publish=true exists to exercise this
+      # workflow, and leaving the archives on the run is how you look at
+      # what it would have shipped.
+      - name: Keep the archives for the publish job
+        uses: actions/upload-artifact@v7
+        with:
+          name: dist
+          path: dist/
+          if-no-files-found: error
+          retention-days: 7
+          # The action zips whatever it is given, and what it is given
+          # here is three archives and a checksum file. Deflating a
+          # gzip stream a second time buys nothing and costs a minute.
+          compression-level: 0
+
   # `needs: full-suite` is the whole gate. A red suite means this job
   # never starts, so there is no tag, no release and no notes -- the
   # commit is just a commit that failed its release, and the next attempt
@@ -332,6 +401,13 @@ jobs:
     needs: full-suite
     if: github.event_name == 'push' || inputs.publish == true || inputs.publish == 'true'
     runs-on: ubuntu-latest
+    # Spelled out for the same reason the `image` job spells its own out:
+    # naming any permission in the top-level block sets every unnamed one
+    # to none, so contents: write has to be repeated alongside the
+    # actions: read that download-artifact wants for the artifact API.
+    permissions:
+      contents: write
+      actions: read
     steps:
       - uses: actions/checkout@v7
         with:
@@ -361,12 +437,30 @@ jobs:
           git tag -a "$VERSION" -m "Release $VERSION" "$GITHUB_SHA"
           git push origin "$VERSION"
 
+      - name: Fetch the archives full-suite built
+        uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist
+
+      # The archives go up with the release rather than after it, so
+      # there is no window in which the release exists with nothing
+      # attached — `gh release create` uploads the assets as part of
+      # creating it, and fails the whole step if any of them fails to
+      # upload.
+      #
+      # SHA256SUMS is in dist/ and gets attached with the rest.
+      # scripts/build-dist.sh pins the mtimes, permissions and member
+      # order inside every archive, so those checksums are reproducible
+      # from this tag by anyone running the same script — which is the
+      # only thing that makes publishing them worth anything.
       - name: Create the GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ needs.full-suite.outputs.version }}
         run: |
-          gh release create "$VERSION" --title "$VERSION" --generate-notes
+          ls -l dist
+          gh release create "$VERSION" --title "$VERSION" --generate-notes dist/*
 
   # The container image, published to GitHub's own registry under the same
   # account as the repository: ghcr.io/gerrowadat/disgracelands.
