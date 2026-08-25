@@ -64,6 +64,19 @@ able to stop a running game.
 
 **Signals reload files; commands reload the world.** §4.
 
+**Every signal below is a Unix signal, and one row of the table does not
+survive the trip to Windows.** Go's `syscall` package defines `SIGHUP`,
+`SIGINT`, `SIGTERM` and `SIGQUIT` there as numbers that exist and are
+never delivered — harmless to name and to trap. It defines no `SIGUSR1`
+or `SIGUSR2` at all, so anything that mentions them by name has to sit
+behind a build constraint (`internal/signals/name_unix.go`) or the tree
+stops compiling for `windows/amd64`, which is a platform a release ships
+binaries for. That is not a hypothetical: it is what the release
+cross-compile caught the first time it ran. Whatever §3's `SIGUSR1` and
+`SIGUSR2` rows eventually do, they get implemented on the Unix side of
+that split, and Windows gets whatever in-game or `dlctl` route exists
+instead.
+
 ## 3. The table
 
 | Signal | Disposition | The C | Why |

@@ -4,6 +4,13 @@
 // (Copyright (C) 1990, 1991). Use of this file is governed by the CircleMUD
 // and DikuMUD licenses; see LICENSE. Non-commercial use only.
 
+// The dispatcher is exercised by actually sending signals, and both
+// syscall.Kill and SIGWINCH are Unix-only -- so this file is too. Nothing
+// is lost: the tests run on Linux, and what Windows needs from this
+// package is that it compiles, which scripts/build-dist.sh checks at
+// release time.
+//go:build unix
+
 package signals
 
 import (
