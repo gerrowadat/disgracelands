@@ -96,6 +96,15 @@ for platform in $PLATFORMS; do
 		ext=".exe"
 	fi
 
+	# vet before build, because `go build` below compiles only what the
+	# two binaries import -- not the tests. A _test.go naming a
+	# Unix-only symbol builds clean and fails `GOOS=windows go vet`, and
+	# that is not hypothetical: internal/signals broke both halves at
+	# once the first time this script ran for real, the package in
+	# Name() and its test file in syscall.Kill. vet type-checks tests,
+	# so it is the stricter of the two and costs seconds.
+	CGO_ENABLED=0 GOOS="$os" GOARCH="$arch" go vet ./...
+
 	mkdir -p "$stage"
 	for bin in dlmud dlctl; do
 		CGO_ENABLED=0 GOOS="$os" GOARCH="$arch" \

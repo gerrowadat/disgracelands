@@ -128,6 +128,14 @@ func (s *Set) Stop() {
 // os.Signal.String gives the strerror-style wording — "hangup",
 // "terminated" — and an operator reading a log is looking for the name they
 // typed at kill(1).
+//
+// The four below are the ones Go's syscall package defines on every
+// platform this builds for, Windows included — where SIGHUP and SIGQUIT
+// are numbers that exist and are never delivered, which costs nothing to
+// name. SIGUSR1 and SIGUSR2 are not numbers Windows has at all, so they
+// live in name_unix.go behind platformName; naming them here is what
+// stopped the tree compiling for windows/amd64 (caught by the release
+// cross-compile, scripts/build-dist.sh, on its first run).
 func Name(sig os.Signal) string {
 	switch sig {
 	case syscall.SIGHUP:
@@ -136,12 +144,11 @@ func Name(sig os.Signal) string {
 		return "SIGINT"
 	case syscall.SIGTERM:
 		return "SIGTERM"
-	case syscall.SIGUSR1:
-		return "SIGUSR1"
-	case syscall.SIGUSR2:
-		return "SIGUSR2"
 	case syscall.SIGQUIT:
 		return "SIGQUIT"
+	}
+	if name, ok := platformName(sig); ok {
+		return name
 	}
 	return sig.String()
 }
