@@ -16,6 +16,21 @@ source see `BUILDING.md`.
 > §10. Everything below about process management, health checking,
 > logging and player data is real and works.
 
+## Getting a binary
+
+Every release attaches a `dlmud`/`dlctl` pair for `linux/amd64`,
+`linux/arm64` and `windows/amd64`, plus a `SHA256SUMS`:
+
+```sh
+tar xzf disgracelands-v1.2.3-linux-amd64.tar.gz
+sha256sum -c SHA256SUMS          # from the directory you downloaded into
+```
+
+The two Linux ones are also the container image
+(`ghcr.io/gerrowadat/disgracelands`, see "Containers" below); Windows has
+no image, which is most of why the archive exists. To build instead, or
+for a platform not on that list, see `BUILDING.md`.
+
 ## Starting it
 
 The shortest thing that actually starts, for local use:

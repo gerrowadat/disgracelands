@@ -227,7 +227,15 @@ there, not path-filtered: a release is exactly the point where "probably
 didn't touch the layout code" stops being good enough), the C-vs-Go
 world-parity check, the licence check, two doc-coverage checks, a check
 that `examples/stock/yaml`/`examples/mini/yaml` still match a fresh
-`dlctl lib import` of their binary source, and a container build.
+`dlctl lib import` of their binary source, a container build, and a
+cross-compile of both binaries for every published platform
+(`linux/amd64`, `linux/arm64`, `windows/amd64`), which is also what
+produces the archives attached to the release —
+`scripts/build-dist.sh`, or `make dist` locally. That cross-compile is
+the only thing in the tree that builds for anything but the host: `go
+test ./...` cannot notice a Windows build break and neither can `make
+check`, so a change touching `syscall`, file paths or process handling
+is one worth running `make dist` after.
 `scripts/release.sh` (`make release BUMP=patch`) is what actually cuts a
 release: it works out the next semver version, regenerates the example
 yaml worlds if they have drifted, runs the local checks, pushes `main`,

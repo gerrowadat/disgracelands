@@ -276,10 +276,12 @@ answer:
   world parity (`make parity`), the license check, the two doc-coverage
   checks, a check that `examples/stock/yaml`/`examples/mini/yaml` still
   match a fresh `dlctl lib import` of their binary source, the play
-  regression suite (`make play`, below), and a container build — the
-  licence check here is the full five, not just the notices — and only
-  once all of that is green does it tag the commit, create the GitHub
-  release and push the image. See "Cutting a release" below.
+  regression suite (`make play`, below), a container build, and a
+  cross-compile of both binaries for every published platform
+  (`make dist`, below) — the licence check here is the full five, not
+  just the notices — and only once all of that is green does it tag the
+  commit, create the GitHub release, attach the archives to it and push
+  the image. See "Cutting a release" below.
 
 ### The play regression suite
 
@@ -368,6 +370,42 @@ to avoid, both of which produce differences that are not differences:
   and the obvious fix is a way to hold mobile activity still on both sides —
   the C has no flag for it, so it would be another `<DoC>` addition.
 
+### The release archives
+
+```sh
+make dist          # linux/amd64, linux/arm64, windows/amd64 into out/dist
+```
+
+`scripts/build-dist.sh` builds `dlmud` and `dlctl` for each published
+platform, packages each pair with `LICENSE`, `README.md` and
+`BUILDING.md`, and writes a `SHA256SUMS`. `release.yml` runs the same
+script and attaches its output to the GitHub release; `BUILDING.md` has
+the platform table and what is deliberately not on it.
+
+Two things about it are worth knowing before changing it:
+
+- **It is the cross-platform build check as well as the packaging step**,
+  which is why it sits near the top of `full-suite` rather than next to
+  the upload at the bottom. A platform that has stopped compiling should
+  fail the release in the first minute, not after twenty. It is the
+  *only* thing in the tree that builds for anything but the host —
+  `go test ./...` cannot notice a Windows build break, and neither can
+  `make check`.
+- **The archives are reproducible, and that is load-bearing for
+  `SHA256SUMS`.** `-trimpath` and pinned `-ldflags` do the binaries —
+  including the build date, which is the *commit's* date and not the wall
+  clock, because a binary stamped with the minute the runner started
+  would undo the packaging work below from the inside. The script does
+  the containers around them, by fixing every staged file's
+  mtime (1980-01-01, because a zip's DOS timestamp cannot represent
+  anything earlier and would silently clamp), setting permissions rather
+  than inheriting them from the builder's umask, feeding `zip` a sorted
+  file list rather than letting `zip -r` use readdir order, and
+  `TZ=UTC`, because a zip records local time with no zone. Any one of
+  those left out and the same commit packages to different bytes on a
+  different machine — at which point publishing a checksum says only that
+  the runner agrees with itself.
+
 ## Cutting a release
 
 ```sh
@@ -387,8 +425,11 @@ version, and watches the run. `release.yml` is the authoritative gate —
 the local pre-flight exists to fail sooner, not to replace it.
 
 **The script does not tag anything.** `release.yml`'s `publish` job
-creates the tag, after `full-suite` has gone green, and both `publish` and
-`image` are `needs:`-gated on it. So a failed release leaves *nothing*
+creates the tag, after `full-suite` has gone green, then creates the
+GitHub release with the archives `full-suite` built attached to it — the
+same bytes the suite checked, handed over as a workflow artifact rather
+than rebuilt, so what is published is what was tested. Both `publish` and
+`image` are `needs:`-gated on `full-suite`. So a failed release leaves *nothing*
 behind: no tag, no GitHub release, no generated notes, no package, and the
 version number still free — fix the problem, merge the fix, and run `make
 release BUMP=v1.2.3` again for the same version. It used to work the other

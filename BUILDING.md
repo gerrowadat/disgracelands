@@ -26,6 +26,45 @@ see `docs/operations.md`; for the full settings list,
 against a tiny world, a throwaway data directory, and the checks to run
 before pushing — see `docs/developer.md` and the `Makefile` it describes.
 
+### Platforms
+
+`go build ./...` targets any platform Go does; what a release actually
+*publishes* is three:
+
+| `GOOS`/`GOARCH` | Ships as | Also an image |
+| --- | --- | --- |
+| `linux/amd64` | `.tar.gz` on the GitHub release | yes |
+| `linux/arm64` | `.tar.gz` on the GitHub release | yes |
+| `windows/amd64` | `.zip` on the GitHub release | no |
+
+Nothing in the tree uses cgo, so every one of those cross-compiles from
+any host with nothing installed but Go — no cross toolchain, no
+emulation, no `apt`. That is also why the container image can be
+distroless/static and why the pluggable formats are a compiled-in
+registry rather than Go plugins (`docs/proposals/go-port-plan.md` §5.1).
+
+```sh
+make dist          # all three, into out/dist, with checksums
+```
+
+`scripts/build-dist.sh` is what that runs, and `release.yml` runs the same
+script — so `make dist` is how to find out about a broken cross-compile
+before a release does. It needs `zip` for the Windows archive; everything
+else is Go and `tar`. Each archive holds `dlmud`, `dlctl`, `LICENSE`,
+`README.md` and this file, and the mtimes, permissions and member order
+inside are pinned, so the published `SHA256SUMS` is reproducible from the
+tag rather than being a checksum of trust in the runner.
+
+Other targets build and are simply not published — `linux/386`,
+`linux/arm`, `darwin/amd64` and `darwin/arm64` all compile today. Adding
+one to a release is a line in `PLATFORMS` in `scripts/build-dist.sh`.
+
+Windows is a *build* target, not a tested one: the release checks that
+both binaries compile and link for it, and the test suite runs on Linux
+only. The server has no Unix-only runtime dependency (no cgo, no unix
+sockets, no `syscall` beyond signal names), but `SIGHUP`-to-reload
+`--config` is a Unix signal and will never fire there — restart instead.
+
 Two binaries:
 
 - **`dlmud`** — the server. Every option can also be set from the

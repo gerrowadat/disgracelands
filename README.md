@@ -87,7 +87,9 @@ records — and `scripts/world-parity.sh` checks that at every release (`.github
 
 ## Where to start
 
-- **Building either server**: `BUILDING.md`
+- **Building either server**: `BUILDING.md` — which also lists the
+  platforms a release ships binaries for (`linux/amd64`, `linux/arm64`,
+  `windows/amd64`; the container image covers the two Linux ones)
 - **Running and administering the Go server**: `docs/configuration.md`,
   `docs/operations.md`
 - **Working on the Go port**: `docs/developer.md` (and `make` for the dev
@@ -107,7 +109,7 @@ The rule: the root is the Go port. C code lives only under `reference/`.
 cmd/            The dlmud server and dlctl tooling binaries.
 internal/       Everything else in the Go port.
 build/          Dockerfile and compose file.
-scripts/        Development scripts, notably world-parity.sh.
+scripts/        Development scripts, notably world-parity.sh and build-dist.sh.
 docs/           This project's own documentation. The root is operator
                 docs for the Go server; docs/proposals/ is work not yet
                 done; docs/design/ is design decisions that have actually

@@ -3,6 +3,10 @@
 /dlmud
 /dlctl
 /out/
+# scripts/build-dist.sh's default output directory -- the cross-compiled
+# release archives. `make dist` puts them under out/ instead; this covers
+# running the script by hand, and release.yml, which uses the default.
+/dist/
 *.test
 *.out
 coverage.txt
