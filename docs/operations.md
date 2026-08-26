@@ -336,6 +336,19 @@ output needs no such check — `dlctl world lint` already reports invalid
 UTF-8 in world text, and covers `--to-dir/world` the same way it covers
 any other `--world-dir`.
 
+**A lib dir imported before 2026-08-26 has truncated mail; re-import it.**
+The classic mail codec read a block chain's links as block numbers, and in
+the C they are byte offsets into the file (`docs/weirdnumbers.md`). Every
+message longer than 79 characters therefore stopped at its first block, with
+no error anywhere — the yaml `state import` writes is well-formed and short.
+Nothing else was affected; mail is the only subsystem whose on-disk format
+chains blocks together. Re-run the import against the original `plrmail` and
+compare the message count and lengths:
+
+```sh
+grep -c '^- ' data-yaml/state/mail.yaml
+```
+
 ### Converting only the player roster
 
 The server runs on the ascii format and refuses to start on the original

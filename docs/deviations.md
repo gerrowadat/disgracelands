@@ -748,6 +748,25 @@ Listed here so they are not mistaken for deliberate differences.
   deleted. Removing it when nothing is left is the same thing to a reader and
   leaves no litter.
 
+- **A freed mail block is reused lowest-first, not most-recently-freed
+  first.** The C keeps an explicit free list, built at boot by `scan_file`
+  and pushed to by `read_delete`, and `pop_free_list` takes from its front
+  (`mail.c:115`) — so the block freed last is the block filled next. This
+  port has no free list and scans for the lowest deleted block. The file's
+  contents differ in *which* block a message lands in and in nothing else,
+  and the C reads either one; where it shows is a test, which can only
+  compare a file the two wrote byte for byte while no block has yet been
+  freed (`internal/persist/mail/classic/fixture_test.go`).
+
+- **A mail block link that names no block ends the message.** The link is a
+  byte offset (see the weirdnumbers entry); a corrupt one that is negative,
+  not a multiple of `BLOCK_SIZE`, or past the end of the file would send the
+  C either to `read_from_file`'s "invalid filepos read" and mail disabled
+  server-wide, or to a `fseek` past the end and a `fread` of whatever was in
+  the buffer. A chain that points back into itself would hang it. Here the
+  message simply ends at the last block that was real. Nothing is gained by
+  reproducing a read fault in a reader that already holds the whole file.
+
 - **Mail is delivered in ascending block order.** See the weirdnumbers entry:
   the C's order depends on whether the server has been restarted since the
   message was sent.

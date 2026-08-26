@@ -12,6 +12,9 @@
 // through their first field. Freed blocks go on a free list and are reused,
 // so the file grows to its high-water mark and stays there.
 //
+// A link in that chain is a byte offset into the file, not a block number —
+// see blockOffset, and the fixture in testdata that pins it.
+//
 // The block size is the same under every data model. What changes is the
 // split *inside* a block — a header block holds 79 characters of text under
 // ILP32 and 59 under LP64, because the fields before the text are wider — so
@@ -63,7 +66,9 @@ const (
 )
 
 // Block types (mail.h:53). A data block's type is either one of these or a
-// non-negative link to the next block.
+// link to the next block — and that link is a *byte offset into the file*,
+// not a block number. See blockOffset. The same is true of a header block's
+// next_block.
 const (
 	headerBlock  int32 = -1
 	lastBlock    int32 = -2
@@ -190,11 +195,12 @@ func (s *Store) Send(m mail.Message) error {
 	for text != "" {
 		next := s.alloc()
 		// Link the previous block to this one. In a header block the link is
-		// next_block; in a data block it is the block type itself.
+		// next_block; in a data block it is the block type itself. Either
+		// way it is a byte offset, not an index.
 		if prev == head {
-			putInt32(s.blocks[prev][offNextBlock:], int32(next)) //nolint:gosec // a block index
+			putInt32(s.blocks[prev][offNextBlock:], blockOffset(next))
 		} else {
-			putInt32(s.blocks[prev][offBlockType:], int32(next)) //nolint:gosec // ditto
+			putInt32(s.blocks[prev][offBlockType:], blockOffset(next))
 		}
 
 		data := make([]byte, BlockSize)
@@ -264,16 +270,54 @@ func (s *Store) readChainLocked(head int) (mail.Message, []int) {
 	}
 
 	span := []int{head}
-	next := int(int32(byteOrder.Uint32(block[offNextBlock:]))) //nolint:gosec // reinterpretation
 	seen := map[int]bool{head: true}
-	for next >= 0 && next < len(s.blocks) && !seen[next] {
+	next := s.blockAt(int32(byteOrder.Uint32(block[offNextBlock:]))) //nolint:gosec // reinterpretation
+	for next >= 0 && !seen[next] {
 		seen[next] = true
 		data := s.blocks[next]
 		m.Text += readText(data[offDataTxt:], DataTextSize)
 		span = append(span, next)
-		next = int(blockType(data))
+		next = s.blockAt(blockType(data))
 	}
 	return m, span
+}
+
+// blockOffset is what the C stores in a link: the block's byte offset into
+// the file, because that is what it passes to fseek.
+//
+// pop_free_list hands back an offset (mail.c:115, and file_end_pos when the
+// free list is empty), store_mail assigns it straight into next_block or a
+// data block's block_type (mail.c:349, :378), and read_delete hands it back
+// to read_from_file, which seeks to it (mail.c:476, :209). scan_file builds
+// the free list the same way, multiplying its block counter by BLOCK_SIZE
+// (mail.c:263).
+//
+// It reads exactly like an index and is not one, which is how this package
+// had it wrong: the store wrote indices and read indices, so every
+// round-trip test it had passed while no file a C server wrote could be
+// read at all past its first block. docs/weirdnumbers.md has it; the fixture
+// in testdata is bytes the C actually wrote.
+func blockOffset(i int) int32 {
+	return int32(i * BlockSize) //nolint:gosec // a 2GB mail file is not a thing
+}
+
+// blockAt is the reverse: the index of the block a link names, or -1 if it
+// names no block in this file.
+//
+// LAST_BLOCK and DELETED_BLOCK are negative and land here as -1, which ends
+// a chain. So does an offset past the end of the file or one that is not a
+// whole number of blocks — the C would seek there and read rubbish, or log
+// its "invalid filepos read" and disable mail; there is nothing to be gained
+// from reproducing that in a reader whose whole file is already in memory.
+func (s *Store) blockAt(link int32) int {
+	if link < 0 || link%BlockSize != 0 {
+		return -1
+	}
+	i := int(link) / BlockSize
+	if i >= len(s.blocks) {
+		return -1
+	}
+	return i
 }
 
 // alloc returns a block index to write into, porting pop_free_list.
@@ -282,6 +326,12 @@ func (s *Store) readChainLocked(head int) (mail.Message, []int) {
 // same answer at a size where it does not matter. A deleted block is reused
 // before the file is grown, which is the behaviour that keeps the file from
 // growing without bound.
+//
+// Not quite the same answer, in one respect: pop_free_list is LIFO, so the C
+// refills the block freed *last* and this refills the *lowest*. Neither file
+// is unreadable to the other and only a byte-for-byte comparison can see it,
+// which is why fixture_test.go can only make that comparison against a file
+// nothing has been deleted from yet. It is in docs/deviations.md.
 func (s *Store) alloc() int {
 	for i, block := range s.blocks {
 		if blockType(block) == deletedBlock {

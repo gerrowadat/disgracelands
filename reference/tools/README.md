@@ -49,6 +49,13 @@ wrong. Every oracle written so far has caught at least one real mistake.
   at*: `int * float` truncated back to `int` is 115 with SSE and 114 in the
   x87's 80-bit registers, and the archived server was i386. Built `-m32
   -mfpmath=387` for that reason.
+- **`mailgen.c`** — `store_mail` and the block-freeing half of `read_delete`
+  from `mail.c`, writing mail files for `internal/persist/mail/classic` to be
+  checked against. Not arithmetic: the thing it pins is that a link between
+  two blocks is a *byte offset into the file*, not a block number. A codec
+  that has that wrong is wrong symmetrically, so it round-trips its own files
+  perfectly and cannot read a single multi-block message the real server
+  wrote. Must be built `-m32`, for the same reason `maillayout.c` must.
 - **`nameoracle.c`** — `isname` and `get_number` from `handler.c`, the two
   functions that decide what a typed word means. `isname` reads like a prefix
   match and is a whole-word one, which this port got wrong for four phases;

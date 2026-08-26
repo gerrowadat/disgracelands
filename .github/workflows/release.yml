@@ -122,15 +122,16 @@ jobs:
           fi
           grep -- "struct members against the 32-bit C" boards.txt
 
-      - name: The 32-bit mail layout check must not have skipped
+      - name: The 32-bit mail checks must not have skipped
         run: |
           go test -count=1 -v ./internal/persist/mail/... > mail.txt 2>&1 || { cat mail.txt; exit 1; }
           if grep -q -- "--- SKIP" mail.txt; then
-            echo "the 32-bit mail layout check skipped; it must run for a release:"
+            echo "a 32-bit mail check skipped; they must run for a release:"
             grep -A2 -- "--- SKIP" mail.txt
             exit 1
           fi
           grep -- "mail block values against the 32-bit C" mail.txt
+          grep -- "regenerated both mail fixtures" mail.txt
 
       - name: The 32-bit house layout check must not have skipped
         run: |

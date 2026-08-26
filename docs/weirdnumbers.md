@@ -1085,6 +1085,48 @@ checksum anywhere in the format to catch it.
 
 *Source*: `mail.h:71`.
 
+### The link between two mail blocks is a byte offset, not a block number
+
+```c
+target_address = pop_free_list();
+header.header_data.next_block = target_address;
+```
+
+`next_block` sits in a struct next to `from` and `to`, is written by
+`store_mail` from something called an address, and is read back by
+`read_delete` as `following_block`. Everything about it reads like an index
+into the file's blocks. It is a byte offset: `pop_free_list` returns
+`file_end_pos` — the length of the file — when the free list is empty
+(`mail.c:112`), `scan_file` builds the free list by multiplying its block
+counter by `BLOCK_SIZE` (`mail.c:263`), and both `read_from_file` and
+`write_to_file` `fseek` straight to the value and reject it if it is not a
+multiple of `BLOCK_SIZE` (`mail.c:209`, `mail.c:175`). The same is true of a
+data block's `block_type` when it is not one of the three negative sentinels.
+
+The failure this causes is invisible from inside the port. A codec that reads
+the link as an index and writes it as one is *symmetrically* wrong, so it
+round-trips its own files perfectly and every test built on that passes.
+Against a file a C server wrote, the link is a hundred times too large: it
+usually points past the end of the file, so the message silently truncates at
+its header block's 79 characters, and in a file of more than 10,000 blocks it
+points at a real block instead and splices somebody else's letter into the
+middle. Reading the archived `plrmail` this way reported three messages, each
+cut off at 79 characters; the file holds eight.
+
+The lesson is the one in `CLAUDE.md` — a field that would have to be simulated
+in your head to be sure of is a field to test against the C — and it is
+`isname` again rather than arithmetic. Nothing here is a *number* that is
+surprising; what is surprising is the unit.
+
+*Verified*: `reference/tools/mailgen.c` — `store_mail` and the block-freeing
+half of `read_delete`, built `-m32` — writes two files, checked into
+`internal/persist/mail/classic/testdata`. One is append-only and is compared
+against what the Go writes byte for byte; the other has a message threaded
+back through freed blocks so its chain runs 5 → 4 → 6 → 7, and is read.
+
+*Source*: `mail.c:112`, `mail.c:175`, `mail.c:209`, `mail.c:263`,
+`mail.c:349`, `mail.c:476`.
+
 ### Which piece of mail you get next depends on how long the server has been up
 
 `index_mail` pushes each new message onto the *front* of a per-player list
