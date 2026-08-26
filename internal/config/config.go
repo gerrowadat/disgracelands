@@ -115,6 +115,16 @@ type Config struct {
 	Restrict      bool
 	NoSpecials    bool
 
+	// FreezeMobiles holds the mobiles still: no wandering, no scavenging,
+	// no mobile-activity dice. It is not a C option and not a game
+	// setting — it is the session-parity harness's lever, matching the
+	// `-M` added to the C server for the same purpose
+	// (reference/moderncserver/src/comm.c, `freeze_mobiles`). A mobile's
+	// position depends on how many pulses have elapsed since boot, so two
+	// servers booted seconds apart disagree about every room a mobile
+	// walks through — which is most of Midgaard. See test/parity.
+	FreezeMobiles bool
+
 	// Security.
 	AllowLegacyPasswords bool
 
@@ -335,6 +345,7 @@ func Load(args []string, lookupEnv func(string) (string, bool), out io.Writer) (
 	boolean("skip-rent-check", "Skip the rent scan on boot (C: -q)", &cfg.SkipRentCheck)
 	boolean("restrict", "Allow no new players (C: -r)", &cfg.Restrict)
 	boolean("no-specials", "Suppress special procedure assignment (C: -s)", &cfg.NoSpecials)
+	boolean("freeze-mobiles", "Hold the mobiles still (parity harness; C: -M)", &cfg.FreezeMobiles)
 
 	boolean("allow-legacy-passwords", "Accept pre-2008 DES crypt(3) password hashes", &cfg.AllowLegacyPasswords)
 

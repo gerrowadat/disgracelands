@@ -527,6 +527,193 @@ enforce that, only the warning in the command's help.
 
 ---
 
+## What the session-parity suite found
+
+`test/parity` (`make session-parity`, 2026-08-25) types the same scripts at
+the C server and at this one and compares what they said, line for line —
+the missing half of the world-parity harness, which compares only what the
+two *loaded*. Everything below is a difference it found on its first green
+run, listed here because Phase 7's precondition 2 is not "make the two
+servers agree" but "every difference is either fixed or decided". Each one
+has a matching entry in the suite's own triage table, so a difference that
+gets fixed fails the suite with "delete the entry" rather than quietly
+staying on this list.
+
+**None of these are fixed.** They are gaps, not decisions — but as of
+2026-08-26 every one of them has been *ruled on*, which is the half of
+precondition 2 that needed a person rather than a harness. Twenty
+differences are listed below; eighteen needed a ruling, and each carries
+it:
+
+- **Blocker** — fix before cutover. A returning player would not forgive
+  it. Sixteen of the eighteen, which is the honest answer to "how close
+  is this to being playable by someone who played the original": closer
+  than the list looks, since most are one command each, and not as close
+  as a green suite suggests.
+- **Later** — a real gap, worth closing, not gating cutover.
+- **Accepted** — the difference stands; this file is where it is
+  recorded, and that is the whole disposition.
+
+The two 64-bit reference-build entries at the end need no ruling: the
+port is right and the thing it is compared against is wrong.
+
+### The two that are in every transcript
+
+- **`quit` returns to the main menu in the C and disconnects here.**
+  `do_quit` (act.other.c:180) ends in `extract_char`, which puts a playing
+  descriptor back into `CON_MENU`; the port's `doQuit`
+  (`internal/session/commands.go`) calls `Session.Close`. A player who quits
+  on the C server can enter the game again without dialling back in.
+  *Ruling (2026-08-26):*
+  **Blocker.** `quit` is among the most-typed commands in the game and the
+  menu is where a returning player expects to land.
+- **The C prepends a CRLF to any output that interrupts a prompt.**
+  `process_output` sends its buffer from `i` rather than `i + 2` when
+  `has_prompt` is set (comm.c:1459), and a descriptor is born with
+  `has_prompt = 1` — "prompt is part of greetings" (comm.c:1404). Every
+  separate write the C makes while answering one command therefore arrives
+  with a blank line in front of it. The port has no equivalent and adds
+  newlines of its own in other places. **The suite does not compare blank
+  lines at all** because of this (`internal/parity/diff.go`,
+  `withoutBlankLines`), which is the one place it is knowingly blind: a
+  difference that is *only* whitespace would not be caught.
+  *Ruling (2026-08-26):*
+  **Accepted**, along with the blindness it forces on the suite.
+  Reproducing `has_prompt`'s newline solely so that blank lines could be
+  compared is a great deal of work for very little evidence; the blind
+  spot is bounded and written down here, which is what makes it a decision
+  rather than an oversight.
+
+### Things a player would notice
+
+- **A mortal's hit points at creation differ.** A level 1 thief rolls 23 on
+  the C and 19 here; a cleric, 20 and 19. Both servers are on the C's own
+  generator from the same fixed seed and agree about the abilities `score`
+  prints, so the dice are in step and the formula is not.
+  *Ruling (2026-08-26):*
+  **Blocker.** The generators are in step, so this is arithmetic that has
+  been read wrong, not a design difference — exactly the shape CLAUDE.md
+  says wants a C oracle rather than another reading.
+- **Walking is free here.** `do_simple_move` (act.movement.c) charges
+  `need_movement` movement points per room, from the two rooms' sector
+  types, and refuses with "You are too exhausted." when there are not
+  enough. `Context.moveCharacter` charges nothing: the C's prompt counts
+  down 84, 83, 82 across three rooms and this port's stays at 84.
+  *Ruling (2026-08-26):*
+  **Blocker.** Movement cost is gameplay and balance, not presentation: it
+  is what gates exploration, and the prompt currently displays a number
+  that never changes.
+- **The C colours what it prints and the port does not.** New characters get
+  colour turned on for them in both (interpreter.c:1616, a `<DoC>` local
+  change the port has as `game.ApplyNewCharacterDefaults`), but the C wraps
+  room names, exits and the fight in `CCCYN()`/`CCYEL()` at the call site
+  (screen.h:42) while the port renders only the `&`-codes embedded in text
+  (`internal/colour`, `Session.SendAt`). Nothing else in the suite is
+  compared with the ANSI left in; the `colour` scenario is where it is
+  compared instead of stripped.
+  *Ruling (2026-08-26):*
+  **Blocker.** A flat screen reads as a different game. Mechanical to fix
+  — call site by call site — but there are many call sites.
+- **`who` prints the class abbreviation for immortals in the C** (`[Wa 34]`
+  against `[ 34]`) and counts in words: "One lonely character displayed."
+  against "1 character playing.".
+  *Ruling (2026-08-26):*
+  **Blocker.** `who` is the first thing most people type on connecting.
+- **`exits` shows room vnums to an immortal in the C** (`North - [ 1201] The
+  Inn Of The Gods`) and not here.
+  *Ruling (2026-08-26):*
+  **Blocker.** Builders need it, and it is a conditional on the viewer's
+  level.
+- **`'` and `:` are commands in the C and `hop` is a social; here it is the
+  other way round.** Visible in `commands` and `socials`, which list them.
+  *Ruling (2026-08-26):*
+  **Blocker.** `'` is the say shorthand and is typed constantly, and the
+  split feeds the command table's abbreviation order (`Command.CLine`), so
+  this is more than a difference in what `commands` lists.
+- **`look in <container>` lists the contents in the C** ("bag (carried):",
+  then each object) and answers "You see nothing special about a bag." here.
+  Same for a corpse.
+  *Ruling (2026-08-26):*
+  **Blocker.** A corpse whose contents cannot be checked is a broken game,
+  and the extra descriptions are half of what the world's prose is for.
+- **`remove all` removes everything in the C** and looks for an object
+  called "all" here.
+  *Ruling (2026-08-26):*
+  **Blocker.** The `all` and `all.thing` forms are muscle memory; failing
+  them is felt in the first minute of play.
+- **`get 2.sword` says the count back when it fails here** ("You don't see a
+  2.sword here.") and the C strips it ("You don't see a sword here.").
+  *Ruling (2026-08-26):*
+  **Blocker**, with the refusal wording below it.
+- **Refusal wording**: `look in nothing` is "There doesn't seem to be a
+  nothing here." in the C and "You do not see that here." here.
+  `kill self` is "Your mother would be so sad.. :(" in the C, and here
+  `self` does not resolve as a target at all ("They aren't here.").
+  *Ruling (2026-08-26):*
+  **Blocker.** The exact wording is part of what the game felt like, and
+  `self` not resolving as a target at all is a gap in the target lookup
+  rather than in a string.
+- **`look at <object>` finds the object's extra description in the C** — the
+  ATM's own note — and answers with the room's line for it here.
+  *Ruling (2026-08-26):*
+  **Blocker**; see `look in` above, which it was ruled on with.
+- **Objects are listed in a different order**, both on the floor and in an
+  inventory.
+  *Ruling (2026-08-26):*
+  **Later** — the one difference of the seventeen that is not a cutover
+  blocker. It is a consequence of where the port inserts into its lists,
+  visible but harmless, with the caveat that ordering is what `2.sword`
+  selects against, so it is not purely presentational.
+- **Death.** The C sends `death_cry` to the room ("Your blood freezes as you
+  hear the beastly fido's death cry.") and the killer's own "is dead!
+  R.I.P." once; the port sends the room's line to the killer twice and no
+  cry at all.
+  *Ruling (2026-08-26):*
+  **Blocker.** The death cry is how the surrounding rooms learn something
+  died, and the doubled line is a plain bug in `game.Act`'s audience
+  resolution rather than a missing feature.
+- **`flee` picks a different exit on the two servers.**
+  *Ruling (2026-08-26):*
+  **Blocker.** Same seed, different exit means the draw order or the
+  attempt loop diverges — a fidelity bug, and one worth chasing for what
+  else it might indicate about the generators staying in step.
+- **A shopkeeper's and a postmaster's messages carry the player's name
+  here.** The C builds them as `"%s %s"` of `GET_NAME(ch)` and the message
+  (shop.c's `is_ok_char`, and the same shape in mail.c) and hands the result
+  to `do_tell`, which eats the first word as the *addressee* — so the name
+  never reaches the player, and `do_tell` capitalises the speaker. Here it
+  is "the grocer tells you, 'Parityone You don't seem to have that.'"
+  against the C's "The grocer tells you, 'You don't seem to have that.'".
+  *Ruling (2026-08-26):*
+  **Blocker.** Every shop and post office interaction shows it, and it
+  reads as an obvious bug rather than as a quirk.
+- **The improved editor prompts for each line with `]` in the C** and
+  silently here, and the C confirms a sent letter with "Message sent!".
+  *Ruling (2026-08-26):*
+  **Blocker.** A silent editor gives no sign that anything was received,
+  and the missing send confirmation is worse than it looks given that this
+  build of the C is the one that eats the letter.
+
+### Two that are the reference build, not the port
+
+Both are the C server *as built on a modern 64-bit machine* differing from
+the archived 32-bit one, so the port is right and the thing it is being
+compared against is not:
+
+- **Shop prices differ by one, and the keeper's stock lists in the opposite
+  order.** The price is `cost * profit_buy` computed at whatever width the
+  multiplication happens at — which is why the shop-price oracle is built
+  `-m32 -mfpmath=387` (CLAUDE.md). This C is neither, and says 78 where the
+  port and the archived server say 77.
+- **This C build cannot store mail at all.** `store_mail` asserts that its
+  header and data blocks are exactly `BLOCK_SIZE` and calls `core_dump()`
+  when they are not (mail.c:311-315); on a 64-bit build they are not, and
+  the log fills with "SYSERR: Assertion failed at mail.c:313!". The C takes
+  the stamp money, says "Message sent!" and delivers nothing. The port
+  delivers the letter.
+
+---
+
 ## Not deviations — gaps still to fill
 
 Listed here so they are not mistaken for deliberate differences.

@@ -124,6 +124,9 @@ type Server struct {
 	rebootWanted   atomic.Bool
 	// noSpecials suppresses special procedures, matching the C's -s.
 	noSpecials bool
+	// freezeMobiles suppresses the mobile-activity pulse, matching the C's
+	// -M. See Options.FreezeMobiles.
+	freezeMobiles bool
 	// roundLength is how long a combat round lasts, and so how long a wait
 	// state holds somebody's next command up for. Zero is the real two
 	// seconds; see session.DefaultRoundLength.
@@ -176,6 +179,10 @@ type Options struct {
 	Restrict    bool
 	// NoSpecials suppresses special procedures (C: -s).
 	NoSpecials bool
+	// FreezeMobiles stops the mobile-activity pulse running at all, which
+	// is the C server's own `-M` (a <DoC> addition, comm.c's
+	// `freeze_mobiles`). Only the session-parity harness sets it.
+	FreezeMobiles bool
 	// RoundLength overrides how long a combat round lasts. Zero — which is
 	// every caller that is not a test — means the real two seconds, which
 	// is what PULSE_VIOLENCE is. See session.DefaultRoundLength.
@@ -188,27 +195,28 @@ type Options struct {
 // New creates a Server.
 func New(opts Options) *Server {
 	s := &Server{
-		engine:      opts.Engine,
-		players:     opts.Players,
-		objects:     opts.Objects,
-		boards:      opts.Boards,
-		mail:        opts.Mail,
-		houses:      opts.Houses,
-		bans:        opts.Bans,
-		reports:     opts.Reports,
-		names:       opts.Names,
-		clockFormat: opts.ClockFormat,
-		clockPath:   opts.ClockPath,
-		worldFormat: opts.WorldFormat,
-		worldDir:    opts.WorldDir,
-		worldMini:   opts.WorldMini,
-		auth:        opts.Auth,
-		text:        opts.Text,
-		logger:      opts.Logger,
-		restrict:    opts.Restrict,
-		noSpecials:  opts.NoSpecials,
-		roundLength: opts.RoundLength,
-		rng:         opts.RNG,
+		engine:        opts.Engine,
+		players:       opts.Players,
+		objects:       opts.Objects,
+		boards:        opts.Boards,
+		mail:          opts.Mail,
+		houses:        opts.Houses,
+		bans:          opts.Bans,
+		reports:       opts.Reports,
+		names:         opts.Names,
+		clockFormat:   opts.ClockFormat,
+		clockPath:     opts.ClockPath,
+		worldFormat:   opts.WorldFormat,
+		worldDir:      opts.WorldDir,
+		worldMini:     opts.WorldMini,
+		auth:          opts.Auth,
+		text:          opts.Text,
+		logger:        opts.Logger,
+		restrict:      opts.Restrict,
+		noSpecials:    opts.NoSpecials,
+		freezeMobiles: opts.FreezeMobiles,
+		roundLength:   opts.RoundLength,
+		rng:           opts.RNG,
 	}
 	s.booted = time.Now()
 	s.shutdownWanted = make(chan struct{})

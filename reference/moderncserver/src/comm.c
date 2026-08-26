@@ -112,6 +112,13 @@ const char *dump_world_file = NULL;	/* -J: dump world as JSON and exit	*/
 /* <DoC> -S: fix the RNG seed, for the Go port's session-parity harness.
  * Zero means "use time(0)", which is what the server has always done.	*/
 unsigned long fixed_random_seed = 0;
+/* <DoC> -M: hold the mobiles still, for the same harness. A wandering
+ * mobile's position depends on how many PULSE_MOBILE pulses have elapsed
+ * since boot, which depends on how fast each server booted, so a room
+ * description compared between the two servers is comparing boot times.
+ * mobile_activity() also rolls dice, so leaving it running walks the two
+ * generators out of step with each other as well.			*/
+int freeze_mobiles = 0;
 void dump_world_json(FILE *f);		/* worlddump.c				*/
 /* </DoC> */
 struct timeval null_time;	/* zero-valued time structure */
@@ -297,6 +304,10 @@ int main(int argc, char **argv)
 	exit(1);
       }
       break;
+    case 'M':
+      freeze_mobiles = 1;
+      puts("Mobile activity suppressed.");
+      break;
     /* </DoC> */
     case 'q':
       no_rent_check = 1;
@@ -317,6 +328,7 @@ int main(int argc, char **argv)
               "  -J <file>      Dump the loaded world to <file> as JSON and exit.\n"
               "  -d <directory> Specify library directory (defaults to 'lib').\n"
               "  -h             Print this command line argument help.\n"
+              "  -M             Hold the mobiles still, for the parity harness.\n"
               "  -m             Start in mini-MUD mode.\n"
 	      "  -o <file>      Write log to <file> instead of stderr.\n"
               "  -q             Quick boot (doesn't scan rent for object limits)\n"
@@ -912,7 +924,8 @@ void heartbeat(int pulse)
   if (!(pulse % PULSE_IDLEPWD))		/* 15 seconds */
     check_idle_passwords();
 
-  if (!(pulse % PULSE_MOBILE))
+  /* <DoC> -M holds them still; see freeze_mobiles above. */
+  if (!(pulse % PULSE_MOBILE) && !freeze_mobiles)
     mobile_activity();
 
   if (!(pulse % PULSE_VIOLENCE))

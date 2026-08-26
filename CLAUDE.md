@@ -92,6 +92,7 @@ are not doing one of these three things, expect to be wrong.
 | `internal/session` | Commands and the login/menu state machine. |
 | `internal/server` | The world goroutine, ticks, and the integration tests. |
 | `test/play` | The play regression suite: a real `dlmud`, booted on `examples/mini`, driven over a socket. Build-tagged `play`, release-only, `make play`. |
+| `test/parity` | The session-parity suite: the same scripts typed at *both* servers, transcripts compared. Build-tagged `parity`, in no workflow at all, `make session-parity`. |
 | `internal/persist/world` | Zone/mob/obj/shop file readers. |
 | `internal/persist/player` | The roster and the rent files, behind interfaces. |
 | `reference/` | The original C, the modernised C build, and the oracle tools. |

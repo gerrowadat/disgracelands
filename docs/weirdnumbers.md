@@ -740,8 +740,9 @@ dies the moment an immortal looks at the board room:
     SYSERR: Fatal board error: board vnum 3095 does not exist!
 
 It is not a problem for the world-parity harness, which never boots into the
-game — but the session-parity harness does, so `scripts/session-parity.sh`
-synthesises the two objects into its scratch copy. `examples/stock/binary/`
+game — but the session-parity harness does, so the scratch copy it stages has
+the two objects synthesised into it (`internal/parity/stage.go`, used by both
+`test/parity` and `scripts/session-parity.sh`). `examples/stock/binary/`
 itself is untouched.
 
 *Source*: `boards.c:67`, `boards.c:126`.

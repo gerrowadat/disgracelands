@@ -1,0 +1,21 @@
+# The colour scenario: create a character and look at things the C server
+# colours.
+#
+# What is being compared is in test/parity's own scenario table rather than
+# here: with the ANSI stripped the two servers must agree, and with it left
+# in they must not, because the C wraps room names, exits and the fight in
+# CCCYN()/CCYEL() and this port emits colour only for the &-codes inside
+# text.
+Parityone
+y
+swordfish
+swordfish
+m
+w
+
+1
+look
+exits
+score
+who
+quit

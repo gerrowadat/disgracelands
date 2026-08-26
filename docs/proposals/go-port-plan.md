@@ -1901,15 +1901,45 @@ sense to start:
 1. **World parity clean.** Already true, checked at every release
    (`release.yml`). Not a gate that needs new work, just the one that
    must keep passing.
-2. **Session parity triaged, not just run.** `scripts/session-parity.sh`
-   is not a CI gate — "its first run found differences that are not all
-   fixed" (`docs/developer.md`) — and `testdata/parity/` holds exactly
-   one script (`login-and-look.session`). Cutover needs either those
-   differences fixed or each one explicitly triaged and accepted in
-   `docs/deviations.md`, and enough more scripts added to actually
-   exercise combat, shops, boards, mail and housing before "the two
-   servers agree" is a claim covering more than logging in and looking
-   around.
+2. **Session parity triaged, not just run.** *Done, in the sense this
+   precondition asked for — and it is the "triaged" half that is done,
+   not the "agree" half.* `test/parity` (2026-08-25) plays ten
+   scenarios at both servers, covering combat, shops, boards, mail end
+   to end and housing as this precondition asked, and every difference
+   it finds is now either absent or an entry in its own triage table
+   pointing at `docs/deviations.md` ("What the session-parity suite
+   found"). It is green, and green means *decided*, not *identical*:
+   twenty-odd real differences are written down there, two of which
+   are the 64-bit reference build rather than the port. Cutover does
+   not need them all fixed; it needs somebody to have read that list
+   and decided which of them a returning player would not forgive.
+
+   **That reading has now happened (2026-08-26), and it is what makes
+   this precondition actually met rather than merely prepared for.**
+   Eighteen of the twenty differences needed a ruling — the other two
+   are the 64-bit reference build being wrong rather than the port — and
+   each carries its own in `docs/deviations.md`. Sixteen are
+   **blockers**: fix before
+   cutover. One is **later**: objects list in a different order from the
+   C, a consequence of where this port inserts into its lists, harmless
+   except that ordering is what `2.sword` selects against. One is
+   **accepted**: the suite does not compare blank lines, because the C
+   prepends a CRLF to any output interrupting a prompt (comm.c:1459) and
+   reproducing that solely to compare whitespace buys almost no
+   evidence — the one place the harness is knowingly blind, bounded and
+   written down.
+
+   Sixteen blockers is a larger number than "the port is playable"
+   suggests, and a smaller job than it sounds: most are one command
+   each. The ones that are not are the three this paragraph used to
+   single out — `quit` returning to the menu, movement points never
+   being charged, and call-site colour, which is mechanical but has a
+   great many call sites — plus two that are bugs rather than gaps and
+   should be read as such: a level 1 mortal's hit points are rolled
+   from a formula that has been read wrong (the generators are in step,
+   so it is arithmetic, and CLAUDE.md says what that wants — an oracle,
+   not another reading), and `game.Act` sends the killer's own death
+   line twice while sending no `death_cry` at all.
 3. **The real archive's non-ASCII text survives conversion.** The
    importer gap this precondition was first written about is closed —
    all seven of `dlctl lib import`'s sub-importers take `--encoding` and
@@ -2024,40 +2054,61 @@ backends, the WipeMud race system (`TODO.md` §2).
   for byte. *Not built.* The session tests assert the strings inline instead,
   which is the same idea with worse ergonomics and no diff.
 - **A scripted-session harness**: a list of commands in, transcript out, run
-  against **both** servers and diffed. *Built* — `scripts/session-parity.sh`,
-  `internal/parity` and `dlctl parity session`. It boots both servers on
-  throwaway copies of `data/` with the same fixed RNG seed, plays a script at
-  each, normalises away the handful of things two servers can never agree on,
-  and diffs.
+  against **both** servers and diffed. *Built, and then built again.*
 
-  **Not in CI yet, on purpose.** Its first run found real differences and they
-  are not all fixed, so wiring it in would mean a permanently red job or a
-  suppression that hides the findings. It runs by hand until the list below is
-  empty.
+  The first version — `scripts/session-parity.sh`, `internal/parity` and
+  `dlctl parity session` — boots both servers on throwaway copies of the
+  data directory with the same fixed RNG seed, plays a script at each,
+  normalises away the handful of things two servers can never agree on, and
+  diffs. It found the message of the day for a brand-new implementor (fixed
+  in the change that built it) and **colour** — the C emitted it and this
+  port emitted none — which brought three more with it, each invisible until
+  the transcripts were laid side by side: **`compact` was another settable,
+  listed, saved preference that nothing read**, so the blank line before the
+  prompt was always there; **the room's people are listed newest-first**,
+  because `char_to_room` prepends; and **`score` was missing "It's your
+  birthday today."**.
 
-  What the first run found, in order of size:
+  Then it sat, with one script in it and a list of differences nobody could
+  read. **`test/parity` (2026-08-25) is the second version**, and the three
+  things it changed are all about making a difference legible rather than
+  about finding more of them:
 
-  - **The message of the day for a brand-new implementor.** Fixed in the same
-    change that built the harness.
-  - **Colour.** The C emitted it and this port emitted none — every room
-    title, exit line and object list differed by an escape sequence. Fixed:
-    `internal/colour`, the markup `data-format.md` §5 already specified, and
-    `color` ported. It brought three more with it, each invisible until the
-    transcripts were laid side by side: **`compact` was another settable,
-    listed, saved preference that nothing read**, so the blank line before the
-    prompt was always there; **the room's people are listed newest-first**,
-    because `char_to_room` prepends; and **`score` was missing "It's your
-    birthday today."**.
-  - **What is left**, and the harness's own limitations as much as the port's:
-    three blank-line placements around the menu, and a great deal of noise
-    from **wandering mobiles** — a janitor's position depends on how many
-    mobile pulses have elapsed, which depends on how fast each server booted.
-    Holding mobile activity still on both sides would need another `<DoC>`
-    addition to the C, and is the next thing this harness wants.
+  - **The mobiles are held still on both sides** — `-M` in the C, a `<DoC>`
+    addition alongside `-S`, and `--freeze-mobiles` here. This was named
+    above as "the next thing this harness wants" and it was: a janitor's
+    position depends on how many pulses have elapsed since boot. It also
+    stops `mobile_activity` rolling dice, which is what makes **a fight
+    comparable round by round** — the previous limitation, "the two servers
+    do not consume the RNG sequence in the same order", was a consequence of
+    the mobiles moving rather than a fact about the two servers.
+  - **Transcripts are compared a command at a time.** A single extra blank
+    line in the login sequence used to report every line after it as
+    differing too: forty findings, of which thirty-nine were consequences of
+    the first.
+  - **Every difference is either fixed or written down.** The suite carries
+    a triage table of patterns for lines the two servers are allowed to
+    disagree about, each pointing at its entry in `docs/deviations.md` — and
+    an entry that stops matching anything fails the suite with "delete it",
+    so the list shrinks as things get fixed instead of becoming a record of
+    what used to be wrong.
 
-  The C server needed one addition to make this possible: `-S <seed>` fixes
-  the RNG seed, marked `<DoC>` like `-J`, so a session is reproducible. Zero
-  keeps `time(0)` and an ordinary boot is unchanged.
+  Ten scenarios: creation and first impressions, colour, objects, a fight,
+  shops, banking and the inn, boards, mail end to end, houses, and what a
+  mortal is refused. What that found is in `docs/deviations.md` under
+  "What the session-parity suite found" — twenty-odd differences, including
+  two that are the *reference build* rather than the port (this C is 64-bit,
+  so its shop prices are off by one and its mail system cannot store a
+  letter at all).
+
+  **In neither workflow, on purpose**, including `release.yml`: it needs a C
+  toolchain, starts two servers per scenario and frames answers by silence.
+  `make session-parity` runs it. See `docs/developer.md`.
+
+  The C server needed three additions to make this possible, all marked
+  `<DoC>`: `-S <seed>` fixes the RNG seed, `-M` holds the mobiles still, and
+  `-J` (Phase 1's) dumps the world. Zero keeps `time(0)` and an ordinary
+  boot is unchanged.
 - **Property tests** on the numeric core — combat damage, experience,
   saving throws — asserting no overflow and no negative-where-impossible
   across the full input range, which is where the 64-bit work either holds

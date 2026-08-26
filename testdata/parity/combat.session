@@ -1,0 +1,31 @@
+# A fight, round by round.
+#
+# This is the scenario the harness was said not to be able to have: "the two
+# servers do not consume the RNG sequence in the same order, so a script that
+# fights something is comparing rolls rather than wording"
+# (docs/developer.md, before this suite). With the seed fixed on both sides
+# *and* the mobiles held still (-M, --freeze-mobiles) they do consume it in
+# the same order, which is why the abilities `score` prints agree and why the
+# rounds below can be compared at all.
+Parityone
+y
+swordfish
+swordfish
+m
+w
+
+1
+goto 3001
+load mob 3062
+look
+consider fido
+kill fido
+look
+# What is left of it, and what the room says about that.
+look in corpse
+# Refusals.
+kill nobody
+kill self
+flee
+hit
+quit

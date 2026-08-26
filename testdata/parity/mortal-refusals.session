@@ -1,0 +1,50 @@
+# What a level 1 mortal is told they cannot do.
+#
+# Half of this is the command table's own minimum levels, which are part of
+# *matching* rather than a check afterwards (5i-a): an immortal command typed
+# by a mortal is not refused, it is not found, and the answer is "Huh?!?".
+# The other half is minimum_position, cmd_info[]'s second column (5j).
+#
+# The god is created and dismissed first only because the first character on
+# an empty roster would otherwise be one.
+Parityone
+y
+swordfish
+swordfish
+m
+w
+
+1
+quit
+!reconnect
+Paritythree
+y
+swordfish
+swordfish
+m
+t
+
+1
+score
+practice
+skills
+spells
+# Immortal commands, which a mortal cannot even match.
+goto 3001
+load obj 3021
+shutdown
+wizlock
+set Paritythree level 34
+users
+# Positions: cmd_info[]'s minimum_position, which nothing had been reading
+# until 5j.
+sleep
+north
+look
+stand
+sit
+north
+stand
+# And a word that is not a command at all.
+frobnicate
+quit

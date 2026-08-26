@@ -1,0 +1,65 @@
+# The postmaster: `check`, sending a letter through the line editor, and the
+# recipient collecting it at the other end.
+#
+# Four connections, because a script is one connection and this needs two
+# characters. The first character created on an empty roster is an
+# implementor (db.c's "if this is our first player --- he be God"), so the
+# god is made first and the mortal who gets the letter second.
+Parityone
+y
+swordfish
+swordfish
+m
+w
+
+1
+quit
+!reconnect
+Paritytwo
+y
+swordfish
+swordfish
+f
+c
+
+1
+quit
+!reconnect
+# The god, at the Post Office, with the price of a stamp.
+Parityone
+swordfish
+
+1
+set Parityone gold 5000
+goto 3062
+look
+check
+mail Paritytwo
+A letter typed by the parity harness.
+It is two lines long, like the board message.
+/s
+check
+# Somebody who has never existed.
+mail Nobodyhere
+receive
+quit
+!reconnect
+# The mortal, who has to walk: south, east, north from the temple is the
+# Post Office. `goto` is an immortal command and this character is a level 1
+# cleric.
+Paritytwo
+swordfish
+
+1
+check
+south
+east
+north
+look
+check
+receive
+inventory
+read letter
+check
+receive
+quit

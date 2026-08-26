@@ -7,6 +7,7 @@
 package server
 
 import (
+	"slices"
 	"time"
 
 	"github.com/gerrowadat/disgracelands/internal/engine"
@@ -30,12 +31,21 @@ const (
 
 // Periodic returns the scheduled work for the engine.
 func (s *Server) Periodic() []engine.Periodic {
-	return []engine.Periodic{
+	p := []engine.Periodic{
 		{Name: "violence", Every: pulseViolence, Run: s.performViolence},
 		{Name: "mobile-activity", Every: pulseMobile, Run: s.mobileActivity},
 		{Name: "zone-update", Every: pulseZone, Run: s.zoneUpdate},
 		{Name: "point-update", Every: pulseTick, Run: s.pointUpdate},
 	}
+	// --freeze-mobiles drops the pulse rather than making mobileActivity
+	// return early, so the C's `if (!(pulse % PULSE_MOBILE) &&
+	// !freeze_mobiles)` and this agree about the one thing that matters:
+	// no dice are rolled. A version that entered the function and returned
+	// would still have to be read carefully to be sure of that.
+	if s.freezeMobiles {
+		p = slices.DeleteFunc(p, func(e engine.Periodic) bool { return e.Name == "mobile-activity" })
+	}
+	return p
 }
 
 // regenContext answers what the regeneration formulas need to know about a
