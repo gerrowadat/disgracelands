@@ -1,0 +1,42 @@
+# hcontrol: the house control file, the one immortal command that writes it,
+# and the owner it needs to already exist.
+Parityone
+y
+swordfish
+swordfish
+m
+w
+
+1
+quit
+!reconnect
+Paritytwo
+y
+swordfish
+swordfish
+f
+c
+
+1
+quit
+!reconnect
+Parityone
+swordfish
+
+1
+hcontrol
+hcontrol show
+hcontrol build 3000 east Paritytwo
+hcontrol show
+goto 3000
+look
+hcontrol destroy 3000
+hcontrol show
+# The refusals: a house where one already is, a direction that is not an
+# exit, an owner who has never existed, and a word that is not a subcommand.
+hcontrol build 3000 east Paritytwo
+hcontrol build 3000 up Paritytwo
+hcontrol destroy 3000
+hcontrol build 3011 north Nobodyhere
+hcontrol frobnicate
+quit

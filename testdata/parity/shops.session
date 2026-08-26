@@ -1,0 +1,36 @@
+# The two shops either side of Market Square: the grocer, who sells bread,
+# and the weaponsmith, who sells swords. `list`, `value`, `buy` and `sell`
+# are the four commands shop_keeper intercepts, and each of them has a
+# refusal worth as much as its success.
+Parityone
+y
+swordfish
+swordfish
+m
+w
+
+1
+goto 3010
+look
+set Parityone gold 5000
+list
+value bread
+buy bread
+inventory
+sell bread
+buy 3 bread
+inventory
+# Things the keeper does not have, and things it will not buy.
+buy nothing
+sell nothing
+value nothing
+load obj 3021
+sell sword
+goto 3011
+list
+value sword
+buy sword
+equipment
+sell 2.sword
+inventory
+quit

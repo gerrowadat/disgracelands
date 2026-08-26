@@ -1,0 +1,30 @@
+# The ATM in the temple and the receptionist at the Grunting Boar: the `bank`
+# and `receptionist` specials, and the four commands between them.
+#
+# No `rent`, deliberately: renting takes the character out of the world and
+# saves afterwards, off the world goroutine here, and the next scenario in
+# the table logs the same character straight back in.
+Parityone
+y
+swordfish
+swordfish
+m
+w
+
+1
+goto 3001
+look at atm
+balance
+deposit 100
+balance
+withdraw 50
+balance
+deposit all
+balance
+withdraw 100000
+deposit nothing
+withdraw nothing
+goto 3008
+look
+offer
+quit

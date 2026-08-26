@@ -317,6 +317,22 @@ shopkeepers, bankers and the rest are ordinary mobiles.
 older than 30 real days and crash files older than 10 — `update_obj_file()`
 (objsave.c:332), called from `db.c:457` under exactly this condition.
 
+| Flag | C equivalent | Meaning |
+|---|---|---|
+| `--freeze-mobiles` | `-M` | Hold the mobiles still: no wandering, no scavenging, no mobile-activity dice. |
+
+`--freeze-mobiles` is not a game setting and is not one of the C server's
+own options: `-M` is a `<DoC>` addition made to the C tree for the
+session-parity suite (`test/parity`, `docs/developer.md`), and this is its
+counterpart. A wandering mobile's position depends on how many pulses have
+elapsed since boot, so two servers started seconds apart disagree about
+every room a janitor walks through; `mobile_activity` also rolls dice, so
+leaving it running walks two fixed-seed generators out of step with each
+other. Both servers drop the pulse entirely rather than entering it and
+returning early, so neither rolls anything. **Nothing but a comparison
+harness should set it** — a world whose mobiles never move is not the
+game.
+
 ## Security
 
 | Flag | Default | Meaning |

@@ -1,0 +1,28 @@
+# The mortal bulletin board in the Reading Room, west of the temple: reading
+# it, writing to it through the line editor, and taking a message off it
+# again. gen_board intercepts look/read/write/remove.
+Parityone
+y
+swordfish
+swordfish
+m
+w
+
+1
+goto 3000
+look
+look at board
+read 1
+write A parity test
+This is a message typed by the parity harness.
+It has two lines, so that a message body is more than one.
+/s
+look at board
+read 1
+remove 1
+look at board
+# Refusals: a message that is not there, and a removal that is not allowed.
+read 9
+remove 9
+read board
+quit

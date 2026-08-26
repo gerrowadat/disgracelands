@@ -245,6 +245,24 @@ check: ## Build, vet, format-check, lint, test, license and world-lint -- the fu
 parity: ## Check the Go and C world loaders agree (builds the C server; slow)
 	./scripts/world-parity.sh
 
+# Session parity: the same scripts typed at both servers, with what they
+# said compared line for line. `parity` above compares what the two servers
+# *loaded*; this compares what they *say*.
+#
+# In neither workflow, deliberately -- not even release.yml. It needs a C
+# toolchain and starts two servers per scenario, and it frames a command's
+# output by silence, which makes it both slow and the one thing here whose
+# timing depends on how busy the machine is. Run it by hand after changing
+# anything a player reads, which is most things. It builds the C server
+# itself if the binary is missing or older than the source.
+#
+# No -race: what is under test is the C server's output, and instrumenting
+# the Go side of a comparison changes only how long it takes. test/play is
+# where the Go server's goroutines get watched.
+.PHONY: session-parity
+session-parity: ## Play the parity scripts at both servers and compare (builds the C server; slow)
+	$(GO) test -tags=parity -count=1 -timeout 35m ./test/parity/...
+
 .PHONY: license
 license: ## Check the CircleMUD/DikuMUD license obligations
 	./scripts/license-check.sh

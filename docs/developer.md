@@ -347,28 +347,107 @@ Some things worth knowing before adding to it:
   this is our first player --- he be God" would otherwise make the first
   one level 34. `m.god()` logs that implementor in when a test needs one.
 
-**Session parity** (`scripts/session-parity.sh`) is in neither workflow.
-Boots *both* servers on throwaway copies of `examples/stock/binary/` with
-the same fixed RNG seed, plays a script from `testdata/parity/` at each,
-and diffs what they said. Where they differ, the C server is right. Its
-first run found differences that are not all fixed, so it would be a
-permanently red job either way — run it by hand after changing anything a
-player reads, which is most things. `--ignore-colour` sets aside the one
-systematic difference — the C emits ANSI and this port does not — so the
-rest is legible.
+### Session parity: `test/parity`
 
-Adding a script is a file of lines to type in `testdata/parity/`. Two things
-to avoid, both of which produce differences that are not differences:
+```sh
+make session-parity        # both servers, every scenario, ~8 minutes
+go test -tags=parity -count=1 -run TestSessionParity/shops ./test/parity/
+```
 
-- **Dice.** The seed is fixed on both sides, but the two servers do not
-  consume the sequence in the same order, so a script that fights something
-  is comparing rolls rather than wording.
-- **Rooms that wandering mobiles pass through.** A janitor's position
-  depends on how many mobile-activity pulses have elapsed, which depends on
-  how fast each server booted. The Midgaard temple and the immortal rooms
-  are all on a janitor's route. This is the harness's sharpest limitation
-  and the obvious fix is a way to hold mobile activity still on both sides —
-  the C has no flag for it, so it would be another `<DoC>` addition.
+`make parity` compares what the two servers **loaded**. This compares what
+they **say**: it boots the C server and `dlmud` on their own throwaway
+copies of `examples/stock/binary/`, types the same script at each, and
+compares the transcripts line for line. Where they differ, the C server is
+right.
+
+It is the sibling of `test/play`, and the difference is what each is
+evidence of. `test/play` asserts that the server says what *this project
+believes* it should say — and the belief is a reading of the C, which is
+what has been wrong repeatedly. This suite has no expected output in it at
+all. The C server is the expectation.
+
+**In neither workflow, deliberately — not even `release.yml`.** It needs a C
+toolchain, starts two servers per scenario, and frames a command's output by
+silence, which makes it the one thing in the tree whose timing depends on
+how busy the machine is. Run it by hand after changing anything a player
+reads. It builds the C server itself if `reference/moderncserver/bin/circle`
+is missing or older than the source, and skips rather than fails if there is
+no `gcc`.
+
+**What it found on its first green run is in `docs/deviations.md`**, under
+"What the session-parity suite found" — twenty differences, from `quit`
+returning to the menu in the C to this port never charging movement points
+for walking. Eighteen carry a ruling (2026-08-26): sixteen are cutover
+blockers, one is for later, one is accepted. The other two need no ruling,
+being the 64-bit reference build wrong rather than the port. Green
+means *decided*, not *identical*, and the rulings are what make that true.
+
+Four pieces of machinery make the comparison legible, and each replaced
+something that had made the harness's findings unreadable before:
+
+- **Both servers hold their mobiles still** — `--freeze-mobiles` here, `-M`
+  in the C, a `<DoC>` addition made for this. A wandering mobile's position
+  depends on how many pulses have elapsed since boot, so without it the two
+  servers disagree about every room a janitor walks through, which is most
+  of Midgaard. It also stops `mobile_activity` rolling dice, which is what
+  lets a **fight** be compared round by round: with the seed fixed *and* the
+  mobiles still, the two generators stay in step, and "a script that fights
+  something is comparing rolls rather than wording" — which is what this
+  document used to say — is no longer true.
+- **Transcripts are compared a command at a time**, not a line at a time
+  (`internal/parity/diff.go`). One extra blank line early in the login
+  sequence used to report every line after it as differing too: the first
+  run of the old harness produced forty findings that were one finding and
+  thirty-nine consequences.
+- **Blank lines are not compared at all**, because the C prepends a CRLF to
+  any output that interrupts a prompt (comm.c:1459) and this port does not.
+  That is the one place the suite is knowingly blind; `deviations.md` says
+  so.
+- **The mud clock is normalised away entirely** — the hour, the weekday and
+  the calendar date (`internal/parity/session.go`, `Normalise`). The hour
+  was normalised from the start, for the obvious reason: a mud hour is 75
+  real seconds (`utils.h:109`) and the two transcripts are taken one server
+  after the other, about fifteen seconds apart, so the hour between them
+  differs about a fifth of the time. The date was **not**, and that is worth
+  knowing about because of how it surfaced: a mud day is 1800 real seconds,
+  which puts a rollover between the two transcripts roughly one run in a
+  hundred and twenty, and it duly landed on one a day after the suite first
+  went green — reporting the port's calendar as wrong when nothing was. Both
+  servers compute the date from the same epoch with the same formula; one of
+  them was simply asked later. Pinning the epoch would not have helped, since
+  the divergence comes from *when each server is sampled* rather than from
+  where its clock started. The cost is that this suite does not compare the
+  mud calendar at all, which is the right trade anyway: `mud_time_passed` is
+  pure arithmetic over elapsed seconds, and CLAUDE.md says what checks that —
+  an oracle, not two transcripts fifteen seconds apart.
+
+**Adding a scenario** is a script in `testdata/parity/` and a row in
+`scenarios` (`test/parity/session_test.go`). A script is the lines a player
+types, `#` for a comment, and one directive:
+
+- `!reconnect` hangs up and dials again. Each scenario gets its own freshly
+  booted pair of servers, so the first character it creates is an
+  implementor (`db.c`'s "if this is our first player --- he be God"); a
+  scenario that needs a mortal too makes the god first, `quit`s, and
+  reconnects. `mail.session` has four connections and two characters in it.
+  Type `quit` before it: dropping a socket with a character still in the
+  world is its own comparison, not an accident every scenario should be
+  making.
+
+Two knobs on the row: `quiet`, how long a server must be silent before its
+answer is taken to be complete (a fight is not finished answering for
+several two-second rounds, so `combat` waits three seconds), and `known`,
+the triage list.
+
+**`known` is the part worth understanding.** It is a list of *decisions*: a
+pattern for lines the two servers are allowed to disagree about, and why —
+matched against the differing line rather than against the command, because
+one difference is rarely one command (a mortal's hit points differ, and so
+does the prompt after every command in the script). A differing line no
+entry matches fails the suite, and **an entry that matches nothing also
+fails**, with "delete it": that is what makes the list shrink as things get
+fixed instead of turning into a record of what used to be wrong. Every entry
+points at `docs/deviations.md` for the finding itself.
 
 ### The release archives
 

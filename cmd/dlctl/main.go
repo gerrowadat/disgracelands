@@ -69,6 +69,11 @@ var commands = []command{
 		run:     cmdParitySession,
 	},
 	{
+		name:    "parity stage",
+		summary: "Prepare a scratch lib/ directory for a parity run to boot a server on",
+		run:     cmdParityStage,
+	},
+	{
 		name:    "world lint",
 		summary: "Check world files for errors (replaces the C tree's scheck, and dlmud -c)",
 		run:     cmdWorldLint,

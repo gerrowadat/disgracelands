@@ -1,0 +1,47 @@
+# Objects: making them, carrying them, wearing them, putting them in things,
+# and the refusals. Played by the implementor, because `load` is the only way
+# to get an object into an empty world without walking to a shop.
+Parityone
+y
+swordfish
+swordfish
+m
+w
+
+1
+goto 3001
+load obj 3021
+inventory
+wield sword
+equipment
+remove sword
+load obj 3032
+put sword bag
+look in bag
+get sword bag
+load obj 3041
+wear shirt
+load obj 3042
+wear shield
+equipment
+remove all
+inventory
+drop sword
+look
+get sword
+# The same word, with a count in front of it: `isname` is a whole-word match
+# and `get_number` is what reads the "2." (5m).
+load obj 3021
+get 2.sword
+inventory
+junk all
+inventory
+# Refusals, whose wording matters exactly as much as the successes.
+get nothing
+wear nothing
+wield nothing
+remove nothing
+put nothing in nothing
+drop nothing
+look in nothing
+quit

@@ -96,10 +96,43 @@ func cmdParitySession(args []string) error {
 		return nil
 	}
 
-	diff := parity.Diff(cNorm, goNorm)
-	fmt.Printf("    %d differing line(s)\n\n%s\n", strings.Count(diff, "\n-")+strings.Count(diff, "\n+"), diff)
+	diffs := parity.Compare(cNorm, goNorm)
+	fmt.Printf("    %d command(s) answered differently\n\n", len(diffs))
+	for _, d := range diffs {
+		fmt.Print(d.String())
+	}
 	if *outDir != "" {
 		fmt.Printf("    transcripts in %s\n", *outDir)
 	}
 	return errQuiet
+}
+
+// cmdParityStage prepares one scratch lib/ directory for a parity run.
+//
+// It exists so that scripts/session-parity.sh and test/parity stage their
+// directories with the same code rather than with a shell copy of it. What
+// "the same" has to cover is not obvious — an empty roster so the first
+// character is an implementor on both sides, and two board objects the
+// patched C server dies without — so having it written down twice was a
+// standing invitation for the two harnesses to be comparing different games.
+func cmdParityStage(args []string) error {
+	fs := flag.NewFlagSet("parity stage", flag.ContinueOnError)
+	from := fs.String("from-dir", "examples/stock/binary", "classic lib/ directory to copy")
+	to := fs.String("to-dir", "", "directory to prepare (required)")
+	fs.Usage = func() {
+		_, _ = fmt.Fprint(fs.Output(),
+			"Usage: dlctl parity stage --to-dir=DIR [--from-dir=DIR]\n\n"+
+				"Copies a lib/ directory to a scratch one a parity run can boot a\n"+
+				"server on: empty roster, writable, and with the boards the patched\n"+
+				"C server insists on.\n\n")
+		fs.PrintDefaults()
+	}
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+	if *to == "" {
+		fs.Usage()
+		return fmt.Errorf("--to-dir is required")
+	}
+	return parity.StageLib(*to, *from)
 }
