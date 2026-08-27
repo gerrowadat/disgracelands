@@ -400,12 +400,12 @@ ci-clean: ## Remove the containers, volumes and cache act reuses between runs
 
 .PHONY: world-lint
 world-lint: ## Lint the world files under LIB
-	$(GO) run ./cmd/dlctl world lint --world-dir=$(LIB)/world
+	$(GO) run ./cmd/dlctl lint --type=world --dir=$(LIB)
 
 .PHONY: world-dump
 world-dump: ## Dump the loaded world as canonical JSON to out/world.json
 	@mkdir -p $(OUT)
-	$(GO) run ./cmd/dlctl world dump --world-dir=$(LIB)/world --out=$(OUT)/world.json
+	$(GO) run ./cmd/dlctl dump --type=world --dir=$(LIB) --out=$(OUT)/world.json
 	@echo "==> $(OUT)/world.json"
 
 # The one-off that turns an archived CircleMUD lib/ into something this server
@@ -414,7 +414,7 @@ world-dump: ## Dump the loaded world as canonical JSON to out/world.json
 .PHONY: convert
 convert: ## Convert an original data directory: make convert FROM=/path/to/lib TO=out/converted
 	@test -n "$(FROM)" && test -n "$(TO)" || { echo 'usage: make convert FROM=/path/to/lib TO=out/converted'; exit 2; }
-	$(GO) run ./cmd/dlctl convert --from=$(FROM) --to=$(TO)
+	$(GO) run ./cmd/dlctl convert --from-dir=$(FROM) --to-dir=$(TO)
 
 # The yaml equivalent: every subsystem, one lib/ to one fresh yaml
 # directory, in one command. Point it at the original archive, not at
@@ -423,14 +423,14 @@ convert: ## Convert an original data directory: make convert FROM=/path/to/lib T
 .PHONY: lib-import
 lib-import: ## Convert an original data directory into yaml: make lib-import FROM=/path/to/lib TO=out/yaml
 	@test -n "$(FROM)" && test -n "$(TO)" || { echo 'usage: make lib-import FROM=/path/to/lib TO=out/yaml'; exit 2; }
-	$(GO) run ./cmd/dlctl lib import --from-dir=$(FROM) --to-dir=$(TO)
+	$(GO) run ./cmd/dlctl import --from-dir=$(FROM) --to-dir=$(TO)
 
 .PHONY: roster
 roster: ## List the characters in the player directory under LIB
-	$(GO) run ./cmd/dlctl pfile dump --player-dir=$(LIB)/pfiles
+	$(GO) run ./cmd/dlctl dump --type=pfile --dir=$(LIB)
 
 .PHONY: ctl
-ctl: ## Run dlctl: make ctl ARGS="pfile dump --name=Someone"
+ctl: ## Run dlctl: make ctl ARGS="dump --type=pfile --name=Someone"
 	$(GO) run ./cmd/dlctl $(ARGS)
 
 ##@ Containers

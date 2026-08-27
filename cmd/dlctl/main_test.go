@@ -45,19 +45,14 @@ func TestUnknownCommandIsRejected(t *testing.T) {
 }
 
 func TestMultiWordCommandsMatchBeforeTheirPrefix(t *testing.T) {
-	// "pfile dump" must not be mistaken for an unknown "pfile" command.
-	// Asking for a character that does not exist proves it reached the
-	// implementation: only that can produce a not-found error.
-	//
-	// Note that listing a *missing* directory is not an error — a roster
-	// that does not exist yet is an empty one, which is the normal
-	// fresh-install state — so this asks for a name instead.
-	err := run([]string{"pfile", "dump", "--player-dir", "does/not/exist", "--name", "nobody"})
-	if err == nil {
-		t.Fatal("run([pfile dump --name=nobody]) succeeded, want a not-found error")
-	}
-	if strings.Contains(err.Error(), "unknown command") {
-		t.Errorf("\"pfile dump\" was not dispatched: %v", err)
+	// "data version" must not be mistaken for an unknown "data" command.
+	// --dir points at a directory with no stamp, which is not an error (an
+	// unstamped directory just gets a warning); that proves dispatch reached
+	// the implementation, since "data" alone would report "unknown command"
+	// instead.
+	err := run([]string{"data", "version", "--dir", t.TempDir()})
+	if err != nil {
+		t.Errorf("run([data version]) = %v, want success", err)
 	}
 }
 
@@ -65,36 +60,36 @@ func TestListingAMissingRosterIsNotAnError(t *testing.T) {
 	// A blank roster is how a fresh install starts, and the C server creates
 	// the files on demand. Reporting it as a failure would make every new
 	// deployment look broken.
-	if err := run([]string{"pfile", "dump", "--player-dir", "does/not/exist"}); err != nil {
+	if err := run([]string{"dump", "--type", "pfile", "--dir", "does/not/exist"}); err != nil {
 		t.Errorf("listing a missing roster = %v, want success", err)
 	}
 }
 
-func TestBarePfileIsUnknown(t *testing.T) {
-	err := run([]string{"pfile"})
+func TestBareDataIsUnknown(t *testing.T) {
+	err := run([]string{"data"})
 	if err == nil || !strings.Contains(err.Error(), "unknown command") {
-		t.Errorf("run([pfile]) = %v, want an unknown-command error", err)
+		t.Errorf("run([data]) = %v, want an unknown-command error", err)
 	}
 }
 
-func TestBareGroupNameIsUnknown(t *testing.T) {
-	// "world" on its own is not a command; only "world <something>" is.
-	err := run([]string{"world"})
+func TestBareParityIsUnknown(t *testing.T) {
+	// "parity" on its own is not a command; only "parity session" is.
+	err := run([]string{"parity"})
 	if err == nil || !strings.Contains(err.Error(), "unknown command") {
-		t.Errorf("run([world]) = %v, want an unknown-command error", err)
+		t.Errorf("run([parity]) = %v, want an unknown-command error", err)
 	}
 }
 
-func TestWorldLintDispatches(t *testing.T) {
+func TestLintDispatches(t *testing.T) {
 	// Not a test of linting — that lives with the parser — but of dispatch:
 	// a real subcommand must reach its implementation rather than falling
 	// through to "unknown command" or a phase stub.
-	err := run([]string{"world", "lint", "--world-dir", "does/not/exist"})
+	err := run([]string{"lint", "--type", "world", "--dir", "does/not/exist"})
 	if err == nil {
-		t.Fatal("world lint on a missing directory succeeded, want an error")
+		t.Fatal("lint on a missing directory succeeded, want an error")
 	}
 	if strings.Contains(err.Error(), "unknown command") || strings.Contains(err.Error(), "not implemented") {
-		t.Errorf("world lint did not reach its implementation: %v", err)
+		t.Errorf("lint did not reach its implementation: %v", err)
 	}
 }
 

@@ -111,7 +111,7 @@ writes it as canonical JSON and exits without opening a socket or touching
 player data. It is read-only with respect to the game and unreachable from
 normal operation.
 
-The Go server produces the same format with `dlctl world dump --parity`, and
+The Go server produces the same format with `dlctl dump --type=world --parity`, and
 `scripts/world-parity.sh` at the repository root diffs the two. They
 currently agree on every field of all 3,202 records of what ships
 (`examples/stock/binary`: 1878 rooms, 569 mobiles, 679 objects, 30 zones, 46

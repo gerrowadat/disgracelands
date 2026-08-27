@@ -121,12 +121,12 @@ echo "==> Releasing:       $tag"
 # check whether anything actually changed. This is the same check
 # release.yml makes authoritatively; doing it here first means a real
 # drift gets a commit and a description instead of a failed release run.
-echo "==> Checking example yaml worlds against a fresh dlctl lib import"
+echo "==> Checking example yaml worlds against a fresh dlctl import"
 
 # Before regenerating anything: refuse on a leftover etc/time. It is the mud
 # clock's epoch, written into whatever --lib-dir a server ran on -- and
 # examples/stock/binary is the *default* --lib-dir, so `make run`, a compose
-# stack or a bare `go run ./cmd/dlmud` all leave one behind. lib import reads
+# stack or a bare `go run ./cmd/dlmud` all leave one behind. import reads
 # it, so the regeneration below would quietly rewrite state/clock.yaml to
 # whenever you last stopped a server and, worse, commit that. It is not
 # gitignored precisely so it stays visible; this is the second line of that
@@ -135,7 +135,7 @@ for pair in stock mini; do
 	if [ -e "examples/$pair/binary/etc/time" ]; then
 		echo "release.sh: examples/$pair/binary/etc/time exists." >&2
 		echo "  It is runtime state left by a server that ran on this directory," >&2
-		echo "  dlctl lib import reads it, and regenerating with it in place would" >&2
+		echo "  dlctl import reads it, and regenerating with it in place would" >&2
 		echo "  commit a state/clock.yaml with your clock in it rather than the" >&2
 		echo "  epoch this example ships. Delete it and re-run:" >&2
 		echo "    rm examples/$pair/binary/etc/time" >&2
@@ -146,7 +146,7 @@ done
 regenerated=0
 for pair in stock mini; do
 	work=$(mktemp -d)
-	go run ./cmd/dlctl lib import \
+	go run ./cmd/dlctl import \
 		--from-dir="examples/$pair/binary" --to-dir="$work" >/dev/null
 	# -x .dlversion: the stamp records which release of dlctl wrote the
 	# directory (docs/design/data-format-versioning.md), so it is expected
@@ -166,7 +166,7 @@ if [ "$regenerated" -eq 1 ]; then
 	git add examples/stock/yaml examples/mini/yaml
 	git commit -m "Regenerate example yaml worlds for $tag
 
-dlctl lib import's output no longer matched what was checked in -- the
+dlctl import's output no longer matched what was checked in -- the
 binary source changed without a matching regeneration, or an importer's
 own output did. (.dlversion is excluded from the comparison: it records
 which release of dlctl wrote the directory, not anything about the

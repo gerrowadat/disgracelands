@@ -8,12 +8,10 @@ package main
 
 import (
 	"bufio"
-	"flag"
 	"fmt"
 	"os"
 	"path/filepath"
 	"time"
-	"unicode/utf8"
 
 	"golang.org/x/text/encoding/charmap"
 
@@ -37,63 +35,54 @@ import (
 	reportsyaml "github.com/gerrowadat/disgracelands/internal/persist/reports/yaml"
 )
 
-// transcodeString converts s from enc to UTF-8, leaving it alone if it is
-// empty or already valid UTF-8 — shared by importBoards/importMail/
-// importReports below, the three state subsystems that carry free text.
-// bans (a hostname substring and an admin's name) and houses (numeric
-// fields and a StoredObject identified only by vnum, never by name or
-// description) have nothing to transcode, so neither calls this.
-func transcodeString(s *string, enc *charmap.Charmap) bool {
-	if *s == "" || utf8.ValidString(*s) {
-		return false
-	}
-	if out, err := enc.NewDecoder().String(*s); err == nil {
-		*s = out
-		return true
-	}
-	return false
-}
-
-// cmdStateImport converts bans, boards, mail, houses, the clock and the
+// importState converts bans, boards, mail, houses, the clock and the
 // bug/idea/typo reports into yaml together, per step 6a/6b of
 // docs/design/data-format.md §9 — one command, since they end up in one
 // directory and there is no reason to convert boards without mail.
-func cmdStateImport(args []string) error {
-	fs := flag.NewFlagSet("state import", flag.ContinueOnError)
-	fromDir := fs.String("from-dir", "data/etc", "Source (classic) directory for bans, boards, mail, the house control file and the clock")
-	fromHouseDir := fs.String("from-house-dir", "data/house", "Source (classic) directory for the per-room house object files")
-	fromMiscDir := fs.String("from-misc-dir", "data/misc", "Source (classic) directory for the bug/idea/typo report files")
-	toDir := fs.String("to-dir", "data/state", "Destination (yaml) directory")
-	encName := fs.String("encoding", convert.DefaultEncoding,
-		fmt.Sprintf("Source text encoding: %v", encodingNames()))
-	if err := fs.Parse(args); err != nil {
-		return err
+//
+// The three classic-side source directories (etc/, house/, misc/) default
+// from o.fromDir via stateClassicDirs; o.fromHouseDir/o.fromMiscDir
+// override them for an archive that keeps house/misc somewhere else.
+func importState(o importOptions) error {
+	if o.fromFormat != "" && o.fromFormat != "classic" {
+		return fmt.Errorf("import --type=state only reads a classic source (got --from-format=%q)", o.fromFormat)
+	}
+	enc, ok := convert.Encodings[o.encName]
+	if !ok {
+		return fmt.Errorf("unknown encoding %q (have: %v)", o.encName, encodingNames())
 	}
 
-	enc, ok := convert.Encodings[*encName]
-	if !ok {
-		return fmt.Errorf("unknown encoding %q (have: %v)", *encName, encodingNames())
+	etcDir, houseDir, miscDir := stateClassicDirs(withDefaultBase(o.fromDir))
+	if o.fromHouseDir != "" {
+		houseDir = o.fromHouseDir
+	}
+	if o.fromMiscDir != "" {
+		miscDir = o.fromMiscDir
+	}
+	toDir, err := resolveDir(typeState, withDefaultBase(o.toDir), "yaml")
+	if err != nil {
+		return err
 	}
 
 	out := bufio.NewWriter(os.Stdout)
 	defer func() { _ = out.Flush() }()
 
-	if err := importBans(*fromDir, *toDir, out); err != nil {
+	if err := importBans(etcDir, toDir, out); err != nil {
 		return fmt.Errorf("bans: %w", err)
 	}
-	if err := importBoards(*fromDir, *toDir, enc, *encName, out); err != nil {
+	if err := importBoards(etcDir, toDir, enc, o.encName, out); err != nil {
 		return fmt.Errorf("boards: %w", err)
 	}
-	if err := importMail(*fromDir, *toDir, enc, *encName, out); err != nil {
+	if err := importMail(etcDir, toDir, enc, o.encName, out); err != nil {
 		return fmt.Errorf("mail: %w", err)
 	}
-	if err := importHouses(*fromDir, *fromHouseDir, *toDir, out); err != nil {
+	if err := importHouses(etcDir, houseDir, toDir, out); err != nil {
 		return fmt.Errorf("houses: %w", err)
 	}
-	if err := importReports(*fromMiscDir, *toDir, enc, *encName, out); err != nil {
+	if err := importReports(miscDir, toDir, enc, o.encName, out); err != nil {
 		return fmt.Errorf("reports: %w", err)
 	}
-	if err := importClock(*fromDir, *toDir, out); err != nil {
+	if err := importClock(etcDir, toDir, out); err != nil {
 		return fmt.Errorf("clock: %w", err)
 	}
 	return out.Flush()
@@ -280,19 +269,13 @@ func importClock(fromDir, toDir string, out *bufio.Writer) error {
 	return nil
 }
 
-// cmdStateFmt canonicalises a yaml state directory in place: load and
-// immediately re-save bans, boards, mail and houses.
-func cmdStateFmt(args []string) error {
-	fs := flag.NewFlagSet("state fmt", flag.ContinueOnError)
-	dir := fs.String("state-dir", "data/state", "Yaml state directory")
-	if err := fs.Parse(args); err != nil {
-		return err
-	}
-
+// fmtState canonicalises a yaml state directory in place: load and
+// immediately re-save bans, boards, mail, houses, reports and the clock.
+func fmtState(dir string) error {
 	out := bufio.NewWriter(os.Stdout)
 	defer func() { _ = out.Flush() }()
 
-	banStore, err := bansyaml.New(bans.Config{Path: *dir})
+	banStore, err := bansyaml.New(bans.Config{Path: dir})
 	if err != nil {
 		return fmt.Errorf("bans: %w", err)
 	}
@@ -300,7 +283,7 @@ func cmdStateFmt(args []string) error {
 		return fmt.Errorf("bans: %w", err)
 	}
 
-	boardStore, err := boardsyaml.New(boards.Config{Dir: *dir})
+	boardStore, err := boardsyaml.New(boards.Config{Dir: dir})
 	if err != nil {
 		return fmt.Errorf("boards: %w", err)
 	}
@@ -317,7 +300,7 @@ func cmdStateFmt(args []string) error {
 		}
 	}
 
-	mailStore, err := mailyaml.New(mail.Config{Path: *dir})
+	mailStore, err := mailyaml.New(mail.Config{Path: dir})
 	if err != nil {
 		return fmt.Errorf("mail: %w", err)
 	}
@@ -325,7 +308,7 @@ func cmdStateFmt(args []string) error {
 		return fmt.Errorf("mail: %w", err)
 	}
 
-	houseStore, err := housesyaml.New(houses.Config{ObjectDir: *dir})
+	houseStore, err := housesyaml.New(houses.Config{ObjectDir: dir})
 	if err != nil {
 		return fmt.Errorf("houses: %w", err)
 	}
@@ -337,7 +320,7 @@ func cmdStateFmt(args []string) error {
 		return fmt.Errorf("houses: %w", err)
 	}
 
-	reportStore, err := reportsyaml.New(reports.Config{Dir: *dir})
+	reportStore, err := reportsyaml.New(reports.Config{Dir: dir})
 	if err != nil {
 		return fmt.Errorf("reports: %w", err)
 	}
@@ -345,11 +328,11 @@ func cmdStateFmt(args []string) error {
 		return fmt.Errorf("reports: %w", err)
 	}
 
-	epoch, err := clock.Load("yaml", *dir)
+	epoch, err := clock.Load("yaml", dir)
 	if err != nil {
 		return fmt.Errorf("clock: %w", err)
 	}
-	if err := clock.Save("yaml", *dir, epoch); err != nil {
+	if err := clock.Save("yaml", dir, epoch); err != nil {
 		return fmt.Errorf("clock: %w", err)
 	}
 

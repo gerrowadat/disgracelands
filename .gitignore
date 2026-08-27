@@ -85,10 +85,10 @@ examples/mini/yaml/players/
 # NOT ignored, deliberately: etc/time, the mud clock's epoch
 # (internal/persist/clock, ClassicFile = "time"). It looks like exactly the
 # runtime state the rules above cover, and hiding it would be worse than the
-# untracked file it leaves behind, because `dlctl lib import` *reads* it: run
+# untracked file it leaves behind, because `dlctl import` *reads* it: run
 # the server in place once and a regenerated examples/stock/yaml gets a
 # different state/clock.yaml, which the release-time "example worlds must match
-# lib import's output" check then fails on. scripts/release.sh does not stop
+# dlctl import's output" check then fails on. scripts/release.sh does not stop
 # there -- it regenerates and commits -- so a silent etc/time would get a
 # drifted clock committed rather than caught. Leaving it in `git status` is
 # what makes it a thing you notice and delete.

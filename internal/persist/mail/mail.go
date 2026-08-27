@@ -44,7 +44,7 @@ type Store interface {
 	// Receive takes one message for a player, oldest first.
 	Receive(recipient int64) (Message, bool, error)
 	// All is a non-destructive read of every message in the store, for
-	// tooling that needs to see everything at once (`dlctl state import`,
+	// tooling that needs to see everything at once (`dlctl import --type=state`,
 	// chiefly) without draining anyone's inbox to do it.
 	All() []Message
 }

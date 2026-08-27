@@ -153,7 +153,7 @@ func repoRoot() string {
 // flags the server needs to read it.
 //
 // Both of examples/mini's formats are played through, not just the classic
-// one: `dlctl lib import` converting cleanly (cmd/dlctl's own tests) and the
+// one: `dlctl import` converting cleanly (cmd/dlctl's own tests) and the
 // world dumps matching are necessary but not sufficient -- the question this
 // answers is whether a server booted on the converted directory is a game
 // you can play. That is a different question, and it is the one that would

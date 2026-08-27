@@ -36,7 +36,7 @@ These were settled up front and the rest of the plan assumes them:
 
 | Question | Decision |
 |---|---|
-| **Text encoding** | **UTF-8 throughout.** The server works in UTF-8 and nothing else. Old CP1252 data is converted once by `dlctl convert`, not decoded per-connection forever — the same principle the player formats follow (§5.2). The world loader still reads bytes transparently, because transcoding at load time would change what a writer later emits; `dlctl world lint` reports anything not yet converted. Answers what was §13.1. |
+| **Text encoding** | **UTF-8 throughout.** The server works in UTF-8 and nothing else. Old CP1252 data is converted once by `dlctl convert`, not decoded per-connection forever — the same principle the player formats follow (§5.2). The world loader still reads bytes transparently, because transcoding at load time would change what a writer later emits; `dlctl lint --type=world` reports anything not yet converted. Answers what was §13.1. |
 | **Web client** | **Wanted, not merely kept open.** A self-hosted optional web front end is a real intention, so GMCP and the WebSocket transport get built properly rather than minimally. The reasoning is worth recording: telnet clients are ageing out, and a MUD whose only door is TinyFugue has a shrinking number of people who can walk through it. Answers what was §13.4. |
 | **Legacy passwords** | **Accepted and upgraded on login; nobody is reset.** Answers what was §13.5. |
 | **Fidelity, restated** | **As faithful to the patched C server as possible.** The row above says "faithful core"; this sharpens it. Where a choice exists between what the C server does and what a modern design would prefer, the C server wins, and a deviation needs a reason written down next to it. The existing exceptions stand — bugs are fixed, integer widths are made honest, credentials are modernised — but each is a deliberate, recorded departure rather than licence to redesign. When in doubt, read the C and do that. |
@@ -81,8 +81,8 @@ for the scripting seam later.
 ```
 cmd/
   dlmud/            The server binary.
-  dlctl/            Offline tooling: format conversion, pfile dump,
-                    world lint (`scheck`), autowiz, mudpasswd, listrent.
+  dlctl/            Offline tooling: format conversion, dump --type=pfile,
+                    lint --type=world (`scheck`), autowiz, mudpasswd, listrent.
 internal/
   game/             The world model + rules. No I/O, no formats.
     char.go  room.go  obj.go  zone.go
@@ -233,7 +233,7 @@ this reason.
    magnitudes**: gold, experience, `played` seconds. The C code overflows
    silently; the Go code saturates at a documented cap.
 
-A `dlctl pfile verify` subcommand cross-checks a converted playerfile
+A `dlctl verify --type=pfile` subcommand cross-checks a converted playerfile
 against the original binary field by field, so item 2 is testable rather
 than assertable.
 
@@ -395,8 +395,8 @@ with the files is a class of bug that then simply does not arise.
 ### 5.5 Migration
 
 ```
-dlctl pfile convert --from=binary --from-dir=data/etc \
-                    --to=ascii    --to-dir=data/pfiles
+dlctl convert --type=pfile --from-format=binary --from-dir=data \
+                            --to-format=ascii    --to-dir=data
 ```
 
 Replaces `reference/tools/bin2ascii.c`, and needs no 32-bit build: the
@@ -409,9 +409,9 @@ because a truncated name is a different character and finding that out after
 the conversion is worse than not converting. `--dry-run` reports without
 writing; `--force` overwrites characters already present.
 
-Also `dlctl pfile verify` (§4) and `dlctl pfile dump`.
+Also `dlctl verify --type=pfile` (§4) and `dlctl dump --type=pfile`.
 
-`dlctl pfile passwd <name>` sets a character's password offline. Nothing in
+`dlctl passwd --type=pfile <name>` sets a character's password offline. Nothing in
 the C or in the game can: `set` has no password field and the menu only ever
 lets the owner change their own, which leaves an archived character whose
 password nobody remembers with no way back in. It applies the same rule the
@@ -446,7 +446,7 @@ nothing about either needed to change shape to let one type serve both.
 `--player-format=yaml` boots the server (`cmd/dlmud/main.go` picks the
 opened `Store` as the `ObjectStore` too when it satisfies that interface,
 falling back to `binary` — §5.6's still-not-pluggable rent files —
-otherwise), and `dlctl pfile import`/`fmt` convert and canonicalise it.
+otherwise), and `dlctl import --type=pfile`/`fmt` convert and canonicalise it.
 `ascii` stays the default.
 
 Landing this also closed two real gaps rather than only adding a format:
@@ -471,7 +471,7 @@ each what §5.6 always meant by "a small interface": a `Store`
 the existing implementation moved unchanged into its own `classic`
 subpackage, and a `yaml` implementation added beside it. One flag,
 `--state-format`, selects for all four together, since in practice they
-always move as one directory. `dlctl state import`/`fmt` convert and
+always move as one directory. `dlctl import --type=state`/`fmt` convert and
 canonicalise.
 
 Houses needed one real design decision the others didn't: its object
@@ -540,7 +540,7 @@ real attention:
   `reference/moderncserver/src/` — worth the intrusion, and it's additive
   so it doesn't disturb the reference build.
 - `scheck` (`reference/moderncserver/src/util/scheck`, the `-c`
-  syntax-check mode) becomes `dlctl world lint`, usable in CI over
+  syntax-check mode) becomes `dlctl lint --type=world`, usable in CI over
   `data/world/`.
 
 ### 6.2 Why this seam earns its place
@@ -559,8 +559,8 @@ speculative one and shouldn't drive the design.
 half should land before Phase 6's OLC writeback rather than after, so that
 `Sink` gets implemented once rather than twice. That happened: `yaml`
 (`internal/persist/world/yaml/`) is a second registered `world.Source`/
-`world.Sink`, `--world-format=yaml` boots the server, and `dlctl world
-import`/`fmt` convert and canonicalise it. `classic` stays the default and
+`world.Sink`, `--world-format=yaml` boots the server, and `dlctl import
+--type=world`/`fmt` convert and canonicalise it. `classic` stays the default and
 the parity oracle; players (§5.7/§5.8 above) and step 6a's four small
 state formats have since landed too — the rest of `lib/`'s formats
 (data-format.md §11 step 6b) are not attempted. See that document's §11
@@ -680,7 +680,7 @@ Everything currently reachable through `comm.c`'s single-letter options
 | `-d <dir>` | `--lib-dir` | `DL_LIB_DIR` |
 | `-o <file>` | `--log-file` (`-` = stdout) | `DL_LOG_FILE` |
 | `-m` | `--mini-mud` | `DL_MINI_MUD` |
-| `-c` | `dlctl world lint` (own subcommand) | — |
+| `-c` | `dlctl lint --type=world` (own subcommand) | — |
 | `-q` | `--skip-rent-check` | `DL_SKIP_RENT_CHECK` |
 | `-r` | `--restrict` (no new players) | `DL_RESTRICT` |
 | `-s` | `--no-specials` | `DL_NO_SPECIALS` |
@@ -805,8 +805,8 @@ Three decisions made during the build, all revisable:
    if it turns out to be noisy.
 
 **Phase 1 — World loading. ✅ Done.** `game` type definitions with explicit
-widths. `persist/world` interface + `classic` implementation. `dlctl world
-lint` and `dlctl world dump`. Parity harness against a dump-and-exit path
+widths. `persist/world` interface + `classic` implementation. `dlctl lint
+--type=world` and `dlctl dump --type=world`. Parity harness against a dump-and-exit path
 added to the C server. *Done when: the Go loader reproduces the C loader's
 view of all 47 zones exactly.*
 
@@ -869,7 +869,7 @@ the Go loader, none of which any hand-written test had found:
    find. Strings now escape byte by byte to pure ASCII, which the C side
    reproduces trivially.
 
-Two fields are excluded from the comparison, via `dlctl world dump
+Two fields are excluded from the comparison, via `dlctl dump --type=world
 --parity`, because the C server does not retain them: whether a mob used the
 enhanced (`E`) format, which `parse_enhanced_mob()` consumes without
 recording, and the espec key/value lines, which `interpret_espec()` folds
@@ -877,8 +877,8 @@ into ordinary fields and discards. The Go loader keeps both because they are
 useful; comparing them could only ever produce noise.
 
 **Phase 2 — Player loading. ✅ Done.** `persist/player` interface,
-`binary` implementation (§4/§5.3), `ascii` implementation, `dlctl pfile
-convert|verify|dump`. Password verification and rehash-on-login logic,
+`binary` implementation (§4/§5.3), `ascii` implementation, `dlctl
+convert|verify|dump --type=pfile`. Password verification and rehash-on-login logic,
 unit-tested against known vectors.
 
 **The stated criterion was wrong and is corrected here.** It said "all 108
@@ -918,10 +918,10 @@ matches `bin2ascii` output.*
   independently recorded for the real file. That is the only check on the
   32-bit layout available without the archive, and it holds.
 - `player.Store` + registry, the `binary` store (atomic saves, 0600, in-place
-  updates because positions are referenced elsewhere), and `dlctl pfile
-  dump|verify`.
+  updates because positions are referenced elsewhere), and `dlctl
+  dump|verify --type=pfile`.
 
-**Also built:** the `ascii` format and `dlctl pfile convert`, and with them
+**Also built:** the `ascii` format and `dlctl convert --type=pfile`, and with them
 a decision that reversed §5.2 — the server runs on `ascii` and refuses to
 start on `binary`. The binary format cannot store a modern hash at all (its
 password field is eleven bytes), so keeping it as the live format would have
@@ -1445,13 +1445,13 @@ equivalent — the seven in-game menu editors (`medit`/`oedit`/`redit`/
 `sedit`/`zedit`/`olc`/`edit`) plus `Sink` writeback and the `gen*`
 layer they need. **Decided against, deliberately, not merely deferred**:
 building lets a builder edit the world files in the `--lib-dir` directly
-(by hand, or via `dlctl world import`/`fmt` into `yaml`) and bring a
+(by hand, or via `dlctl import --type=world`/`fmt` into `yaml`) and bring a
 change in without restarting — `reloadmob` (below) — rather than
 reproducing a decades-old menu-tree UI screen by screen.
 `Sink`/`WriteZone` already exist (§6.3, landed during Phase 5) and are
 exactly what a real OLC would have saved through; nothing about this
 decision leaves them stranded, it just means nothing in this tree drives
-them from an in-game menu. `dlctl world lint` and the world-parity
+them from an in-game menu. `dlctl lint --type=world` and the world-parity
 harness are what make offline editing safe either way.
 
 **`tedit` ✅ — the phase's first slice, landed before the OLC decision.**
@@ -1872,7 +1872,7 @@ build that wrote it**, from `internal/buildinfo` — derived rather than
 hand-maintained, which is the whole argument (§1.1 of the design doc):
 a format version somebody has to remember to bump is one that fails
 silently in exactly the direction the mechanism exists to catch.
-`dlctl lib import` stamps `--to-dir` once every step has succeeded, and
+`dlctl import` (no `--type`) stamps `--to-dir` once every step has succeeded, and
 `dlmud`'s boot sequence compares that stamp against its own release —
 **a differing major refuses to start, in either direction; a differing
 minor logs a warning and starts anyway; a differing patch, or no stamp,
@@ -1892,30 +1892,30 @@ warning is generic**, and usually a false alarm, because most releases
 do not touch the format at all; and **nothing migrates the files** across
 a major bump, only the stamp.
 
-**`dlctl lib import` ✅ — the seven format-specific importers, run
-together against one `lib/`-shaped source, in one command.** `world
-import`/`pfile import`/`state import`/`names import`/`messages import`/
-`socials import`/`helpdb import`, run in that order against
-`--from-dir`'s own subdirectories, plus `text/`'s plain-prose files
-copied unchanged (never a pluggable format) and, once every step has
-actually succeeded, a `.dlversion` stamp naming this build's release
+**`dlctl import` ✅ — the seven format-specific importers, run
+together against one `lib/`-shaped source, in one command.**
+`import --type=world`/`pfile`/`state`/`names`/`messages`/`socials`/
+`help`, run in that order against `--from-dir` (a base directory `dlctl`
+resolves each `--type`'s own subpath under), plus `text/`'s plain-prose
+files copied unchanged (never a pluggable format) and, once every step
+has actually succeeded, a `.dlversion` stamp naming this build's release
 written into `--to-dir` (nothing, from an unreleased build).
 Verified against `examples/stock/`, not a synthetic fixture: regenerating
 `examples/stock/yaml` from `examples/stock/binary` and diffing every file
 against what is checked in is what proved the recipe, not an assumption,
-and is now a standing test (`TestLibImportMatchesTheCheckedInExample`).
+and is now a standing test (`TestImportMatchesTheCheckedInExamples`).
 
 Writing the getting-started walkthrough this landed with
 (`docs/operations.md`) found a real gap rather than assuming the seven
-importers were uniform: only `world`/`pfile import` transcoded non-UTF-8
-source text on their own (`--encoding`, the same flag `dlctl convert`
-uses); the other five assumed the source was already UTF-8 and carried a
-raw CP1252 byte straight through into a `.yaml` file that then claimed to
-be UTF-8 and was not. `examples/stock/`'s own world is pure ASCII
-throughout, so nothing here had ever exercised the gap — found with a
-synthetic fixture instead, a curly quote fed to `names import` and
-inspected byte for byte in the output. **Fixed since**: all seven
-importers take `--encoding` now, each decoding the specific free-text
+importers were uniform: only `import --type=world`/`pfile` transcoded
+non-UTF-8 source text on their own (`--encoding`, the same flag `dlctl
+convert` uses); the other five assumed the source was already UTF-8 and
+carried a raw CP1252 byte straight through into a `.yaml` file that then
+claimed to be UTF-8 and was not. `examples/stock/`'s own world is pure
+ASCII throughout, so nothing here had ever exercised the gap — found with
+a synthetic fixture instead, a curly quote fed to `import --type=names`
+and inspected byte for byte in the output. **Fixed since**: all seven
+`--type`s take `--encoding` now, each decoding the specific free-text
 fields its own format actually carries (see `docs/design/data-format.md`
 §11.1 for the full field-by-field account) — `TODO.md`'s own entry for
 this moved from "still open" to "superseded" accordingly.
@@ -1977,7 +1977,7 @@ sense to start:
    line twice while sending no `death_cry` at all.
 3. **The real archive's non-ASCII text survives conversion.** The
    importer gap this precondition was first written about is closed —
-   all seven of `dlctl lib import`'s sub-importers take `--encoding` and
+   all seven of `dlctl import`'s sub-importers take `--encoding` and
    transcode now (`TODO.md`'s "Superseded", `docs/design/data-format.md`
    §11.1). What is not closed is the exercise: `examples/stock/`'s own
    world is pure ASCII, so nothing here has ever run the conversion
@@ -2281,7 +2281,7 @@ they touch:
 
 1. ~~**How faithful does OLC need to be**~~ **Settled: not built at all.**
    Decided against, in favour of `reloadmob`/`reloadzone` — edit the world
-   data directly (by hand or via `dlctl world import`/`fmt`), reload it
+   data directly (by hand or via `dlctl import --type=world`/`fmt`), reload it
    into the running server without a restart. `Sink`/`WriteZone` (§6.3)
    are unaffected either way; nothing in this tree just happens to drive
    them from an in-game menu.

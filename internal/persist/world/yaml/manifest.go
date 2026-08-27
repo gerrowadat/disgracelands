@@ -148,7 +148,7 @@ func zoneFiles(dir string) (byVnum map[int32]string, findings []string, err erro
 	return byVnum, findings, nil
 }
 
-// zoneFileName is the canonical filename dlctl world fmt writes a zone to:
+// zoneFileName is the canonical filename dlctl fmt --type=world writes a zone to:
 // "<vnum>-<slugified-name>.yaml". §3: this is a convenience for humans, not
 // something the loader resolves by.
 func zoneFileName(vnum int32, name string) string {

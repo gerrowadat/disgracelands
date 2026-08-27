@@ -193,8 +193,8 @@ func CheckBuild(dir string) (warning string, err error) {
 		filepath.Join(dir, FileName), got, buildinfo.Get().Version), nil
 }
 
-// Write stamps dir/.dlversion with v, atomically. `dlctl lib import`
-// calls it with Current at the end of a successful conversion; `dlctl
+// Write stamps dir/.dlversion with v, atomically. `dlctl import` (no
+// --type) calls it with Current at the end of a successful conversion; `dlctl
 // data version --write` calls it by hand, which is the adoption path for
 // a directory that predates the stamp or one an older release wrote.
 func Write(dir string, v Version) error {

@@ -107,7 +107,7 @@ func (s *Source) Load(ctx context.Context) (*game.World, error) {
 }
 
 // LoadWithWarnings loads the world and returns everything questionable found
-// along the way. `dlctl world lint` reports the warnings; the server logs
+// along the way. `dlctl lint --type=world` reports the warnings; the server logs
 // them.
 func (s *Source) LoadWithWarnings(ctx context.Context) (*game.World, []Warning, error) {
 	l := &loader{dir: s.dir, mini: s.mini}

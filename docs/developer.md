@@ -275,7 +275,7 @@ answer:
   32-bit toolchain and enforcing that those tests did *not* skip, plus
   world parity (`make parity`), the license check, the three doc-coverage
   checks, a check that `examples/stock/yaml`/`examples/mini/yaml` still
-  match a fresh `dlctl lib import` of their binary source, the play
+  match a fresh `dlctl import` of their binary source, the play
   regression suite (`make play`, below), a container build, and a
   cross-compile of both binaries for every published platform
   (`make dist`, below) — the licence check here is the full five, not
@@ -323,7 +323,7 @@ that stopped being assigned, a converted directory that lost a file: all of
 those pass every test in `internal/server` and fail the first thing a
 player types. The suite found six bugs before it was finished being
 written — a shutdown that saved nobody and took thirty seconds to do it, a
-`dlctl lib import` that dropped `text/help/screen`, two commands the
+`dlctl import` that dropped `text/help/screen`, two commands the
 tutorial told players to type that the server does not accept,
 `perform_dupe_check` never having been ported (so a second login made a
 *second body*, and both saved over the same pfile), and `do_visible`
@@ -541,7 +541,7 @@ make release BUMP=patch      # or minor | major | v1.2.3
 `origin/main`, and that `gh` is present and logged in; works out the next
 semver version from the latest `v*.*.*` tag reachable from `HEAD`
 (`v0.0.0` if there is none yet); regenerates `examples/stock/yaml` and
-`examples/mini/yaml` from their `binary/` source via `dlctl lib import`
+`examples/mini/yaml` from their `binary/` source via `dlctl import`
 and commits the result if anything had drifted (a `dataversion` bump, an
 edited binary source with no matching regeneration); runs `make check`,
 `make play` and, if a C compiler is available, `make parity`, as a local
@@ -830,7 +830,7 @@ one thing, and the mistakes it catches all look right.
 - **World edits get linted.** `make world-lint` reports exits to deleted
   rooms and resets for mobs that no longer exist. Errors fail CI; warnings do
   not, because the shipped world has had several since long before this repo
-  existed. `dlctl world lint --strict` makes warnings fail too.
+  existed. `dlctl lint --type=world --strict` makes warnings fail too.
 
 ## The rest of the Makefile
 
@@ -842,7 +842,7 @@ one thing, and the mistakes it catches all look right.
 | `make fmt` / `make vet` / `make lint` / `make tidy` | The individual checks. |
 | `make world-dump` | The loaded world as canonical JSON, in `out/world.json`. |
 | `make roster` | The characters in the player directory. |
-| `make ctl ARGS="pfile dump --name=Someone"` | Any `dlctl` command. |
+| `make ctl ARGS="dump --type=pfile --name=Someone"` | Any `dlctl` command. |
 | `make docker` / `make compose-up` / `make compose-down` | The container image and the local stack. |
 | `make ci` / `make ci-job JOB=…` | `go.yml`, locally, in containers (`CI_WORKFLOW=...` for `release.yml`). |
 | `make ci-list` / `make ci-clean` | What `make ci` would run; discard its reused containers. |
@@ -853,9 +853,9 @@ one thing, and the mistakes it catches all look right.
 
 ```
 cmd/dlmud/          the server binary
-cmd/dlctl/          offline tooling: convert, lib import, world/pfile/state/
-                    names/messages/socials/helpdb import and fmt, lint/dump,
-                    pfile commands, data version
+cmd/dlctl/          offline tooling: convert, import, fmt, lint, dump,
+                    verify, passwd (each --type=world/pfile/state/names/
+                    messages/socials/help where it applies), data version
 internal/config/    every setting, declared once
 internal/persist/   world and player formats, one package per format
 internal/game/      the game model and the rules ported from the C server

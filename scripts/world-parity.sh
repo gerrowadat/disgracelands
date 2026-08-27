@@ -62,8 +62,11 @@ echo "==> Dumping the world from the C server"
 
 echo "==> Dumping the world from the Go server"
 # --parity omits the two mob fields the C server does not retain after
-# loading; see internal/persist/world/dump.go.
-go run ./cmd/dlctl world dump --world-dir="$WORLD_DIR" --parity --out="$OUT/go.json"
+# loading; see internal/persist/world/dump.go. --dir is the lib base (the
+# same one -d gives the C server above), not $WORLD_DIR itself — dlctl
+# resolves world/ under it the same way --lib-dir does for a running
+# server.
+go run ./cmd/dlctl dump --type=world --dir="$(dirname "$WORLD_DIR")" --parity --out="$OUT/go.json"
 
 echo "==> Comparing"
 # Both dumps are the same canonical format, but one is pretty-printed and the

@@ -89,7 +89,7 @@ func (s *Store) Name() string { return FormatName }
 func (s *Store) Close() error { return nil }
 
 // Rewrite writes the file back in its current, canonical form without
-// changing its contents — `dlctl state fmt`'s way of reformatting bans,
+// changing its contents — `dlctl fmt --type=state`'s way of reformatting bans,
 // since Add/Remove are the only ways to change what is stored and neither
 // is the right shape for "no changes, just rewrite."
 func (s *Store) Rewrite() error { return s.save() }

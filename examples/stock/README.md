@@ -27,13 +27,14 @@ One command, converting every subsystem `dlctl` knows how to against
 `binary/` in one go:
 
 ```sh
-go run ./cmd/dlctl lib import --from-dir=examples/stock/binary --to-dir=examples/stock/yaml
+go run ./cmd/dlctl import --from-dir=examples/stock/binary --to-dir=examples/stock/yaml
 ```
 
-`lib import` is `world import`/`pfile import`/`state import`/`names
-import`/`messages import`/`socials import`/`helpdb import`, run in that
-order against the matching subdirectories of `--from-dir`, plus two things
-none of those seven do on their own: `text/`'s eleven plain-text files
+`import` with no `--type` is `import --type=world`/`pfile`/`state`/`names`/
+`messages`/`socials`/`help`, run in that order against the matching
+subdirectories of `--from-dir` (`dlctl` resolves each `--type`'s own
+subpath, the same way `--lib-dir` does for a running server), plus two
+things none of those seven do on their own: `text/`'s eleven plain-text files
 (`motd`, `credits`, `greetings`, ...) — not a pluggable format, since both
 classic and yaml read them from the same `text/<name>` path regardless of
 `--*-format` (`internal/server/text.go`) — are copied across unchanged
@@ -51,32 +52,33 @@ produced only `clock.yaml` and an empty `houses.yaml`; there is no
 Re-run the command above after editing anything in `binary/` to keep
 `yaml/` in sync. Nothing checks it on an ordinary push, but a release
 does: `scripts/release.sh` regenerates both example worlds before it
-dispatches anything, and `release.yml` then re-runs `lib import` into a
+dispatches anything, and `release.yml` then re-runs `import` into a
 temporary directory and diffs it against what is checked in, for
 `examples/mini` as well as this one. A mismatch there stops the release.
 
 **Delete `binary/etc/time` before regenerating.** `binary/` is also the
 server's default `--lib-dir`, so running `dlmud` with no flags at all — or
 `make run`, or the compose stack — writes the mud clock's epoch there on
-shutdown. `lib import` reads it, and the regenerated `state/clock.yaml`
+shutdown. `import` reads it, and the regenerated `state/clock.yaml`
 then carries whenever *you* last stopped a server rather than the epoch
 this example is supposed to ship. It is deliberately not gitignored, so it
 shows up in `git status` as the untracked file it is; delete it and
 regenerate. Nothing else the server writes into `binary/` reaches
-`lib import`'s output, because the rest is player data and there is none
+`import`'s output, because the rest is player data and there is none
 here to import.
 
-The seven subsystem commands `lib import` wraps are still there individually,
-for converting just one of them, or into a directory laid out differently
+The seven `--type`s `import` wraps still run on their own, with
+`--type=world`/`pfile`/`state`/`names`/`messages`/`socials`/`help`, for
+converting just one of them, or into a directory laid out differently
 than `--to-dir`'s own subdirectory-per-subsystem default.
 
 ## Verifying the two are the same world
 
 ```sh
-go run ./cmd/dlctl world lint --world-dir=examples/stock/binary/world --world-format=classic
-go run ./cmd/dlctl world lint --world-dir=examples/stock/yaml/world   --world-format=yaml
-go run ./cmd/dlctl world dump --world-dir=examples/stock/binary/world --world-format=classic --out=/tmp/binary.json
-go run ./cmd/dlctl world dump --world-dir=examples/stock/yaml/world   --world-format=yaml   --out=/tmp/yaml.json
+go run ./cmd/dlctl lint --type=world --dir=examples/stock/binary --format=classic
+go run ./cmd/dlctl lint --type=world --dir=examples/stock/yaml   --format=yaml
+go run ./cmd/dlctl dump --type=world --dir=examples/stock/binary --format=classic --out=/tmp/binary.json
+go run ./cmd/dlctl dump --type=world --dir=examples/stock/yaml   --format=yaml   --out=/tmp/yaml.json
 diff /tmp/binary.json /tmp/yaml.json
 ```
 

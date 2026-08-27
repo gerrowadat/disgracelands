@@ -36,7 +36,7 @@ every flag appears here, but it cannot check that the prose is accurate.
 | Flag | Default | Meaning |
 |---|---|---|
 | `--lib-dir` | `examples/stock/binary` | Runtime data directory: world files, help text, boards, player data. The same directory the C server takes with `-d`. |
-| `--player-dir` | *(empty)* | Player-data directory. Empty means `<lib-dir>/pfiles`. |
+| `--player-dir` | *(empty)* | Player-data directory. Empty means `<lib-dir>/pfiles` (`ascii`/`binary`) or `<lib-dir>/players` (`yaml`), following `--player-format`. |
 | `--world-dir` | *(empty)* | World-data directory. Empty means `<lib-dir>/world`. |
 | `--config` | *(empty)* | Game-tuning config file (see "A config file: `--config`" below). Empty means `config.c`'s own defaults. |
 
@@ -87,29 +87,31 @@ mail, houses, reports, the clock, xnames, damage messages, socials and
 the help database — into one fresh `yaml` directory in a single command:
 
 ```sh
-dlctl lib import --from-dir=data --to-dir=data-yaml
+dlctl import --from-dir=data --to-dir=data-yaml
 ```
 
-This is the seven commands below run in order against `--from-dir`'s own
-subdirectories, plus `text/`'s plain-text files copied across unchanged
-and, once everything else has succeeded, a `.dlversion` stamp naming this
-build's own release written into `--to-dir` (see "The yaml format's own
-version" below). Each of the
-seven is also its own command, for converting one subsystem on its own or
-into a directory laid out differently than `lib import`'s subdirectory
-default:
+This is the seven `--type` conversions below run in order against
+`--from-dir` — a base directory `dlctl` resolves each `--type`'s own
+subpath under, the same way `--lib-dir` does for `dlmud` itself (`world/`
+either way; `etc/`/`pfiles/` vs `players/` for `pfile`, depending on
+format; `etc/`/`house/`/`misc/` vs one `state/` for `state`; `misc/` vs
+`config/` for `names`/`messages`/`socials`; `text/help/` either way) —
+plus `text/`'s plain-text files copied across unchanged and, once
+everything else has succeeded, a `.dlversion` stamp naming this build's
+own release written into `--to-dir` (see "The yaml format's own version"
+below). Each of the seven also runs on its own, with `--type`:
 
 Convert an existing world directory once:
 
 ```sh
-dlctl world import --from-dir=data/world --to-dir=data/world
+dlctl import --type=world --from-dir=data --to-dir=data
 ```
 
 Convert an existing roster once, into `ascii`:
 
 ```sh
-dlctl pfile convert --from=binary --from-dir=data/etc \
-                    --to=ascii    --to-dir=data/pfiles
+dlctl convert --type=pfile --from-format=binary --from-dir=data \
+                            --to-format=ascii    --to-dir=data
 ```
 
 — or into `yaml`, which also carries over any rent/crash file (read via
@@ -117,17 +119,19 @@ dlctl pfile convert --from=binary --from-dir=data/etc \
 format for them regardless of `--player-format`, matching the C):
 
 ```sh
-dlctl pfile import --from-dir=data/etc --to-dir=data/players
+dlctl import --type=pfile --from-dir=data --to-dir=data
 ```
 
 `--state-format` covers bans, boards, mail, player housing, the mud
 clock and the bug/idea/typo reports together — one flag, since they end
 up in one directory (`data/state/` under `yaml`) and there is no
-reason to convert boards without mail. Convert an existing set once:
+reason to convert boards without mail. Convert an existing set once
+(`--from-house-dir`/`--from-misc-dir` override the `house/`/`misc/`
+`dlctl` would otherwise derive from `--from-dir`, for an archive that
+keeps them somewhere else):
 
 ```sh
-dlctl state import --from-dir=data/etc --from-house-dir=data/house \
-                    --from-misc-dir=data/misc --to-dir=data/state
+dlctl import --type=state --from-dir=data --to-dir=data
 ```
 
 `--names-format` covers the disallowed-name list on its own
@@ -137,7 +141,7 @@ is, not one that happens to move with the five stores above. Convert an
 existing list once:
 
 ```sh
-dlctl names import --from-path=data/misc/xnames --to-dir=data/config
+dlctl import --type=names --from-dir=data --to-dir=data
 ```
 
 `--messages-format` covers the `skill_message`/`dam_message` table on its
@@ -148,7 +152,7 @@ unrelated administrative concerns and do not need to move together.
 Convert an existing table once:
 
 ```sh
-dlctl messages import --from-path=data/misc/messages --to-dir=data/config
+dlctl import --type=messages --from-dir=data --to-dir=data
 ```
 
 `--socials-format` covers the `do_action` table on its own (`misc/socials`
@@ -159,20 +163,20 @@ three are otherwise unrelated administrative concerns and do not need to
 move together. Convert an existing table once:
 
 ```sh
-dlctl socials import --from-path=data/misc/socials --to-dir=data/config
+dlctl import --type=socials --from-dir=data --to-dir=data
 ```
 
 `--help-format` covers the help database — `text/help/index` plus the
 `.hlp` files it lists under `classic`, `text/help/help.yaml` plus one
 `.txt` file per entry under `yaml`. Unlike the three flags above, both
-formats live in the *same* directory rather than `misc/` versus
-`config/`: they simply never read each other's files, so a converted
-tree can sit right beside the classic one it came from. Convert an
-existing archive once (`--to-dir` defaults to the same directory as
-`--from-dir`, so this runs in place unless told otherwise):
+formats live in the *same* directory (`text/help/`) rather than `misc/`
+versus `config/`: they simply never read each other's files, so a
+converted tree can sit right beside the classic one it came from.
+Convert an existing archive once (`--to-dir` defaults to the same base
+as `--from-dir`, so this runs in place unless told otherwise):
 
 ```sh
-dlctl helpdb import --from-dir=data/text/help --to-dir=data/text/help
+dlctl import --type=help --from-dir=data --to-dir=data
 ```
 
 **The server will not start on `--player-format=binary`**, and says so with
@@ -429,8 +433,8 @@ the environment exactly as the long forms do.
 
 Two C options have no flag equivalent:
 
-- **`-c`** (syntax check) is now `dlctl world lint`, so it can run in CI
-  without starting a server.
+- **`-c`** (syntax check) is now `dlctl lint --type=world`, so it can run
+  in CI without starting a server.
 - **A bare port number** (`circle -q 4000`) is rejected, with a message
   pointing at `--listen-telnet`/`--listen-telnets`. There are three
   listeners now and no sensible way to guess which one was meant.

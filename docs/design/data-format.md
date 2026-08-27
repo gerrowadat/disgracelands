@@ -309,7 +309,7 @@ zones:
 
 Import reads the *source index*, never the directory listing, and reports
 every on-disk file the index does not mention rather than quietly adopting
-or quietly discarding it. `dlctl world lint` flags a zone file with no
+or quietly discarding it. `dlctl lint --type=world` flags a zone file with no
 manifest entry, so the two cannot drift apart in the other direction either.
 
 **One writer per file.** Every file in this tree is written by exactly one
@@ -322,7 +322,7 @@ repaired by anything but a program that understands the format.
 
 **Filenames are conveniences.** `30-midgaard.yaml` is named for humans;
 the loader reads `zone.vnum` from inside it. A mismatch between the two is
-a lint warning, not an error, and `dlctl world fmt` renames the file to
+a lint warning, not an error, and `dlctl fmt --type=world` renames the file to
 match. Nothing resolves a record by filename.
 
 ---
@@ -494,7 +494,7 @@ of risk, so:
   flags_raw: 0x40000        # bits with no symbolic name, preserved verbatim
   ```
 
-  `dlctl world lint` reports every use of `flags_raw` as something to name.
+  `dlctl lint --type=world` reports every use of `flags_raw` as something to name.
   Losing a bit silently is how a room quietly stops being a death trap.
 
 - **The 32-bit letter-encoding ceiling goes away.** `Flags.ExceedsCRange()`
@@ -503,7 +503,8 @@ of risk, so:
   behaviour in the C server. `yaml` has no such limit: flags are a list of
   names and there are as many names as we care to define. Converting a world
   that uses bit 32 or above *back* to `classic` cannot work, and
-  `dlctl world export --format=classic` refuses rather than truncating.
+  `dlctl export --type=world --to-format=classic` refuses rather than
+  truncating.
 
   Worth knowing before anyone spends effort on it: the real world does not
   go anywhere near this. Every room and mobile bitfield in a snapshot of the
@@ -574,7 +575,7 @@ type: other
 values: [0, 3, 0, 17]       # always accepted, always preserved exactly
 ```
 
-and `dlctl world lint` reports it, so a human decides whether it was junk
+and `dlctl lint --type=world` reports it, so a human decides whether it was junk
 or whether it meant something. Both forms load; the typed form is canonical
 where it is available.
 
@@ -636,7 +637,7 @@ world.
 What this buys, beyond legibility: "the last mobile loaded" stops being
 implicit in file order, so a `give` that has drifted away from its `mob`
 becomes a *structural* impossibility rather than a silent misbehaviour, and
-`dlctl world lint` can say "this `equip` has no mobile" instead of the game
+`dlctl lint --type=world` can say "this `equip` has no mobile" instead of the game
 quietly equipping the wrong creature.
 
 The full opcode set:
@@ -870,7 +871,7 @@ answer to:
 - **Unbalanced colour is lintable.** A description that opens `{{red}}` and
   never returns to `{{/}}` bleeds into whatever is printed next. That is the single
   most common colour bug in MUD data, it is trivial to detect on a symbolic
-  grammar, and `dlctl world lint` reports it.
+  grammar, and `dlctl lint --type=world` reports it.
 
 ### 5.5 Converting back to CircleMUD
 
@@ -1019,7 +1020,7 @@ Disgracelands `lib/` does not: its world, text and misc directories are pure
 That is not a reason to drop the step — this is one snapshot of an archive
 that holds over a thousand nightly ones, and a converter that assumes ASCII
 and meets a curly quote does silent damage — but it does mean encoding is a
-smaller risk than it looked, and `dlctl world lint` reporting what it
+smaller risk than it looked, and `dlctl lint --type=world` reporting what it
 transcoded is more useful than any amount of care taken up front.
 
 Only help needs structure, because a help entry genuinely has fields —
@@ -1258,7 +1259,7 @@ Four of these are now built — step 6a, `internal/persist/{bans,boards,
 mail,houses}`, each retrofitted to the `Store` interface/registry shape
 `world` and `player` already had, `classic` moved to its own subpackage
 unchanged, `yaml` added beside it, `--state-format` selecting between
-them, `dlctl state import`/`fmt` converting and canonicalising. All three
+them, `dlctl import --type=state`/`fmt` converting and canonicalising. All three
 struct-dump ones were already ported and working before this — boards,
 mail, houses — which is the right order: the C formats had to be readable
 before there was anything to convert *from*, and those ports' test
@@ -1365,7 +1366,7 @@ reader does not care about:
 - **Deterministic.** Fixed key order (schema order, not alphabetical — a
   room's `vnum` and `name` first, its prose in the middle, its exits last).
   Records in vnum order. Two-space indentation. No maps ranged over. Running
-  `dlctl world fmt` twice produces the same bytes, and a zone the server
+  `dlctl fmt --type=world` twice produces the same bytes, and a zone the server
   rewrote without changing produces an empty diff.
 - **Block scalars for anything multi-line**, and quoted style *only* where a
   block scalar cannot represent the string exactly. Three choices have to be
@@ -1391,13 +1392,13 @@ reader does not care about:
 ### 10.4 Tooling
 
 ```
-dlctl lib import --from-dir=data-old --to-dir=data      # every subsystem, one lib/ to one fresh yaml directory
-dlctl world import --from=data-old --format=classic --to=data
-dlctl world export --to=data-classic --format=classic   # refuses on data loss (not built — §11 step 3)
-dlctl world lint                                        # replaces scheck
-dlctl world fmt                                         # canonicalise in place
-dlctl data verify                                       # every file, every schema (not built)
-dlctl data version --dir=data                           # which release wrote the directory, and whether this one will load it; docs/design/data-format-versioning.md
+dlctl import --from-dir=data-old --to-dir=data                     # every subsystem, one lib/ to one fresh yaml directory
+dlctl import --type=world --from-dir=data-old --from-format=classic --to-dir=data
+dlctl export --type=world --to-dir=data-classic --to-format=classic  # refuses on data loss (not built — §11 step 3)
+dlctl lint --type=world --dir=data                                 # replaces scheck
+dlctl fmt --type=world --dir=data                                  # canonicalise in place
+dlctl data verify                                                  # every file, every schema (not built)
+dlctl data version --dir=data                                      # which release wrote the directory, and whether this one will load it; docs/design/data-format-versioning.md
 ```
 
 `export` is not a nicety. It is what makes this format safe to adopt: as
@@ -1428,18 +1429,18 @@ format-neutral and that is the whole reason it exists.
 |---|---|---|
 | **1. Vocabularies ✅** | Name tables for every flag set, sector, position, item type, apply location and wear slot, in `internal/game/yamlnames.go`, with round-trip tests (`yamlnames_test.go`) against the C-sourced display tables in `bitnames.go`/`object.go`. | Every bit in the stock world has a name or round-trips via `flags_raw`. |
 | **1b. Colour ✅** | The `{{…}}` parser, ANSI renderer and stripper, keyed off `PrefColour1`/`PrefColour2`, plus `DisplayWidth` — `internal/game/colour.go`. | The swearing social in §5.3 survives parse → render → strip unescaped and unchanged (`colour_test.go`); no wrapping layer exists yet to consume `DisplayWidth`. |
-| **2. World read ✅** | `yaml` as a `world.Source` (`internal/persist/world/yaml/`), plus `dlctl world import` from `classic`, including CP1252→UTF-8 transcoding and ESC → named-code demotion. | `dlctl world import` on the real `data/world` produces zero `dlctl world lint --world-format=yaml` findings, and `dlmud --world-format=yaml` boots, populates and serves a connection. |
-| **3. World write ✅ (export not yet)** | `world.Sink` (`WriteZone`), the canonical writer (`text.go`'s `Text`/`NestedText`), `dlctl world fmt`. `dlctl world export` (yaml → classic) is **not built** — it needs a classic-format *writer*, which does not exist in this tree at all yet (`classic` has only ever been a reader). | `classic → yaml → classic` round-trips byte-identical at the in-memory/parity-dump level for the whole real world (`yaml/parity_test.go`, 30 zones / 3,202 records) with no lossy transform left to except (trailing blank lines used to be one; `text.go`'s `needsQuoting` now escapes them instead — see §12); `fmt` is idempotent, verified against the real corpus. |
+| **2. World read ✅** | `yaml` as a `world.Source` (`internal/persist/world/yaml/`), plus `dlctl import --type=world` from `classic`, including CP1252→UTF-8 transcoding and ESC → named-code demotion. | `dlctl import --type=world` on the real `data` produces zero `dlctl lint --type=world --dir=data --format=yaml` findings, and `dlmud --world-format=yaml` boots, populates and serves a connection. |
+| **3. World write ✅ (export not yet)** | `world.Sink` (`WriteZone`), the canonical writer (`text.go`'s `Text`/`NestedText`), `dlctl fmt --type=world`. `dlctl export --type=world` (yaml → classic) is **not built** — it needs a classic-format *writer*, which does not exist in this tree at all yet (`classic` has only ever been a reader). | `classic → yaml → classic` round-trips byte-identical at the in-memory/parity-dump level for the whole real world (`yaml/parity_test.go`, 30 zones / 3,202 records) with no lossy transform left to except (trailing blank lines used to be one; `text.go`'s `needsQuoting` now escapes them instead — see §12); `fmt` is idempotent, verified against the real corpus. |
 | **4. Flip the default** | `--world-format=yaml`, `data/` converted in the repo, `classic` demoted to import-only. | Not attempted — a decision about `data/` itself, separate from this code landing. `--world-format=yaml` is available and works today; `classic` stays the default. |
-| **5. Players ✅** | `yaml` player store (`internal/persist/player/yaml/`), implementing both `player.Store` and `player.ObjectStore` against one file (§8); `dlctl pfile import`/`pfile fmt`; the `alias` command (`interpreter.c`'s `do_alias`/`perform_alias`, previously unported — no archived alias data exists anywhere to have ported instead); real container nesting, format-gated on `yaml` as a user-approved deviation (`docs/deviations.md`). | `dlctl pfile import` converts a `binary` roster (rent files included); `dlmud --player-format=yaml` boots, and a character created on it, quit and logged back in, keeps a bag's contents *inside* the bag — proven live (`TestRentingUnderYamlKeepsTheRingInTheBag`), not just at the codec level. `PlayerRecord`/`player.Store` needed no restructuring: `ObjectStore` was already a separate interface a format could additionally implement, and `StoredObject` grew one field (`Contains`) rather than being redesigned. |
-| **6a. Bans, boards, mail, houses ✅** | `yaml` for each (`internal/persist/{bans,boards,mail,houses}/yaml/`), every one retrofitted to the `Store`/`Register`/`Open` shape `world`/`player` already had (`classic` moved to its own subpackage per format, unchanged); `--state-format`; `dlctl state import`/`fmt`, converting all four together. Houses' contents reuse the player object-instance schema directly, always flat (containment stayed scoped to player rent files, §8's own note in this table's row 5). | `dlctl state import`/`fmt` round-trip a synthetic fixture (no real archived data exists for any of these four — confirmed, not assumed, in the scoping survey); a live server integration test per format proves each one end to end (posting/reading a board message, sending/receiving mail, a ban refusing a connection, a house crash-save surviving a reload), all under `--state-format=yaml`. |
-| **6b. xnames, the clock, reports ✅** | Three of step 6a's own deferred pieces, each small enough to build the feature and its format together in one pass: character creation now consults `misc/xnames`/`config/names.yaml` (`internal/persist/names`, `--names-format`); the MUD clock's epoch is persisted (`internal/persist/clock`, joining `--state-format`, `Live.SetBooted`/`SavedEpoch`); `do_gen_write` (`bug`/`idea`/`typo`) is implemented and gets `state/reports.yaml` (`internal/persist/reports`, joining `--state-format`). | A disallowed name is refused at creation; a persisted epoch survives a simulated restart within the C's own sub-hour rounding bound (`docs/weirdnumbers.md`); `bug`/`idea`/`typo` append, refuse NPCs/empty text/a full file, and round-trip through `dlctl state import`/`fmt` — all proved with live server integration tests, not just at the codec level. |
+| **5. Players ✅** | `yaml` player store (`internal/persist/player/yaml/`), implementing both `player.Store` and `player.ObjectStore` against one file (§8); `dlctl import --type=pfile`/`fmt --type=pfile`; the `alias` command (`interpreter.c`'s `do_alias`/`perform_alias`, previously unported — no archived alias data exists anywhere to have ported instead); real container nesting, format-gated on `yaml` as a user-approved deviation (`docs/deviations.md`). | `dlctl import --type=pfile` converts a `binary` roster (rent files included); `dlmud --player-format=yaml` boots, and a character created on it, quit and logged back in, keeps a bag's contents *inside* the bag — proven live (`TestRentingUnderYamlKeepsTheRingInTheBag`), not just at the codec level. `PlayerRecord`/`player.Store` needed no restructuring: `ObjectStore` was already a separate interface a format could additionally implement, and `StoredObject` grew one field (`Contains`) rather than being redesigned. |
+| **6a. Bans, boards, mail, houses ✅** | `yaml` for each (`internal/persist/{bans,boards,mail,houses}/yaml/`), every one retrofitted to the `Store`/`Register`/`Open` shape `world`/`player` already had (`classic` moved to its own subpackage per format, unchanged); `--state-format`; `dlctl import --type=state`/`fmt`, converting all four together. Houses' contents reuse the player object-instance schema directly, always flat (containment stayed scoped to player rent files, §8's own note in this table's row 5). | `dlctl import --type=state`/`fmt` round-trip a synthetic fixture (no real archived data exists for any of these four — confirmed, not assumed, in the scoping survey); a live server integration test per format proves each one end to end (posting/reading a board message, sending/receiving mail, a ban refusing a connection, a house crash-save surviving a reload), all under `--state-format=yaml`. |
+| **6b. xnames, the clock, reports ✅** | Three of step 6a's own deferred pieces, each small enough to build the feature and its format together in one pass: character creation now consults `misc/xnames`/`config/names.yaml` (`internal/persist/names`, `--names-format`); the MUD clock's epoch is persisted (`internal/persist/clock`, joining `--state-format`, `Live.SetBooted`/`SavedEpoch`); `do_gen_write` (`bug`/`idea`/`typo`) is implemented and gets `state/reports.yaml` (`internal/persist/reports`, joining `--state-format`). | A disallowed name is refused at creation; a persisted epoch survives a simulated restart within the C's own sub-hour rounding bound (`docs/weirdnumbers.md`); `bug`/`idea`/`typo` append, refuse NPCs/empty text/a full file, and round-trip through `dlctl import --type=state`/`fmt` — all proved with live server integration tests, not just at the codec level. |
 | **6c-i. Help ✅** | The real keyword lookup: `do_help`'s binary search plus backward-walk over `text/help/index` and the `.hlp` files it lists, ported to `internal/game/help.go` and wired through `internal/server/text.go`; `help circlemud` now reaches the real archived `CIRCLE CIRCLEMUD CREDITS` entry instead of a special case. | `help`, `help <keyword>` and the ambiguous-prefix behaviour all proved against the real 216-entry, 86KB archive (`internal/game/help_test.go`), plus a live server test that `help circlemud`/`help credits`/`help circle` show the real credits text with no special case in the command (`internal/server/help_test.go`). |
 | **6c-ii. Damage messages: weapon swing, kick, bash, backstab ✅** | `dam_message`'s compiled severity table and `skill_message`'s full `misc/messages` lookup, ported for `internal/server/violence.go`'s `s.hit` (`Damage`, the weapon-swing dispatch) and the three `SkillDamage` callers `do_kick`/`do_bash`/`do_backstab` — `skillHit`/`skillMiss`'s old fixed strings are gone entirely, and a miss for any of the four is no longer a separate code path (`amount 0` through the same `applyDamage` a hit uses, matching `hit()`'s/`do_kick`'s/etc.'s own `damage(ch, vict, 0, ...)` calls). | Verified against the real archive (`data/misc/messages`, 55 records, including its one backstab/bash entry and two kick variants) as well as synthetic fixtures — live server tests prove a registered entry wins on a miss/death blow and loses to the compiled table on an ordinary weapon hit, and that a non-weapon attack with nothing registered is genuinely silent (no fallback at all). |
-| **6c-iii. `config/messages.yaml` ✅** | `internal/persist/messages`, mirroring `internal/persist/names`'s shape (a `Load`/`Save` pair, not a full `Store` registry — the C never writes `misc/messages` at runtime either) rather than `reports`'/`bans`' fuller one. New `game.AttackTypeName`/`AttackTypeFromName` name a record's attack type across the two numeric spaces `misc/messages` mixes — weapon types via `YamlAttackTypeNames()`, spells and skills via `SpellNameOrNumber` (already covering `SkillBackstab`/`SkillBash`/`SkillKick`, since `spellTable` is one table for both) — falling back to `#N` for either space's unnamed numbers. New `--messages-format` flag, its own rather than sharing `--names-format`'s, for the same reason `--names-format` did not join `--state-format`. `dlctl messages import`/`fmt` mirror `names`' own two commands. | `dlctl messages import` against the real 55-record archive produces byte-identical records read back through yaml — confirmed by a test that parses classic directly and compares, not by inspection. A live server test proves `LoadText(dir, "yaml")` — the same path `--messages-format=yaml` drives — resolves a real kick message through `config/messages.yaml`, not just that the codec round-trips in isolation. |
-| **6c-iv. `config/socials.yaml` ✅** | `internal/persist/socials`, the same `Load`/`Save`-pair shape `messages`/`names` already use — `misc/socials` is never written at runtime either. No split numeric space to reconcile this time: `min_victim_position` is a single `Position` enum, named via `game.NameByValue`/`ValueByName` against `game.YamlPositionNames()`, the same table the world format already uses for a mobile's `position`/`default_position`. `no_arg`/`found`/`self` are each an object of `{char, others[, victim]}`, `omitempty` down to the whole block being absent for a social that does not fill it — `found`/`not_found`/`self` are naturally all empty together, since the C only ever reads them as one group gated on `CharFound != ""` (`Social.TakesTarget()`). New `--socials-format` flag, its own for the same reason `--messages-format` is. `dlctl socials import`/`fmt` mirror `messages`' own two commands. | `dlctl socials import` against the real 104-record archive (`data/misc/socials` — 104, not the 105 lines in the file; one is a stray `you` entry with no command-table slot the C itself drops, `docs/proposals/go-port-plan.md`'s own count) produces byte-identical records read back through yaml. A live server test proves `LoadText(dir, ..., "yaml")` resolves the real archive's `smile` entry with its real message through `config/socials.yaml`, not just that the codec round-trips in isolation. |
+| **6c-iii. `config/messages.yaml` ✅** | `internal/persist/messages`, mirroring `internal/persist/names`'s shape (a `Load`/`Save` pair, not a full `Store` registry — the C never writes `misc/messages` at runtime either) rather than `reports`'/`bans`' fuller one. New `game.AttackTypeName`/`AttackTypeFromName` name a record's attack type across the two numeric spaces `misc/messages` mixes — weapon types via `YamlAttackTypeNames()`, spells and skills via `SpellNameOrNumber` (already covering `SkillBackstab`/`SkillBash`/`SkillKick`, since `spellTable` is one table for both) — falling back to `#N` for either space's unnamed numbers. New `--messages-format` flag, its own rather than sharing `--names-format`'s, for the same reason `--names-format` did not join `--state-format`. `dlctl import --type=messages`/`fmt` mirror `names`' own two commands. | `dlctl import --type=messages` against the real 55-record archive produces byte-identical records read back through yaml — confirmed by a test that parses classic directly and compares, not by inspection. A live server test proves `LoadText(dir, "yaml")` — the same path `--messages-format=yaml` drives — resolves a real kick message through `config/messages.yaml`, not just that the codec round-trips in isolation. |
+| **6c-iv. `config/socials.yaml` ✅** | `internal/persist/socials`, the same `Load`/`Save`-pair shape `messages`/`names` already use — `misc/socials` is never written at runtime either. No split numeric space to reconcile this time: `min_victim_position` is a single `Position` enum, named via `game.NameByValue`/`ValueByName` against `game.YamlPositionNames()`, the same table the world format already uses for a mobile's `position`/`default_position`. `no_arg`/`found`/`self` are each an object of `{char, others[, victim]}`, `omitempty` down to the whole block being absent for a social that does not fill it — `found`/`not_found`/`self` are naturally all empty together, since the C only ever reads them as one group gated on `CharFound != ""` (`Social.TakesTarget()`). New `--socials-format` flag, its own for the same reason `--messages-format` is. `dlctl import --type=socials`/`fmt` mirror `messages`' own two commands. | `dlctl import --type=socials` against the real 104-record archive (`data/misc/socials` — 104, not the 105 lines in the file; one is a stray `you` entry with no command-table slot the C itself drops, `docs/proposals/go-port-plan.md`'s own count) produces byte-identical records read back through yaml. A live server test proves `LoadText(dir, ..., "yaml")` resolves the real archive's `smile` entry with its real message through `config/socials.yaml`, not just that the codec round-trips in isolation. |
 | **6c-v. Damage messages: every offensive spell ✅** | `SkillDamage` was already `skill_message` alone, no `dam_message` fallback, the same non-weapon path `do_kick`/`do_bash`/`do_backstab` use — `mag_damage`'s own C confirms it is the right one, ending with `return (damage(ch, victim, dam, spellnum))` (magic.c:294), the identical dispatch with a spell number standing in for a skill's. `internal/session/cast.go`'s `spellDamage` — the one caller left on `Damage`'s no-message path, printing its own fixed "You blast .../blasts you with..." text — now calls `SkillDamage` instead, spell number as attack type, with nothing else to change: no new server-side code, no format change, only the one caller. | Verified against the real archive: every spell `game.SpellDamage` computes damage for has a registered entry except the two local joke spells (`ouchie`, `immolate`) — confirmed by parsing the archive, not by inspection. A live test casts Magic Missile end to end and gets the real archive's own hit line back; `TestSkillDamageTreatsSpellNumbersLikeSkillNumbers` proves the registered/unregistered split (Magic Missile vs. Ouchie) holds for a spell number exactly as it already does for a skill's. |
-| **6c-vi. `text/help/help.yaml`, one file per entry ✅** | `internal/persist/help`, the same `Load`/`Save`-pair shape `messages`/`socials`/`names` already use — nothing writes the help database at runtime either. New `game.HelpSlug` names each entry's file: every keyword joined by a space (not just the first, the doc's own illustrative example — checked against the real archive, this is what makes all 216 entries slug distinct rather than colliding six ways on a shared first token), lowercased, non-alphanumeric runs collapsed to one `-`; the writer disambiguates any residual collision with a numeric suffix and falls back to a positional name for the one keyword line that slugs to empty (`! ^`, pure punctuation). `min_level` — the doc's own worked example invents it, and its own annotation already says to drop it (`struct help_index_element`, db.h:207-211, has no level field) — is not in the format. Classic and yaml share `text/help/` itself rather than splitting `misc/`/`config/` the way `messages`/`socials`/`names` do, since classic there is already multi-file; `dlctl helpdb import`/`fmt` (named `helpdb`, not `help` — `dlctl`'s own bare `help` is reserved for its usage listing, so a subcommand group literally named `help ...` would be unreachable) default `--to-dir` to the same directory as `--from-dir`, mirroring `world import`. New `--help-format` flag. | `dlctl helpdb import` against the real 216-entry archive produces byte-identical records read back through yaml, and `helpdb fmt` is idempotent (identical `help.yaml` byte-for-byte on a second run) — both checked, not assumed. A live server test proves `LoadText(..., "yaml")` resolves the real archived `CIRCLE CIRCLEMUD CREDITS` entry — the same licence-obligation lookup 6c-i's own classic test proves — through `help.yaml` and its `.txt` files, not just that the codec round-trips in isolation. |
+| **6c-vi. `text/help/help.yaml`, one file per entry ✅** | `internal/persist/help`, the same `Load`/`Save`-pair shape `messages`/`socials`/`names` already use — nothing writes the help database at runtime either. New `game.HelpSlug` names each entry's file: every keyword joined by a space (not just the first, the doc's own illustrative example — checked against the real archive, this is what makes all 216 entries slug distinct rather than colliding six ways on a shared first token), lowercased, non-alphanumeric runs collapsed to one `-`; the writer disambiguates any residual collision with a numeric suffix and falls back to a positional name for the one keyword line that slugs to empty (`! ^`, pure punctuation). `min_level` — the doc's own worked example invents it, and its own annotation already says to drop it (`struct help_index_element`, db.h:207-211, has no level field) — is not in the format. Classic and yaml share `text/help/` itself rather than splitting `misc/`/`config/` the way `messages`/`socials`/`names` do, since classic there is already multi-file; `dlctl import --type=help`/`fmt --type=help` default `--to-dir` to the same base as `--from-dir`, mirroring `import --type=world`. (`--type=help`, not `helpdb`: that name only ever existed because `dlctl`'s own bare `help` is reserved for its usage listing, so a *subcommand* literally named `help ...` would have been unreachable — a `--type` value has no such collision, see `docs/operations.md`.) New `--help-format` flag. | `dlctl import --type=help` against the real 216-entry archive produces byte-identical records read back through yaml, and `fmt --type=help` is idempotent (identical `help.yaml` byte-for-byte on a second run) — both checked, not assumed. A live server test proves `LoadText(..., "yaml")` resolves the real archived `CIRCLE CIRCLEMUD CREDITS` entry — the same licence-obligation lookup 6c-i's own classic test proves — through `help.yaml` and its `.txt` files, not just that the codec round-trips in isolation. |
 | **7. Retire** | `ascii` and `binary` become `dlctl`-only; `classic` becomes import-only. | Not attempted. |
 
 Steps 1–4 are worth doing before **Phase 6** of `go-port-plan.md`, which is
@@ -1456,9 +1457,9 @@ the only format that can read the archived roster and rent files at all,
 and remains the tooling's own path for reading them, even once a server
 is running on `yaml`.
 
-### 11.1 `dlctl lib import` — all seven at once, and a gap it exposed and closed
+### 11.1 `dlctl import` — all seven at once, and a gap it exposed and closed
 
-`dlctl lib import --from-dir=X --to-dir=Y` runs the seven importers above
+`dlctl import --from-dir=X --to-dir=Y` runs the seven importers above
 in order, against `X`'s own `world/`/`etc/`/`misc/`/`house/`/`text/`
 subdirectories, plus copying `text/`'s plain-prose files unchanged and
 stamping `Y` with a `.dlversion` naming this build's own release
@@ -1468,23 +1469,24 @@ getting-started walkthrough for running it against a real archive.
 
 Found while writing that walkthrough, checked with a synthetic CP1252
 fixture rather than assumed: **only two of the seven importers transcoded
-non-UTF-8 text on their own.** `world import` and `pfile import` each
-had their own `--encoding` flag and decoded CP1252 (or whatever was
-named) the same way `dlctl convert` does; `state import`/`names import`/
-`messages import`/`socials import`/`helpdb import` read whatever bytes
-were in the source file and wrote them straight into the `yaml` output,
-UTF-8 declaration and all. Pointed at a source file that is genuinely
-CP1252 (a curly quote in a social, an accented name on the `xnames`
-list), the result was a `.yaml` file that was not valid UTF-8 despite
-saying it was. `examples/stock/` never surfaced this, because stock
-CircleMUD's own text is pure ASCII throughout and ASCII is valid UTF-8
-unchanged — the gap was real but inert against every fixture in this
-repo, which is exactly the kind of thing worth writing down rather than
-leaving for the first real archive to find silently.
+non-UTF-8 text on their own.** `import --type=world` and `import
+--type=pfile` each had their own `--encoding` flag and decoded CP1252 (or
+whatever was named) the same way `dlctl convert` does; `--type=state`/
+`names`/`messages`/`socials`/`help` read whatever bytes were in the
+source file and wrote them straight into the `yaml` output, UTF-8
+declaration and all. Pointed at a source file that is genuinely CP1252 (a
+curly quote in a social, an accented name on the `xnames` list), the
+result was a `.yaml` file that was not valid UTF-8 despite saying it was.
+`examples/stock/` never surfaced this, because stock CircleMUD's own text
+is pure ASCII throughout and ASCII is valid UTF-8 unchanged — the gap was
+real but inert against every fixture in this repo, which is exactly the
+kind of thing worth writing down rather than leaving for the first real
+archive to find silently.
 
-**Closed**: all seven importers now take `--encoding` and decode the same
-way, `lib import` passing its own flag through to every one of them.
-Each of the five gained a `transcode*` helper mirroring `world import`'s
+**Closed**: all seven `--type`s now take `--encoding` and decode the
+same way, `import` with no `--type` passing its own flag through to
+every one of them. Each of the five gained a `transcode*` helper
+mirroring `import --type=world`'s
 own `transcodeWorldStrings` — walking each format's actual free-text
 fields (a board's `Heading`/`Body`, a mail message's `Text`, a report's
 `Body`, a fight message's `Attacker`/`Victim`/`Room` per die/miss/hit/god

@@ -18,28 +18,87 @@ import (
 	"github.com/gerrowadat/disgracelands/internal/game"
 	"github.com/gerrowadat/disgracelands/internal/persist/player"
 	"github.com/gerrowadat/disgracelands/internal/persist/player/ascii"
-	"github.com/gerrowadat/disgracelands/internal/persist/player/binary"
+	"github.com/gerrowadat/disgracelands/internal/persist/world"
+	"github.com/gerrowadat/disgracelands/internal/persist/world/classic"
 )
 
-func pfileFlags(fs *flag.FlagSet) (dir, format *string) {
-	dir = fs.String("player-dir", "data/pfiles", "Directory holding the player data")
-	format = fs.String("player-format", ascii.FormatName,
-		fmt.Sprintf("Player-file format: %v", player.Formats()))
-	return
-}
+// dumpTypes is who `dlctl dump` supports today: world and pfile.
+var dumpTypes = []dirType{typeWorld, typePfile}
 
-// cmdPfileDump prints a roster, or one character in full. It replaces
-// reference/tools/pfiledump.c, and unlike it reads the binary format as well
-// as the ascii one — and needs no 32-bit build to do it.
-func cmdPfileDump(args []string) error {
-	fs := flag.NewFlagSet("pfile dump", flag.ContinueOnError)
-	dir, format := pfileFlags(fs)
-	name := fs.String("name", "", "Print this character in full instead of listing the roster")
+// cmdDump prints what is in a directory, for the --type given.
+func cmdDump(args []string) error {
+	fs := flag.NewFlagSet("dump", flag.ContinueOnError)
+	typeRaw := fs.String("type", "", "Subsystem to dump: "+joinTypes(dumpTypes))
+	dir := fs.String("dir", "data", "Data directory (base)")
+	format := fs.String("format", "", "Format (default: classic for world, ascii for pfile)")
+	outPath := fs.String("out", "-", "Output file, or - for stdout (--type=world only)")
+	parity := fs.Bool("parity", false,
+		"Omit fields the C server does not retain, for diffing against its dump (--type=world only)")
+	mini := fs.Bool("mini-mud", false, "Use the reduced index.mini file list (--type=world only)")
+	name := fs.String("name", "", "Print this character in full instead of listing the roster (--type=pfile only)")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
+	t, err := parseType(*typeRaw, dumpTypes)
+	if err != nil {
+		return err
+	}
+	switch t {
+	case typeWorld:
+		f := *format
+		if f == "" {
+			f = classic.FormatName
+		}
+		return dumpWorld(*dir, f, *mini, *outPath, *parity)
+	case typePfile:
+		f := *format
+		if f == "" {
+			f = ascii.FormatName
+		}
+		return dumpPfile(*dir, f, *name)
+	default:
+		return fmt.Errorf("dump: unsupported --type %q", t)
+	}
+}
 
-	store, err := player.Open(*format, player.Config{Dir: *dir, ReadOnly: true})
+// dumpWorld writes the loaded world as canonical JSON, for diffing against
+// the same dump produced by the C loader.
+func dumpWorld(base, format string, mini bool, outPath string, parity bool) error {
+	dir, err := resolveDir(typeWorld, base, format)
+	if err != nil {
+		return err
+	}
+	dump, _, err := loadWorld(context.Background(), dir, format, mini, world.Options{Parity: parity})
+	if err != nil {
+		return err
+	}
+
+	w := os.Stdout
+	if outPath != "-" {
+		f, err := os.Create(outPath) //nolint:gosec // operator-supplied path
+		if err != nil {
+			return err
+		}
+		defer func() { _ = f.Close() }()
+		w = f
+	}
+
+	bw := bufio.NewWriter(w)
+	if err := world.WriteDump(bw, dump); err != nil {
+		return err
+	}
+	return bw.Flush()
+}
+
+// dumpPfile prints a roster, or one character in full. It replaces
+// reference/tools/pfiledump.c, and unlike it reads the binary format as
+// well as the ascii one — and needs no 32-bit build to do it.
+func dumpPfile(base, format, name string) error {
+	dir, err := resolveDir(typePfile, base, format)
+	if err != nil {
+		return err
+	}
+	store, err := player.Open(format, player.Config{Dir: dir, ReadOnly: true})
 	if err != nil {
 		return err
 	}
@@ -49,8 +108,8 @@ func cmdPfileDump(args []string) error {
 	defer func() { _ = out.Flush() }()
 
 	ctx := context.Background()
-	if *name != "" {
-		rec, err := store.Load(ctx, *name)
+	if name != "" {
+		rec, err := store.Load(ctx, name)
 		if err != nil {
 			return err
 		}
@@ -138,49 +197,4 @@ func describeCredential(c game.Credential) string {
 	default:
 		return string(c.Scheme)
 	}
-}
-
-// cmdPfileVerify checks a player database and reports what it found. It is
-// the tool for answering "is this file what I think it is" before trusting a
-// migration.
-func cmdPfileVerify(args []string) error {
-	fs := flag.NewFlagSet("pfile verify", flag.ContinueOnError)
-	dir, format := pfileFlags(fs)
-	if err := fs.Parse(args); err != nil {
-		return err
-	}
-	if *format != binary.FormatName {
-		return fmt.Errorf("pfile verify currently understands only the %q format", binary.FormatName)
-	}
-
-	store, err := binary.New(player.Config{Dir: *dir, ReadOnly: true})
-	if err != nil {
-		return err
-	}
-	defer func() { _ = store.Close() }()
-
-	report, err := store.Verify(context.Background())
-	if err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "error: %v\n", err)
-		return errQuiet
-	}
-
-	out := bufio.NewWriter(os.Stdout)
-	defer func() { _ = out.Flush() }()
-
-	_, _ = fmt.Fprintf(out, "%d bytes, %d records of %d\n", report.Bytes, report.Records, report.RecordSize)
-	_, _ = fmt.Fprintf(out, "%d named character(s), %d empty slot(s)\n", report.Named, report.Empty)
-	if report.LegacyPasswords > 0 {
-		_, _ = fmt.Fprintf(out, "%d character(s) still on legacy crypt(3) passwords\n", report.LegacyPasswords)
-	}
-	for _, p := range report.Problems {
-		_, _ = fmt.Fprintf(out, "problem: %s\n", p)
-	}
-	if err := out.Flush(); err != nil {
-		return err
-	}
-	if len(report.Problems) > 0 {
-		return errQuiet
-	}
-	return nil
 }

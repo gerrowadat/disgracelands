@@ -11,7 +11,7 @@
 // Unlike boards/mail/houses/bans this is read-only game data: nothing in
 // the C ever writes xnames at runtime, only Valid_Name (ban.c:255)
 // consults it. So there is no Store interface with Add/Remove methods to
-// design here, only a list to load — and, for `dlctl names import`/`fmt`,
+// design here, only a list to load — and, for `dlctl import --type=names`/`fmt`,
 // to write back out in whichever format was asked for. Small enough that
 // classic and yaml both live in this one package rather than getting
 // their own subpackages and a Register/Open registry the way
@@ -71,8 +71,9 @@ func Load(format, path string) ([]string, error) {
 // is implemented: the C never writes xnames at runtime, and building a
 // classic writer nothing needs yet would be exactly the "format before
 // the feature" mistake this whole step's plan is careful to avoid — this
-// exists for `dlctl names import` (classic to yaml) and `names fmt`
-// (yaml, canonicalised), neither of which writes classic.
+// exists for `dlctl import --type=names` (classic to yaml) and
+// `fmt --type=names` (yaml, canonicalised), neither of which writes
+// classic.
 func Save(format, path string, list []string) error {
 	if format != "yaml" {
 		return fmt.Errorf("names: writing %q is not supported (only yaml)", format)

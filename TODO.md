@@ -21,9 +21,9 @@ this repo: `../welmar/CircleMUD3/lib/etc/players`, in the original binary
 format. To convert it locally:
 
 ```sh
-go run ./cmd/dlctl pfile convert \
-  --from=binary --from-dir=../welmar/CircleMUD3/lib/etc \
-  --to=ascii    --to-dir=examples/stock/binary/pfiles
+go run ./cmd/dlctl convert --type=pfile \
+  --from-format=binary --from-dir=../welmar/CircleMUD3/lib \
+  --to-format=ascii    --to-dir=examples/stock/binary
 ```
 
 That is Phase 2's replacement for the old `-m32` `bin2ascii` route, and it
@@ -64,8 +64,8 @@ September–December 2002 survives) and 164 per-zone tarballs
 (`welmar/zones/`) if a different point-in-time snapshot is wanted.
 
 Not investigated beyond "it loads and boots" — though it now also loads
-identically in both servers, and `dlctl world lint` reports what is wrong
-with it (0 errors, 20 warnings, 8 notes; see
+identically in both servers, and `dlctl lint --type=world` reports what is
+wrong with it (0 errors, 20 warnings, 8 notes; see
 `docs/investigations/lib-directory-format.md` §9), which is more than was
 known before. The shipped stock world lints at 0 errors, 11 warnings, 12
 notes — a different world, and a different set of findings
@@ -102,7 +102,7 @@ Kept here so it is clear these were decided rather than forgotten.
 - **Wiring ascii pfiles into the C server's live login/save path.** This was
   the biggest remaining item and the Go port took it over: Phase 2 built
   both formats behind one interface, and the Go server runs on ascii and
-  refuses to start on binary, converting with `dlctl pfile convert` instead.
+  refuses to start on binary, converting with `dlctl convert --type=pfile` instead.
   Doing it in C as well would have been the same security-adjacent work
   twice.
 - **Deciding how to run it across restarts.** `autorun` and friends are
@@ -118,9 +118,9 @@ Kept here so it is clear these were decided rather than forgotten.
   anyone who builds and runs that tree locally should know they are there
   — as history, not as a fix to make. The Go port fixes this class of bug
   where it meets it and records each one (`docs/deviations.md`).
-- **`dlctl lib import`'s five smaller importers not transcoding.** Fixed,
-  not decided against: `state import`/`names import`/`messages import`/
-  `socials import`/`helpdb import` all take `--encoding` now and decode
-  the same way `world`/`pfile import` already did, `lib import` passing
-  its own flag through to all seven. See `docs/design/data-format.md`
-  §11.1 for what each importer's free-text fields turned out to be.
+- **`dlctl import`'s five smaller importers not transcoding.** Fixed,
+  not decided against: `--type=state`/`names`/`messages`/`socials`/`help`
+  all take `--encoding` now and decode the same way `--type=world`/
+  `pfile` already did, `import` with no `--type` passing its own flag
+  through to all seven. See `docs/design/data-format.md` §11.1 for what
+  each importer's free-text fields turned out to be.

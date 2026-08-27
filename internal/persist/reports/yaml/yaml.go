@@ -84,7 +84,7 @@ func (s *Store) Name() string { return FormatName }
 func (s *Store) Close() error { return nil }
 
 // Rewrite writes the file back in its current, canonical form without
-// changing its contents — `dlctl state fmt`'s way of reformatting reports,
+// changing its contents — `dlctl fmt --type=state`'s way of reformatting reports,
 // mirroring bans/yaml's Rewrite for the same reason: Append is the only
 // other way to change what is stored, and it is the wrong shape for "no
 // changes, just rewrite."
@@ -129,7 +129,7 @@ func (s *Store) load() error {
 // here would be right for a freshly filed report and wrong for one being
 // imported from classic — this function cannot tell those apart, so that
 // choice belongs to the caller that can (the live `bug`/`idea`/`typo`
-// command sets When itself; `dlctl state import` deliberately does not,
+// command sets When itself; `dlctl import --type=state` deliberately does not,
 // since classic's own report genuinely has no recoverable timestamp).
 func (s *Store) Append(r reports.Report) (bool, error) {
 	if s.readOnly {

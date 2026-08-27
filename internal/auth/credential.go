@@ -171,7 +171,7 @@ func (v Verifier) NewCredential(password string) (game.Credential, error) {
 // NewCredential hashes a password for storage at DefaultCost.
 //
 // It is for callers with no Verifier to hand, which means the ones that are
-// not a login: `dlctl pfile passwd` sets a password offline and has no
+// not a login: `dlctl passwd --type=pfile` sets a password offline and has no
 // legacy policy to apply.
 func NewCredential(password string) (game.Credential, error) {
 	return newCredential(password, DefaultCost)

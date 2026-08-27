@@ -292,7 +292,7 @@ func (s *Session) handleDeleteConfirm(ctx context.Context, deps Deps, line strin
 
 // badNewPassword reports why a password cannot be set, or "".
 //
-// The rule itself is auth.BadPassword: `dlctl pfile passwd` sets passwords
+// The rule itself is auth.BadPassword: `dlctl passwd --type=pfile` sets passwords
 // too, and the two must agree about what is settable or an administrator can
 // hand out a password the owner could never have chosen themselves.
 func badNewPassword(password, name string) string {

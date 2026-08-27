@@ -13,7 +13,7 @@
 // read-only game data at runtime — nothing in the C ever writes
 // misc/socials while playing — so there is no Store interface with a
 // runtime-mutation method to design, only a list to load and (for
-// `dlctl socials import`/`fmt`) to write back out.
+// `dlctl import --type=socials`/`fmt`) to write back out.
 package socials
 
 import (
