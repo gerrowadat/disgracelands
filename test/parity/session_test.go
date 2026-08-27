@@ -223,19 +223,9 @@ var scenarios = []scenario{
 			quitReturnsToTheMenu,
 			theVitalsPrompt,
 			{
-				command: "kill fido",
-				match:   `^(Your blood freezes as you hear the beastly fido's death cry\.|the beastly fido is dead!  R\.I\.P\.)$`,
-				why:     "death: the C sends the death cry to the room and the killer's own line once; this port sends the room's line to the killer twice and no cry; docs/deviations.md",
-			},
-			{
 				command: "look",
 				match:   `^(A small sword lies here\.|An automatic teller machine has been installed in the wall here\.|The corpse of the beastly fido is lying here\.)$`,
 				why:     "the order a room's objects are listed in, and the corpse's own contents; docs/deviations.md",
-			},
-			{
-				command: "flee",
-				match:   `.`,
-				why:     "fleeing picks a random exit and the two servers pick different ones; docs/deviations.md",
 			},
 		},
 	},

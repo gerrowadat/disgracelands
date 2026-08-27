@@ -1666,6 +1666,51 @@ implicit.
 
 ---
 
+## `number(1, 1)` costs a draw
+
+`number()` (utils.c:38) has no special case for a range with one value in it:
+
+    return ((circle_random() % (to - from + 1)) + from);
+
+`number(1, 1)` therefore takes a value from the generator, reduces it modulo
+1, and answers 1. The draw is spent. An implementation that notices the answer
+can only be 1 and returns early is *right about the value and wrong about the
+generator*, and every subsequent draw on that server is one step ahead of the
+C's.
+
+This port had that early return. It cost **288 draws during a single boot of
+the stock world** — `read_mobile` rolls `dice(hit, mana)` for every mobile a
+zone reset creates (db.c:1824), and 288 of those dice are d1s. The two servers
+were 289 values apart before a player had typed anything (the 289th is the
+weather; see below), which is why `flee` picked a different exit on each.
+
+**The existing oracle could not see it, and that is the interesting part.**
+`reference/tools/randoracle.c` compares *values*: seed a fresh generator, ask
+for `number(1, 1)` five hundred times, compare. Both answer 1 five hundred
+times. They agree perfectly and are in completely different places. What
+disagrees is whatever is asked *next*, which a single-range oracle never asks.
+The oracle grew an alternating-range mode for exactly this — interleave the
+degenerate range with `number(1, 100)` and the second column diverges on the
+first pair.
+
+The lesson generalises past this bug: **an oracle that compares outputs cannot
+see a difference in how much state was consumed to produce them.** Anywhere
+the C's draw count is part of the behaviour — which is anywhere two servers
+have to stay in step — the test has to interleave.
+
+The 289th draw was the weather, and it is why weather.c is ported now:
+`reset_time` rolls the barometric pressure at boot (`dice(1, 50)` or
+`dice(1, 80)`, db.c) and `weather_change` rolls five more every mud hour —
+sometimes six, since the sky's own switch has a conditional `dice(1, 4)` in
+four of its cases (`weather.c:88`). Nothing in the game reads the sky except
+the four messages it prints. It is ported because it rolls.
+
+*Source*: `utils.c:38-45`, `db.c:1824`. Ported as `rng.Rand.Number`, with
+`TestAZeroWidthRangeStillDraws` (`internal/rng/rng_test.go`) as the
+interleaved check.
+
+---
+
 ## What to do about all this
 
 The rule that has worked: **anything with a division, a cast, or a comment

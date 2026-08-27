@@ -378,13 +378,23 @@ no `gcc`.
 "What the session-parity suite found" — twenty differences, from `quit`
 returning to the menu in the C to this port never charging movement points
 for walking. Eighteen carry a ruling (2026-08-26): sixteen are cutover
-blockers, one is for later, one is accepted. The other two need no ruling,
+blockers, one is for later, one is accepted. Ten of the sixteen are fixed. The other two need no ruling,
 being the 64-bit reference build wrong rather than the port. Green
 means *decided*, not *identical*, and the rulings are what make that true.
 
-Four pieces of machinery make the comparison legible, and each replaced
+Five pieces of machinery make the comparison legible, and each replaced
 something that had made the harness's findings unreadable before:
 
+- **Both servers hold their weather still** — `--freeze-weather` here, `-W`
+  in the C, the newer of the two `<DoC>` levers and the subtler one.
+  `weather_change` rolls five dice every mud hour and sometimes six
+  (weather.c:88), and this harness plays its script at one server and *then*
+  at the other — so by the same line the second server has been running about
+  a minute longer and can have had a weather tick the first had not. Five
+  draws is enough to put the two generators out of step for everything
+  afterwards, which is how `flee` came to pick a different exit on each.
+  Nothing in the game reads the sky except its own four messages; what `-W`
+  suppresses is the dice.
 - **Both servers hold their mobiles still** — `--freeze-mobiles` here, `-M`
   in the C, a `<DoC>` addition made for this. A wandering mobile's position
   depends on how many pulses have elapsed since boot, so without it the two

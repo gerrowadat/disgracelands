@@ -46,6 +46,12 @@ type zoneState struct {
 // Without this the world is 2,981 rooms and nothing else: every mobile and
 // every object a player ever sees is created here or by a later reset.
 func (s *Server) BootReset(w *game.Live) {
+	// The weather, before anything else rolls. reset_time is the first thing
+	// in the C's boot to touch the generator (db.c), one draw for the
+	// barometer, and a server that skips it is one value out of step with the
+	// C for the rest of its life — see docs/weirdnumbers.md.
+	w.SetWeather(game.InitWeather(w.MudTime(), s.rng))
+
 	// The socials are commands, so they have to be in the table before
 	// anybody can type one. The C boots them in boot_db alongside the world.
 	if socials := s.text.Socials(); len(socials) > 0 {

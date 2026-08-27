@@ -187,13 +187,14 @@ func startPair(t *testing.T) *pair {
 
 	cPort, gPort := freePort(t), freePort(t)
 
-	// -q skips the rent scan, -S fixes the seed and -M holds the mobiles
-	// still; the last two are <DoC> additions made for this harness. -d must
-	// be absolute because the C server chdir()s into it.
+	// -q skips the rent scan, -S fixes the seed, -M holds the mobiles still
+	// and -W holds the weather still; the last three are <DoC> additions made
+	// for this harness. -d must be absolute because the C server chdir()s
+	// into it.
 	c := &server{name: "circle", dir: cDir, addr: fmt.Sprintf("127.0.0.1:%d", cPort)}
-	c.cmd = exec.Command(cBinary, "-q", "-M", "-S", seed, "-d", cDir, fmt.Sprint(cPort)) //nolint:gosec // ports and paths this function made
+	c.cmd = exec.Command(cBinary, "-q", "-M", "-W", "-S", seed, "-d", cDir, fmt.Sprint(cPort)) //nolint:gosec // ports and paths this function made
 
-	// The Go server's own spelling of the same three, plus the C's own
+	// The Go server's own spelling of the same four, plus the C's own
 	// generator so that both are rolling the same dice from the same seed.
 	g := &server{name: "dlmud", dir: gDir, addr: fmt.Sprintf("127.0.0.1:%d", gPort)}
 	g.cmd = exec.Command(goBinary, //nolint:gosec // the binary this suite built
@@ -204,7 +205,7 @@ func startPair(t *testing.T) *pair {
 		"--skip-rent-check",
 		"--rng=circle",
 		"--rng-seed="+seed,
-		"--freeze-mobiles",
+		"--freeze-mobiles", "--freeze-weather",
 		"--log-level=error",
 	)
 

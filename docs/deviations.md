@@ -551,9 +551,9 @@ the work was done:
   it. Sixteen of the eighteen, which is the honest answer to "how close
   is this to being playable by someone who played the original": closer
   than the list looks, since most are one command each, and not as close
-  as a green suite suggests. **Eight are fixed so far** — both halves of
-  `look`, `remove all`, `get 2.sword`, the refusal wording, `who`, `exits`
-  and the `'`/`:`/`hop` split — leaving eight.
+  as a green suite suggests. **Ten are fixed so far** — both halves of
+  `look`, `remove all`, `get 2.sword`, the refusal wording, `who`, `exits`,
+  the `'`/`:`/`hop` split, death and `flee` — leaving six.
 - **Later** — a real gap, worth closing, not gating cutover.
 - **Accepted** — the difference stands; this file is where it is
   recorded, and that is the whole disposition.
@@ -758,19 +758,64 @@ port is right and the thing it is compared against is wrong.
   blocker. It is a consequence of where the port inserts into its lists,
   visible but harmless, with the caveat that ordering is what `2.sword`
   selects against, so it is not purely presentational.
-- **Death.** The C sends `death_cry` to the room ("Your blood freezes as you
-  hear the beastly fido's death cry.") and the killer's own "is dead!
+- ~~**Death.** The C sends `death_cry` to the room~~ ("Your blood freezes as you
+  hear the beastly fido's death cry.") ~~and the killer's own "is dead!
   R.I.P." once; the port sends the room's line to the killer twice and no
-  cry at all.
+  cry at all.~~
   *Ruling (2026-08-26):*
   **Blocker.** The death cry is how the surrounding rooms learn something
   died, and the doubled line is a plain bug in `game.Act`'s audience
   resolution rather than a missing feature.
-- **`flee` picks a different exit on the two servers.**
+  **Fixed 2026-08-27**, and it was not `game.Act`. Two functions announce a
+  death in the C and they announce different things: `damage()`'s position
+  switch sends "$n is dead!  R.I.P." (fight.c:891) and `raw_kill` sends
+  `death_cry` (fight.c:389). This port's `die` sent the R.I.P. line *as
+  well*, so anything reaching it through damage() said it twice. The
+  ruling's own reading was half wrong too: what the scenario actually
+  exercises is an **implementor's** `kill`, whose gate is `GET_LEVEL(ch) <
+  LVL_IMPL` (act.offensive.c:78 — LVL_IMPL, not LVL_IMMORT), and which
+  reaches `raw_kill` directly with no damage, no experience and *no R.I.P.
+  line at all*. This port reached raw_kill by calling damage() with a large
+  enough number, which announced a death the C announces nowhere on that
+  path. `session.Violence` grew a `RawKill` so the seam has the shape the C
+  does, and `suffer` (bleeding out) now announces through the same
+  `announcePosition` a fight does, because in the C that path is damage()
+  too.
+- ~~**`flee` picks a different exit on the two servers.**~~
   *Ruling (2026-08-26):*
   **Blocker.** Same seed, different exit means the draw order or the
   attempt loop diverges — a fidelity bug, and one worth chasing for what
   else it might indicate about the generators staying in step.
+  **Fixed 2026-08-27.** It was worth chasing. The
+  attempt loop was fine; the two generators were 289 draws apart before a
+  player had typed anything. Both causes were measured rather than guessed,
+  by counting draws on each side at boot and at the first `flee`.
+
+  **288 of them were `number(x, x)`.** `Rand.Number` returned early for a
+  zero-width range without touching the generator; the C has no such branch
+  and reduces a real draw modulo 1. Every d1 in every mobile's hit dice —
+  288 across a boot of the stock world — was a draw this port did not take.
+  Fixed, with an oracle test that can see it: the existing one compares
+  *values*, and `number(1, 1)` answers 1 either way, so it agreed perfectly
+  while the generator fell behind. `randoracle` grew an alternating-range
+  mode so a degenerate range can be interleaved with a real one, which is
+  what makes a missing draw observable at all.
+
+  **The 289th was the weather**, and it is why weather.c is ported now.
+  `reset_time` rolls the barometric pressure once at boot (`dice(1, 50)` or
+  `dice(1, 80)`) and `weather_change` rolls five more every mud hour —
+  `dice(1, 4) + dice(2, 6) - dice(2, 6)` (weather.c:88), sometimes six, from
+  `weather_and_time(1)` every 75 real seconds (comm.c:934). Fixing only the
+  boot draw would have agreed for a short script and diverged partway
+  through a long one, which is worse than a known difference, so the
+  barometer, the sky and their four messages all landed together
+  (`internal/game/weather.go`). Nothing in the game reads the sky except
+  those messages; it exists because it rolls.
+
+  With the generators in step, `flee` picks the same exit on both servers.
+  The last difference was **the order of its two outputs**: the C's look
+  happens inside `do_simple_move`, so a player sees the room and is then
+  told "You flee head over heels." This port said it first.
 - **A shopkeeper's and a postmaster's messages carry the player's name
   here.** The C builds them as `"%s %s"` of `GET_NAME(ch)` and the message
   (shop.c's `is_ok_char`, and the same shape in mail.c) and hands the result

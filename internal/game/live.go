@@ -11,6 +11,8 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/gerrowadat/disgracelands/internal/rng"
 )
 
 // Live is the running world: the loaded prototypes plus who is standing
@@ -63,11 +65,44 @@ type Live struct {
 	// value is this server's YES. See TrackThroughDoors.
 	noTrackThroughDoors bool
 
+	// weather is weather_info: the barometer and the sky. Set at boot by
+	// InitWeather and walked every mud hour by ChangeWeather, both of which
+	// roll — which is the reason it exists here at all. See weather.go.
+	weather Weather
+
 	// mobileDefs indexes the mobile prototypes by vnum.
 	mobileDefs map[MobVnum]*MobDef
 	// mobiles is every mobile instance in the world, which is what the zone
 	// population caps are counted against.
 	mobiles map[*Character]bool
+}
+
+// Weather is the current barometer and sky.
+func (l *Live) Weather() Weather { return l.weather }
+
+// SetWeather installs the boot-time weather (reset_time's own half).
+func (l *Live) SetWeather(w Weather) { l.weather = w }
+
+// AdvanceWeather is weather_change, run once a mud hour. It returns what
+// everybody outdoors should be told.
+func (l *Live) AdvanceWeather(r *rng.Rand) []string {
+	return l.weather.ChangeWeather(l.MudTime(), r)
+}
+
+// Outdoors lists the players who would hear a send_to_outdoor
+// (comm.c): awake, and not in a room flagged indoors.
+func (l *Live) Outdoors() []*Character {
+	var out []*Character
+	for _, c := range l.Players() {
+		if c.Position <= PosSleeping {
+			continue
+		}
+		if room := l.Room(c.Room); room == nil || room.Flags.Has(RoomIndoors) {
+			continue
+		}
+		out = append(out, c)
+	}
+	return out
 }
 
 // MudTime is the current moment on the mud calendar.

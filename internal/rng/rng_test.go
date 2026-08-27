@@ -64,6 +64,46 @@ func TestNumberMatchesTheC(t *testing.T) {
 	}
 }
 
+// TestAZeroWidthRangeStillDraws is the test the single-range oracle above
+// cannot be: it compares draw *consumption*, not just values.
+//
+// number(1, 1) can only answer 1, so a port that returns 1 without touching
+// the generator agrees with TestNumberMatchesTheC perfectly — and is one draw
+// behind the C from then on. This port had exactly that early return, and it
+// cost 288 draws during a single boot of the stock world (every d1 in every
+// mobile's hit dice), which put the session-parity harness's two servers 288
+// values apart before a player had typed a word. `flee` picking a different
+// exit on the two servers was the visible end of it.
+//
+// Interleaving the degenerate range with a real one is what makes the missing
+// draw observable: the 1s all match either way, and the second column does
+// not.
+func TestAZeroWidthRangeStillDraws(t *testing.T) {
+	oracle := buildOracle(t)
+
+	for _, tc := range []struct{ lo, hi int32 }{
+		{1, 1},   // a d1, which is what mobile hit dice are full of
+		{0, 0},   // and the same thing at zero
+		{-3, -3}, // and negative, since number() allows it
+	} {
+		want := runOracle(t, oracle, "42", "500",
+			strconv.Itoa(int(tc.lo)), strconv.Itoa(int(tc.hi)), "1", "100")
+
+		r := NewRand(NewCircle(42))
+		for i := 0; i < len(want); i += 2 {
+			if got := r.Number(tc.lo, tc.hi); int64(got) != int64(want[i]) {
+				t.Fatalf("number(%d, %d) draw %d: Go gave %d, the C gave %d",
+					tc.lo, tc.hi, i/2, got, want[i])
+			}
+			if got := r.Number(1, 100); int64(got) != int64(want[i+1]) {
+				t.Fatalf("number(1, 100) after number(%d, %d), draw %d: Go gave %d, the C gave %d"+
+					" — the degenerate range did not consume a value",
+					tc.lo, tc.hi, i/2, got, want[i+1])
+			}
+		}
+	}
+}
+
 // TestSeedingIsReproducible, which is what the parity harness needs.
 func TestSeedingIsReproducible(t *testing.T) {
 	for _, name := range Names {

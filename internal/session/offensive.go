@@ -107,11 +107,12 @@ func doKill(c *Context) error {
 		}
 	}
 
-	// raw_kill, which is death with no experience for anybody: no attacker is
-	// passed, so nobody is credited.
-	if victim.Record != nil {
-		c.Violence.Damage(c.World, nil, victim, victim.Record.Points.Hit+100)
-	}
+	// raw_kill, and not damage() with a big number. The difference is
+	// visible: damage() announces the new position first — "$n is dead!
+	// R.I.P." to the room, "You are dead!  Sorry..." to the victim — and
+	// raw_kill announces nothing but the death cry. Routing this through
+	// Damage printed both, and then die() printed the R.I.P. a second time.
+	c.Violence.RawKill(c.World, victim)
 	return nil
 }
 
