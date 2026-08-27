@@ -1,0 +1,26 @@
+# who, exits, commands and socials: four listings whose contents are decided
+# by the command table's own fourth column (minimum_level) and by which
+# function each row points at.
+Parityone
+y
+swordfish
+swordfish
+m
+w
+
+1
+who
+exits
+goto 3001
+exits
+who
+commands
+socials
+wizhelp
+# A room whose only way out is a shut door, which do_exits leaves out
+# entirely rather than describing (act.informative.c:387).
+goto 3110
+exits
+close door
+exits
+quit

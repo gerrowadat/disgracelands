@@ -10,8 +10,11 @@ import (
 	"os"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/gerrowadat/disgracelands/internal/game"
 )
 
 // How much of the C's command table answers, derived rather than counted by
@@ -217,6 +220,115 @@ func TestConnectedNamesMatchTheCSource(t *testing.T) {
 	for s := StateGetName; s <= StateClosed; s++ {
 		if connectedNames[s] == "" {
 			t.Errorf("state %v has no connected_types name", s)
+		}
+	}
+}
+
+// TestEveryCommandsMinimumLevelMatchesTheCSource re-parses interpreter.c's
+// fourth column and compares it against every ported command's MinLevel.
+//
+// The command table's *order* has been derived from the C since Phase 3
+// (`Command.CLine`, so a row inserted in the wrong place fails a test rather
+// than quietly shadowing another). Its *levels* were not, and were typed by
+// hand sixty times — which is sixty chances to leave one at zero. Three had
+// been: `handbook` and `imotd` are LVL_IMMORT in the C and `hcontrol` is
+// LVL_GRGOD, and all three were unrestricted here, so a mortal could read the
+// immortals' handbook and a god below Greater could build houses. The
+// session-parity suite is what noticed, and only indirectly: `commands` lists
+// a row only when `(minimum_level >= LVL_IMMORT) != wizhelp`, so the three
+// showed up in a mortal-facing list that the C's did not have them in.
+func TestEveryCommandsMinimumLevelMatchesTheCSource(t *testing.T) {
+	src, err := os.ReadFile("../../reference/moderncserver/src/interpreter.c")
+	if err != nil {
+		t.Fatalf("reading interpreter.c: %v", err)
+	}
+
+	// The named levels, so a row saying LVL_GRGOD is compared as 33 rather
+	// than skipped. `-1` appears too and means "nobody at all", which the C
+	// tests with `minimum_level < 0` before anything else.
+	named := map[string]int32{
+		"LVL_IMPL":   game.LevelImplementor,
+		"LVL_GRGOD":  game.LevelGreaterGod,
+		"LVL_GOD":    game.LevelGod,
+		"LVL_IMMORT": game.LevelImmortal,
+		"LVL_FREEZE": game.LevelGreaterGod, // #define LVL_FREEZE LVL_GRGOD
+	}
+
+	// { "name" , POS_x , do_y , <level> , <subcmd> },
+	entry := regexp.MustCompile(`^\s*\{ *"([^"]+)"\s*,[^,]*,[^,]*,\s*([A-Z_0-9-]+)\s*,`)
+	want := map[string]int32{}
+	for _, line := range strings.Split(string(src), "\n") {
+		m := entry.FindStringSubmatch(line)
+		if m == nil || m[1] == `\n` {
+			continue
+		}
+		level, ok := named[m[2]]
+		if !ok {
+			n, err := strconv.Atoi(m[2])
+			if err != nil {
+				// LVL_BUILDER is the only other name in the column, and it
+				// is OasisOLC's, on the six editor rows this port declines
+				// (notPorted). It is not defined in the stock structs.h at
+				// all, so there is nothing here to compare it against.
+				if notPorted[m[1]] == "" {
+					t.Errorf("%q: cannot read minimum level %q", m[1], m[2])
+				}
+				continue
+			}
+			level = int32(n)
+		}
+		want[m[1]] = level
+	}
+	if len(want) == 0 {
+		t.Fatal("no minimum levels parsed out of interpreter.c")
+	}
+
+	// 0 and 1 are the same restriction, so they are compared as one. No
+	// playable character is below level 1 — creation sets it before anybody
+	// can type — so a row saying 0 and a row saying 1 refuse exactly the same
+	// set of people, and the C's table uses both interchangeably. Normalising
+	// keeps the ~40 inert rows out of the way of the ones that are not inert.
+	atLeastOne := func(n int32) int32 {
+		if n < 1 {
+			return 1
+		}
+		return n
+	}
+
+	// The socials too. `Commands` holds only the static table in a unit test
+	// — RegisterSocials interleaves the rest at boot — so they are checked
+	// through socialLines/socialLevels directly, which is what that call
+	// builds them from. Exactly one social has a level (`snowball`), and
+	// this is what would notice a second.
+	for name := range socialLines {
+		expected, ok := want[name]
+		if !ok {
+			t.Errorf("social %q is not in the C's table", name)
+			continue
+		}
+		if got := socialLevels[name]; atLeastOne(got) != atLeastOne(expected) {
+			t.Errorf("social %q has MinLevel %d, the C has %d", name, got, expected)
+		}
+	}
+
+	for _, cmd := range Commands {
+		expected, ok := want[cmd.Name]
+		if !ok {
+			// reloadmob and friends have no row in the C at all; newCommands
+			// is where that is already accounted for.
+			if newCommands[cmd.Name] == "" {
+				t.Errorf("%q is not in the C's table", cmd.Name)
+			}
+			continue
+		}
+		// A negative level in the C means "unreachable"; nothing here has
+		// one, and if something grows one this should be revisited rather
+		// than silently compared against zero.
+		if expected < 0 {
+			continue
+		}
+		if atLeastOne(cmd.MinLevel) != atLeastOne(expected) {
+			t.Errorf("%q has MinLevel %d, the C has %d", cmd.Name, cmd.MinLevel, expected)
 		}
 	}
 }

@@ -418,16 +418,23 @@ func doCommands(mode listMode) func(*Context) error {
 				continue
 			}
 			if mode != listWizhelp {
-				isSocial := cmd.Social != nil || cmd.Name == "insult"
+				// The C's test is on the *function* a row points at:
+				//
+				//   socials != (cmd_info[i].command_pointer == do_action ||
+				//               cmd_info[i].command_pointer == do_insult)
+				//
+				// (act.informative.c:1502.) `socialLines` is precisely the
+				// set of do_action rows, which makes membership in it the
+				// faithful test — and a better one than "has a Social
+				// attached", which this used before. `hop` is the row that
+				// tells them apart: it points at do_action but the shipped
+				// socials file has no entry to attach, so it was being listed
+				// as a command here and is a social in the C.
+				_, isAction := socialLines[cmd.Name]
+				isSocial := isAction || cmd.Name == "insult"
 				if isSocial != (mode == listSocials) {
 					continue
 				}
-			}
-			// A one-character command is an alias for a real one and is not
-			// listed; the C's table has them and `commands` shows them, but
-			// they read as noise in a list.
-			if len(cmd.Name) < 2 {
-				continue
 			}
 			names = append(names, cmd.Name)
 		}

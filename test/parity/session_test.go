@@ -128,26 +128,6 @@ var scenarios = []scenario{
 		known: []known{
 			quitReturnsToTheMenu,
 			theVitalsPrompt,
-			{
-				command: "who",
-				match:   `^(\[.*\] Parityone the Implementor|One lonely character displayed\.|1 character playing\.)$`,
-				why:     "who: the C prints the class abbreviation for immortals too, and counts in words; docs/deviations.md",
-			},
-			{
-				command: "commands",
-				match:   `.`,
-				why:     "the C lists `'` and `:` among the commands and `hop` among the socials; this port has them the other way round, which moves every column; docs/deviations.md",
-			},
-			{
-				command: "socials",
-				match:   `.`,
-				why:     "as `commands`: `hop` is a social in the C and a command here; docs/deviations.md",
-			},
-			{
-				command: "exits",
-				match:   `^(North|East|South|West|Up|Down) +- `,
-				why:     "exits: the C shows room vnums to an immortal and this port does not; docs/deviations.md",
-			},
 		},
 	},
 	{
@@ -174,16 +154,6 @@ var scenarios = []scenario{
 		known: []known{
 			quitReturnsToTheMenu,
 			theVitalsPrompt,
-			{
-				command: "who",
-				match:   `^(\[.*\] Parityone the Implementor|One lonely character displayed\.|1 character playing\.)$`,
-				why:     "as login-and-look's `who`; docs/deviations.md",
-			},
-			{
-				command: "exits",
-				match:   `^(North|East|South|West|Up|Down) +- `,
-				why:     "as login-and-look's `exits`; docs/deviations.md",
-			},
 		},
 	},
 	{
@@ -206,6 +176,24 @@ var scenarios = []scenario{
 				command: "drop all",
 				match:   `^You drop (a bag|a chain mail shirt|a shield)\.$`,
 				why:     "the order an inventory is walked in, which is the same Later-ruled difference as `inventory` above: the C's obj_to_char puts a new object at the *head* of the list and this port appends, so `all` runs newest-first there and oldest-first here; docs/deviations.md",
+			},
+		},
+	},
+	{
+		name:  "listings",
+		about: "who, exits, commands and socials, and the command table's own levels",
+		known: []known{
+			quitReturnsToTheMenu,
+			theVitalsPrompt,
+			{
+				command: "wizhelp",
+				match:   `.`,
+				why:     "the eight commands this port declines outright -- the seven OasisOLC editors and `slowns` -- are all immortal-level, so `wizhelp` is the one listing that names them and the only one that cannot agree; docs/deviations.md, \"Eight of the C's 318 commands are not implemented\"",
+			},
+			{
+				command: "goto 3110",
+				match:   `^A desk is set against the western wall\.$`,
+				why:     "the order a room's objects are listed in; docs/deviations.md",
 			},
 		},
 	},

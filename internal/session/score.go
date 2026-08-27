@@ -7,6 +7,7 @@
 package session
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/gerrowadat/disgracelands/internal/game"
@@ -89,44 +90,68 @@ func positionLine(c *game.Character) string {
 	return "You are standing.\r\n"
 }
 
-// doExits lists the ways out, porting do_exits.
+// doExits lists the ways out, porting do_exits (act.informative.c:376).
+//
+// Three things here were wrong and are the C's now, all of them found by
+// playing `exits` at both servers rather than by reading:
+//
+//   - **A closed exit is not listed at all.** The loop's condition is
+//     `... && !EXIT_FLAGGED(EXIT(ch, door), EX_CLOSED)`, so a room whose only
+//     way out is a shut door answers " None." This port listed "East - The
+//     door is closed.", a line that appears nowhere in the C tree.
+//   - **An immortal sees the destination's vnum**, `[%5d]`, which is most of
+//     what makes the command useful while building.
+//   - **Blindness is checked first**, with do_look's own wording rather than
+//     a room lookup.
 func doExits(c *Context) error {
+	if isBlind(c.Character) {
+		c.Send("You can't see a damned thing, you're blind!\r\n")
+		return nil
+	}
 	room := c.World.Room(c.Character.Room)
 	if room == nil {
 		c.Send("You are nowhere at all. That should not be possible.\r\n")
 		return nil
 	}
 
-	var any bool
-	c.Send("Obvious exits:\r\n")
+	immortal := c.Character.Level() >= game.LevelImmortal
+
+	var lines []string
 	for dir := game.Direction(0); dir < game.NumDirections; dir++ {
 		exit := room.Exits[dir]
-		if exit == nil || exit.ToRoom == game.NoRoom {
-			continue
-		}
-		if exit.State.Has(game.ExitClosed) {
-			// A closed door is listed by its name, not its destination —
-			// which is how a player knows there is something to open.
-			name := exit.Keywords
-			if name == "" {
-				name = "door"
-			}
-			c.Send("%-5s - The %s is closed.\r\n", capitaliseFirst(dir.String()), name)
-			any = true
+		if exit == nil || exit.ToRoom == game.NoRoom || exit.State.Has(game.ExitClosed) {
 			continue
 		}
 
-		destination := c.World.Room(exit.ToRoom)
-		name := "Too dark to tell"
-		if destination != nil {
+		var name string
+		if destination := c.World.Room(exit.ToRoom); destination != nil {
 			name = destination.Name
 		}
-		c.Send("%-5s - %s\r\n", capitaliseFirst(dir.String()), name)
-		any = true
+		switch {
+		case immortal:
+			lines = append(lines, fmt.Sprintf("%-5s - [%5d] %s\r\n",
+				capitaliseFirst(dir.String()), exit.ToRoom, name))
+		case c.World.RoomIsDark(exit.ToRoom) && !game.CanSeeInDark(c.Character):
+			// The darkness test is on the room being *looked into*, not the
+			// one being stood in, so a lit room can list a dark one as
+			// unknowable.
+			lines = append(lines, fmt.Sprintf("%-5s - Too dark to tell\r\n",
+				capitaliseFirst(dir.String())))
+		default:
+			lines = append(lines, fmt.Sprintf("%-5s - %s\r\n",
+				capitaliseFirst(dir.String()), name))
+		}
 	}
 
-	if !any {
+	// The header goes out before the list is examined, so it appears even
+	// when there is nothing under it.
+	c.Send("Obvious exits:\r\n")
+	if len(lines) == 0 {
 		c.Send(" None.\r\n")
+		return nil
+	}
+	for _, line := range lines {
+		c.Send("%s", line)
 	}
 	return nil
 }
