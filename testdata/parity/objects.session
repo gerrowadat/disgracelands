@@ -36,6 +36,22 @@ get 2.sword
 inventory
 junk all
 inventory
+# Looking at things, which is four different functions behind one word:
+# look_in_obj for `in`, look_in_direction for a direction, look_at_target for
+# everything else, and look_at_room for nothing at all (act.informative.c:679).
+# The extra-description search is what makes `look at atm` show the note stuck
+# to the machine rather than the machine's own line from the room.
+load obj 3021
+look at sword
+look sword
+drop sword
+look sword
+look at atm
+look north
+look d
+look 0.sword
+look .sword
+get sword
 # Refusals, whose wording matters exactly as much as the successes.
 get nothing
 wear nothing

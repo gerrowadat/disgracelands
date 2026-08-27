@@ -1592,6 +1592,42 @@ compounds into something a player could notice.
 
 ---
 
+## `generic_find` cannot see the invisible, except on your own body
+
+`generic_find` (handler.c:1331) is the C's one-call search: it takes a
+bitvector of places to look and reports which of them it found the thing in.
+Its inventory and room branches both go through `get_obj_in_list_vis`, whose
+loop has three nested conditions — the name matches, `CAN_SEE_OBJ`, then
+decrement the count:
+
+    for (i = list; i && *number; i = i->next_content)
+      if (isname(name, i->name))
+        if (CAN_SEE_OBJ(ch, i))
+          if (--(*number) == 0)
+
+Its **equipment** branch is one line and has no visibility test at all:
+
+    if (GET_EQ(ch, i) && isname(name, GET_EQ(ch, i)->name) && --number == 0)
+
+So an object a character cannot see is unfindable in their inventory and
+findable on their body. Turn a ring invisible and drop detect invisible: it
+vanishes from `look ring` while carried, and comes back the moment it is
+worn. Nothing in the surrounding code suggests this is deliberate — the two
+branches were simply written at different times — and it is reproduced rather
+than tidied, per plan §0, because it is reachable and what it changes is what
+a player can type.
+
+It also means the count and the visibility filter disagree about the same
+object: an invisible carried ring does not consume a number, an invisible
+worn one does.
+
+*Source*: `handler.c:1355-1362` (the equipment loop), `handler.c:1124-1145`
+(`get_obj_in_list_vis`). Ported as `Search.EquippedObject`
+(`internal/game/live.go`), which exists as a method of its own rather than as
+`ObjectIn` over a slice for exactly this reason.
+
+---
+
 ## What to do about all this
 
 The rule that has worked: **anything with a division, a cast, or a comment

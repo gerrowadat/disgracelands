@@ -193,11 +193,6 @@ var scenarios = []scenario{
 			quitReturnsToTheMenu,
 			theVitalsPrompt,
 			{
-				command: "look in bag",
-				match:   `.`,
-				why:     "`look in <container>` lists the contents in the C and describes the container here; docs/deviations.md",
-			},
-			{
 				command: "remove all",
 				match:   `.`,
 				why:     "`remove all` is not the keyword `all` in the C; this port looks for an object called that; docs/deviations.md",
@@ -217,11 +212,14 @@ var scenarios = []scenario{
 				match:   `^You don't see a (2\.)?sword here\.$`,
 				why:     "the C strips the count out of the name before saying it back; docs/deviations.md",
 			},
-			{
-				command: "look in nothing",
-				match:   `.`,
-				why:     "the refusal for looking into something that is not there; docs/deviations.md",
-			},
+		},
+	},
+	{
+		name:  "fountains",
+		about: "look_in_obj's drink-container branch: fullness[] and color_liquid[]",
+		known: []known{
+			quitReturnsToTheMenu,
+			theVitalsPrompt,
 		},
 	},
 	{
@@ -242,11 +240,6 @@ var scenarios = []scenario{
 				command: "look",
 				match:   `^(A small sword lies here\.|An automatic teller machine has been installed in the wall here\.|The corpse of the beastly fido is lying here\.)$`,
 				why:     "the order a room's objects are listed in, and the corpse's own contents; docs/deviations.md",
-			},
-			{
-				command: "look in corpse",
-				match:   `.`,
-				why:     "as `look in <container>` in the objects scenario; docs/deviations.md",
 			},
 			{
 				command: "kill self",
@@ -295,11 +288,6 @@ var scenarios = []scenario{
 			quitReturnsToTheMenu,
 			theVitalsPrompt,
 			theShopkeepersTell,
-			{
-				command: "look at atm",
-				match:   `.`,
-				why:     "`look at <object>` finds the extra description in the C and the room's own line here; docs/deviations.md",
-			},
 		},
 	},
 	{

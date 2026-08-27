@@ -133,6 +133,16 @@ func TestLookAtSomebody(t *testing.T) {
 
 // TestLookAtAnObject, in the order the C searches: equipment, inventory,
 // floor.
+//
+// "You see nothing special.." — two full stops, and no mention of what was
+// looked at — is show_obj_to_char's SHOW_OBJ_ACTION default
+// (act.informative.c:60), and it is the answer whether the object is on the
+// floor or in hand. This test used to expect the object's *long* description
+// for the floor case ("A long sword is lying here.") and its short one for
+// the carried case, which is what this port did and what the C does not: the
+// long description is what `look` at the room prints, not what looking at the
+// object prints. Checked against the real C server before changing, with
+// scripts/session-parity.sh, rather than from a reading.
 func TestLookAtAnObject(t *testing.T) {
 	srv, _ := newTestServer(t)
 	c := dialClient(t, listening(t, srv))
@@ -141,12 +151,14 @@ func TestLookAtAnObject(t *testing.T) {
 	drop(t, srv, testSwordVnum, ImmortStartRoom)
 
 	c.send("look sword")
-	c.expect("A long sword is lying here.")
+	c.expect("You see nothing special..")
 
 	c.send("get sword")
 	c.expect("You get a long sword.")
 	c.send("look sword")
-	c.expect("You see nothing special about a long sword.")
+	// The second occurrence: the first is still sitting in the transcript
+	// from the floor case above, and expect would match it and prove nothing.
+	c.expectCount("You see nothing special..", 2)
 
 	c.send("look nothing")
 	c.expect("You do not see that here.")

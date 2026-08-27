@@ -543,13 +543,16 @@ staying on this list.
 2026-08-26 every one of them has been *ruled on*, which is the half of
 precondition 2 that needed a person rather than a harness. Twenty
 differences are listed below; eighteen needed a ruling, and each carries
-it:
+it. A fixed one keeps its entry, struck through and with what closed it —
+the ruling is the record of the decision, and deleting it would lose why
+the work was done:
 
 - **Blocker** — fix before cutover. A returning player would not forgive
   it. Sixteen of the eighteen, which is the honest answer to "how close
   is this to being playable by someone who played the original": closer
   than the list looks, since most are one command each, and not as close
-  as a green suite suggests.
+  as a green suite suggests. **Two are fixed so far** (both halves of
+  `look`), leaving fourteen.
 - **Later** — a real gap, worth closing, not gating cutover.
 - **Accepted** — the difference stands; this file is where it is
   recorded, and that is the whole disposition.
@@ -630,12 +633,19 @@ port is right and the thing it is compared against is wrong.
   **Blocker.** `'` is the say shorthand and is typed constantly, and the
   split feeds the command table's abbreviation order (`Command.CLine`), so
   this is more than a difference in what `commands` lists.
-- **`look in <container>` lists the contents in the C** ("bag (carried):",
-  then each object) and answers "You see nothing special about a bag." here.
-  Same for a corpse.
+- ~~**`look in <container>` lists the contents in the C**~~ ("bag
+  (carried):", then each object) ~~and answers "You see nothing special
+  about a bag." here. Same for a corpse.~~
   *Ruling (2026-08-26):*
   **Blocker.** A corpse whose contents cannot be checked is a broken game,
   and the extra descriptions are half of what the world's prose is for.
+  **Fixed 2026-08-26**: `do_look` is a dispatcher rather than a command, and
+  this port had collapsed its four branches into one — `look in` reached
+  `look_at_target`, which describes a thing, rather than `look_in_obj`,
+  which opens it. `internal/session/look.go` is the missing three
+  (`look_in_obj`, `look_in_direction` and the shared `generic_find` over the
+  three object lists); `look <direction>` had not been ported at all and
+  falls out of the same dispatch.
 - **`remove all` removes everything in the C** and looks for an object
   called "all" here.
   *Ruling (2026-08-26):*
@@ -653,10 +663,20 @@ port is right and the thing it is compared against is wrong.
   **Blocker.** The exact wording is part of what the game felt like, and
   `self` not resolving as a target at all is a gap in the target lookup
   rather than in a string.
-- **`look at <object>` finds the object's extra description in the C** — the
-  ATM's own note — and answers with the room's line for it here.
+- ~~**`look at <object>` finds the object's extra description in the C**~~ —
+  the ATM's own note — ~~and answers with the room's line for it here.~~
   *Ruling (2026-08-26):*
   **Blocker**; see `look in` above, which it was ruled on with.
+  **Fixed 2026-08-26**: `look_at_target` searches extra descriptions on four
+  lists — the room, worn equipment, the inventory, the floor — with a count
+  shared across all four, and this port searched only the room's, only after
+  failing to find an object. Two unlisted differences came out with it, both
+  confirmed against the C rather than reasoned about: looking at an object
+  answers `show_obj_to_char`'s "You see nothing special.." (two full stops,
+  and the object unnamed) rather than this port's "You see nothing special
+  about a long sword." or the room's long description, and a zero count —
+  `0.thing`, or a bare leading dot — answers "Look at what?" before any
+  search happens.
 - **Objects are listed in a different order**, both on the floor and in an
   inventory.
   *Ruling (2026-08-26):*
@@ -723,14 +743,20 @@ Listed here so they are not mistaken for deliberate differences.
   what the world-parity harness and the Phase 7 shadow run depend on. In
   this repo that directory is `examples/stock/binary/`, the shipped
   example and the Go server's default.
-- **`generic_find`'s combined forms are not ported.** `CAN_SEE` and `N.thing`
-  both reach the search functions now, so an invisible thief can neither be
-  seen nor named and `2.sword` picks the second one. What the C keeps in
-  `generic_find` and this port does not is the *bitvector* — one call that
-  searches inventory, equipment, the room and the world in a caller-chosen
-  combination, and reports which of them it found the thing in. Here each
-  command searches the lists it cares about in the order it wants. The
-  behaviour is the same for every command ported so far; the shape is not.
+- **`generic_find`'s combined forms are ported only where a command needed
+  them.** `CAN_SEE` and `N.thing` both reach the search functions, so an
+  invisible thief can neither be seen nor named and `2.sword` picks the
+  second one. What the C keeps in `generic_find` is the *bitvector* — one
+  call that searches inventory, equipment, the room and the world in a
+  caller-chosen combination, and reports which of them it found the thing
+  in. `Context.findObjectAndWhere` (`internal/session/look.go`) is that
+  call for the three object bits, added because `look_in_obj` needs the
+  "which list" answer to head a container's contents with "(carried)" /
+  "(here)" / "(used)". **`look` is the only caller so far**; every other
+  command still searches the lists it cares about in the order it wants,
+  with a counter per list rather than one shared across them. That
+  difference is reachable: `2.sword` with one worn and one carried is the
+  carried one through `look` and the worn one through everything else.
 - **Eight of the C's 318 commands are not implemented**, and the plan's
   §10 "What is not in it" lists every one with its `interpreter.c` line. In
   brief: the seven OasisOLC editors (Phase 6), plus `slowns`. `color` is

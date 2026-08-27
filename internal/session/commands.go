@@ -1064,19 +1064,44 @@ func doLook(c *Context) error {
 		return nil
 	}
 
-	// `look <something>` describes one thing; bare `look` describes the room.
-	if arg := strings.TrimSpace(c.Arg); arg != "" {
-		// `look in <container>` and `look at <thing>` are both the C's, and
-		// both mean "describe that".
-		arg = strings.TrimPrefix(arg, "at ")
-		arg = strings.TrimPrefix(arg, "in ")
+	// From here do_look is a dispatcher rather than a command: four different
+	// functions answer to it (act.informative.c:679-690), and the order they
+	// are tried in is what decides what an ambiguous word means.
+	arg, rest := halfChop(c.Arg)
+
+	switch {
+	case arg == "":
+		// `look` typed on purpose ignores brief mode, which is what the C's
+		// ignore_brief argument is for. Everywhere else in the whole tree
+		// passes 0: act.informative.c:680 is the only caller that passes 1.
+		return lookAtRoom(c, true)
+
+	case isPrefixOf(arg, "in"):
+		// Before the direction check, so `look i` is "look in what?" rather
+		// than a direction — nothing abbreviates to a direction from "i", but
+		// the ordering is the C's and is what makes that answerable.
+		return c.lookInObject(rest)
+
+	case direction(arg):
+		// `look north`. Ahead of `at`, so a direction beats an extra
+		// description of the same name.
+		dir, _ := game.ParseDirection(arg)
+		return c.lookInDirection(dir)
+
+	case isPrefixOf(arg, "at"):
+		return c.lookAtTarget(rest)
+
+	default:
+		// `look sword`, with no preposition at all.
 		return c.lookAtTarget(arg)
 	}
+}
 
-	// `look` typed on purpose ignores brief mode, which is what the C's
-	// ignore_brief argument is for. Everywhere else in the whole tree passes
-	// 0: `do_look` at act.informative.c:680 is the only caller that passes 1.
-	return lookAtRoom(c, true)
+// direction reports whether a word names one, which do_look asks with
+// search_block(arg, dirs, FALSE) — abbreviations allowed.
+func direction(word string) bool {
+	_, ok := game.ParseDirection(word)
+	return ok
 }
 
 // lookAtRoom shows the character the room they are in.
