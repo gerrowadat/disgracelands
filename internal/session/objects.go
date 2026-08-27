@@ -112,7 +112,8 @@ func doWear(c *Context) error {
 
 	obj := c.findObject(c.Character.Carrying, arg1)
 	if obj == nil {
-		c.Send("You don't seem to have %s %s.\r\n", article(arg1), arg1)
+		named := namedWithoutCount(arg1)
+		c.Send("You don't seem to have %s %s.\r\n", article(named), named)
 		return nil
 	}
 	if c.Character.Level() < obj.MinLevel() {
@@ -149,7 +150,8 @@ func doWield(c *Context) error {
 
 	obj := c.findObject(c.Character.Carrying, c.Arg)
 	if obj == nil {
-		c.Send("You don't seem to have %s %s.\r\n", article(c.Arg), c.Arg)
+		named := namedWithoutCount(c.Arg)
+		c.Send("You don't seem to have %s %s.\r\n", article(named), named)
 		return nil
 	}
 	if !obj.WearFlags.Has(game.ItemWearWield) {
@@ -171,7 +173,8 @@ func doGrab(c *Context) error {
 
 	obj := c.findObject(c.Character.Carrying, c.Arg)
 	if obj == nil {
-		c.Send("You don't seem to have %s %s.\r\n", article(c.Arg), c.Arg)
+		named := namedWithoutCount(c.Arg)
+		c.Send("You don't seem to have %s %s.\r\n", article(named), named)
 		return nil
 	}
 	if obj.Type == game.ItemLight {
@@ -186,26 +189,115 @@ func doGrab(c *Context) error {
 
 // doRemove takes something off, porting do_remove.
 func doRemove(c *Context) error {
-	if c.Arg == "" {
+	arg, _ := oneArgument(c.Arg)
+	if arg == "" {
 		c.Send("Remove what?\r\n")
 		return nil
 	}
 
-	for pos := game.WearPosition(0); pos < game.NumWears; pos++ {
-		obj := c.Character.Equipment[pos]
-		if obj == nil || !obj.Matches(c.Arg) {
-			continue
+	// `remove all` and `remove all.ring` are the C's, and this port had
+	// neither: it looked for an object whose name was the literal word "all"
+	// and refused. do_remove is the last of the nine find_all_dots callers to
+	// get them (act.item.c:1453).
+	mode, rest := findAllDots(arg)
+	switch mode {
+	case findAll:
+		var found bool
+		for pos := game.WearPosition(0); pos < game.NumWears; pos++ {
+			if c.Character.Equipment[pos] != nil {
+				c.performRemove(pos)
+				found = true
+			}
+		}
+		if !found {
+			c.Send("You're not using anything.\r\n")
 		}
 
+	case findAllDot:
+		if rest == "" {
+			c.Send("Remove all of what?\r\n")
+			return nil
+		}
+		var found bool
+		for pos := game.WearPosition(0); pos < game.NumWears; pos++ {
+			obj := c.Character.Equipment[pos]
+			if obj == nil || !c.World.CanSeeObj(c.Character, obj) || !obj.Matches(rest) {
+				continue
+			}
+			c.performRemove(pos)
+			found = true
+		}
+		if !found {
+			// The C pluralises by sticking an "s" on whatever was typed, so
+			// `remove all.boots` answers "any bootss". Left alone: it is what
+			// a player of the real game saw.
+			c.Send("You don't seem to be using any %ss.\r\n", rest)
+		}
+
+	default:
+		pos, ok := c.equipmentPosition(arg)
+		if !ok {
+			named := namedWithoutCount(arg)
+			c.Send("You don't seem to be using %s %s.\r\n", article(named), named)
+			return nil
+		}
+		c.performRemove(pos)
+	}
+	return nil
+}
+
+// equipmentPosition is get_obj_pos_in_equip_vis (handler.c:1254): which slot
+// holds the N'th visible worn thing of that name.
+//
+// It checks CAN_SEE_OBJ, which is worth saying out loud because
+// generic_find's own equipment loop does not — see docs/weirdnumbers.md.
+// Two searches over the same array, in the same file, disagreeing about
+// whether an invisible worn object can be found.
+func (c *Context) equipmentPosition(arg string) (game.WearPosition, bool) {
+	n, word := game.GetNumber(arg)
+	if n == 0 {
+		return 0, false
+	}
+	for pos := game.WearPosition(0); pos < game.NumWears; pos++ {
+		obj := c.Character.Equipment[pos]
+		if obj == nil || !c.World.CanSeeObj(c.Character, obj) || !obj.Matches(word) {
+			continue
+		}
+		n--
+		if n == 0 {
+			return pos, true
+		}
+	}
+	return 0, false
+}
+
+// performRemove is perform_remove (act.item.c:1424).
+//
+// Two refusals this port did not have, and both are things a player runs
+// into: a cursed item cannot come off at all, and an item cannot come off
+// into hands that are already full. The second is why `remove all` is not
+// simply a loop that always succeeds — a character wearing more than they can
+// carry takes some of it off and keeps the rest on.
+func (c *Context) performRemove(pos game.WearPosition) {
+	obj := c.Character.Equipment[pos]
+	if obj == nil {
+		return
+	}
+	switch {
+	case obj.ExtraFlags.Has(game.ItemNoDrop):
+		c.Send("You can't remove %s, it must be CURSED!\r\n", obj.Name())
+	case c.handsFull():
+		// Capitalised because act() capitalises whatever it ends up with —
+		// `SEND_TO_Q(CAP(lbuf), ...)` (comm.c:2410) — and "$p" is the first
+		// thing in this format, so a short description beginning "a long
+		// sword" reaches the player as "A long sword:".
+		c.Send("%s: you can't carry that many items!\r\n", capitaliseFirst(obj.Name()))
+	default:
 		c.World.Unequip(c.Character, pos)
 		c.World.ObjectToChar(obj, c.Character)
 		c.Send("You stop using %s.\r\n", obj.Name())
 		c.announce("%s stops using %s.\r\n", c.Character.Name, obj.Name())
-		return nil
 	}
-
-	c.Send("You don't seem to be using %s %s.\r\n", article(c.Arg), c.Arg)
-	return nil
 }
 
 // wearAt puts an object in a slot and says so, porting perform_wear,

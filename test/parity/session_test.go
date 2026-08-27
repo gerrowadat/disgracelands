@@ -193,14 +193,9 @@ var scenarios = []scenario{
 			quitReturnsToTheMenu,
 			theVitalsPrompt,
 			{
-				command: "remove all",
-				match:   `.`,
-				why:     "`remove all` is not the keyword `all` in the C; this port looks for an object called that; docs/deviations.md",
-			},
-			{
 				command: "inventory",
 				match:   `^(a shield|a chain mail shirt|a small sword|a bag)$`,
-				why:     "what `remove all` above left on rather than in hand, and the order the rest are listed in; docs/deviations.md",
+				why:     "the order an inventory is listed in; docs/deviations.md",
 			},
 			{
 				command: "look",
@@ -208,10 +203,18 @@ var scenarios = []scenario{
 				why:     "the order a room's objects are listed in; docs/deviations.md",
 			},
 			{
-				command: "get 2.sword",
-				match:   `^You don't see a (2\.)?sword here\.$`,
-				why:     "the C strips the count out of the name before saying it back; docs/deviations.md",
+				command: "drop all",
+				match:   `^You drop (a bag|a chain mail shirt|a shield)\.$`,
+				why:     "the order an inventory is walked in, which is the same Later-ruled difference as `inventory` above: the C's obj_to_char puts a new object at the *head* of the list and this port appends, so `all` runs newest-first there and oldest-first here; docs/deviations.md",
 			},
+		},
+	},
+	{
+		name:  "self",
+		about: "`self` and `me` as targets, and the refusals beside them",
+		known: []known{
+			quitReturnsToTheMenu,
+			theVitalsPrompt,
 		},
 	},
 	{
@@ -240,11 +243,6 @@ var scenarios = []scenario{
 				command: "look",
 				match:   `^(A small sword lies here\.|An automatic teller machine has been installed in the wall here\.|The corpse of the beastly fido is lying here\.)$`,
 				why:     "the order a room's objects are listed in, and the corpse's own contents; docs/deviations.md",
-			},
-			{
-				command: "kill self",
-				match:   `.`,
-				why:     "the C answers `kill self` with its own refusal; this port does not resolve `self` as a target at all; docs/deviations.md",
 			},
 			{
 				command: "flee",

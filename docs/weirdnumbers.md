@@ -1628,6 +1628,44 @@ worn one does.
 
 ---
 
+## `get_number` does not read the count, it removes it
+
+`get_number` (handler.c:590) looks like a parser and is not one. Its job is
+to answer "which match did they ask for", and it does that by **rewriting the
+caller's string**:
+
+    if ((ppos = strchr(*name, '.')) != NULL) {
+      *ppos++ = '\0';
+      strcpy(number, *name);
+      strcpy(*name, ppos);          /* <- the argument is now "sword" */
+
+Every `FIND_INDIV` branch in `act.item.c` hands one buffer to a `*_vis`
+search — which calls `get_number` when it is passed a NULL count — and then
+prints that same buffer in the refusal if the search failed. By then the
+buffer no longer says what the player typed:
+
+    get 2.sword     ->  "You don't see a sword here."
+
+Six commands are downstream of a search this way and say "sword": `get`,
+`drop`, `junk`, `remove`, `wear`, `wield`. Others are not, and say back
+whatever was typed. Nothing in the message distinguishes them, which is why
+the six were established by playing them at both servers
+(`scripts/session-parity.sh`) rather than by reading — a reading would have
+had to simulate the buffer's lifetime through two function calls per command,
+nine times.
+
+The same rewrite is why `look at 2.plaque` searches extra descriptions for
+"plaque" (act.informative.c:604) and why `2.self` is you rather than nobody
+(handler.c:1068): both sit after a `get_number` that has already consumed the
+prefix.
+
+*Source*: `handler.c:590-604`, `act.item.c:296-299`. Ported as
+`game.GetNumber` and `session.namedWithoutCount`, the latter existing purely
+to make the "the message sees the stripped buffer" step explicit rather than
+implicit.
+
+---
+
 ## What to do about all this
 
 The rule that has worked: **anything with a division, a cast, or a comment

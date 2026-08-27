@@ -353,7 +353,7 @@ func TestAnAbbreviationDoesNotNameAnybody(t *testing.T) {
 	mortal.send("kill do")
 	mortal.expect("They don't seem to be here.")
 	mortal.send("look dog")
-	mortal.expect("You see nothing special about a large dog.")
+	mortal.expect("You see nothing special about it.")
 
 	// And a player, by a partial name.
 	mortal.send("look zo")
@@ -362,7 +362,7 @@ func TestAnAbbreviationDoesNotNameAnybody(t *testing.T) {
 	// transcript.
 	mortal.expect("You do not see that here.")
 	mortal.send("look zod")
-	mortal.expect("You see nothing special about Zod.")
+	mortal.expect("You see nothing special about him.")
 }
 
 // TestYouCannotTargetWhatYouCannotSee — the other half of CAN_SEE, and the
@@ -374,7 +374,7 @@ func TestYouCannotTargetWhatYouCannotSee(t *testing.T) {
 	god, mortal := twoInARoom(t, srv, addr)
 
 	mortal.send("look zod")
-	mortal.expect("You see nothing special about Zod.")
+	mortal.expect("You see nothing special about him.")
 
 	affect(t, srv, "Zod", game.AffectInvisible)
 	mortal.send("look zod")
@@ -383,7 +383,7 @@ func TestYouCannotTargetWhatYouCannotSee(t *testing.T) {
 	// Detect invisible brings them back within reach.
 	affect(t, srv, "Bystander", game.AffectDetectInvis)
 	mortal.send("look zod")
-	mortal.expectCount("You see nothing special about Zod.", 2)
+	mortal.expectCount("You see nothing special about him.", 2)
 
 	_ = god
 }
@@ -410,14 +410,24 @@ func TestNThingTargeting(t *testing.T) {
 	c.send("inventory")
 	c.expect("a long sword")
 
-	// Past the end finds nothing rather than the last one.
+	// Past the end finds nothing rather than the last one — and the refusal
+	// says "a sword", not "a 9.sword". get_number rewrites the caller's
+	// buffer (handler.c:596) and do_drop prints that same buffer, so the
+	// count is gone by the time the player is told about it.
 	c.send("drop 9.sword")
-	c.expect("You don't seem to have a 9.sword.")
+	c.expect("You don't seem to have a sword.")
 }
 
 // TestZeroDotMeansAPlayer. get_number returns 0 for a non-numeric prefix and
-// for a literal `0.`, and a character search reads that as "a player of this
-// name" (handler.c:1068) — so `0.zod` finds the player and never a mobile.
+// for a literal `0.`, and get_char_room_vis reads that as "a player of this
+// name" (handler.c:1074) — so `0.zod` finds the player and never a mobile.
+//
+// Through `hit`, not `look`, and the difference is the point. do_hit calls
+// get_char_vis directly (act.offensive.c:108) and reaches that branch;
+// look_at_target goes through generic_find, which gives up on a zero count
+// before it searches anything at all (handler.c:1345), so `look 0.zod` is
+// "Look at what?" no matter who zod is. Both halves checked against the C
+// with scripts/session-parity.sh.
 func TestZeroDotMeansAPlayer(t *testing.T) {
 	srv, _ := newTestServer(t)
 	addr := listening(t, srv)
@@ -425,7 +435,10 @@ func TestZeroDotMeansAPlayer(t *testing.T) {
 	spawnDog(t, srv, MortalStartRoom)
 
 	mortal.send("look 0.zod")
-	mortal.expect("You see nothing special about Zod.")
+	mortal.expect("Look at what?")
+
+	mortal.send("hit 0.zod")
+	mortal.expect("Use 'murder' to hit another player.")
 
 	// A mobile is not a player, so 0. never reaches one — and the answer is
 	// "Look at what?", not "You do not see that here.": look_at_target
@@ -433,7 +446,11 @@ func TestZeroDotMeansAPlayer(t *testing.T) {
 	// (act.informative.c:605-608), before any object or extra description is
 	// looked at. Checked against the C with scripts/session-parity.sh.
 	mortal.send("look 0.dog")
-	mortal.expect("Look at what?")
+	mortal.expectCount("Look at what?", 2)
+
+	// And a mobile is not a player, so `hit 0.dog` finds nobody either.
+	mortal.send("hit 0.dog")
+	mortal.expect("They don't seem to be here.")
 }
 
 // TestColourIsEmittedAtTheReadersLevel. The C interleaves escapes as it builds

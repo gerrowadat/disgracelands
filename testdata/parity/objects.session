@@ -26,13 +26,33 @@ wear shield
 equipment
 remove all
 inventory
+# remove's three dot-modes (act.item.c:1453), and perform_remove's own two
+# refusals, which this port did not have: a cursed item will not come off, and
+# nothing comes off into hands that are already full.
+wear shirt
+wear shield
+remove all.shirt
+equipment
+remove all
+remove all.nothing
+remove all
 drop sword
 look
 get sword
 # The same word, with a count in front of it: `isname` is a whole-word match
-# and `get_number` is what reads the "2." (5m).
+# and `get_number` is what reads the "2." (5m) -- and rewrites the buffer it
+# was given, so the refusals below say "sword" and never "2.sword".
 load obj 3021
 get 2.sword
+drop 2.sword
+remove 2.sword
+wear 2.shirt
+wield 2.sword
+# And with two of them actually there, where the count picks the second.
+load obj 3021
+drop all
+get 2.sword
+inventory
 inventory
 junk all
 inventory
