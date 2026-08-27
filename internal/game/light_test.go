@@ -88,9 +88,15 @@ func TestAnIndoorRoomIsNeverDark(t *testing.T) {
 	}
 }
 
-// TestAnOutdoorRoomFollowsTheSun, including the two boundaries that are easy
-// to get wrong: SUN_SET counts as dark, and the light comes back at SUN_RISE
-// rather than at SUN_LIGHT.
+// TestAnOutdoorRoomFollowsTheSun, including the boundaries that are easy to
+// get wrong: SUN_SET counts as dark, the light comes back at SUN_RISE rather
+// than at SUN_LIGHT, and **sunset is at twenty-one, not twenty**.
+//
+// That last one was wrong here, and it was an hour of darkness across every
+// outdoor room in the world. Two functions in the C set the sunlight and they
+// agree: another_hour's switch (weather.c:41) fires at 5, 6, 21 and 22, and
+// reset_time's chain (db.c) reads `< 5` dark, `== 5` rise, `<= 20` light,
+// `== 21` set, else dark.
 func TestAnOutdoorRoomFollowsTheSun(t *testing.T) {
 	for _, tc := range []struct {
 		hour int32
@@ -101,8 +107,9 @@ func TestAnOutdoorRoomFollowsTheSun(t *testing.T) {
 		{6, false},  // SUN_LIGHT
 		{12, false}, // SUN_LIGHT
 		{19, false}, // still SUN_LIGHT
-		{20, true},  // SUN_SET — dusk is dark
-		{21, true},  // SUN_DARK
+		{20, false}, // SUN_LIGHT — the C's last lit hour
+		{21, true},  // SUN_SET — dusk is dark
+		{22, true},  // SUN_DARK
 		{23, true},  // SUN_DARK
 	} {
 		l := darkWorld(t)

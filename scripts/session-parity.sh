@@ -35,20 +35,36 @@ set -eu
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 cd "$ROOT"
 
-OUT=$(mktemp -d)
+# Where the transcripts go. A throwaway directory that is deleted on the way
+# out, unless PARITY_OUT_DIR names one -- which is for reading a difference
+# after the fact, since "transcripts in /tmp/tmp.XXXX" is not much use once
+# the trap below has removed it.
+OUT=${PARITY_OUT_DIR:-$(mktemp -d)}
+KEEP_OUT=${PARITY_OUT_DIR:+yes}
 CPID=""
 GPID=""
 cleanup() {
 	[ -n "$CPID" ] && kill "$CPID" 2>/dev/null || true
 	[ -n "$GPID" ] && kill "$GPID" 2>/dev/null || true
-	rm -rf "$OUT"
+	[ -n "$KEEP_OUT" ] || rm -rf "$OUT"
 }
 trap cleanup EXIT
 
 CSERVER=reference/moderncserver
 MAKEFILES="$CSERVER/src/Makefile $CSERVER/src/util/Makefile"
 
-if [ ! -x "$CSERVER/bin/circle" ]; then
+# Rebuilt when the binary is missing *or older than any source under src/*.
+# It used to be missing alone, while this script's own comments and
+# docs/developer.md both said "or older than the source" -- so editing the C
+# and re-running silently compared against the previous binary. That cost real
+# time: an instrumented C server that printed nothing, twice, before the
+# timestamps were checked.
+c_is_stale() {
+	[ ! -x "$CSERVER/bin/circle" ] && return 0
+	[ -n "$(find "$CSERVER/src" -name '*.[ch]' -newer "$CSERVER/bin/circle" -print -quit)" ]
+}
+
+if c_is_stale; then
 	echo "==> Building the C server"
 	for mk in $MAKEFILES; do
 		[ -f "$mk" ] && cp "$mk" "$OUT/$(echo "$mk" | tr / _)"
@@ -101,15 +117,16 @@ for script in $SCRIPTS; do
 	CPORT=$(free_port)
 	GPORT=$(free_port)
 
-	# -S fixes the RNG seed and -M holds the mobiles still, both <DoC>
+	# -S fixes the RNG seed, -M holds the mobiles still and -W holds the
+	# weather still, all three <DoC>
 	# additions for exactly this harness. -q skips the rent scan; -d must be
 	# absolute because the C server chdir()s.
-	"$ROOT/$CSERVER/bin/circle" -q -M -S "$SEED" -d "$CLIB" "$CPORT" >"$OUT/$RUN/c.log" 2>&1 &
+	"$ROOT/$CSERVER/bin/circle" -q -M -W -S "$SEED" -d "$CLIB" "$CPORT" >"$OUT/$RUN/c.log" 2>&1 &
 	CPID=$!
 	go run ./cmd/dlmud \
 		--lib-dir="$GLIB" \
 		--listen-telnets= --listen-telnet="127.0.0.1:$GPORT" \
-		--rng=circle --rng-seed="$SEED" --freeze-mobiles \
+		--rng=circle --rng-seed="$SEED" --freeze-mobiles --freeze-weather \
 		--log-level=error >"$OUT/$RUN/g.log" 2>&1 &
 	GPID=$!
 

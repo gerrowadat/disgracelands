@@ -454,6 +454,19 @@ func (s *Server) kill(w *game.Live, victim *game.Character) {
 	s.die(w, victim)
 }
 
+// RawKill implements session.Violence: raw_kill (fight.c:381).
+//
+// Everything death does with none of what damage() does first — no position
+// announcement, no experience, no alignment change, no attacker at all.
+// `kill` typed by an implementor is the only thing in the C that reaches it
+// this way; everything else arrives through damage().
+func (s *Server) RawKill(w *game.Live, victim *game.Character) {
+	if victim == nil {
+		return
+	}
+	s.kill(w, victim)
+}
+
 // toRoomExcept tells everyone in a character's room except them, and except
 // anyone else named.
 func (s *Server) toRoomExcept(w *game.Live, c *game.Character, format string, args ...any) {

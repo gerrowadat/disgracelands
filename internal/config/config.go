@@ -125,6 +125,15 @@ type Config struct {
 	// walks through — which is most of Midgaard. See test/parity.
 	FreezeMobiles bool
 
+	// FreezeWeather holds the barometer still: no weather_change, and none
+	// of its dice. Like FreezeMobiles it is not a C option and not a game
+	// setting — it matches the `-W` added to the C server for the same
+	// purpose. weather_change rolls five dice a mud hour and sometimes six,
+	// and the parity harness plays its script at one server and then at the
+	// other, so by the same line the second server has been up longer and
+	// has had a tick the first had not. See test/parity.
+	FreezeWeather bool
+
 	// Security.
 	AllowLegacyPasswords bool
 
@@ -346,6 +355,7 @@ func Load(args []string, lookupEnv func(string) (string, bool), out io.Writer) (
 	boolean("restrict", "Allow no new players (C: -r)", &cfg.Restrict)
 	boolean("no-specials", "Suppress special procedure assignment (C: -s)", &cfg.NoSpecials)
 	boolean("freeze-mobiles", "Hold the mobiles still (parity harness; C: -M)", &cfg.FreezeMobiles)
+	boolean("freeze-weather", "Hold the weather still (parity harness; C: -W)", &cfg.FreezeWeather)
 
 	boolean("allow-legacy-passwords", "Accept pre-2008 DES crypt(3) password hashes", &cfg.AllowLegacyPasswords)
 

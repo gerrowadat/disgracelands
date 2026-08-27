@@ -187,21 +187,30 @@ const (
 	SunSet
 )
 
-// SunlightAt returns the state of the day at an hour, porting the switch in
-// weather_and_time (weather.c). The day is short: sunrise at five, sunset at
-// twenty-one.
+// SunlightAt returns the state of the day at an hour.
+//
+// Two functions in the C set the sunlight and they have to agree:
+// `another_hour` switches on the hour as it ticks over (weather.c:41 — 5 is
+// SUN_RISE, 6 SUN_LIGHT, 21 SUN_SET, 22 SUN_DARK) and `reset_time` picks the
+// state for whatever hour the server booted into (db.c — under 5 is dark, 5
+// is rise, 20 or under is light, 21 is set, otherwise dark). Both put **sunset
+// at twenty-one and full dark at twenty-two**.
+//
+// This had sunset at twenty and dark at twenty-one, an hour early at both
+// ends, which is not a cosmetic difference: `room_is_dark` treats SUN_SET and
+// SUN_DARK alike (light.go), so every outdoor room in the world went dark an
+// hour before the C's did — and a dark room is one a mortal cannot read, see
+// the exits of, or see anybody in.
 func SunlightAt(hour int32) Sunlight {
 	switch {
+	case hour < 5:
+		return SunDark
 	case hour == 5:
 		return SunRise
-	case hour == 6:
+	case hour <= 20:
 		return SunLight
-	case hour == 20:
-		return SunSet
 	case hour == 21:
-		return SunDark
-	case hour > 5 && hour < 21:
-		return SunLight
+		return SunSet
 	}
 	return SunDark
 }

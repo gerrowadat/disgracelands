@@ -95,8 +95,16 @@ func TestAnImplementorsKillIsSomethingElse(t *testing.T) {
 	c.expect("You chop it to pieces!  Ah!  The blood!")
 
 	inWorld(t, srv, func(w *game.Live) {
-		if dog.Record.Points.Hit > 0 {
-			t.Errorf("the dog is on %d hit points", dog.Record.Points.Hit)
+		// Gone from the room, not beaten down to zero: raw_kill (fight.c:381)
+		// applies no damage at all — it is stop_fighting, death_cry,
+		// make_corpse, extract_char, and nothing else. This used to assert
+		// the dog's hit points had dropped, because this port reached
+		// raw_kill by calling damage() with a large enough number, which also
+		// announced a death the C announces nowhere on this path.
+		for _, who := range w.Occupants(ImmortStartRoom) {
+			if who == dog {
+				t.Error("the dog is still in the room")
+			}
 		}
 		// A corpse, and no experience: raw_kill credits nobody.
 		var corpse bool

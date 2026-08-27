@@ -212,12 +212,22 @@ func doFlee(c *Context) error {
 		for _, other := range c.World.Occupants(from) {
 			other.Tell("%s has fled!\r\n", c.Character.Name)
 		}
+
+		// The room first, then the message. In the C the look happens *inside*
+		// do_simple_move, which do_flee calls before saying anything
+		// (act.offensive.c:382), so a player sees where they landed and is
+		// then told how. This port had it the other way round, which reads
+		// fine and is not what the real server did.
+		//
+		// do_flee's look passes ignore_brief = 0 (act.offensive.c:372), unlike
+		// `look` typed by hand.
+		if err := lookAtRoom(c, false); err != nil {
+			return err
+		}
 		c.Send("You flee head over heels.\r\n")
 
 		c.penaliseFlight(wasFighting)
-		// do_flee's look passes ignore_brief = 0 (act.offensive.c:372), unlike
-		// `look` typed by hand.
-		return lookAtRoom(c, false)
+		return nil
 	}
 
 	c.Send("PANIC!  You couldn't escape!\r\n")

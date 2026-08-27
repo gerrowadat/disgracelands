@@ -127,6 +127,9 @@ type Server struct {
 	// freezeMobiles suppresses the mobile-activity pulse, matching the C's
 	// -M. See Options.FreezeMobiles.
 	freezeMobiles bool
+	// freezeWeather suppresses weather_and_time, matching the C's -W. See
+	// Options.FreezeWeather.
+	freezeWeather bool
 	// roundLength is how long a combat round lasts, and so how long a wait
 	// state holds somebody's next command up for. Zero is the real two
 	// seconds; see session.DefaultRoundLength.
@@ -183,6 +186,12 @@ type Options struct {
 	// is the C server's own `-M` (a <DoC> addition, comm.c's
 	// `freeze_mobiles`). Only the session-parity harness sets it.
 	FreezeMobiles bool
+	// FreezeWeather stops weather_and_time running, which is the C server's
+	// own `-W` (also a <DoC> addition). Only the session-parity harness
+	// sets it, and for the same reason: weather_change rolls dice on a
+	// timer, and the harness's two servers do not reach a given line of the
+	// script at the same age.
+	FreezeWeather bool
 	// RoundLength overrides how long a combat round lasts. Zero — which is
 	// every caller that is not a test — means the real two seconds, which
 	// is what PULSE_VIOLENCE is. See session.DefaultRoundLength.
@@ -215,6 +224,7 @@ func New(opts Options) *Server {
 		restrict:      opts.Restrict,
 		noSpecials:    opts.NoSpecials,
 		freezeMobiles: opts.FreezeMobiles,
+		freezeWeather: opts.FreezeWeather,
 		roundLength:   opts.RoundLength,
 		rng:           opts.RNG,
 	}

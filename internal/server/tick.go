@@ -78,6 +78,11 @@ func (r regenContext) GoodRegen() bool {
 // Order matters and is the C's: conditions first, so a character who runs out
 // of food this tick regenerates at the reduced rate this tick, not next.
 func (s *Server) pointUpdate(w *game.Live) {
+	// weather_and_time(1) comes first on this pulse in the C, ahead of
+	// affect_update and point_update (comm.c:934), and the order matters for
+	// one reason only: it rolls. Five draws a mud hour, sometimes six.
+	s.weatherAndTime(w)
+
 	now := time.Now()
 
 	for _, c := range w.Players() {
@@ -144,8 +149,73 @@ func (s *Server) suffer(w *game.Live, c *game.Character, amount int32) {
 	c.Record.Points.Hit -= amount
 	c.Position = game.UpdatePosition(c.Record, c.Position)
 
+	// The C reaches this through damage(), which announces the new position
+	// before deciding whether anybody died (fight.c:877). Bleeding out is not
+	// a quieter way to die than being hit — it is the same function — so
+	// "You are dead!  Sorry..." and "$n is dead!  R.I.P." come from here, the
+	// same place they come from in a fight, rather than from die().
+	s.announcePosition(w, c)
+
 	if c.Position == game.PosDead {
 		s.die(w, c)
+	}
+}
+
+// weatherAndTime is weather_and_time(1) (weather.c:29): another_hour's four
+// announcements, then weather_change.
+//
+// The hour is derived here rather than incremented, so "the hour just ticked
+// over" is "the hour this pulse lands on" — the pulse is one mud hour long by
+// construction (pulseTick), which is the same thing said differently.
+func (s *Server) weatherAndTime(w *game.Live) {
+	// --freeze-weather is the C's `weather_and_time(0)`: the hour still
+	// advances, nothing is announced, and no dice are rolled. Only the
+	// parity harness sets it.
+	if s.freezeWeather {
+		return
+	}
+	outdoors := w.Outdoors()
+
+	if line := game.SunriseMessage(w.MudTime().Hours); line != "" {
+		for _, c := range outdoors {
+			c.Tell("%s", line)
+		}
+	}
+	for _, line := range w.AdvanceWeather(s.rng) {
+		for _, c := range outdoors {
+			c.Tell("%s", line)
+		}
+	}
+}
+
+// deathCry is death_cry (fight.c:367): the room hears whose it was, and every
+// room one step away hears that it was somebody.
+//
+// The neighbours are reached through CAN_GO, so a closed door muffles it —
+// the same condition `exits` uses to decide what to list. Two exits leading
+// to the same room send it there twice, which the C does not guard against
+// and neither does this.
+func (s *Server) deathCry(w *game.Live, c *game.Character) {
+	for _, other := range w.Occupants(c.Room) {
+		if other == c {
+			continue
+		}
+		other.Tell("%s", w.Act("Your blood freezes as you hear $n's death cry.",
+			game.ActArgs{Actor: c}, other))
+	}
+
+	room := w.Room(c.Room)
+	if room == nil {
+		return
+	}
+	for dir := game.Direction(0); dir < game.NumDirections; dir++ {
+		exit := room.Exits[dir]
+		if exit == nil || exit.ToRoom == game.NoRoom || exit.State.Has(game.ExitClosed) {
+			continue
+		}
+		for _, other := range w.Occupants(exit.ToRoom) {
+			other.Tell("Your blood freezes as you hear someone's death cry.\r\n")
+		}
 	}
 }
 
@@ -157,12 +227,13 @@ func (s *Server) suffer(w *game.Live, c *game.Character, amount int32) {
 func (s *Server) die(w *game.Live, c *game.Character) {
 	s.logger.Info("a character died", "character", c.Name, "room", c.Room)
 
-	c.Tell("You are dead!  Sorry...\r\n")
-	for _, other := range w.Occupants(c.Room) {
-		if other != c {
-			other.Tell("%s is dead!  R.I.P.\r\n", c.Name)
-		}
-	}
+	// death_cry, and *only* death_cry. raw_kill's own announcement
+	// (fight.c:389) is the cry; "$n is dead!  R.I.P." belongs to damage()'s
+	// position switch (fight.c:891) and is sent there, once, before die() is
+	// ever called. Sending it here too is what made a kill say it twice —
+	// and made an implementor's `kill`, which reaches raw_kill without going
+	// through damage() at all, say it when the C says nothing of the kind.
+	s.deathCry(w, c)
 
 	w.MakeCorpse(c)
 	w.StopFighting(c)

@@ -14,6 +14,14 @@
  *
  *   randoracle <seed> <count>          dump raw circle_random() values
  *   randoracle <seed> <count> <lo> <hi>  dump number(lo, hi) values
+ *   randoracle <seed> <count> <lo> <hi> <lo2> <hi2>
+ *                                      alternate the two ranges
+ *
+ * The alternating mode exists because the single-range mode cannot see a
+ * missing *draw*, only a wrong *value*. number(1, 1) answers 1 whether or not
+ * the generator was advanced, so a port that skips the draw agrees with this
+ * oracle perfectly and is one step behind for everything afterwards.
+ * Interleaving a degenerate range with a real one is what makes that visible.
  *
  * One value per line. internal/rng/rng_test.go compiles this and compares.
  */
@@ -72,8 +80,8 @@ int main(int argc, char **argv)
     unsigned long initial;
     long count, i;
 
-    if (argc != 3 && argc != 5) {
-        fprintf(stderr, "usage: %s <seed> <count> [<lo> <hi>]\n", argv[0]);
+    if (argc != 3 && argc != 5 && argc != 7) {
+        fprintf(stderr, "usage: %s <seed> <count> [<lo> <hi> [<lo2> <hi2>]]\n", argv[0]);
         return 2;
     }
 
@@ -85,11 +93,18 @@ int main(int argc, char **argv)
     if (argc == 3) {
         for (i = 0; i < count; i++)
             printf("%lu\n", circle_random());
-    } else {
+    } else if (argc == 5) {
         int lo = atoi(argv[3]);
         int hi = atoi(argv[4]);
         for (i = 0; i < count; i++)
             printf("%d\n", number(lo, hi));
+    } else {
+        int lo = atoi(argv[3]), hi = atoi(argv[4]);
+        int lo2 = atoi(argv[5]), hi2 = atoi(argv[6]);
+        for (i = 0; i < count; i++) {
+            printf("%d\n", number(lo, hi));
+            printf("%d\n", number(lo2, hi2));
+        }
     }
 
     return 0;

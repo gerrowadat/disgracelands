@@ -119,6 +119,14 @@ unsigned long fixed_random_seed = 0;
  * mobile_activity() also rolls dice, so leaving it running walks the two
  * generators out of step with each other as well.			*/
 int freeze_mobiles = 0;
+/* <DoC> -W: hold the weather still, for the same harness and for the same
+ * reason as -M. weather_change() rolls five dice every mud hour and
+ * sometimes six, and the harness plays its script at one server and then at
+ * the other -- so by the same line of the script the second server has been
+ * up longer and has had a weather tick the first had not. Nothing in the
+ * game reads the sky except its own four messages; what -W suppresses is the
+ * dice.                                                              */
+int freeze_weather = 0;
 void dump_world_json(FILE *f);		/* worlddump.c				*/
 /* </DoC> */
 struct timeval null_time;	/* zero-valued time structure */
@@ -308,6 +316,10 @@ int main(int argc, char **argv)
       freeze_mobiles = 1;
       puts("Mobile activity suppressed.");
       break;
+    case 'W':
+      freeze_weather = 1;
+      puts("Weather suppressed.");
+      break;
     /* </DoC> */
     case 'q':
       no_rent_check = 1;
@@ -329,6 +341,7 @@ int main(int argc, char **argv)
               "  -d <directory> Specify library directory (defaults to 'lib').\n"
               "  -h             Print this command line argument help.\n"
               "  -M             Hold the mobiles still, for the parity harness.\n"
+              "  -W             Hold the weather still, for the parity harness.\n"
               "  -m             Start in mini-MUD mode.\n"
 	      "  -o <file>      Write log to <file> instead of stderr.\n"
               "  -q             Quick boot (doesn't scan rent for object limits)\n"
@@ -932,7 +945,10 @@ void heartbeat(int pulse)
     perform_violence();
 
   if (!(pulse % (SECS_PER_MUD_HOUR * PASSES_PER_SEC))) {
-    weather_and_time(1);
+    /* <DoC> -W holds it still; see freeze_weather above. Mode 0 is the C's
+     * own "advance the hour but do not touch the weather" argument, so this
+     * is the existing switch rather than a new branch.               */
+    weather_and_time(freeze_weather ? 0 : 1);
     affect_update();
     point_update();
     fflush(player_fl);

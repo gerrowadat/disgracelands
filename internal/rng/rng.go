@@ -112,12 +112,26 @@ func (r *Rand) Seed(seed uint64) {
 // The modulo is the C's, biased and all. A uniform reduction would be more
 // correct and would produce different numbers, which is exactly what this
 // package exists not to do.
+//
+// **A zero-width range still draws.** `number(1, 1)` can only return 1, and
+// an early return for it looks free — it is not. The C has no such branch:
+//
+//	return ((circle_random() % (to - from + 1)) + from);
+//
+// so it takes a value from the generator and reduces it modulo 1. Skipping
+// that draw returns the right answer and leaves the generator one step behind
+// the C's for the rest of the run. It went unnoticed because the oracle
+// compares *values*: a fresh generator asked for number(1, 1) repeatedly
+// agrees with the C perfectly, since both answer 1 every time. What disagrees
+// is everything asked afterwards.
+//
+// The branch that used to be here cost 288 draws during a single boot of the
+// stock world — every d1 in every mobile's hit dice — which put the
+// session-parity harness's two servers 288 values apart before a player had
+// typed anything. See TestAZeroWidthRangeStillDraws.
 func (r *Rand) Number(from, to int32) int32 {
 	if from > to {
 		from, to = to, from
-	}
-	if from == to {
-		return from
 	}
 
 	// Widened deliberately. The C computes to - from + 1 in an int, so a
@@ -125,7 +139,7 @@ func (r *Rand) Number(from, to int32) int32 {
 	// nonsense; nothing in the game asks for one, but silently reproducing
 	// undefined behaviour is not fidelity, it is a crash waiting for an
 	// unusual caller.
-	width := uint64(int64(to)-int64(from)) + 1 //nolint:gosec // to > from here, so the difference is positive
+	width := uint64(int64(to)-int64(from)) + 1 //nolint:gosec // to >= from here, so the difference is non-negative
 	if width > 1<<32 {
 		width = 1 << 32
 	}

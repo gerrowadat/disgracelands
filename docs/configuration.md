@@ -333,6 +333,17 @@ returning early, so neither rolls anything. **Nothing but a comparison
 harness should set it** — a world whose mobiles never move is not the
 game.
 
+`--freeze-weather` is the same kind of lever and the same kind of `<DoC>`
+addition (`-W`), for a reason worth stating separately: `weather_change`
+rolls five dice every mud hour and sometimes six (`weather.c:88`), and the
+harness plays its script at one server and *then* at the other. By the same
+line of the script the second server has been running about a minute
+longer, so it can have had a weather tick the first had not — five draws
+that put the two generators out of step for everything afterwards. Nothing
+in the game reads the sky except its own four messages; what `-W`
+suppresses is the dice. **Nothing but a comparison harness should set this
+either.**
+
 ## Security
 
 | Flag | Default | Meaning |

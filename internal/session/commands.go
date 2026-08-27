@@ -141,6 +141,12 @@ type Violence interface {
 	SkillDamage(w *game.Live, attacker, victim *game.Character, amount, skillType int32) int32
 	// Swing is one weapon attack, taken now rather than on the next round.
 	Swing(w *game.Live, attacker, victim *game.Character)
+	// RawKill is raw_kill (fight.c:381): death without damage. It is not
+	// Damage with a large number — damage() announces the new position and
+	// hands out experience, and raw_kill does neither. An implementor's
+	// `kill` is the only caller, and the C reaches raw_kill directly from
+	// it (act.offensive.c:96).
+	RawKill(w *game.Live, victim *game.Character)
 }
 
 // MobReloader hot-reloads a mobile prototype from disk, for `reloadmob`

@@ -435,6 +435,7 @@ func run(args []string) (int, error) {
 		Restrict:      cfg.Restrict,
 		NoSpecials:    cfg.NoSpecials,
 		FreezeMobiles: cfg.FreezeMobiles,
+		FreezeWeather: cfg.FreezeWeather,
 		RNG:           rng.NewRand(source),
 	})
 	// The engine's periodic work belongs to the server, which is the side
