@@ -551,9 +551,9 @@ the work was done:
   it. Sixteen of the eighteen, which is the honest answer to "how close
   is this to being playable by someone who played the original": closer
   than the list looks, since most are one command each, and not as close
-  as a green suite suggests. **Five are fixed so far** — both halves of
-  `look`, `remove all`, `get 2.sword` and the refusal wording — leaving
-  eleven.
+  as a green suite suggests. **Eight are fixed so far** — both halves of
+  `look`, `remove all`, `get 2.sword`, the refusal wording, `who`, `exits`
+  and the `'`/`:`/`hop` split — leaving eight.
 - **Later** — a real gap, worth closing, not gating cutover.
 - **Accepted** — the difference stands; this file is where it is
   recorded, and that is the whole disposition.
@@ -618,22 +618,53 @@ port is right and the thing it is compared against is wrong.
   *Ruling (2026-08-26):*
   **Blocker.** A flat screen reads as a different game. Mechanical to fix
   — call site by call site — but there are many call sites.
-- **`who` prints the class abbreviation for immortals in the C** (`[Wa 34]`
-  against `[ 34]`) and counts in words: "One lonely character displayed."
-  against "1 character playing.".
+- ~~**`who` prints the class abbreviation for immortals in the C**~~
+  (`[Wa 34]` against `[ 34]`) ~~and counts in words~~: "One lonely
+  character displayed." against "1 character playing.".
   *Ruling (2026-08-26):*
   **Blocker.** `who` is the first thing most people type on connecting.
-- **`exits` shows room vnums to an immortal in the C** (`North - [ 1201] The
-  Inn Of The Gods`) and not here.
+  **Fixed 2026-08-27**: the line is `[%s %2d] %s %s` of CLASS_ABBR, level,
+  name and title (act.informative.c:1163), and the count is words below two
+  and digits above it — including "No-one at all!", which nothing here
+  could reach.
+- ~~**`exits` shows room vnums to an immortal in the C**~~ (`North - [ 1201]
+  The Inn Of The Gods`) ~~and not here.~~
   *Ruling (2026-08-26):*
   **Blocker.** Builders need it, and it is a conditional on the viewer's
   level.
-- **`'` and `:` are commands in the C and `hop` is a social; here it is the
-  other way round.** Visible in `commands` and `socials`, which list them.
+  **Fixed 2026-08-27**, along with two things nobody had listed. **A closed
+  exit is not listed at all**: the loop's condition ends
+  `&& !EXIT_FLAGGED(EXIT(ch, door), EX_CLOSED)` (act.informative.c:387), so
+  a room whose only way out is a shut door answers " None." This port
+  printed "East - The door is closed.", a line that appears nowhere in the
+  C tree, and a test asserted it. And **blindness is checked first**, with
+  do_look's own wording.
+- ~~**`'` and `:` are commands in the C and `hop` is a social; here it is
+  the other way round.**~~ Visible in `commands` and `socials`, which list
+  them.
   *Ruling (2026-08-26):*
   **Blocker.** `'` is the say shorthand and is typed constantly, and the
   split feeds the command table's abbreviation order (`Command.CLine`), so
   this is more than a difference in what `commands` lists.
+  **Fixed 2026-08-27**, and neither half was where it looked. `'` and `:`
+  were in the table all along with the right `CLine`s — a *listing* filter
+  dropped every one-character command, on the stated reasoning that they
+  "read as noise in a list". And `hop` was classed by whether a `Social`
+  was attached to it, where the C's test is on the function the row points
+  at: `command_pointer == do_action || command_pointer == do_insult`
+  (act.informative.c:1502). `hop` points at `do_action` and has no entry in
+  the shipped socials file, so it had nothing attached and was being listed
+  as a command.
+
+  Chasing the last column of that listing found a real gap with nothing to
+  do with `commands`: **the command table's minimum levels were typed by
+  hand and three were wrong.** `handbook` and `imotd` are LVL_IMMORT in the
+  C and `hcontrol` is LVL_GRGOD; all three were unrestricted here, so a
+  mortal could read the immortals' handbook and any immortal could build
+  houses. `snowball` is LVL_IMMORT too and was reachable by anyone. The
+  table's *order* had been derived from the C since Phase 3 and its levels
+  never were; `TestEveryCommandsMinimumLevelMatchesTheCSource` re-parses
+  interpreter.c's fourth column now, so the next one fails a test instead.
 - ~~**`look in <container>` lists the contents in the C**~~ ("bag
   (carried):", then each object) ~~and answers "You see nothing special
   about a bag." here. Same for a corpse.~~

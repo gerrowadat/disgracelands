@@ -317,9 +317,18 @@ func TestExits(t *testing.T) {
 	if !strings.Contains(got, "Obvious exits:") {
 		t.Errorf("the exit's destination is not named:\n%s", got)
 	}
+	// Zod is the first character on an empty roster and so an Implementor,
+	// which is what makes the vnum appear: do_exits prints `[%5d]` at or
+	// above LVL_IMMORT and nothing below it (act.informative.c:390).
+	if !strings.Contains(got, "[") {
+		t.Errorf("an immortal was not shown the destination's vnum:\n%s", got)
+	}
 
-	// A closed door is named rather than pointed through, which is how a
-	// player knows there is something to open.
+	// A closed exit is not listed at all — the loop's own condition is
+	// `... && !EXIT_FLAGGED(EXIT(ch, door), EX_CLOSED)`. This test used to
+	// assert "The gate is closed.", a line that appears nowhere in the C
+	// tree; checked against the real server with scripts/session-parity.sh,
+	// in a room whose only way out is a shut door, which answers " None."
 	if err := srv.engine.DoSync(context.Background(), func(w *game.Live) {
 		exit := w.Room(ImmortStartRoom).Exits[game.South]
 		exit.Keywords = "gate"
@@ -328,9 +337,16 @@ func TestExits(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	// Counted rather than searched for: expect returns the whole transcript
+	// so far, and the *first* `exits` above legitimately listed South. One
+	// occurrence means the second listing left it out.
+	before := strings.Count(got, "South")
 	c.send("exits")
-	if got := c.expect("The gate is closed."); !strings.Contains(got, "The gate is closed.") {
-		t.Errorf("a closed door was not reported:\n%s", got)
+	c.send("time")
+	got = c.expect("o'clock")
+	if after := strings.Count(got, "South"); after != before {
+		t.Errorf("a closed exit was listed (South seen %d times, was %d):\n%s",
+			after, before, got)
 	}
 }
 

@@ -123,3 +123,15 @@ var socialLines = map[string]int{
 	"yawn":     559,
 	"yodel":    560,
 }
+
+// socialLevels is the minimum level of any social that has one.
+//
+// Exactly one does: `snowball` is LVL_IMMORT (interpreter.c:482), which in the
+// stock world is the joke it sounds like — a god throwing snow at mortals.
+// Every other do_action row is 0 or 1. It is a map rather than a field on
+// socialLines because one exception does not justify changing a hundred and
+// six rows, and TestEveryCommandsMinimumLevelMatchesTheCSource is what would
+// notice a second one appearing.
+var socialLevels = map[string]int32{
+	"snowball": 31, // game.LevelImmortal
+}

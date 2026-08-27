@@ -370,7 +370,7 @@ func init() {
 
 		// Housing (interpreter.c:330, :338). `hcontrol` is POS_DEAD and
 		// LVL_GRGOD in the C's table; `house` is any mortal in their own.
-		{Name: "hcontrol", Help: "Build, destroy and list houses.", Run: doHcontrol, CLine: 330},
+		{Name: "hcontrol", Help: "Build, destroy and list houses.", Run: doHcontrol, CLine: 330, MinLevel: game.LevelGreaterGod},
 		{Name: "house", Help: "Let somebody into your house, or list who is.", Run: doHouse, CLine: 338},
 
 		// The last of the rules (interpreter.c:288, :358, :390, :493, :516).
@@ -553,8 +553,8 @@ func init() {
 		{Name: "diagnose", Help: "See how hurt somebody is.", Run: doDiagnose, CLine: 276},
 		{Name: "display", Help: "Choose what the prompt shows.", Run: doDisplay, CLine: 277},
 		{Name: "gold", Help: "Count your money.", Run: doGold, CLine: 314},
-		{Name: "handbook", Help: "The immortals' handbook.", Run: cannedText("handbook", TextFiles.Handbook), CLine: 329},
-		{Name: "imotd", Help: "The immortals' message of the day.", Run: cannedText("immortal message of the day", TextFiles.ImmortalMOTD), CLine: 343},
+		{Name: "handbook", Help: "The immortals' handbook.", Run: cannedText("handbook", TextFiles.Handbook), CLine: 329, MinLevel: game.LevelImmortal},
+		{Name: "imotd", Help: "The immortals' message of the day.", Run: cannedText("immortal message of the day", TextFiles.ImmortalMOTD), CLine: 343, MinLevel: game.LevelImmortal},
 		{Name: "immlist", Help: "List the immortals.", Run: cannedText("immortal list", TextFiles.ImmList), CLine: 344},
 		{Name: "info", Help: "General information about the game.", Run: cannedText("information", TextFiles.Info), CLine: 345},
 		{Name: "levels", Help: "Show the experience table for your class.", Run: doLevels, CLine: 359},
@@ -646,11 +646,12 @@ func RegisterSocials(socials []game.Social) (added int, unknown []string) {
 		}
 		have[s.Name] = true
 		out = append(out, Command{
-			Name:   s.Name,
-			Help:   "(social)",
-			Run:    doAction,
-			CLine:  line,
-			Social: &socials[i],
+			Name:     s.Name,
+			Help:     "(social)",
+			Run:      doAction,
+			CLine:    line,
+			MinLevel: socialLevels[s.Name],
+			Social:   &socials[i],
 		})
 		added++
 	}
@@ -664,10 +665,11 @@ func RegisterSocials(socials []game.Social) (added int, unknown []string) {
 			continue
 		}
 		out = append(out, Command{
-			Name:  name,
-			Help:  "(social, with nothing in the socials file)",
-			Run:   doAction,
-			CLine: line,
+			Name:     name,
+			Help:     "(social, with nothing in the socials file)",
+			Run:      doAction,
+			CLine:    line,
+			MinLevel: socialLevels[name],
 		})
 	}
 
@@ -1544,14 +1546,40 @@ func doWho(c *Context) error {
 
 	c.Send("Players\r\n-------\r\n")
 	for _, p := range shown {
-		title := p.Title()
-		if title != "" {
-			title = " " + title
-		}
-		c.Send("[%3d] %s%s\r\n", p.Level(), p.Name, title)
+		// `[%s %2d] %s %s` — CLASS_ABBR, level, name, title
+		// (act.informative.c:1163). The class abbreviation was missing here,
+		// so every line read "[ 34]" where the real server said "[Wa 34]".
+		// The space before the title is unconditional in the C, so somebody
+		// with no title gets a trailing one.
+		c.Send("[%s %2d] %s %s\r\n", classAbbrev(p), p.Level(), p.Name, p.Title())
 	}
-	c.Send("\r\n%d character%s playing.\r\n", len(shown), plural(len(shown)))
+	// The C counts in words below two and in digits above it
+	// (act.informative.c:1212-1216).
+	switch len(shown) {
+	case 0:
+		c.Send("\r\nNo-one at all!\r\n")
+	case 1:
+		c.Send("\r\nOne lonely character displayed.\r\n")
+	default:
+		c.Send("\r\n%d characters displayed.\r\n", len(shown))
+	}
 	return nil
+}
+
+// classAbbrev is the CLASS_ABBR macro (utils.h:488), which answers "--" for a
+// mobile rather than indexing class_abbrevs with whatever a mobile's class
+// field happens to hold.
+func classAbbrev(who *game.Character) string {
+	if who.IsNPC() {
+		return "--"
+	}
+	if who.Record == nil {
+		return "--"
+	}
+	if abbrev, ok := game.ClassAbbrevs[who.Record.Class]; ok {
+		return abbrev
+	}
+	return "--"
 }
 
 // doCredits shows the credits file.
