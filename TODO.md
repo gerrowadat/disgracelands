@@ -54,14 +54,22 @@ trees share, so anything WipeMud-only would not show up in it.
 
 ### 3. World data — pick a snapshot, or trust what is live
 
-`data/world/` is whatever was in `welmar/CircleMUD3/lib/world` when this was
-seeded. The archive has 1,184 dated nightly world backups
-(`welmar/world-backups/`, September–December 2002 survives) and 164 per-zone
-tarballs (`welmar/zones/`) if a different point-in-time snapshot is wanted.
+This is about the *archived* world, not the one in this repo: what ships
+here is stock CircleMUD's own `lib/` (`examples/stock/binary/`, see
+`README.md`), and no Disgracelands world data has ever been committed. The
+archived world the port was seeded against is `welmar/CircleMUD3/lib/world`,
+whatever state it happened to be in when the server stopped. The archive
+also has 1,184 dated nightly world backups (`welmar/world-backups/`,
+September–December 2002 survives) and 164 per-zone tarballs
+(`welmar/zones/`) if a different point-in-time snapshot is wanted.
 
 Not investigated beyond "it loads and boots" — though it now also loads
 identically in both servers, and `dlctl world lint` reports what is wrong
-with it (0 errors, 11 warnings), which is more than was known before.
+with it (0 errors, 20 warnings, 8 notes; see
+`docs/investigations/lib-directory-format.md` §9), which is more than was
+known before. The shipped stock world lints at 0 errors, 11 warnings, 12
+notes — a different world, and a different set of findings
+(`docs/operations.md`).
 
 ### 4. Hosting and exposure
 

@@ -1,9 +1,9 @@
 # Local development stack. Run from the repository root:
 #   docker compose -f build/docker-compose.yml up --build
 #
-# The server it starts is at Phase 3: players can connect, log in and move
-# around, but the rules core is not built. See
-# docs/proposals/go-port-plan.md §10.
+# It boots the whole game -- Phases 0-5 are done -- on the stock CircleMUD
+# world this repository ships. See docs/proposals/go-port-plan.md §10 for
+# what is and is not built.
 
 services:
   dlmud:
@@ -21,13 +21,36 @@ services:
       - --listen-telnets=
       - --metrics-addr=:9090
       - --log-format=json
+    # The image's own user is uid 65532 (distroless `nonroot`), which is right
+    # for a deployment mounting a volume it owns and wrong for a bind mount of
+    # a directory in your checkout: the server needs to *write* that directory
+    # -- pfiles/, plrobjs/, house/, etc/players -- and 65532 owns none of it.
+    # Without this the server boots, serves and reads the world fine, and then
+    # the first character creation fails with "mkdir /data/pfiles: permission
+    # denied", which is a confusing way to find out. Running as the owner of
+    # the bind mount fixes it and is still not root.
+    #
+    # 1000:1000 is the first login account on every ordinary Linux install, so
+    # the default is right for most people. It is deliberately not spelled
+    # ${UID}: bash makes UID a readonly shell variable and does not export it,
+    # so `UID=$(id -u) docker compose ...` fails outright with "UID: readonly
+    # variable" rather than doing anything useful. If you are not 1000:
+    #   DL_UID=$(id -u) DL_GID=$(id -g) make compose-up
+    user: "${DL_UID:-1000}:${DL_GID:-1000}"
     ports:
       - "4000:4000"   # telnet
       - "9090:9090"   # metrics, healthz, readyz
     volumes:
-      # The real runtime data directory, so the container sees the same world
-      # and player files the C server in reference/ does.
-      - ../data:/data
+      # The default --lib-dir, so the container sees the same world and player
+      # files both servers do outside it -- the C server reaches this same
+      # directory through its own reference/moderncserver/lib symlink. The
+      # image ships no world of its own, so without a mount here the server
+      # has nothing to load at all.
+      #
+      # The player data written back into it (pfiles/, plrobjs/, house/,
+      # etc/players) is gitignored, the same as when the server is run
+      # directly against this directory.
+      - ../examples/stock/binary:/data
     # docker stop sends SIGTERM, which the server handles by saving and
     # shutting down cleanly. Give it room to finish.
     stop_grace_period: 45s
@@ -38,8 +61,12 @@ services:
     # `restart: on-failure`. See docs/operations.md, "Exit codes".
     restart: unless-stopped
     healthcheck:
-      # distroless has no shell and no curl, so the check runs the server
-      # binary's own health probe rather than shelling out.
+      # distroless has no shell and no curl, so there is nothing in the image
+      # that can call /readyz. This runs a binary from the image instead, which
+      # proves the container is up and executing and nothing about whether the
+      # game is serving. A real deployment should point an external check at
+      # /readyz on --metrics-addr; see docs/operations.md, "Health and
+      # readiness".
       test: ["CMD", "/usr/local/bin/dlctl", "version"]
       interval: 30s
       timeout: 5s

@@ -615,6 +615,26 @@ Hot-reboot / copyover (preserving player connections across a restart by
 passing file descriptors) is **explicitly out of scope for v1** but the
 session layer should keep its state serializable so it stays possible.
 
+**What landed, and where.** There is no `internal/net`. The listeners
+are `internal/server/listen.go` — `Listener` is a `net.Listener` plus
+the transport label this section asked for, `ListenTelnet`/`ListenTLS`
+construct the two that exist, and `Accept` is the one accept loop all of
+them go through (which is also what makes the greeting unskippable,
+§12). Splitting them out of `internal/server` would have bought a
+package boundary and nothing else: the accept loop needs the `Server` it
+is accepting for. Negotiation did get its own package,
+`internal/telnet`, because it is a state machine with no dependency on
+the server at all. Connection hygiene is `Limits` in the same file —
+`--max-players`, `--max-connections-per-ip` (bucketed by /64 for IPv6,
+see `perHostKey`) and `--login-grace-time`. Graceful shutdown moved out
+to `internal/signals` and grew an exit-code contract;
+`docs/design/signal-handling.md` is now the document for it, and it says
+rather more than the paragraph above does. Two things in this section
+are not built: the WebSocket listener (`--listen-ws` is accepted and
+inert) and reverse DNS, which this port does not do at all rather than
+doing it off the game goroutine — which is also why `slowns` is declined
+(`docs/deviations.md`).
+
 ---
 
 ## 8. The scripting seam
@@ -1424,15 +1444,15 @@ because a command with no slice is a command nobody schedules.
 equivalent — the seven in-game menu editors (`medit`/`oedit`/`redit`/
 `sedit`/`zedit`/`olc`/`edit`) plus `Sink` writeback and the `gen*`
 layer they need. **Decided against, deliberately, not merely deferred**:
-building lets a builder edit `data/world` directly (by hand, or via
-`dlctl world import`/`fmt` into `yaml`) and bring a change in without
-restarting — `reloadmob` (below) — rather than reproducing a decades-old
-menu-tree UI screen by screen. `Sink`/`WriteZone` already exist (§6.3,
-landed during Phase 5) and are exactly what a real OLC would have saved
-through; nothing about this decision leaves them stranded, it just means
-nothing in this tree drives them from an in-game menu. `dlctl world
-lint` and the world-parity harness are what make offline editing safe
-either way.
+building lets a builder edit the world files in the `--lib-dir` directly
+(by hand, or via `dlctl world import`/`fmt` into `yaml`) and bring a
+change in without restarting — `reloadmob` (below) — rather than
+reproducing a decades-old menu-tree UI screen by screen.
+`Sink`/`WriteZone` already exist (§6.3, landed during Phase 5) and are
+exactly what a real OLC would have saved through; nothing about this
+decision leaves them stranded, it just means nothing in this tree drives
+them from an in-game menu. `dlctl world lint` and the world-parity
+harness are what make offline editing safe either way.
 
 **`tedit` ✅ — the phase's first slice, landed before the OLC decision.**
 `do_tedit`'s nine canned text files (`credits`/`news`/`motd`/`imotd`/

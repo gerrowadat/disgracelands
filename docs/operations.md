@@ -9,8 +9,9 @@ source see `BUILDING.md`.
 > resets, mobiles act, characters fight, cast, level and die, guildmasters
 > teach, shopkeepers trade, and the boards, mail, houses, rent and the
 > immortal commands all work. Phase 6 (OasisOLC) was decided against, in
-> favour of editing `data/world` directly and reloading it live
-> (`reloadmob`/`reloadzone`/`reloadobj`/`reloadshop`); Phase 7 (cutover)
+> favour of editing the world files in your `--lib-dir` directly and
+> reloading them live (`reloadmob`/`reloadzone`/`reloadobj`/`reloadshop`);
+> Phase 7 (cutover)
 > has not started. What is left of Phase 5 itself is a handful of small,
 > named commands, listed one by one in `docs/proposals/go-port-plan.md`
 > §10. Everything below about process management, health checking,
@@ -87,17 +88,18 @@ The tags are `X.Y.Z`, `X.Y` and `latest`. There is deliberately no `X`
 tag: while this is 0.x, `0` would promise a compatibility guarantee it
 cannot keep.
 
-**While the repository is private the package is too.** A package takes
-the visibility of the repository it was first published from, so pulling
-it needs a login with a token that has `read:packages`:
+**A package takes the visibility of the repository it was first published
+from, and keeps it.** The first images here were published while this
+repository was still private, so the package may still be private even
+though the repository is not: visibility is independent after that first
+publish, and making the repository public does not carry the package with
+it. If `docker pull` returns "denied", either make the package public from
+its own page under the account's *Packages* tab, or log in with a token
+that has `read:packages`:
 
 ```sh
 echo "$GITHUB_TOKEN" | docker login ghcr.io -u <your-username> --password-stdin
 ```
-
-Package visibility is independent of the repository's after that first
-publish — the package can be made public on its own, from its page under
-the account's *Packages* tab, without the repository following it.
 
 Or build it yourself. A plain `docker build` produces an image for the
 architecture you are on:
@@ -120,11 +122,18 @@ Notes that matter:
   will not work. That is the point: the C server's approach to staying up
   was the `autorun` script looping in a shell, and this replaces it with
   the container runtime's restart policy plus real signal handling.
-- **`/lib` is a volume.** It is mutable state — players, houses, boards,
-  mail, and any world file edited in-game. An image rebuild must not lose
-  it.
-- The container runs as **non-root**. `/lib` must be writable by uid 65532
-  (`nonroot`).
+- **The image declares `/data` as a volume** and its default command is
+  `--lib-dir=/data`. It ships no world of its own, so that volume — or
+  whatever you point `--lib-dir` at instead, as the examples above do with
+  `/lib` — is where a lib-dir has to be mounted. It is mutable state:
+  players, houses, boards, mail, and any world file edited in-game. An
+  image rebuild must not lose it.
+- The container runs as **non-root**. The lib-dir must be writable by uid
+  65532 (`nonroot`) — the server writes `pfiles/`, `plrobjs/`, `house/` and
+  `etc/players` into it, and character creation is the first thing that
+  fails if it cannot. `build/docker-compose.yml` overrides the user instead,
+  because it bind-mounts a directory from your checkout that uid 65532 does
+  not own.
 - Health checks cannot use `curl`, for the same no-shell reason. Point an
   external check at `/readyz` on `--metrics-addr`, or use the `dlctl`
   binary in the image.

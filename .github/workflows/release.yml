@@ -9,7 +9,7 @@
 # used to sit above that step in go.yml's history): the ILP32
 # player/board/mail/house layout checks and the shop-price check (both
 # need a 32-bit C build to compare against), the C-vs-Go world-parity
-# check (needs a full C build), the license check, two doc-coverage
+# check (needs a full C build), the license check, three doc-coverage
 # checks, a container build, and the play regression suite (test/play,
 # a real server on examples/mini driven over a socket). All real, none
 # of them cheap, none of them needing an answer on every single commit
@@ -339,6 +339,23 @@ jobs:
             grep -q -- "--$flag" docs/configuration.md || {
               echo "docs/configuration.md does not mention --$flag"; missing=1; }
           done < flags.txt
+          exit $missing
+
+      # docs/README.md is the map: it is how anyone finds a document at all,
+      # and a document nothing links to is a document nobody reads. That is
+      # not hypothetical -- docs/investigations/lib-directory-format.md sat
+      # unlinked from the day it was written (2026-08-20) until a doc sweep
+      # on 2026-08-26 went looking, 854 lines that the index, every other
+      # document and therefore every reader had missed.
+      - name: docs/README.md links every document
+        run: |
+          find docs -name '*.md' ! -name README.md | sort > docs.txt
+          missing=0
+          while read -r doc; do
+            rel="${doc#docs/}"
+            grep -q "($rel)" docs/README.md || {
+              echo "docs/README.md does not link $doc"; missing=1; }
+          done < docs.txt
           exit $missing
 
       - name: World parity - the Go and C loaders must agree
