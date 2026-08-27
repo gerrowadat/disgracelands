@@ -66,6 +66,11 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
+// serverVersion is the release this suite's server binary claims to be.
+// Any valid semver would do; what matters is that it is fixed, so a test
+// can name a directory stamp that differs from it in exactly one tier.
+const serverVersion = "v7.3.1"
+
 func buildAndRun(m *testing.M) (int, error) {
 	dir, err := os.MkdirTemp("", "play-bin")
 	if err != nil {
@@ -75,6 +80,17 @@ func buildAndRun(m *testing.M) (int, error) {
 
 	serverBinary = filepath.Join(dir, "dlmud")
 	args := []string{"build", "-o", serverBinary}
+	// Built as a *released* binary, not a bare `go build`. The data-format
+	// version check (docs/design/data-format-versioning.md) compares a
+	// directory's .dlversion stamp against the server's own release
+	// version, and a binary linked without -ldflags has none -- so it
+	// skips the check entirely, which would make this suite blind to the
+	// one boot-time refusal an operator upgrading across a major release
+	// actually meets. Stamping a fixed version here is what lets
+	// dataversion_test.go exercise the real path; every other test in the
+	// suite boots on an unstamped directory, where the check is silent.
+	args = append(args, "-ldflags",
+		"-X github.com/gerrowadat/disgracelands/internal/buildinfo.version="+serverVersion)
 	// The child is built with the race detector exactly when the test binary
 	// was. `go test -race ./test/play` instrumenting only the driver would
 	// say nothing about the server, which is where every goroutine that

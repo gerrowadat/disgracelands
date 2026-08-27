@@ -301,10 +301,19 @@ are not interchangeable:
 |  | `internal/server` | `test/play` |
 | --- | --- | --- |
 | The world | built in Go by `testWorld()` | read off disk, zones reset into it |
-| The server | a `Server` struct wired field by field | the `dlmud` binary, flags and all |
+| The server | a `Server` struct wired field by field | the `dlmud` binary, flags and all — built with `-ldflags`, so it is a *released* binary |
 | Reaches into the world goroutine | yes, via `inWorld` | no — socket in, socket out |
 | Runs | every push | releases only |
 | Costs | seconds | minutes |
+
+The `-ldflags` in the second row is not decoration. A binary built without
+them has no release version, and the `.dlversion` compatibility check
+(`docs/design/data-format-versioning.md`) silently does nothing in a build
+like that — so a bare `go build` would have made this suite blind to the
+one boot refusal an operator upgrading across a major release actually
+meets. `harness_test.go`'s `serverVersion` is the fixed release the child
+claims to be, and `dataversion_test.go` writes stamps that differ from it
+in one tier at a time.
 
 That first row is the point. Nothing in `internal/server` loads a world
 file, runs a zone reset, attaches a special procedure by vnum, resolves a

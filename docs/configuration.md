@@ -86,8 +86,9 @@ dlctl lib import --from-dir=data --to-dir=data-yaml
 
 This is the seven commands below run in order against `--from-dir`'s own
 subdirectories, plus `text/`'s plain-text files copied across unchanged
-and, once everything else has succeeded, a `.dlversion` stamp written
-into `--to-dir` (see "The yaml format's own version" below). Each of the
+and, once everything else has succeeded, a `.dlversion` stamp naming this
+build's own release written into `--to-dir` (see "The yaml format's own
+version" below). Each of the
 seven is also its own command, for converting one subsystem on its own or
 into a directory laid out differently than `lib import`'s subdirectory
 default:
@@ -183,14 +184,31 @@ pluggable at all.
 
 ### The yaml format's own version
 
-`--lib-dir`'s directory may hold a `.dlversion` stamp — `major.minor.patch`
-for the yaml format packages, not a flag and not per-subsystem; see
-`docs/design/data-format-versioning.md`. If present, `dlmud` checks it once
-at boot: a newer *major* than this build understands is a fatal error before
-anything else opens, a newer *minor* is a logged warning and the server
-starts anyway, and anything else is silent. `dlctl data version --dir=<lib-
-dir>` answers the same question without starting a server, and `--write`
-stamps a directory that predates the mechanism.
+`--lib-dir`'s directory may hold a `.dlversion` stamp — the
+`major.minor.patch` release of the `dlctl` that wrote it, not a flag and
+not per-subsystem; see `docs/design/data-format-versioning.md`. If present,
+`dlmud` checks it once at boot against its own release version:
+
+- **A different *major*** — in either direction — is a fatal error before
+  anything else opens. A major version only loads data written by its own
+  major version, so moving a directory across a major release means
+  restamping it deliberately (`dlctl data version --dir=<lib-dir>
+  --write`) after checking the release notes, rather than finding out
+  halfway through boot.
+- **A different *minor***, same major, is a logged warning and the server
+  starts anyway. The two builds are a release apart; usually that means
+  nothing for the data, occasionally it means one side is writing
+  something the other will not read.
+- **Anything else** — the same major and minor, any patch, or no stamp at
+  all — is silent.
+
+`dlctl data version --dir=<lib-dir>` answers the same question without
+starting a server, and `--write` stamps a directory that predates the
+mechanism or that an older release wrote.
+
+Both halves of this need a *released* binary: a build made with `go run`,
+`go test` or a plain `go build` has no version of its own, so it stamps
+nothing and checks nothing (design doc §6).
 
 An unknown format name is rejected at startup rather than deep inside boot.
 

@@ -195,11 +195,13 @@ func run(args []string) (int, error) {
 	// subsystem: cfg.LibDir is the one directory every format-specific
 	// path (WorldPath, PlayerPath, the state/config/text subdirectories)
 	// is derived from, so one file at its root versions all of them
-	// together. A directory with no stamp — everything predating this
-	// mechanism, and every classic/ascii/binary-only one — checks out
-	// silently; see dataversion.Check's own doc comment for what the
-	// other two outcomes mean.
-	if warning, err := dataversion.Check(cfg.LibDir, dataversion.Current); err != nil {
+	// together. The stamp names the release of dlctl that wrote the
+	// directory; this refuses to start unless that release shares our
+	// major version, and warns if it merely differs in minor. A directory
+	// with no stamp — everything predating this mechanism, everything an
+	// unreleased dlctl wrote, and every classic/ascii/binary-only one —
+	// checks out silently; see dataversion.CheckBuild.
+	if warning, err := dataversion.CheckBuild(cfg.LibDir); err != nil {
 		return exitFailed, err
 	} else if warning != "" {
 		logger.Warn(warning)

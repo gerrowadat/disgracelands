@@ -37,9 +37,11 @@ classic and yaml read them from the same `text/<name>` path regardless of
 `--*-format` (`internal/server/text.go`) — are copied across unchanged
 rather than converted; and, once every step above has actually succeeded,
 `--to-dir` is stamped with a `.dlversion` file
-(`docs/design/data-format-versioning.md`) recording which release of the
-yaml packages wrote it — `examples/stock/yaml/.dlversion` is what that
-stamp looks like. `binary/`'s own roster, mail, boards, bans and houses
+(`docs/design/data-format-versioning.md`) recording which release of
+`dlctl` wrote it. There is no `.dlversion` under `yaml/` here, and that is
+correct: this fixture is regenerated with `go run ./cmd/dlctl`, which has
+no release version and so writes no stamp. A directory you actually intend
+to run should be built with a released binary, which does. `binary/`'s own roster, mail, boards, bans and houses
 are all empty (a fresh stock install has none), so the state step here
 produced only `clock.yaml` and an empty `houses.yaml`; there is no
 `pfiles/` to convert because there is no roster.

@@ -507,6 +507,41 @@ for, to preserve whitespace that has no meaning to the server. Four
 records in the real world data have it, all trailing spaces a builder left
 behind. (`internal/persist/world/yaml`.)
 
+### `.dlversion` names a release, and an existing `1.0.0` stamp will now be refused
+
+`.dlversion` (`docs/design/data-format-versioning.md`) used to hold a
+format version this project maintained by hand, fixed at `1.0.0` for its
+whole life. It now holds the `major.minor.patch` **release** of the
+`dlctl` that wrote the directory, taken from `internal/buildinfo`, and
+`dlmud` refuses to boot unless that stamp's major matches its own.
+
+Two consequences worth stating rather than discovering:
+
+- **Any directory already stamped `1.0.0` is refused by every `0.x`
+  server**, because major 1 is not major 0. There is exactly one way it
+  could exist — a hand-run `dlctl data version --dir=X --write` against
+  the old scheme, which is the only thing that ever wrote a stamp — and
+  the fix is to run the same command again with a current released
+  `dlctl`. The two example worlds carried such a stamp and it has been
+  deleted; a fresh `lib import` no longer produces one.
+- **The refusal now runs in both directions.** The old rule only refused
+  data from a *newer* major, on the reasoning that a new server reading
+  old data is the ordinary case. Under a release semver that reasoning
+  does not hold: 1.x and 2.x are two different agreements about what the
+  files mean, and a build has no more business guessing at the one it was
+  not written for than at one from the future. A differing *minor* warns,
+  either way, and starts.
+
+Why the release version at all, given it is the blunter instrument: it is
+derived rather than declared, so it cannot be forgotten. A hand-maintained
+number lives in one `var` that a change to a writer has no mechanical
+reason to touch, and a missed bump produces not an error but silence —
+two builds that disagree about the files and neither saying so. The cost
+is false alarms, since most releases change nothing about the format;
+that trade, and the unreleased-build hole it leaves (`go run` and `go
+test` have no version, so they stamp nothing and check nothing), are
+argued out in §1.1 and §6 of the design doc.
+
 ### A password can be set from outside the game
 
 The C has no way for anyone but the owner to change a password: `set`

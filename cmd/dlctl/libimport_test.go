@@ -9,7 +9,6 @@ package main
 import (
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/gerrowadat/disgracelands/internal/persist/dataversion"
@@ -87,12 +86,13 @@ func TestLibImportConvertsEndToEnd(t *testing.T) {
 				t.Errorf("players/ exists with an empty roster to import: %v", err)
 			}
 
-			stamp, err := os.ReadFile(filepath.Join(to, dataversion.FileName))
-			if err != nil {
-				t.Fatalf("reading %s: %v", dataversion.FileName, err)
-			}
-			if got := string(stamp); !strings.Contains(got, dataversion.Current.String()) {
-				t.Errorf("%s = %q, want it to contain %q", dataversion.FileName, got, dataversion.Current.String())
+			// The stamp is this build's release version, and a test
+			// binary has none (docs/design/data-format-versioning.md
+			// §6), so `lib import` writes no stamp at all here rather
+			// than inventing a number. A released dlctl is what
+			// produces one; that half is dataversion's own tests.
+			if _, err := os.Stat(filepath.Join(to, dataversion.FileName)); !os.IsNotExist(err) {
+				t.Errorf("%s was written by a build with no release version: %v", dataversion.FileName, err)
 			}
 		})
 	}

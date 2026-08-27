@@ -80,9 +80,10 @@ hide that it started as a proposal.
   unchanged. Everything but game configuration and the `classic` export
   writer is built; §11 tracks the rest.
 - **[data-format-versioning.md](design/data-format-versioning.md)** — the
-  yaml format's own `major.minor.patch` stamp: a major bump refuses to
-  boot, a minor bump is "own risk" and `dlctl data version` reports what
-  changed, a patch bump is silent by construction. Layered on top of
+  `.dlversion` stamp a data directory carries: the `major.minor.patch`
+  release of the `dlctl` that wrote it. A *differing* major refuses to
+  boot in either direction, a differing minor is "own risk" and `dlctl
+  data version` reports it, a differing patch is silent by construction. Layered on top of
   data-format.md §10.1's own per-file `schema: dl/<kind>@<major>` tag,
   which says what shape one file is in rather than what release the whole
   directory was last written by.
