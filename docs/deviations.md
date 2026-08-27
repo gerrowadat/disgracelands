@@ -1095,6 +1095,28 @@ Listed here so they are not mistaken for deliberate differences.
   deleted. Removing it when nothing is left is the same thing to a reader and
   leaves no litter.
 
+- **A freed mail block is reused lowest-first, not most-recently-freed
+  first.** The C keeps an explicit free list, built at boot by `scan_file`
+  and pushed to by `read_delete`, and `pop_free_list` takes from its *front*
+  (`mail.c:112`) — so the block freed last is the block filled next. `alloc`
+  has no free list and scans for the lowest deleted block instead. Which
+  block a given message lands in differs; nothing else does, and either
+  server reads either file. Where it shows is that a file this port writes
+  can only be compared byte for byte against one the C wrote while no block
+  has yet been freed — after that the two disagree about the order and about
+  nothing else.
+
+- **A mail block link that names no block ends the message.** The link is a
+  byte offset (see the weirdnumbers entry), and `linkIndex` rejects one that
+  is negative, not a multiple of `BLOCK_SIZE`, or past the end of the file;
+  `readChainLocked` also stops on a link that points back into the chain.
+  The C would take the first of those to `read_from_file`'s "invalid filepos
+  read" and mail disabled server-wide (`mail.c:196`), the second to an
+  `fseek` past the end and an `fread` of whatever the buffer held, and the
+  third round forever. A reader that already holds the whole file in memory
+  gains nothing from reproducing a read fault, and a hang is not a behaviour
+  worth being faithful to.
+
 - **Mail is delivered in ascending block order.** See the weirdnumbers entry:
   the C's order depends on whether the server has been restarted since the
   message was sent.

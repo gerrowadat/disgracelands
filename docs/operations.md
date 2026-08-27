@@ -518,6 +518,28 @@ output needs no such check — `dlctl world lint` already reports invalid
 UTF-8 in world text, and covers `--to-dir/world` the same way it covers
 any other `--world-dir`.
 
+**A lib dir imported before 2026-08-24 has truncated mail; import it
+again.** Until then the classic mail codec read a block chain's links as
+block numbers where the C writes byte offsets (`docs/weirdnumbers.md`), so
+every message longer than 79 characters stopped at its first block. There
+was no error and nothing looks wrong afterwards: the `mail.yaml` that
+`state import` wrote is well formed, and the *message count* is right —
+only the bodies are short. Mail is the only subsystem whose on-disk format
+chains blocks together, so nothing else in the directory is affected.
+
+Re-run the import against the original `plrmail` into a scratch directory
+and diff, rather than trying to spot the truncation by eye — a message that
+runs to several blocks is a yaml block scalar, so its length is not
+something one line of `awk` can tell you:
+
+```sh
+dlctl state import --from-dir=/path/to/old/lib/etc --to-dir=/tmp/mail-recheck
+diff /tmp/mail-recheck/mail.yaml data-yaml/state/mail.yaml
+```
+
+No output means the old import was already correct. Otherwise take the new
+file: every difference will be a message the old one cut short.
+
 ### Converting only the player roster
 
 The server runs on the ascii format and refuses to start on the original
