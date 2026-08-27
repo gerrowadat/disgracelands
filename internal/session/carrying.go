@@ -54,9 +54,16 @@ func (c *Context) getFromRoom(arg string, howmany int32) {
 	mode, arg := findAllDots(arg)
 
 	if mode == findIndiv {
-		matches := matchingObjects(c.World.RoomObjects(c.Character.Room), arg, howmany)
+		// get_number rewrites the caller's buffer in place — `strcpy(*name,
+		// ppos)` (handler.c:596) — and get_from_room passes that same buffer
+		// to the search and then to the refusal. So the count is gone by the
+		// time either sees it: `get 2.sword` with no sword about answers
+		// "You don't see a sword here.", not "a 2.sword", and with two
+		// swords about it picks the second one. This port did neither.
+		n, word := game.GetNumber(arg)
+		matches := c.visibleMatches(c.World.RoomObjects(c.Character.Room), word, n, howmany)
 		if len(matches) == 0 {
-			c.Send("You don't see %s %s here.\r\n", article(arg), arg)
+			c.Send("You don't see %s %s here.\r\n", article(word), word)
 			return
 		}
 		for _, obj := range matches {
@@ -344,9 +351,13 @@ func (c *Context) drop(mode dropMode) error {
 		case dots == findAllDot && word == "":
 			c.Send("What do you want to %s all of?\r\n", mode.verb())
 		case dots == findIndiv:
+			// findObject strips the count on its way through NewSearch; the
+			// refusal has to see the same stripped word, because in the C
+			// they are one buffer. See getFromRoom above.
+			named := namedWithoutCount(word)
 			obj := c.findObject(c.Character.Carrying, word)
 			if obj == nil {
-				c.Send("You don't seem to have %s %s.\r\n", article(word), word)
+				c.Send("You don't seem to have %s %s.\r\n", article(named), named)
 				return nil
 			}
 			reward += c.dropObject(obj, mode)
@@ -583,7 +594,8 @@ func doGive(c *Context) error {
 	case mode == findIndiv:
 		obj := c.findObject(c.Character.Carrying, word)
 		if obj == nil {
-			c.Send("You don't seem to have %s %s.\r\n", article(word), word)
+			named := namedWithoutCount(word)
+			c.Send("You don't seem to have %s %s.\r\n", article(named), named)
 			return nil
 		}
 		c.giveObject(victim, obj)
@@ -700,6 +712,35 @@ func (c *Context) findContainer(name string) (obj *game.Object, onGround bool) {
 // to the same thing. A count of zero matches nothing at all — `get 0 sword`
 // is silently obeyed, because the C's `while (obj && howmany--)` tests before
 // it decrements.
+// visibleMatches is get_from_room's own loop (act.item.c:301-306): the n'th
+// visible thing of that name, and then the next howmany-1 after it.
+//
+// The count applies to where the run *starts*, not to how long it is, which
+// is what makes `get 3 2.sword` mean "from the second sword, take three".
+// A zero count takes nothing at all, since every object search in the C opens
+// with `if (*number == 0) return (NULL);`.
+func (c *Context) visibleMatches(list []*game.Object, word string, n int, howmany int32) []*game.Object {
+	if n == 0 || word == "" {
+		return nil
+	}
+	var out []*game.Object
+	var seen int
+	for _, obj := range list {
+		if !obj.Matches(word) || !c.World.CanSeeObj(c.Character, obj) {
+			continue
+		}
+		seen++
+		if seen < n {
+			continue
+		}
+		out = append(out, obj)
+		if int64(len(out)) >= int64(howmany) {
+			break
+		}
+	}
+	return out
+}
+
 func matchingObjects(list []*game.Object, word string, howmany int32) []*game.Object {
 	var out []*game.Object
 	for _, obj := range list {

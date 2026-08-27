@@ -551,8 +551,9 @@ the work was done:
   it. Sixteen of the eighteen, which is the honest answer to "how close
   is this to being playable by someone who played the original": closer
   than the list looks, since most are one command each, and not as close
-  as a green suite suggests. **Two are fixed so far** (both halves of
-  `look`), leaving fourteen.
+  as a green suite suggests. **Five are fixed so far** — both halves of
+  `look`, `remove all`, `get 2.sword` and the refusal wording — leaving
+  eleven.
 - **Later** — a real gap, worth closing, not gating cutover.
 - **Accepted** — the difference stands; this file is where it is
   recorded, and that is the whole disposition.
@@ -646,15 +647,34 @@ port is right and the thing it is compared against is wrong.
   (`look_in_obj`, `look_in_direction` and the shared `generic_find` over the
   three object lists); `look <direction>` had not been ported at all and
   falls out of the same dispatch.
-- **`remove all` removes everything in the C** and looks for an object
-  called "all" here.
+- ~~**`remove all` removes everything in the C**~~ ~~and looks for an object
+  called "all" here.~~
   *Ruling (2026-08-26):*
   **Blocker.** The `all` and `all.thing` forms are muscle memory; failing
   them is felt in the first minute of play.
-- **`get 2.sword` says the count back when it fails here** ("You don't see a
-  2.sword here.") and the C strips it ("You don't see a sword here.").
+  **Fixed 2026-08-27**: `do_remove` was the last of `find_all_dots`'s nine
+  callers with neither mode. `perform_remove`'s own two refusals came with
+  it, and neither was here before: a cursed item will not come off at all,
+  and nothing comes off into hands that are already full — which is why
+  `remove all` is not a loop that always succeeds.
+- ~~**`get 2.sword` says the count back when it fails here**~~ ("You don't
+  see a 2.sword here.") ~~and the C strips it~~ ("You don't see a sword
+  here.").
   *Ruling (2026-08-26):*
   **Blocker**, with the refusal wording below it.
+  **Fixed 2026-08-27**, and it was not a wording bug. `get_number` does not
+  merely read the count off "2.sword" — it rewrites the caller's buffer,
+  `strcpy(*name, ppos)` (handler.c:596) — and every FIND_INDIV branch in
+  `act.item.c` hands one buffer to the search and then prints that same
+  buffer. So six refusals said the count back here and none does in the C:
+  `get`, `drop`, `junk`, `remove`, `wear`, `wield`. Which six was found by
+  playing them at both servers rather than by reading, because whether a
+  refusal is downstream of a search is not visible from the message.
+  The larger half: **`get 2.sword` could never succeed here at all.**
+  `getFromRoom` matched on the raw argument, so the count was part of the
+  name it looked for. It now honours it, and the count picks where the run
+  starts rather than how long it is — `get 3 2.sword` is "from the second
+  sword, take three" (act.item.c:301).
 - **Refusal wording**: `look in nothing` is "There doesn't seem to be a
   nothing here." in the C and "You do not see that here." here.
   `kill self` is "Your mother would be so sad.. :(" in the C, and here
@@ -663,6 +683,29 @@ port is right and the thing it is compared against is wrong.
   **Blocker.** The exact wording is part of what the game felt like, and
   `self` not resolving as a target at all is a gap in the target lookup
   rather than in a string.
+  **Fixed**: `look in nothing` with the `look` work on 2026-08-26; `self`
+  and `me` on 2026-08-27. The latter is `get_char_room_vis`'s own special
+  case (handler.c:1068), whose entire comment in the C is `/* JE 7/18/94
+  :-) :-) */`, and where it sits matters three times over: after
+  `get_number`, so `2.self` is you and the count is read and discarded;
+  before the zero-count branch, so `me` never reaches the players-only
+  lookup; and before `CAN_SEE`, which makes yourself the one target a
+  blinded character can still name. `get_char_world_vis` inherits all of it
+  by delegating (handler.c:1091). `get 2.sword`'s own entry above covers
+  the count-stripping half of this bullet.
+
+  Two differences nobody had listed came out of writing the scenario for
+  this, which is the argument for scenarios over assertions. **Looking at a
+  character said their name and should say a pronoun**: the C is
+  `act("You see nothing special about $m.", ...)` (act.informative.c:242),
+  and `$m` is the objective pronoun of the person being looked at, so it is
+  "about him.", "about her." or "about it." — never "about Zod." or "about
+  a large dog." Three tests asserted the name, and it reads naturally
+  enough that none of them was ever doubted. And **`look 0.anything` is
+  "Look at what?"**, because generic_find gives up on a zero count before
+  it searches at all (handler.c:1345); the `0.<name> means a player` branch
+  is real but unreachable through `look`, and reachable through `hit`,
+  which calls get_char_vis directly (act.offensive.c:108).
 - ~~**`look at <object>` finds the object's extra description in the C**~~ —
   the ATM's own note — ~~and answers with the room's line for it here.~~
   *Ruling (2026-08-26):*

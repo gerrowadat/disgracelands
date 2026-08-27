@@ -429,6 +429,9 @@ func (l *Live) Occupants(room RoomVnum) []*Character { return l.occupants[room] 
 // name, and honours the `2.` prefix, which is what `number` is for.
 func (l *Live) FindInRoom(viewer *Character, room RoomVnum, word string) *Character {
 	s := l.NewSearch(viewer, word)
+	if s.IsSelf() {
+		return viewer
+	}
 	return s.CharIn(l.occupants[room])
 }
 
@@ -464,6 +467,28 @@ func (l *Live) NewSearch(viewer *Character, arg string) *Search {
 // Number is the count remaining, for a caller that needs to know whether the
 // argument was `0.something`.
 func (s *Search) Number() int { return s.n }
+
+// IsSelf reports whether the typed word is get_char_room_vis's own special
+// case for the searcher themselves (handler.c:1068), whose entire comment in
+// the C is a name, a date and two smileys:
+//
+//	/* JE 7/18/94 :-) :-) */
+//	if (!str_cmp(name, "self") || !str_cmp(name, "me"))
+//	  return (ch);
+//
+// Three things about where it sits are player-visible. It is **after**
+// get_number, so `2.self` and `0.me` are the searcher too — the count is read
+// and then ignored. It is **before** the `*number == 0` branch, so "me" never
+// reaches the players-only lookup that a bare `0.` name would. And it is
+// **before** CAN_SEE, which is the only way to name somebody a blind
+// character can still target: yourself.
+//
+// str_cmp is a whole-word case-insensitive compare, not isname, so a mobile
+// with "self" among its keywords is unreachable by that word while you are in
+// the room with it.
+func (s *Search) IsSelf() bool {
+	return strings.EqualFold(s.Word, "self") || strings.EqualFold(s.Word, "me")
+}
 
 // CharIn returns the next matching character in a list the viewer can see,
 // counting down. Called more than once, it carries on where it left off.
@@ -605,7 +630,11 @@ func (l *Live) FindAnywhere(viewer *Character, word string) *Character {
 	}
 	// The viewer's own room first, as get_char_world_vis does — it calls
 	// get_char_room_vis before walking the world (handler.c:1091), so
-	// somebody standing in front of you wins over a namesake elsewhere.
+	// somebody standing in front of you wins over a namesake elsewhere. That
+	// delegation is also how "self" reaches a world search at all.
+	if s.IsSelf() {
+		return viewer
+	}
 	if viewer != nil {
 		if c := s.CharIn(l.occupants[viewer.Room]); c != nil {
 			return c

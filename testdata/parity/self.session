@@ -1,0 +1,32 @@
+# "self" and "me": get_char_room_vis's own special case (handler.c:1068),
+# whose whole comment in the C is `/* JE 7/18/94 :-) :-) */`. It sits after
+# get_number and before both the zero-count branch and CAN_SEE, so the count
+# is read and ignored and a blind character can still name themselves.
+Parityone
+y
+swordfish
+swordfish
+m
+w
+
+1
+goto 3001
+look self
+look me
+look 2.self
+look 0.me
+kill self
+hit self
+kill me
+kill Parityone
+# `0.<name>` means "a player with this name", which is the branch just below
+# the self one. `look` cannot reach it -- generic_find gives up on a zero
+# count before searching anything -- but `hit` calls get_char_vis directly and
+# does, so naming yourself this way lands on do_hit's own self-refusal.
+look 0.parityone
+hit 0.parityone
+hit 0.nobody
+# A word that is not "self" and names nobody, for the refusal beside it.
+kill nobody
+look nobody
+quit

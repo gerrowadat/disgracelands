@@ -97,6 +97,19 @@ func (c *Context) lookAtTarget(arg string) error {
 		return nil
 	}
 
+	// generic_find gives up on a zero count *before it searches anything at
+	// all* — `if (!(number = get_number(&name))) return (0);`
+	// (handler.c:1345) — and look_at_target then reads the count itself and
+	// says "Look at what?" (act.informative.c:605). The order matters for one
+	// case: `0.me` is not you, because get_char_room_vis's own "self" branch
+	// is never reached. `2.me` is, since that branch ignores the count it
+	// sits behind. Both checked against the C, not reasoned about.
+	fnum, name := game.GetNumber(name)
+	if fnum == 0 {
+		c.Send("Look at what?\r\n")
+		return nil
+	}
+
 	if victim := c.findInRoom(name); victim != nil {
 		return c.lookAtCharacter(victim)
 	}
@@ -104,16 +117,6 @@ func (c *Context) lookAtTarget(arg string) error {
 	// An object, and *where* it was found — generic_find is asked for all
 	// three object lists at once, with one shared count.
 	obj, _ := c.findObjectAndWhere(name)
-
-	// The count is stripped off before the extra descriptions are searched,
-	// and the C's own comment says why: "Strip off 'number.' from 2.foo and
-	// friends" (act.informative.c:604). A zero count — `0.thing` or a bare
-	// leading dot — gives up here rather than searching.
-	fnum, name := game.GetNumber(name)
-	if fnum == 0 {
-		c.Send("Look at what?\r\n")
-		return nil
-	}
 
 	// The extra descriptions, in the C's own order: the room, then worn
 	// equipment, then the inventory, then what is lying on the floor
@@ -228,7 +231,15 @@ func (c *Context) lookAtCharacter(victim *game.Character) error {
 	if victim.Record != nil && victim.Record.Description != "" {
 		c.Send("%s", ensureNewline(victim.Record.Description))
 	} else {
-		c.Send("You see nothing special about %s.\r\n", victim.Name)
+		// `$m`, not the name: the C is `act("You see nothing special about
+		// $m.", FALSE, i, 0, ch, TO_VICT)` (act.informative.c:242), and $m is
+		// the *objective pronoun* of the person being looked at. So it is
+		// "about him.", "about her." or "about it." — never a name, and never
+		// "about a large dog." This port printed the name, which reads
+		// naturally enough that nothing questioned it until a parity scenario
+		// finally looked at somebody.
+		c.Send("%s", c.World.Act("You see nothing special about $m.",
+			game.ActArgs{Actor: victim, Victim: c.Character}, c.Character))
 	}
 
 	c.Send("%s", game.HealthDiagnosis(victim.Name, victim.Record))

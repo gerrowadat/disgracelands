@@ -108,6 +108,23 @@ const (
 	findAllDot
 )
 
+// namedWithoutCount is what a refusal echoes back once a *_vis search has run
+// on the same argument.
+//
+// get_number does not merely *read* the count off "2.sword" — it rewrites the
+// caller's buffer, `strcpy(*name, ppos)` (handler.c:596). Every FIND_INDIV
+// branch in act.item.c hands one buffer to the search and then prints that
+// same buffer in the refusal, so by then it says "sword". `get 2.sword` with
+// nothing about answers "You don't see a sword here."
+//
+// Checked command by command against the C with scripts/session-parity.sh
+// rather than by reading, because which refusals are downstream of a search
+// and which are not is not visible from the message.
+func namedWithoutCount(arg string) string {
+	_, word := game.GetNumber(arg)
+	return word
+}
+
 // findAllDots classifies an argument, porting find_all_dots.
 //
 // The C version rewrites its argument in place to strip the "all." prefix,
