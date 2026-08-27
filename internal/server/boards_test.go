@@ -311,7 +311,7 @@ func TestABoardDoesNotSwallowOrdinaryCommands(t *testing.T) {
 	c.expect("The Notice Board")
 
 	c.send("look ring")
-	c.expect("You see nothing special about a gold ring.")
+	c.expect("You see nothing special..")
 
 	c.send("wear ring")
 	c.expect("You slide a gold ring on to your right ring finger.")

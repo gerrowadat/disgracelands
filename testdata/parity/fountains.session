@@ -1,0 +1,16 @@
+# The drink-container half of look_in_obj: fullness[] and color_liquid[].
+Parityone
+y
+swordfish
+swordfish
+m
+w
+
+1
+goto 3030
+look
+look in fountain
+look at fountain
+goto 3001
+look in atm
+quit

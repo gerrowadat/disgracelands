@@ -120,3 +120,40 @@ func TestTheDrinkNamesMatchTheCSource(t *testing.T) {
 		}
 	}
 }
+
+// The two tables look_in_obj describes a drink container with are re-parsed
+// out of the C the same way every other name table is.
+//
+// fullness[] is the one table in constants.c with no "\n" sentinel — the C
+// carries a comment saying so, "Not used in sprinttype() so no \n." — and its
+// last entry is an empty string literal rather than a word. That is worth a
+// test rather than a glance: an off-by-one here would describe a full
+// container as "more than half full" and an empty one is never asked about,
+// so nothing else in the game would notice.
+func TestTheLiquidTablesMatchTheCSource(t *testing.T) {
+	constants := parseCTables(t, "../../reference/moderncserver/src/constants.c")
+
+	for _, tc := range []struct {
+		cName string
+		got   []string
+	}{
+		{"color_liquid", liquidColours[:]},
+		{"fullness", fullnessNames[:]},
+	} {
+		want, ok := constants[tc.cName]
+		if !ok {
+			t.Errorf("%s: no such table in the C source", tc.cName)
+			continue
+		}
+		if len(tc.got) != len(want) {
+			t.Errorf("%s has %d entries, the C has %d\n got: %q\nwant: %q",
+				tc.cName, len(tc.got), len(want), tc.got, want)
+			continue
+		}
+		for i := range want {
+			if tc.got[i] != want[i] {
+				t.Errorf("%s[%d] is %q, the C has %q", tc.cName, i, tc.got[i], want[i])
+			}
+		}
+	}
+}

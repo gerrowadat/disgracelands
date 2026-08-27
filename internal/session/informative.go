@@ -92,44 +92,134 @@ func doExamine(c *Context) error {
 // hand rather than the one on the ground.
 func (c *Context) lookAtTarget(arg string) error {
 	name := strings.TrimSpace(arg)
+	if name == "" {
+		c.Send("Look at what?\r\n")
+		return nil
+	}
 
 	if victim := c.findInRoom(name); victim != nil {
 		return c.lookAtCharacter(victim)
 	}
-	if obj := c.findVisibleObject(name); obj != nil {
-		// A note shows what is written on it and nothing else, which is the
-		// whole of how mail is read (act.informative.c:117). Before the
-		// description, because a note lying on the floor is still read rather
-		// than described.
-		if obj.Type == game.ItemNote {
-			if text := obj.ActionDescription(); text != "" {
-				c.Send("There is something written on it:\r\n\r\n%s", ensureNewline(text))
-			} else {
-				c.Send("It's blank.\r\n")
-			}
-			return nil
-		}
-		if obj.Description != "" && obj.Location == game.InRoom {
-			c.Send("%s\r\n", obj.Description)
-		} else {
-			c.Send("You see nothing special about %s.\r\n", obj.Name())
+
+	// An object, and *where* it was found — generic_find is asked for all
+	// three object lists at once, with one shared count.
+	obj, _ := c.findObjectAndWhere(name)
+
+	// The count is stripped off before the extra descriptions are searched,
+	// and the C's own comment says why: "Strip off 'number.' from 2.foo and
+	// friends" (act.informative.c:604). A zero count — `0.thing` or a bare
+	// leading dot — gives up here rather than searching.
+	fnum, name := game.GetNumber(name)
+	if fnum == 0 {
+		c.Send("Look at what?\r\n")
+		return nil
+	}
+
+	// The extra descriptions, in the C's own order: the room, then worn
+	// equipment, then the inventory, then what is lying on the floor
+	// (act.informative.c:610-639). This is what makes `look at atm` show the
+	// note stuck to the ATM rather than the ATM's own line from the room.
+	//
+	// `i` counts *matches across all four lists*, not within one, so
+	// `2.plaque` in a room with one plaque and a plaque on the floor is the
+	// one on the floor. That shared counter is the whole reason these are one
+	// walk rather than four independent searches.
+	if desc, found := c.findExtraDescription(name, fnum); found {
+		// The C pages the room's own extra description and sends the other
+		// three directly (page_string against send_to_char). Both end up on
+		// the screen; the difference only shows for a description longer than
+		// a page, and none in the shipped world is.
+		c.Send("%s", ensureNewline(desc))
+		// An object matched by *both* an extra description and its own name
+		// gets its modifiers appended — show_obj_modifiers, then a newline
+		// (act.informative.c:643-646). The description itself is not repeated.
+		if obj != nil {
+			c.Send("%s\r\n", objectModifiers(c.Character, obj))
 		}
 		return nil
 	}
 
-	// An extra description on the room — the C looks these up last, which is
-	// why an object named "fountain" wins over a fountain in the room's
-	// description.
-	if room := c.World.Room(c.Character.Room); room != nil {
-		for _, extra := range room.ExtraDescs {
-			if game.MatchesAnyKeyword(extra.Keywords, name) {
-				c.Send("%s", ensureNewline(extra.Description))
-				return nil
-			}
-		}
+	if obj != nil {
+		return c.showObject(obj)
 	}
 
 	c.Send("You do not see that here.\r\n")
+	return nil
+}
+
+// findExtraDescription walks the four lists look_at_target searches, in its
+// order, returning the fnum'th match.
+func (c *Context) findExtraDescription(name string, fnum int) (string, bool) {
+	var seen int
+	match := func(list []game.ExtraDesc) (string, bool) {
+		for _, extra := range list {
+			if !game.MatchesAnyKeyword(extra.Keywords, name) {
+				continue
+			}
+			seen++
+			if seen == fnum {
+				return extra.Description, true
+			}
+		}
+		return "", false
+	}
+
+	if room := c.World.Room(c.Character.Room); room != nil {
+		if desc, ok := match(room.ExtraDescs); ok {
+			return desc, true
+		}
+	}
+	for pos := game.WearPosition(0); pos < game.NumWears; pos++ {
+		obj := c.Character.Equipment[pos]
+		if obj == nil || obj.Def == nil || !c.World.CanSeeObj(c.Character, obj) {
+			continue
+		}
+		if desc, ok := match(obj.Def.ExtraDescs); ok {
+			return desc, true
+		}
+	}
+	for _, list := range [][]*game.Object{
+		c.Character.Carrying,
+		c.World.RoomObjects(c.Character.Room),
+	} {
+		for _, obj := range list {
+			if obj.Def == nil || !c.World.CanSeeObj(c.Character, obj) {
+				continue
+			}
+			if desc, ok := match(obj.Def.ExtraDescs); ok {
+				return desc, true
+			}
+		}
+	}
+	return "", false
+}
+
+// showObject is show_obj_to_char with SHOW_OBJ_ACTION (act.informative.c:60),
+// which is what look_at_target falls back to when nothing matched an extra
+// description.
+//
+// The two odd strings are the C's and are odd on purpose: a drink container
+// says "It looks like a drink container." and everything else "You see
+// nothing special.." — with two full stops, because show_obj_modifiers
+// appends to the same line and the sentence was written to run into it.
+func (c *Context) showObject(obj *game.Object) error {
+	switch obj.Type {
+	case game.ItemNote:
+		// A note shows what is written on it and nothing else, which is the
+		// whole of how mail is read (act.informative.c:117). It returns
+		// before the modifiers, so a glowing note does not say so.
+		if text := obj.ActionDescription(); text != "" {
+			c.Send("There is something written on it:\r\n\r\n%s", ensureNewline(text))
+		} else {
+			c.Send("It's blank.\r\n")
+		}
+		return nil
+	case game.ItemDrinkCon:
+		c.Send("It looks like a drink container.")
+	default:
+		c.Send("You see nothing special..")
+	}
+	c.Send("%s\r\n", objectModifiers(c.Character, obj))
 	return nil
 }
 

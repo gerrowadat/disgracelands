@@ -199,3 +199,71 @@ func Slur(said string, r interface{ Number(int32, int32) int32 }) string {
 	}
 	return out
 }
+
+// liquidColours is color_liquid[] (constants.c:494), indexed by liquid
+// number. It is what a fountain or a drink container is described as holding
+// when somebody looks in it.
+//
+// Three separate liquids are "clear" and two are "brown", so the table is not
+// a bijection and cannot be inverted — which is fine, because nothing ever
+// asks it to be.
+var liquidColours = [16]string{
+	"clear",
+	"brown",
+	"clear",
+	"brown",
+	"dark",
+	"golden",
+	"red",
+	"green",
+	"clear",
+	"light green",
+	"white",
+	"brown",
+	"black",
+	"red",
+	"clear",
+	"crystal clear",
+}
+
+// LiquidColour names the colour of a liquid, or "clear" for a number outside
+// the table.
+//
+// The C indexes color_liquid[] through sprinttype(), which walks to the "\n"
+// sentinel and answers "UNDEFINED" past the end. Nothing in the shipped world
+// has an out-of-range liquid, so the fallback here is a guard rather than a
+// reproduction of that.
+func LiquidColour(liquid int32) string {
+	if liquid < 0 || int(liquid) >= len(liquidColours) {
+		return "clear"
+	}
+	return liquidColours[liquid]
+}
+
+// fullnessNames is fullness[] (constants.c:520), and the C's own comment on
+// it explains the shape: "Not used in sprinttype() so no \n." — so unlike
+// every other table in constants.c it has no sentinel, and its last entry is
+// the empty string rather than a word.
+//
+// That empty entry is the point. The description is built as "It's %sfull of
+// a %s liquid.", so a full container reads "It's full of a clear liquid." —
+// the table supplies the *qualifier* and a full one has none.
+var fullnessNames = [4]string{
+	"less than half ",
+	"about half ",
+	"more than half ",
+	"",
+}
+
+// Fullness names how full a drink container is, from (filled * 3) / capacity.
+//
+// The arithmetic is the caller's, and it is integer division: a container
+// exactly full gives 3 and lands on the empty entry. look_in_obj guards the
+// capacity against zero before dividing, which is why this takes the answer
+// rather than the two numbers.
+func Fullness(amount int32) string {
+	if amount < 0 || int(amount) >= len(fullnessNames) {
+		return ""
+	}
+	return fullnessNames[amount]
+}

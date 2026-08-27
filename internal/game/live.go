@@ -518,6 +518,40 @@ func (s *Search) seesObject(o *Object) bool {
 	return s.viewer == nil || s.world.CanSeeObj(s.viewer, o)
 }
 
+// EquippedObject is generic_find's own equipment loop (handler.c:1355), and
+// it exists as a method of its own rather than as ObjectIn over a slice
+// because of the one way it differs from every other object search in the C:
+// **it does not check CAN_SEE_OBJ**.
+//
+//	if (GET_EQ(ch, i) && isname(name, GET_EQ(ch, i)->name) && --number == 0)
+//
+// `get_obj_in_list_vis`, which is what the inventory and room searches go
+// through, opens with a visibility test; this loop has none. So a character
+// wearing something they cannot see — an invisible ring, with no detect
+// invisible up — can still `look at ring` and `remove ring`, while the same
+// ring in their inventory is unfindable. There is no sign it is deliberate,
+// and it is reproduced rather than tidied (plan §0): it is reachable, and
+// what it changes is what a player can type.
+//
+// The count is shared with the rest of the search, exactly as the C shares
+// its `number` across generic_find's branches.
+func (s *Search) EquippedObject(eq *[NumWears]*Object) *Object {
+	if s.Word == "" || s.n == 0 {
+		return nil
+	}
+	for pos := WearPosition(0); pos < NumWears; pos++ {
+		o := eq[pos]
+		if o == nil || !o.Matches(s.Word) {
+			continue
+		}
+		s.n--
+		if s.n == 0 {
+			return o
+		}
+	}
+	return nil
+}
+
 // ObjectIn returns the next matching object in a list the viewer can see.
 //
 // Unlike CharIn, a count of zero finds nothing at all: every object search in

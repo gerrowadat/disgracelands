@@ -342,15 +342,25 @@ func TestAnAbbreviationDoesNotNameAnybody(t *testing.T) {
 	_, mortal := twoInARoom(t, srv, addr)
 
 	// A mobile, by a partial keyword and then a whole one.
+	//
+	// Through `kill` rather than `look`, and the reason is worth keeping:
+	// every proper prefix of "dog" — "d", "do", "dog" — is also an
+	// abbreviation of "down", and do_look tries directions before targets
+	// (act.informative.c:686), so `look do` looks at the floor. That is the
+	// C's behaviour too, checked against it rather than assumed. `kill` has
+	// no direction branch, so it is where the isname point still lives.
 	spawnDog(t, srv, MortalStartRoom)
-	mortal.send("look do")
-	mortal.expect("You do not see that here.")
+	mortal.send("kill do")
+	mortal.expect("They don't seem to be here.")
 	mortal.send("look dog")
 	mortal.expect("You see nothing special about a large dog.")
 
 	// And a player, by a partial name.
 	mortal.send("look zo")
-	mortal.expectCount("You do not see that here.", 2)
+	// The first occurrence, not the second: the `look do` above became a
+	// `kill`, so this is now the only "You do not see that here." in the
+	// transcript.
+	mortal.expect("You do not see that here.")
 	mortal.send("look zod")
 	mortal.expect("You see nothing special about Zod.")
 }
@@ -417,9 +427,13 @@ func TestZeroDotMeansAPlayer(t *testing.T) {
 	mortal.send("look 0.zod")
 	mortal.expect("You see nothing special about Zod.")
 
-	// A mobile is not a player, so 0. never reaches one.
+	// A mobile is not a player, so 0. never reaches one — and the answer is
+	// "Look at what?", not "You do not see that here.": look_at_target
+	// re-reads the count after the character search and gives up on a zero
+	// (act.informative.c:605-608), before any object or extra description is
+	// looked at. Checked against the C with scripts/session-parity.sh.
 	mortal.send("look 0.dog")
-	mortal.expect("You do not see that here.")
+	mortal.expect("Look at what?")
 }
 
 // TestColourIsEmittedAtTheReadersLevel. The C interleaves escapes as it builds
