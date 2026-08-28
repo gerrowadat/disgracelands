@@ -191,6 +191,22 @@ formats have no trailing period.
 ## Workflow
 
 - **Always branch → PR → merge. Never commit direct to `main`.**
+- **Assume the worktree you're handed is stale, and branch from
+  `origin/main`, not from whatever is checked out.** A worktree can be
+  sitting on a branch whose work already merged — squash-merged, so its
+  commit is *not* an ancestor of `main` even though its tree is
+  byte-identical to it. `git diff HEAD origin/main` coming up empty proves
+  the content matches; it proves nothing about ancestry. Branching from
+  that stale HEAD carries its old commit along as if it were new, and a PR
+  opened from it shows that commit's whole diff a second time, on top of
+  the actual change — GitHub computes the diff against the merge-base, and
+  if the old commit was never really in `main`'s history the merge-base
+  lands before it. Found the hard way on #184: `git diff` said clean,
+  `git log origin/main..HEAD` did not, and the fix was `git fetch && git
+  checkout -b <name> origin/main` before making the change at all —
+  which is the rule now, every time, not just when something looks off.
+  Mid-branch, `git rebase --onto origin/main <old-base>` is the recovery
+  if this has already happened.
 - Commit messages are long prose: what the change does, *why the C does it
   that way*, and `file:line` citations. Name the things that cost you time —
   the traps above are all in commit messages first.
