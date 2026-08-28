@@ -590,7 +590,7 @@ stops, which is how to exercise the workflow without cutting a release.
 make ci                    # go.yml, every job, in containers
 make ci-job JOB=test       # one job: test | lint
 make ci-list               # what `make ci` would run
-make ci-clean              # throw away the reused containers
+make ci-clean              # throw away this repo's reused containers
 ```
 
 This runs `.github/workflows/go.yml` (set `CI_WORKFLOW=.github/workflows/
@@ -621,8 +621,26 @@ which is a genuinely disorienting twenty minutes; it could as easily look like
 a *pass*, from a deleted file still satisfying a reference.
 
 So: **if a job fails for a reason you cannot find on disk, run `make ci-clean`
-before believing it.** That removes the containers *and* the `act-*` volumes,
-which is what makes it work — removing the containers alone does not.
+before believing it.** That removes the containers *and* their volumes, which
+is what makes it work — removing the containers alone does not.
+
+`ci-clean` is careful about two things, and both were learned by getting
+them wrong (2026-08-28). It runs **under the same `flock` a run does**, so a
+clean issued while somebody else's `make ci` is in flight waits for it
+instead of removing the container that run is executing in — which surfaces
+to *them* as `exitcode '137'` and `Error response from daemon: RWLayer of
+container ... is unexpectedly nil`, with nothing to connect it to what you
+did. And it removes only **this repository's** containers, matched the same
+way `act-guard.sh` matches them (the workspace mount is the repo root or
+under it), rather than everything called `act-*` on the machine; another
+project's act containers are listed as left alone and survive.
+
+Note what is deliberately *not* used as a signal: whether the container is
+running. `--reuse` means it stays `Up` between runs on purpose — "Up" means
+"act has been here", not "act is here now". Only the lock answers that.
+`act-toolcache` is left alone too: it is act's shared tool cache, is not
+bound to any checkout, and holds downloaded toolchains rather than anything
+that can go stale against a branch.
 
 #### Worktrees, and the two ways act runs somebody else's code
 
@@ -661,6 +679,11 @@ survives `make ci-clean` as it was before this — the containers are gone, the
 volumes are gone, and the stale findings come back anyway from a cache
 `actions/cache` restores into the fresh container. It reads exactly like the
 volume-staleness trap above and is not it.
+
+Both halves live in `scripts/`: `act-guard.sh` before a run, `act-clean.sh`
+behind `make ci-clean`. Neither is optional decoration — a `make ci` result
+from the wrong tree, or a colleague's run killed halfway, are both failures
+that look like your code.
 
 ### What this reproduces, and what it does not
 
@@ -845,7 +868,7 @@ one thing, and the mistakes it catches all look right.
 | `make ctl ARGS="dump --type=pfile --name=Someone"` | Any `dlctl` command. |
 | `make docker` / `make compose-up` / `make compose-down` | The container image and the local stack. |
 | `make ci` / `make ci-job JOB=…` | `go.yml`, locally, in containers (`CI_WORKFLOW=...` for `release.yml`). |
-| `make ci-list` / `make ci-clean` | What `make ci` would run; discard its reused containers. |
+| `make ci-list` / `make ci-clean` | What `make ci` would run; discard this repo's reused containers (waits for any run in progress). |
 | `make release BUMP=patch\|minor\|major` | Regenerate the example worlds if stale, check locally, then dispatch `release.yml` and wait — see "Cutting a release". |
 | `make clean` | Removes `out/`: binaries, scratch data directory, dev certificate. |
 

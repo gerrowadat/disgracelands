@@ -321,6 +321,7 @@ GIT_COMMON_DIR := $(shell git rev-parse --git-common-dir 2>/dev/null)
 #     regardless of which directory each thinks it is in.
 ACT_LOCK = $(GIT_COMMON_DIR)/act.lock
 ACT_GUARD = ./scripts/act-guard.sh $(CURDIR)
+ACT_CLEAN_RAW = ./scripts/act-clean.sh $(CURDIR) "$(ACT_CACHE)"
 
 # The container is only half of it. act runs a cache server for
 # actions/cache, and its default store (~/.cache/actcache) is shared by every
@@ -345,8 +346,12 @@ ACT_RAW = $(ACT_BIN) --container-options "-v $(GIT_COMMON_DIR):$(GIT_COMMON_DIR)
 ACT_FLOCK := $(shell command -v flock 2>/dev/null)
 ifeq ($(ACT_FLOCK),)
 ACT = $(ACT_GUARD) && $(ACT_RAW)
+ACT_CLEAN = $(ACT_CLEAN_RAW)
 else
 ACT = $(ACT_GUARD) && $(ACT_FLOCK) $(ACT_LOCK) $(ACT_RAW)
+# Under the same lock as a run, so a clean waits for one in progress
+# rather than pulling the container out from under it.
+ACT_CLEAN = $(ACT_FLOCK) $(ACT_LOCK) $(ACT_CLEAN_RAW)
 endif
 
 # Scoped to go.yml, the day-to-day workflow (build/vet/lint/test on every
@@ -382,19 +387,21 @@ ci-list: ## List the jobs `make ci` would run
 # and keeps getting compiled. That reads as a failure in code you cannot find
 # -- `undefined: New` in a _test.go that is not on disk -- and it could as
 # easily read as a pass. Removing the containers alone does not fix it.
+#
+# Two things this must not do, both learned the hard way (2026-08-28).
+# It must not reach past ACT_LOCK -- `make ci` holds that lock so two
+# checkouts cannot drive one container at once, and a clean that ignores
+# it removes the container a live run is executing in, which surfaces to
+# the *other* session as `exitcode '137'` and `RWLayer of container ... is
+# unexpectedly nil`. And it must not match on the `act-` name alone, which
+# catches every act container on the machine including other projects'.
+# scripts/act-clean.sh does the scoping; the lock below does the rest.
+#
+# Note that "the container is running" is not an alternative signal:
+# --reuse means a container stays Up between runs on purpose.
 .PHONY: ci-clean
-ci-clean: ## Remove the containers, volumes and cache act reuses between runs
-	@ids=$$(docker ps -aq --filter "name=act-"); \
-	  if [ -n "$$ids" ]; then docker rm -f $$ids; else echo "no act containers"; fi
-	@vols=$$(docker volume ls -q --filter "name=act-"); \
-	  if [ -n "$$vols" ]; then docker volume rm -f $$vols; else echo "no act volumes"; fi
-	@# And this checkout's cache store. golangci-lint's cache is keyed by
-	@# package *content* and records absolute paths, so an entry saved by one
-	@# checkout is a legitimate hit for another with the same content -- and
-	@# replays that checkout's filenames. Clearing the containers without
-	@# clearing this leaves exactly the symptom that sent this looking at
-	@# volumes in the first place.
-	@rm -rf "$(ACT_CACHE)" && echo "removed $(ACT_CACHE)"
+ci-clean: ## Remove this repo's act containers, volumes and cache (waits for any run in progress)
+	$(ACT_CLEAN)
 
 ##@ Data and tooling
 
