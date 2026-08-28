@@ -610,3 +610,31 @@ var tourCommands = map[int][]string{
 	roomNoticeBoard:    {"look board", "read board"},
 	roomGraduationHall: {"smile", "wave", "say hello", "score"},
 }
+
+// TestWritingOnTheBoard, which is the only thing on the tour that opens the
+// line editor -- and the editor is where issue #192 lived: it prompted for
+// nothing and confirmed nothing, so a player typing into it had no sign the
+// server was taking the lines at all.
+//
+// make_prompt's second branch is `else if (d->str) strcpy(prompt, "] ")`
+// (comm.c:1008), keyed off the pointer being written to rather than off the
+// connection state, so every line typed into an editor gets one back.
+func TestWritingOnTheBoard(t *testing.T) {
+	m, c, _ := arrive(t, miniClassic, "Scribbler", roomNoticeBoard)
+
+	// The command that opens the editor prompts with "] " rather than with
+	// the H/M/V prompt, so the walk's usual barrier is no good here.
+	contains(t, "write board", c.doUntil("write board", "] "), "Write your message")
+
+	contains(t, "the first line typed", c.doUntil("A notice.", "] "), "] ")
+	contains(t, "the second line typed", c.doUntil("Signed, Scribbler.", "] "), "] ")
+
+	// '@' ends it, and the H/M/V prompt comes back with the character.
+	c.doUntil("@", promptMarker)
+
+	// `read 1` and not `read board 1`: the board special takes the
+	// command by number, and a keyword sends it to do_look instead.
+	contains(t, "reading it back", c.do("read 1"), "A notice.", "Signed, Scribbler.")
+
+	m.noServerErrors()
+}

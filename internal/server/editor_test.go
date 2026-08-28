@@ -212,3 +212,55 @@ func TestImprovedEditorAbortDiscardsBuffer(t *testing.T) {
 		t.Errorf("Text.MOTD() = %q, /c should have cleared the seeded original before /s saved", motd)
 	}
 }
+
+// Every line typed into the editor gets a `] ` back (issue #192).
+//
+// make_prompt's second branch is `else if (d->str) strcpy(prompt, "] ")`
+// (comm.c:1008) — keyed off the pointer being written to rather than off the
+// connection state, and before the CON_PLAYING test. The port was silent
+// while typing, so a player had no sign the server had taken the line.
+func TestTheEditorPromptsForEveryLine(t *testing.T) {
+	srv, _ := newTestServer(t)
+	c := dialClient(t, listening(t, srv))
+	c.create("Zod", "swordfish", "m", "w")
+
+	c.send("tedit motd")
+	c.expect("Edit file below:")
+	// The command's own tail sends the first one: prompt() resolves to "] "
+	// as soon as the editor is entered.
+	c.expectCount("] ", 1)
+
+	c.send("first line")
+	c.expectCount("] ", 2)
+	c.send("second line")
+	c.expectCount("] ", 3)
+
+	// An editor *command* prompts too — it is still a line typed at a
+	// descriptor with d->str set.
+	c.send("/l")
+	c.expectCount("] ", 4)
+
+	c.send("/a")
+	c.expect("Edit aborted.")
+}
+
+// And the description editor at the menu, which is the same mechanism: the
+// C's CON_EXDESC sets d->str like any other string_write caller.
+func TestTheDescriptionEditorPromptsForEveryLine(t *testing.T) {
+	srv, _ := newTestServer(t)
+	c := dialClient(t, listening(t, srv))
+	c.create("Zod", "swordfish", "m", "w")
+
+	c.send("quit")
+	c.expectCount("Make your choice:", 2)
+
+	c.send("2")
+	c.expect("Enter the new text you'd like others to see")
+	c.expectCount("] ", 1)
+
+	c.send("A tall figure.")
+	c.expectCount("] ", 2)
+
+	c.send("@")
+	c.expectCount("Make your choice:", 3)
+}

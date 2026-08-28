@@ -999,13 +999,29 @@ port is right and the thing it is compared against is wrong.
   behaviour and it is odd enough to be worth knowing about — the refusals
   themselves go to the *keeper*, who has no client to receive them, which
   is why they are a return value rather than a `Send`.
-- **The improved editor prompts for each line with `]` in the C** and
-  silently here, and the C confirms a sent letter with "Message sent!".
+- ~~**The improved editor prompts for each line with `]` in the C** and
+  silently here, and the C confirms a sent letter with "Message sent!".~~
   *Ruling (2026-08-26):*
   **Blocker.** A silent editor gives no sign that anything was received,
   and the missing send confirmation is worse than it looks given that this
   build of the C is the one that eats the letter.
-  **Tracked:** #192.
+  **Fixed 2026-08-28** (#192). The prompt is `make_prompt`'s second branch,
+  `else if (d->str) strcpy(prompt, "] ")` (comm.c:1008) — and the thing to
+  notice is what it keys off. Not the connection state: the *pointer being
+  written to*. So it fires for the improved editor, for `tedit`, for a board
+  post and for the menu's description editor alike, and it sits above the
+  `CON_PLAYING` test, so a descriptor at the menu writing a description gets
+  `] ` and not the menu's silence. Both paths send it here now
+  (`Session.handleEditing` and `handleEnterDescription`); the *first* one,
+  after the command that opens the editor, already worked, because
+  `Dispatcher.Do`'s tail calls `prompt` and `prompt` had the `StateEditing`
+  case all along.
+
+  "Message sent!" is `playing_string_cleanup`'s (modify.c:232). Worth more
+  here than in the C: the reference build used for parity is the one whose
+  `store_mail` core-dumps on 64-bit and delivers nothing while saying this
+  (see "Two that are the reference build, not the port" below), so the line
+  this port prints is the only true confirmation either server gives.
 
 ### Two that are the reference build, not the port
 

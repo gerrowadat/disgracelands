@@ -120,14 +120,21 @@ func postmasterSendMail(sc *SpecialCall) {
 	sc.Session.beginEditor(maxMailSize, func(text string, saved bool) {
 		// playing_string_cleanup's own PLR_MAILING branch (modify.c:226-231)
 		// says "Mail aborted." for anything but a real save with something in
-		// it — /a included, now that it exists. Its "Message sent!" half is
-		// not added here: this port never printed it even for a plain '@'
-		// save, a separate, pre-existing gap outside this pass's scope.
+		// it — /a included — and "Message sent!" for one that goes.
+		//
+		// That confirmation is worth more here than it looks. The reference C
+		// build used for parity testing is the one whose store_mail asserts
+		// its blocks are exactly BLOCK_SIZE and core_dumps when they are not
+		// on a 64-bit build (docs/deviations.md): it takes the stamp money,
+		// says "Message sent!" and delivers nothing. This port actually
+		// delivers, so the line is the only signal a player gets that the
+		// letter went, and it was missing (#192).
 		if !saved || text == "" {
 			sc.Tell("Mail aborted.\r\n")
 			return
 		}
 		mail.Send(recipient, from, time.Now(), text)
+		sc.Tell("Message sent!\r\n")
 	})
 }
 
