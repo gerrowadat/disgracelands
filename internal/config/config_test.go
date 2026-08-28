@@ -247,6 +247,43 @@ func TestWarnings(t *testing.T) {
 	}
 }
 
+func TestWebFlags(t *testing.T) {
+	cfg := load(t, append(minimal, "--listen-ws=:8080", "--web-password=hunter2", "--web-captcha"), nil)
+	if cfg.WSAddr != ":8080" {
+		t.Errorf("WSAddr = %q, want :8080", cfg.WSAddr)
+	}
+	if cfg.WebPassword != "hunter2" {
+		t.Errorf("WebPassword = %q, want hunter2", cfg.WebPassword)
+	}
+	if !cfg.WebCaptcha {
+		t.Error("WebCaptcha = false, want true")
+	}
+}
+
+// TestWebWarnings: --listen-ws gets the same TLS caveat --debug-addr's
+// neighbours already do, plus one of its own when there is no
+// --web-password to gate it — but only when the web interface is actually
+// enabled at all.
+func TestWebWarnings(t *testing.T) {
+	cfg := load(t, append(minimal, "--listen-ws=:8080"), nil)
+	warnings := strings.Join(cfg.Warnings(), "\n")
+	for _, want := range []string{"web interface has no TLS", "no --web-password"} {
+		if !strings.Contains(warnings, want) {
+			t.Errorf("Warnings() = %q, want it to mention %q", warnings, want)
+		}
+	}
+
+	withPassword := load(t, append(minimal, "--listen-ws=:8080", "--web-password=hunter2"), nil)
+	if strings.Contains(strings.Join(withPassword.Warnings(), "\n"), "no --web-password") {
+		t.Error("Warnings() still complained about --web-password once one was set")
+	}
+
+	disabled := load(t, minimal, nil)
+	if warnings := strings.Join(disabled.Warnings(), "\n"); strings.Contains(warnings, "web interface") {
+		t.Errorf("Warnings() = %q, want no web-interface warning when --listen-ws is unset", warnings)
+	}
+}
+
 func TestUsageDocumentsEnvironmentVariables(t *testing.T) {
 	// The usage text is the only place the flag/env correspondence is visible
 	// to an operator, so it has to actually appear there.

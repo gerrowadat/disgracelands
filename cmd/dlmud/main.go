@@ -22,6 +22,8 @@ import (
 	"flag"
 	"fmt"
 	"log/slog"
+	"net"
+	"net/http"
 	"os"
 	"path/filepath"
 	"syscall"
@@ -509,7 +511,54 @@ func run(args []string) (int, error) {
 		}
 		listeners = append(listeners, ln)
 	}
-	if len(listeners) == 0 {
+	// The web interface: a welcome page, a browser terminal at /play, and
+	// the WebSocket upgrade at /ws that terminal speaks over. It is an
+	// ordinary net/http.Server rather than a *server.Listener, because it
+	// serves plain HTTP pages as well as upgrading connections — see
+	// internal/server/web.go's own doc comment for how /ws still ends up
+	// going through the exact same Server.serve every telnet connection
+	// does.
+	var webServer *http.Server
+	if cfg.WSAddr != "" {
+		handler, err := srv.WebHandler(ctx, cfg.WebPassword, cfg.WebCaptcha, limits)
+		if err != nil {
+			return exitFailed, err
+		}
+		ln, err := net.Listen("tcp", cfg.WSAddr)
+		if err != nil {
+			return exitFailed, fmt.Errorf("listening on %s: %w", cfg.WSAddr, err)
+		}
+		webServer = &http.Server{
+			Addr:              cfg.WSAddr,
+			Handler:           handler,
+			ReadHeaderTimeout: 5 * time.Second,
+		}
+		if cfg.TLSCert != "" || cfg.TLSACMEDomain != "" {
+			tlsCfg, err := tlsConfig(ctx, cfg, logger)
+			if err != nil {
+				return exitFailed, err
+			}
+			webServer.TLSConfig = tlsCfg
+			logger.Info("listening", "transport", "web", "addr", ln.Addr().String(), "tls", true)
+			go func() {
+				// ServeTLS with empty cert/key files is correct once
+				// TLSConfig already supplies certificates via
+				// GetCertificate, which tlsConfig always sets up.
+				if err := webServer.ServeTLS(ln, "", ""); err != nil && !errors.Is(err, http.ErrServerClosed) {
+					logger.Error("listener failed", "transport", "web", "error", err)
+				}
+			}()
+		} else {
+			logger.Info("listening", "transport", "web", "addr", ln.Addr().String())
+			go func() {
+				if err := webServer.Serve(ln); err != nil && !errors.Is(err, http.ErrServerClosed) {
+					logger.Error("listener failed", "transport", "web", "error", err)
+				}
+			}()
+		}
+	}
+
+	if len(listeners) == 0 && webServer == nil {
 		return exitFailed, fmt.Errorf("no listeners could be started")
 	}
 
@@ -556,6 +605,19 @@ func run(args []string) (int, error) {
 	// them off the world goroutine is that nothing waits for them *during*
 	// play.
 	srv.WaitForWrites()
+
+	// The web listener, same as the telnet ones: every session behind it
+	// already got ctx's own cancellation (Server.serve's own ctx.Done()
+	// watcher, not this call), so this is a bounded wait for those to
+	// actually finish closing rather than what does the closing. It has
+	// to run before stopWorld — a web session still mid-command needs the
+	// world goroutine turning to finish it, the same reason nothing below
+	// this line may touch the world either.
+	if webServer != nil {
+		if err := webServer.Shutdown(shutdownCtx); err != nil {
+			logger.Error("web listener shutdown failed", "error", err)
+		}
+	}
 
 	// Only now is the world finished with. Everything above this line
 	// needed it turning; nothing below it does.
