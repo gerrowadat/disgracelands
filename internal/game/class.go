@@ -289,29 +289,57 @@ func StartingSkills(class int32) map[int32]int32 {
 // goroutine touching the disk. See internal/server for where it happens.
 func AdvanceLevel(rec *PlayerRecord, r *rng.Rand) {
 	addHit := HitPointBonus(rec.Abilities.Constitution)
-	var addMove int32
+	var addMana, addMove int32
 
-	switch rec.Class {
-	case ClassMagicUser:
-		addHit, addMove = addHit+randRange(r, 3, 8), randRange(r, 0, 2)
-	case ClassCleric:
-		addHit, addMove = addHit+randRange(r, 5, 10), randRange(r, 0, 2)
-	case ClassThief:
-		addHit, addMove = addHit+randRange(r, 7, 13), randRange(r, 1, 3)
-	case ClassWarrior:
-		addHit, addMove = addHit+randRange(r, 10, 15), randRange(r, 1, 3)
-	case ClassPaladin:
-		addHit, addMove = addHit+randRange(r, 10, 14), randRange(r, 1, 3)
+	// casterMana is the two spellcasting classes' identical mana roll, capped
+	// at ten. The C computes (int)(1.5 * GET_LEVEL(ch)), which truncates
+	// towards zero for the positive levels this can be called with, so
+	// integer arithmetic gives the same answer.
+	level := rec.Level
+	casterMana := func() int32 {
+		n := randRange(r, level, level*3/2)
+		if n > 10 {
+			n = 10
+		}
+		return n
 	}
 
-	// Every class rolls mana the same way, capped at ten. The C computes
-	// (int)(1.5 * level), which truncates towards zero for the positive
-	// levels this can be called with, so integer arithmetic gives the same
-	// answer.
-	level := rec.Level
-	addMana := randRange(r, level, level*3/2)
-	if addMana > 10 {
-		addMana = 10
+	// **The draws are written out per class, in the C's own order, and that
+	// order is not the same for every class.** A magic-user and a cleric roll
+	// hit points, then *mana*, then movement (class.c:1948-1950, :1957-1959);
+	// a thief and a warrior roll hit points and then movement, and set
+	// add_mana to a plain zero with no draw at all (:1965-1967, :1971-1973).
+	//
+	// Both halves of that were wrong here, and both were invisible in a
+	// single character. Rolling movement before mana handed each of them the
+	// other's number, which is how a magic-user got 83 movement where the C
+	// gave 84. Rolling mana for a thief cost a draw the C never takes, so
+	// every roll in the game after a thief was created came out one step
+	// along — which is what the session-parity harness saw as hit points that
+	// did not match (#188).
+	switch rec.Class {
+	case ClassMagicUser:
+		addHit += randRange(r, 3, 8)
+		addMana = casterMana()
+		addMove = randRange(r, 0, 2)
+	case ClassCleric:
+		addHit += randRange(r, 5, 10)
+		addMana = casterMana()
+		addMove = randRange(r, 0, 2)
+	case ClassThief:
+		addHit += randRange(r, 7, 13)
+		addMove = randRange(r, 1, 3)
+	case ClassWarrior:
+		addHit += randRange(r, 10, 15)
+		addMove = randRange(r, 1, 3)
+	case ClassPaladin:
+		// Not the C's: advance_level has no CLASS_PALADIN case at all, so a
+		// paladin there gains only the constitution bonus and the two MAX(1)
+		// floors. These numbers are this port's, modelled on the warrior's
+		// and one below them; see docs/deviations.md. The draws follow the
+		// warrior's shape, mana included — which is to say, no mana draw.
+		addHit += randRange(r, 10, 14)
+		addMove = randRange(r, 1, 3)
 	}
 
 	// MAX(1, ...) on both: a low-constitution magic-user can roll a negative
@@ -363,7 +391,13 @@ func Start(rec *PlayerRecord, r *rng.Rand) {
 	rec.Points.Exp = 1
 	rec.Abilities = RollAbilities(rec.Class, r)
 	rec.Title = Title(rec.Class, rec.Level, rec.Sex)
+	// All three, as do_start does (class.c:1897-1899). init_char has already
+	// set the mana and movement to the same numbers for a character created
+	// here, which is why leaving them out was invisible — but do_start sets
+	// them itself, and it is do_start that says what a level 1 character is.
 	rec.Points.MaxHit = baseMaxHit
+	rec.Points.MaxMana = baseMaxMana
+	rec.Points.MaxMove = baseMaxMove
 	rec.Skills = StartingSkills(rec.Class)
 
 	AdvanceLevel(rec, r)

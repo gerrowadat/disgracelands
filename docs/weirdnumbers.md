@@ -272,6 +272,68 @@ levels above you. Killing something far above your level is worth more alone.
 
 ---
 
+### advance_level draws in a different order for different classes
+
+```c
+  case CLASS_MAGIC_USER:
+    add_hp += rand_number(3, 8);
+    add_mana = rand_number(GET_LEVEL(ch), (int)(1.5 * GET_LEVEL(ch)));
+    add_mana = MIN(add_mana, 10);
+    add_move = rand_number(0, 2);
+    break;
+...
+  case CLASS_THIEF:
+    add_hp += rand_number(7, 13);
+    add_mana = 0;
+    add_move = rand_number(1, 3);
+    break;
+```
+
+Read as arithmetic these four cases are the same shape with different
+constants. As *draws* they are not. A magic-user and a cleric take three —
+hit points, **mana**, movement, in that order. A thief and a warrior take
+two, because `add_mana = 0` is an assignment and not a call: the generator
+is not advanced.
+
+Both halves bite. Hoisting the mana roll out of the switch, on the reasoning
+that every class computes it the same way, hands a magic-user's mana number
+to their movement and their movement number to their mana — 83 movement
+where the C gives 84 — and costs a thief a draw the C never spends, so every
+roll in the game after a thief is created comes out one step along. The
+first is a wrong number in one field; the second is a wrong number in
+everything, for the rest of the run, and it is the one that is nearly
+impossible to find by reading.
+
+`(int)(1.5 * GET_LEVEL(ch))` is a genuine float multiplication truncated
+back to `int`, but for the positive levels this is ever called with it agrees
+with `level * 3 / 2` in integer arithmetic, so there is no `shopprice`-style
+width problem here.
+
+*Source*: `class.c:1941-1974`. *Reproduced* in `game.AdvanceLevel`, checked
+against `reference/tools/startoracle.c`.
+
+### do_start sets max_mana to 100, and a new character has all of it
+
+```c
+  GET_MAX_HIT(ch)  = 10;
+  GET_MAX_MANA(ch) = 100;
+  GET_MAX_MOVE(ch) = 82;
+  ...
+  advance_level(ch);
+  ...
+  GET_MANA(ch) = GET_MAX_MANA(ch);
+```
+
+`advance_level` guards the mana *gain* on `GET_LEVEL(ch) > 1`, so a level 1
+character gains none — which reads like "a new character has no mana", and
+is not what the code says. The 100 is handed out flat, before the gain is
+skipped, and the prompt reads `100M` from the first moment of the first
+character. This port had a test asserting the opposite, with a comment
+explaining why the C prompts `0M`; the oracle disagreed and the oracle was
+right.
+
+*Source*: `class.c:1897-1899`, `:1924`. *Reproduced* in `game.Start`.
+
 ## Regeneration
 
 ### `graf`'s 60–79 band divides by 20
