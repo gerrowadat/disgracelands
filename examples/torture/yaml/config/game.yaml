@@ -1,0 +1,3 @@
+# examples/torture: the game tuning, deliberately not at its defaults.
+free_rent: false
+max_bad_pws: 3

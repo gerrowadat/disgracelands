@@ -1,0 +1,4 @@
+! ^
+
+A keyword line of pure punctuation, which slugs to the empty string.
+The writer falls back to a positional name for this one.

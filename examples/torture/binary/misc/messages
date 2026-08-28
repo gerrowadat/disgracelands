@@ -1,0 +1,35 @@
+* misc/messages. Comments are only legal between records.
+
+* Magic Missile (spells.h SPELL_MAGIC_MISSILE is 5).
+M
+ 5
+Your magic missile finishes $N off — messily.
+$n's magic missile finishes you off.
+$n's magic missile finishes $N off.
+Your magic missile misses $N.
+$n's magic missile misses you.
+$n's magic missile misses $N.
+Your magic missile hits $N.
+$n's magic missile hits you.
+$n's magic missile hits $N.
+#
+#
+#
+
+* TYPE_HIT (structs.h) is 132: an ordinary weapon swing.
+M
+ 132
+You batter $N into a café-coloured smear.
+$n batters you into a smear.
+$n batters $N into a smear.
+#
+#
+#
+You hit $N.
+$n hits you.
+$n hits $N.
+Your godly blow annihilates $N.
+$n's godly blow annihilates you.
+$n's godly blow annihilates $N.
+
+$

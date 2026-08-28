@@ -1,0 +1,6 @@
+SLUG COLLISION
+
+HelpSlug joins an entry's keywords with a space, lowercases them and
+collapses every non-alphanumeric run to one dash. So this entry and
+the next one both slug to "slug-collision", from two different
+keyword lines, and the writer has to disambiguate them.

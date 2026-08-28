@@ -199,7 +199,7 @@ func (l *loader) objFromDoc(path string, od objDoc) *game.ObjDef {
 	if len(unknown) > 0 {
 		l.errorf("%s: object #%d: unknown perm_affect name(s): %s", path, od.Vnum, strings.Join(unknown, ", "))
 	}
-	obj.PermAffect = int32(permAffect) //nolint:gosec // affect bits fit comfortably
+	obj.PermAffect = int32(permAffect.Set(game.Flags(od.PermAffectRaw))) //nolint:gosec // affect bits fit comfortably
 
 	obj.Values = l.objValues(path, od)
 

@@ -1,0 +1,550 @@
+schema: dl/world@1
+zone:
+  vnum: 50
+  name: The Torture Chamber
+  range:
+  - 5000
+  - 5099
+  lifespan: 30
+  reset: always
+rooms:
+- vnum: 5000
+  name: The Antechamber of Every Flag
+  sector: inside
+  flags:
+  - dark
+  - death
+  - no_mob
+  - indoors
+  - peaceful
+  - soundproof
+  - no_track
+  - no_magic
+  - tunnel
+  - private
+  - godroom
+  - house
+  - house_crash
+  - atrium
+  - olc
+  - good_regen
+  - can_quit
+  - pkill
+  flags_raw: 4294475776
+  desc: |2
+       Every room flag a CircleMUD bitvector_t can hold is set on this room
+    at once. The field below is 'abcdefghijklmnopqrstuvwxyzABCDEF' - bits 0
+    through 31, which is as wide as an i386 `long` ever was. Anything from
+    'G' on would be `1 << 32` in an `int`, which is undefined behaviour in
+    the C loader rather than a bigger number, so this is the widest field
+    that is hostile instead of simply broken.
+       Bits nothing has a name for come back through `flags_raw`, which is
+    the escape hatch the yaml format has for exactly this.
+  exits:
+    north:
+      to: 5001
+      desc: |
+            North, to the room whose description is not ASCII.
+      key: -1
+- vnum: 5001
+  name: Caf’ de l’Encodage…
+  sector: city
+  desc: |2
+       This description is CP1252, not UTF-8, and every byte in it that is
+    not ASCII is one an archived world file really contains: ’ is the
+    curly apostrophe in data/world/wld/90.wld, “ and ” the curly
+    quotes, – and — the en and em dashes, … an ellipsis, and é
+    è ü ñ the accented letters a builder typed on a machine that
+    was not this one.
+       © 2001. ½ a loaf. 30° to starboard.
+  exits:
+    north:
+      to: 5002
+      desc: |
+            North, past the café, to the room that ends in silence.
+      key: -1
+    south:
+      to: 5000
+      desc: |
+            Back to the Antechamber.
+      key: -1
+  extra_descs:
+  - keywords:
+    - caf’
+    - sign
+    desc: "   The sign says “Café”, in the encoding it was painted in.\n"
+- vnum: 5002
+  name: The Room That Ends In Silence
+  sector: field
+  desc: "   This description ends with a deliberately blank line before its\nclosing tilde. fread_string appends CRLF for every line that does not\ncontain a tilde, so the loaded string ends with two of them, and a\nYAML\nliteral block cannot carry that back: goccy's re-print right-trims\nevery trailing newline off the node regardless of the chomping\nindicator. The yaml writer quotes and escapes it instead.\n\n"
+  exits:
+    north:
+      to: 5003
+      desc: |
+            North, to the room with a carriage return in it.
+      key: -1
+    south:
+      to: 5001
+      desc: |
+            Back to the café.
+      key: -1
+- vnum: 5003
+  name: The Room With A Bare Carriage Return
+  sector: inside
+  desc: "   The line after this one ends with a literal CR before its newline.\nrawLine strips only the '\\n', so the CR survives into the string and\nfread_string then appends its own CRLF after it:\r\n   That is a bare carriage return once CRLF pairs are folded to LF, and\na bare CR is unrepresentable in a YAML block scalar at all - the spec\nfolds CR, CRLF and LF alike on decode. obj/0.obj's bug object in the\nreal archive has fifteen of them in a row.\n"
+  exits:
+    north:
+      to: 5004
+      desc: |
+            North, to the room with trailing spaces.
+      key: -1
+    south:
+      to: 5002
+      desc: |
+            Back to the room that ends in silence.
+      key: -1
+- vnum: 5004
+  name: The Room With Trailing Spaces
+  sector: inside
+  desc: "   The final line of this description carries its own tilde, so\nfread_string returns without appending CRLF, and it carries trailing\nspaces before that tilde. A literal block drops them; the writer\nquotes the string instead.   "
+  exits:
+    north:
+      to: 5005
+      desc: |
+            North, to the room with a hash in it.
+      key: -1
+    south:
+      to: 5003
+      desc: |
+            Back to the room with a carriage return in it.
+      key: -1
+- vnum: 5005
+  name: The Room With A Hash In It
+  sector: inside
+  desc: |2
+       The next line begins with a '#'. count_hash_records counts those to
+    size its arrays, and it counts this one, so the loader allocates room
+    for a record that is not there:
+    #5005 is prose, not a record header, whatever the record counter says.
+       A lone dollar sign is content too, and so is a hash that is not in
+    the first column: only a tilde ends a string, and only a hash in
+    column one starts a record. $
+  exits:
+    north:
+      to: 5006
+      desc: |
+            North, to the gallery.
+      key: -1
+    south:
+      to: 5004
+      desc: |
+            Back to the room with trailing spaces.
+      key: -1
+- vnum: 5006
+  name: The Gallery of Indented Art
+  sector: inside
+  desc: |2
+       Two hand-drawn signs hang here. One is an extra description on the
+    room; the other is the description of the exit north. Both begin with
+    more leading whitespace than a later line carries, which is the shape
+    that makes a YAML literal block decode back to a different string than
+    it encoded unless an indentation indicator is emitted - and NestedText
+    cannot reliably emit one at this depth, so it quotes instead.
+  exits:
+    north:
+      to: 5007
+      desc: "        /\\\n       /  \\    a gable, drawn in an exit description, six columns deep\n      /____\\   in the yaml document that comes out the other side\n"
+      door: regular
+      key: 5003
+      keywords: gate grille
+    south:
+      to: 5005
+      desc: |
+            Back to the room with a hash in it.
+      key: -1
+  extra_descs:
+  - keywords:
+    - sign
+    - painted
+    desc: "        +----------------+\n        |  THIS WAY UP   |\n        +----------------+\n   and underneath, in a smaller hand, someone has added: 'or not'.\n"
+- vnum: 5007
+  name: The Room That Looks Like Syntax
+  sector: inside
+  desc: |2
+       get_line skips a line whose first byte is '*'; fread_string does
+    not. So the next line is content, and a loader that used the wrong
+    primitive would silently lose it:
+    * this line begins with an asterisk and is part of the description.
+       The line after this one opens with the colour markup's own
+    delimiter, which YAML would otherwise read as a flow mapping:
+    {{red}}not colour, just two braces{{/}}
+  exits:
+    north:
+      to: 5008
+      desc: |
+            North, to the last room.
+      key: -1
+    south:
+      to: 5006
+      desc: |
+            Back to the gallery.
+      key: -1
+- vnum: 5008
+  name: The Empty Room
+  sector: inside
+  desc: ""
+  exits:
+    south:
+      to: 5007
+      desc: |
+            Back to the room that looks like syntax.
+      key: -1
+mobiles:
+- vnum: 5000
+  keywords:
+  - everything
+  - mobile
+  - flags
+  short: the mobile with every flag
+  long: |
+    A mobile carrying every action and affection bit at once stands here.
+  desc: |2
+       Both bit fields on this mobile are the full 32 the C can represent.
+    Its hit dice and damage dice are at the extremes sscanf will read: the
+    format embeds the 'd' and the '+' as literals, so a negative bonus
+    cannot be written at all, and these are the largest that fit.
+  act:
+  - spec
+  - sentinel
+  - scavenger
+  - aware
+  - aggressive
+  - stay_zone
+  - wimpy
+  - aggr_evil
+  - aggr_good
+  - aggr_neutral
+  - memory
+  - helper
+  - no_charm
+  - no_summon
+  - no_sleep
+  - no_bash
+  - no_blind
+  - dead
+  act_raw: 4294443008
+  affected:
+  - blind
+  - invisible
+  - detect_align
+  - detect_invis
+  - detect_magic
+  - sense_life
+  - waterwalk
+  - sanctuary
+  - group
+  - curse
+  - infravision
+  - poison
+  - protect_evil
+  - protect_good
+  - sleep
+  - no_track
+  - holy_shield
+  - sneak
+  - hide
+  - silence
+  - charm
+  affected_raw: 4290838528
+  alignment: -1000
+  level: 34
+  thac0: -10
+  ac: -100
+  hp: 30d30+30000
+  damage: 20d20+2000
+  gold: 2000000000
+  exp: 2000000000
+  position: standing
+  default_position: standing
+  sex: female
+- vnum: 5001
+  keywords:
+  - enhanced
+  - especs
+  - mobile
+  short: the enhanced mobile
+  long: |
+    A mobile with an espec for every ability is here, being enhanced.
+  desc: |2
+       parse_enhanced_mob reads 'Key: Value' lines until an 'E' on its own.
+    interpret_espec splits on the first colon and treats a line with no
+    colon as a keyword with no value, so both shapes are here.
+  act:
+  - spec
+  - sentinel
+  alignment: 0
+  level: 1
+  thac0: 20
+  ac: 10
+  hp: 1d1+1
+  damage: 1d1
+  gold: 0
+  exp: 1
+  position: standing
+  default_position: standing
+  sex: neutral
+  abilities:
+    bare_hand_attack: 12
+    str: 18
+    str_add: 100
+    int: 18
+    wis: 18
+    dex: 18
+    con: 18
+    cha: 18
+- vnum: 5002
+  keywords:
+  - shopkeeper
+  - torture
+  short: the torture chamber's shopkeeper
+  long: |
+    A shopkeeper stands here, selling awkward things.
+  act:
+  - spec
+  - sentinel
+  alignment: 0
+  level: 20
+  thac0: 10
+  ac: 0
+  hp: 10d10+100
+  damage: 2d4+2
+  gold: 500
+  exp: 1000
+  position: standing
+  default_position: standing
+  sex: male
+objects:
+- vnum: 5000
+  keywords:
+  - extremes
+  - object
+  - every
+  - flag
+  short: the object of every extreme
+  desc: An object whose every value is at an extreme lies here.
+  action_desc: |2
+       Read me. I am an action description, which most objects do not have.
+  type: weapon
+  wear:
+  - take
+  - finger
+  - neck
+  - body
+  - head
+  - legs
+  - feet
+  - hands
+  - arms
+  - shield
+  - about
+  - waist
+  - wrist
+  - wield
+  - hold
+  wear_raw: 4294934528
+  flags:
+  - glow
+  - hum
+  - no_rent
+  - no_donate
+  - no_invis
+  - invisible
+  - magic
+  - no_drop
+  - bless
+  - anti_good
+  - anti_evil
+  - anti_neutral
+  - anti_mage
+  - anti_cleric
+  - anti_thief
+  - anti_warrior
+  - no_sell
+  - no_locate
+  flags_raw: 4294705152
+  perm_affect:
+  - blind
+  - invisible
+  - detect_align
+  - detect_invis
+  - detect_magic
+  - sense_life
+  - waterwalk
+  - sanctuary
+  - group
+  - curse
+  - infravision
+  - poison
+  - protect_evil
+  - protect_good
+  - sleep
+  - no_track
+  - holy_shield
+  - sneak
+  - hide
+  - silence
+  - charm
+  perm_affect_raw: 2143354880
+  values:
+  - 2147483647
+  - -2147483648
+  - 2147483647
+  - -2147483648
+  weight: 2147483647
+  cost: 2147483647
+  rent: 2147483647
+  min_level: 34
+  affects:
+  - location: str
+    modifier: -100
+  - location: hitroll
+    modifier: 100
+- vnum: 5001
+  keywords:
+  - flask
+  - heavy
+  - liquid
+  short: a suspiciously light flask
+  desc: A flask that weighs less than what is in it sits here.
+  type: drink_container
+  wear:
+  - take
+  drink:
+    capacity: 100
+    current: 96
+    liquid: water
+  weight: 101
+  cost: 10
+  rent: 1
+- vnum: 5002
+  keywords:
+  - described
+  - thing
+  - many
+  short: a much-described thing
+  desc: A thing with more descriptions than sense is here.
+  type: armor
+  wear:
+  - take
+  - finger
+  armor:
+    ac_apply: 0
+  weight: 1
+  cost: 1
+  rent: 1
+  affects:
+  - location: str
+    modifier: 1
+  - location: dex
+    modifier: 2
+  extra_descs:
+  - keywords:
+    - third
+    desc: "   The last extra description in the file, which the C loader sees\nfirst. reverseExtras is what keeps that observable.\n"
+  - keywords:
+    - second
+    desc: "        ___\n       /   \\   art on an object's extra description, indented deeper on\n       \\___/   its first line than on its last\n"
+  - keywords:
+    - first
+    desc: "   The first extra description in the file, which the C loader prepends\nand therefore sees last.\n"
+- vnum: 5003
+  keywords:
+  - key
+  - minimal
+  short: a minimal key
+  desc: A minimal key lies here.
+  type: key
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 0
+  cost: 0
+  rent: 0
+- vnum: 5004
+  keywords:
+  - box
+  - nesting
+  short: a nesting box
+  desc: A box that holds another box is here.
+  type: container
+  wear:
+  - take
+  container:
+    capacity: 100
+    key: -1
+  weight: 5
+  cost: 10
+  rent: 1
+shops:
+- vnum: 50
+  keeper: 5002
+  rooms:
+  - 5000
+  sells:
+  - 5000
+  - 5002
+  buys:
+  - type: weapon
+  - type: armor
+  markup: 1.5
+  markdown: 0.25
+  hours:
+  - - 0
+    - 28
+  messages:
+    no_such_item_keeper: "%s I do not have that, and would not sell it if I did."
+    no_such_item_player: "%s You do not seem to have that."
+    do_not_buy: "%s I do not buy that here."
+    keeper_broke: "%s I cannot afford that right now!"
+    player_broke: "%s You cannot afford that!"
+    buy: "%s That will be %d coins, thanks."
+    sell: "%s I will give you %d coins for it."
+resets:
+- mob: 5000
+  room: 5000
+  max: 1
+  then:
+  - give: 5000
+    max: 1
+  - equip: 5002
+    slot: wield
+    max: 1
+- room: 5006
+  object: 5004
+  max: 3
+  then:
+  - put: 5004
+    into: 5004
+    max: 3
+  - put: 5004
+    into: 5004
+    max: 3
+  - put: 5003
+    into: 5004
+    max: 1
+- mob: 5001
+  room: 5001
+  max: 1
+- mob: 5002
+  room: 5002
+  max: 1
+  then:
+  - give: 5000
+    max: 5
+  - give: 5002
+    max: 5
+- door: 5006
+  dir: north
+  state: locked

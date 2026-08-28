@@ -1,0 +1,18 @@
+schema: dl/bans@1
+bans:
+- site: new.example.org
+  type: new
+  when: "2004-11-09T11:33:20Z"
+  by: Torturer
+- site: select.example.org
+  type: select
+  when: "2004-11-09T11:33:20Z"
+  by: Torturer
+- site: all.example.org
+  type: all
+  when: "2004-11-09T11:33:20Z"
+  by: Torturer
+- site: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.example.org
+  type: all
+  when: "2004-11-09T11:33:20Z"
+  by: Abbbbbbbbbbbbbbbbbb

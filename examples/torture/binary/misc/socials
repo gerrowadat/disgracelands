@@ -1,0 +1,46 @@
+smile 0 0
+You smile.
+$n smiles.
+You smile at $M.
+$n smiles at $N.
+$n smiles at you.
+They are not here.
+You smile at yourself.
+$n smiles at $mself.
+
+ponder 0 0
+You ponder.
+$n ponders.
+#
+
+shove 1 8
+Shove whom?
+#
+You shove $M.
+$n shoves $N.
+$n shoves you.
+They are not here to be shoved.
+You shove yourself. Well done.
+$n shoves $mself, which is quite a trick.
+
+cafe 0 0
+You order a café — £2.50, and worth it.
+$n orders a café. It smells of “proper” coffee.
+You buy $M a café; $e says “merci” and takes it in $s own hands.
+$n buys $N a café.
+$n buys you a café.
+Nobody by that name is at the café.
+You buy yourself a café.
+$n buys $mself a café.
+
+congratulate 0 0
+Congratulate whom?
+#
+You congratulate $M.
+$n congratulates $N.
+$n congratulates you.
+They are not here.
+You congratulate yourself.
+$n congratulates $mself.
+
+$

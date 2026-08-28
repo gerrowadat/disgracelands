@@ -1,0 +1,3 @@
+CAFE CAFé
+
+An entry whose keywords are not ASCII. © 2001.

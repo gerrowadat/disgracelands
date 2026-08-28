@@ -1,0 +1,48 @@
+#5000
+everything mobile flags~
+the mobile with every flag~
+A mobile carrying every action and affection bit at once stands here.
+~
+   Both bit fields on this mobile are the full 32 the C can represent.
+Its hit dice and damage dice are at the extremes sscanf will read: the
+format embeds the 'd' and the '+' as literals, so a negative bonus
+cannot be written at all, and these are the largest that fit.
+~
+abcdefghijklmnopqrstuvwxyzABCDEF abcdefghijklmnopqrstuvwxyzABCDEF -1000 S
+34 -10 -100 30d30+30000 20d20+2000
+2000000000 2000000000
+8 8 2
+#5001
+enhanced especs mobile~
+the enhanced mobile~
+A mobile with an espec for every ability is here, being enhanced.
+~
+   parse_enhanced_mob reads 'Key: Value' lines until an 'E' on its own.
+interpret_espec splits on the first colon and treats a line with no
+colon as a keyword with no value, so both shapes are here.
+~
+ab 0 0 E
+1 20 10 1d1+1 1d1+0
+0 1
+8 8 0
+BareHandAttack: 12
+Str: 18
+StrAdd: 100
+Int: 18
+Wis: 18
+Dex: 18
+Con: 18
+Cha: 18
+NoColonKeyword
+E
+#5002
+shopkeeper torture~
+the torture chamber's shopkeeper~
+A shopkeeper stands here, selling awkward things.
+~
+~
+ab 0 0 S
+20 10 0 10d10+100 2d4+2
+500 1000
+8 8 1
+$

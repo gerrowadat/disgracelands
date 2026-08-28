@@ -242,24 +242,25 @@ func diceDocString(d game.Dice) string {
 func objDocFrom(o *game.ObjDef) objDoc {
 	wearNames, wearRaw := game.NameBits(o.WearFlags, game.YamlWearFlagNames())
 	flagNames, flagRaw := game.NameBits(o.ExtraFlags, game.YamlItemExtraFlagNames())
-	permNames, _ := game.NameBits(game.Flags(o.PermAffect), game.YamlAffectFlagNames()) //nolint:gosec // affect bits fit comfortably
+	permNames, permRaw := game.NameBits(game.Flags(o.PermAffect), game.YamlAffectFlagNames()) //nolint:gosec // affect bits fit comfortably
 
 	od := objDoc{
-		Vnum:       int32(o.Vnum),
-		Keywords:   strings.Fields(o.Keywords),
-		Short:      Text(o.ShortDesc),
-		Desc:       Text(ToStored(o.Description)),
-		ActionDesc: Text(ToStored(o.ActionDesc)),
-		Type:       valueName(o.Type, game.YamlItemTypeNames()),
-		Wear:       wearNames,
-		WearRaw:    uint64(wearRaw),
-		Flags:      flagNames,
-		FlagsRaw:   uint64(flagRaw),
-		PermAffect: permNames,
-		Weight:     o.Weight,
-		Cost:       o.Cost,
-		Rent:       o.RentPerDay,
-		MinLevel:   o.MinLevel,
+		Vnum:          int32(o.Vnum),
+		Keywords:      strings.Fields(o.Keywords),
+		Short:         Text(o.ShortDesc),
+		Desc:          Text(ToStored(o.Description)),
+		ActionDesc:    Text(ToStored(o.ActionDesc)),
+		Type:          valueName(o.Type, game.YamlItemTypeNames()),
+		Wear:          wearNames,
+		WearRaw:       uint64(wearRaw),
+		Flags:         flagNames,
+		FlagsRaw:      uint64(flagRaw),
+		PermAffect:    permNames,
+		PermAffectRaw: uint64(permRaw),
+		Weight:        o.Weight,
+		Cost:          o.Cost,
+		Rent:          o.RentPerDay,
+		MinLevel:      o.MinLevel,
 	}
 
 	typed, unusedNonzero, ok := TypedValues(o.Type, o.Values)

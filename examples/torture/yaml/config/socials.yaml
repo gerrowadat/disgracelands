@@ -1,0 +1,62 @@
+schema: dl/socials@1
+socials:
+- command: smile
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: You smile.
+    others: $n smiles.
+  found:
+    char: You smile at $M.
+    others: $n smiles at $N.
+    victim: $n smiles at you.
+  not_found: They are not here.
+  self:
+    char: You smile at yourself.
+    others: $n smiles at $mself.
+- command: ponder
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: You ponder.
+    others: $n ponders.
+- command: shove
+  hide: true
+  min_victim_position: standing
+  no_arg:
+    char: Shove whom?
+  found:
+    char: You shove $M.
+    others: $n shoves $N.
+    victim: $n shoves you.
+  not_found: They are not here to be shoved.
+  self:
+    char: You shove yourself. Well done.
+    others: $n shoves $mself, which is quite a trick.
+- command: cafe
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: You order a café — £2.50, and worth it.
+    others: $n orders a café. It smells of “proper” coffee.
+  found:
+    char: You buy $M a café; $e says “merci” and takes it in $s own hands.
+    others: $n buys $N a café.
+    victim: $n buys you a café.
+  not_found: Nobody by that name is at the café.
+  self:
+    char: You buy yourself a café.
+    others: $n buys $mself a café.
+- command: congratulate
+  hide: false
+  min_victim_position: dead
+  no_arg:
+    char: Congratulate whom?
+  found:
+    char: You congratulate $M.
+    others: $n congratulates $N.
+    victim: $n congratulates you.
+  not_found: They are not here.
+  self:
+    char: You congratulate yourself.
+    others: $n congratulates $mself.
