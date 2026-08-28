@@ -1844,19 +1844,33 @@ found and reverted by diffing against what the words were before rather
 than trusting the regex.
 
 **Versioning the yaml format ✅ — `docs/design/data-format-versioning.md`,
-a `major.minor.patch` stamp for the format as a whole, distinct from
-§10.1's existing per-file `schema: dl/<kind>@<major>` tag.**
+a `major.minor.patch` stamp for a data directory as a whole, distinct
+from §10.1's existing per-file `schema: dl/<kind>@<major>` tag.**
 `internal/persist/dataversion` reads and writes `.dlversion` at a data
-directory's root; `dlmud`'s boot sequence refuses to start on a stamp
-whose major is newer than this build understands, logs a warning and
-starts anyway on a newer minor ("own risk"), and says nothing about a
-newer patch or no stamp at all. `dlctl data version --dir=X` answers the
-same question offline, and `--write` stamps a directory that predates
-the mechanism. `Current` is `1.0.0` — there has been exactly one version
-so far, which this work is what establishes; the minor-version warning
-has no per-feature detail to give yet, and nothing stamps a directory
-automatically, both named as real, current gaps rather than built ahead
-of a second version to test them against.
+directory's root. The number stamped is **the release semver of the
+build that wrote it**, from `internal/buildinfo` — derived rather than
+hand-maintained, which is the whole argument (§1.1 of the design doc):
+a format version somebody has to remember to bump is one that fails
+silently in exactly the direction the mechanism exists to catch.
+`dlctl lib import` stamps `--to-dir` once every step has succeeded, and
+`dlmud`'s boot sequence compares that stamp against its own release —
+**a differing major refuses to start, in either direction; a differing
+minor logs a warning and starts anyway; a differing patch, or no stamp,
+says nothing.** Both comparisons are on difference, not newer-ness: a
+major bump means the two builds disagree about what the files mean, and
+disagreement has no direction. `dlctl data version --dir=X` answers the
+same question offline, and `--write` restamps — the migration path
+across a major bump, and the adoption path for a directory that predates
+the mechanism.
+
+Named as real, current gaps rather than papered over: an **unreleased
+build** (`go run`, `go test`, plain `go build`) has no version of its
+own, so it stamps nothing and enforces nothing — accepted deliberately,
+because a development build guessing at a version and then enforcing it
+would be worse than not checking (design doc §6); the **minor-version
+warning is generic**, and usually a false alarm, because most releases
+do not touch the format at all; and **nothing migrates the files** across
+a major bump, only the stamp.
 
 **`dlctl lib import` ✅ — the seven format-specific importers, run
 together against one `lib/`-shaped source, in one command.** `world
@@ -1864,7 +1878,8 @@ import`/`pfile import`/`state import`/`names import`/`messages import`/
 `socials import`/`helpdb import`, run in that order against
 `--from-dir`'s own subdirectories, plus `text/`'s plain-prose files
 copied unchanged (never a pluggable format) and, once every step has
-actually succeeded, a `.dlversion` stamp written into `--to-dir`.
+actually succeeded, a `.dlversion` stamp naming this build's release
+written into `--to-dir` (nothing, from an unreleased build).
 Verified against `examples/stock/`, not a synthetic fixture: regenerating
 `examples/stock/yaml` from `examples/stock/binary` and diffing every file
 against what is checked in is what proved the recipe, not an assumption,

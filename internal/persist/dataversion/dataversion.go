@@ -8,12 +8,18 @@
 // major.minor.patch stamp — docs/design/data-format-versioning.md, which
 // this package is the implementation of.
 //
+// The number stamped is the *release semver of the build that wrote the
+// directory*, taken from internal/buildinfo, not a version this package
+// maintains by hand. A directory therefore records which dlctl made it,
+// and dlmud compares that against its own release: the same major or it
+// will not start, a differing minor and it says so and starts anyway.
+//
 // It is deliberately separate from any one subsystem's schema tag
 // (data-format.md §10.1's "schema: dl/<kind>@<major>" on every individual
 // file): that tag says what shape *one file* is in, checked the moment
-// that file is read. This package says what release of the yaml format
-// packages as a whole a data/ directory was last written by — one number
-// for every subsystem together, checked once, at boot.
+// that file is read. This package says which release of the tooling last
+// wrote a data/ directory as a whole — one number for every subsystem
+// together, checked once, at boot.
 package dataversion
 
 import (
@@ -24,6 +30,8 @@ import (
 	"strings"
 
 	"github.com/goccy/go-yaml"
+
+	"github.com/gerrowadat/disgracelands/internal/buildinfo"
 )
 
 // FileName is the stamp's own name, at the root of a data directory that
@@ -33,12 +41,6 @@ const FileName = ".dlversion"
 // schema is this file's own schema tag, the same convention data-format.md
 // §10.1 gives every other yaml document.
 const schema = "dl/dataversion@1"
-
-// Current is the version this build's yaml packages implement. Bump it —
-// and only it — when a change to internal/persist/*/yaml earns one, per
-// docs/design/data-format-versioning.md's three tiers. There has been
-// exactly one version so far: this is also the first one.
-var Current = Version{Major: 1, Minor: 0, Patch: 0}
 
 // Version is a data/ directory's format-version stamp.
 type Version struct {
@@ -68,58 +70,133 @@ func Parse(s string) (Version, error) {
 	return Version{Major: nums[0], Minor: nums[1], Patch: nums[2]}, nil
 }
 
+// Current is this build's own release version, and whether it has one at
+// all. It is buildinfo's version string reduced to a semver: the Makefile
+// stamps that from `git describe --tags --always --dirty`, so a build made
+// from a tag reads "v1.2.3" and one made four commits past it reads
+// "v1.2.3-4-gabc1234" — both of which are release 1.2.3 for compatibility
+// purposes, because the format a build writes is whatever its source says,
+// and the tag is the only name that source has.
+//
+// ok is false for a build with no release version to name — `go run`, `go
+// test`, `go install`, a plain `go build` with no -ldflags, all of which
+// leave buildinfo reporting "devel". Such a build stamps nothing and
+// enforces nothing; see CheckBuild, and docs/design/data-format-
+// versioning.md §6 for why that hole is deliberate rather than an
+// oversight.
+func Current() (v Version, ok bool) {
+	return parseBuild(buildinfo.Get().Version)
+}
+
+// parseBuild reduces a `git describe` string to the release it names.
+func parseBuild(s string) (Version, bool) {
+	s = strings.TrimPrefix(s, "v")
+	// "-4-gabc1234", "-dirty", and semver's own "+build" metadata all
+	// describe *this* build, not the release it descends from.
+	if i := strings.IndexAny(s, "-+"); i >= 0 {
+		s = s[:i]
+	}
+	v, err := Parse(s)
+	if err != nil {
+		return Version{}, false
+	}
+	return v, true
+}
+
 type doc struct {
 	Schema  string `yaml:"schema"`
 	Format  string `yaml:"format"`
 	Version string `yaml:"version"`
 }
 
-// Check reads dir/.dlversion, if it exists, and compares it against
-// current. The three tiers, per docs/design/data-format-versioning.md:
-//
-//   - No stamp, or the stamp is at or below what current supports: both
-//     return values are zero. There is nothing for a caller to say — this
-//     covers every data/ directory that predates the stamp, and every one
-//     already caught up.
-//   - The stamp's minor is newer than current's, same major: warning is
-//     non-empty, err is nil. "Own risk" — boot anyway, but say so.
-//   - The stamp's major is newer than current's: err is non-nil. This
-//     build may misread the data outright, and must not start on it.
-func Check(dir string, current Version) (warning string, err error) {
+// Read returns the version dir is stamped with, and whether it is stamped
+// at all. A directory with no stamp is not an error: it is every directory
+// that predates this mechanism, every one written by an unreleased build,
+// and every one running only classic/ascii/binary, all of which are
+// unversioned by design.
+func Read(dir string) (v Version, ok bool, err error) {
 	path := filepath.Join(dir, FileName)
 	b, err := os.ReadFile(path) //nolint:gosec // operator-configured data directory
 	if os.IsNotExist(err) {
-		return "", nil
+		return Version{}, false, nil
 	}
 	if err != nil {
-		return "", fmt.Errorf("reading %s: %w", path, err)
+		return Version{}, false, fmt.Errorf("reading %s: %w", path, err)
 	}
 	var d doc
 	if err := yaml.UnmarshalWithOptions(b, &d, yaml.Strict()); err != nil {
-		return "", fmt.Errorf("reading %s: %w", path, err)
+		return Version{}, false, fmt.Errorf("reading %s: %w", path, err)
 	}
 	got, err := Parse(d.Version)
 	if err != nil {
-		return "", fmt.Errorf("%s: %w", path, err)
+		return Version{}, false, fmt.Errorf("%s: %w", path, err)
 	}
+	return got, true, nil
+}
+
+// Check reads dir's stamp, if it has one, and compares it against current.
+// The three outcomes, per docs/design/data-format-versioning.md §2:
+//
+//   - No stamp, or the same major and minor: both return values are zero.
+//     Nothing to say.
+//   - Same major, a different minor in either direction: warning is
+//     non-empty, err is nil. Something in the format moved additively —
+//     boot anyway, but say so, because whichever side is behind may be
+//     quietly dropping what the other side knows about.
+//   - A different major in either direction: err is non-nil. The two
+//     builds do not agree on what the files mean, and this one must not
+//     start on data it may misread.
+//
+// Note that both comparisons are on *difference*, not on newer-ness: data
+// written by an older major is refused exactly as firmly as data written
+// by a newer one. A major bump is defined as a change an other-versioned
+// reader gets wrong rather than merely fails to understand, and "wrong" is
+// not a direction.
+func Check(dir string, current Version) (warning string, err error) {
+	got, ok, err := Read(dir)
+	if err != nil || !ok {
+		return "", err
+	}
+	path := filepath.Join(dir, FileName)
 	switch {
-	case got.Major > current.Major:
+	case got.Major != current.Major:
 		return "", fmt.Errorf(
-			"%s is format version %s; this server understands up to major version %d and will not start on newer data — see docs/design/data-format-versioning.md",
-			path, got, current.Major)
-	case got.Major == current.Major && got.Minor > current.Minor:
+			"%s was written by release %s; this is release %s, and major version %d only loads data written by major version %d — see docs/design/data-format-versioning.md",
+			path, got, current, current.Major, current.Major)
+	case got.Minor != current.Minor:
 		return fmt.Sprintf(
-			"%s is format version %s; this server only knows %s — starting anyway, at your own risk (docs/design/data-format-versioning.md). Run `dlctl data version --dir=%s` for specifics.",
+			"%s was written by release %s; this is release %s. Same major version, so it will load — but the two disagree on minor version, and whichever is behind may not understand everything the other wrote. Run `dlctl data version --dir=%s` for specifics.",
 			path, got, current, dir), nil
 	default:
 		return "", nil
 	}
 }
 
-// Write stamps dir/.dlversion with v, atomically. This is the adoption
-// path for a data directory that predates the stamp — `dlctl data version
-// --write`'s own implementation — and what a future format-changing
-// `fmt`/`import` tool would call once one has a reason to bump v.
+// CheckBuild is Check against this build's own release version, and the
+// entry point cmd/dlmud boots through.
+//
+// A build with no release version of its own (Current's ok is false) has
+// nothing to compare against, so it enforces nothing. It says so, once,
+// but only for a directory that actually carries a stamp — an unstamped
+// directory read by an unversioned build is two halves of the same
+// silence, and there is no finding to report.
+func CheckBuild(dir string) (warning string, err error) {
+	if current, ok := Current(); ok {
+		return Check(dir, current)
+	}
+	got, ok, err := Read(dir)
+	if err != nil || !ok {
+		return "", err
+	}
+	return fmt.Sprintf(
+		"%s was written by release %s, and this build (%s) has no release version of its own to check that against — no compatibility check was made. See docs/design/data-format-versioning.md.",
+		filepath.Join(dir, FileName), got, buildinfo.Get().Version), nil
+}
+
+// Write stamps dir/.dlversion with v, atomically. `dlctl lib import`
+// calls it with Current at the end of a successful conversion; `dlctl
+// data version --write` calls it by hand, which is the adoption path for
+// a directory that predates the stamp or one an older release wrote.
 func Write(dir string, v Version) error {
 	path := filepath.Join(dir, FileName)
 	d := doc{Schema: schema, Format: "yaml", Version: v.String()}

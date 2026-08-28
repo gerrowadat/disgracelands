@@ -356,7 +356,9 @@ jobs:
       # does this regeneration locally before dispatching, so a difference
       # here means the workflow was triggered without running it, not that the
       # examples are actually stale — either way, the release should not
-      # continue on a mismatch it did not expect.
+      # continue on a mismatch it did not expect. `.dlversion` is excluded:
+      # it records which release of dlctl wrote the directory, not anything
+      # about the world data, so it is meant to differ here.
       - name: Example worlds must match dlctl lib import's output
         run: |
           set -e
@@ -364,7 +366,7 @@ jobs:
             rm -rf "/tmp/regen-$pair"
             go run ./cmd/dlctl lib import \
               --from-dir="examples/$pair/binary" --to-dir="/tmp/regen-$pair" >/dev/null
-            if ! diff -rq "examples/$pair/yaml" "/tmp/regen-$pair"; then
+            if ! diff -rq -x .dlversion "examples/$pair/yaml" "/tmp/regen-$pair"; then
               echo "examples/$pair/yaml does not match a fresh dlctl lib import;"
               echo "run scripts/release.sh, which regenerates and commits this before dispatching this workflow."
               exit 1

@@ -127,7 +127,12 @@ for pair in stock mini; do
 	work=$(mktemp -d)
 	go run ./cmd/dlctl lib import \
 		--from-dir="examples/$pair/binary" --to-dir="$work" >/dev/null
-	if ! diff -rq "examples/$pair/yaml" "$work" >/dev/null 2>&1; then
+	# -x .dlversion: the stamp records which release of dlctl wrote the
+	# directory (docs/design/data-format-versioning.md), so it is expected
+	# to differ between a checked-in copy and a fresh import and says
+	# nothing about whether the world data drifted. An unreleased `go run`
+	# dlctl, which is what this is, writes none at all.
+	if ! diff -rq -x .dlversion "examples/$pair/yaml" "$work" >/dev/null 2>&1; then
 		echo "    examples/$pair/yaml is stale against examples/$pair/binary -- regenerating"
 		rm -rf "examples/$pair/yaml"
 		cp -r "$work" "examples/$pair/yaml"
@@ -140,11 +145,12 @@ if [ "$regenerated" -eq 1 ]; then
 	git add examples/stock/yaml examples/mini/yaml
 	git commit -m "Regenerate example yaml worlds for $tag
 
-dlctl lib import's output no longer matched what was checked in --
-either the yaml format's own version (internal/persist/dataversion)
-moved, or the binary source changed without a matching regeneration.
-Caught here rather than at release.yml's own drift check, which now has
-nothing to fail on.
+dlctl lib import's output no longer matched what was checked in -- the
+binary source changed without a matching regeneration, or an importer's
+own output did. (.dlversion is excluded from the comparison: it records
+which release of dlctl wrote the directory, not anything about the
+world.) Caught here rather than at release.yml's own drift check, which
+now has nothing to fail on.
 
 Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>"
 	echo "==> Committed regenerated example worlds"

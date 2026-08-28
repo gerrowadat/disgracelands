@@ -2,14 +2,18 @@
 
 `docs/design/data-format.md` §10.1 already tags every individual file with
 `schema: dl/<kind>@<major>` — what *shape* one file is in. This document
-is the layer above that: one `major.minor.patch` for the yaml packages as
-a whole, stamped once per data directory, checked once at boot rather than
-once per file. It is what lets a change to `internal/persist/*/yaml` say,
-truthfully, how much of a problem it is for a directory a different build
-wrote.
+is the layer above that: one `major.minor.patch` for a data directory as a
+whole, stamped when the directory is written and checked once at boot
+rather than once per file. The number is the **release version of the
+`dlctl` that wrote it** (§1.1), so a server can say, before it opens a
+single file, whether the tooling that produced this directory and the
+tooling about to read it are the same generation.
 
-Implemented in `internal/persist/dataversion` and wired into `dlmud`'s
-boot sequence and `dlctl data version`.
+The rule, in one line: **a differing minor version warns; a differing
+major version refuses to load at all, in either direction.**
+
+Implemented in `internal/persist/dataversion` and wired into `dlctl lib
+import`, `dlmud`'s boot sequence, and `dlctl data version`.
 
 ---
 
@@ -18,9 +22,11 @@ boot sequence and `dlctl data version`.
 | Question | Decision |
 |---|---|
 | **Shape** | **`major.minor.patch`, semver in spirit.** Three tiers, each with a different consequence, rather than the single incrementing integer §10.1 uses per file — a directory-level number has to describe *compatibility*, not just "newer/older", because unlike one file's shape, a whole yaml tree can drift in ways that are fine to run on and ways that are not. |
+| **Which number** | **The release semver of the build that wrote the directory** — `internal/buildinfo`'s version, which the Makefile stamps from `git describe --tags`. Not a format version this project maintains separately by hand. §1.1 has the reasoning and what it costs. |
 | **Where it lives** | **One file, `.dlversion`, at the root of the directory `--lib-dir` names.** Not per-subsystem. `PlayerFormat`, `WorldFormat`, `StateFormat` and the rest are independently selectable, but the code that implements `yaml` for all of them ships as one build of this one repo — there is no meaningful sense in which `internal/persist/player/yaml` is "version 1.2.0" while `internal/persist/world/yaml` is "version 1.4.0" in the same checkout. One number, describing what release of this codebase's yaml support last touched the directory. |
 | **What owns the check** | **The server refuses to boot on a major mismatch; a linter answers the question ahead of time.** `dataversion.Check` is the one function both call — `cmd/dlmud`'s boot sequence, for the consequence that matters, and `dlctl data version`, so an operator can ask "will this start?" without starting it. |
-| **What bumps which tier** | **Major: an older server would misread the data, not just fail to understand part of it — the same bar §10.1 sets for one file's own schema major, applied to the directory as a whole (a top-level directory renamed, a file split in two, `.dlversion` itself changing shape).** Minor: additive — a new optional field, a new document kind, a new flag value understood — nothing an older reader loses data over, only fails to take advantage of. Patch: no schema or behaviour change a reader could observe at all — a writer bug fixed, a validation message reworded, a default corrected to match what was already documented. |
+| **What bumps which tier** | **The project's own release tiers, which now have to mean this too.** Major: a differently-versioned build would misread the data, not just fail to understand part of it — the same bar §10.1 sets for one file's own schema major, applied to the directory as a whole (a top-level directory renamed, a file split in two, `.dlversion` itself changing shape). Minor: additive — a new optional field, a new document kind, a new flag value understood — nothing an other-versioned reader loses data over, only fails to take advantage of. Patch: no schema or behaviour change a reader could observe at all. |
+| **Which way the comparison runs** | **Neither tier looks at direction.** A *differing* minor warns and a *differing* major refuses, whether the data is ahead of the build or behind it. §2 has the argument; it is a change from this document's first version, which only ever looked upward. |
 
 ---
 
@@ -43,18 +49,67 @@ all" — a question that needs an answer before the first file is even
 opened, not discovered one `schema:` mismatch at a time partway through
 boot.
 
+### 1.1 Why the release semver, and not a number of its own
+
+The stamp is the writing build's own release version. `dlctl` 1.4.2 writes
+`1.4.2`; `dlmud` 1.4.2 reads it and agrees; `dlmud` 2.0.0 refuses it.
+
+The alternative — and this document's first version did it this way — is a
+format version maintained by hand, bumped only when
+`internal/persist/*/yaml` earns it, decoupled from releases entirely. That
+is the more precise instrument: it says *the format* moved rather than
+*the project* did, so a year of releases that never touch the yaml
+packages leave every directory happily compatible. What it costs is that
+the number is only ever as good as somebody's memory. It lives in one
+`var` that a change to a writer has no mechanical reason to touch; nothing
+fails if it is not bumped, and what a missed bump produces is not an error
+but silence — two builds that disagree about the files and neither of them
+saying so. A version nobody is forced to maintain is a version that will
+eventually be wrong in the one direction the mechanism exists to catch.
+
+The release semver has none of that precision and one property that
+outweighs it: **it is already correct, always, without anybody
+remembering.** It is derived, not declared. Every build has one, it moves
+on its own, and the release process is where the project already thinks
+about what a version number is promising.
+
+What it costs, stated plainly rather than discovered later:
+
+- **False alarms.** Most releases change nothing about the format, and two
+  builds a minor apart will warn at each other regardless. The warning is
+  therefore weaker evidence than the old scheme's would have been — it
+  says "these were built at different times", not "the format moved".
+  That is the trade: a warning that is sometimes noise, over a warning
+  that is sometimes absent when it shouldn't be.
+- **A major release is a hard cutover for data, whether or not it is one
+  for the format.** Cutting 2.0.0 means no 2.x server reads a 1.x
+  directory until `dlctl data version --write` restamps it — which, if the
+  format genuinely did not change, is all the migration there is to do,
+  but it is not nothing and it is not automatic. Deciding to bump major
+  now carries this consequence, and whoever bumps it owns saying so in the
+  release notes.
+- **Unreleased builds have no version at all.** §6.
+
 ## 2. The three tiers, precisely
 
-Given a directory stamped `D` and a running build that understands `S`
-(`dataversion.Current`):
+Given a directory stamped `D` (the release of `dlctl` that wrote it) and a
+running build that is release `S` (`dataversion.Current`):
 
 | Comparison | Outcome | Who says so |
 |---|---|---|
-| `D.Major > S.Major` | **Refuses to boot.** This build may misread the data outright — the same reasoning §10.1 already applies per file, now applied to the directory as a whole. | `dataversion.Check` returns a non-nil `error`; `cmd/dlmud`'s `run` returns it, which is a fatal exit before any store opens. |
-| `D.Major == S.Major`, `D.Minor > S.Minor` | **Boots anyway, at your own risk.** Nothing refuses to read; some of what the directory contains may go unrecognised — an unknown-but-additive field, a document kind this build has never heard of. | `dataversion.Check` returns a non-empty warning and a nil error; `cmd/dlmud` logs it and continues. `dlctl data version --dir=…` prints the same finding without starting anything. |
-| `D.Major == S.Major`, `D.Minor <= S.Minor` (any `Patch`) | **Fully compatible, silently.** By construction: a patch bump changes nothing a reader could observe, and a minor at or below what this build already knows introduces nothing this build has not already accounted for. | `dataversion.Check` returns `("", nil)`. |
-| `D.Major < S.Major` | **Fully compatible, silently — for now.** The ordinary case: every directory starts at the version whatever server last wrote it understood, which is never newer than whatever ships tomorrow. Nothing has changed major yet, so there is no real "can a new build still read old-major data" question to have answered wrong. Whichever future change earns the first major bump has to answer it, honestly, at the time — this document does not pre-decide it. | `dataversion.Check` returns `("", nil)`; noted here so the gap is visible rather than silently assumed away. |
-| No `.dlversion` present | **Fully compatible, silently.** Every directory that predates this mechanism, and every one running only `classic`/`ascii`/`binary` — all of which are unversioned by design (§3) — looks like this. | Same as the row above. |
+| `D.Major != S.Major` | **Refuses to boot** — in *either* direction. This build may misread the data outright, and "misread" is not a direction: whichever side of a major bump a reader is on, the other side's files mean something it does not agree with. This is the rule the C-era "newer data only" instinct gets wrong, and the reason `S` will not quietly open a directory an older major wrote either. | `dataversion.Check` returns a non-nil `error`; `cmd/dlmud`'s `run` returns it, which is a fatal exit before any store opens. |
+| `D.Major == S.Major`, `D.Minor != S.Minor` | **Boots anyway, at your own risk** — again in either direction. Nothing refuses to read. If `D` is ahead, some of what the directory contains may go unrecognised; if `D` is behind, some of what this build expects to find may simply not be there. Both are worth saying out loud and neither is worth refusing over. | `dataversion.Check` returns a non-empty warning and a nil error; `cmd/dlmud` logs it and continues. `dlctl data version --dir=…` prints the same finding without starting anything. |
+| `D.Major == S.Major`, `D.Minor == S.Minor`, any `Patch` | **Fully compatible, silently.** By construction: a patch bump changes nothing a reader could observe. | `dataversion.Check` returns `("", nil)`. |
+| No `.dlversion` present | **Fully compatible, silently.** Every directory that predates this mechanism, every one written by an unreleased build (§6), and every one running only `classic`/`ascii`/`binary` — all of which are unversioned by design (§3). | Same as the row above. |
+
+Note what is *not* in that table any more: there is no "older is fine"
+row. The first version of this document had one, on the reasoning that a
+new build reading old data is the ordinary case and nothing had ever
+bumped major anyway. That reasoning was about a hand-maintained format
+number, where "older" reliably meant "a subset of what I know". Under a
+release semver it does not: 1.x and 2.x are two different agreements about
+what the files mean, and a build has no more business guessing at the one
+it was not written for than at one from the future.
 
 ## 3. Why `classic`/`ascii`/`binary` are not versioned
 
@@ -78,74 +133,121 @@ flags set to `yaml` does not need a new stamp for that reason alone.
 ```yaml
 schema: dl/dataversion@1
 format: yaml
-version: 1.0.0
+version: 1.4.2
 ```
 
 Same shape §10.1 gives every other document in the tree (`schema:` first,
-strict decoding — an unrecognised field is an error, per §10.2). `format`
-is currently always `yaml`; it exists so a second future format (§0 of
+strict decoding — an unrecognised field is an error, per §10.2). `format` is
+currently always `yaml`; it exists so a second future format (§0 of
 `data-format.md` already reserves the name `yaml` "as opposed to `native`"
 precisely because more than one is expected eventually) has somewhere to
 say which versioning scheme it is using, without this file's own shape
 having to change to make room.
 
-`internal/persist/dataversion.Current` is the version compiled into this
-build — `1.0.0` today, because there has been exactly one version so far
-and this document is what establishes it. Bump `Current` — and only
-`Current` — when a change to `internal/persist/*/yaml` earns one, by §0's
-own rule for which tier. Nothing else in the mechanism changes: `Check`
-already knows what to do with a new number, and no `switch` anywhere
-needs a new case for "1.1" versus "1.0".
+`internal/persist/dataversion.Current` is not a constant to maintain: it
+reduces `internal/buildinfo`'s version string to a semver. The Makefile
+stamps that string in with `-ldflags` from `git describe --tags --always
+--dirty`, so it arrives in any of several shapes — `v1.2.3` from the tag
+itself, `v1.2.3-4-gabc1234` four commits later, either of those with
+`-dirty` appended. All of them name release `1.2.3`, which is what
+`Current` returns: the release a build descends from is the only release
+its source has a name for, and a commit that changed the format without
+tagging one has not made a claim about compatibility yet.
+
+Nothing anywhere needs a new case when the number moves. `Check` compares
+two `Version`s; no `switch` grows a branch for "1.3" versus "1.2".
 
 ## 5. What actually happens today
 
 Built:
 
-- `internal/persist/dataversion` — `Version`, `Parse`, `Check`, `Write`,
-  `Current`.
-- `cmd/dlmud`'s boot sequence calls `Check(cfg.LibDir, dataversion.
-  Current)` once, right after logging starts and before any store opens
-  — a fatal error on a major mismatch, a logged warning on a minor one,
-  silence otherwise.
-- `dlctl data version` — bare, prints what this build understands;
-  `--dir=X` reports `X`'s own stamp and the same verdict `Check` would
-  reach, without booting anything; `--write` (with `--dir`) stamps a
-  directory with `Current` — the adoption path for one that predates the
-  mechanism, or a fixture a test wants pinned.
+- `internal/persist/dataversion` — `Version`, `Parse`, `Current`, `Read`,
+  `Check`, `CheckBuild`, `Write`.
+- `cmd/dlmud`'s boot sequence calls `CheckBuild(cfg.LibDir)` once, right
+  after logging starts and before any store opens — a fatal error on a
+  major mismatch, a logged warning on a minor one, silence otherwise.
+- `dlctl lib import` calls `Write(--to-dir, Current)` once the whole
+  conversion has succeeded, which is what puts a stamp on a directory in
+  the ordinary course of things. It stamps nothing if any step failed
+  (a half-converted directory should not claim to be a release's output)
+  and nothing if this build has no release version (§6), saying so in
+  both cases.
+- `test/play` builds its server with `-ldflags` for this reason
+  specifically, so that its child process *has* a release version and
+  actually performs the check. `test/play/dataversion_test.go` is the
+  only place the boot refusal is exercised end to end, as a process that
+  exits with something to read: `internal/persist/dataversion`'s own
+  tests cover the comparison, and cannot cover `cmd/dlmud` reaching it.
+- `dlctl data version` — bare, prints what release this build is;
+  `--dir=X` reports `X`'s own stamp and the same verdict `CheckBuild`
+  would reach, without booting anything; `--write` (with `--dir`) stamps
+  a directory with `Current` — the adoption path for one that predates
+  the mechanism, and the migration path across a major bump.
 
 Not built, and worth naming rather than leaving to be discovered missing:
 
-- **Nothing stamps a directory automatically.** `dlctl world/pfile/state/
-  …/fmt` and `import` do not call `dataversion.Write` yet. Adopting the
-  stamp today is a manual `dlctl data version --dir=data --write` after
-  converting — reasonable while `Current` has only ever been `1.0.0` and
-  there is nothing yet for an unstamped directory to be behind on, less
-  reasonable once a second version exists. Wiring `Write` into the
-  canonicalising tools is the natural next step the *first* minor or
-  major bump should bring with it, not before — building the write path
-  now, against a version number that has never changed, would be
-  exactly the kind of untested machinery this project's own testing
-  discipline (`CLAUDE.md`, "do not read the C and transcribe it" — the
-  same caution applies to inventing a format nothing has exercised yet)
-  warns against.
-- **The minor-version warning is generic.** "This server only knows
-  1.0.0" names the two versions and points at `dlctl data version`, but
-  neither of them can yet say *what specifically* changed between them —
-  because nothing has. The design leaves room for exactly that: the
-  intended shape, once there is a second minor version to describe, is a
-  small table in `internal/persist/dataversion` mapping each past minor
-  bump to a one-line note of what it added, which `Check`'s warning and
-  `dlctl data version`'s report both read from — populated by whoever
-  earns the *next* minor bump, as part of earning it, not spoken for in
-  advance.
-- **No downgrade tool.** A directory stamped with a newer major than a
-  given build understands has no `dlctl` command to bring it back —
-  unlike `world export`'s intended role for `yaml → classic` (`data-
-  format.md` §10.4, itself not built yet either). Whether a downgrade is
-  even possible depends entirely on what the eventual first major bump
-  turns out to remove, so there is nothing concrete to build against yet.
+- **Only `lib import` stamps.** The single-subsystem converters (`dlctl
+  world/pfile/state/names/messages/socials/helpdb import`) and `fmt` do
+  not call `dataversion.Write`, because none of them produces a whole
+  data directory — each writes one corner of one, often into a directory
+  another release built. `lib import` is the one command whose output is
+  a complete `--lib-dir`, so it is the one command that can honestly say
+  which release wrote the whole thing. Running a converter by hand
+  leaves the stamp alone; `dlctl data version --dir=X --write` is how you
+  update it deliberately.
+- **The minor-version warning is generic.** It names the two releases and
+  points at `dlctl data version`, but it cannot say *what* changed
+  between them — and under a release semver it usually cannot, because
+  usually nothing did (§1.1). Making it specific would mean the release
+  process recording, per version, whether the format moved at all, which
+  is the hand-maintained number §1.1 declined. The warning is deliberately
+  a prompt to go and look, not a diagnosis.
+- **No downgrade or migration tool beyond restamping.** `dlctl data
+  version --write` sets the number; nothing rewrites the *files* across a
+  major bump. That is fine exactly as long as major bumps do not actually
+  change the format, which is the common case under §1.1 and cannot be
+  relied on. Whichever release first bumps major *and* changes the yaml
+  packages owes a real converter — nothing here plays the part `world
+  export` is meant to play for `yaml → classic` (`data-format.md` §10.4,
+  itself not built either) — and this is where its absence is recorded
+  until then. Whether a downgrade is even possible depends entirely on
+  what that bump turns out to remove.
+- **The example worlds are not stamped.** `examples/stock/yaml` and
+  `examples/mini/yaml` are checked in, and regenerated by `scripts/
+  release.sh` and `release.yml` using `go run ./cmd/dlctl` — an
+  unreleased build, which writes no stamp. So neither carries one, and
+  both drift checks pass `-x .dlversion` so that a regeneration run from
+  a *released* `dlctl` does not look like world data changed. A shipped
+  fixture pinned to whichever release happened to build it would be a
+  standing source of exactly the false alarm §1.1 already concedes.
 
-## 6. Relationship to the rest of the format's versioning
+## 6. Unreleased builds have no version, and enforce nothing
+
+`go run`, `go test`, `go install`, a plain `go build` — none of them pass
+the Makefile's `-ldflags`, so `buildinfo` reports `devel` and `Current`
+returns no version at all. This is not a rare corner: it is every test in
+this repo, and every `make run` a contributor does.
+
+Such a build has nothing to compare against, so it does not pretend to:
+
+- `dlctl lib import` writes no stamp, and says so on the way out. It does
+  not invent `0.0.0` — a made-up number would propagate into a real
+  directory and later be *checked*, which is worse than no number.
+- `dlctl data version --write` refuses, and tells you to use `make build`
+  or a released binary.
+- `dlmud` performs no compatibility check. If the directory carries a
+  stamp, it logs one line saying the check was skipped and why — an
+  unstamped directory read by an unversioned build is two halves of the
+  same silence, and there is no finding to report.
+
+The hole is real: a developer build will happily open a directory a
+release would refuse. It is accepted because the alternative — an
+unreleased build guessing at a version and enforcing it — turns a
+development convenience into data corruption's plausible cover story, and
+because the enforcement matters where operators are, which is on released
+binaries.
+
+## 7. Relationship to the rest of the format's versioning
 
 Three things now answer three different questions about the same tree,
 deliberately not merged into one:
@@ -153,14 +255,18 @@ deliberately not merged into one:
 | Mechanism | Question it answers | Granularity | Checked |
 |---|---|---|---|
 | `schema: dl/<kind>@<major>` (§10.1) | Is this **one file** a shape this loader understands? | Per file, per document kind | Every time that file is read |
-| `.dlversion` (this document) | Is this **directory**, as a release of this project's own format code, safe for this build to run on at all? | Once, for the whole directory | Once, at boot (or on demand via `dlctl data version`) |
+| `.dlversion` (this document) | Was this **directory** written by tooling of the same generation as the build about to read it? | Once, for the whole directory | Once, at boot (or on demand via `dlctl data version`) |
 | `dlctl world lint` / `dlctl data verify` (`data-format.md` §10.4, the latter not built) | Does this directory's **content** actually satisfy its own schema — references resolve, flags are known, nothing is silently wrong? | Whole directory, content-level | On demand, offline |
 
-A future schema-major bump on one document kind and a future
-`dataversion` major bump are not the same event and do not have to
-coincide: most schema-major bumps will be additive at the directory level
-(a new, optional-to-omit document kind existing somewhere is a minor
-bump; an existing kind's shape changing incompatibly is a major bump at
-*both* levels, because that is what "an older loader would misread it"
-means at either granularity). The three-row table above is the map for
-telling them apart when the time comes.
+A schema-major bump on one document kind and a project-major bump are not
+the same event and need not coincide in either direction. A schema major
+can move inside a minor release, and a major release can happen with the
+schemas untouched — which, under §1.1, is the usual case. The two are
+related only in one direction, and it is worth stating: **a change that
+breaks a document's schema major is a change that must not ship in a
+minor release**, because `.dlversion` would then wave through two builds
+that genuinely disagree about the files, and the per-file `schema:` tag
+would be left to catch it one file at a time partway through boot — which
+it will, but as a failed start rather than a refused one. The three-row
+table above is the map for telling the mechanisms apart; that sentence is
+the one rule connecting them.

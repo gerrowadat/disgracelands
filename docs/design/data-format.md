@@ -1397,7 +1397,7 @@ dlctl world export --to=data-classic --format=classic   # refuses on data loss (
 dlctl world lint                                        # replaces scheck
 dlctl world fmt                                         # canonicalise in place
 dlctl data verify                                       # every file, every schema (not built)
-dlctl data version --dir=data                           # the directory's own major.minor.patch stamp; docs/design/data-format-versioning.md
+dlctl data version --dir=data                           # which release wrote the directory, and whether this one will load it; docs/design/data-format-versioning.md
 ```
 
 `export` is not a nicety. It is what makes this format safe to adopt: as
@@ -1461,8 +1461,9 @@ is running on `yaml`.
 `dlctl lib import --from-dir=X --to-dir=Y` runs the seven importers above
 in order, against `X`'s own `world/`/`etc/`/`misc/`/`house/`/`text/`
 subdirectories, plus copying `text/`'s plain-prose files unchanged and
-stamping `Y` with a `.dlversion` (`docs/design/data-format-versioning.md`)
-once everything else has succeeded — see `docs/operations.md`'s own
+stamping `Y` with a `.dlversion` naming this build's own release
+(`docs/design/data-format-versioning.md`) once everything else has
+succeeded — see `docs/operations.md`'s own
 getting-started walkthrough for running it against a real archive.
 
 Found while writing that walkthrough, checked with a synthetic CP1252

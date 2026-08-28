@@ -495,8 +495,11 @@ import`/`messages import`/`socials import`/`helpdb import` commands, run
 in order against `--from-dir`'s own `world/`/`etc/`/`misc/`/`house/`/
 `text/` subdirectories, plus the plain-text files under `text/` copied
 across unchanged and, once everything else has succeeded, `--to-dir`
-stamped with this build's own format version
-(`docs/design/data-format-versioning.md`).
+stamped with this build's own release version
+(`docs/design/data-format-versioning.md`) — which is what a later `dlmud`
+compares against its own before it will boot on the result. Use a released
+`dlctl` for a directory you intend to run: an unreleased build has no
+version to stamp with, and says so instead of writing one.
 
 **Check the result for text that did not get transcoded.** Only two of
 the seven importers — `world` and `pfile` — have their own `--encoding`

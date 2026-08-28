@@ -15,6 +15,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/gerrowadat/disgracelands/internal/buildinfo"
 	"github.com/gerrowadat/disgracelands/internal/persist/convert"
 	"github.com/gerrowadat/disgracelands/internal/persist/dataversion"
 	"github.com/gerrowadat/disgracelands/internal/persist/player/binary"
@@ -136,15 +137,29 @@ func cmdLibImport(args []string) error {
 	fmt.Println()
 
 	if len(failed) > 0 {
-		fmt.Printf("Failed: %s. %s was not stamped with a format version — fix these and re-run.\n",
+		fmt.Printf("Failed: %s. %s was not stamped with a release version — fix these and re-run.\n",
 			strings.Join(failed, ", "), *toDir)
 		return errQuiet
 	}
 
-	if err := dataversion.Write(*toDir, dataversion.Current); err != nil {
+	// The stamp is this build's own release version (docs/design/data-
+	// format-versioning.md): a directory records which dlctl made it, and
+	// dlmud checks that against its own release before it will boot. An
+	// unreleased dlctl — `go run`, `go test`, a plain `go build` — has no
+	// release to name, so it writes no stamp rather than inventing one.
+	// Say so: an operator who expected a stamp should find out here, from
+	// the tool that did not write it, rather than from a server that
+	// later checked nothing.
+	current, ok := dataversion.Current()
+	if !ok {
+		fmt.Printf("%s is a complete yaml directory. This build (%s) has no release version, so it was not stamped with one.\n",
+			*toDir, buildinfo.Get().Version)
+		return nil
+	}
+	if err := dataversion.Write(*toDir, current); err != nil {
 		return fmt.Errorf("stamping %s: %w", *toDir, err)
 	}
-	fmt.Printf("%s is a complete yaml directory, format version %s.\n", *toDir, dataversion.Current)
+	fmt.Printf("%s is a complete yaml directory, written by release %s.\n", *toDir, current)
 	return nil
 }
 
