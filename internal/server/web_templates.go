@@ -124,6 +124,43 @@ var playTemplate = template.Must(template.New("play").Parse(`<!doctype html>
 	// terminal.
 	var localEcho = true;
 
+	// The arrow keys, and the one of them that does something.
+	//
+	// xterm.js delivers a cursor key as its own onData call, as an escape
+	// sequence: ESC [ A-D normally, ESC O A-D when an application has put
+	// the terminal into cursor-key mode (DECCKM). The game understands
+	// neither, so before this they were forwarded to the server as command
+	// text -- ESC, '[' and a letter, which is why an arrow key at the name
+	// prompt answered "Names may only contain letters." -- and echoed back
+	// into the terminal, where xterm read them again and moved the cursor.
+	// Neither happens now: an arrow key is swallowed here and never
+	// reaches either.
+	var ARROW = {
+		'\x1b[A': 'up', '\x1b[B': 'down', '\x1b[C': 'right', '\x1b[D': 'left',
+		'\x1bOA': 'up', '\x1bOB': 'down', '\x1bOC': 'right', '\x1bOD': 'left',
+	};
+
+	// What the player has typed on the line so far, as they can see it,
+	// and the last line they finished. lastCommand is what up-arrow
+	// repeats.
+	var line = '';
+	var lastCommand = '';
+
+	// Whether anything at all has been sent to the server since the last
+	// line ending -- which is not the same question as whether 'line' is
+	// empty, and the difference is why this is counted separately.
+	//
+	// Every keystroke goes to the server as it is typed (see term.onData
+	// below; the pager depends on it), and the server has no line editing
+	// of its own: readLoop appends every byte until a line ending, so a
+	// backspace is *not* subtracted there. It is erased on screen here and
+	// still sent, so 'line' models what the player sees and this models
+	// what the server holds. Up-arrow may only inject a command when the
+	// server holds nothing, or the two would run together -- half-typed
+	// "ki" plus a repeated "look" is the command "kilook". If #233 gives
+	// the server line editing, this restriction can be revisited.
+	var pending = 0;
+
 	var proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
 	var ws = new WebSocket(proto + '//' + location.host + '/ws');
 	ws.onmessage = function (ev) {
@@ -141,26 +178,79 @@ var playTemplate = template.Must(template.New("play").Parse(`<!doctype html>
 	ws.onopen = function () { term.focus(); };
 	ws.onclose = function () { term.write('\r\n\x1b[31m[connection closed]\x1b[0m\r\n'); };
 	ws.onerror = function () { term.write('\r\n\x1b[31m[connection error]\x1b[0m\r\n'); };
-	term.onData(function (data) {
-		if (ws.readyState === WebSocket.OPEN) ws.send(data);
-		if (!localEcho) return;
-		// Minimal local line editing: echo what was typed, and let
-		// backspace erase it back off the screen — matching what a real
-		// telnet client's own terminal driver already does before a line
-		// ever reaches the server. \r\n is collapsed to \r first so a
-		// pasted chunk with Windows line endings does not echo a blank
-		// line for every one of them.
+	// send types a line at the game as if the player had: the text, then
+	// the Enter that runs it. Used by the up-arrow repeat.
+	function send(text) {
+		if (ws.readyState !== WebSocket.OPEN) return;
+		ws.send(text + '\r');
+		consume(text + '\r', localEcho);
+	}
+
+	// repeat is the up-arrow: run the last command again.
+	//
+	// Two things stop it. Nothing may have been typed since the last
+	// Enter, for the reason 'pending' explains -- with a half-typed line
+	// in the server's buffer there is no way to take it back, since the
+	// characters have already gone. And local echo must be on: echo is
+	// off around a password, so a password is never recorded as
+	// lastCommand and up-arrow can never replay one in the clear.
+	function repeat() {
+		if (!lastCommand || pending !== 0 || !localEcho) return;
+		send(lastCommand);
+	}
+
+	// consume walks what was typed, keeping 'line', 'lastCommand' and
+	// 'pending' up to date, and echoing it if echo is on.
+	//
+	// Echoing is this page's own job: xterm.js has no local echo, unlike a
+	// real telnet client's terminal driver, which echoes by itself and
+	// only stops when told to around a password. Backspace is erased off
+	// the screen the same way that driver would -- though note it is *not*
+	// taken back out of the server's buffer, which it cannot be from
+	// here: the byte has already gone, and readLoop has no line editing
+	// to undo it with. That is issue #233, and it is why 'pending' counts
+	// a backspace as one more thing the server is holding, not one fewer.
+	//
+	// \r\n is collapsed to \r first so a pasted chunk with Windows line
+	// endings does not echo a blank line, or record an empty command, for
+	// every one of them.
+	function consume(data, echo) {
 		data = data.replace(/\r\n/g, '\r');
 		for (var i = 0; i < data.length; i++) {
 			var ch = data[i];
 			if (ch === '\r' || ch === '\n') {
-				term.write('\r\n');
+				if (echo) term.write('\r\n');
+				// Only a line the player could actually see becomes the
+				// one up-arrow repeats.
+				if (echo && line !== '') lastCommand = line;
+				line = '';
+				pending = 0;
 			} else if (ch === '\x7f' || ch === '\b') {
-				term.write('\b \b');
+				if (echo) term.write('\b \b');
+				line = line.slice(0, -1);
+				pending++;
 			} else {
-				term.write(ch);
+				if (echo) term.write(ch);
+				line += ch;
+				pending++;
 			}
 		}
+	}
+
+	term.onData(function (data) {
+		// Arrow keys never reach the server and are never echoed. Only a
+		// whole keystroke that *is* one counts, so a paste that happens
+		// to contain an escape sequence is still forwarded whole, as it
+		// was before. The ESC test comes first so that the lookup cannot
+		// reach Object.prototype -- without it, pasting the literal word
+		// "constructor" finds a function there, and would be swallowed.
+		var arrow = data.charCodeAt(0) === 27 ? ARROW[data] : undefined;
+		if (arrow !== undefined) {
+			if (arrow === 'up') repeat();
+			return;
+		}
+		if (ws.readyState === WebSocket.OPEN) ws.send(data);
+		consume(data, localEcho);
 	});
 })();
 </script>

@@ -259,6 +259,25 @@ substantively one — the server sends it the same ANSI colour codes any
 other client gets, with no telnet option negotiation at all (a browser has
 nobody to negotiate with).
 
+Keystrokes go to the server one at a time as they are typed, which is what
+lets the pager answer a single keypress without Enter, and it means the
+page does its own echoing — xterm.js has none, where a telnet client's
+terminal driver would. Two consequences a player notices:
+
+- **The arrow keys do nothing, except up, which repeats the last command
+  you typed.** A cursor key is an escape sequence, not a character; before
+  this the page forwarded it to the game as command text (an arrow at the
+  name prompt answered "Names may only contain letters.") and echoed it
+  back into the terminal, where it moved the cursor. Now it is swallowed
+  in the browser and never reaches either. Up-arrow repeats only when you
+  have typed nothing since the last Enter — with a half-finished line
+  already sent, there is no way to take it back — and never repeats
+  anything typed with echo off, so a password can never be replayed.
+- **Backspace is currently only cosmetic** (#233): it is erased from the
+  screen but the byte has already gone to the game, which has no line
+  editing to drop it. This does not affect a telnet client, whose own
+  terminal driver edits the line before sending it.
+
 If `--tls-cert`/`--tls-key` (or, once implemented, `--tls-acme-domain`) are
 set, the web interface serves HTTPS and `wss://`; otherwise it is plain
 HTTP and `ws://`, the same either/or every other listener already offers.
