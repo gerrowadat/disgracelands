@@ -78,6 +78,12 @@ type Context struct {
 	// writing elsewhere: this runs on the world goroutine, and a rule that
 	// waits for a disk stops the game for everybody.
 	Save func(*game.Character)
+	// SaveAliases writes back a character's aliases and nothing else,
+	// leaving the rest of the on-disk record as it stands. It exists for
+	// do_save's duplication guard (act.other.c:180-184), which is the only
+	// caller: with auto_save on, `save` deliberately does not write the
+	// character. Same fire-and-forget contract as Save.
+	SaveAliases func(*game.Character)
 	// Rent stores a character's belongings and takes them out of the world,
 	// for the receptionist.
 	Rent RentSaver
@@ -726,6 +732,9 @@ type Dispatcher struct {
 	NoSpecials bool
 	// Save writes a character's record back, off the world goroutine.
 	Save func(*game.Character)
+	// SaveAliases writes back only a character's aliases, off the world
+	// goroutine, for do_save's duplication guard.
+	SaveAliases func(*game.Character)
 	// Rent stores a character's belongings, for the receptionist.
 	Rent RentSaver
 	// SaveBoard writes a bulletin board back to disk.
@@ -818,7 +827,7 @@ func (d *Dispatcher) Do(ctx context.Context, s *Session, line string) error {
 		c := &Context{
 			Ctx: ctx, Session: s, Character: s.Character(),
 			World: w, Text: d.Text, RNG: d.RNG, Violence: d.Violence, Arg: arg,
-			Social: cmd.Social, Save: d.Save, Rent: d.Rent, SaveBoard: d.SaveBoard, Mail: d.Mail, Houses: d.Houses, Operator: d.Operator, Bans: d.Bans, Reports: d.Reports, SetPassword: d.SetPassword, TextEdit: d.TextEdit, MobReload: d.MobReload, ZoneReload: d.ZoneReload, ObjectReload: d.ObjectReload, ShopReload: d.ShopReload, RoundLength: d.RoundLength,
+			Social: cmd.Social, Save: d.Save, SaveAliases: d.SaveAliases, Rent: d.Rent, SaveBoard: d.SaveBoard, Mail: d.Mail, Houses: d.Houses, Operator: d.Operator, Bans: d.Bans, Reports: d.Reports, SetPassword: d.SetPassword, TextEdit: d.TextEdit, MobReload: d.MobReload, ZoneReload: d.ZoneReload, ObjectReload: d.ObjectReload, ShopReload: d.ShopReload, RoundLength: d.RoundLength,
 		}
 
 		// A command that panics must not leave the player staring at a dead

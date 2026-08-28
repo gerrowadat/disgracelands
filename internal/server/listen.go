@@ -247,6 +247,13 @@ func (s *Server) serve(ctx context.Context, sess *session.Session, limits Limits
 					}
 				})
 			},
+			SaveAliases: func(c *game.Character) {
+				s.background(func() {
+					if err := s.SaveAliases(context.Background(), c); err != nil {
+						s.logger.Error("saving aliases on request", "character", c.Name, "error", err)
+					}
+				})
+			},
 		},
 	})
 }

@@ -245,6 +245,37 @@ func TestWhatYouWereCarryingSurvivesAQuit(t *testing.T) {
 	}
 }
 
+// TestSaveWritesTheAliasesAndSaysSo is do_save's duplication guard
+// (act.other.c:173-186) on a server booted the way one really boots.
+// auto_save defaults on (config.c:150) and nothing in examples/mini turns it
+// off, so what a player actually gets for typing `save` is "Saving aliases."
+// and no character write at all — two clients with coordinated saves, or one
+// client and a crash, are how items get duplicated, and the periodic sweep
+// has the job instead. internal/server can prove the guard; only this can
+// prove the shipped configuration still lands inside it.
+//
+// The alias surviving the round trip is the other half of the C's reasoning:
+// write_aliases has exactly two call sites and both are in do_save, so a
+// guarded save that wrote nothing at all would lose an alias defined this
+// session.
+func TestSaveWritesTheAliasesAndSaysSo(t *testing.T) {
+	m := start(t, miniClassic)
+	c := m.dial()
+	c.create("Tourist", "tourpass", "m", "w")
+
+	c.do("alias gl get all corpse")
+	contains(t, "a mortal's save", c.do("save"), "Saving aliases.")
+
+	c.quit()
+	c.close()
+
+	back := m.dial()
+	back.login("Tourist", "tourpass")
+	contains(t, "the alias after a round trip", back.do("alias"), "gl", "get all corpse")
+
+	m.noServerErrors()
+}
+
 // TestReconnectingToALinkdeadCharacter. A connection that drops without
 // quitting leaves the character standing in the world; logging in again picks
 // the same body back up rather than making a second one.

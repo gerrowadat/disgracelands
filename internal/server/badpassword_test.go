@@ -255,6 +255,18 @@ func TestABadPasswordDoesNotClobberALivePlayer(t *testing.T) {
 	srv, _ := newTestServer(t)
 	addr := listening(t, srv)
 
+	// This test uses `save` to get the live character's gold onto disk, and
+	// do_save's duplication guard (act.other.c:180-184) would otherwise stop
+	// it: with auto_save on, a mortal's `save` writes their aliases and
+	// nothing else. Turning the sweep off puts `save` back to being a real
+	// save, which is the lever this test needs and is beside the point it is
+	// making — a failed login must not overwrite a live player either way.
+	orig := game.Tuning()
+	t.Cleanup(func() { game.SetTuning(orig) })
+	tuning := orig
+	tuning.AutoSave = false
+	game.SetTuning(tuning)
+
 	// The first character on the roster is an Implementor; a second one is
 	// an ordinary mortal, which is what this is about.
 	dialClient(t, addr).create("Filler", "swordfish", "m", "w")
@@ -286,7 +298,7 @@ func TestABadPasswordDoesNotClobberALivePlayer(t *testing.T) {
 
 	// The live character still has it, and still has it after their own save.
 	victim.send("save")
-	victim.expect("Saving Welmar.")
+	victim.expect("Saving Welmar and aliases.")
 	victim.settle()
 	srv.WaitForWrites()
 

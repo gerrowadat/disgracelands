@@ -810,6 +810,46 @@ func (s *Server) Save(ctx context.Context, c *game.Character) error {
 	return s.players.Save(ctx, &snapshot)
 }
 
+// SaveAliases writes back a character's aliases and leaves everything else on
+// disk exactly as it was, for do_save's duplication guard (act.other.c:180-
+// 184; see session.doSave).
+//
+// The C has it easy: aliases are their own file (plralias/, alias.c:23), so
+// write_aliases already touches nothing else. This port keeps them on the
+// player record, so "only the aliases" has to be a read-modify-write — load
+// what is on disk, replace the alias list, write it back. That is the same
+// end state, and it is the state the guard is after: whatever the sweep last
+// wrote for hit points, gold and position stands, and a `save` cannot force
+// a fresh copy of it out.
+//
+// Off the world goroutine for the same reason Save is, and the snapshot is
+// taken on it for the same reason too. A character who has never been written
+// has nothing to merge into and is left alone rather than created here.
+func (s *Server) SaveAliases(ctx context.Context, c *game.Character) error {
+	if c == nil || c.Record == nil || c.IsNPC() {
+		return nil
+	}
+	var (
+		name    string
+		aliases []game.Alias
+	)
+	if err := s.engine.DoSync(ctx, func(_ *game.Live) {
+		name = c.Record.Name
+		aliases = append([]game.Alias(nil), c.Record.Aliases...)
+	}); err != nil {
+		return err
+	}
+	rec, err := s.players.Load(ctx, name)
+	if errors.Is(err, player.ErrNotFound) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	rec.Aliases = aliases
+	return s.players.Save(ctx, rec)
+}
+
 // tickAutosave decides whether one PULSE_AUTOSAVE tick should trigger a save
 // sweep, porting comm.c:928-929's two-part check: does autosave run at all,
 // and has autosave_time minutes' worth of ticks passed. minsSinceCrashsave is

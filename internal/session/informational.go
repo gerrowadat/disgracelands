@@ -560,17 +560,50 @@ func doVersion(c *Context) error {
 	return nil
 }
 
-// doSave, porting do_save.
+// doSave, porting do_save (act.other.c:166-193).
 //
-// The C's version is mostly about object and house saving, neither of which
-// exists yet. What it does that matters is confirm to the player that their
-// character is on disk — and the C is careful to say so only when they typed
-// the command rather than when something called it internally.
+// The C's `if (cmd)` is always taken here: `save` is only ever reached from
+// the command table, and the one thing the branch guards — telling the
+// player anything at all — is what a typed `save` is for. Nothing in the C
+// calls do_save internally either (grep act.other.c and interpreter.c: the
+// only references are the prototype and the table entry).
+//
+// What the branch actually holds is the duplication guard, and it is easy to
+// read past because it looks like a message-formatting choice:
+//
+//	if (auto_save && GET_LEVEL(ch) <= LVL_IMMORT) {
+//	  send_to_char(ch, "Saving aliases.\r\n");
+//	  write_aliases(ch);
+//	  return;
+//	}
+//
+// With the periodic sweep on, a mortal's `save` writes their *aliases* and
+// nothing else. The C's comment (act.other.c:173-179) says why: two players
+// with coordinated saves, or one player with a house, can otherwise duplicate
+// items across a save and a crash, and the sweep is already authoritative, so
+// there is nothing to be gained by letting anyone force a write. It assumes
+// guest immortals are untrustworthy, hence `<=` rather than `<` — level 31
+// itself is inside the guard.
+//
+// The aliases still get written because in the C nothing else ever writes
+// them: write_aliases has exactly these two call sites, so a `save` that
+// skipped it would lose an alias defined this session. The formats a server
+// runs on (`ascii` and `yaml`) keep aliases on the player record rather than
+// in a separate plralias file, so "write only the aliases" is SaveAliases'
+// read-modify-write of that record rather than a second file — the effect on
+// disk is the same one the C has.
 func doSave(c *Context) error {
 	if c.Character.IsNPC() || c.Session == nil {
 		return nil
 	}
-	c.Send("Saving %s.\r\n", c.Character.Name)
+	if game.Tuning().AutoSave && c.Character.Level() <= game.LevelImmortal {
+		c.Send("Saving aliases.\r\n")
+		if c.SaveAliases != nil {
+			c.SaveAliases(c.Character)
+		}
+		return nil
+	}
+	c.Send("Saving %s and aliases.\r\n", c.Character.Name)
 	if c.Save != nil {
 		c.Save(c.Character)
 	}
