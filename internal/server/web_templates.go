@@ -81,8 +81,14 @@ var captchaTemplate = template.Must(template.New("captcha").Parse(`<!doctype htm
 // playTemplate is the terminal itself. term.onData sends every keystroke
 // to /ws as it comes rather than batching a line at a time — the same
 // character-at-a-time behaviour a real telnet client gives the server,
-// which is what lets password entry suppress local echo and the pager
-// answer a single keypress without Enter.
+// which is what lets the pager answer a single keypress without Enter.
+//
+// Echoing what is typed is this page's own job, and not a small one:
+// xterm.js has no local echo at all, unlike a real telnet client's
+// terminal driver, which echoes by itself and only stops when told to
+// around a password. See the script's own comment on localEcho for how
+// that gap is closed — session.go's webEchoOff/OnMarker is the other half
+// of it.
 var playTemplate = template.Must(template.New("play").Parse(`<!doctype html>
 <html><head><meta charset="utf-8">
 <title>Disgracelands</title>
@@ -108,14 +114,53 @@ var playTemplate = template.Must(template.New("play").Parse(`<!doctype html>
 	fit.fit();
 	window.addEventListener('resize', function () { fit.fit(); });
 
+	// Whether to echo locally, toggled by the two markers session.go's
+	// EchoOff/EchoOn send in place of a telnet IAC WILL/WONT ECHO (there
+	// is no telnet client here to negotiate ECHO with) — U+E000 to turn
+	// it off around a password, U+E001 to turn it back on. Both are
+	// Unicode Private Use Area code points with no meaning of their own,
+	// so they cannot collide with anything the game actually sends, and
+	// both are stripped here before the rest of the message reaches the
+	// terminal.
+	var localEcho = true;
+
 	var proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
 	var ws = new WebSocket(proto + '//' + location.host + '/ws');
-	ws.onmessage = function (ev) { term.write(ev.data); };
+	ws.onmessage = function (ev) {
+		var data = ev.data;
+		if (data.indexOf('\uE000') !== -1) {
+			localEcho = false;
+			data = data.split('\uE000').join('');
+		}
+		if (data.indexOf('\uE001') !== -1) {
+			localEcho = true;
+			data = data.split('\uE001').join('');
+		}
+		term.write(data);
+	};
 	ws.onopen = function () { term.focus(); };
 	ws.onclose = function () { term.write('\r\n\x1b[31m[connection closed]\x1b[0m\r\n'); };
 	ws.onerror = function () { term.write('\r\n\x1b[31m[connection error]\x1b[0m\r\n'); };
 	term.onData(function (data) {
 		if (ws.readyState === WebSocket.OPEN) ws.send(data);
+		if (!localEcho) return;
+		// Minimal local line editing: echo what was typed, and let
+		// backspace erase it back off the screen — matching what a real
+		// telnet client's own terminal driver already does before a line
+		// ever reaches the server. \r\n is collapsed to \r first so a
+		// pasted chunk with Windows line endings does not echo a blank
+		// line for every one of them.
+		data = data.replace(/\r\n/g, '\r');
+		for (var i = 0; i < data.length; i++) {
+			var ch = data[i];
+			if (ch === '\r' || ch === '\n') {
+				term.write('\r\n');
+			} else if (ch === '\x7f' || ch === '\b') {
+				term.write('\b \b');
+			} else {
+				term.write(ch);
+			}
+		}
 	});
 })();
 </script>

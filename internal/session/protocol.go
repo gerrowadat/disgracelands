@@ -198,6 +198,27 @@ func (s *Session) SendGMCP(pkg string, data any) {
 	s.SendRaw(wire)
 }
 
+// webEchoOffMarker and webEchoOnMarker are the websocket transport's own
+// stand-in for IAC WILL/WONT ECHO — a telnet client's local terminal
+// driver does its own echoing, so the server only has to say when to
+// switch it off, but a browser terminal (internal/server/web.go's
+// playTemplate) has no local echo of its own at all: xterm.js writes
+// exactly what it is told to and nothing else. So the JavaScript on the
+// other end does the echoing, and these two single-codepoint markers,
+// stripped from the stream before anything is written to the terminal,
+// are how the server tells it whether to.
+//
+// Both are U+E000/U+E001, from the Unicode Private Use Area — code points
+// with no defined meaning of their own, guaranteed never to appear in the
+// game's real output, chosen over a telnet-shaped sequence (an OSC
+// escape, say) because there is no terminal on the other end to leave it
+// to interpreting correctly; the marker only has to be recognised by the
+// one page that sends and reads it.
+const (
+	webEchoOffMarker = "\ue000"
+	webEchoOnMarker  = "\ue001"
+)
+
 // EchoOff tells the client to stop echoing, which is how the password prompt
 // hides what is typed. This is the C's echo_off_str (comm.c).
 func (s *Session) EchoOff() {
@@ -205,8 +226,13 @@ func (s *Session) EchoOff() {
 	s.proto.echo = true
 	s.proto.mu.Unlock()
 	// Announce rather than Enable: see Negotiator.Announce for why ECHO is
-	// the one option that does not wait to be agreed with.
+	// the one option that does not wait to be agreed with. SendRaw drops
+	// this for a websocket session — see webEchoOffMarker for what reaches
+	// it instead.
 	s.SendRaw(s.proto.neg.Announce(telnet.SideUs, telnet.OptEcho, true))
+	if s.transport == "websocket" {
+		s.sendRawAlways([]byte(webEchoOffMarker))
+	}
 }
 
 // EchoOn undoes EchoOff. It must be called on every path away from a password
@@ -216,8 +242,12 @@ func (s *Session) EchoOn() {
 	wasOff := s.proto.echo
 	s.proto.echo = false
 	s.proto.mu.Unlock()
-	if wasOff {
-		s.SendRaw(s.proto.neg.Announce(telnet.SideUs, telnet.OptEcho, false))
+	if !wasOff {
+		return
+	}
+	s.SendRaw(s.proto.neg.Announce(telnet.SideUs, telnet.OptEcho, false))
+	if s.transport == "websocket" {
+		s.sendRawAlways([]byte(webEchoOnMarker))
 	}
 }
 
