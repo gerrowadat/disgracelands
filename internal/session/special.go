@@ -7,6 +7,8 @@
 package session
 
 import (
+	"fmt"
+
 	"github.com/gerrowadat/disgracelands/internal/game"
 	"github.com/gerrowadat/disgracelands/internal/rng"
 )
@@ -88,6 +90,37 @@ func (sc *SpecialCall) SendPaged(format string, args ...any) {
 		return
 	}
 	sc.Session.SendPaged(format, args...)
+}
+
+// tellFrom is act("$n tells you, '...'", FALSE, from, 0, ch, TO_VICT): a
+// mobile addressing whoever is acting. The receptionist and the postmaster
+// speak this way directly (objsave.c:963 onwards, mail.c:537 onwards) — the
+// shopkeeper goes the long way round through doTell.
+func (sc *SpecialCall) tellFrom(from *game.Character, format string, args ...any) {
+	deliverTell(sc.World, from, sc.Actor, fmt.Sprintf(format, args...))
+}
+
+// doTell is do_tell(from, argument, cmd_tell, 0) (act.comm.c:152) for a
+// mobile speaker: the first word of the argument is the addressee and is
+// consumed, and the rest is what gets said.
+//
+// The shop's twenty-odd messages are all built this way, which is why they
+// all start with the customer's name in the data files. See keeperTells.
+func (sc *SpecialCall) doTell(from *game.Character, argument string) {
+	name, message := halfChop(argument)
+	if name == "" || message == "" {
+		// "Who do you wish to tell what??", to a mobile with no client.
+		return
+	}
+	victim := sc.World.FindPlayer(from, name)
+	if victim == nil {
+		// NOPERSON, likewise to nobody.
+		return
+	}
+	if ok, _ := tellIsOKFor(sc.World, from, victim); !ok {
+		return
+	}
+	deliverTell(sc.World, from, victim, message)
 }
 
 // ToRoom sends to everyone in the actor's room except the actor.

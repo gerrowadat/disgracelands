@@ -7,8 +7,6 @@
 package session
 
 import (
-	"fmt"
-
 	"github.com/gerrowadat/disgracelands/internal/game"
 )
 
@@ -265,12 +263,6 @@ func purse(c *game.Character) int32 {
 		return 0
 	}
 	return c.Record.Points.Gold + c.Record.Points.BankGold
-}
-
-// tellFrom is act("$n tells you, '...'", ..., TO_VICT): a mobile addressing
-// one person. Every line the receptionist speaks is one of these.
-func (sc *SpecialCall) tellFrom(from *game.Character, format string, args ...any) {
-	sc.Actor.Tell("%s tells you, '%s'\r\n", from.Name, fmt.Sprintf(format, args...))
 }
 
 // runSocialFor makes a mobile perform a social with no target, which is what

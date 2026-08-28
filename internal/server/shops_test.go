@@ -317,3 +317,29 @@ func TestAShopkeeperWithWillFightCanBeHurt(t *testing.T) {
 	c.send("hit shopkeeper")
 	c.expect("the shopkeeper") // present in every damage tier's text, hit or miss
 }
+
+// A shop message is routed through do_tell, so the customer's own name — the
+// leading `%s` every shop message in the data files starts with — is consumed
+// as the addressee and never appears in what they hear. Issue #191: the port
+// used to send the formatted string straight out, so a customer called Custom
+// was told "the shopkeeper tells you, 'Custom What do you want to buy??'".
+//
+// act() also capitalises the line, which is where the capital in "The
+// shopkeeper" comes from: the mobile's own name is lower case.
+func TestAShopMessageDoesNotEchoTheCustomersName(t *testing.T) {
+	srv, _ := newTestServer(t)
+	c := dialClient(t, listening(t, srv))
+	c.create("Custom", "spendthrift", "m", "m")
+	inShop(t, srv, "Custom", 1000)
+
+	c.send("buy")
+	c.expect("What do you want to buy??")
+
+	line := "The shopkeeper tells you, 'What do you want to buy??'"
+	if !c.seen(line) {
+		t.Errorf("the shop said something other than %q:\n%s", line, c.transcript())
+	}
+	if strings.Contains(c.transcript(), "Custom What do you want") {
+		t.Errorf("the customer's name leaked into the shop's message:\n%s", c.transcript())
+	}
+}
