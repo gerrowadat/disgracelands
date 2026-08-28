@@ -856,17 +856,37 @@ port is right and the thing it is compared against is wrong.
   The last difference was **the order of its two outputs**: the C's look
   happens inside `do_simple_move`, so a player sees the room and is then
   told "You flee head over heels." This port said it first.
-- **A shopkeeper's and a postmaster's messages carry the player's name
-  here.** The C builds them as `"%s %s"` of `GET_NAME(ch)` and the message
+- ~~**A shopkeeper's and a postmaster's messages carry the player's name
+  here.**~~ The C builds them as `"%s %s"` of `GET_NAME(ch)` and the message
   (shop.c's `is_ok_char`, and the same shape in mail.c) and hands the result
   to `do_tell`, which eats the first word as the *addressee* — so the name
   never reaches the player, and `do_tell` capitalises the speaker. Here it
-  is "the grocer tells you, 'Parityone You don't seem to have that.'"
+  was "the grocer tells you, 'Parityone You don't seem to have that.'"
   against the C's "The grocer tells you, 'You don't seem to have that.'".
   *Ruling (2026-08-26):*
   **Blocker.** Every shop and post office interaction shows it, and it
   reads as an obvious bug rather than as a quirk.
-  **Tracked:** #191.
+  **Fixed 2026-08-28** (#191), and it was two bugs sharing a symptom. The
+  name is *routing*: `keeperTells` now does `do_tell`'s `half_chop`, drops
+  the first word, and resolves it through a new `Live.FindPlayer` —
+  `get_player_vis`, which skips mobiles before it compares anything, so a
+  mobile answering to the customer's name cannot intercept the shop's
+  reply. And the capital came free, because both the shopkeeper and the
+  postmaster now deliver through `act("$n tells you, '...'")`
+  (`deliverTell`, comm.c:110) instead of formatting the speaker's name in:
+  `act` capitalises the finished line, and a mobile's own name is lower
+  case. The postmaster was never the `"%s %s"` shape at all — mail.c and
+  objsave.c call `act` directly — so for it and the receptionist the
+  capital *was* the whole bug. Routing through `act` also means `$n`
+  resolves per audience, so a keeper the customer cannot see says "Someone
+  tells you", which is what the C has always done.
+
+  `do_tell`'s refusals come with it: `is_tell_ok` now runs for a mobile
+  speaker too (`tellIsOKFor`), so a customer with `notell` set, or standing
+  in a soundproof room, gets no answer from the shop. That is the C's
+  behaviour and it is odd enough to be worth knowing about — the refusals
+  themselves go to the *keeper*, who has no client to receive them, which
+  is why they are a return value rather than a `Send`.
 - **The improved editor prompts for each line with `]` in the C** and
   silently here, and the C confirms a sent letter with "Message sent!".
   *Ruling (2026-08-26):*

@@ -651,6 +651,28 @@ func (c *Character) NamedBy(word string) bool {
 // Find returns a character by name, case-insensitively.
 func (l *Live) Find(name string) *Character { return l.byName[strings.ToLower(name)] }
 
+// FindPlayer is get_player_vis(ch, name, NULL, FIND_CHAR_WORLD)
+// (handler.c:1063): a *player* anywhere in the world, matched on the whole
+// name and filtered on CAN_SEE.
+//
+// It is not FindAnywhere with a filter bolted on. get_player_vis skips
+// mobiles before it compares anything and never looks in the searcher's room
+// first, so a mobile answering to the same word cannot shadow the player —
+// which matters because the only callers are do_tell and do_page for a
+// non-immortal speaker, and one of those speakers is every shopkeeper in the
+// game addressing a customer by name.
+//
+// Players() rather than byName: that map holds mobiles too, keyed on the
+// short description, so a mobile can occupy a player's key.
+func (l *Live) FindPlayer(viewer *Character, name string) *Character {
+	for _, c := range l.Players() {
+		if strings.EqualFold(c.Name, name) && l.CanSee(viewer, c) {
+			return c
+		}
+	}
+	return nil
+}
+
 // FindAnywhere returns the first character anywhere in the world a typed word
 // names, porting get_char_world_vis.
 //

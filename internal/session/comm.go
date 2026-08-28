@@ -146,31 +146,62 @@ func doReply(c *Context) error {
 // tellIsOK is is_tell_ok: the six reasons a tell does not arrive, each with
 // its own message so the teller can tell which.
 func (c *Context) tellIsOK(victim *game.Character) bool {
+	ok, refusal := tellIsOKFor(c.World, c.Character, victim)
+	if !ok {
+		c.Send("%s", refusal)
+	}
+	return ok
+}
+
+// tellIsOKFor is is_tell_ok (act.comm.c:127) with its refusal returned rather
+// than sent, because the speaker is not always a player.
+//
+// A shopkeeper's or postmaster's lines reach the customer through do_tell
+// (see keeperTells), so they run this gauntlet too — a customer with notell
+// set, or standing in a soundproof room, gets no answer from the shop at all.
+// The refusals themselves go to the *speaker*, and a mobile has no client to
+// receive them, which is why they are a return value here.
+func tellIsOKFor(w *game.Live, speaker, victim *game.Character) (bool, string) {
+	soundproof := func(vnum game.RoomVnum) bool {
+		room := w.Room(vnum)
+		return room != nil && room.Flags.Has(game.RoomSoundproof)
+	}
 	switch {
-	case victim == c.Character:
-		c.Send("You try to tell yourself something.\r\n")
-	case !c.Character.IsNPC() && c.prefers(game.PrefNoTell):
-		c.Send("You can't tell other people while you have notell on.\r\n")
-	case c.roomIsSoundproof(c.Character.Room):
-		c.Send("The walls seem to absorb your words.\r\n")
+	case victim == speaker:
+		return false, "You try to tell yourself something.\r\n"
+	case !speaker.IsNPC() && speaker.Record != nil &&
+		speaker.Record.Preferences.Has(game.PrefNoTell):
+		return false, "You can't tell other people while you have notell on.\r\n"
+	case soundproof(speaker.Room):
+		return false, "The walls seem to absorb your words.\r\n"
 	case !victim.IsNPC() && victim.Client == nil:
-		c.Send("%s's linkless at the moment.\r\n", capitaliseFirst(victim.Subject()))
+		return false, capitaliseFirst(victim.Subject()) + "'s linkless at the moment.\r\n"
 	case victim.Record != nil && victim.Record.PlayerFlags.Has(game.PlayerWriting):
-		c.Send("%s's writing a message right now; try again later.\r\n",
-			capitaliseFirst(victim.Subject()))
+		return false, capitaliseFirst(victim.Subject()) +
+			"'s writing a message right now; try again later.\r\n"
 	case (!victim.IsNPC() && victim.Record != nil &&
 		victim.Record.Preferences.Has(game.PrefNoTell)) ||
-		c.roomIsSoundproof(victim.Room):
-		c.Send("%s can't hear you.\r\n", capitaliseFirst(victim.Subject()))
-	default:
-		return true
+		soundproof(victim.Room):
+		return false, capitaliseFirst(victim.Subject()) + " can't hear you.\r\n"
 	}
-	return false
+	return true, ""
+}
+
+// deliverTell is perform_tell's first half (act.comm.c:110):
+// act("$n tells you, '...'", FALSE, ch, 0, vict, TO_VICT).
+//
+// Going through act() rather than formatting the name in is not cosmetic.
+// act() resolves $n *per audience*, so a speaker the listener cannot see is
+// "someone", and it capitalises the first letter of the finished line — which
+// is where "The grocer tells you," gets its capital, a mobile's own name
+// being lower case.
+func deliverTell(w *game.Live, from, to *game.Character, message string) {
+	to.Tell("%s", w.Act("$n tells you, '"+message+"'", game.ActArgs{Actor: from}, to))
 }
 
 // performTell delivers one, and remembers who to reply to.
 func (c *Context) performTell(victim *game.Character, message string) {
-	victim.Tell("%s tells you, '%s'\r\n", c.Character.Name, message)
+	deliverTell(c.World, c.Character, victim, message)
 
 	if !c.Character.IsNPC() && c.prefers(game.PrefNoRepeat) {
 		c.Send("Okay.\r\n")

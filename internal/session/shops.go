@@ -72,10 +72,24 @@ func specShopKeeper(sc *SpecialCall) bool {
 	return true
 }
 
-// keeperTells is do_tell(keeper, ...): the keeper addresses one customer by
-// name. Every shop message in the data files is formatted this way.
+// keeperTells is do_tell(keeper, buf, cmd_tell, 0) (shop.c:135 and twenty
+// more), where buf is snprintf("%s %s", GET_NAME(ch), message).
+//
+// The leading name is *routing, not text*. Every shop message in the data
+// files begins with a `%s` because the C hands the whole string to do_tell,
+// which half_chops the first word off as the addressee and passes only the
+// remainder to perform_tell — so the customer's own name never reaches them.
+// Sending the formatted string straight to the customer, as this did, leaked
+// it into the message: "the grocer tells you, 'Parityone You don't seem to
+// have that.'" where the C says "The grocer tells you, 'You don't seem to
+// have that.'"
+//
+// do_tell's own refusals apply too: it resolves the addressee and runs
+// is_tell_ok, so a customer with notell set hears nothing from the shop.
+// is_ok_char has already checked CAN_SEE(keeper, ch) by this point
+// (shop.c:122), which is what makes the lookup of the name reliably succeed.
 func keeperTells(sc *SpecialCall, keeper *game.Character, format string, args ...any) {
-	sc.Actor.Tell("%s tells you, '%s'\r\n", keeper.Name, fmt.Sprintf(format, args...))
+	sc.doTell(keeper, fmt.Sprintf(format, args...))
 }
 
 // keeperSays is do_say: to the whole room. `is_open` uses this for the
