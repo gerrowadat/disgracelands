@@ -606,6 +606,7 @@ port is right and the thing it is compared against is wrong.
   *Ruling (2026-08-26):*
   **Blocker.** `quit` is among the most-typed commands in the game and the
   menu is where a returning player expects to land.
+  **Tracked:** #187.
 - **The C prepends a CRLF to any output that interrupts a prompt.**
   `process_output` sends its buffer from `i` rather than `i + 2` when
   `has_prompt` is set (comm.c:1459), and a descriptor is born with
@@ -633,6 +634,7 @@ port is right and the thing it is compared against is wrong.
   **Blocker.** The generators are in step, so this is arithmetic that has
   been read wrong, not a design difference — exactly the shape CLAUDE.md
   says wants a C oracle rather than another reading.
+  **Tracked:** #188.
 - **Walking is free here.** `do_simple_move` (act.movement.c) charges
   `need_movement` movement points per room, from the two rooms' sector
   types, and refuses with "You are too exhausted." when there are not
@@ -642,6 +644,7 @@ port is right and the thing it is compared against is wrong.
   **Blocker.** Movement cost is gameplay and balance, not presentation: it
   is what gates exploration, and the prompt currently displays a number
   that never changes.
+  **Tracked:** #189.
 - **The C colours what it prints and the port does not.** New characters get
   colour turned on for them in both (interpreter.c:1616, a `<DoC>` local
   change the port has as `game.ApplyNewCharacterDefaults`), but the C wraps
@@ -653,6 +656,7 @@ port is right and the thing it is compared against is wrong.
   *Ruling (2026-08-26):*
   **Blocker.** A flat screen reads as a different game. Mechanical to fix
   — call site by call site — but there are many call sites.
+  **Tracked:** #190.
 - ~~**`who` prints the class abbreviation for immortals in the C**~~
   (`[Wa 34]` against `[ 34]`) ~~and counts in words~~: "One lonely
   character displayed." against "1 character playing.".
@@ -793,6 +797,7 @@ port is right and the thing it is compared against is wrong.
   blocker. It is a consequence of where the port inserts into its lists,
   visible but harmless, with the caveat that ordering is what `2.sword`
   selects against, so it is not purely presentational.
+  **Tracked:** #193.
 - ~~**Death.** The C sends `death_cry` to the room~~ ("Your blood freezes as you
   hear the beastly fido's death cry.") ~~and the killer's own "is dead!
   R.I.P." once; the port sends the room's line to the killer twice and no
@@ -861,12 +866,14 @@ port is right and the thing it is compared against is wrong.
   *Ruling (2026-08-26):*
   **Blocker.** Every shop and post office interaction shows it, and it
   reads as an obvious bug rather than as a quirk.
+  **Tracked:** #191.
 - **The improved editor prompts for each line with `]` in the C** and
   silently here, and the C confirms a sent letter with "Message sent!".
   *Ruling (2026-08-26):*
   **Blocker.** A silent editor gives no sign that anything was received,
   and the missing send confirmation is worse than it looks given that this
   build of the C is the one that eats the letter.
+  **Tracked:** #192.
 
 ### Two that are the reference build, not the port
 
@@ -911,6 +918,7 @@ Listed here so they are not mistaken for deliberate differences.
   with a counter per list rather than one shared across them. That
   difference is reachable: `2.sword` with one worn and one carried is the
   carried one through `look` and the worn one through everything else.
+  **Tracked:** #194.
 - **Eight of the C's 318 commands are not implemented**, and the plan's
   §10 "What is not in it" lists every one with its `interpreter.c` line. In
   brief: the seven OasisOLC editors (Phase 6), plus `slowns`. `color` is
