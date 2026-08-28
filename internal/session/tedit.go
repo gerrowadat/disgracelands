@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/gerrowadat/disgracelands/internal/game"
+	"github.com/gerrowadat/disgracelands/internal/obs"
 )
 
 // teditField is one row of do_tedit's own local field table (tedit.c) —
@@ -101,6 +102,18 @@ func doTedit(c *Context) error {
 			return
 		}
 		editor.SetTextField(name, text)
+		// mudlog(buf, CMP, LVL_GOD, TRUE) (tedit.c:49-50), on the save
+		// path only. The C prints `d->olc`, which is the *file path* it
+		// stashed at tedit.c:143 (`str_dup(fields[l].filename)`); this
+		// seam is TextEditor, which is addressed by field name and has
+		// no path to print, so the field name goes in instead.
+		//
+		// tedit.c:41-42's companion — "SYSERR: Can't write file" at
+		// CMP/LVL_IMPL — has no equivalent here: SetTextField takes the
+		// write and reports only a bad name, so the C's fopen failure is
+		// not a branch this port has at this point.
+		c.wizlog(obs.LogComplete, game.LevelGod,
+			"OLC: %s saves '%s'.", actor.Name, name)
 		// "Saved.\r\n" is tedit_string_cleanup's own confirmation
 		// (modify.c's STRINGADD_SAVE case), not the generic editor's —
 		// board write/mail print nothing here because the C never did

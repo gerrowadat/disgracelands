@@ -1443,7 +1443,7 @@ because a command with no slice is a command nobody schedules.
 | ~~Aliases~~ | All built: `:` for emote (interpreter.c:286), `take` for get (:503), and the C's two deliberate stumps `qui` (:421) and `shutdow` (:463). |
 | ~~Immortal odds and ends~~ | All built: `users` (:528), `skillset` (:469), `reload` (:428), `wizhelp` (:553), `qecho` (:419) and `page` (:398). |
 | Mortal odds and ends | `color` (:258), and only that: the `PRF_COLOR` bits are stored and `set color` works, but nothing emits colour, so the command has nothing to switch. `insult` (:346) and `alias` (:226) are built. **`hop` (:337) was never missing**: it is the one `do_action` row the shipped socials file does not fill, and `RegisterSocials` gives it a command anyway that answers "That action is not supported." — which is what the C does too. |
-| `mudlog`'s in-game half | `syslog` sets `PRF_LOG1`/`PRF_LOG2` and nothing reads them: the `wizvis` attribute on a log record (`internal/obs/log.go`) has no consumer, so gods cannot watch the log from in-game. Wanted whenever the syslog levels are meant to mean something. |
+| ~~`mudlog`'s in-game half~~ | Done. `obs.WithWizVisEcho` + `Server.echoWizVis` deliver the echo, and #134 (2026-08-28) wired up every `mudlog()` call site in ported territory. `docs/deviations.md` has the audit. |
 
 **Phase 6 — Building tools.** Originally scoped as an OasisOLC
 equivalent — the seven in-game menu editors (`medit`/`oedit`/`redit`/
@@ -1814,7 +1814,8 @@ Wired in from `cmd/dlmud/main.go` right after `BootReset`, gated on
 (`db.c:456`) — `--skip-rent-check`'s own entry in `docs/configuration.md`
 no longer says *(inert)*.
 
-**`syslog`'s in-game echo ✅ — the seam, and its first real producer.**
+**`syslog`'s in-game echo ✅ — the seam, its first real producer, and
+(#134) every other one.**
 `mudlog()`'s second job — echoing a line to online immortals whose level
 and own syslog verbosity (`PRF_LOG1`/`PRF_LOG2`) both qualify — had
 nowhere to reach a live connection from `internal/obs`, since that package
@@ -1847,10 +1848,47 @@ which is fine for the log file but is not what `mudlog`'s `buf` — `"%s %s:
 `WithWizVisEcho` echoes a record's message verbatim, the same string
 mudlog's own `str` serves both jobs from. The message is now that exact
 format, so what an online, qualifying immortal sees in-game is the real
-text, not a placeholder. Every other command that logs something the C
-would have run through `mudlog()` remains a would-be producer — see
-`docs/deviations.md`'s own entry for the honest count of how many that
-still is.
+text, not a placeholder.
+
+**The rest of `mudlog()`'s call sites ✅ (#134, 2026-08-28).** The pass
+that finished the above went through all 106 `mudlog()` calls in
+`reference/moderncserver/src` and wired up every one in ported territory —
+52 call sites in the Go, from `quit` and `purge` through the login
+sequence, combat's death line, `Crash_load`'s seven, close_socket and the
+zone reset queue.
+`Context.wizlog`/`wizlogInvis` (`internal/session/wizlog.go`) and
+`Server.wizlog`/`wizlogInvis` (`internal/server/wizvis.go`) are the two
+helpers that make a call site one line; `wizlogInvis` carries the C's
+much commoner `MAX(LVL_x, GET_INVIS_LEV(ch))` spelling of the level.
+`docs/deviations.md` lists what is wired, what is not and why.
+
+Two things the audit found that reading alone would not have.
+`mudlog` returns *before* its echo loop when the level is negative
+(`utils.c:238-239`), so `do_skillset`'s `mudlog(buf2, BRF, -1, TRUE)`
+(`modify.c:344`) means "log it and show nobody" rather than "show
+everybody" — `echoWizVis` had no such guard and would have broadcast it
+to every mortal in the game. And `interpreter.c:1629`'s "new player" line
+fires against a buffer a local `<DoC>` block overwrote three lines
+earlier, so the real server logged a duplicate of the "All hail"
+broadcast instead. Both are in `docs/weirdnumbers.md`.
+
+The echo itself needed rebuilding to take the new producers.
+`Server.echoWizVis` had been deciding who a line reaches inline, on
+whatever goroutine logged it, reading live `PlayerRecord`s and session
+fields as it went — safe only because `bug` runs as a command, on the
+world goroutine already. It queues through `engine.Do` now and walks
+`w.Players()` rather than the session list, and `Session.state` became an
+`atomic.Int32` because the "mid-edit" exclusion reads it from the world
+goroutine. `-race` found the old shape within one run once the login
+producers existed.
+
+Six gaps came out of the same pass and are filed rather than written
+down: death traps do not kill (#209), the dispatcher reads `Record.Level`
+off the world goroutine (#210), `wizlock` does not keep mortals out
+because `Server.AllowedIn` is never called (#211), the three `<DoC>` cyan
+broadcasts are unported (#212), nothing sets `PLR_KILLER` on an attack
+(#213), and nothing sets `PLR_WRITING` either, which leaves four checks
+on it dead (#214).
 
 **`native` is `yaml` throughout ✅ — a rename, not a redesign, because the
 name stopped being true.** §5.7/§5.8/§6.3 already called the format

@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/gerrowadat/disgracelands/internal/game"
+	"github.com/gerrowadat/disgracelands/internal/obs"
 )
 
 // The spell routines that are not a table lookup: the ones that happen to
@@ -323,6 +324,11 @@ func (c *Context) spellSummonPerson(victim *game.Character, level int32) {
 			"Type NOSUMMON to allow other players to summon you.\r\n",
 			c.Character.Name, name, capitaliseFirst(c.Character.Subject()))
 		c.Send("You failed because %s has summon protection on.\r\n", victim.Name)
+		// mudlog(buf, BRF, LVL_IMMORT, TRUE) (spells.c:161-163): a bare
+		// LVL_IMMORT, no GET_INVIS_LEV() MAX around it, so a wizinvis god
+		// failing a summon is reported to every immortal all the same.
+		c.wizlog(obs.LogBrief, game.LevelImmortal, "%s failed summoning %s to %s.",
+			c.Character.Name, victim.Name, name)
 		return
 	}
 

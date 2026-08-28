@@ -27,6 +27,7 @@ import (
 
 	"github.com/gerrowadat/disgracelands/internal/colour"
 	"github.com/gerrowadat/disgracelands/internal/game"
+	"github.com/gerrowadat/disgracelands/internal/obs"
 	"github.com/gerrowadat/disgracelands/internal/telnet"
 )
 
@@ -166,7 +167,14 @@ type Session struct {
 	out    chan outgoing
 	logger *slog.Logger
 
-	state     State
+	// state is the connection state, and it is an atomic because it is not
+	// only read by this session's own goroutine: the world goroutine reads
+	// it, through Character.Client, to decide whether a mudlog() line
+	// should land on somebody who is mid-edit (internal/server/wizvis.go's
+	// `interrupted`, standing in for the C's PLR_WRITING — see #214). A
+	// plain int there is a data race, latent while `bug` was the only
+	// wizvis producer and immediate once #134 added the rest.
+	state     atomic.Int32
 	character *game.Character
 	// original is set while this session is switched into somebody else.
 	original *game.Character
@@ -216,7 +224,7 @@ type Session struct {
 	// page has been shown or the reader quits — this port's own way of
 	// reproducing the fact that the C never changes STATE(d) while paging
 	// at all (comm.c:811's showstr_count check runs before the state
-	// switch). Captured by sendPaged from s.state itself, so every caller
+	// switch). Captured by sendPaged from the state itself, so every caller
 	// gets this for free.
 	pagerReturn State
 
@@ -294,7 +302,7 @@ func (s *Session) Extracted() bool { return s.extracted.Load() }
 // the world.
 func (s *Session) ReturnToMenu(menu string) {
 	s.MarkExtracted()
-	s.state = StateMenu
+	s.setState(StateMenu)
 	s.Send("%s", menu)
 }
 
@@ -467,7 +475,7 @@ func New(id uint64, conn net.Conn, transport string, logger *slog.Logger) *Sessi
 	if err != nil {
 		host = conn.RemoteAddr().String()
 	}
-	return &Session{
+	s := &Session{
 		id:        id,
 		conn:      conn,
 		transport: transport,
@@ -477,9 +485,13 @@ func New(id uint64, conn net.Conn, transport string, logger *slog.Logger) *Sessi
 		done:      make(chan struct{}),
 		written:   make(chan struct{}),
 		logger:    logger.With("session", id, "transport", transport, "host", host),
-		state:     StateGetName,
 		proto:     protocol{neg: telnet.NewNegotiator(policy)},
 	}
+	// StateGetName is zero, so this is not strictly needed — written out
+	// anyway, because "the first state is whichever constant happens to
+	// be zero" is not something a reader should have to check.
+	s.setState(StateGetName)
+	return s
 }
 
 // ID identifies the session in logs.
@@ -496,7 +508,13 @@ func (s *Session) Host() string { return s.host }
 func (s *Session) LoginTime() time.Time { return s.loginTime }
 
 // State returns where the session has got to.
-func (s *Session) State() State { return s.state }
+func (s *Session) State() State { return State(s.state.Load()) }
+
+// setState moves the connection to a new state. Every write goes through
+// here; see the field's own note for why it is atomic.
+func (s *Session) setState(st State) {
+	s.state.Store(int32(st)) //nolint:gosec // State is a small enum, not a computed int
+}
 
 // Character returns the logged-in character, or nil.
 func (s *Session) Character() *game.Character { return s.character }
@@ -767,6 +785,25 @@ func (s *Session) Serve(ctx context.Context, deps Deps) {
 		if err := deps.Login.Leave(context.WithoutCancel(ctx), s, s.character); err != nil {
 			s.logger.Error("removing the character from the world", "error", err)
 		}
+	} else if s.character != nil && !s.Displaced() {
+		// close_socket's `else` (comm.c:1977-1979): a descriptor closing
+		// with a character attached but not IS_PLAYING — which after #187
+		// is the ordinary end of a session, the player having typed
+		// `quit` and then hung up at the menu. CMP, so only an immortal
+		// running syslog complete sees it; the "Closing link to" line
+		// Server.Leave logs is the interesting one and it is NRM.
+		//
+		// close_socket's third branch, `mudlog("Losing descriptor without
+		// char.", CMP, LVL_IMMORT, TRUE)` (comm.c:1982), has no
+		// counterpart here and deliberately so: the C allocates
+		// d->character at the *name* prompt, so that line means "a
+		// connection that never typed anything", plus the displaced
+		// descriptor whose pointer perform_dupe_check just nulled. This
+		// port has no half-built character to lose — a session with no
+		// s.character is a connection that never authenticated — so the
+		// line would fire on every idle port-scan instead.
+		wizlog(s.logger, obs.LogComplete, game.LevelImmortal,
+			"Losing player: %s.", s.character.Name)
 	}
 	// Give the writer a moment to finish before the backstop close. Without
 	// this, a session that ends by saying something — "Wrong password.", or
@@ -846,7 +883,7 @@ func (s *Session) readLoop(ctx context.Context, deps Deps) error {
 						if handleErr := s.handle(ctx, deps, part); handleErr != nil {
 							return handleErr
 						}
-						if s.state == StateClosed || s.closed.Load() {
+						if s.State() == StateClosed || s.closed.Load() {
 							return nil
 						}
 					}
@@ -1006,8 +1043,8 @@ func (s State) ConnectedName() string {
 // (pagerReturn) rather than the fallback "Playing" every other caller of
 // State.ConnectedName has to live with.
 func (s *Session) ConnectedName() string {
-	if s.state == StatePaging {
+	if s.State() == StatePaging {
 		return s.pagerReturn.ConnectedName()
 	}
-	return s.state.ConnectedName()
+	return s.State().ConnectedName()
 }

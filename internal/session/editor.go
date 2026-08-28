@@ -80,7 +80,7 @@ func (s *Session) beginEditorSeeded(maxLength int, seed string, done func(text s
 	s.editorBuf = editText{text: seed, present: seed != ""}
 	s.editorMax = maxLength
 	s.editorDone = done
-	s.state = StateEditing
+	s.setState(StateEditing)
 }
 
 // handleEditing collects one line of an edited text, porting string_add
@@ -98,7 +98,7 @@ func (s *Session) beginEditorSeeded(maxLength int, seed string, done func(text s
 // nothing back, with no sign the server took it. That is issue #192.
 func (s *Session) handleEditing(line string) error {
 	err := s.editLine(line)
-	if err == nil && s.state == StateEditing {
+	if err == nil && s.State() == StateEditing {
 		s.Send("%s", prompt(s))
 	}
 	return err
@@ -897,7 +897,7 @@ func (s *Session) finishEditing(saved bool) error {
 
 	done := s.editorDone
 	s.editorBuf, s.editorDone, s.editorMax = editText{}, nil, 0
-	s.state = StatePlaying
+	s.setState(StatePlaying)
 	if done != nil {
 		done(text, saved)
 	}

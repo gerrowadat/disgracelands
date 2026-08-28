@@ -19,6 +19,7 @@ import (
 
 	"github.com/gerrowadat/disgracelands/internal/colour"
 	"github.com/gerrowadat/disgracelands/internal/game"
+	"github.com/gerrowadat/disgracelands/internal/obs"
 	"github.com/gerrowadat/disgracelands/internal/rng"
 )
 
@@ -1025,10 +1026,10 @@ func split(line string) (word, arg string) {
 // on when they last played, which is the point of keeping the preference
 // bits faithful.
 func prompt(s *Session) string {
-	if s.state == StatePaging {
+	if s.State() == StatePaging {
 		return s.pagingPrompt()
 	}
-	if s.state == StateEditing {
+	if s.State() == StateEditing {
 		return "] "
 	}
 	// make_prompt's last two branches are both `STATE(d) == CON_PLAYING`
@@ -1037,7 +1038,7 @@ func prompt(s *Session) string {
 	// all. That only became reachable when `quit` started returning to the
 	// menu instead of disconnecting (#187): before, the command's own tail
 	// never ran for a session that was still open in a non-playing state.
-	if s.state != StatePlaying {
+	if s.State() != StatePlaying {
 		return ""
 	}
 	c := s.Character()
@@ -1777,6 +1778,11 @@ func doQuit(c *Context, full bool) error {
 	if items := carriedItemCount(ch); items > game.MaxRent && !immortal {
 		c.Send("You currently have too many items (%d items in total).\r\n"+
 			"You must have %d items or less before leaving.\r\n", items, game.MaxRent)
+		// mudlog(buf, NRM, MAX(LVL_IMMORT, GET_INVIS_LEV(ch)), TRUE)
+		// (act.other.c:131-132). The refusal is worth a god's attention:
+		// a player stuck at the door is a player about to ask why.
+		c.wizlogInvis(obs.LogNormal, game.LevelImmortal, ch,
+			"%s attempted to quit with %d items", ch.Name, items)
 		return nil
 	} else {
 		// Unconditional in the C, and on the *else* of the refusal — so a
@@ -1796,6 +1802,10 @@ func doQuit(c *Context, full bool) error {
 		c.Violence.Damage(c.World, nil, ch, ch.Record.Points.Hit+1)
 	default:
 		c.announce("%s has left the game.\r\n", ch.Name)
+		// mudlog(buf, NRM, MAX(LVL_IMMORT, GET_INVIS_LEV(ch)), TRUE)
+		// (act.other.c:153-154), between the act() and the goodbye.
+		c.wizlogInvis(obs.LogNormal, game.LevelImmortal, ch,
+			"%s has quit the game.", ch.Name)
 		c.Send("Goodbye, friend.. Come back soon!\r\n")
 		// Quitting in a house makes it your load room, unless a god has
 		// already pinned one (act.other.c:167).

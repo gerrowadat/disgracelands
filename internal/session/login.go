@@ -13,6 +13,7 @@ import (
 
 	"github.com/gerrowadat/disgracelands/internal/colour"
 	"github.com/gerrowadat/disgracelands/internal/game"
+	"github.com/gerrowadat/disgracelands/internal/obs"
 )
 
 // This is the port of interpreter.c's nanny(): the state machine every
@@ -36,7 +37,7 @@ const maxNameLength = 20
 
 // handle advances the login state machine by one line of input.
 func (s *Session) handle(ctx context.Context, deps Deps, line string) error {
-	switch s.state {
+	switch s.State() {
 	case StateGetName:
 		return s.handleGetName(ctx, deps, line)
 	case StateConfirmName:
@@ -120,12 +121,26 @@ func (s *Session) handleGetName(ctx context.Context, deps Deps, line string) err
 	case "all":
 		s.Send("You are not welcome here.\r\n")
 		s.logger.Info("refused a banned site", "host", s.Host(), "ban", "all")
+		// mudlog(buf2, CMP, LVL_GOD, TRUE) (comm.c:1397-1398). The C
+		// refuses a BAN_ALL site in new_descriptor, before a byte is read,
+		// so its line names only the host; this port refuses at the name
+		// prompt instead, and keeps the C's text rather than adding the
+		// name it now happens to know.
+		wizlog(s.logger, obs.LogComplete, game.LevelGod,
+			"Connection attempt denied from [%s]", s.Host())
 		s.Close()
 		return nil
 	case "new":
 		if !exists {
 			s.Send("Sorry, new characters are not allowed from your site!\r\n")
 			s.logger.Info("refused a new character from a banned site", "host", s.Host())
+			// mudlog(buf, NRM, LVL_GOD, TRUE) (interpreter.c:1414-1416),
+			// which the C reaches at CON_NAME_CNFRM — one prompt later
+			// than this, after the "Did I get that right?" — so the name
+			// it prints is one the player has already confirmed. Same
+			// refusal either way; the message is the C's.
+			wizlog(s.logger, obs.LogNormal, game.LevelGod,
+				"Request for new char %s denied from [%s] (siteban)", name, s.Host())
 			s.Close()
 			return nil
 		}
@@ -133,12 +148,12 @@ func (s *Session) handleGetName(ctx context.Context, deps Deps, line string) err
 
 	s.pendingName = name
 	if exists {
-		s.state = StatePassword
+		s.setState(StatePassword)
 		s.EchoOff()
 		s.Send("Password: ")
 		return nil
 	}
-	s.state = StateConfirmName
+	s.setState(StateConfirmName)
 	s.Send("Did I get that right, %s (Y/N)? ", name)
 	return nil
 }
@@ -146,12 +161,12 @@ func (s *Session) handleGetName(ctx context.Context, deps Deps, line string) err
 func (s *Session) handleConfirmName(deps Deps, line string) error {
 	switch strings.ToLower(strings.TrimSpace(line)) {
 	case "y", "yes":
-		s.state = StateNewPassword
+		s.setState(StateNewPassword)
 		s.EchoOff()
 		s.Send("New character.\r\nGive me a password for %s: ", s.pendingName)
 	case "n", "no":
 		s.pendingName = ""
-		s.state = StateGetName
+		s.setState(StateGetName)
 		s.Send("Okay, what IS it, then? ")
 	default:
 		s.Send("Please type Yes or No: ")
@@ -189,6 +204,13 @@ func (s *Session) handlePassword(ctx context.Context, deps Deps, line string) er
 		// line. Telling an anonymous connection which half it got right is
 		// how a roster becomes a list of accounts to attack.
 		s.logger.Info("failed login", "name", s.pendingName, "host", s.Host())
+		// mudlog(buf, BRF, LVL_GOD, TRUE) (interpreter.c:1463-1464). The
+		// C only reaches this with a *known* name and a wrong password;
+		// this port cannot tell the two apart at this point on purpose
+		// (see above), so an unknown name logs the same line. That is a
+		// deliberate widening, not a mis-port.
+		wizlog(s.logger, obs.LogBrief, game.LevelGod,
+			"Bad PW: %s [%s]", s.pendingName, s.Host())
 
 		// Two counters, and they are not the same counter — this is the
 		// thing the C is easy to misread on. The character's own tally is
@@ -228,6 +250,11 @@ func (s *Session) handlePassword(ctx context.Context, deps Deps, line string) er
 	// intended — `set <name> siteok` is how an immortal clears one.
 	if deps.Login.BanFor(s.Host()) == "select" && !siteOK(character) {
 		s.logger.Info("refused a select-banned site", "host", s.Host(), "character", character.Name)
+		// mudlog(buf, NRM, LVL_GOD, TRUE) (interpreter.c:1486-1488) —
+		// and note it is `denied from %s`, no brackets round the host,
+		// unlike every other line in nanny.
+		wizlog(s.logger, obs.LogNormal, game.LevelGod,
+			"Connection attempt for %s denied from %s", character.Name, s.Host())
 		s.Send("Sorry, this char has not been cleared for login from your site!\r\n")
 		s.Close()
 		return nil
@@ -247,22 +274,41 @@ func (s *Session) handlePassword(ctx context.Context, deps Deps, line string) er
 		s.logger.Info("taking over an existing body",
 			"character", existing.Name, "mode", mode)
 		s.character = existing
-		s.state = StatePlaying
+		s.setState(StatePlaying)
 
+		// The three mudlogs of do_perform_dupe_check's tail, one per
+		// mode, all NRM at MAX(LVL_IMMORT, GET_INVIS_LEV(d->character))
+		// (interpreter.c:1286, 1295, 1300). RECON and UNSWITCH share a
+		// line and USURP has its own — which is the whole point of
+		// having three: a god watching wants to know whether somebody
+		// walked back in or shoved somebody else out.
 		switch mode {
 		case DupeUsurp:
 			s.Send("You take over your own body, already in use!\r\n")
+			wizlog(s.logger, obs.LogNormal, wizlogLevel(game.LevelImmortal, existing),
+				"%s has re-logged in ... disconnecting old socket.", existing.Name)
 		case DupeUnswitch:
 			s.Send("Reconnecting to unswitched char.")
+			wizlog(s.logger, obs.LogNormal, wizlogLevel(game.LevelImmortal, existing),
+				"%s [%s] has reconnected.", existing.Name, s.Host())
 		default:
 			s.Send("Reconnecting.\r\n")
+			wizlog(s.logger, obs.LogNormal, wizlogLevel(game.LevelImmortal, existing),
+				"%s [%s] has reconnected.", existing.Name, s.Host())
 		}
 		return deps.Commands.Do(ctx, s, "look")
 	}
 
 	s.character = character
-	s.state = StateReadMOTD
+	s.setState(StateReadMOTD)
 	s.Send("%s\r\n", motdFor(deps, character))
+	// mudlog(buf, BRF, MAX(LVL_IMMORT, GET_INVIS_LEV(d->character)), TRUE)
+	// (interpreter.c:1508-1509), after the MOTD is queued and before the
+	// login-failure notice. BRF, so it reaches an immortal running the
+	// lowest syslog setting there is — this is the line gods actually
+	// watch for.
+	wizlog(s.logger, obs.LogBrief, wizlogLevel(game.LevelImmortal, character),
+		"%s [%s] has connected.", character.Name, s.Host())
 	s.reportLoginFailures()
 	s.Send("*** PRESS RETURN: ")
 	return nil
@@ -317,7 +363,7 @@ func (s *Session) handleNewPassword(deps Deps, line string) error {
 		return nil
 	}
 	s.pendingPassword = password
-	s.state = StateConfirmPassword
+	s.setState(StateConfirmPassword)
 	s.Send("\r\nPlease retype password: ")
 	return nil
 }
@@ -325,13 +371,13 @@ func (s *Session) handleNewPassword(deps Deps, line string) error {
 func (s *Session) handleConfirmPassword(deps Deps, line string) error {
 	if strings.TrimSpace(line) != s.pendingPassword {
 		s.pendingPassword = ""
-		s.state = StateNewPassword
+		s.setState(StateNewPassword)
 		s.Send("\r\nPasswords don't match.\r\nGive me a password for %s: ", s.pendingName)
 		return nil
 	}
 	s.EchoOn()
 	// The C asks sex next, then class. Same order, same wording.
-	s.state = StateQuerySex
+	s.setState(StateQuerySex)
 	s.Send("\r\nWhat is your sex (M/F)? ")
 	return nil
 }
@@ -348,7 +394,7 @@ func (s *Session) handleQuerySex(deps Deps, line string) error {
 		return nil
 	}
 	s.pendingSex = sex
-	s.state = StateQueryClass
+	s.setState(StateQueryClass)
 	s.Send("%s\r\nClass: ", game.CreationMenu)
 	return nil
 }
@@ -383,7 +429,16 @@ func (s *Session) handleQueryClass(ctx context.Context, deps Deps, line string) 
 	}
 
 	s.character = character
-	s.state = StateReadMOTD
+	s.setState(StateReadMOTD)
+	// mudlog(buf, NRM, LVL_IMMORT, TRUE) (interpreter.c:1629). The C
+	// builds this string at :1606 and then, in the `<DoC>` block that
+	// follows, reuses `buf` for the "All hail" broadcast — so the line
+	// that actually reaches the log there is the *broadcast*, not "new
+	// player", and no immortal ever saw the message this call site was
+	// written to send. See docs/weirdnumbers.md; the port logs what the
+	// call site meant.
+	wizlog(s.logger, obs.LogNormal, game.LevelImmortal,
+		"%s [%s] new player.", character.Name, s.Host())
 	// **The mortal message of the day, unconditionally**, even for the first
 	// character on the roster — who `init_char` has just made an implementor.
 	//
@@ -405,7 +460,7 @@ func (s *Session) handleQueryClass(ctx context.Context, deps Deps, line string) 
 // after the background story. Either way it leads to the menu, which is what
 // the C's CON_RMOTD does.
 func (s *Session) handleReadMOTD(deps Deps) error {
-	s.state = StateMenu
+	s.setState(StateMenu)
 	s.Send("%s", deps.Text.Menu())
 	return nil
 }

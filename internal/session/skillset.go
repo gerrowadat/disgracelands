@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/gerrowadat/disgracelands/internal/game"
+	"github.com/gerrowadat/disgracelands/internal/obs"
 )
 
 // do_skillset (modify.c:259): set one skill on one character to one number.
@@ -88,6 +89,17 @@ func doSkillset(c *Context) error {
 	if victim.Record.Skills == nil {
 		victim.Record.Skills = map[int32]int32{}
 	}
+	// mudlog(buf2, BRF, -1, TRUE) (modify.c:342-344), before the skill is
+	// actually set. The level is **-1**, not an LVL_ constant: the only
+	// mudlog in the tree that passes one, and mudlog returns before its
+	// echo loop when the level is negative (utils.c:238-239) — so this
+	// line goes to the log and to nobody in game, however high an
+	// immortal has their syslog turned up. Tagged anyway, and left for
+	// Server.echoWizVis to discard, so the call site says what the C says
+	// rather than quietly dropping the argument. See docs/weirdnumbers.md.
+	c.wizlog(obs.LogBrief, -1, "%s changed %s's %s to %d.",
+		c.Character.Name, victim.Name, game.SpellName(skill), value)
+
 	victim.Record.Skills[skill] = value
 
 	c.Send("You change %s's %s to %d.\r\n", victim.Name, game.SpellName(skill), value)

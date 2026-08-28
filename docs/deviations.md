@@ -1073,6 +1073,15 @@ compared against is not:
 
 Listed here so they are not mistaken for deliberate differences.
 
+- **A death trap does not kill.** `do_simple_move` ends with
+  `if (ROOM_FLAGGED(IN_ROOM(ch), ROOM_DEATH) && GET_LEVEL(ch) < LVL_IMMORT)
+  { log_death_trap(ch); death_cry(ch); extract_char(ch); return (0); }`
+  (`act.movement.c:171-176`) and none of it is ported: `ROOM_DEATH` is
+  read, stored, shown by `show death` and avoided by wandering mobiles and
+  by `spell_teleport`, but walking into one of those rooms yourself is
+  survivable here and was not on the real server. Found while auditing
+  `mudlog()` call sites for #134 — `log_death_trap` (`utils.c:165`) is one
+  of them, and it has nothing to log from. Filed as #209.
 - **Whatever `--lib-dir` points at is the on-disk contract**, decided
   rather than deviated: both servers read the same directory, which is
   what the world-parity harness and the Phase 7 shadow run depend on. In
@@ -1195,23 +1204,117 @@ Listed here so they are not mistaken for deliberate differences.
   entirely — see go-port-plan.md's own write-up of that work for what it
   brought with it.
 
-- **`syslog` has one real producer so far; every other `mudlog` call site in
-  the ported commands is still a would-be one.** `mudlog()` had two jobs:
-  write the line, and echo it to online immortals at or above a level whose
-  own syslog verbosity (`PRF_LOG1`/`PRF_LOG2`, the two bits `do_syslog`
-  sets) is high enough. The second is real now — `obs.WithWizVisEcho`
-  (`internal/obs/log.go`) wraps the server's log handler so a record
-  carrying both `obs.WizLevel` and `obs.WizType` reaches
-  `Server.echoWizVis` (`internal/server/wizvis.go`), which applies the C's
-  exact selection (online, `CON_PLAYING`, not switched into an NPC, at or
-  above the level, not mid-edit, syslog verbosity at or above the
-  message's own type) and sends it in green — but only `bug`/`idea`/`typo`
-  (`internal/session/report.go`) actually tags a record this way yet.
-  Every other command that calls `s.logger.Info`/`Error`/`Warn` for
-  something the C would have `mudlog()`'d is a would-be producer the
-  mechanism is ready for but nothing has wired up — auditing every such
-  call site against its own `mudlog` in the C is its own pass, not
-  attempted here.
+- **`syslog` reaches every `mudlog()` call site the port has, and the ones
+  it does not are listed below.** `mudlog()` had two jobs: write the line,
+  and echo it to online immortals at or above a level whose own syslog
+  verbosity (`PRF_LOG1`/`PRF_LOG2`, the two bits `do_syslog` sets) is high
+  enough. Both are real. `obs.WithWizVisEcho` (`internal/obs/log.go`)
+  wraps the server's log handler so a record carrying both `obs.WizLevel`
+  and `obs.WizType` reaches `Server.echoWizVis`
+  (`internal/server/wizvis.go`), which applies the C's exact selection
+  (in the world, not switched into an NPC, level at or above the line's,
+  not mid-edit, syslog verbosity at or above the line's own type, and
+  `level < 0` reaching nobody at all — see
+  [`weirdnumbers.md`](weirdnumbers.md)) and sends it in green.
+
+  Two of those conditions are reached differently from the C, both for
+  goroutine-ownership reasons rather than behavioural ones. The loop
+  walks the *world's* players rather than the server's session list,
+  which is the same set `descriptor_list` plus `STATE(i) == CON_PLAYING`
+  picks out and is the set the world goroutine owns — and it runs *on*
+  that goroutine, queued through `engine.Do`, because deciding who a
+  line reaches means reading live `PlayerRecord`s. Doing it inline
+  wherever the log call was made is a data race; that was latent while
+  `bug` was the only producer (a command already runs on the world
+  goroutine) and immediate once #134 added producers on the login
+  goroutine. And "mid-edit" is the connection state (`StateEditing`,
+  plus `StatePaging`) rather than `PLR_WRITING`, because nothing in this
+  port sets that bit — see #214, where three other checks on it are
+  dead. `Session.state` became an `atomic.Int32` for this: it is read
+  from the world goroutine now, and written by each session's own.
+
+  The producers are `Context.wizlog`/`wizlogInvis`
+  (`internal/session/wizlog.go`) and `Server.wizlog`/`wizlogInvis`
+  (`internal/server/wizvis.go`). Issue #134 was the pass that went through
+  every `mudlog()` in `reference/moderncserver/src` and wired up the ones
+  in ported territory: `quit` (both of do_quit's), `purge`, `force` (all
+  three), `zreset` (both), `pardon`, `redeem`, `notitle`, `squelch`,
+  `freeze`, `thaw`, `set <name> passwd`, `ban`, `unban`, `skillset`,
+  `hcontrol pay`, `tedit`'s save, the summon-protection failure,
+  `bug`/`idea`/`typo`, `do_start`'s "advanced to level 1", both copies of
+  gain_exp's "advanced N levels", the death line (`PKILL: ` prefix
+  included), close_socket's "Closing link to"/"Losing player", the auto
+  zone reset, `log_zone_error`, the idle reaping, all seven of
+  `Crash_load`'s and the hoarding check, the receptionist's rent and cryo
+  lines, and the login sequence's own ten — the BAN_ALL, new-character
+  and SELECT refusals, "Bad PW", "has connected", "new player", "has
+  self-deleted", and the three reconnect modes.
+
+  **Two deliberate differences run through all of them.** The first: the
+  C's `file` argument is FALSE at four call sites, meaning "echo it, do
+  not write it down". This port writes every line to the structured log
+  regardless — a log the operator can filter is worth more than the C's
+  choice about a plain-text file, and nothing player-visible or on-disk
+  turns on it. The second: `mudlog`'s `str` was one string serving both
+  jobs, so these call sites log the C's *exact text* rather than the
+  lowercase-noun-plus-attributes shape the rest of this tree's structured
+  logging uses. `echoWizVis` relays a record's message, so the message has
+  to be the thing a god reads.
+
+  **Not ported, with reasons:**
+  - `mudlog` inside `gain_exp`/`gain_exp_regardless` (`limits.c:305`,
+    `:357`) sits at its three *callers* instead — `internal/game` has no
+    logger and is not getting one.
+  - `log_zone_error`'s two lines (`db.c:1961`, `:1965`) are one line here;
+    `game.ResetReport` already carries the offending command inside the
+    same string, and both C lines are NRM/LVL_GOD so nobody sees half of
+    a pair.
+  - `close_socket`'s "Losing descriptor without char." (`comm.c:1982`).
+    The C allocates `d->character` at the name prompt, so that line means
+    "a connection that typed nothing"; here a session with no character is
+    the same object as one that never authenticated, and the line would
+    fire on every port-scan.
+  - `mudlog`'s own `PLR_WRITING` exclusion (`utils.c:248`) has a
+    stand-in rather than the flag, as above. The flag itself is #214.
+  - `parse_action`'s "SYSERR: invalid command passed to parse_action"
+    (`improved-edit.c:473`) is unreachable in the C —
+    `improved_editor_execute` only ever passes valid `PARSE_*` constants,
+    and its own `default:` prints "Invalid option." without logging.
+  - The SIGUSR1/SIGUSR2 lines (`comm.c:904`, `:909`) have no handlers to
+    log from yet; see `docs/design/signal-handling.md` §3.
+  - `autowiz` (`limits.c:256`) is not ported, and neither is the wizlist
+    regeneration it announces.
+  - `objsave.c:217`'s auto-equip SYSERR is inside `#if USE_AUTOEQ`,
+    which `structs.h:30` sets to 0 — the rent file has no location field,
+    so there is no double-equipped slot to complain about.
+  - Every `mudlog` in `gen*.c`, `medit.c`, `oedit.c`, `redit.c`,
+    `sedit.c`, `zedit.c` and `oasis.c` — 42 of the 106 — belongs to
+    OasisOLC, which is not ported. `tedit.c` is the exception and is
+    wired up; its companion "SYSERR: Can't write file" (`tedit.c:42`) is
+    not, because `TextEditor.SetTextField` owns the write and reports
+    only a bad field name.
+  - `comm.c:1409`'s "New connection from" is inside `#if 0` in the C.
+  - `log_death_trap` (`utils.c:165`, called from `act.movement.c:173`) has
+    nothing to log from: **walking into a `ROOM_DEATH` room does not kill
+    anybody in this port**, because `do_simple_move`'s death-trap branch
+    was never written. That is a gameplay gap and not a logging one —
+    found by this audit, filed as #209, and listed again under "Not
+    deviations — gaps still to fill" above.
+  - `check_killer`'s "PC Killer bit set on ..." (`fight.c:231`) and the
+    sanctioned-pkill line (`fight.c:272`) have no code to sit in either:
+    nothing in this port sets `PLR_KILLER` on an attack. Filed as #213.
+  - The two **wizlock** refusals (`interpreter.c:1425` for a new
+    character, `:1496` for an existing one) have no refusal to attach to:
+    `Server.AllowedIn` is never called, and `Create`'s own check produces
+    a different message. Filed as #211. The *site-ban* new-character
+    refusal at `:1416`, which reads much the same, is wired up.
+
+  **One line the port says and the C did not.** `interpreter.c:1629`'s
+  "new player" `mudlog` fires against a buffer a local `<DoC>` block
+  overwrote three lines earlier, so what the real server logged was a
+  duplicate of the "All hail" broadcast, with the host lost. The port
+  logs the line the call site was written for.
+  [`weirdnumbers.md`](weirdnumbers.md) has the C.
 - **The pager now covers `credits`/`news`/`info`/`wizlist`/`immlist`/
   `handbook`/`policy`/`motd`/`imotd`/`help`, a bulletin board's message
   list and a message's own body, a shop's `list`, `practice`'s skill

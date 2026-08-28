@@ -8,6 +8,7 @@ package server
 
 import (
 	"github.com/gerrowadat/disgracelands/internal/game"
+	"github.com/gerrowadat/disgracelands/internal/obs"
 	"github.com/gerrowadat/disgracelands/internal/session"
 )
 
@@ -98,6 +99,7 @@ func (s *Server) BootReset(w *game.Live) {
 
 		for _, problem := range report.Problems {
 			s.logger.Warn("zone reset", "zone", zone.Vnum, "name", zone.Name, "problem", problem)
+			s.wizlogZoneError(zone.Vnum, problem)
 		}
 	}
 
@@ -161,8 +163,17 @@ func (s *Server) drainZoneQueue(w *game.Live) {
 		s.logger.Debug("zone reset",
 			"zone", zone.Vnum, "name", zone.Name,
 			"mobiles", report.Mobiles, "objects", report.Objects)
+		// mudlog(buf, CMP, LVL_GOD, FALSE) (db.c:1936-1937). CMP, so only
+		// a god running syslog complete sees the world tick over
+		// underneath them — which at ten seconds a zone is exactly as
+		// often as it sounds. The C's `file` argument is FALSE here, so
+		// the line never reached its log at all; this port writes it
+		// anyway, the same uniform choice made for every other echo (see
+		// docs/deviations.md).
+		s.wizlog(obs.LogComplete, game.LevelGod, "Auto zone reset: %s", zone.Name)
 		for _, problem := range report.Problems {
 			s.logger.Warn("zone reset", "zone", zone.Vnum, "problem", problem)
+			s.wizlogZoneError(zone.Vnum, problem)
 		}
 	}
 }
@@ -175,4 +186,19 @@ func (s *Server) zoneStateFor(i int) *zoneState {
 		s.zones[i] = &zoneState{}
 	}
 	return s.zones[i]
+}
+
+// wizlogZoneError is log_zone_error (db.c:1955), the pair of NRM/LVL_GOD
+// mudlogs a bad zone command produces.
+//
+// The C writes two lines — "SYSERR: zone file: %s" and then "SYSERR:
+// ...offending cmd: '%c' cmd in zone #%d, line %d" (db.c:1961, :1965) —
+// because its ZONE_ERROR macro has the message and the command in
+// different places. game.ResetReport already carries both in one string
+// ("line 42: M 3001 1 3014: mobile does not exist", reset.go:241), so
+// this is one line rather than two. Both of the C's are the same type and
+// level, so no immortal ends up seeing one half without the other.
+func (s *Server) wizlogZoneError(zone game.ZoneVnum, problem string) {
+	s.wizlog(obs.LogNormal, game.LevelGod,
+		"SYSERR: zone file: zone #%d, %s", zone, problem)
 }

@@ -7,7 +7,10 @@
 package session
 
 import (
+	"fmt"
+
 	"github.com/gerrowadat/disgracelands/internal/game"
+	"github.com/gerrowadat/disgracelands/internal/obs"
 )
 
 // The wizard commands that change things, ported from act.wizard.c.
@@ -69,6 +72,14 @@ func doPurge(c *Context) error {
 				return nil
 			}
 			c.announceExcept(victim, "%s disintegrates %s.\r\n", c.Character.Name, victim.Name)
+			// mudlog(buf, BRF, MAX(LVL_GOD, GET_INVIS_LEV(ch)), TRUE)
+			// (act.wizard.c:1348-1349), and only for a player — the C
+			// guards it with `if (!IS_NPC(vict))`, so purging a mobile is
+			// unremarkable and purging a person is not.
+			if !victim.IsNPC() {
+				c.wizlogInvis(obs.LogBrief, game.LevelGod, c.Character,
+					"(GC) %s has purged %s.", c.Character.Name, victim.Name)
+			}
 			c.purge(victim)
 			c.Send("Okay.\r\n")
 			return nil
@@ -184,6 +195,12 @@ func doZreset(c *Context) error {
 			c.World.ResetZone(zone, c.RNG)
 		}
 		c.Send("Reset world.\r\n")
+		// mudlog(buf, NRM, MAX(LVL_GRGOD, GET_INVIS_LEV(ch)), TRUE)
+		// (act.wizard.c:1991-1992). Greater god, not god: resetting every
+		// zone at once is loud enough that the C raises the bar for who
+		// hears about it.
+		c.wizlogInvis(obs.LogNormal, game.LevelGreaterGod, c.Character,
+			"(GC) %s reset entire world.", c.Character.Name)
 		return nil
 	}
 
@@ -206,6 +223,12 @@ func doZreset(c *Context) error {
 
 	c.World.ResetZone(target, c.RNG)
 	c.Send("Reset zone %d (#%d): %s.\r\n", target.Vnum, target.Vnum, target.Name)
+	// mudlog(buf, NRM, MAX(LVL_GRGOD, GET_INVIS_LEV(ch)), TRUE)
+	// (act.wizard.c:2007-2008). The C's own text prints the zone *rnum*
+	// here, the table index; this port has no rnums, so it prints the vnum,
+	// the same substitution the reply above already makes.
+	c.wizlogInvis(obs.LogNormal, game.LevelGreaterGod, c.Character,
+		"(GC) %s reset zone %d (%s)", c.Character.Name, target.Vnum, target.Name)
 	return nil
 }
 
@@ -285,7 +308,15 @@ func doAdvance(c *Context) error {
 	// The level is set by the experience, not the other way round: the C
 	// hands gain_exp_regardless the *difference* between this level's
 	// threshold and what they have, and lets the levelling code do the rest.
-	game.GainExperienceRegardless(rec, game.LevelExperience(rec.Class, newLevel)-rec.Points.Exp, c.RNG)
+	if levels := game.GainExperienceRegardless(rec, game.LevelExperience(rec.Class, newLevel)-rec.Points.Exp, c.RNG); levels > 0 {
+		// gain_exp_regardless' copy of the same line (limits.c:351-357).
+		// `advance` demoting somebody sets the level itself and gains no
+		// levels here, so this fires on the way up only — which is the C's
+		// behaviour too, `is_altered` being set by the loop alone.
+		c.wizlogInvis(obs.LogBrief, game.LevelImmortal, victim,
+			"%s advanced %d level%s to level %d.", victim.Name,
+			levels, plural(int(levels)), rec.Level)
+	}
 	if c.Save != nil {
 		c.Save(victim)
 	}
@@ -353,6 +384,12 @@ func doPardon(c *Context) error {
 	rec.PlayerFlags = rec.PlayerFlags.Clear(game.PlayerThief | game.PlayerKiller)
 	c.Send("Pardoned.\r\n")
 	victim.Tell("You have been pardoned by the Gods!\r\n")
+	// mudlog(buf, BRF, MAX(LVL_GOD, GET_INVIS_LEV(ch)), TRUE)
+	// (act.wizard.c:2051-2052). Note the order of the two names: the C
+	// puts the pardoned player first and the god second, the opposite way
+	// round from most of do_wizutil's other lines.
+	c.wizlogInvis(obs.LogBrief, game.LevelGod, c.Character,
+		"(GC) %s pardoned by %s", victim.Name, c.Character.Name)
 	c.saveVictim(victim)
 	return nil
 }
@@ -360,22 +397,32 @@ func doPardon(c *Context) error {
 // doNoTitle and doSquelch are SCMD_NOTITLE and SCMD_SQUELCH, which are the
 // same command over different bits.
 func doNoTitle(c *Context) error {
-	return c.togglePlayerFlag(game.PlayerNoTitle, "Notitle")
+	return c.togglePlayerFlag(game.PlayerNoTitle, "Notitle", obs.LogNormal)
 }
 
 func doSquelch(c *Context) error {
-	return c.togglePlayerFlag(game.PlayerNoShout, "Squelch")
+	return c.togglePlayerFlag(game.PlayerNoShout, "Squelch", obs.LogBrief)
 }
 
-func (c *Context) togglePlayerFlag(flag game.Flags, label string) error {
+// togglePlayerFlag carries the syslog verbosity as a parameter because the
+// two commands do not share one: notitle is NRM and squelch is BRF
+// (act.wizard.c:2074, 2082). Everything else about them is identical, down
+// to the C building one string and using it for both the log line and the
+// reply — which is why the reply here starts with "(GC) " too.
+func (c *Context) togglePlayerFlag(flag game.Flags, label string, typ int) error {
 	victim := c.wizutilTarget()
 	if victim == nil {
 		return nil
 	}
 	rec := victim.Record
 	rec.PlayerFlags = rec.PlayerFlags.Toggle(flag)
-	c.Send("(GC) %s %s for %s by %s.\r\n",
+	line := fmt.Sprintf("(GC) %s %s for %s by %s.",
 		label, onOff(rec.PlayerFlags.Has(flag)), victim.Name, c.Character.Name)
+	// mudlog(buf, ..., MAX(LVL_GOD, GET_INVIS_LEV(ch)), TRUE) and then
+	// `strcat(buf, "\r\n"); send_to_char(buf, ch)` — the log line first,
+	// the same text to the god second.
+	c.wizlogInvis(typ, game.LevelGod, c.Character, "%s", line)
+	c.Send("%s\r\n", line)
 	c.saveVictim(victim)
 	return nil
 }
@@ -405,6 +452,10 @@ func doFreeze(c *Context) error {
 	c.Send("Frozen.\r\n")
 	announce(c.World, victim.Room, victim,
 		"A sudden cold wind conjured from nowhere freezes %s!\r\n", victim.Name)
+	// mudlog(buf, BRF, MAX(LVL_GOD, GET_INVIS_LEV(ch)), TRUE)
+	// (act.wizard.c:2100-2101).
+	c.wizlogInvis(obs.LogBrief, game.LevelGod, c.Character,
+		"(GC) %s frozen by %s.", victim.Name, c.Character.Name)
 	c.saveVictim(victim)
 	return nil
 }
@@ -426,6 +477,11 @@ func doThaw(c *Context) error {
 		return nil
 	}
 
+	// mudlog(buf, BRF, MAX(LVL_GOD, GET_INVIS_LEV(ch)), TRUE)
+	// (act.wizard.c:2114-2115), which the C does *before* clearing the bit
+	// — the one place in do_wizutil it logs ahead of acting.
+	c.wizlogInvis(obs.LogBrief, game.LevelGod, c.Character,
+		"(GC) %s un-frozen by %s.", victim.Name, c.Character.Name)
 	rec.PlayerFlags = rec.PlayerFlags.Clear(game.PlayerFrozen)
 	victim.Tell("A fireball suddenly explodes in front of you, melting the ice!\r\n" +
 		"You feel thawed.\r\n")

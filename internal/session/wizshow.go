@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/gerrowadat/disgracelands/internal/game"
+	"github.com/gerrowadat/disgracelands/internal/obs"
 )
 
 // do_ban, do_unban and do_show, ported from ban.c:128 and act.wizard.c:2155.
@@ -89,6 +90,13 @@ func doBan(c *Context) error {
 		c.Send("That site has already been banned -- unban it to change the ban type.\r\n")
 		return nil
 	}
+	// mudlog(buf, NRM, MAX(LVL_GOD, GET_INVIS_LEV(ch)), TRUE)
+	// (ban.c:202-204), before the confirmation rather than after it — the
+	// opposite way round from do_unban below, for no reason either
+	// function gives. The type in the text is ban_types[ban_node->type]
+	// (ban.c:37-41), always lower case, not the word the god typed.
+	c.wizlogInvis(obs.LogNormal, game.LevelGod, c.Character,
+		"%s has banned %s for %s players.", c.Character.Name, site, strings.ToLower(kind))
 	c.Send("Site banned.\r\n")
 	return nil
 }
@@ -104,7 +112,7 @@ func doUnban(c *Context) error {
 		return nil
 	}
 
-	_, found, err := c.Bans.Unban(site)
+	kind, found, err := c.Bans.Unban(site)
 	if err != nil {
 		c.Send("The ban list could not be written.\r\n")
 		return nil
@@ -114,6 +122,11 @@ func doUnban(c *Context) error {
 		return nil
 	}
 	c.Send("Site unbanned.\r\n")
+	// mudlog(buf, NRM, MAX(LVL_GOD, GET_INVIS_LEV(ch)), TRUE)
+	// (ban.c:236-238), after the confirmation this time, and reading the
+	// removed node's own type rather than anything the god typed.
+	c.wizlogInvis(obs.LogNormal, game.LevelGod, c.Character,
+		"%s removed the %s-player ban on %s.", c.Character.Name, strings.ToLower(kind), site)
 	return nil
 }
 

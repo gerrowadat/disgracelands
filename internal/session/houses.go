@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/gerrowadat/disgracelands/internal/game"
+	"github.com/gerrowadat/disgracelands/internal/obs"
 )
 
 // do_hcontrol and do_house, ported from house.c:505 and :525.
@@ -176,6 +177,12 @@ func hcontrolPay(c *Context, arg string) {
 		c.Send("Unknown house.\r\n")
 		return
 	}
+	// mudlog(buf, NRM, MAX(LVL_IMMORT, GET_INVIS_LEV(ch)), TRUE)
+	// (house.c:494-495), before the payment is recorded. The house in the
+	// text is the argument as typed, not the resolved vnum — `%s` of
+	// `arg`, so `hcontrol pay 0003` logs "house 0003".
+	c.wizlogInvis(obs.LogNormal, game.LevelImmortal, c.Character,
+		"Payment for house %s collected by %s.", strings.TrimSpace(arg), c.Character.Name)
 	h.LastPayment = time.Now()
 	c.Houses.SaveControl(c.World)
 	c.Send("Payment recorded.\r\n")

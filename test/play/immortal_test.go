@@ -79,6 +79,83 @@ func TestLoadAndPurge(t *testing.T) {
 	m.noServerErrors()
 }
 
+// TestSyslogEchoesMudlogLines: `syslog` turns on the second half of
+// mudlog() (utils.c:243), the one that shows a god what the game is doing
+// as it happens. Only a booted server with real rooms in it can produce
+// the interesting lines -- `zreset` needs a zone that resets, and a real
+// login needs the login sequence -- so this is here rather than in
+// internal/server.
+//
+// The green is the C's CCGRN at C_NRM (utils.c:255-257); the brackets are
+// mudlog's own `sprintf(buf, "[ %s ]\r\n", str)`.
+//
+// Every assertion here is a doUntil rather than a do: the echo is queued
+// onto the world goroutine (Server.echoWizVis), so it may land after the
+// prompt of the command that caused it. Waiting for the line itself is
+// the barrier; waiting for a prompt is not.
+func TestSyslogEchoesMudlogLines(t *testing.T) {
+	m := start(t, miniClassic)
+	c := m.god()
+
+	contains(t, "turning it on", c.do("syslog complete"),
+		"Your syslog is now complete.")
+
+	// (GC) %s reset zone %d (%s) -- NRM at LVL_GRGOD (act.wizard.c:2008),
+	// which an implementor clears. examples/mini has one zone, #1.
+	contains(t, "a zone reset is echoed",
+		c.doUntil("zreset 1", "[ (GC) Founder reset zone 1 (The Testing Grounds) ]"),
+		"[ (GC) Founder reset zone 1 (The Testing Grounds) ]")
+
+	// Three lines from somebody else's login, none of them produced by
+	// anything typed on this connection: "%s [%s] new player."
+	// (interpreter.c:1629), do_start's "advanced to level 1"
+	// (class.c:1837) and Crash_load's "entering game with no equipment."
+	// (objsave.c:458).
+	other := m.dial()
+	other.create("Onlooker", "onlookerpass", "f", "w")
+	contains(t, "somebody being created is echoed",
+		c.doUntil("look", "[ Onlooker entering game with no equipment. ]"),
+		"[ Onlooker [", "] new player. ]",
+		"[ Onlooker advanced to level 1 ]",
+		"[ Onlooker entering game with no equipment. ]")
+
+	// %s has quit the game. -- NRM at LVL_IMMORT (act.other.c:154).
+	other.doUntil("quit", "Make your choice:")
+	contains(t, "somebody quitting is echoed",
+		c.doUntil("look", "[ Onlooker has quit the game. ]"),
+		"[ Onlooker has quit the game. ]")
+
+	// %s [%s] has connected. -- BRF at LVL_IMMORT (interpreter.c:1509).
+	// The character exists now, so this is a login rather than a
+	// creation, and it is the other of the two lines.
+	back := m.dial()
+	back.login("Onlooker", "onlookerpass")
+	contains(t, "somebody logging back in is echoed",
+		c.doUntil("look", "] has connected. ]"),
+		"[ Onlooker [", "] has connected. ]")
+
+	m.noServerErrors()
+}
+
+// TestSyslogOffShowsNothing is the same server with the preference left
+// where a new character finds it: `syslog` defaults to off, and mudlog's
+// `if (tp < type) continue` (utils.c:252-253) then discards everything.
+func TestSyslogOffShowsNothing(t *testing.T) {
+	m := start(t, miniClassic)
+	c := m.god()
+
+	contains(t, "it starts off", c.do("syslog"), "Your syslog is currently off.")
+
+	// The second command is the barrier: it is queued onto the world
+	// goroutine behind whatever the reset queued, so its prompt is proof
+	// that an echo would already have been written if there was one.
+	// Both slices are searched, since a queued echo could land in either.
+	out := c.do("zreset 1") + c.do("look")
+	missing(t, "nothing is echoed", out, "[ (GC) Founder reset zone")
+
+	m.noServerErrors()
+}
+
 // TestSet changes a field on a character who is logged in, and the change is
 // visible where a player would see it.
 func TestSet(t *testing.T) {

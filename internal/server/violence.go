@@ -9,6 +9,7 @@ package server
 import (
 	"github.com/gerrowadat/disgracelands/internal/colour"
 	"github.com/gerrowadat/disgracelands/internal/game"
+	"github.com/gerrowadat/disgracelands/internal/obs"
 )
 
 // The combat round, ported from perform_violence and the messaging half of
@@ -314,6 +315,26 @@ func (s *Server) applyDamage(w *game.Live, attacker, victim *game.Character, dam
 		if attacker != nil {
 			s.award(attacker, victim)
 		}
+		// mudlog(buf2, BRF, LVL_IMMORT, TRUE) (fight.c:953), and only for
+		// a dead *player* — `if (!IS_NPC(victim))` (fight.c:938) — so the
+		// mobiles a fight is mostly made of are not logged. The "PKILL: "
+		// prefix is a `<DoC>` local addition and goes on when the killer
+		// is a player too (fight.c:940-949): the one line an immortal
+		// most wanted to see, marked so it could be grepped for. Bare
+		// LVL_IMMORT, no GET_INVIS_LEV() — a wizinvis god killing
+		// somebody is reported like anybody else.
+		if !victim.IsNPC() && attacker != nil {
+			prefix := ""
+			if !attacker.IsNPC() {
+				prefix = "PKILL: "
+			}
+			room := "nowhere"
+			if def := w.Room(victim.Room); def != nil {
+				room = def.Name
+			}
+			s.wizlog(obs.LogBrief, game.LevelImmortal, "%s%s killed by %s at %s",
+				prefix, victim.Name, attacker.Name, room)
+		}
 		s.kill(w, victim)
 	}
 }
@@ -445,6 +466,20 @@ func (s *Server) awardGroup(killer, victim *game.Character) {
 func (s *Server) announceGain(who *game.Character, out game.ExpGain) {
 	if out.Capped {
 		who.Tell("You can only understand so much...\r\n")
+	}
+	if out.Levels > 0 && who.Record != nil {
+		// mudlog(buf, BRF, MAX(LVL_IMMORT, GET_INVIS_LEV(ch)), TRUE)
+		// (limits.c:299-305), inside gain_exp's own `if (is_altered)` and
+		// ahead of "You rise a level!". It lives in gain_exp in the C, so
+		// every caller gets it; internal/game has no logger to put it in
+		// (that is the package's whole rule), so it sits at the callers
+		// that can actually raise somebody instead — here, at the
+		// cityguard's award (internal/session/specprocs.go), and at
+		// `advance` (internal/session/wizchange.go), which reaches
+		// gain_exp_regardless' identical copy at limits.c:357.
+		s.wizlogInvis(obs.LogBrief, game.LevelImmortal, who,
+			"%s advanced %d level%s to level %d.",
+			who.Name, out.Levels, pluralS(int(out.Levels)), who.Record.Level)
 	}
 	switch {
 	case out.Levels == 1:

@@ -62,11 +62,13 @@ func doGenWrite(kind string) func(*Context) error {
 		// in-game (obs.WithWizVisEcho echoes a record's own message, the
 		// same string mudlog's str serves both jobs from) — so the
 		// message here is that format, not a generic "<kind> report".
-		if c.Session != nil {
-			c.Session.logger.Info(fmt.Sprintf("%s %s: %s", c.Character.Name, kind, arg),
-				"character", c.Character.Name, "text", arg,
-				obs.WizLevel(int(game.LevelImmortal)), obs.WizType(obs.LogComplete))
-		}
+		//
+		// wizlogAttrs rather than wizlog, because the structured fields
+		// are worth keeping here on top of the C's text: a report is
+		// something somebody will want to grep for later by author.
+		c.wizlogAttrs(obs.LogComplete, game.LevelImmortal,
+			fmt.Sprintf("%s %s: %s", c.Character.Name, kind, arg),
+			"character", c.Character.Name, "text", arg)
 
 		if c.Reports == nil {
 			c.Send("Could not open the file.  Sorry.\r\n")
