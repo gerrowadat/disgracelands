@@ -257,6 +257,40 @@ would need its own scoping pass.
 | **Why** | Every shop this port's world data actually defines has a short enough list that the C's own wrap would never trigger either — the C's threshold is on rendered width, this port's is "none" — so there is no behaviour difference for any real shop, only for a hypothetical one with enough rooms or products to run past a terminal's width. Reproducing an exact break column for a case nothing exercises was not worth the code. |
 | **Where** | `internal/session/wizshops.go`'s `listDetailedShop`. |
 
+### `announce`: a player can turn the game-wide broadcasts down
+
+| | |
+|---|---|
+| **C** | `send_to_all_color` (comm.c:2256) reaches every descriptor at `CON_PLAYING` that is not carrying `PLR_WRITING`. The reader has no say in it beyond their colour level. |
+| **Go** | The same, plus a per-character `announce { Off \| Brief \| All }`. `All` is the C's behaviour; `Brief` drops the level-gain line and keeps the newcomer hail, the death trap and the remort; `Off` drops the lot. |
+| **Why** | The four `<DoC>` broadcasts (#212) are not a channel anybody joined and there is no `nogossip` for them — on a busy server the level-gain line fires on every kill that levels anybody, game-wide, and there was no way to be rid of it short of not playing. The C's own answer to exactly this problem, for every channel it *does* have, is a preference bit; this is that answer applied to the one stream that never got one. Graded rather than binary because the four differ enormously in frequency and only one of them is the problem. |
+| **Where** | `internal/game/announce.go` (`AnnounceLevel`, `Announcement.Hears`, the filter in `Live.Announce`), `doAnnounce` in `internal/session/informational.go`. |
+
+**The bits count suppression, not volume, and that is the load-bearing
+part.** `pref` is a `long` in the pfile struct (structs.h:858) and the pfile
+is a raw `fwrite`, so on the ILP32 data model the archived data uses there
+are nine spare bits — 23 through 31 — and every one of them is *clear* in
+every record ever written. A level where zero meant "off" would have muted
+the entire roster on the day it shipped. `PrefNoAnnounce1`/`2` therefore hold
+how much to take away, the way `PRF_NOGOSS` and its neighbours already read,
+and a record that has never heard of the setting reads as `All`.
+`internal/persist/player/binary/codec_test.go` round-trips both bits under
+both data models.
+
+Two smaller consequences, listed so they are not mistaken for slips:
+
+- **`toggle` grows a row.** `do_toggle` (act.informative.c:1263) is a ported
+  listing and its grid is the C's; the `Announcements:` line is a local
+  addition to it. A setting `toggle` does not list is a setting nobody
+  finds, and `toggle` is the one place a player looks for what they have
+  switched on.
+- **`announce` has a synthetic `CLine`.** It has no row in `interpreter.c`,
+  so it shares `autoexit`'s line (232) — after every real `a`-command in the
+  table. `a` still means `alias` for a mortal and `at` for a god, `au` is
+  still the auction/autoexit pair, and `an`, which matched nothing before, is
+  the only abbreviation this adds. Same device as `reloadmob` and friends;
+  `coverage_test.go`'s `newCommands` records it.
+
 ---
 
 ## Protocol

@@ -59,6 +59,7 @@ var newCommands = map[string]string{
 	"reloadzone": "reloadmob's own zone-wide extension; see docs/deviations.md",
 	"reloadobj":  "reloadmob's own object counterpart; see docs/deviations.md",
 	"reloadshop": "reloadmob's own shop counterpart; see docs/deviations.md",
+	"announce":   "lets a player turn the <DoC> broadcasts down; see docs/deviations.md",
 }
 
 // TestEveryCommandIsPortedOrListed compares the C's table against ours.

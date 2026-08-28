@@ -191,8 +191,8 @@ func (c *Context) broadcast(format string, args ...any) {
 // applies the reader's own COLOR_LEV threshold, and it skips anybody carrying
 // PLR_WRITING. game.Live.Announce is both, so that the four `<DoC>` callers
 // share one implementation rather than four loops.
-func (c *Context) broadcastAt(want colour.Level, format string, args ...any) {
-	c.World.Announce(want, format, args...)
+func (c *Context) broadcastAt(tier game.Announcement, want colour.Level, format string, args ...any) {
+	c.World.Announce(tier, want, format, args...)
 }
 
 // castSpell runs the spell's routines, porting call_magic.
