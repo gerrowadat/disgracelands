@@ -82,6 +82,12 @@ examples/mini/binary/house/
 examples/mini/yaml/pfiles/
 examples/mini/yaml/players/
 
+# data/ was the default --lib-dir before examples/stock/binary/ took over
+# (see that section's own comment above); it is not checked in and not the
+# default any more, but a --lib-dir=data server run locally still leaves
+# the same runtime state behind.
+data/pfiles/
+
 # NOT ignored, deliberately: etc/time, the mud clock's epoch
 # (internal/persist/clock, ClassicFile = "time"). It looks like exactly the
 # runtime state the rules above cover, and hiding it would be worse than the
