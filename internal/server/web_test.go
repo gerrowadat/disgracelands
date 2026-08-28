@@ -9,6 +9,7 @@ package server
 import (
 	"context"
 	"io"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -235,15 +236,36 @@ func TestWebSocketReachesTheRealLoginFlow(t *testing.T) {
 	if _, err := conn.Write([]byte("y\r\n")); err != nil {
 		t.Fatalf("confirming the name: %v", err)
 	}
-	n, err = conn.Read(buf)
-	if err != nil {
-		t.Fatalf("reading the password prompt: %v", err)
-	}
-	got = string(buf[:n])
-	if !strings.Contains(got, "assword") {
-		t.Errorf("after confirming the name = %q, want a password prompt", got)
+	// EchoOff's own marker (protocol.go's webEchoOffMarker) and the prompt
+	// text that follows it are two separate SendRaw/Send calls from two
+	// different call sites — session.go's own writeLoop has no reason to
+	// coalesce them, and coder/websocket turns each Write into its own
+	// WebSocket message — so they are read here as the two messages they
+	// are rather than assumed to arrive in one.
+	got = readUntilString(t, conn, "assword", buf)
+	if !strings.Contains(got, "\ue000") {
+		t.Errorf("before the password prompt = %q, want the echo-off marker", got)
 	}
 	assertNoIAC(t, "password prompt", got)
+}
+
+// readUntilString reads from conn until the accumulated text contains
+// want, or the test's own context deadline gives out.
+func readUntilString(t *testing.T, conn net.Conn, want string, buf []byte) string {
+	t.Helper()
+	var got strings.Builder
+	for {
+		n, err := conn.Read(buf)
+		if n > 0 {
+			got.Write(buf[:n])
+		}
+		if strings.Contains(got.String(), want) {
+			return got.String()
+		}
+		if err != nil {
+			t.Fatalf("reading (want %q): %v; got so far: %q", want, err, got.String())
+		}
+	}
 }
 
 // assertNoIAC checks for a raw 0xFF byte — telnet's IAC — anywhere in got.
