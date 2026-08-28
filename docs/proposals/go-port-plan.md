@@ -1890,6 +1890,16 @@ broadcasts are unported (#212), nothing sets `PLR_KILLER` on an attack
 (#213), and nothing sets `PLR_WRITING` either, which leaves four checks
 on it dead (#214).
 
+**The dispatcher's level read is on the world goroutine ✅ (#210).**
+`Dispatcher.Do` made three reads of world state on the connection's own
+goroutine before it entered `engine.DoSync` — the level the typed word is
+matched at (`interpreter.c:623`), the wait state, and the numbers in the
+prompt — and `advance` writing `GET_LEVEL` from `gain_exp_regardless`
+(`limits.c:357`) raced the first of them. Two round trips now: one to read
+what `command_interpreter` looks at before it runs anything, and one to run
+it. The wait stays outside both, because it is a sleep and the world
+goroutine must not sleep.
+
 **Death traps kill now ✅ (#209).** `do_simple_move`'s closing
 `log_death_trap(ch); death_cry(ch); extract_char(ch);`
 (`act.movement.c:171-176`) is `Context.deathTrap`. Both halves of

@@ -784,21 +784,50 @@ type Dispatcher struct {
 }
 
 // Do implements CommandHandler.
+//
+// Two round trips to the world goroutine, not one. Everything
+// command_interpreter looks at *before* it runs anything — the level the word
+// is matched at, the wait state, and the numbers in the prompt — is world
+// state, written on the world goroutine by anything that advances, lags or
+// hurts a character. Reading any of it here, on the connection's own
+// goroutine, is a data race, and was one: `advance` writing GET_LEVEL from
+// gain_exp_regardless (limits.c:357, game.GainExperienceRegardless) against
+// this function reading it to match a command. Two players, one of them an
+// immortal advancing the other, is an ordinary thing to happen. Issue #210.
+//
+// The wait itself stays out here deliberately. It is a sleep, and sleeping on
+// the world goroutine would stop the game for everybody — which is the whole
+// reason the dispatch is split this way round rather than simply wrapping the
+// lot in one DoSync.
 func (d *Dispatcher) Do(ctx context.Context, s *Session, line string) error {
 	word, arg := split(line)
-	if word == "" {
-		s.Send("%s", prompt(s))
-		return nil
-	}
 
-	// The level is part of the match. A command above your level is not
-	// refused, it is invisible: the word carries on matching down the table
-	// and, if nothing else answers to it, you get "Huh?!?" — the same answer
-	// as a word that means nothing at all. A mortal typing `goto` has never
-	// been told there is such a command.
-	cmd := lookupFor(word, characterLevel(s))
+	var (
+		cmd   *Command
+		wait  time.Duration
+		reply string
+	)
+	if err := d.Run(ctx, func(_ *game.Live) {
+		if word == "" {
+			reply = prompt(s)
+			return
+		}
+		// The level is part of the match. A command above your level is not
+		// refused, it is invisible: the word carries on matching down the
+		// table and, if nothing else answers to it, you get "Huh?!?" — the
+		// same answer as a word that means nothing at all. A mortal typing
+		// `goto` has never been told there is such a command.
+		cmd = lookupFor(word, characterLevel(s))
+		if cmd == nil {
+			reply = "Huh?!?\r\n" + prompt(s)
+			return
+		}
+		wait = s.Character().WaitRemaining()
+	}); err != nil {
+		return err
+	}
 	if cmd == nil {
-		s.Send("Huh?!?\r\n%s", prompt(s))
+		s.Send("%s", reply)
 		return nil
 	}
 
@@ -807,13 +836,11 @@ func (d *Dispatcher) Do(ctx context.Context, s *Session, line string) error {
 	// *delayed* rather than refused — a player who types `kick` twice gets
 	// two kicks, slowly. Sleeping here has the same effect, since this
 	// goroutine is the one reading their input.
-	if c := s.Character(); c != nil {
-		if remaining := c.WaitRemaining(); remaining > 0 {
-			select {
-			case <-time.After(remaining):
-			case <-ctx.Done():
-				return ctx.Err()
-			}
+	if wait > 0 {
+		select {
+		case <-time.After(wait):
+		case <-ctx.Done():
+			return ctx.Err()
 		}
 	}
 
