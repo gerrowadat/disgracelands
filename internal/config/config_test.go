@@ -216,6 +216,14 @@ func TestPathDerivation(t *testing.T) {
 	if got, want := override.WorldPath(), "/other/world"; got != want {
 		t.Errorf("WorldPath() = %q, want the override %q", got, want)
 	}
+
+	// PlayerPath must follow --player-format, not default to ascii's
+	// answer regardless: docs/design/data-format.md's own yaml layout is
+	// players/, not pfiles/ — pfiles/ is ascii's own directory.
+	yaml := load(t, append(minimal, "--lib-dir=/srv/dl", "--player-format=yaml"), nil)
+	if got, want := yaml.PlayerPath(), "/srv/dl/players"; got != want {
+		t.Errorf("PlayerPath() with --player-format=yaml = %q, want %q", got, want)
+	}
 }
 
 func TestVersionSkipsValidation(t *testing.T) {

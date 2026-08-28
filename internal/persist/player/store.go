@@ -131,7 +131,7 @@ type Config struct {
 	// `etc/players` (PLAYER_FILE, db.h) and `plrobjs/` (LIB_PLROBJS,
 	// db.h:37). So in an archived lib/ the rent files are a *sibling* of the
 	// directory the roster is in, not a child of it, and a tool pointed at
-	// the roster the way `dlctl pfile convert --from-dir=lib/etc` is finds
+	// the roster the way `dlctl convert --type=pfile --from-dir=lib/etc` is finds
 	// no rent files at all unless it is told where they are.
 	ObjectsDir string
 	// AliasDir is the `plralias/` directory holding the per-character alias

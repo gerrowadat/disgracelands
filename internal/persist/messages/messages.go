@@ -12,7 +12,7 @@
 // Like internal/persist/names, this is read-only game data at runtime —
 // nothing in the C ever writes misc/messages while playing — so there is
 // no Store interface with a runtime-mutation method to design, only a
-// list to load and (for `dlctl messages import`/`fmt`) to write back out.
+// list to load and (for `dlctl import --type=messages`/`fmt`) to write back out.
 package messages
 
 import (

@@ -145,7 +145,7 @@ func (s *Store) All() []mail.Message {
 }
 
 // Rewrite writes the file back in its current, canonical form without
-// changing its contents — `dlctl state fmt`'s way of reformatting mail,
+// changing its contents — `dlctl fmt --type=state`'s way of reformatting mail,
 // since Send/Receive are the only ways to change what is stored and
 // neither is the right shape for "no changes, just rewrite."
 func (s *Store) Rewrite() error { return s.save() }

@@ -15,14 +15,14 @@ import (
 )
 
 // stockBinaryDir is examples/stock/binary from cmd/dlctl's own package
-// directory — the real, checked-in fixture `lib import`'s own README
+// directory — the real, checked-in fixture `import` (with no --type)'s own README
 // (examples/stock/README.md) documents producing examples/stock/yaml
 // from, used here rather than a synthetic one so this test exercises the
 // same seven subsystems and the same real archive data every other
 // importer's own tests do individually.
 const stockBinaryDir = "../../examples/stock/binary"
 
-// libImportFixtures is every checked-in binary/yaml pair `lib import`'s
+// libImportFixtures is every checked-in binary/yaml pair `import` (with no --type)'s
 // own tests hold to the same standard: regenerate yaml from binary, and
 // it must match what is checked in byte for byte. examples/mini is the
 // second entry, added once it existed — its own README has the story of
@@ -39,27 +39,27 @@ var libImportFixtures = []struct {
 	{"mini", "../../examples/mini/binary", "../../examples/mini/yaml"},
 }
 
-func TestLibImportRequiresBothDirs(t *testing.T) {
-	if err := run([]string{"lib", "import"}); err == nil {
-		t.Error("run([lib import]) with neither flag succeeded, want an error")
+func TestImportRequiresBothDirs(t *testing.T) {
+	if err := run([]string{"import"}); err == nil {
+		t.Error("run([import]) with neither flag succeeded, want an error")
 	}
-	if err := run([]string{"lib", "import", "--from-dir", stockBinaryDir}); err == nil {
-		t.Error("run([lib import --from-dir]) with no --to-dir succeeded, want an error")
+	if err := run([]string{"import", "--from-dir", stockBinaryDir}); err == nil {
+		t.Error("run([import --from-dir]) with no --to-dir succeeded, want an error")
 	}
-	if err := run([]string{"lib", "import", "--to-dir", t.TempDir()}); err == nil {
-		t.Error("run([lib import --to-dir]) with no --from-dir succeeded, want an error")
+	if err := run([]string{"import", "--to-dir", t.TempDir()}); err == nil {
+		t.Error("run([import --to-dir]) with no --from-dir succeeded, want an error")
 	}
 }
 
-func TestLibImportConvertsEndToEnd(t *testing.T) {
+func TestImportConvertsEndToEnd(t *testing.T) {
 	for _, fx := range libImportFixtures {
 		t.Run(fx.name, func(t *testing.T) {
 			to := t.TempDir()
-			if err := run([]string{"lib", "import", "--from-dir", fx.binaryDir, "--to-dir", to}); err != nil {
-				t.Fatalf("run([lib import]): %v", err)
+			if err := run([]string{"import", "--from-dir", fx.binaryDir, "--to-dir", to}); err != nil {
+				t.Fatalf("run([import]): %v", err)
 			}
 
-			// One file or directory per subsystem `lib import` wraps,
+			// One file or directory per subsystem `import` (with no --type) wraps,
 			// matching what the checked-in yaml/ itself already holds.
 			for _, want := range []string{
 				"world/zones.yaml",
@@ -79,8 +79,8 @@ func TestLibImportConvertsEndToEnd(t *testing.T) {
 
 			// players/ is not produced at all: neither fixture's binary/
 			// roster has anyone in it (a fresh stock install has none,
-			// and this is invented from scratch), and pfile import does
-			// not create an empty directory for zero characters —
+			// and this is invented from scratch), and import --type=pfile
+			// does not create an empty directory for zero characters —
 			// asserting this rather than assuming it.
 			if _, err := os.Stat(filepath.Join(to, "players")); !os.IsNotExist(err) {
 				t.Errorf("players/ exists with an empty roster to import: %v", err)
@@ -88,7 +88,7 @@ func TestLibImportConvertsEndToEnd(t *testing.T) {
 
 			// The stamp is this build's release version, and a test
 			// binary has none (docs/design/data-format-versioning.md
-			// §6), so `lib import` writes no stamp at all here rather
+			// §6), so `import` writes no stamp at all here rather
 			// than inventing a number. A released dlctl is what
 			// produces one; that half is dataversion's own tests.
 			if _, err := os.Stat(filepath.Join(to, dataversion.FileName)); !os.IsNotExist(err) {
@@ -98,7 +98,7 @@ func TestLibImportConvertsEndToEnd(t *testing.T) {
 	}
 }
 
-func TestLibImportMatchesTheCheckedInExamples(t *testing.T) {
+func TestImportMatchesTheCheckedInExamples(t *testing.T) {
 	// Each yaml/ is its own binary/ converted exactly this way (both
 	// READMEs say so) — regenerating it and diffing against what is
 	// checked in is what proves that claim rather than assuming it, and
@@ -107,8 +107,8 @@ func TestLibImportMatchesTheCheckedInExamples(t *testing.T) {
 	for _, fx := range libImportFixtures {
 		t.Run(fx.name, func(t *testing.T) {
 			to := t.TempDir()
-			if err := run([]string{"lib", "import", "--from-dir", fx.binaryDir, "--to-dir", to}); err != nil {
-				t.Fatalf("run([lib import]): %v", err)
+			if err := run([]string{"import", "--from-dir", fx.binaryDir, "--to-dir", to}); err != nil {
+				t.Fatalf("run([import]): %v", err)
 			}
 
 			var mismatches []string

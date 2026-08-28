@@ -135,7 +135,7 @@ func compareJSON(t *testing.T, label string, want, got any) {
 	}
 }
 
-// writeImportedManifest builds zones.yaml the way `dlctl world import`
+// writeImportedManifest builds zones.yaml the way `dlctl import --type=world`
 // will: every zone the source loaded, enabled.
 func writeImportedManifest(t *testing.T, dir string, w *game.World) {
 	t.Helper()

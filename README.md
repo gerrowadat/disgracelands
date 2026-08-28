@@ -67,7 +67,7 @@ Phase 6 (OasisOLC) was decided against on those terms.
 
 The data itself is pluggable: run on the original `classic`/`ascii`
 file shapes, or convert a whole `lib/` into one `yaml` directory — one
-file per zone and per character — with `dlctl lib import`. See
+file per zone and per character — with `dlctl import`. See
 `docs/design/data-format.md` and `docs/operations.md`.
 
 **From here, the two servers are allowed to differ.** Reaching playable was
@@ -139,7 +139,7 @@ reference/      Everything that is not the Go port.
                   runnable. See its README.md.
   tools/          C helper programs written for this revival (the binary
                   player-database-to-ascii_pfiles converter and a dumper).
-                  Superseded by dlctl's pfile subcommands.
+                  Superseded by dlctl's --type=pfile commands.
   CircleMUD3-src/ Code-only snapshot of the pre-upgrade baseline.
   WipeMud-src/    Code-only snapshot of the abandoned CircleMUD 3.1
                   upgrade attempt. See reference/README.md.

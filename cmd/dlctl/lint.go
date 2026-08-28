@@ -18,14 +18,11 @@ import (
 	"github.com/gerrowadat/disgracelands/internal/persist/world/classic"
 )
 
-// worldFlags declares the options shared by the world subcommands.
-func worldFlags(fs *flag.FlagSet) (dir, format *string, mini *bool) {
-	dir = fs.String("world-dir", "data/world", "World data directory")
-	format = fs.String("world-format", classic.FormatName,
-		fmt.Sprintf("World format: %v", world.Formats()))
-	mini = fs.Bool("mini-mud", false, "Use the reduced index.mini file list")
-	return
-}
+// lintTypes is who `dlctl lint` supports today — just world, the C tree's
+// scheck/-c equivalent. --type is still required and validated against
+// this narrower set (not allTypes), so a future `lint --type=state` fails
+// clearly rather than needing dispatch logic added blind.
+var lintTypes = []dirType{typeWorld}
 
 // loadWorld opens the configured source and loads it, returning findings
 // where the source can produce them.
@@ -54,19 +51,30 @@ func loadWorld(ctx context.Context, dir, format string, mini bool, opts world.Op
 	return world.BuildDumpWithOptions(w, opts), nil, nil
 }
 
-// cmdWorldLint checks the world files and reports what it finds. It replaces
-// the C tree's src/util/scheck and its -c mode, and unlike either it can run
-// in CI without starting a server.
-func cmdWorldLint(args []string) error {
-	fs := flag.NewFlagSet("world lint", flag.ContinueOnError)
-	dir, format, mini := worldFlags(fs)
+// cmdLint checks a directory's files and reports what it finds. For
+// --type=world it replaces the C tree's src/util/scheck and its -c mode,
+// and unlike either can run in CI without starting a server.
+func cmdLint(args []string) error {
+	fs := flag.NewFlagSet("lint", flag.ContinueOnError)
+	typeRaw := fs.String("type", "", "Subsystem to check: "+joinTypes(lintTypes))
+	dir := fs.String("dir", "data", "Data directory (base)")
+	format := fs.String("format", classic.FormatName, fmt.Sprintf("Format: %v", world.Formats()))
+	mini := fs.Bool("mini-mud", false, "Use the reduced index.mini file list")
 	quiet := fs.Bool("quiet", false, "Suppress informational findings")
 	strict := fs.Bool("strict", false, "Exit non-zero on warnings as well as errors")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
+	t, err := parseType(*typeRaw, lintTypes)
+	if err != nil {
+		return err
+	}
+	target, err := resolveDir(t, *dir, *format)
+	if err != nil {
+		return err
+	}
 
-	dump, findings, err := loadWorld(context.Background(), *dir, *format, *mini, world.Options{})
+	dump, findings, err := loadWorld(context.Background(), target, *format, *mini, world.Options{})
 	if err != nil {
 		// A load failure is itself the finding, and the most important one.
 		fmt.Fprintf(os.Stderr, "error: %v\n", err)
@@ -108,39 +116,4 @@ func cmdWorldLint(args []string) error {
 		return errQuiet
 	}
 	return nil
-}
-
-// cmdWorldDump writes the loaded world as canonical JSON, for diffing against
-// the same dump produced by the C loader.
-func cmdWorldDump(args []string) error {
-	fs := flag.NewFlagSet("world dump", flag.ContinueOnError)
-	dir, format, mini := worldFlags(fs)
-	outPath := fs.String("out", "-", "Output file, or - for stdout")
-	parity := fs.Bool("parity", false,
-		"Omit fields the C server does not retain, for diffing against its dump")
-	if err := fs.Parse(args); err != nil {
-		return err
-	}
-
-	dump, _, err := loadWorld(context.Background(), *dir, *format, *mini,
-		world.Options{Parity: *parity})
-	if err != nil {
-		return err
-	}
-
-	w := os.Stdout
-	if *outPath != "-" {
-		f, err := os.Create(*outPath) //nolint:gosec // operator-supplied path
-		if err != nil {
-			return err
-		}
-		defer func() { _ = f.Close() }()
-		w = f
-	}
-
-	bw := bufio.NewWriter(w)
-	if err := world.WriteDump(bw, dump); err != nil {
-		return err
-	}
-	return bw.Flush()
 }

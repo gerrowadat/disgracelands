@@ -15,8 +15,9 @@ import (
 
 // worldExampleFixtures is every checked-in world/ pair this repo ships as a
 // worked example — both a classic (or binary) source and its yaml
-// conversion — held to the two things `dlctl world lint` and `dlctl world
-// dump` exist to check: the data loads clean, and the two formats agree.
+// conversion — held to the two things `dlctl lint --type=world` and
+// `dlctl dump --type=world` exist to check: the data loads clean, and the
+// two formats agree.
 var worldExampleFixtures = []struct {
 	name          string
 	classicDir    string
@@ -28,7 +29,7 @@ var worldExampleFixtures = []struct {
 }
 
 // TestWorldExamplesLintClean is the regression this repo's own examples
-// are held to: `dlctl world lint` finds nothing above informational
+// are held to: `dlctl lint --type=world` finds nothing above informational
 // severity in either format. examples/mini's own README has the story of
 // what this test would have caught before the zone header was widened —
 // a mobile or object outside a zone's own bot–top range is not a lint

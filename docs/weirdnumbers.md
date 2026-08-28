@@ -657,7 +657,7 @@ canteen declared as weighing 20 and holding 80 units arrives weighing 85. The
 world files were authored against this behaviour, so the declared numbers look
 wrong on their own.
 
-*Reproduced*, and reported by `dlctl world lint` as a note rather than a
+*Reproduced*, and reported by `dlctl lint --type=world` as a note rather than a
 warning, since it is intended.
 
 ### A container's capacity includes the container
@@ -759,7 +759,7 @@ the end of `obj/30.obj`, after 3099, and produced exactly the same "does not
 exist" as not adding them at all.
 
 Worth knowing before anybody hand-edits a world file, and worth knowing that
-`dlctl world lint` does not check for it.
+`dlctl lint --type=world` does not check for it.
 
 *Source*: `db.c`'s `real_object`.
 

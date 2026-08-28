@@ -148,16 +148,17 @@ type Config struct {
 	ShowVersion bool
 }
 
-// PlayerPath returns the player-data directory, defaulting to LibDir/pfiles.
-//
-// The ascii format keeps a tree of one file per character, so it wants a
-// directory of its own rather than sharing data/etc with the boards, the ban
-// list and the rest of the C server's odds and ends.
+// PlayerPath returns the player-data directory, defaulting to LibDir/pfiles
+// for ascii, LibDir/players for yaml (Dir, SubsystemPlayers) — the ascii
+// format keeps a tree of one file per character, so it wants a directory of
+// its own rather than sharing data/etc with the boards, the ban list and
+// the rest of the C server's odds and ends; yaml keeps its own, named
+// after itself the way state/ and config/ are.
 func (c *Config) PlayerPath() string {
 	if c.PlayerDir != "" {
 		return c.PlayerDir
 	}
-	return c.LibDir + "/pfiles"
+	return Dir(c.LibDir, SubsystemPlayers, c.PlayerFormat)
 }
 
 // WorldPath returns the world-data directory, defaulting to LibDir/world.
@@ -165,7 +166,7 @@ func (c *Config) WorldPath() string {
 	if c.WorldDir != "" {
 		return c.WorldDir
 	}
-	return c.LibDir + "/world"
+	return Dir(c.LibDir, SubsystemWorld, c.WorldFormat)
 }
 
 // Known format names. These are validated here so a typo fails at startup
@@ -458,7 +459,7 @@ func (c *Config) Validate() error {
 	if !contains(serverPlayerFormats, c.PlayerFormat) {
 		return fmt.Errorf("--player-format: the server cannot run on %q; it is a conversion format only. "+
 			"Convert the roster first:\n"+
-			"    dlctl pfile convert --from=%s --from-dir=<dir> --to=ascii --to-dir=<dir>",
+			"    dlctl convert --type=pfile --from-format=%s --from-dir=<dir> --to-format=ascii --to-dir=<dir>",
 			c.PlayerFormat, c.PlayerFormat)
 	}
 	if !contains(knownWorldFormats, c.WorldFormat) {

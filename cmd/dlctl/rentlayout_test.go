@@ -111,14 +111,18 @@ func TestPfileImportFindsRentFilesBesideTheRoster(t *testing.T) {
 	lib := t.TempDir()
 	name := writeRosterWithRent(t, filepath.Join(lib, "etc"), filepath.Join(lib, "plrobjs"))
 
-	to := filepath.Join(t.TempDir(), "players")
-	if err := run([]string{"pfile", "import", "--from-dir", filepath.Join(lib, "etc"), "--to-dir", to}); err != nil {
-		t.Fatalf("run([pfile import]): %v", err)
+	// --from-dir/--to-dir are base directories under the new common --type
+	// flag scheme (cmd/dlctl/layout.go): resolveDir(typePfile, lib,
+	// "binary") is lib/etc, matching where writeRosterWithRent put the
+	// roster, and resolveDir(typePfile, to, "yaml") is to/players.
+	to := t.TempDir()
+	if err := run([]string{"import", "--type", "pfile", "--from-dir", lib, "--to-dir", to}); err != nil {
+		t.Fatalf("run([import --type=pfile]): %v", err)
 	}
-	if got := importedInventory(t, to, name); got != 1 {
+	if got := importedInventory(t, filepath.Join(to, "players"), name); got != 1 {
 		t.Errorf("imported inventory: got %d objects, want 1", got)
 	}
-	if got := importedAliases(t, to, name); len(got) != 1 {
+	if got := importedAliases(t, filepath.Join(to, "players"), name); len(got) != 1 {
 		t.Errorf("imported aliases: got %d, want 1", len(got))
 	}
 }
@@ -127,14 +131,15 @@ func TestPfileImportFindsRentFilesBesideTheRoster(t *testing.T) {
 // one directory holding a roster and the rent files that go with it, which
 // is what a server started with --lib-dir writes. It has to keep working.
 func TestPfileImportFindsRentFilesInsideTheRoster(t *testing.T) {
-	pfiles := filepath.Join(t.TempDir(), "pfiles")
-	name := writeRosterWithRent(t, pfiles, filepath.Join(pfiles, "plrobjs"))
+	base := t.TempDir()
+	roster := filepath.Join(base, "etc")
+	name := writeRosterWithRent(t, roster, filepath.Join(roster, "plrobjs"))
 
-	to := filepath.Join(t.TempDir(), "players")
-	if err := run([]string{"pfile", "import", "--from-dir", pfiles, "--to-dir", to}); err != nil {
-		t.Fatalf("run([pfile import]): %v", err)
+	to := t.TempDir()
+	if err := run([]string{"import", "--type", "pfile", "--from-dir", base, "--to-dir", to}); err != nil {
+		t.Fatalf("run([import --type=pfile]): %v", err)
 	}
-	if got := importedInventory(t, to, name); got != 1 {
+	if got := importedInventory(t, filepath.Join(to, "players"), name); got != 1 {
 		t.Errorf("imported inventory: got %d objects, want 1", got)
 	}
 }
@@ -142,17 +147,18 @@ func TestPfileImportFindsRentFilesInsideTheRoster(t *testing.T) {
 // TestPfileImportHonoursAnExplicitObjectsDir covers a layout that is
 // neither, which is what the flag is for.
 func TestPfileImportHonoursAnExplicitObjectsDir(t *testing.T) {
-	roster := filepath.Join(t.TempDir(), "roster")
+	base := t.TempDir()
+	roster := filepath.Join(base, "etc")
 	objs := filepath.Join(t.TempDir(), "somewhere-else", "plrobjs")
 	name := writeRosterWithRent(t, roster, objs)
 
-	to := filepath.Join(t.TempDir(), "players")
+	to := t.TempDir()
 	if err := run([]string{
-		"pfile", "import", "--from-dir", roster, "--from-objs-dir", objs, "--to-dir", to,
+		"import", "--type", "pfile", "--from-dir", base, "--from-objs-dir", objs, "--to-dir", to,
 	}); err != nil {
-		t.Fatalf("run([pfile import]): %v", err)
+		t.Fatalf("run([import --type=pfile]): %v", err)
 	}
-	if got := importedInventory(t, to, name); got != 1 {
+	if got := importedInventory(t, filepath.Join(to, "players"), name); got != 1 {
 		t.Errorf("imported inventory: got %d objects, want 1", got)
 	}
 }

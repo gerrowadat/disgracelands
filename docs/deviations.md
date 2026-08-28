@@ -46,7 +46,7 @@ are fidelity, not deviation, and they live in the tests that assert them.
 | **C** | `nanny` (interpreter.c:1526) refuses a password shorter than 3 characters or longer than `MAX_PWD_LENGTH` (10). Traditional DES `crypt(3)` then truncates it to 8 characters regardless. |
 | **Go** | Minimum 6, no maximum. |
 | **Why** | Both C limits were consequences of the storage, not policy. The ten-character ceiling is the width of the field in `char_file_u`; the three-character floor was a defensible minimum when only the first eight characters were hashed anyway. Under argon2id the whole password is used and the stored form is not fixed-width, so neither limit has a reason to exist. Applies only to passwords being *set* — no existing character is locked out. |
-| **Where** | `auth.BadPassword` in `internal/auth/policy.go`, called from `badNewPassword` (`internal/session/menu.go`) and from `dlctl pfile passwd`. |
+| **Where** | `auth.BadPassword` in `internal/auth/policy.go`, called from `badNewPassword` (`internal/session/menu.go`) and from `dlctl passwd --type=pfile`. |
 
 ### Passwords are argon2id; legacy DES hashes are accepted and upgraded
 
@@ -523,7 +523,7 @@ Two consequences worth stating rather than discovering:
   the old scheme, which is the only thing that ever wrote a stamp — and
   the fix is to run the same command again with a current released
   `dlctl`. The two example worlds carried such a stamp and it has been
-  deleted; a fresh `lib import` no longer produces one.
+  deleted; a fresh `import` no longer produces one.
 - **The refusal now runs in both directions.** The old rule only refused
   data from a *newer* major, on the reasoning that a new server reading
   old data is the ordinary case. Under a release semver that reasoning
@@ -547,8 +547,8 @@ argued out in §1.1 and §6 of the design doc.
 The C has no way for anyone but the owner to change a password: `set`
 (act.wizard.c) has no such field, and `nanny`'s menu choice 4 is the only
 writer. That is right for a live game and unworkable for an archive, where a
-character's password is a DES hash from 2008 that nobody has. `dlctl pfile
-passwd <name>` sets one offline, under the same rule the menu applies
+character's password is a DES hash from 2008 that nobody has. `dlctl
+passwd --type=pfile <name>` sets one offline, under the same rule the menu applies
 (`auth.BadPassword`), refusing any format that cannot store an argon2id hash.
 
 It stays out of the game deliberately. A god who could set another

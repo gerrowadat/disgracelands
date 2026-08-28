@@ -326,7 +326,7 @@ jobs:
         run: go test -tags=play -race -count=1 -timeout 30m ./test/play/...
 
       - name: Lint the world files
-        run: go run ./cmd/dlctl world lint --world-dir=examples/stock/binary/world
+        run: go run ./cmd/dlctl lint --type=world --dir=examples/stock/binary
 
       - name: docs/configuration.md covers every flag
         run: |
@@ -365,7 +365,7 @@ jobs:
         run: ./scripts/license-check.sh
 
       # examples/stock/yaml/ and examples/mini/yaml/ are generated
-      # (`dlctl lib import`) from examples/*/binary/, checked in rather
+      # (`dlctl import`) from examples/*/binary/, checked in rather
       # than built on demand, same reasoning data/world's own tracked
       # files have (docs/developer.md: "the world is source"). A release
       # is where drift between the two gets caught: regenerate both fresh
@@ -376,15 +376,15 @@ jobs:
       # continue on a mismatch it did not expect. `.dlversion` is excluded:
       # it records which release of dlctl wrote the directory, not anything
       # about the world data, so it is meant to differ here.
-      - name: Example worlds must match dlctl lib import's output
+      - name: Example worlds must match dlctl import's output
         run: |
           set -e
           for pair in stock mini; do
             rm -rf "/tmp/regen-$pair"
-            go run ./cmd/dlctl lib import \
+            go run ./cmd/dlctl import \
               --from-dir="examples/$pair/binary" --to-dir="/tmp/regen-$pair" >/dev/null
             if ! diff -rq -x .dlversion "examples/$pair/yaml" "/tmp/regen-$pair"; then
-              echo "examples/$pair/yaml does not match a fresh dlctl lib import;"
+              echo "examples/$pair/yaml does not match a fresh dlctl import;"
               echo "run scripts/release.sh, which regenerates and commits this before dispatching this workflow."
               exit 1
             fi

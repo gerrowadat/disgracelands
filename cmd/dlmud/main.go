@@ -274,9 +274,9 @@ func run(args []string) (int, error) {
 	// state/clock.yaml directory the other four state stores share under
 	// yaml (docs/design/data-format.md §9). Applied before anyone can
 	// see the clock — BootReset and every command after it read MudTime().
-	clockPath := filepath.Join(cfg.LibDir, "etc", "time")
-	if cfg.StateFormat == "yaml" {
-		clockPath = filepath.Join(cfg.LibDir, "state")
+	clockPath := config.Dir(cfg.LibDir, config.SubsystemState, cfg.StateFormat)
+	if cfg.StateFormat != "yaml" {
+		clockPath = filepath.Join(clockPath, "time")
 	}
 	epoch, err := clock.Load(cfg.StateFormat, clockPath)
 	if err != nil {
@@ -319,10 +319,7 @@ func run(args []string) (int, error) {
 
 	// The bulletin boards: beside the player data in the etc directory under
 	// classic, or state/boards.yaml under yaml.
-	boardDir := filepath.Join(cfg.LibDir, "etc")
-	if cfg.StateFormat == "yaml" {
-		boardDir = filepath.Join(cfg.LibDir, "state")
-	}
+	boardDir := config.Dir(cfg.LibDir, config.SubsystemState, cfg.StateFormat)
 	boardStore, err := boards.Open(cfg.StateFormat, boards.Config{Dir: boardDir})
 	if err != nil {
 		return exitFailed, err
@@ -330,9 +327,9 @@ func run(args []string) (int, error) {
 
 	// The mud mail file: classic's block-allocator file, or
 	// state/mail.yaml under yaml.
-	mailPath := filepath.Join(cfg.LibDir, "etc", "plrmail")
-	if cfg.StateFormat == "yaml" {
-		mailPath = filepath.Join(cfg.LibDir, "state")
+	mailPath := config.Dir(cfg.LibDir, config.SubsystemState, cfg.StateFormat)
+	if cfg.StateFormat != "yaml" {
+		mailPath = filepath.Join(mailPath, "plrmail")
 	}
 	mailStore, err := mail.Open(cfg.StateFormat, mail.Config{Path: mailPath})
 	if err != nil {
@@ -342,12 +339,9 @@ func run(args []string) (int, error) {
 	// The house control file and the per-house object files: classic's two
 	// separate paths, or state/houses.yaml (everything folded in) under
 	// yaml.
-	houseCfg := houses.Config{
-		ControlPath: filepath.Join(cfg.LibDir, "etc", "hcontrol"),
-		ObjectDir:   filepath.Join(cfg.LibDir, "house"),
-	}
-	if cfg.StateFormat == "yaml" {
-		houseCfg = houses.Config{ObjectDir: filepath.Join(cfg.LibDir, "state")}
+	houseCfg := houses.Config{ObjectDir: config.Dir(cfg.LibDir, config.SubsystemHouseObjects, cfg.StateFormat)}
+	if cfg.StateFormat != "yaml" {
+		houseCfg.ControlPath = filepath.Join(config.Dir(cfg.LibDir, config.SubsystemState, cfg.StateFormat), "hcontrol")
 	}
 	houseStore, err := houses.Open(cfg.StateFormat, houseCfg)
 	if err != nil {
@@ -356,9 +350,9 @@ func run(args []string) (int, error) {
 
 	// The site ban list — the one archive file that is plain text, under
 	// classic; a state/bans.yaml file under yaml.
-	banPath := filepath.Join(cfg.LibDir, "etc", "badsites")
-	if cfg.StateFormat == "yaml" {
-		banPath = filepath.Join(cfg.LibDir, "state")
+	banPath := config.Dir(cfg.LibDir, config.SubsystemState, cfg.StateFormat)
+	if cfg.StateFormat != "yaml" {
+		banPath = filepath.Join(banPath, "badsites")
 	}
 	banStore, err := bans.Open(cfg.StateFormat, bans.Config{Path: banPath})
 	if err != nil {
@@ -368,10 +362,7 @@ func run(args []string) (int, error) {
 	// The bug/idea/typo log: misc/{bugs,ideas,typos} under classic, or the
 	// same state/ directory the other four state stores share under
 	// yaml.
-	reportsDir := filepath.Join(cfg.LibDir, "misc")
-	if cfg.StateFormat == "yaml" {
-		reportsDir = filepath.Join(cfg.LibDir, "state")
-	}
+	reportsDir := config.Dir(cfg.LibDir, config.SubsystemReports, cfg.StateFormat)
 	reportStore, err := reports.Open(cfg.StateFormat, reports.Config{Dir: reportsDir})
 	if err != nil {
 		return exitFailed, err
@@ -381,9 +372,9 @@ func run(args []string) (int, error) {
 	// config/names.yaml under yaml. Missing is not an error — see
 	// names.Load's doc comment — so a server with no list disallows
 	// nothing, matching Valid_Name's own posture.
-	namesPath := filepath.Join(cfg.LibDir, "misc", "xnames")
-	if cfg.NamesFormat == "yaml" {
-		namesPath = filepath.Join(cfg.LibDir, "config")
+	namesPath := config.Dir(cfg.LibDir, config.SubsystemNames, cfg.NamesFormat)
+	if cfg.NamesFormat != "yaml" {
+		namesPath = filepath.Join(namesPath, "xnames")
 	}
 	disallowedNames, err := names.Load(cfg.NamesFormat, namesPath)
 	if err != nil {

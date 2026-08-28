@@ -112,7 +112,7 @@ func TestAReadOnlyStoreRefusesToWrite(t *testing.T) {
 // The written file's board keys come out sorted, verified rather than
 // assumed: goccy/go-yaml's own map-marshalling behaviour, not a guarantee
 // this package makes itself (nothing here sorts by hand). This is what
-// makes the file's diffs meaningful and dlctl state fmt idempotent.
+// makes the file's diffs meaningful and dlctl fmt --type=state idempotent.
 func TestWrittenFileHasSortedBoardKeys(t *testing.T) {
 	dir := t.TempDir()
 	s, err := New(boards.Config{Dir: dir})

@@ -34,7 +34,7 @@ func (m *mud) find(msg string) (logLine, bool) {
 
 // TestTheWorldLoadsTheSameInBothFormats.
 //
-// examples/mini/yaml is examples/mini/binary put through `dlctl lib import`,
+// examples/mini/yaml is examples/mini/binary put through `dlctl import`,
 // and cmd/dlctl's own tests already check that the conversion is clean and
 // that the two dump identically. This asks the question those cannot: does a
 // server booted on the converted directory come up with the same world in it?

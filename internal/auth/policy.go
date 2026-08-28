@@ -31,7 +31,7 @@ const MinPasswordLength = 6
 //
 // The rule lives here rather than beside the login state machine because the
 // login state machine is no longer the only thing that sets a password:
-// `dlctl pfile passwd` does it offline, and a rule each caller states for
+// `dlctl passwd --type=pfile` does it offline, and a rule each caller states for
 // itself is one that ends up meaning two different things. The strings are
 // the C's, so they are still what a player sees at the menu.
 func BadPassword(password, name string) string {

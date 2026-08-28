@@ -13,7 +13,7 @@ does, how to configure it, how to run it.
   shutdown, health and readiness, metrics, logs, backups, exposure, and
   getting started from an original CircleMUD directory: `dlctl convert`
   into the classic/ascii shapes the server already runs on by default, or
-  `dlctl lib import` straight into `yaml`.
+  `dlctl import` straight into `yaml`.
 - **[developer.md](developer.md)** — working on the port: the `Makefile`'s
   dev targets, getting a server running locally against a tiny world or a
   throwaway data directory, poking at it by hand, and what to run before

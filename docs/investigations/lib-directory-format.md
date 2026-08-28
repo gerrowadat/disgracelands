@@ -32,7 +32,7 @@ Both were pointed at `~/scratch/lib/world` and made to dump canonical JSON:
 
 ```
 $ reference/moderncserver/bin/circle -J c.json -d <lib>
-$ go run ./cmd/dlctl world dump --world-dir=<lib>/world --parity --out=go.json
+$ go run ./cmd/dlctl dump --type=world --dir=<lib> --parity --out=go.json
 2981 rooms, 944 mobiles, 1199 objects, 47 zones, 77 shops
 IDENTICAL
 ```
@@ -338,7 +338,7 @@ players             139,104 bytes = 108 records of 1288
 players.beforewipe  1,965,488 bytes = 1526 records of 1288
 ```
 
-1288 is the ILP32 size. `dlctl pfile verify` reads both cleanly: 108 and
+1288 is the ILP32 size. `dlctl verify --type=pfile` reads both cleanly: 108 and
 **1,526** named characters, no empty slots, all on legacy `crypt(3)` DES
 passwords. The 1,526-character pre-wipe roster is by far the largest single
 piece of player history in the archive.
@@ -676,7 +676,7 @@ Two things about this are worth recording so nobody chases it:
   It is a stock-CircleMUD condition, not archive corruption. The archive's
   higher count is consistent with Disgracelands' seven custom spells.
 
-`dlctl world lint` against the archive reports **0 errors, 20 warnings, 8
+`dlctl lint --type=world` against the archive reports **0 errors, 20 warnings, 8
 notes**. The warnings are the five unlisted-file groups, two shops in
 nonexistent rooms (#3008 → room 3056, #5433 → room 6563), eleven shop
 `producing` entries for objects that do not exist, and two exits locked by
@@ -758,7 +758,7 @@ snapshot should parse, not search.
 **§2.4/§10.3's trailing-whitespace risk is the common case, not the edge
 case** (§8.2). 25% of room descriptions. This should be decided before the
 writer is built, not discovered by the fuzz test: either the writer falls back
-to quoted style for a quarter of all rooms, or `dlctl world import` strips
+to quoted style for a quarter of all rooms, or `dlctl import --type=world` strips
 trailing whitespace as a declared, reported, one-time normalisation. The
 second is a data change and belongs in `docs/deviations.md`; it is probably
 still the right answer, but it is the kind of thing that must be chosen out
@@ -809,8 +809,8 @@ already present in the archive triggers it.
 
 Two things follow. `internal/persist/world/classic` should either reproduce
 the C's forward-only cursor or keep the sort and document the difference in
-`docs/deviations.md` with this reproduction as the example. And `dlctl world
-lint` should report overlapping zone ranges and a zone table that is not
+`docs/deviations.md` with this reproduction as the example. And `dlctl
+lint --type=world` should report overlapping zone ranges and a zone table that is not
 ascending — neither is currently detected, which is why the divergence is
 silent on both sides.
 

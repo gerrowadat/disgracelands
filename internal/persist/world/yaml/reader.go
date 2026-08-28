@@ -224,7 +224,7 @@ func (l *loader) objFromDoc(path string, od objDoc) *game.ObjDef {
 // Exactly one of these should be present; if more than one is, the first
 // found in this order wins and the rest are ignored silently — a
 // consequence of the loose "any of these may be set" document shape rather
-// than a validated union, which dlctl world lint's write path never
+// than a validated union, which dlctl lint --type=world's write path never
 // produces since the writer only ever sets one.
 func (l *loader) objValues(path string, od objDoc) [game.NumObjValues]int32 {
 	switch {

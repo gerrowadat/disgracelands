@@ -334,7 +334,7 @@ func (s *Store) writeAll(data []byte) error {
 }
 
 // Verify checks that every record in the file decodes, and reports what it
-// found. `dlctl pfile verify` uses it; nothing else should need it.
+// found. `dlctl verify --type=pfile` uses it; nothing else should need it.
 func (s *Store) Verify(ctx context.Context) (Report, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()

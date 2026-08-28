@@ -86,7 +86,7 @@ Two binaries:
 - **`dlctl`** — offline tooling: world linting and dumping, player-file
   conversion, inspection and password setting, and converting a whole
   original data directory — into the classic/ascii shapes the server runs
-  on by default (`dlctl convert`), or straight into `yaml` (`dlctl lib
+  on by default (`dlctl convert`), or straight into `yaml` (`dlctl
   import`, `docs/design/data-format.md`).
   The jobs `reference/moderncserver/src/util/` and `reference/tools/` do
   today. Any subcommand added before the layer it needs reports which plan

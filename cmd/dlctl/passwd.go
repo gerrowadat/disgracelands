@@ -24,13 +24,13 @@ import (
 )
 
 //nolint:gosec // G101 matches "passwd" in the name; this is help text, not a credential.
-const helpPfilePasswd = `Usage: dlctl pfile passwd [options] <name>
+const helpPasswd = `Usage: dlctl passwd --type=pfile [options] <name>
 
 Sets a character's password. The new password is read from the terminal
 without echo, or from standard input if it is not a terminal:
 
-    dlctl pfile passwd --player-dir=lib/pfiles Bob
-    printf '%s\n' "$NEW" | dlctl pfile passwd Bob
+    dlctl passwd --type=pfile --dir=lib Bob
+    printf '%s\n' "$NEW" | dlctl passwd --type=pfile Bob
 
 Stop the server first. It holds a logged-in character's record in memory and
 writes it back on the next save, which would undo this.
@@ -38,7 +38,10 @@ writes it back on the next save, which would undo this.
 Options:
 `
 
-// cmdPfilePasswd sets one character's password from outside the game.
+// passwdTypes is who `dlctl passwd` supports today: just pfile.
+var passwdTypes = []dirType{typePfile}
+
+// cmdPasswd sets one character's password from outside the game.
 //
 // Nothing else can. The C has no `set ... password` — act.wizard.c's set_fields
 // never had one — and this port's only path is the owner changing their own
@@ -53,11 +56,13 @@ Options:
 // character's password can log in as them, and that is a different thing from
 // anything the C's immortal levels grant; keeping it offline keeps it to
 // whoever already has the pfiles on disk, who could have edited them anyway.
-func cmdPfilePasswd(args []string) error {
-	fs := flag.NewFlagSet("pfile passwd", flag.ContinueOnError)
-	dir, format := pfileFlags(fs)
+func cmdPasswd(args []string) error {
+	fs := flag.NewFlagSet("passwd", flag.ContinueOnError)
+	typeRaw := fs.String("type", "", "Subsystem to set a password in: "+joinTypes(passwdTypes))
+	base := fs.String("dir", "data", "Data directory (base)")
+	format := fs.String("format", "ascii", "Player-file format")
 	fs.Usage = func() {
-		_, _ = io.WriteString(fs.Output(), helpPfilePasswd)
+		_, _ = io.WriteString(fs.Output(), helpPasswd)
 		fs.PrintDefaults()
 	}
 	if err := fs.Parse(args); err != nil {
@@ -65,11 +70,19 @@ func cmdPfilePasswd(args []string) error {
 	}
 	if fs.NArg() != 1 {
 		fs.Usage()
-		return fmt.Errorf("pfile passwd needs exactly one character name")
+		return fmt.Errorf("passwd needs exactly one character name")
 	}
 	name := fs.Arg(0)
+	t, err := parseType(*typeRaw, passwdTypes)
+	if err != nil {
+		return err
+	}
+	dir, err := resolveDir(t, *base, *format)
+	if err != nil {
+		return err
+	}
 
-	store, err := player.Open(*format, player.Config{Dir: *dir})
+	store, err := player.Open(*format, player.Config{Dir: dir})
 	if err != nil {
 		return err
 	}
@@ -82,14 +95,14 @@ func cmdPfilePasswd(args []string) error {
 	// answering a different question than the one asked.
 	if !store.Capabilities().Supports(game.SchemeArgon2id) {
 		return fmt.Errorf("the %q format cannot store a modern password hash; "+
-			"convert the directory first with `dlctl pfile convert`", store.Name())
+			"convert the directory first with `dlctl convert --type=pfile`", store.Name())
 	}
 
 	ctx := context.Background()
 	rec, err := store.Load(ctx, name)
 	if err != nil {
 		if errors.Is(err, player.ErrNotFound) {
-			return fmt.Errorf("no character called %q in %s", name, *dir)
+			return fmt.Errorf("no character called %q in %s", name, dir)
 		}
 		return err
 	}

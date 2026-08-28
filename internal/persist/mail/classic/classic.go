@@ -229,7 +229,7 @@ func (s *Store) Receive(recipient int64) (mail.Message, bool, error) {
 }
 
 // All is a non-destructive read of every message in the file, for tooling
-// that needs to see everything at once (`dlctl state import`, chiefly) —
+// that needs to see everything at once (`dlctl import --type=state`, chiefly) —
 // unlike Receive, nothing here is freed or removed.
 func (s *Store) All() []mail.Message {
 	s.mu.Lock()

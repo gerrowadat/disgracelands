@@ -9,7 +9,7 @@ always the way back.
 Checked in twice, the same way `examples/stock/` is: `binary/` is the
 classic CircleMUD file shapes, hand-written directly against
 `internal/persist/world/classic`'s own reader rather than generated, and
-`yaml/` is `binary/` converted with `dlctl lib import`. See
+`yaml/` is `binary/` converted with `dlctl import`. See
 `docs/design/data-format.md`.
 
 ## The tour
@@ -122,10 +122,10 @@ silently fallen outside it.
 ## Reproducing `yaml/` from `binary/`
 
 ```sh
-dlctl lib import --from-dir=examples/mini/binary --to-dir=examples/mini/yaml
+dlctl import --from-dir=examples/mini/binary --to-dir=examples/mini/yaml
 ```
 
-`classic → yaml` world dumps are identical — `dlctl world dump` on each
+`classic → yaml` world dumps are identical — `dlctl dump --type=world` on each
 and `diff` the two — the same check `examples/stock/README.md` runs, and
 for the same reason.
 

@@ -20,7 +20,7 @@ import (
 	reportsclassic "github.com/gerrowadat/disgracelands/internal/persist/reports/classic"
 )
 
-// A found-not-assumed regression test for TODO.md's "dlctl lib import's
+// A found-not-assumed regression test for TODO.md's "dlctl import's
 // five smaller importers not transcoding" entry: each of the five, plus
 // state import's own three text-carrying subsystems, gets a source fixture
 // containing the literal CP1252 byte 0x92 (Windows-1252's "right single
@@ -68,16 +68,28 @@ func containsString(haystack, needle string) bool {
 		})()
 }
 
+// writeFile creates path's parent directories and writes it, failing the
+// test on any error — every fixture below builds a classic-shaped source
+// tree under a fresh base directory, the same base --from-dir now resolves
+// a --type's own classic subpath from.
+func writeFile(t *testing.T, path string, body []byte) {
+	t.Helper()
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		t.Fatalf("mkdir for %s: %v", path, err)
+	}
+	if err := os.WriteFile(path, body, 0o600); err != nil {
+		t.Fatalf("writing %s: %v", path, err)
+	}
+}
+
 func TestNamesImportTranscodesNonUTF8(t *testing.T) {
-	src := filepath.Join(t.TempDir(), "xnames")
-	if err := os.WriteFile(src, []byte("don"+cp1252RightQuote+"t\n"), 0o600); err != nil {
-		t.Fatalf("writing fixture: %v", err)
-	}
+	fromDir := t.TempDir()
+	writeFile(t, filepath.Join(fromDir, "misc", "xnames"), []byte("don"+cp1252RightQuote+"t\n"))
 	toDir := t.TempDir()
-	if err := run([]string{"names", "import", "--from-path", src, "--to-dir", toDir}); err != nil {
-		t.Fatalf("names import: %v", err)
+	if err := run([]string{"import", "--type", "names", "--from-dir", fromDir, "--to-dir", toDir}); err != nil {
+		t.Fatalf("import --type=names: %v", err)
 	}
-	checkTranscodedUTF8(t, filepath.Join(toDir, "names.yaml"), "don"+wantUTF8RightQuote+"t")
+	checkTranscodedUTF8(t, filepath.Join(toDir, "config", "names.yaml"), "don"+wantUTF8RightQuote+"t")
 }
 
 func TestMessagesImportTranscodesNonUTF8(t *testing.T) {
@@ -89,15 +101,13 @@ func TestMessagesImportTranscodesNonUTF8(t *testing.T) {
 		"miss-attacker\n" + "miss-victim\n" + "miss-room\n" +
 		"hit-attacker\n" + "hit-victim\n" + "hit-room\n" +
 		"god-attacker\n" + "god-victim\n" + "god-room\n"
-	src := filepath.Join(t.TempDir(), "messages")
-	if err := os.WriteFile(src, []byte(body), 0o600); err != nil {
-		t.Fatalf("writing fixture: %v", err)
-	}
+	fromDir := t.TempDir()
+	writeFile(t, filepath.Join(fromDir, "misc", "messages"), []byte(body))
 	toDir := t.TempDir()
-	if err := run([]string{"messages", "import", "--from-path", src, "--to-dir", toDir}); err != nil {
-		t.Fatalf("messages import: %v", err)
+	if err := run([]string{"import", "--type", "messages", "--from-dir", fromDir, "--to-dir", toDir}); err != nil {
+		t.Fatalf("import --type=messages: %v", err)
 	}
-	checkTranscodedUTF8(t, filepath.Join(toDir, "messages.yaml"), "die"+wantUTF8RightQuote+"s")
+	checkTranscodedUTF8(t, filepath.Join(toDir, "config", "messages.yaml"), "die"+wantUTF8RightQuote+"s")
 }
 
 func TestSocialsImportTranscodesNonUTF8(t *testing.T) {
@@ -109,37 +119,31 @@ func TestSocialsImportTranscodesNonUTF8(t *testing.T) {
 		"$n waves.\n" +
 		"#\n" +
 		"$\n"
-	src := filepath.Join(t.TempDir(), "socials")
-	if err := os.WriteFile(src, []byte(body), 0o600); err != nil {
-		t.Fatalf("writing fixture: %v", err)
-	}
+	fromDir := t.TempDir()
+	writeFile(t, filepath.Join(fromDir, "misc", "socials"), []byte(body))
 	toDir := t.TempDir()
-	if err := run([]string{"socials", "import", "--from-path", src, "--to-dir", toDir}); err != nil {
-		t.Fatalf("socials import: %v", err)
+	if err := run([]string{"import", "--type", "socials", "--from-dir", fromDir, "--to-dir", toDir}); err != nil {
+		t.Fatalf("import --type=socials: %v", err)
 	}
-	checkTranscodedUTF8(t, filepath.Join(toDir, "socials.yaml"), "wave"+wantUTF8RightQuote+"ly")
+	checkTranscodedUTF8(t, filepath.Join(toDir, "config", "socials.yaml"), "wave"+wantUTF8RightQuote+"ly")
 }
 
 func TestHelpImportTranscodesNonUTF8(t *testing.T) {
-	dir := t.TempDir()
-	if err := os.WriteFile(filepath.Join(dir, "index"), []byte("test.hlp\n$\n"), 0o600); err != nil {
-		t.Fatalf("writing index: %v", err)
-	}
+	fromDir := t.TempDir()
+	writeFile(t, filepath.Join(fromDir, "text", "help", "index"), []byte("test.hlp\n$\n"))
 	body := "test\n" +
 		"It" + cp1252RightQuote + "s a test.\n" +
 		"#\n" +
 		"$\n"
-	if err := os.WriteFile(filepath.Join(dir, "test.hlp"), []byte(body), 0o600); err != nil {
-		t.Fatalf("writing test.hlp: %v", err)
-	}
+	writeFile(t, filepath.Join(fromDir, "text", "help", "test.hlp"), []byte(body))
 	toDir := t.TempDir()
-	if err := run([]string{"helpdb", "import", "--from-dir", dir, "--to-dir", toDir}); err != nil {
-		t.Fatalf("helpdb import: %v", err)
+	if err := run([]string{"import", "--type", "help", "--from-dir", fromDir, "--to-dir", toDir}); err != nil {
+		t.Fatalf("import --type=help: %v", err)
 	}
 	// help.yaml itself only holds the keyword/slug index; the transcoded
 	// body lands in the per-entry text file help.Save writes alongside it
 	// (help.go's Save, "<slug>.txt").
-	checkTranscodedUTF8(t, filepath.Join(toDir, "test.txt"), "It"+wantUTF8RightQuote+"s a test")
+	checkTranscodedUTF8(t, filepath.Join(toDir, "text", "help", "test.txt"), "It"+wantUTF8RightQuote+"s a test")
 }
 
 // TestStateImportTranscodesNonUTF8 covers the three of state import's five
@@ -148,14 +152,20 @@ func TestHelpImportTranscodesNonUTF8(t *testing.T) {
 // hand-rolled file format) so the fixture is exactly what that format's
 // own code produces. bans and houses carry no free text (a hostname/admin
 // name, and numeric fields plus a vnum-only stored object respectively --
-// see stateimport.go's own transcodeString doc comment) and are left
-// empty, the same "tolerates a missing source" behaviour examples/stock/
-// binary's own empty archive already exercises.
+// see stateio.go's own transcodeString doc comment) and are left empty,
+// the same "tolerates a missing source" behaviour examples/stock/binary's
+// own empty archive already exercises.
+//
+// Boards and mail live under fromDir/etc, matching --from-dir's own base
+// resolution (stateClassicDirs); reports uses --from-misc-dir, an explicit
+// override, the same as houses' --from-house-dir -- both independent of
+// --from-dir on purpose, for an archive that keeps them somewhere else.
 func TestStateImportTranscodesNonUTF8(t *testing.T) {
 	fromDir := t.TempDir()
+	fromEtcDir := filepath.Join(fromDir, "etc")
 	fromMiscDir := t.TempDir()
 
-	boardSrc, err := boardsclassic.New(boards.Config{Dir: fromDir})
+	boardSrc, err := boardsclassic.New(boards.Config{Dir: fromEtcDir})
 	if err != nil {
 		t.Fatalf("opening board source: %v", err)
 	}
@@ -167,7 +177,7 @@ func TestStateImportTranscodesNonUTF8(t *testing.T) {
 	}
 	_ = boardSrc.Close()
 
-	mailSrc, err := mailclassic.New(mail.Config{Path: filepath.Join(fromDir, "plrmail")})
+	mailSrc, err := mailclassic.New(mail.Config{Path: filepath.Join(fromEtcDir, "plrmail")})
 	if err != nil {
 		t.Fatalf("opening mail source: %v", err)
 	}
@@ -190,28 +200,28 @@ func TestStateImportTranscodesNonUTF8(t *testing.T) {
 
 	toDir := t.TempDir()
 	if err := run([]string{
-		"state", "import",
+		"import", "--type", "state",
 		"--from-dir", fromDir,
 		"--from-house-dir", t.TempDir(),
 		"--from-misc-dir", fromMiscDir,
 		"--to-dir", toDir,
 	}); err != nil {
-		t.Fatalf("state import: %v", err)
+		t.Fatalf("import --type=state: %v", err)
 	}
 
-	checkTranscodedUTF8(t, filepath.Join(toDir, "boards.yaml"), "A quote"+wantUTF8RightQuote+"d headline")
-	checkTranscodedUTF8(t, filepath.Join(toDir, "boards.yaml"), "body"+wantUTF8RightQuote+"s own quote")
-	checkTranscodedUTF8(t, filepath.Join(toDir, "mail.yaml"), "A quote"+wantUTF8RightQuote+"d letter")
-	checkTranscodedUTF8(t, filepath.Join(toDir, "reports.yaml"), "A quote"+wantUTF8RightQuote+"d bug report")
+	checkTranscodedUTF8(t, filepath.Join(toDir, "state", "boards.yaml"), "A quote"+wantUTF8RightQuote+"d headline")
+	checkTranscodedUTF8(t, filepath.Join(toDir, "state", "boards.yaml"), "body"+wantUTF8RightQuote+"s own quote")
+	checkTranscodedUTF8(t, filepath.Join(toDir, "state", "mail.yaml"), "A quote"+wantUTF8RightQuote+"d letter")
+	checkTranscodedUTF8(t, filepath.Join(toDir, "state", "reports.yaml"), "A quote"+wantUTF8RightQuote+"d bug report")
 }
 
-func TestLibImportPassesEncodingToEveryImporter(t *testing.T) {
+func TestImportAllPassesEncodingToEveryImporter(t *testing.T) {
 	// The seven sub-importers' own tests above (plus world/pfile import's
 	// pre-existing --encoding support) cover the decoding itself; this
-	// only has to show `lib import` actually threads a non-default
-	// --encoding through to all five importers this change touched,
-	// rather than silently dropping it for some of them the way it did
-	// before this fix.
+	// only has to show `import` (--type omitted) actually threads a
+	// non-default --encoding through to all five importers this change
+	// touched, rather than silently dropping it for some of them the way
+	// it did before this fix.
 	fromDir := t.TempDir()
 	for _, sub := range []string{"world", "etc", "misc", "house", "text"} {
 		if err := os.MkdirAll(filepath.Join(fromDir, sub), 0o755); err != nil {
@@ -231,14 +241,11 @@ func TestLibImportPassesEncodingToEveryImporter(t *testing.T) {
 			t.Fatalf("writing %s/index: %v", sub, err)
 		}
 	}
-	if err := os.WriteFile(filepath.Join(fromDir, "misc", "xnames"),
-		[]byte("caf"+cp1252RightQuote+"\n"), 0o600); err != nil {
-		t.Fatalf("writing xnames fixture: %v", err)
-	}
+	writeFile(t, filepath.Join(fromDir, "misc", "xnames"), []byte("caf"+cp1252RightQuote+"\n"))
 
 	toDir := t.TempDir()
-	if err := run([]string{"lib", "import", "--from-dir", fromDir, "--to-dir", toDir, "--encoding", "cp1252"}); err != nil {
-		t.Fatalf("lib import: %v", err)
+	if err := run([]string{"import", "--from-dir", fromDir, "--to-dir", toDir, "--encoding", "cp1252"}); err != nil {
+		t.Fatalf("import: %v", err)
 	}
 	checkTranscodedUTF8(t, filepath.Join(toDir, "config", "names.yaml"), "caf"+wantUTF8RightQuote)
 }

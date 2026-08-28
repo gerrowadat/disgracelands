@@ -395,7 +395,7 @@ obscurely.
 ### Checking the world files
 
 ```sh
-dlctl world lint --world-dir=lib/world
+dlctl lint --type=world --dir=lib
 ```
 
 Replaces `reference/moderncserver/src/util/scheck` and the C server's `-c`
@@ -414,9 +414,9 @@ Findings come in three severities:
 errors. Exit status is non-zero if anything at the failing severity was
 found, so it works directly as a CI step.
 
-`world lint` also reports world text that is not valid UTF-8, which is how
-you find out a directory still needs converting. The server works in UTF-8;
-see `dlctl convert` above.
+`lint --type=world` also reports world text that is not valid UTF-8, which
+is how you find out a directory still needs converting. The server works
+in UTF-8; see `dlctl convert` above.
 
 The shipped world currently reports **0 errors, 11 warnings, 12 notes**. The
 warnings are worth knowing about:
@@ -440,8 +440,8 @@ weight when it is lighter than the liquid it holds.
 If you have an original CircleMUD `lib/`, convert the whole thing once:
 
 ```sh
-dlctl convert --from=/path/to/old/lib --to=data --dry-run   # look first
-dlctl convert --from=/path/to/old/lib --to=data
+dlctl convert --from-dir=/path/to/old/lib --to-dir=data --dry-run   # look first
+dlctl convert --from-dir=/path/to/old/lib --to-dir=data
 ```
 
 That does three things: reformats the binary player database as ascii
@@ -484,39 +484,40 @@ conversion that failed part way would otherwise leave it half done.
 `dlctl convert` (above) modernises a `lib/` in place — CP1252 to UTF-8,
 the player database reformatted as `ascii` pfiles — but keeps everything
 in the original CircleMUD file shapes: `classic` world files, one board
-per file, a struct-dump mail file. `dlctl lib import` goes further and
-produces a single `yaml` directory instead — one file per zone and per
-character, `config/`/`state/`/`text/help/help.yaml` for the rest — read
-and written directly by the server with no further conversion step. See
-`docs/design/data-format.md`.
+per file, a struct-dump mail file. `dlctl import` (no `--type`) goes
+further and produces a single `yaml` directory instead — one file per
+zone and per character, `config/`/`state/`/`text/help/help.yaml` for the
+rest — read and written directly by the server with no further
+conversion step. See `docs/design/data-format.md`.
 
 Point it straight at the original archive, not at `dlctl convert`'s own
 output — the two do not chain, since `dlctl convert` relocates the
-roster to `pfiles/` and `lib import` expects it where the archive itself
+roster to `pfiles/` and `import` expects it where the archive itself
 keeps it:
 
 ```sh
-dlctl lib import --from-dir=/path/to/old/lib --to-dir=data-yaml
+dlctl import --from-dir=/path/to/old/lib --to-dir=data-yaml
 ```
 
-That is the seven `world import`/`pfile import`/`state import`/`names
-import`/`messages import`/`socials import`/`helpdb import` commands, run
-in order against `--from-dir`'s own `world/`/`etc/`/`misc/`/`house/`/
-`text/` subdirectories, plus the plain-text files under `text/` copied
-across unchanged and, once everything else has succeeded, `--to-dir`
-stamped with this build's own release version
+That is the seven `import --type=world`/`pfile`/`state`/`names`/
+`messages`/`socials`/`help` conversions, run in order against
+`--from-dir`'s own `world/`/`etc/`/`misc/`/`house/`/`text/`
+subdirectories (`dlctl` works out which of those a given `--type` needs —
+see "Pointing dlctl at a directory" below), plus the plain-text files
+under `text/` copied across unchanged and, once everything else has
+succeeded, `--to-dir` stamped with this build's own release version
 (`docs/design/data-format-versioning.md`) — which is what a later `dlmud`
 compares against its own before it will boot on the result. Use a released
 `dlctl` for a directory you intend to run: an unreleased build has no
 version to stamp with, and says so instead of writing one.
 
 **Check the result for text that did not get transcoded.** Only two of
-the seven importers — `world` and `pfile` — have their own `--encoding`
-flag and decode CP1252 the way `dlctl convert` does; the other five
-assume the source is already UTF-8. A real archive with a curly quote in
-a social or an accented name on the disallowed-name list will carry that
-byte straight through into a `.yaml` file that is not actually valid
-UTF-8. This is real and current, not a hypothetical — see
+the seven — `world` and `pfile` — have their own `--encoding` flag and
+decode CP1252 the way `dlctl convert` does; the other five assume the
+source is already UTF-8. A real archive with a curly quote in a social or
+an accented name on the disallowed-name list will carry that byte
+straight through into a `.yaml` file that is not actually valid UTF-8.
+This is real and current, not a hypothetical — see
 `docs/design/data-format.md` §11.1 and `TODO.md` for the exact gap and
 which importers still need it. Check with:
 
@@ -526,18 +527,33 @@ find data-yaml/config data-yaml/state data-yaml/text/help -type f \
 ```
 
 Nothing printed means nothing slipped through. `world` and `pfile`'s own
-output needs no such check — `dlctl world lint` already reports invalid
-UTF-8 in world text, and covers `--to-dir/world` the same way it covers
-any other `--world-dir`.
+output needs no such check — `dlctl lint --type=world` already reports
+invalid UTF-8 in world text, and covers `data-yaml` the same way it
+covers any other `--dir`.
+
+### Pointing dlctl at a directory
+
+Every `dlctl` command above takes a base directory (`--dir`, or
+`--from-dir`/`--to-dir` for the two that move data between two of them) —
+never a leaf subdirectory. Point it at the archive root (or your `data/`),
+and `dlctl` works out where a given `--type` actually lives under it, the
+same way `dlmud --lib-dir` does: `world/` either way, `etc/`/`pfiles/` vs
+`players/` for pfile depending on format, `etc/`/`house/`/`misc/` vs one
+`state/` for state, `misc/` vs `config/` for names/messages/socials,
+`text/help/` either way. Pointing `--dir` straight at, say, a `pfiles/`
+directory does not work — classic and yaml no longer agree closely enough
+on shape for that to be reliable, which is why this indirection exists at
+all.
 
 **A lib dir imported before 2026-08-24 has truncated mail; import it
 again.** Until then the classic mail codec read a block chain's links as
 block numbers where the C writes byte offsets (`docs/weirdnumbers.md`), so
 every message longer than 79 characters stopped at its first block. There
 was no error and nothing looks wrong afterwards: the `mail.yaml` that
-`state import` wrote is well formed, and the *message count* is right —
-only the bodies are short. Mail is the only subsystem whose on-disk format
-chains blocks together, so nothing else in the directory is affected.
+`import --type=state` wrote is well formed, and the *message count* is
+right — only the bodies are short. Mail is the only subsystem whose
+on-disk format chains blocks together, so nothing else in the directory
+is affected.
 
 Re-run the import against the original `plrmail` into a scratch directory
 and diff, rather than trying to spot the truncation by eye — a message that
@@ -545,8 +561,8 @@ runs to several blocks is a yaml block scalar, so its length is not
 something one line of `awk` can tell you:
 
 ```sh
-dlctl state import --from-dir=/path/to/old/lib/etc --to-dir=/tmp/mail-recheck
-diff /tmp/mail-recheck/mail.yaml data-yaml/state/mail.yaml
+dlctl import --type=state --from-dir=/path/to/old/lib --to-dir=/tmp/mail-recheck
+diff /tmp/mail-recheck/state/mail.yaml data-yaml/state/mail.yaml
 ```
 
 No output means the old import was already correct. Otherwise take the new
@@ -559,8 +575,8 @@ binary one — see `docs/configuration.md`. An existing data directory is
 converted once:
 
 ```sh
-dlctl pfile convert --from=binary --from-dir=data/etc \
-                    --to=ascii    --to-dir=data/pfiles
+dlctl convert --type=pfile --from-format=binary --from-dir=data \
+                            --to-format=ascii    --to-dir=data
 ```
 
 `--dry-run` reports what it would do without writing anything, which is
@@ -578,9 +594,9 @@ roster against the C server, or undo a migration.
 ### Inspecting player data
 
 ```sh
-dlctl pfile verify --player-dir=data/etc     # is this file what you think?
-dlctl pfile dump   --player-dir=data/pfiles  # list the roster
-dlctl pfile dump   --player-dir=data/pfiles --name=zod
+dlctl verify --type=pfile --dir=data --format=binary  # is this file what you think?
+dlctl dump   --type=pfile --dir=data                  # list the roster
+dlctl dump   --type=pfile --dir=data --name=zod
 ```
 
 `verify` is the one to run before trusting a migration. It reports the record
@@ -596,8 +612,8 @@ CI log is not where they should end up.
 ### Setting a password from outside the game
 
 ```sh
-dlctl pfile passwd --player-dir=data/pfiles Someone
-printf '%s\n' "$NEW" | dlctl pfile passwd Someone    # scripted
+dlctl passwd --type=pfile --dir=data Someone
+printf '%s\n' "$NEW" | dlctl passwd --type=pfile Someone    # scripted
 ```
 
 At a terminal it prompts twice with echo off, exactly as the game's menu does;
@@ -618,7 +634,7 @@ command's help. See `docs/deviations.md`.
 ### Comparing against the C server
 
 ```sh
-dlctl world dump --world-dir=lib/world --out=go.json
+dlctl dump --type=world --dir=lib --out=go.json
 ```
 
 Writes the loaded world as canonical JSON: deterministic ordering, values

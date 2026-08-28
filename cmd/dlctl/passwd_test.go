@@ -20,13 +20,17 @@ import (
 	"github.com/gerrowadat/disgracelands/internal/persist/player/ascii"
 )
 
-// rosterWith writes a one-character ascii roster and returns its directory.
+// rosterWith writes a one-character ascii roster under a fresh base
+// directory's pfiles/ subdirectory (config.Dir(base, SubsystemPlayers,
+// "ascii")) and returns the base, matching what `dlctl passwd --type=pfile
+// --dir=<base>` itself resolves.
 //
 // The character starts on a legacy DES credential because that is the state
 // this command exists for: an archived pfile whose password nobody has.
 func rosterWith(t *testing.T, name string) string {
 	t.Helper()
-	dir := t.TempDir()
+	base := t.TempDir()
+	dir := filepath.Join(base, "pfiles")
 	store, err := ascii.New(player.Config{Dir: dir})
 	if err != nil {
 		t.Fatalf("opening a store: %v", err)
@@ -43,7 +47,7 @@ func rosterWith(t *testing.T, name string) string {
 	if err := store.Save(context.Background(), rec); err != nil {
 		t.Fatalf("saving %s: %v", name, err)
 	}
-	return dir
+	return base
 }
 
 // onStdin points os.Stdin at a file holding line, so the command takes the
@@ -67,10 +71,12 @@ func onStdin(t *testing.T, line string) {
 	})
 }
 
-// loadCredential reads back what the command wrote.
-func loadCredential(t *testing.T, dir, name string) game.Credential {
+// loadCredential reads back what the command wrote. base is what
+// rosterWith returned — the pfiles/ subdirectory is where the ascii store
+// actually lives.
+func loadCredential(t *testing.T, base, name string) game.Credential {
 	t.Helper()
-	store, err := ascii.New(player.Config{Dir: dir, ReadOnly: true})
+	store, err := ascii.New(player.Config{Dir: filepath.Join(base, "pfiles"), ReadOnly: true})
 	if err != nil {
 		t.Fatalf("reopening the store: %v", err)
 	}
@@ -86,7 +92,7 @@ func TestPasswdSetsAWorkingPassword(t *testing.T) {
 	dir := rosterWith(t, "Zod")
 	onStdin(t, "correct horse battery\n")
 
-	if err := run([]string{"pfile", "passwd", "--player-dir", dir, "Zod"}); err != nil {
+	if err := run([]string{"passwd", "--type", "pfile", "--dir", dir, "Zod"}); err != nil {
 		t.Fatalf("pfile passwd: %v", err)
 	}
 
@@ -117,12 +123,12 @@ func TestPasswdSetsAWorkingPassword(t *testing.T) {
 
 func TestPasswdMatchesTheNameCaseInsensitively(t *testing.T) {
 	// Names are matched case-insensitively everywhere else — the ascii store
-	// lowercases to build the path — so `dlctl pfile passwd zod` must find
+	// lowercases to build the path — so `dlctl passwd --type=pfile zod` must find
 	// Zod rather than reporting no such character.
 	dir := rosterWith(t, "Zod")
 	onStdin(t, "a good long password\n")
 
-	if err := run([]string{"pfile", "passwd", "--player-dir", dir, "zod"}); err != nil {
+	if err := run([]string{"passwd", "--type", "pfile", "--dir", dir, "zod"}); err != nil {
 		t.Fatalf("pfile passwd zod: %v", err)
 	}
 	if got := loadCredential(t, dir, "Zod").Scheme; got != game.SchemeArgon2id {
@@ -154,7 +160,7 @@ func TestPasswdAppliesTheSameRulesAsTheMenu(t *testing.T) {
 			dir := rosterWith(t, tc.character)
 			onStdin(t, tc.password+"\n")
 
-			err := run([]string{"pfile", "passwd", "--player-dir", dir, tc.character})
+			err := run([]string{"passwd", "--type", "pfile", "--dir", dir, tc.character})
 			if err == nil {
 				t.Fatalf("setting %q succeeded, want a rejection", tc.password)
 			}
@@ -172,7 +178,7 @@ func TestPasswdRejectsAMissingCharacter(t *testing.T) {
 	dir := rosterWith(t, "Zod")
 	onStdin(t, "a good long password\n")
 
-	err := run([]string{"pfile", "passwd", "--player-dir", dir, "Nobody"})
+	err := run([]string{"passwd", "--type", "pfile", "--dir", dir, "Nobody"})
 	if err == nil {
 		t.Fatal("setting a password for a missing character succeeded")
 	}
@@ -188,7 +194,7 @@ func TestPasswdRefusesTheBinaryFormat(t *testing.T) {
 	dir := rosterWith(t, "Zod")
 	onStdin(t, "a good long password\n")
 
-	err := run([]string{"pfile", "passwd", "--player-dir", dir, "--player-format", "binary", "Zod"})
+	err := run([]string{"passwd", "--type", "pfile", "--dir", dir, "--format", "binary", "Zod"})
 	if err == nil {
 		t.Fatal("pfile passwd on a binary roster succeeded, want a refusal")
 	}
@@ -200,8 +206,8 @@ func TestPasswdRefusesTheBinaryFormat(t *testing.T) {
 func TestPasswdNeedsExactlyOneName(t *testing.T) {
 	dir := rosterWith(t, "Zod")
 	for _, args := range [][]string{
-		{"pfile", "passwd", "--player-dir", dir},
-		{"pfile", "passwd", "--player-dir", dir, "Zod", "Bob"},
+		{"passwd", "--type", "pfile", "--dir", dir},
+		{"passwd", "--type", "pfile", "--dir", dir, "Zod", "Bob"},
 	} {
 		if err := run(args); err == nil {
 			t.Errorf("run(%v) succeeded, want an argument error", args)
