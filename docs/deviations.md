@@ -1331,15 +1331,26 @@ Listed here so they are not mistaken for deliberate differences.
   the counter at all is not treated as a failed login, which is what the C
   does with `save_char`'s ignored return.
 
-- **`auto_save` does not (yet) gate `do_save`.** `config.c`'s comment on
-  `auto_save` is really about two things: the periodic sweep (now tunable,
-  above) and `do_save`'s own duplication guard — "if auto_save, `save`
-  only writes aliases, to stop two clients or a crash duplicating items"
-  (`act.other.c:188-193`). This port's `save` command always does a full
-  save regardless of `auto_save`, a pre-existing simplification independent
-  of today's config-file work. Worth fixing if `auto_save` is ever actually
-  turned off on a live server; until then the periodic sweep being
-  authoritative covers the archive's own settings exactly.
+- **`auto_save` gates `do_save`'s duplication guard too, and now does here
+  as well.** `config.c`'s comment on `auto_save` is really about two things:
+  the periodic sweep (tunable, above) and `do_save`'s own guard — with the
+  sweep on, a `save` from anyone at or below `LVL_IMMORT` writes their
+  *aliases* and nothing else, "to stop two clients or a crash duplicating
+  items" (`act.other.c:173-186`). Only the sweep was built at first, so
+  `save` did a full write regardless of `auto_save`; that gap is closed
+  (issue #137), and this entry stays as the record of it having been one.
+
+  The `<=` is the C's own and it is deliberate: its comment says the code
+  "assumes that guest immortals aren't trustworthy", so level 31 is *inside*
+  the guard and only 32 and up get a real save. The one implementation
+  difference left is not visible from the game: the C writes a separate
+  `plralias/` file, whereas the two formats a server can actually run on
+  (`ascii`, `yaml`) keep aliases on the player record, so "write only the
+  aliases" is a read-modify-write of that record — load what is on disk,
+  replace the alias list, write it back — in `Server.SaveAliases`. Same end
+  state on disk, and the same thing the guard is protecting: whatever the
+  sweep last wrote for points, gold and position stands, and no command can
+  force a fresh copy of it out.
 
 - **Renting empties your bags and strips your body — on `binary` and
   `ascii`.** `USE_AUTOEQ` is 0 in this tree (`structs.h:30`), so
