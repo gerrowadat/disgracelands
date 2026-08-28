@@ -304,19 +304,16 @@ func AdvanceLevel(rec *PlayerRecord, r *rng.Rand) {
 		return n
 	}
 
-	// **The draws are written out per class, in the C's own order, and that
-	// order is not the same for every class.** A magic-user and a cleric roll
-	// hit points, then *mana*, then movement (class.c:1948-1950, :1957-1959);
-	// a thief and a warrior roll hit points and then movement, and set
-	// add_mana to a plain zero with no draw at all (:1965-1967, :1971-1973).
+	// **The draws happen in the C's own order: hit points, then mana, then
+	// movement** (class.c:1868-1901). Every class does all three, including
+	// the two whose mana is thrown away again a few lines further down —
+	// `if (GET_LEVEL(ch) > 1)` guards the *addition*, not the roll.
 	//
-	// Both halves of that were wrong here, and both were invisible in a
-	// single character. Rolling movement before mana handed each of them the
-	// other's number, which is how a magic-user got 83 movement where the C
-	// gave 84. Rolling mana for a thief cost a draw the C never takes, so
-	// every roll in the game after a thief was created came out one step
-	// along — which is what the session-parity harness saw as hit points that
-	// did not match (#188).
+	// This port hoisted the mana roll out of the switch and took it last, on
+	// the reasonable-looking grounds that every class computes it
+	// identically. It does; the draw order is what differs. Rolling movement
+	// before mana hands each of them the other's number, which is how a
+	// magic-user got 83 movement where the C gives 84 (#188).
 	switch rec.Class {
 	case ClassMagicUser:
 		addHit += randRange(r, 3, 8)
@@ -328,17 +325,15 @@ func AdvanceLevel(rec *PlayerRecord, r *rng.Rand) {
 		addMove = randRange(r, 0, 2)
 	case ClassThief:
 		addHit += randRange(r, 7, 13)
+		addMana = casterMana()
 		addMove = randRange(r, 1, 3)
 	case ClassWarrior:
 		addHit += randRange(r, 10, 15)
+		addMana = casterMana()
 		addMove = randRange(r, 1, 3)
 	case ClassPaladin:
-		// Not the C's: advance_level has no CLASS_PALADIN case at all, so a
-		// paladin there gains only the constitution bonus and the two MAX(1)
-		// floors. These numbers are this port's, modelled on the warrior's
-		// and one below them; see docs/deviations.md. The draws follow the
-		// warrior's shape, mana included — which is to say, no mana draw.
 		addHit += randRange(r, 10, 14)
+		addMana = casterMana()
 		addMove = randRange(r, 1, 3)
 	}
 
@@ -391,13 +386,10 @@ func Start(rec *PlayerRecord, r *rng.Rand) {
 	rec.Points.Exp = 1
 	rec.Abilities = RollAbilities(rec.Class, r)
 	rec.Title = Title(rec.Class, rec.Level, rec.Sex)
-	// All three, as do_start does (class.c:1897-1899). init_char has already
-	// set the mana and movement to the same numbers for a character created
-	// here, which is why leaving them out was invisible — but do_start sets
-	// them itself, and it is do_start that says what a level 1 character is.
+	// max_hit alone (class.c:1809). do_start does not touch max_mana or
+	// max_move: init_char set those, and this is the one place where
+	// WipeMud-src's do_start differs and resets all three.
 	rec.Points.MaxHit = baseMaxHit
-	rec.Points.MaxMana = baseMaxMana
-	rec.Points.MaxMove = baseMaxMove
 	rec.Skills = StartingSkills(rec.Class)
 
 	AdvanceLevel(rec, r)

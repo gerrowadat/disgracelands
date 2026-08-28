@@ -39,15 +39,6 @@ are fidelity, not deviation, and they live in the tests that assert them.
 | **Why** | The C contradicts itself: the menu says one thing and the parser does another, so "be faithful to the C" does not settle it. Paladin exists to reward remorting, and reproducing the accident would let a new player skip the mechanic the class is a prize for. The parser is shared with `set class`, which is presumably why the case is there at all. |
 | **Where** | `internal/game/class.go`, asserted in `TestPaladinIsNotSelectableAtCreation`. |
 
-### A paladin's per-level gains are this port's, because the C has none
-
-| | |
-|---|---|
-| **C** | `advance_level` (class.c:1941) switches on the class and has cases for magic-user, cleric, thief and warrior only. A paladin falls through: `add_hp` is the constitution bonus alone, `add_mana` and `add_move` stay zero, and the two `MAX(1, ...)` floors give one hit point and one movement point per level. No draws are taken. |
-| **Go** | A paladin gains `10..14` hit points on top of the constitution bonus and `1..3` movement, and takes those two draws — the warrior's shape, one below the warrior's hit-point range, and with no mana draw, exactly as the warrior has none. |
-| **Why** | The C contradicts itself here the same way it does over creating one. Paladin is unreachable at creation and is what remorting is *for*, so the fall-through is an oversight rather than a balance decision: a class you earn by giving up a character would gain one hit point a level, less than any class you can simply choose. Recorded rather than corrected back, because it is gameplay a returning player would notice either way and this is the reading the port has always had. |
-| **Where** | `internal/game/class.go`'s `AdvanceLevel`, with the ranges in `TestFirstLevelGainsMatchTheCsRanges`. Written down 2026-08-28, while the creation oracle (#188) was going through the same switch; the behaviour is older than the entry. |
-
 ### Passwords: minimum six characters, no maximum
 
 | | |
@@ -687,37 +678,35 @@ port is right and the thing it is compared against is wrong.
   been read wrong, not a design difference — exactly the shape CLAUDE.md
   says wants a C oracle rather than another reading.
   **Fixed 2026-08-28** (#188), by writing that oracle
-  (`reference/tools/startoracle.c`) — and it found two bugs in
-  `advance_level`, neither of which was in the hit-point formula, which was
-  right all along.
+  (`reference/tools/startoracle.c`). The hit-point formula — the thing the
+  symptom pointed at — was right all along.
 
-  **The draw order is per class, and it is not the same for every class.**
-  A magic-user and a cleric roll hit points, then *mana*, then movement
-  (class.c:1948-1950, :1957-1959). A thief and a warrior roll hit points and
-  then movement, and set `add_mana` to a plain zero with no draw at all
-  (:1965-1967, :1971-1973). This port rolled hit points and movement in one
-  tuple assignment and then mana afterwards, for every class. So a
-  magic-user's mana roll became their movement and vice versa — 83 movement
-  where the C gives 84 — and a thief or warrior took a draw the C never
-  takes, putting every roll in the game after a character was created one
-  step out of step. That second one is what the parity harness saw: not
-  wrong arithmetic, a shifted stream.
+  **The draws happen in the order hit points, mana, movement**
+  (class.c:1868-1901), for every class, including the two whose mana is
+  thrown away again four lines later: `if (GET_LEVEL(ch) > 1)` guards the
+  *addition*, not the roll. This port hoisted the mana roll out of the
+  switch and took it last, on the reasonable-looking grounds that every
+  class computes it identically. It does; the draw order is what differs.
+  Rolling movement before mana hands each of them the other's number — 83
+  movement where the C gives 84 — and shifts everything drawn afterwards.
 
-  **`Start` did not set the base mana and movement.** `do_start` sets all
-  three of max_hit, max_mana and max_move before calling `advance_level`
-  (class.c:1897-1899); this set only max_hit. Invisible in play, because
-  `init_char` had already set the other two to the same numbers — and
-  invisible in the tests, because they measured the *gain* and got the right
-  answer from a base of zero. It also meant `TestStartGivesEveryClassSomething
-  ToLiveOn` asserted a new character has no mana at all, with a comment
-  saying the C prompts `0M` for a new mage. The oracle says 100, which is
-  what both servers have always actually shown.
-
-  The oracle runs four classes over six seeds, 200 characters each, from one
+  The oracle runs five classes over six seeds, 200 characters each, from one
   seeded stream, and prints a `number(0, 999999)` after every character.
   That trailing draw is the whole point and is the same trick `randoracle`'s
   alternating mode is built on: without it a missing draw agrees perfectly
   about the character it is missing from.
+
+  **The first attempt at this fix was written against the wrong C tree**,
+  and is worth recording because the mistake was invisible and the oracle
+  caught it. `reference/WipeMud-src/` is a snapshot of the abandoned 3.1
+  upgrade attempt (`reference/README.md`); `reference/moderncserver/` is the
+  server that was actually played. They disagree in `class.c`: WipeMud's
+  `advance_level` takes no mana draw for a thief or a warrior and has no
+  `CLASS_PALADIN` case at all, and its `do_start` sets max_mana and max_move
+  as well as max_hit. Reading WipeMud produced a "fix" that deleted a real
+  draw for two classes and added two assignments that do not happen. Both
+  went in on 2026-08-28 and both came out the same day, once the oracle was
+  rebuilt from the right tree. **Read `moderncserver`.**
 - ~~**Walking is free here.**~~ `do_simple_move` (act.movement.c) charges
   `need_movement` movement points per room, from the two rooms' sector
   types, and refuses with "You are too exhausted." when there are not
