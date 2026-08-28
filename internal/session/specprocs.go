@@ -363,11 +363,16 @@ func specDump(sc *SpecialCall) bool {
 		// gain_exp's own mudlog, at the one specproc call site that can
 		// reach it (limits.c:299-305) — see Server.announceGain for why
 		// this lives at the callers rather than in internal/game.
-		if out := game.GainExperience(sc.Actor.Record, value, sc.RNG); out.Levels > 0 {
+		out := game.GainExperience(sc.Actor.Record, value, sc.RNG)
+		if out.Levels > 0 {
 			sc.wizlogInvis(obs.LogBrief, game.LevelImmortal, sc.Actor,
 				"%s advanced %d level%s to level %d.", sc.Actor.Name,
 				out.Levels, plural(int(out.Levels)), sc.Actor.Record.Level)
 		}
+		// "You rise a level!" and the whole game hearing about it — the rest
+		// of gain_exp's `if (is_altered)` block, which this call site did not
+		// have at all before #212.
+		sc.World.AnnounceLevelGain(sc.Actor, out.Levels)
 		return true
 	}
 	sc.Actor.Record.Points.Gold += value

@@ -9,6 +9,7 @@ package session
 import (
 	"strings"
 
+	"github.com/gerrowadat/disgracelands/internal/colour"
 	"github.com/gerrowadat/disgracelands/internal/game"
 	"github.com/gerrowadat/disgracelands/internal/obs"
 )
@@ -109,8 +110,15 @@ func doRemort(c *Context) error {
 		victim.Tell("You fall to the ground, clutching your chest, as an unearthly force "+
 			"bestows new knowledge and powers on you!\r\nYou gain the skills and privileges of a %s!\r\n",
 			short)
-		// send_to_all_color: the whole game hears it, in cyan.
-		c.broadcast("A voice whispers in your ear, 'All hail %s! Living again as a %s!\r\n",
+		// send_to_all_color (act.wizard.c:465): the whole game hears it, in
+		// cyan, and anybody mid-edit does not. The comment said "in cyan" and
+		// the call was the *uncoloured* broadcast — the fourth of the family
+		// #212 is about, and the only one that was reaching players at all.
+		//
+		// Note the C's own unbalanced quoting, kept: the whisper opens with a
+		// `'` and closes with a newline, never a matching one.
+		c.broadcastAt(colour.Normal,
+			"{{cyan}}A voice whispers in your ear, 'All hail %s! Living again as a %s!{{/}}\r\n",
 			victim.Name, short)
 	}
 

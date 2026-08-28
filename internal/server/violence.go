@@ -313,7 +313,7 @@ func (s *Server) applyDamage(w *game.Live, attacker, victim *game.Character, dam
 
 	if victim.Position == game.PosDead {
 		if attacker != nil {
-			s.award(attacker, victim)
+			s.award(w, attacker, victim)
 		}
 		// mudlog(buf2, BRF, LVL_IMMORT, TRUE) (fight.c:953), and only for
 		// a dead *player* — `if (!IS_NPC(victim))` (fight.c:938) — so the
@@ -408,13 +408,13 @@ func (s *Server) announcePosition(w *game.Live, victim *game.Character) {
 
 // award gives the killer their experience, porting solo_gain — or, if they
 // are in a group, group_gain.
-func (s *Server) award(killer, victim *game.Character) {
+func (s *Server) award(w *game.Live, killer, victim *game.Character) {
 	if killer == victim || killer.Record == nil || victim.Record == nil {
 		return
 	}
 
 	if killer.Grouped() {
-		s.awardGroup(killer, victim)
+		s.awardGroup(w, killer, victim)
 		return
 	}
 
@@ -423,7 +423,7 @@ func (s *Server) award(killer, victim *game.Character) {
 	killer.Tell("%s", message)
 
 	if exp != 0 {
-		s.announceGain(killer, game.GainExperience(killer.Record, exp, s.rng))
+		s.announceGain(w, killer, game.GainExperience(killer.Record, exp, s.rng))
 	}
 }
 
@@ -433,7 +433,7 @@ func (s *Server) award(killer, victim *game.Character) {
 // Everyone present shares, whether or not they hit anything — a member asleep
 // in the corner gets the same cut as the one who did the killing. That is the
 // C's rule and it is what makes a group worth being in.
-func (s *Server) awardGroup(killer, victim *game.Character) {
+func (s *Server) awardGroup(w *game.Live, killer, victim *game.Character) {
 	members := killer.GroupMembers(killer.Room)
 	if len(members) == 0 {
 		return
@@ -455,7 +455,7 @@ func (s *Server) awardGroup(killer, victim *game.Character) {
 			continue
 		}
 
-		s.announceGain(member, game.GainExperience(member.Record, cut, s.rng))
+		s.announceGain(w, member, game.GainExperience(member.Record, cut, s.rng))
 	}
 }
 
@@ -463,7 +463,7 @@ func (s *Server) awardGroup(killer, victim *game.Character) {
 // independent — the C sends both, and a kill big enough to be capped is
 // exactly the kind that levels somebody, so folding them into one branch
 // swallowed "You rise a level!" precisely when it mattered.
-func (s *Server) announceGain(who *game.Character, out game.ExpGain) {
+func (s *Server) announceGain(w *game.Live, who *game.Character, out game.ExpGain) {
 	if out.Capped {
 		who.Tell("You can only understand so much...\r\n")
 	}
@@ -481,12 +481,12 @@ func (s *Server) announceGain(who *game.Character, out game.ExpGain) {
 			"%s advanced %d level%s to level %d.",
 			who.Name, out.Levels, pluralS(int(out.Levels)), who.Record.Level)
 	}
-	switch {
-	case out.Levels == 1:
-		who.Tell("You rise a level!\r\n")
-	case out.Levels > 1:
-		who.Tell("You rise %d levels!\r\n", out.Levels)
-	}
+	// "You rise a level!" and the `<DoC>` cyan broadcast that goes with it,
+	// which are two lines of the same block in the C and are one call here
+	// (game.Live.AnnounceLevelGain) so that the three call sites this port
+	// reaches gain_exp from cannot drift apart. Before #212 this one said
+	// the first and none of them said the second.
+	w.AnnounceLevelGain(who, out.Levels)
 }
 
 // kill removes a dead character from the fight and leaves a body.

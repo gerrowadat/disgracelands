@@ -435,6 +435,23 @@ func (s *Server) Create(ctx context.Context, req session.CreateRequest) (*game.C
 	if err := s.players.Save(ctx, rec); err != nil {
 		return nil, err
 	}
+
+	// The `<DoC>` hail (interpreter.c:1608-1610), which the C sends here —
+	// straight after save_char, inside the same block as init_char and the
+	// preference defaults. Everybody online is told a newcomer has arrived,
+	// in cyan; the newcomer is not, because they are sitting on the message
+	// of the day at CON_RMOTD and are not in the world yet. #212.
+	//
+	// A DoSync rather than a bare walk of the player list: this runs on the
+	// connection's own goroutine, and the list belongs to the world's.
+	if err := s.engine.DoSync(ctx, func(w *game.Live) {
+		w.AnnounceNewPlayer(rec.Name)
+	}); err != nil {
+		// Not worth refusing a character over. They exist and are on disk;
+		// the worst case is that nobody heard about it.
+		s.logger.Error("announcing a new character", "character", rec.Name, "error", err)
+	}
+
 	return &game.Character{Name: rec.Name, Record: rec}, nil
 }
 

@@ -1950,12 +1950,30 @@ what `command_interpreter` looks at before it runs anything, and one to run
 it. The wait stays outside both, because it is a sleep and the world
 goroutine must not sleep.
 
+**The `<DoC>` cyan broadcasts are all in ✅ (#212).** Four of them, all
+through `send_to_all_color` (`comm.c:2256`): the new-player hail
+(`interpreter.c:1608`), the level-gain pair (`limits.c:311/318` and their
+drifted copies at `:368/375`), the death trap (done with #209) and
+`remort` (`act.wizard.c:465`), which was the only one reaching players at
+all and was doing it through the *uncoloured* `send_to_all`. One
+implementation now — `game.Live.Announce` — which is what carries the
+colour threshold and the `PLR_WRITING` exclusion the C applies, the
+latter live only because #214 made the flag real.
+
+Two things came out of doing it. `gain_exp`'s `if (is_altered)` block
+also says **"You rise a level!"**, and this port said it at one of its
+three call sites: a kill did, the cityguard's award and `advance` did
+not. All three go through `Live.AnnounceLevelGain` now, so they cannot
+drift the way the C's own two copies did — and those two copies really
+did drift, one whisper ending in `\r\n` and the other not
+(`docs/weirdnumbers.md`, "`gain_exp` and `gain_exp_regardless` are copies
+that drifted"), which is reproduced rather than tidied.
+
 **Death traps kill now ✅ (#209).** `do_simple_move`'s closing
 `log_death_trap(ch); death_cry(ch); extract_char(ch);`
 (`act.movement.c:171-176`) is `Context.deathTrap`. Both halves of
-`log_death_trap` came with it, which settles the third of #212's cyan
-broadcasts — the two that remain are the new-player hail and the
-level-gain one. `death_cry` moved to `game.Live.DeathCry` so that the
+`log_death_trap` came with it, which settled the third of #212's cyan
+broadcasts; the rest followed above. `death_cry` moved to `game.Live.DeathCry` so that the
 combat round and the trap share it; the trap does not otherwise touch
 `die()`, because the C does not.
 
