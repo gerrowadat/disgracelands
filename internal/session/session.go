@@ -426,6 +426,19 @@ type LoginHandler interface {
 	// implementation and must not stop the login sequence, exactly as the C
 	// ignores save_char's return.
 	RecordBadPassword(ctx context.Context, name string)
+	// NewCharactersAllowed is nanny's bare `if (circle_restrict)` at
+	// CON_NAME_CNFRM (interpreter.c:1421): any wizlock at all stops a
+	// character being made. Checked before the password prompt rather than
+	// at Create, so the refusal is the C's own — "Sorry, new players can't
+	// be created at the moment." — instead of a creation error the session
+	// has to guess at.
+	NewCharactersAllowed() bool
+	// AllowedIn is the other half of the same global:
+	// `GET_LEVEL(d->character) < circle_restrict` at CON_PASSWORD
+	// (interpreter.c:1491), which turns an *existing* character away once
+	// their password has been accepted. That is what a wizlock above 1
+	// exists for, and until #211 nothing called it.
+	AllowedIn(level int32) bool
 	// Create makes a new character. The request carries everything the C's
 	// creation sequence gathers before a character exists.
 	Create(ctx context.Context, req CreateRequest) (*game.Character, error)

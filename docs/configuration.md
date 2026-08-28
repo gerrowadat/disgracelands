@@ -342,7 +342,7 @@ These correspond one-to-one with the C server's single-letter options.
 |---|---|---|
 | `--mini-mud` | `-m` | Load a minimal world, for testing. |
 | `--skip-rent-check` | `-q` | Skip the rent scan on boot (faster startup). |
-| `--restrict` | `-r` | Allow no new player registrations. |
+| `--restrict` | `-r` | Allow no new player registrations. Sets the wizlock to 1, which is all `-r` is in the C (`comm.c:329`), so `wizlock 0` in-game reopens it. |
 | `--no-specials` | `-s` | Suppress special procedure assignment. |
 
 `--mini-mud` loads each world subdirectory's `index.mini` instead of

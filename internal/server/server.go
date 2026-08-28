@@ -105,10 +105,12 @@ type Server struct {
 	text        *Text
 	logger      *slog.Logger
 
-	// restrict refuses new characters, matching the C's -r.
-	restrict bool
-	// wizlock is the C's `circle_restrict`: the minimum level allowed in,
-	// set at runtime by the `wizlock` command.
+	// wizlock is the C's `circle_restrict` (db.c:60): the minimum level
+	// allowed in, set at runtime by the `wizlock` command and at boot by
+	// `-r`, which in the C is nothing more than `circle_restrict = 1`
+	// (comm.c:328-330). One field, as the C has one global — so `wizlock 0`
+	// reopens a server that was started restricted, which it could not do
+	// while `-r` was a separate bool here.
 	wizlock atomic.Int32
 
 	// connections is every live session, for `users` and `dc`.
@@ -221,12 +223,15 @@ func New(opts Options) *Server {
 		auth:          opts.Auth,
 		text:          opts.Text,
 		logger:        opts.Logger,
-		restrict:      opts.Restrict,
 		noSpecials:    opts.NoSpecials,
 		freezeMobiles: opts.FreezeMobiles,
 		freezeWeather: opts.FreezeWeather,
 		roundLength:   opts.RoundLength,
 		rng:           opts.RNG,
+	}
+	// `-r` is the C's `circle_restrict = 1` and nothing else (comm.c:329).
+	if opts.Restrict {
+		s.wizlock.Store(1)
 	}
 	s.booted = time.Now()
 	s.shutdownWanted = make(chan struct{})
@@ -368,10 +373,11 @@ func (s *Server) RecordBadPassword(ctx context.Context, name string) {
 
 // Create implements session.LoginHandler.
 func (s *Server) Create(ctx context.Context, req session.CreateRequest) (*game.Character, error) {
-	// `-r` on the command line, and `wizlock 1` or higher at runtime: both
-	// close the door to new characters. The C keeps them as separate globals
-	// and tests them in different places; one check covers both.
-	if s.restrict || s.wizlock.Load() >= 1 {
+	// The backstop for nanny's own refusal (interpreter.c:1421, wired up in
+	// handleConfirmName): any wizlock at all — including the one `-r` sets —
+	// means no new characters. A caller that reaches here anyway gets an
+	// error rather than a character.
+	if s.wizlock.Load() >= 1 {
 		return nil, fmt.Errorf("the game is not accepting new characters")
 	}
 
@@ -635,14 +641,32 @@ func (s *Server) DupeCheck(ctx context.Context, sess *session.Session, c *game.C
 	return target, mode
 }
 
-// AllowedIn reports whether somebody of this level may enter, porting the
-// `circle_restrict` check in nanny (interpreter.c).
+// AllowedIn implements session.LoginHandler: nanny's
+// `if (GET_LEVEL(d->character) < circle_restrict)` at CON_PASSWORD
+// (interpreter.c:1491), which turns an existing character away *after* their
+// password has been accepted.
 //
-// A wizlock of 1 closes the game to *new* characters only; anything higher
-// is a level threshold and keeps existing ones out too.
+// The test is the C's literally, and it is not quite the same as do_wizlock's
+// own description of itself. `wizlock 1` says "closed to new players", and
+// for everybody who has ever been in the world it is: `do_start` puts them at
+// level 1 (class.c:1836), so `1 < 1` is false and they walk in. What it also
+// catches is a character created and never played — Record.Level is 0 until
+// Enter runs game.Start — who is turned away at wizlock 1 along with the
+// unmade ones. That is the C's behaviour and it is deliberate here: an
+// abandoned name is exactly as new as a new one.
 func (s *Server) AllowedIn(level int32) bool {
-	lock := s.wizlock.Load()
-	return lock <= 1 || level >= lock
+	return level >= s.wizlock.Load()
+}
+
+// NewCharactersAllowed implements session.LoginHandler: nanny's bare
+// `if (circle_restrict)` at CON_NAME_CNFRM (interpreter.c:1421). Any wizlock
+// at all stops a character being made, which is the whole of what `wizlock 1`
+// is for.
+//
+// `-r` needs no separate test: it sets the same field (comm.c:329), as it
+// does in the C.
+func (s *Server) NewCharactersAllowed() bool {
+	return s.wizlock.Load() == 0
 }
 
 // Enter implements session.LoginHandler: puts a character into the world.

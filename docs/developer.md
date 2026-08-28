@@ -182,7 +182,7 @@ Useful `FLAGS` when reproducing something specific:
 
 | Flag | Why |
 |---|---|
-| `--restrict` | No new players — the `-r` of old runbooks. |
+| `--restrict` | No new players — the `-r` of old runbooks, and like it a wizlock of 1, which `wizlock 0` can lift. |
 | `--no-specials` | Suppress special procedures, so guildmasters, shopkeepers and the rest are ordinary mobiles. |
 | `--pulse-interval=1s` | Slows the game loop to human speed; makes pulse-driven behaviour observable. |
 | `--log-format=json` | What production logs look like: the OpenTelemetry envelope, one record per line. |

@@ -1890,6 +1890,21 @@ broadcasts are unported (#212), nothing sets `PLR_KILLER` on an attack
 (#213), and nothing sets `PLR_WRITING` either, which leaves four checks
 on it dead (#214).
 
+**`wizlock` keeps mortals out ✅ (#211).** Nanny tests `circle_restrict`
+twice — `if (circle_restrict)` at CON_NAME_CNFRM (`interpreter.c:1421`)
+and `GET_LEVEL(d->character) < circle_restrict` at CON_PASSWORD (`:1491`)
+— and neither had anything calling it, so `wizlock 32` closed the game to
+new names and let every mortal on the roster walk straight in.
+`Server.AllowedIn` existed for the second and was reached only by its own
+test; `NewCharactersAllowed` is new for the first, which replaces a
+creation error dressed up as "Something went wrong creating your
+character." with the C's own "Sorry, new players can't be created at the
+moment.". Both `mudlog` lines came with them; what is
+left unwired from #134's audit is `check_killer`'s pair, which needs
+#213 first, and the 42 that belong to OasisOLC. `-r` folded into the same field, as the C has it
+(`comm.c:329`): one global, so `wizlock 0` reopens a server started
+restricted.
+
 **The dispatcher's level read is on the world goroutine ✅ (#210).**
 `Dispatcher.Do` made three reads of world state on the connection's own
 goroutine before it entered `engine.DoSync` — the level the typed word is

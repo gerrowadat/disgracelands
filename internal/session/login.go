@@ -161,6 +161,27 @@ func (s *Session) handleGetName(ctx context.Context, deps Deps, line string) err
 func (s *Session) handleConfirmName(deps Deps, line string) error {
 	switch strings.ToLower(strings.TrimSpace(line)) {
 	case "y", "yes":
+		// The wizlock refusal for a *new* character (interpreter.c:1421-1427),
+		// which sits here in the C — after the name has been confirmed, so the
+		// name it logs is one the player has stood over. Any wizlock at all
+		// closes this door: `wizlock 1` means "closed to new players" and this
+		// is where that is true.
+		//
+		// Until #211 the only thing stopping a new character was Create
+		// returning an error, which the session turned into "Something went
+		// wrong creating your character." — a message about the server, for
+		// something that is a policy.
+		if !deps.Login.NewCharactersAllowed() {
+			s.Send("Sorry, new players can't be created at the moment.\r\n")
+			s.logger.Info("refused a new character while wizlocked",
+				"name", s.pendingName, "host", s.Host())
+			// mudlog(buf, NRM, LVL_GOD, TRUE) (interpreter.c:1423-1425).
+			wizlog(s.logger, obs.LogNormal, game.LevelGod,
+				"Request for new char %s denied from [%s] (wizlock)",
+				s.pendingName, s.Host())
+			s.Close()
+			return nil
+		}
 		s.setState(StateNewPassword)
 		s.EchoOff()
 		s.Send("New character.\r\nGive me a password for %s: ", s.pendingName)
@@ -256,6 +277,29 @@ func (s *Session) handlePassword(ctx context.Context, deps Deps, line string) er
 		wizlog(s.logger, obs.LogNormal, game.LevelGod,
 			"Connection attempt for %s denied from %s", character.Name, s.Host())
 		s.Send("Sorry, this char has not been cleared for login from your site!\r\n")
+		s.Close()
+		return nil
+	}
+
+	// The wizlock refusal for an *existing* character (interpreter.c:1491-1497),
+	// immediately after the SELECT ban and immediately before the dupe check.
+	// This is what a wizlock above 1 is for, and it is what #211 was: nothing
+	// called Server.AllowedIn, so `wizlock 32` closed the game to new names
+	// and let every mortal already on the roster walk straight in.
+	//
+	// The level is the record's own. A character created and never played is
+	// level 0 until Enter runs do_start, so wizlock 1 turns them away too —
+	// the C's arithmetic, and reasonable: an abandoned name is as new as a
+	// new one.
+	if !deps.Login.AllowedIn(levelOf(character)) {
+		s.Send("The game is temporarily restricted.. try again later.\r\n")
+		s.logger.Info("refused a login while wizlocked",
+			"character", character.Name, "host", s.Host())
+		// mudlog(buf, NRM, LVL_GOD, TRUE) (interpreter.c:1494-1496). Note the
+		// shape of it — `for %s [%s]`, the name then the host — which is not
+		// the shape the new-character line above uses.
+		wizlog(s.logger, obs.LogNormal, game.LevelGod,
+			"Request for login denied for %s [%s] (wizlock)", character.Name, s.Host())
 		s.Close()
 		return nil
 	}
