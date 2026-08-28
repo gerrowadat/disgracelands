@@ -85,12 +85,13 @@ func TestAGodLevelLineDoesNotReachALesserImmortal(t *testing.T) {
 	addr := listening(t, srv)
 	god, watcher := twoInARoom(t, srv, addr)
 
-	// setLevel (wizmove_test.go) rather than typing `advance`: the
-	// dispatcher reads Record.Level on the session's own goroutine to
-	// match a command against its level (commands.go:799), so a level
-	// written by somebody else's command at the same moment is a genuine
-	// race, and -race finds it. inWorld's DoSync gives the ordering that
-	// typing `advance` at another connection cannot.
+	// setLevel (wizmove_test.go) rather than typing `advance`, which is
+	// now a choice about clarity rather than about safety: the dispatcher
+	// used to read Record.Level on the session's own goroutine, so a level
+	// written by somebody else's command at the same moment raced it
+	// (#210). It reads it inside DoSync now — dispatchrace_test.go is the
+	// proof — and this stays as it is because one line of setup beats two
+	// connections and an expect for a test that is about mudlog levels.
 	setLevel(t, srv, "Bystander", game.LevelImmortal)
 	watcher.send("syslog complete")
 	watcher.expect("Your syslog is now complete.")
