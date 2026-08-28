@@ -1302,11 +1302,13 @@ Listed here so they are not mistaken for deliberate differences.
   - `check_killer`'s "PC Killer bit set on ..." (`fight.c:231`) and the
     sanctioned-pkill line (`fight.c:272`) have no code to sit in either:
     nothing in this port sets `PLR_KILLER` on an attack. Filed as #213.
-  - The two **wizlock** refusals (`interpreter.c:1425` for a new
-    character, `:1496` for an existing one) have no refusal to attach to:
-    `Server.AllowedIn` is never called, and `Create`'s own check produces
-    a different message. Filed as #211. The *site-ban* new-character
-    refusal at `:1416`, which reads much the same, is wired up.
+  - ~~The two **wizlock** refusals (`interpreter.c:1425` for a new
+    character, `:1496` for an existing one) have no refusal to attach
+    to.~~ Both are wired up (#211), at the two prompts the C checks them
+    at: `handleConfirmName` for a new character and `handlePassword` for
+    an existing one. `-r` came with it — in the C it is nothing but
+    `circle_restrict = 1` (`comm.c:329`), so it is the same field
+    `wizlock` sets, and `wizlock 0` reopens a server started restricted.
 
   **One line the port says and the C did not.** `interpreter.c:1629`'s
   "new player" `mudlog` fires against a buffer a local `<DoC>` block
