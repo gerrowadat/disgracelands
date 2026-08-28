@@ -66,15 +66,22 @@ import (
 )
 
 // tlsConfig builds the TLS settings for the telnets listener.
-func tlsConfig(cfg *config.Config) (*tls.Config, error) {
+//
+// The certificate is served through a server.CertReloader rather than a
+// static tls.Config.Certificates, so a renewed --tls-cert/--tls-key is
+// picked up without a restart (issue #147). ctx bounds the reloader's
+// background poll; it stops when the server shuts down, the same as every
+// other background loop main starts.
+func tlsConfig(ctx context.Context, cfg *config.Config, logger *slog.Logger) (*tls.Config, error) {
 	if cfg.TLSCert != "" {
-		cert, err := tls.LoadX509KeyPair(cfg.TLSCert, cfg.TLSKey)
+		reloader, err := server.NewCertReloader(cfg.TLSCert, cfg.TLSKey, logger)
 		if err != nil {
-			return nil, fmt.Errorf("loading the TLS certificate: %w", err)
+			return nil, err
 		}
+		go reloader.Run(ctx, cfg.TLSReloadInterval)
 		// TLS 1.2 is the floor: anything older has no business carrying a
 		// password in 2026, and no client anyone still uses needs it.
-		return &tls.Config{Certificates: []tls.Certificate{cert}, MinVersion: tls.VersionTLS12}, nil
+		return &tls.Config{GetCertificate: reloader.GetCertificate, MinVersion: tls.VersionTLS12}, nil
 	}
 	if cfg.TLSACMEDomain != "" {
 		return nil, fmt.Errorf("ACME certificates are not implemented yet; use --tls-cert and --tls-key")
@@ -486,7 +493,7 @@ func run(args []string) (int, error) {
 		listeners = append(listeners, ln)
 	}
 	if cfg.TelnetsAddr != "" {
-		tlsCfg, err := tlsConfig(cfg)
+		tlsCfg, err := tlsConfig(ctx, cfg, logger)
 		if err != nil {
 			return exitFailed, err
 		}

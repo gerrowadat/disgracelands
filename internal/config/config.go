@@ -91,6 +91,15 @@ type Config struct {
 	TLSKey          string
 	TLSACMEDomain   string
 	TLSACMECacheDir string
+	// TLSReloadInterval is how often --tls-cert/--tls-key are checked for
+	// changes and, if either has a newer mtime than the certificate
+	// currently serving connections, reloaded — so a renewed certificate
+	// (cert-manager, certbot, an ops team's own cron) takes effect on the
+	// next handshake instead of needing a restart to be picked up (#147).
+	// Zero disables the check: the certificate loaded at boot is used for
+	// the life of the process, which was this server's only behaviour
+	// before this existed.
+	TLSReloadInterval time.Duration
 
 	// Connection handling.
 	TrustProxyHeaders bool
@@ -209,6 +218,7 @@ func Default() Config {
 		TelnetsAddr:          ":4443",
 		WSAddr:               "",
 		TLSACMECacheDir:      "examples/stock/binary/.acme",
+		TLSReloadInterval:    time.Minute,
 		MaxPlayers:           300,
 		MaxConnsPerIP:        8,
 		LoginGraceTime:       60 * time.Second,
@@ -339,6 +349,8 @@ func Load(args []string, lookupEnv func(string) (string, bool), out io.Writer) (
 	str("tls-key", "TLS private key file", &cfg.TLSKey)
 	str("tls-acme-domain", "Obtain a TLS certificate via ACME for this domain", &cfg.TLSACMEDomain)
 	str("tls-acme-cache", "Directory for ACME certificate cache", &cfg.TLSACMECacheDir)
+	duration("tls-reload-interval", "How often to check --tls-cert/--tls-key for changes and reload (0 = never)",
+		&cfg.TLSReloadInterval)
 
 	boolean("trust-proxy-headers", "Trust X-Forwarded-For from a reverse proxy", &cfg.TrustProxyHeaders)
 	integer("max-players", "Maximum simultaneous players", &cfg.MaxPlayers)
