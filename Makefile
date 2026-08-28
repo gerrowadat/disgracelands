@@ -289,12 +289,39 @@ ACT_BIN = $(shell command -v act 2>/dev/null || echo "$(GO) run github.com/nekto
 # pointer's target is a host path the container has no other way to see --
 # so any step that runs git (the "Verify go.mod is tidy" step's `git diff`)
 # fails with "fatal: not a git repository: (null)" the moment `make ci` is
-# run from anywhere but the primary checkout. --git-common-dir resolves the
-# indirection to the one real .git regardless, so bind-mounting *that* into
-# the container at the same path fixes it -- and is a harmless mount of a
-# directory onto itself for a plain clone, where --git-common-dir is just
-# $(CURDIR)/.git.
-GIT_COMMON_DIR := $(shell git rev-parse --git-common-dir 2>/dev/null)
+# run from a worktree rather than the primary checkout. --git-common-dir
+# resolves the indirection to the one real .git regardless, so
+# bind-mounting *that* into the container at the same path fixes it.
+#
+# --path-format=absolute (git 2.31+) matters here: plain --git-common-dir
+# prints a path *relative to $(CURDIR)*, which for a plain clone run from
+# its own root is the bare string ".git" -- and Docker's bind-mount flag
+# rejects a relative host path outright ("invalid mount path: '.git' mount
+# path must be absolute"), failing every job before a container is even
+# created. A linked worktree never hit this, because its common dir lives
+# outside $(CURDIR) and git prints an absolute path for that case already --
+# which is how this went unnoticed running from worktrees for as long as it
+# did.
+GIT_DIR := $(shell git rev-parse --path-format=absolute --git-dir 2>/dev/null)
+GIT_COMMON_DIR := $(shell git rev-parse --path-format=absolute --git-common-dir 2>/dev/null)
+
+# The mount is only needed -- and only safe -- for a linked worktree, where
+# --git-dir (.../.git/worktrees/name) and --git-common-dir (the real .git)
+# differ. For the primary checkout they are the same path, --git-common-dir
+# is already just $(CURDIR)/.git, and mounting it turns out not to be
+# "harmless" the way it sounds: actions/checkout's own docker cp of the
+# working tree writes a fresh .git into that same path inside the
+# container, and a read-only bind mount sitting there rejects that write --
+# "failed to copy content to container: ... read-only file system" on
+# .git/COMMIT_EDITMSG, failing the checkout step of every job. Skipping the
+# mount whenever it would just be $(CURDIR)/.git mounted onto itself avoids
+# the collision, since a plain checkout never had the dangling-pointer
+# problem the mount exists to fix in the first place.
+ifeq ($(GIT_DIR),$(GIT_COMMON_DIR))
+ACT_CONTAINER_OPTIONS :=
+else
+ACT_CONTAINER_OPTIONS := --container-options "-v $(GIT_COMMON_DIR):$(GIT_COMMON_DIR):ro"
+endif
 
 # act names a job's container after the workflow and the job and nothing
 # else -- createContainerName("act", "<workflow>/<job>"), hashed
@@ -337,8 +364,7 @@ ACT_CLEAN_RAW = ./scripts/act-clean.sh $(CURDIR) "$(ACT_CACHE)"
 # while like a stale-volume problem. One cache store per checkout, kept in
 # the shared .git so it is neither in the tree nor in the way of git.
 ACT_CACHE = $(GIT_COMMON_DIR)/act-cache/$(notdir $(CURDIR))
-ACT_RAW = $(ACT_BIN) --container-options "-v $(GIT_COMMON_DIR):$(GIT_COMMON_DIR):ro" \
-	--cache-server-path "$(ACT_CACHE)"
+ACT_RAW = $(ACT_BIN) $(ACT_CONTAINER_OPTIONS) --cache-server-path "$(ACT_CACHE)"
 
 # flock is util-linux and not everywhere. Without it the guard still does the
 # useful half: a run against the wrong checkout is prevented, and only two
