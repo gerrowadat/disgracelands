@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/gerrowadat/disgracelands/internal/colour"
 	"github.com/gerrowadat/disgracelands/internal/game"
 )
 
@@ -277,7 +278,10 @@ func doWiznet(c *Context) error {
 		if who == c.Character && c.noRepeat() {
 			continue
 		}
-		who.Tell("%s", line)
+		// Cyan, at C_NRM (act.wizard.c:1962-1967). Note it is resolved
+		// against the *reader's* preference, as every CC macro is, and not
+		// the wizline's author's.
+		who.TellAt(colour.Normal, "{{cyan}}%s{{/}}", line)
 	}
 
 	if c.noRepeat() {

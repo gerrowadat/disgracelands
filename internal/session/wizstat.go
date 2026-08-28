@@ -191,9 +191,13 @@ func (c *Context) statRoom() {
 		return
 	}
 
+	// The colour is do_stat_room's own, at C_NRM throughout: the name cyan,
+	// the vnum green, the extra-description keywords cyan, the people
+	// yellow, the contents green, and each exit's direction and destination
+	// cyan (act.wizard.c:512-596).
 	var b strings.Builder
-	fmt.Fprintf(&b, "Room name: %s\r\n", room.Name)
-	fmt.Fprintf(&b, "Zone: [%3d], VNum: [%5d], RNum: [%5d], Type: %s\r\n",
+	fmt.Fprintf(&b, "Room name: {{cyan}}%s{{/}}\r\n", room.Name)
+	fmt.Fprintf(&b, "Zone: [%3d], VNum: [{{green}}%5d{{/}}], RNum: [%5d], Type: %s\r\n",
 		zoneNumberOf(c.World, room.Vnum), room.Vnum, room.Vnum,
 		game.SprintType(room.SectorType, game.SectorNames()))
 	fmt.Fprintf(&b, "SpecProc: %s, Flags: %s\r\n",
@@ -207,27 +211,29 @@ func (c *Context) statRoom() {
 	}
 
 	if len(room.ExtraDescs) > 0 {
-		b.WriteString("Extra descs:")
+		b.WriteString("Extra descs:{{cyan}}")
 		for _, extra := range room.ExtraDescs {
 			b.WriteString(" " + extra.Keywords)
 		}
-		b.WriteString("\r\n")
+		b.WriteString("{{/}}\r\n")
 	}
 
-	b.WriteString("Chars present:")
+	b.WriteString("Chars present:{{yellow}}")
 	names := make([]string, 0, len(c.World.Occupants(room.Vnum)))
 	for _, who := range c.World.Occupants(room.Vnum) {
 		names = append(names, fmt.Sprintf("%s(%s)", who.Name, kindOf(who)))
 	}
 	b.WriteString(joinWrapped(names))
+	b.WriteString("{{/}}")
 
 	if objects := c.World.RoomObjects(room.Vnum); len(objects) > 0 {
-		b.WriteString("Contents:")
+		b.WriteString("Contents:{{green}}")
 		shorts := make([]string, 0, len(objects))
 		for _, obj := range objects {
 			shorts = append(shorts, obj.Name())
 		}
 		b.WriteString(joinWrapped(shorts))
+		b.WriteString("{{/}}")
 	}
 
 	for dir := game.Direction(0); int(dir) < game.NumDirections; dir++ {
@@ -235,15 +241,15 @@ func (c *Context) statRoom() {
 		if exit == nil {
 			continue
 		}
-		to := " NONE"
+		to := " {{cyan}}NONE{{/}}"
 		if exit.ToRoom != game.NoRoom {
-			to = fmt.Sprintf("%5d", exit.ToRoom)
+			to = fmt.Sprintf("{{cyan}}%5d{{/}}", exit.ToRoom)
 		}
 		keyword := exit.Keywords
 		if keyword == "" {
 			keyword = "None"
 		}
-		fmt.Fprintf(&b, "Exit %-5s:  To: [%s], Key: [%5d], Keywrd: %s, Type: %s\r\n ",
+		fmt.Fprintf(&b, "Exit {{cyan}}%-5s{{/}}:  To: [%s], Key: [%5d], Keywrd: %s, Type: %s\r\n ",
 			dir, to, exit.Key, keyword,
 			game.SprintBit(game.Flags(exit.State), game.ExitBitNames()))
 		if exit.Description != "" {
@@ -273,8 +279,11 @@ func (c *Context) statObject(obj *game.Object) {
 	if obj.Def != nil {
 		vnum = obj.Def.Vnum
 	}
-	fmt.Fprintf(&b, "Name: '%s', Aliases: %s\r\n", orNone(obj.Name()), obj.Keywords)
-	fmt.Fprintf(&b, "VNum: [%5d], RNum: [%5d], Type: %s, SpecProc: %s\r\n",
+	// Yellow short description, green vnum, cyan extra-description keywords,
+	// green contents — do_stat_object's own, all at C_NRM
+	// (act.wizard.c:612-746).
+	fmt.Fprintf(&b, "Name: '{{yellow}}%s{{/}}', Aliases: %s\r\n", orNone(obj.Name()), obj.Keywords)
+	fmt.Fprintf(&b, "VNum: [{{green}}%5d{{/}}], RNum: [%5d], Type: %s, SpecProc: %s\r\n",
 		vnum, vnum, game.SprintType(obj.Type, game.ItemTypeNames),
 		existsOrNone(obj.ObjSpec() != ""))
 	fmt.Fprintf(&b, "L-Des: %s\r\n", orNone(obj.Description))
@@ -297,12 +306,13 @@ func (c *Context) statObject(obj *game.Object) {
 	b.WriteString(objectValues(obj) + "\r\n")
 
 	if len(obj.Contents) > 0 {
-		b.WriteString("\r\nContents:")
+		b.WriteString("\r\nContents:{{green}}")
 		shorts := make([]string, 0, len(obj.Contents))
 		for _, inside := range obj.Contents {
 			shorts = append(shorts, inside.Name())
 		}
 		b.WriteString(joinWrapped(shorts))
+		b.WriteString("{{/}}")
 	}
 
 	b.WriteString("Affections:")
@@ -391,7 +401,11 @@ func (c *Context) statCharacter(k *game.Character) {
 	if k.IsNPC() {
 		classNames, label = game.NpcClassNames(), "Monster Class: "
 	}
-	fmt.Fprintf(&b, "%s%s, Lev: [%2d], XP: [%7d], Align: [%4d]\r\n",
+	// do_stat_character's colour, all at C_NRM (act.wizard.c:812-954): the
+	// level and experience yellow, the six abilities cyan, the three point
+	// pools green, the flag words cyan and green and yellow, and each
+	// affecting spell's name cyan.
+	fmt.Fprintf(&b, "%s%s, Lev: [{{yellow}}%2d{{/}}], XP: [{{yellow}}%7d{{/}}], Align: [%4d]\r\n",
 		label, game.SprintType(rec.Class, classNames),
 		rec.Level, rec.Points.Exp, rec.Alignment)
 
@@ -415,14 +429,16 @@ func (c *Context) statCharacter(k *game.Character) {
 	}
 
 	a := rec.Abilities
-	fmt.Fprintf(&b, "Str: [%d/%d]  Int: [%d]  Wis: [%d]  Dex: [%d]  Con: [%d]  Cha: [%d]\r\n",
+	fmt.Fprintf(&b, "Str: [{{cyan}}%d/%d{{/}}]  Int: [{{cyan}}%d{{/}}]  Wis: [{{cyan}}%d{{/}}]  "+
+		"Dex: [{{cyan}}%d{{/}}]  Con: [{{cyan}}%d{{/}}]  Cha: [{{cyan}}%d{{/}}]\r\n",
 		a.Strength, a.StrengthPercentile, a.Intelligence, a.Wisdom,
 		a.Dexterity, a.Constitution, a.Charisma)
 
 	p := rec.Points
 	regen := statRegen{who: k, room: c.World.Room(k.Room)}
 	now := time.Now()
-	fmt.Fprintf(&b, "Hit p.:[%d/%d+%d]  Mana p.:[%d/%d+%d]  Move p.:[%d/%d+%d]\r\n",
+	fmt.Fprintf(&b, "Hit p.:[{{green}}%d/%d+%d{{/}}]  Mana p.:[{{green}}%d/%d+%d{{/}}]  "+
+		"Move p.:[{{green}}%d/%d+%d{{/}}]\r\n",
 		p.Hit, p.MaxHit, game.HitGain(rec, regen, now),
 		p.Mana, p.MaxMana, game.ManaGain(rec, regen, now),
 		p.Move, p.MaxMove, game.MoveGain(rec, regen, now))
@@ -446,10 +462,13 @@ func (c *Context) statCharacter(k *game.Character) {
 		game.SprintType(defaultPositionOf(k), game.PositionNames()), 0)
 
 	if k.IsNPC() {
-		fmt.Fprintf(&b, "NPC flags: %s\r\n", game.SprintBit(mobFlagsOf(k), game.ActionBitNames()))
+		fmt.Fprintf(&b, "NPC flags: {{cyan}}%s{{/}}\r\n",
+			game.SprintBit(mobFlagsOf(k), game.ActionBitNames()))
 	} else {
-		fmt.Fprintf(&b, "PLR: %s\r\n", game.SprintBit(rec.PlayerFlags, game.PlayerBitNames()))
-		fmt.Fprintf(&b, "PRF: %s\r\n", game.SprintBit(rec.Preferences, game.PreferenceBitNames()))
+		fmt.Fprintf(&b, "PLR: {{cyan}}%s{{/}}\r\n",
+			game.SprintBit(rec.PlayerFlags, game.PlayerBitNames()))
+		fmt.Fprintf(&b, "PRF: {{green}}%s{{/}}\r\n",
+			game.SprintBit(rec.Preferences, game.PreferenceBitNames()))
 	}
 
 	if k.IsNPC() && k.MobDef != nil {
@@ -480,10 +499,12 @@ func (c *Context) statCharacter(k *game.Character) {
 	}
 	b.WriteString(joinWrapped(names))
 
-	fmt.Fprintf(&b, "AFF: %s\r\n", game.SprintBit(rec.AffectFlags, game.AffectBitNames()))
+	fmt.Fprintf(&b, "AFF: {{yellow}}%s{{/}}\r\n",
+		game.SprintBit(rec.AffectFlags, game.AffectBitNames()))
 
 	for _, aff := range rec.Affects {
-		line := fmt.Sprintf("SPL: (%3dhr) %-21s ", aff.Duration+1, game.SpellName(aff.Type))
+		line := fmt.Sprintf("SPL: (%3dhr) {{cyan}}%-21s{{/}} ",
+			aff.Duration+1, game.SpellName(aff.Type))
 		modifier := ""
 		if aff.Modifier != 0 {
 			modifier = fmt.Sprintf("%+d to %s", aff.Modifier,
