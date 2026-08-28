@@ -7,8 +7,11 @@
 package session
 
 import (
+	"context"
 	"fmt"
 	"strings"
+
+	"github.com/gerrowadat/disgracelands/internal/game"
 )
 
 // The general line editor, porting string_write (modify.c) and the improved
@@ -64,6 +67,26 @@ func (s *Session) beginEditor(maxLength int, done func(text string, saved bool))
 	s.beginEditorSeeded(maxLength, "", done)
 }
 
+// markWriting is string_write's own first two lines (modify.c:100-101):
+//
+//	if (d->character && !IS_NPC(d->character))
+//	  SET_BIT(PLR_FLAGS(d->character), PLR_WRITING);
+//
+// Every editor goes through here, exactly as every editor in the C goes
+// through string_write — mail, a board post, a note, tedit. `mail` sets
+// PLR_MAILING as well, in its own command (mail.c:567, whose comment is
+// "string_write() sets writing"), which is why that bit is not set here.
+//
+// Safe to write the record from this goroutine: beginEditor is only ever
+// reached from a command, which Dispatcher.Do already runs on the world
+// goroutine. Clearing it is the awkward half — see finishEditing.
+func (s *Session) markWriting() {
+	if s.character == nil || s.character.IsNPC() || s.character.Record == nil {
+		return
+	}
+	s.character.Record.PlayerFlags = s.character.Record.PlayerFlags.Set(game.PlayerWriting)
+}
+
 // beginEditorSeeded is beginEditor with existing content already in the
 // buffer, porting string_write's own plain-editor behaviour when the
 // pointer it is handed already points at something: string_add's
@@ -80,6 +103,7 @@ func (s *Session) beginEditorSeeded(maxLength int, seed string, done func(text s
 	s.editorBuf = editText{text: seed, present: seed != ""}
 	s.editorMax = maxLength
 	s.editorDone = done
+	s.markWriting()
 	s.setState(StateEditing)
 }
 
@@ -96,8 +120,8 @@ func (s *Session) beginEditorSeeded(maxLength int, seed string, done func(text s
 //
 // Without it the editor is completely silent: a player types a line and gets
 // nothing back, with no sign the server took it. That is issue #192.
-func (s *Session) handleEditing(line string) error {
-	err := s.editLine(line)
+func (s *Session) handleEditing(ctx context.Context, deps Deps, line string) error {
+	err := s.editLine(ctx, deps, line)
 	if err == nil && s.State() == StateEditing {
 		s.Send("%s", prompt(s))
 	}
@@ -105,11 +129,11 @@ func (s *Session) handleEditing(line string) error {
 }
 
 // editLine is string_add itself, without the prompt.
-func (s *Session) editLine(line string) error {
+func (s *Session) editLine(ctx context.Context, deps Deps, line string) error {
 	if strings.TrimSpace(line) == descriptionTerminator {
-		return s.finishEditing(true)
+		return s.finishEditing(ctx, deps, true)
 	}
-	if handled, err := s.editorCommand(line); handled {
+	if handled, err := s.editorCommand(ctx, deps, line); handled {
 		return err
 	}
 	s.editorBuf.text += line + "\r\n"
@@ -123,7 +147,7 @@ func (s *Session) editLine(line string) error {
 // The work is in improvedEditorExecute, which is a plain function over a
 // buffer so that editoracle_test.go can drive it against the C directly.
 // All this does is move the answer into and out of the session.
-func (s *Session) editorCommand(line string) (bool, error) {
+func (s *Session) editorCommand(ctx context.Context, deps Deps, line string) (bool, error) {
 	result, buf, sent := improvedEditorExecute(s.editorBuf, s.editorMax, line)
 	if result == editorOK {
 		return false, nil
@@ -134,9 +158,9 @@ func (s *Session) editorCommand(line string) (bool, error) {
 	}
 	switch result {
 	case editorAbort:
-		return true, s.finishEditing(false)
+		return true, s.finishEditing(ctx, deps, false)
 	case editorSave:
-		return true, s.finishEditing(true)
+		return true, s.finishEditing(ctx, deps, true)
 	}
 	return true, nil
 }
@@ -885,7 +909,26 @@ func strtokFields(s string, delim byte) []string {
 // has never captured a "before" of — every caller already treats an empty
 // result as "nothing changed" (tedit's file, mail's send, a board post),
 // so handing back "" is the observable-equivalent outcome.
-func (s *Session) finishEditing(saved bool) error {
+//
+// The cleanup runs on the **world goroutine**, which is where the C runs
+// it: string_add is called from the game loop like everything else. Here
+// it is reached from the session's own goroutine — the editor is the one
+// thing a playing character drives outside Dispatcher.Do — and what it
+// touches is world state. The PLR_WRITING bit is read by `tell`, by the
+// room listing and by mudlog's own echo, all of them on the world
+// goroutine; the callbacks write a board's message list and a note's
+// action description, which are world objects. Clearing or writing those
+// from here without the hop is a data race, and -race finds it.
+//
+// The hop is CommandHandler.InWorld, which waits, so nothing the player
+// types next can overtake the cleanup. A callback must therefore not call
+// InWorld itself — none does, and none should; it is already inside the
+// world goroutine by the time it runs.
+//
+// setState comes *before* the hop on purpose: the connection is out of
+// the editor the moment the terminator is typed, so the next line is a
+// command. Its own DoSync queues behind this task either way.
+func (s *Session) finishEditing(ctx context.Context, deps Deps, saved bool) error {
 	var text string
 	if saved {
 		text = s.editorBuf.text
@@ -898,9 +941,35 @@ func (s *Session) finishEditing(saved bool) error {
 	done := s.editorDone
 	s.editorBuf, s.editorDone, s.editorMax = editText{}, nil, 0
 	s.setState(StatePlaying)
-	if done != nil {
-		done(text, saved)
+
+	cleanup := func(*game.Live) {
+		// `REMOVE_BIT(PLR_FLAGS(d->character), PLR_MAILING | PLR_WRITING)`
+		// (modify.c:218-219), on both the save and the abort path, and
+		// guarded by the same `!IS_NPC` the set was.
+		if s.character != nil && !s.character.IsNPC() && s.character.Record != nil {
+			rec := s.character.Record
+			rec.PlayerFlags = rec.PlayerFlags.Clear(game.PlayerMailing | game.PlayerWriting)
+		}
+		if done != nil {
+			done(text, saved)
+		}
 	}
+	// Two ways to end up running it inline, and both are safe for the same
+	// reason — there is no world goroutine to race with.
+	//
+	// A nil Commands is a unit test holding a Session directly. A failed
+	// hop is the shutdown case: Engine.DoSync only ever fails on a
+	// cancelled context, and by then Run has drained its queue and
+	// returned, so a task submitted now would never be run at all. Doing
+	// it here instead is what stops a letter typed at the moment the
+	// server goes down from being silently dropped — the C, being
+	// single-threaded, never had anywhere to lose it.
+	if deps.Commands == nil {
+		cleanup(nil)
+	} else if err := deps.Commands.InWorld(ctx, cleanup); err != nil {
+		cleanup(nil)
+	}
+
 	s.Send("%s", prompt(s))
 	return nil
 }

@@ -1902,6 +1902,53 @@ on-disk thing depends on it. [`deviations.md`](deviations.md) records it.
 
 ---
 
+## `wiznet @`'s "(Writing mail)" can never be printed
+
+```c
+	sprintf(buf1 + strlen(buf1), "  %s", GET_NAME(d->character));
+	if (PLR_FLAGGED(d->character, PLR_WRITING))
+	  strcat(buf1, " (Writing)\r\n");
+	else if (PLR_FLAGGED(d->character, PLR_MAILING))
+	  strcat(buf1, " (Writing mail)\r\n");
+```
+
+`wiznet @` lists the gods on the channel and marks whoever is in the line
+editor. Two annotations, and the second is dead code.
+
+`PLR_MAILING` has exactly one setter — `do_mail`'s
+`SET_BIT(PLR_FLAGS(ch), PLR_MAILING)` (`mail.c:567`), whose own comment is
+`/* string_write() sets writing. */` — and the very next statement calls
+`string_write`, which sets `PLR_WRITING` (`modify.c:100-101`). The
+editor's cleanup clears both together (`modify.c:218-219`), and a login
+clears both again (`interpreter.c:1386`). **So no character ever carries
+`PLR_MAILING` without `PLR_WRITING`**, the first arm always wins, and a
+god writing a letter is reported as plain "(Writing)".
+
+`do_who`'s own pair tests the same two bits *the other way round* —
+
+```c
+      if (PLR_FLAGGED(tch, PLR_MAILING))
+	strcat(buf, " (mailing)");
+      else if (PLR_FLAGGED(tch, PLR_WRITING))
+	strcat(buf, " (writing)");
+```
+
+— so there the mail case does win and "(writing)" is the arm that never
+fires for a letter. Two sites, opposite orders, each with a dead branch;
+neither reads as wrong on its own, which is why this needs both of them
+side by side to see.
+
+*Reproduced*: `writingSuffix` (`internal/session/wizcomm.go`) is the same
+if/else-if in the same order, so it prints what the real server printed.
+`do_who`'s annotation block is not ported at all — this port's who-list
+carries no `(invis)`/`(mailing)`/`(deaf)`/`(notell)` markers — which
+[`deviations.md`](deviations.md) records.
+
+*Source*: `act.wizard.c:1907-1911`, `act.informative.c:1174-1176`,
+`mail.c:567`, `modify.c:100-101,218-219`.
+
+---
+
 ## What to do about all this
 
 The rule that has worked: **anything with a division, a cast, or a comment

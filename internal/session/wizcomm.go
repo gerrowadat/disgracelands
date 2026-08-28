@@ -290,6 +290,13 @@ func doWiznet(c *Context) error {
 		if who.Record.Preferences.Has(game.PrefNoWiz) {
 			continue
 		}
+		// `!PLR_FLAGGED(d->character, PLR_WRITING | PLR_MAILING)`
+		// (act.wizard.c:1960): a god in the line editor is left alone,
+		// the same courtesy do_gen_comm's channels extend. Live as of
+		// #214 — nothing set either bit before that.
+		if who.Record.PlayerFlags.HasAny(game.PlayerWriting | game.PlayerMailing) {
+			continue
+		}
 		if who == c.Character && c.noRepeat() {
 			continue
 		}
@@ -317,7 +324,7 @@ func (c *Context) listGods() {
 			fmt.Fprintf(&offline, "  %s\r\n", who.Name)
 			continue
 		}
-		fmt.Fprintf(&online, "  %s\r\n", who.Name)
+		fmt.Fprintf(&online, "  %s%s\r\n", who.Name, writingSuffix(who.Record))
 	}
 
 	var b strings.Builder
@@ -336,4 +343,33 @@ func (c *Context) listGods() {
 // bare acknowledgement.
 func (c *Context) noRepeat() bool {
 	return c.Character.Record != nil && c.Character.Record.Preferences.Has(game.PrefNoRepeat)
+}
+
+// writingSuffix is the annotation `wiznet @` hangs off a god's name
+// (act.wizard.c:1907-1911):
+//
+//	if (PLR_FLAGGED(d->character, PLR_WRITING))
+//	  strcat(buf1, " (Writing)\r\n");
+//	else if (PLR_FLAGGED(d->character, PLR_MAILING))
+//	  strcat(buf1, " (Writing mail)\r\n");
+//
+// **The second arm is unreachable, and it is reproduced anyway.** `mail`
+// sets PLR_MAILING (mail.c:567) and then calls string_write, which sets
+// PLR_WRITING (modify.c:100-101); the cleanup clears both together
+// (:218-219) and a login clears both again (interpreter.c:1386). So
+// nothing ever carries PLR_MAILING without PLR_WRITING, the first arm
+// always wins, and a god writing a letter is reported as plain
+// "(Writing)" — never "(Writing mail)", on the real server or here.
+//
+// do_who's own pair tests the two bits the other way round
+// (act.informative.c:1174-1176) and so would say "(mailing)"; that
+// annotation block is not ported. See docs/weirdnumbers.md.
+func writingSuffix(rec *game.PlayerRecord) string {
+	switch {
+	case rec.PlayerFlags.Has(game.PlayerWriting):
+		return " (Writing)"
+	case rec.PlayerFlags.Has(game.PlayerMailing):
+		return " (Writing mail)"
+	}
+	return ""
 }

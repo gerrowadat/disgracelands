@@ -156,6 +156,41 @@ func TestSyslogOffShowsNothing(t *testing.T) {
 	m.noServerErrors()
 }
 
+// TestTeditMarksTheEditorAsWriting: PLR_WRITING (#214), on a real booted
+// server. The C sets it in string_write (modify.c:100-101) and clears it
+// in string_add's cleanup (:218-219), and every check on it was dead here
+// until the setter existed.
+//
+// `tedit` is the editor worth using for this in the play suite rather
+// than in internal/server: it edits a canned text file that was actually
+// loaded off disk at boot, which is the one thing this suite has and the
+// unit tests fake.
+func TestTeditMarksTheEditorAsWriting(t *testing.T) {
+	m := start(t, miniClassic)
+	god := m.god()
+
+	other := m.dial()
+	other.create("Onlooker", "onlookerpass", "f", "w")
+
+	// doUntil, not do: the editor prompts with "] " rather than returning
+	// to the game prompt, so waiting for a prompt marker never finishes.
+	god.doUntil("tedit motd", "Edit file below:")
+
+	// act.comm.c:184 -- `tell` refuses rather than interrupting. The
+	// mortal's own command runs on the world goroutine behind whatever
+	// tedit queued there, so its reply is the barrier for the flag.
+	contains(t, "tell refuses somebody mid-edit", other.do("tell Founder hello"),
+		"writing a message right now; try again later.")
+
+	god.doUntil("/a", "Edit aborted.")
+
+	// And once the editor closes, the tell lands.
+	contains(t, "tell works again afterwards", other.do("tell Founder hello again"),
+		"You tell Founder, 'hello again'")
+
+	m.noServerErrors()
+}
+
 // TestSet changes a field on a character who is logged in, and the change is
 // visible where a player would see it.
 func TestSet(t *testing.T) {

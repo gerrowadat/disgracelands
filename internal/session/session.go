@@ -168,12 +168,16 @@ type Session struct {
 	logger *slog.Logger
 
 	// state is the connection state, and it is an atomic because it is not
-	// only read by this session's own goroutine: the world goroutine reads
-	// it, through Character.Client, to decide whether a mudlog() line
-	// should land on somebody who is mid-edit (internal/server/wizvis.go's
-	// `interrupted`, standing in for the C's PLR_WRITING — see #214). A
-	// plain int there is a data race, latent while `bug` was the only
-	// wizvis producer and immediate once #134 added the rest.
+	// only read by this session's own goroutine. `users` walks every
+	// session and prints each one's state (users.go, do_users'
+	// `connected_types[STATE(d)]`), and so does `show snoop`; both are
+	// commands, so both read this from the world goroutine while the
+	// session that owns it may be writing.
+	//
+	// #134 made that concrete — a plain int here produced a -race report
+	// on the first run once the syslog echo started walking sessions.
+	// The echo reads the C's PLR_WRITING flag instead now (#214), but the
+	// two command call sites remain and the atomic with them.
 	state     atomic.Int32
 	character *game.Character
 	// original is set while this session is switched into somebody else.
@@ -480,6 +484,16 @@ type LoginHandler interface {
 // CommandHandler runs what a playing character types.
 type CommandHandler interface {
 	Do(ctx context.Context, s *Session, line string) error
+	// InWorld runs f on the world goroutine and waits for it, the same
+	// way Do runs a command.
+	//
+	// The line editor needs it. Everything a *command* touches is already
+	// serialised by Do; the editor is the one thing a playing character
+	// drives from the session's own goroutine, line by line, and its
+	// cleanup writes world state — the PLR_WRITING bit, a board's message
+	// list, a note's action description. In the C all of that runs inside
+	// string_add, in the game loop, like everything else (modify.c:117).
+	InWorld(ctx context.Context, f func(*game.Live)) error
 }
 
 // New wraps a connection in a session.

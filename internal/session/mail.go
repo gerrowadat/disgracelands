@@ -112,6 +112,18 @@ func postmasterSendMail(sc *SpecialCall) {
 	// coins, and always did.
 	addGold(who, -StampPrice)
 
+	// SET_BIT(PLR_FLAGS(ch), PLR_MAILING), whose own comment in the C is
+	// "string_write() sets writing" (mail.c:567) — the two bits are set in
+	// two places because only this one is mail. Set before beginEditor,
+	// as the C sets it before string_write, and cleared alongside
+	// PLR_WRITING by the editor's cleanup (modify.c:218-219).
+	//
+	// Safe from here: a special procedure runs inside the command that
+	// triggered it, on the world goroutine.
+	if who.Record != nil && !who.IsNPC() {
+		who.Record.PlayerFlags = who.Record.PlayerFlags.Set(game.PlayerMailing)
+	}
+
 	from := int64(-1)
 	if who.Record != nil {
 		from = who.Record.IDNum

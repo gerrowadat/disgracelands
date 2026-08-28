@@ -783,6 +783,15 @@ type Dispatcher struct {
 	RoundLength time.Duration
 }
 
+// InWorld implements CommandHandler: the world-goroutine hop, for the
+// editor. Dispatcher already holds it as Run, for its own use.
+func (d *Dispatcher) InWorld(ctx context.Context, f func(*game.Live)) error {
+	if d.Run == nil {
+		return nil
+	}
+	return d.Run(ctx, f)
+}
+
 // Do implements CommandHandler.
 //
 // Two round trips to the world goroutine, not one. Everything
