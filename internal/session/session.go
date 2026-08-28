@@ -716,12 +716,24 @@ func (s *Session) colourLevel() colour.Level {
 }
 
 // SendRaw queues bytes without line-ending translation, for text that is
-// already in wire form.
+// already in wire form — every telnet control sequence this package sends
+// (option negotiation, the ECHO toggle a password prompt uses, GMCP) goes
+// through here.
+//
+// A websocket session never gets any of it. The browser terminal at the
+// other end is a WebSocket text stream, not a telnet client — there is
+// nobody to negotiate with, and IAC bytes arriving as if they were part of
+// the game's own output would render as garbage rather than being
+// understood, corrupting exactly the "looks like a telnet session"
+// experience the web interface exists to give. Gating this single choke
+// point rather than each call site means a telnet control sequence added
+// here later is safe for a websocket session by construction, not by
+// whoever adds it remembering to check.
 func (s *Session) SendRaw(b []byte) {
 	// Nothing to send is the ordinary answer from the negotiator — a request
 	// already in flight owes no bytes — so callers pass its result straight
 	// in rather than testing it every time.
-	if len(b) == 0 || s.closed.Load() {
+	if len(b) == 0 || s.closed.Load() || s.transport == "websocket" {
 		return
 	}
 	select {

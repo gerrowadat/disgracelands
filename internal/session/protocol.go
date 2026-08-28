@@ -65,7 +65,19 @@ var policy = telnet.Policy{
 // The reason for offering the other two first stands. A client that supports
 // GMCP has it on before the login sequence starts, so a web front end can
 // render the name prompt itself rather than scraping it.
+//
+// That web front end is not this one. internal/server/web.go's browser
+// terminal is a plain ANSI byte stream rendered by xterm.js, which has no
+// telnet awareness at all — there is nothing on the other end to negotiate
+// with, and SendRaw already drops every telnet control sequence for a
+// websocket session regardless, so offering is skipped outright rather
+// than sent and ignored. A GMCP-aware web client, if one is ever built, is
+// a different transport policy from this basic one, not a reason to
+// change what SendRaw does here.
 func (s *Session) offer() {
+	if s.transport == "websocket" {
+		return
+	}
 	s.SendRaw(s.proto.neg.Enable(telnet.SideUs, telnet.OptCharset))
 	s.SendRaw(s.proto.neg.Enable(telnet.SideUs, telnet.OptGMCP))
 }

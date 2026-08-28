@@ -59,6 +59,24 @@ dlmud \
 Bind `--metrics-addr` to loopback or a management interface. It is not
 authenticated.
 
+To let people play from a browser as well, add `--listen-ws` — it shares
+the same `--tls-cert`/`--tls-key` if set, so it is HTTPS/`wss://` for free
+on a server already running the TLS telnet listener:
+
+```sh
+dlmud \
+  --lib-dir=/srv/disgracelands/lib \
+  --listen-telnets=:4443 \
+  --listen-ws=:8080 \
+  --tls-cert=/etc/dl/cert.pem --tls-key=/etc/dl/key.pem \
+  --web-password=hunter2 --web-captcha \
+  --metrics-addr=127.0.0.1:9090
+```
+
+`--web-password` and `--web-captcha` are both optional; see
+`docs/configuration.md`'s own section on the web interface for what each
+actually defends against, which is more modest than either name suggests.
+
 ### If it exits immediately
 
 That is usually deliberate. The server validates its configuration before
@@ -345,8 +363,9 @@ record alongside `severity_text`.
 
 Startup warnings are worth reading rather than filtering. The server warns
 about exactly the things that are safe-but-questionable: plaintext telnet
-enabled, legacy DES password verification enabled, pprof listening, a
-WebSocket listener with neither TLS nor a trusted proxy in front.
+enabled, legacy DES password verification enabled, pprof listening, the
+web interface (`--listen-ws`) with neither TLS nor a trusted proxy in
+front, and the web interface enabled with no `--web-password`.
 
 ### Watching the game from in-game
 

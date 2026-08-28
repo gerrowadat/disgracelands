@@ -641,11 +641,31 @@ the server at all. Connection hygiene is `Limits` in the same file —
 see `perHostKey`) and `--login-grace-time`. Graceful shutdown moved out
 to `internal/signals` and grew an exit-code contract;
 `docs/design/signal-handling.md` is now the document for it, and it says
-rather more than the paragraph above does. Two things in this section
-are not built: the WebSocket listener (`--listen-ws` is accepted and
-inert) and reverse DNS, which this port does not do at all rather than
-doing it off the game goroutine — which is also why `slowns` is declined
-(`docs/deviations.md`).
+rather more than the paragraph above does.
+
+**The WebSocket listener is built ✅**, as `--listen-ws`'s browser client
+rather than a bare transport: `internal/server/web.go` serves a welcome
+page, a browser terminal at `/play` (xterm.js, from a CDN, dark by
+default), and the WebSocket upgrade at `/ws` — wired into the exact same
+`Server.serve` every telnet connection reaches, not a second code path.
+`github.com/coder/websocket` is the library, of the two this section
+named; `websocket.NetConn` is what turns the upgraded connection into the
+`net.Conn` that seam wants. It deliberately does not carry "the same line
+protocol" in the sense this section meant, though: no telnet negotiation
+at all runs over it (`session.go`'s `SendRaw` drops every telnet control
+byte for a `"websocket"` transport, and `offer` does not even try), because
+xterm.js has no telnet awareness to negotiate with — a narrower, simpler
+answer than the GMCP-aware browser client the rest of this section and
+`docs/deviations.md`'s own write-up were building towards, recorded there
+rather than here. `--web-password` (HTTP Basic Auth, one shared secret,
+no accounts) and `--web-captcha` (a five-second arithmetic question in
+front of `/ws`) are new; `docs/configuration.md`'s own section on them has
+the detail, and `docs/deviations.md` has why each is that shape and not a
+more elaborate one.
+
+One thing in this section is still not built: reverse DNS, which this
+port does not do at all rather than doing it off the game goroutine —
+which is also why `slowns` is declined (`docs/deviations.md`).
 
 ---
 

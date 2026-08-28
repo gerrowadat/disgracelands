@@ -323,6 +323,59 @@ client that has to scrape text is a terminal emulator with extra steps.
 `Char.Vitals` goes out with every prompt and `Room.Info` with every look, both
 gated on `Core.Supports`. See `internal/telnet/gmcp.go`.
 
+### The web interface (`--listen-ws`) is a terminal emulator with extra steps, not the GMCP client the section above was written for
+
+Not in the C at all, and not a port of anything — a new capability, free to
+add under "fidelity, phase two" (`docs/proposals/go-port-plan.md`) without a
+reason recorded, except that the reason is worth recording anyway: it is
+the narrower of two things §0 could have meant by "web front end", and the
+gap between them is real.
+
+`internal/server/web.go` serves a welcome page, a browser terminal at
+`/play`, and the WebSocket upgrade that terminal speaks over — wired
+straight into `Server.serve`, so a web player gets exactly the same login,
+game and shutdown handling a telnet one does. The terminal itself is
+[xterm.js](https://xtermjs.org/), loaded from a CDN rather than vendored —
+nothing in the Go binary or `go.mod` changes because of it, and the
+tradeoff is that a browser that cannot reach `cdn.jsdelivr.net` cannot open
+`/play`. It renders the server's own ANSI colour codes directly, the same
+bytes any telnet client gets, and that is deliberately *all* it does: no
+telnet option negotiation, no CHARSET, no GMCP. `session.go`'s `SendRaw`
+drops every telnet control sequence for a session whose transport is
+`"websocket"` rather than sending them into a stream nobody on the other
+end can parse — the negotiator does not even offer CHARSET/GMCP for one
+(`protocol.go`'s `offer`), since there is nobody to answer.
+
+That is a real, narrower choice than the GMCP section above was building
+towards: `Char.Vitals`/`Room.Info` exist for a browser client sophisticated
+enough to render its own status bar and room panel, and this is not that
+client — it is the "terminal emulator with extra steps" that section's own
+reasoning was written to get past. A GMCP-aware web front end is still
+possible on top of the same `--listen-ws` listener one day; it would need
+its own transport policy (`protocol.go`'s `policy`/`offer` gate on
+`s.transport`, not a blanket rule), and this basic terminal is not a step
+toward it so much as a different, simpler answer to the same request.
+
+Two more narrow choices, both named because a reader would otherwise
+wonder why the obvious alternative was skipped:
+
+- **The captcha is a five-second arithmetic question, not an image or a
+  third-party service.** `--web-captcha`'s whole job is raising the cost of
+  "point a script at the web port" above "point a script at the telnet
+  port" — not defeating a determined attacker, whose answer space (two
+  digits) is brute-forceable in seconds. An image captcha needs a font
+  rendering dependency this project otherwise has no use for; a
+  third-party one (`recaptcha`, `hcaptcha`) needs an API key and a call to
+  somebody else's server, which conflicts with "self-hosted" being the
+  point of the web interface at all.
+- **`--web-password` checks a password with no username**, against
+  `internal/server/web.go`'s `requirePassword`. HTTP Basic Auth's own
+  format wants a username/password pair, and the browser dialog it
+  produces asks for one, but there is no account behind it to be a name
+  for — this is one shared secret for "may reach the web interface", a
+  door in front of the game's own login, not a second identity system
+  beside it.
+
 ---
 
 ## Limits the C has none of

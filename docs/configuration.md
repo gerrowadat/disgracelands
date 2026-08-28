@@ -25,9 +25,8 @@ every flag appears here, but it cannot check that the prose is accurate.
 > Phase 6 write-up. Phase 7 (cutover) has not started. Settings marked
 > *(inert)* are accepted and
 > validated but do not yet affect anything, for reasons of their own —
-> `--listen-ws` has no browser client yet to talk to it, `--tls-acme-*`
-> needs an ACME client, `--trust-proxy-headers` needs an actual proxy in
-> front — not because a phase is unfinished. They are here because the
+> `--tls-acme-*` needs an ACME client, `--trust-proxy-headers` needs an
+> actual proxy in front — not because a phase is unfinished. They are here because the
 > configuration surface was built first, deliberately — see
 > `docs/proposals/go-port-plan.md` §10.
 
@@ -231,11 +230,9 @@ empty address disables a listener.
 |---|---|---|
 | `--listen-telnet` | *(disabled)* | Plaintext telnet. |
 | `--listen-telnets` | `:4443` | TLS-wrapped telnet. |
-| `--listen-ws` | *(disabled)* | WebSocket, for browser clients. *(inert)* |
+| `--listen-ws` | *(disabled)* | The web interface: a welcome page, a browser terminal at `/play`, and the WebSocket upgrade that terminal speaks over. |
 
-The telnet listeners are live. **`--listen-ws` is inert**: the address is
-accepted, but no WebSocket listener is started, so a server configured with
-that alone exits with "no listeners could be started".
+All three are live: `--listen-ws` alone is enough to start the server.
 
 **Plaintext telnet is off by default and the server warns when it is on.**
 Passwords cross the network in the clear on that listener; it exists for
@@ -246,6 +243,36 @@ not for general use.
 listener is enabled by default and it has no certificate, so an
 unconfigured `dlmud` exits at startup with a message telling you what to
 set. That is preferable to starting a server nobody can reach.
+
+## The web interface
+
+`--listen-ws` opens one `net/http` server, not a raw socket: `GET /` is a
+welcome page, `GET /play` is a terminal rendered by
+[xterm.js](https://xtermjs.org/) (loaded from a CDN, not vendored — see
+`docs/deviations.md`), and `GET /ws` is the WebSocket upgrade that
+terminal actually connects to. `/ws` is wired straight into the same
+`Server.serve` every telnet connection goes through
+(`internal/server/web.go`): the same login prompt, the same MOTD, the same
+shutdown handling, over a connection that happens to be a WebSocket rather
+than a raw socket. It renders like a telnet client because it is
+substantively one — the server sends it the same ANSI colour codes any
+other client gets, with no telnet option negotiation at all (a browser has
+nobody to negotiate with).
+
+If `--tls-cert`/`--tls-key` (or, once implemented, `--tls-acme-domain`) are
+set, the web interface serves HTTPS and `wss://`; otherwise it is plain
+HTTP and `ws://`, the same either/or every other listener already offers.
+
+| Flag | Default | Meaning |
+|---|---|---|
+| `--web-password` | *(empty)* | Password required to use the web interface at all, via HTTP Basic Auth in front of every route. Any username is accepted — this is one shared secret for "may reach the web interface", not a second account system on top of the game's own login. |
+| `--web-captcha` | `false` | Require solving a simple arithmetic question at `/play` before `/ws` will open a session — raising the cost of pointing a script at the web port above pointing one at the telnet port. It is not meant to stop a determined attacker: the answer space is small enough to brute-force in seconds. |
+
+Both are optional and independent. Running with neither set is a fully
+open, unauthenticated way to reach the game's own login prompt over the
+web — which is a legitimate choice for a small, trusted community, and
+exactly why `Config.Warnings` says so out loud rather than silently
+assuming it was deliberate.
 
 ## TLS
 
@@ -283,8 +310,12 @@ the new file can't take down a server that's already up (issue #147).
 | `--trust-proxy-headers` | `false` | Trust `X-Forwarded-For`. Only enable behind a proxy you control — otherwise clients can forge their apparent address. *(inert)* |
 
 `--max-players`, the per-address limit and the login grace time are all
-enforced. `--trust-proxy-headers` has nothing to apply to until the
-WebSocket listener exists.
+enforced, on the web interface exactly as on the telnet listeners. The web
+interface exists now, but `--trust-proxy-headers` is still inert: nothing
+yet reads `X-Forwarded-For`/`X-Forwarded-Proto`, so a `--listen-ws` behind
+a reverse proxy sees the proxy's own address rather than a player's, and
+its captcha-cleared cookie is only ever `Secure` when this process
+terminates the TLS itself (`internal/server/web.go`).
 
 `--max-connections-per-ip` counts an IPv6 address by its own `/64`, not by
 itself — the block an ISP actually hands one subscriber (RFC 6177), so

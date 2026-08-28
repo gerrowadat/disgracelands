@@ -86,7 +86,24 @@ type Config struct {
 	// Listeners. An empty address means the listener is disabled.
 	TelnetAddr  string
 	TelnetsAddr string
-	WSAddr      string
+	// WSAddr is the web interface's own listen address: a welcome page at
+	// /, a browser terminal at /play, and the WebSocket upgrade at /ws
+	// that page's terminal actually speaks over — the "no browser client
+	// yet" gap docs/configuration.md used to describe. See internal/server/web.go.
+	WSAddr string
+
+	// WebPassword, if set, gates the entire web interface (every route,
+	// not just /play) behind HTTP Basic Auth with this one shared
+	// password — there is no per-account web login, deliberately: the web
+	// interface is a door into the same telnet-style login the game has
+	// always had, not a second identity system.
+	WebPassword string
+	// WebCaptcha requires solving a simple arithmetic challenge before a
+	// browser may open /ws, so that "point a script at the web port"
+	// costs slightly more than "point a script at the telnet port" —
+	// see internal/server/web.go's own doc comment on what this does and
+	// does not defend against.
+	WebCaptcha bool
 
 	// TLS.
 	TLSCert         string
@@ -236,6 +253,8 @@ func Default() Config {
 		TelnetAddr:           "",
 		TelnetsAddr:          ":4443",
 		WSAddr:               "",
+		WebPassword:          "",
+		WebCaptcha:           false,
 		TLSACMECacheDir:      "examples/stock/binary/.acme",
 		TLSReloadInterval:    time.Minute,
 		MaxPlayers:           300,
@@ -362,7 +381,9 @@ func Load(args []string, lookupEnv func(string) (string, bool), out io.Writer) (
 
 	str("listen-telnet", "Plaintext telnet listen address (empty = disabled)", &cfg.TelnetAddr)
 	str("listen-telnets", "TLS telnet listen address (empty = disabled)", &cfg.TelnetsAddr)
-	str("listen-ws", "WebSocket listen address (empty = disabled)", &cfg.WSAddr)
+	str("listen-ws", "Web interface listen address: / and /play in a browser (empty = disabled)", &cfg.WSAddr)
+	str("web-password", "Password required to use the web interface, on top of the game's own login (empty = none)", &cfg.WebPassword)
+	boolean("web-captcha", "Require solving a simple captcha before playing over the web interface", &cfg.WebCaptcha)
 
 	str("tls-cert", "TLS certificate file", &cfg.TLSCert)
 	str("tls-key", "TLS private key file", &cfg.TLSKey)
@@ -568,8 +589,12 @@ func (c *Config) Warnings() []string {
 		w = append(w, "pprof is listening on "+c.DebugAddr+": do not expose this address")
 	}
 	if c.WSAddr != "" && !c.hasTLSSource() && !c.TrustProxyHeaders {
-		w = append(w, "the WebSocket listener has no TLS and --trust-proxy-headers is off: "+
+		w = append(w, "the web interface has no TLS and --trust-proxy-headers is off: "+
 			"expect this only behind a TLS-terminating proxy")
+	}
+	if c.WSAddr != "" && c.WebPassword == "" {
+		w = append(w, "the web interface is enabled with no --web-password: anyone who can reach "+
+			c.WSAddr+" can reach the game's own login prompt")
 	}
 	return w
 }
