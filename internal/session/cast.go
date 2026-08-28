@@ -9,6 +9,7 @@ package session
 import (
 	"github.com/gerrowadat/disgracelands/internal/colour"
 	"github.com/gerrowadat/disgracelands/internal/game"
+	"github.com/gerrowadat/disgracelands/internal/obs"
 )
 
 // doCast, porting do_cast (spell_parser.c).
@@ -102,7 +103,9 @@ func doCast(c *Context) error {
 		}
 		// A botched violent spell provokes the mobile it was aimed at.
 		if info.Violent && victim != nil && victim.IsNPC() {
-			c.World.SetFighting(victim, c.Character)
+			if _, message := c.World.SetFighting(victim, c.Character); message != "" {
+				c.wizlog(obs.LogBrief, game.LevelImmortal, "%s", message)
+			}
 		}
 		return nil
 	}

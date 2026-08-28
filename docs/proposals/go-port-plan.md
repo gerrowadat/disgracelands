@@ -1889,8 +1889,8 @@ down: death traps do not kill (#209), the dispatcher reads `Record.Level`
 off the world goroutine (#210), `wizlock` does not keep mortals out
 because `Server.AllowedIn` is never called (#211), the three `<DoC>` cyan
 broadcasts are unported (#212), nothing sets `PLR_KILLER` on an attack
-(#213), and nothing sets `PLR_WRITING` either, which leaves four checks
-on it dead (#214 — fixed, below).
+(#213 — fixed, below), and nothing sets `PLR_WRITING` either, which
+leaves four checks on it dead (#214 — fixed, below).
 
 **`PLR_WRITING` is a real flag ✅ (#214).** The C sets it in
 `string_write` (`modify.c:100-101`) and clears it in `string_add`'s
@@ -1934,9 +1934,9 @@ new names and let every mortal on the roster walk straight in.
 test; `NewCharactersAllowed` is new for the first, which replaces a
 creation error dressed up as "Something went wrong creating your
 character." with the C's own "Sorry, new players can't be created at the
-moment.". Both `mudlog` lines came with them; what is
-left unwired from #134's audit is `check_killer`'s pair, which needs
-#213 first, and the 42 that belong to OasisOLC. `-r` folded into the same field, as the C has it
+moment.". Both `mudlog` lines came with them; what was
+left unwired from #134's audit was `check_killer`'s pair (fixed below,
+#213) and the 42 that belong to OasisOLC. `-r` folded into the same field, as the C has it
 (`comm.c:329`): one global, so `wizlock 0` reopens a server started
 restricted.
 
@@ -1988,6 +1988,19 @@ has it, with the `toggle` row and the synthetic `CLine`.
 broadcasts; the rest followed above. `death_cry` moved to `game.Live.DeathCry` so that the
 combat round and the trap share it; the trap does not otherwise touch
 `die()`, because the C does not.
+
+**`check_killer` and sanctioned pkill are ported ✅ (#213).**
+`set_fighting` (`fight.c:237-276`) is the one function everything that can
+start a fight calls — `damage()`, `do_rescue` and `do_backstab`
+(`act.offensive.c`), the castle NPCs — so `game.Live.SetFighting` runs its
+tail itself rather than leaving each of its five Go call sites to
+remember to: a room flagged `ROOM_PKILL` announces a sanctioned brawl
+(`fight.c:262-273`) and everywhere else, unless `pk_allowed` is on (it is
+not, `config.c:55`, now `game.PKAllowed`), the first unprovoked blow
+against another player sets `PLR_KILLER` once (`check_killer`,
+`fight.c:219-233`). `internal/game` has no logger, so `SetFighting`'s
+second return value is the already-formatted mudlog line for whichever
+caller has one to hand to `wizlog`/`wizlogInvis`.
 
 **`native` is `yaml` throughout ✅ — a rename, not a redesign, because the
 name stopped being true.** §5.7/§5.8/§6.3 already called the format

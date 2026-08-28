@@ -129,6 +129,10 @@ func TestOtherDamageCallersStaySilentAboutTheHit(t *testing.T) {
 	srv, _ := newTestServer(t)
 	attacker, attackerClient := place(t, srv, fighterRecord("Zod", 30, 500), MortalStartRoom)
 	victim, victimClient := place(t, srv, fighterRecord("Welmar", 5, 200), MortalStartRoom)
+	// An NPC victim, so Damage's own startFighting does not also run
+	// check_killer (fight.c:219-233, #213) — a real message on a genuine
+	// player-vs-player hit, but unrelated to what this test checks.
+	victim.NPC = true
 
 	// A registered message that would be unmistakable if it leaked in.
 	srv.text.messages = game.NewFightMessages([]game.FightMessage{
@@ -333,6 +337,10 @@ func TestSkillDamageIsSilentWithNothingRegistered(t *testing.T) {
 	srv, _ := newTestServer(t)
 	attacker, attackerClient := place(t, srv, fighterRecord("Zod", 30, 500), MortalStartRoom)
 	victim, victimClient := place(t, srv, fighterRecord("Welmar", 5, 200), MortalStartRoom)
+	// An NPC victim, so SkillDamage's own startFighting does not also run
+	// check_killer (fight.c:219-233, #213) — a real message on a genuine
+	// player-vs-player hit, but unrelated to what this test checks.
+	victim.NPC = true
 
 	inWorld(t, srv, func(w *game.Live) {
 		victim.Position = game.PosFighting

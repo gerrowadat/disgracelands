@@ -20,14 +20,27 @@ import (
 // hand for the sake of one iteration per two seconds; here the world keeps the
 // set and hands out a snapshot.
 
-// SetFighting starts a fight, porting set_fighting (fight.c).
+// PKAllowed is config.c's pk_allowed (config.c:55). Off, as it is on the
+// archive's own settings, which is why check_killer and the friendly-fire
+// refusals scattered through internal/session (offensive.go, spells.go) all
+// have something to do. A local constant rather than a GameTuning field for
+// the same reason as the rest of config.c that tuning.go's own doc comment
+// lists beside it: this is one that stays a constant on purpose.
+const PKAllowed = false
+
+// SetFighting starts a fight, porting set_fighting (fight.c:237-276).
 //
-// Returns false if the character is already fighting. The C core-dumps in that
-// case, which is a strong statement about how much it expects it not to
-// happen.
-func (l *Live) SetFighting(c, victim *Character) bool {
+// Returns false if the character is already fighting — the C core-dumps in
+// that case, which is a strong statement about how much it expects it not
+// to happen — and the mudlog line the caller should hand to wizlog at
+// obs.LogBrief/LevelImmortal (mirroring both of set_fighting's own
+// `mudlog(buf, BRF, LVL_IMMORT, TRUE)` call sites), or "" if nothing
+// happened worth logging. internal/game has no logger of its own to call
+// wizlog from directly — see docs/deviations.md on gain_exp for the same
+// shape.
+func (l *Live) SetFighting(c, victim *Character) (bool, string) {
 	if c == nil || victim == nil || c == victim || c.Fighting != nil {
-		return false
+		return false, ""
 	}
 
 	c.Fighting = victim
@@ -46,7 +59,61 @@ func (l *Live) SetFighting(c, victim *Character) bool {
 	l.nextFightSeq++
 	c.fightSeq = l.nextFightSeq
 	l.fighting[c] = true
-	return true
+
+	return true, l.checkKillerOrSanction(c, victim)
+}
+
+// checkKillerOrSanction is set_fighting's own tail (fight.c:256-274): a room
+// flagged ROOM_PKILL is a sanctioned brawl — "Okay! Let's get it on!" to the
+// attacker, "Looks like %s wants a little..." to the victim, and a mudlog
+// line if both are players — and everywhere else, unless the mud runs with
+// pk_allowed on, an unprovoked attack on another player runs [checkKiller]
+// instead.
+func (l *Live) checkKillerOrSanction(c, victim *Character) string {
+	if room := l.Room(c.Room); room != nil && room.Flags.Has(RoomPKill) {
+		c.Tell("Okay! Let's get it on!\r\n")
+		victim.Tell("Looks like %s wants a little...\r\n", c.Name)
+
+		// "Only mudlog if both protagonists are players" (fight.c:269).
+		if !c.IsNPC() && !victim.IsNPC() {
+			return fmt.Sprintf("%s started sanctioned pkill on %s at %s.",
+				c.Name, victim.Name, room.Name)
+		}
+		return ""
+	}
+
+	if PKAllowed {
+		return ""
+	}
+	return l.checkKiller(c, victim)
+}
+
+// checkKiller is check_killer (fight.c:219-233): the first unprovoked blow
+// against another player flags the attacker PLR_KILLER, once — a victim who
+// is already a killer or a thief is fair game and sets nothing, and an
+// attacker who already carries the flag has nothing more to set. IS_NPC and
+// self-attack are excluded too, kept even though every current call site
+// through [Live.SetFighting] has already ruled self-attack out, because
+// check_killer is the C's own choke point for this and a future caller
+// should not have to remember to.
+func (l *Live) checkKiller(c, victim *Character) string {
+	if victim.Record != nil && victim.Record.PlayerFlags.HasAny(PlayerKiller|PlayerThief) {
+		return ""
+	}
+	if (c.Record != nil && c.Record.PlayerFlags.Has(PlayerKiller)) ||
+		c.IsNPC() || victim.IsNPC() || c == victim {
+		return ""
+	}
+
+	c.Record.PlayerFlags = c.Record.PlayerFlags.Set(PlayerKiller)
+	c.Tell("If you want to be a PLAYER KILLER, so be it...\r\n")
+
+	name := ""
+	if room := l.Room(victim.Room); room != nil {
+		name = room.Name
+	}
+	return fmt.Sprintf("PC Killer bit set on %s for initiating attack on %s at %s.",
+		c.Name, victim.Name, name)
 }
 
 // StopFighting takes a character out of combat, porting stop_fighting.
