@@ -19,6 +19,18 @@ port — the phase write-ups in §10 are a historical record of how fidelity
 was reached and stay accurate as history; they are not a live constraint on
 work that starts from here.
 
+**Superseded as the forward plan by
+[`yaml-only.md`](yaml-only.md).** That document is what work is now planned
+from: retiring `classic`/`ascii`/`binary` from the server so it understands
+only `yaml`, and the compatibility testing that has to be true before it
+can. This document is not retired — it stays authoritative as the record of
+Phases 0–6 and as the reference for the architecture they built, and §5,
+§6 and §11 are exactly what the newer plan collects on. Two specific
+interactions worth knowing about before reading on: **Phase 7 (cutover) is
+now downstream of the yaml-only work** rather than the next thing up, and
+**its rollback paragraph is invalidated by it** — see the note at that
+paragraph, and `yaml-only.md` §8.
+
 ---
 
 ## 0. Decisions already taken
@@ -2200,6 +2212,15 @@ Rollback, if cutover needs to be undone: the C server tree is still
 buildable and `--lib-dir` is the same directory either format reads
 (§13's "the on-disk contract" note) — falling back is starting the C
 binary against the same data, not a migration in either direction.
+
+**This paragraph stops being true when
+[`yaml-only.md`](yaml-only.md) lands**, and is left standing rather than
+pre-emptively rewritten because it is accurate today. Once the server
+reads only `yaml`, the two servers no longer share a `--lib-dir`, and
+rolling back means running the C server against the pre-migration archive
+— intact, because `dlctl import` never writes to its source, but stale by
+however long the Go server ran. That plan's §8 sets out the cost and why
+it was accepted; its row 6 is what rewrites this paragraph for real.
 
 Not part of this phase, and worth saying so rather than leaving it
 implicit: this plan does not decide *whether* Disgracelands gets revived

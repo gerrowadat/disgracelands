@@ -46,13 +46,21 @@ both the C tree and the Go tree.
 
 ## `docs/proposals/` — the plan, still moving
 
-The phase order, still future tense for whatever has not landed yet. Partly
-a record now: each finished phase carries a note of what it actually
-contained, what it did not, and what reading the C changed about the plan.
-The unfinished phases are still expected to change. §0's own "Fidelity,
-phase two" is the exception to "still future tense" — it's a decision
-already taken, dated 2026-08-23, about how work from here relates to the C.
+What is going to happen, and the record of how the port got to where it is.
+Two documents, and which is which matters: **`yaml-only.md` is the plan work
+is planned from**, and `go-port-plan.md` is the port that got us here —
+still authoritative for the architecture and for what each phase did and did
+not contain, but no longer extended with new plans.
 
+- **[yaml-only.md](proposals/yaml-only.md)** — retiring `classic`, `ascii`
+  and `binary` from the server, so it understands only `yaml`: what leaks
+  today, what "the conversion is exactly dead on" has to mean and how it
+  gets proved, the compatibility corpus and fuzz targets that do not exist
+  yet, and the rule for yaml fields the legacy formats cannot source.
+  Proposed as v1.0.0 and breaking: after it, the only route from a CircleMUD
+  `lib/` to a running server is `dlctl import`. Not started; its rows 1–2
+  (a deliberately hostile fixture, and `dlctl verify --against`) are worth
+  landing on their own either way.
 - **[go-port-plan.md](proposals/go-port-plan.md)** — the design and phasing
   for reimplementing the engine in Go: 64-bit safety, pluggable player- and
   world-file formats, the concurrency model, licensing constraints, and the
@@ -61,7 +69,9 @@ already taken, dated 2026-08-23, about how work from here relates to the C.
   command by command; Phase 6 (OasisOLC) was decided against, in favour of
   reloading edited world data into a running server without a restart —
   its own write-up covers what that became instead; Phase 7 (cutover) has
-  not started.
+  not started, and is now downstream of `yaml-only.md` rather than the next
+  thing up — including one paragraph of it, on rollback, that plan
+  invalidates.
 
 ## `docs/design/` — decisions that landed
 
