@@ -190,7 +190,11 @@ func TestDeathBlowAgainstTheRealArchive(t *testing.T) {
 // the default).
 func loadRealFightMessages(t *testing.T, srv *Server) {
 	t.Helper()
-	f, err := os.Open(filepath.Join(repoRoot(t), "examples", "stock", "binary", messagesFile))
+	// The classic file directly: this loads the *archive* rather than a
+	// converted directory, which is the point — MESS_FILE was
+	// lib/misc/messages, and internal/server no longer has a constant for
+	// that path because it no longer reads one.
+	f, err := os.Open(filepath.Join(repoRoot(t), "examples", "stock", "binary", "misc", "messages"))
 	if err != nil {
 		t.Fatalf("opening the real archive: %v", err)
 	}
@@ -354,7 +358,7 @@ func TestSkillDamageIsSilentWithNothingRegistered(t *testing.T) {
 	}
 }
 
-// End to end: LoadText(dir, "yaml") reads config/messages.yaml, not
+// End to end: LoadText(dir) reads config/messages.yaml, not
 // misc/messages, and a kick still resolves a real registered message
 // through it — proving the wiring (internal/server/text.go's own
 // messages.Load call, the --messages-format flag it is fed from in
@@ -382,7 +386,7 @@ func TestYamlMessagesFormatEndToEnd(t *testing.T) {
 		t.Fatalf("Save(yaml): %v", err)
 	}
 
-	text, err := LoadText(dir, "yaml", "classic", "classic")
+	text, err := LoadText(dir)
 	if err != nil {
 		t.Fatalf("LoadText: %v", err)
 	}

@@ -51,7 +51,7 @@ func (s *Server) saveClock(ctx context.Context) {
 		return
 	}
 	s.background(func() {
-		if err := clock.Save(s.clockFormat, s.clockPath, epoch); err != nil {
+		if err := clock.Save(DataFormat, s.clockPath, epoch); err != nil {
 			s.logger.Error("writing the mud clock", "error", err)
 		}
 	})

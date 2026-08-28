@@ -222,9 +222,6 @@ func startPair(t *testing.T) *pair {
 	g := &server{name: "dlmud", dir: gYaml, addr: fmt.Sprintf("127.0.0.1:%d", gPort)}
 	g.cmd = exec.Command(goBinary, //nolint:gosec // the binary this suite built
 		"--lib-dir="+gYaml,
-		"--world-format=yaml", "--state-format=yaml", "--names-format=yaml",
-		"--messages-format=yaml", "--socials-format=yaml", "--help-format=yaml",
-		"--player-format=yaml",
 		"--listen-telnets=",
 		"--listen-telnet="+g.addr,
 		"--metrics-addr=",

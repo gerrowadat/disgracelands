@@ -54,7 +54,7 @@ func TestReloadZoneCommandEndToEnd(t *testing.T) {
 
 	dir := t.TempDir()
 	writeReloadableZone(t, dir, "The Reloaded Temple")
-	srv.worldFormat, srv.worldDir = "yaml", dir
+	srv.worldDir = dir
 
 	addr := listening(t, srv)
 	// The first character on the roster is an implementor and wakes in
@@ -83,7 +83,7 @@ func TestReloadZoneCommandRefusesWithAPlayerPresent(t *testing.T) {
 
 	dir := t.TempDir()
 	writeReloadableZone(t, dir, "The Reloaded Temple")
-	srv.worldFormat, srv.worldDir = "yaml", dir
+	srv.worldDir = dir
 
 	addr := listening(t, srv)
 	god := dialClient(t, addr)

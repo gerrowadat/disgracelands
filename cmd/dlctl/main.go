@@ -50,8 +50,8 @@ var commands = []command{
 	},
 	{
 		name: "convert",
-		summary: "Reformat a lib directory: with --type, one subsystem between its own formats " +
-			"(replaces bin2ascii for pfile); without, a whole legacy lib in place (text to UTF-8, same formats)",
+		summary: "Reformat a roster between the legacy formats: --type=pfile, binary <-> ascii " +
+			"(replaces bin2ascii)",
 		run: cmdConvert,
 	},
 	{
@@ -61,8 +61,8 @@ var commands = []command{
 	},
 	{
 		name: "import",
-		summary: "Convert a directory into yaml: with --type, one subsystem; without, a whole classic/binary " +
-			"lib into one fresh yaml directory in one go (docs/design/data-format.md)",
+		summary: "Convert a legacy lib directory into one the server can run on -- the only path there. " +
+			"With --type, one subsystem; without, all of them (docs/design/data-format.md)",
 		run: cmdImport,
 	},
 	{
@@ -82,7 +82,7 @@ var commands = []command{
 	},
 	{
 		name:    "verify",
-		summary: "Check a --type=pfile database decodes, and report what is in it",
+		summary: "Check a --type=pfile database decodes; with --against, that two directories load to the same state",
 		run:     cmdVerify,
 	},
 	{

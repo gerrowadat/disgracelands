@@ -47,42 +47,6 @@ type Config struct {
 	// GameConfigPath, LoadGameTuningFor and cmd/dlmud's SIGHUP handling.
 	GameConfigFile string
 
-	// Pluggable format selection (docs/proposals/go-port-plan.md §5, §6).
-	PlayerFormat string
-	WorldFormat  string
-	// StateFormat covers boards, mail, houses and bans together
-	// (docs/design/data-format.md §9, step 6a) — one flag, because they
-	// are one directory in practice and there is no reason to convert one
-	// without the others.
-	StateFormat string
-	// NamesFormat covers the xnames disallowed-name list
-	// (docs/design/data-format.md §9, step 6b) — its own flag rather
-	// than folded into StateFormat, because yaml's config/names.yaml is
-	// a different directory than state/ is: config/ is where game config,
-	// socials and messages will eventually join it too, whenever each of
-	// those lands.
-	NamesFormat string
-	// MessagesFormat covers the skill_message/dam_message table
-	// (docs/design/data-format.md §9, step 6c) — its own flag rather
-	// than sharing NamesFormat's: the two live in the same config/
-	// directory but are otherwise unrelated administrative concerns (a
-	// moderation list versus combat flavour text), the same reasoning
-	// that kept them from sharing StateFormat's "one directory, one
-	// flag" grouping in the first place.
-	MessagesFormat string
-	// SocialsFormat covers the do_action table (docs/design/
-	// data-format.md §9, step 6c) — its own flag for the same reason
-	// MessagesFormat is not folded into NamesFormat: config/ groups
-	// several unrelated administrative concerns in one directory, and
-	// each moves on its own schedule.
-	SocialsFormat string
-	// HelpFormat covers text/help (docs/design/data-format.md §7) —
-	// its own flag too, though unlike Names/Messages/SocialsFormat it
-	// does not live under config/: classic and yaml share text/help/
-	// itself, distinguished by which files are present rather than by
-	// directory.
-	HelpFormat string
-
 	// Listeners. An empty address means the listener is disabled.
 	TelnetAddr  string
 	TelnetsAddr string
@@ -176,17 +140,13 @@ type Config struct {
 	ShowVersion bool
 }
 
-// PlayerPath returns the player-data directory, defaulting to LibDir/pfiles
-// for ascii, LibDir/players for yaml (Dir, SubsystemPlayers) — the ascii
-// format keeps a tree of one file per character, so it wants a directory of
-// its own rather than sharing data/etc with the boards, the ban list and
-// the rest of the C server's odds and ends; yaml keeps its own, named
-// after itself the way state/ and config/ are.
+// PlayerPath returns the player-data directory, defaulting to
+// LibDir/players (Dir, SubsystemPlayers).
 func (c *Config) PlayerPath() string {
 	if c.PlayerDir != "" {
 		return c.PlayerDir
 	}
-	return Dir(c.LibDir, SubsystemPlayers, c.PlayerFormat)
+	return Dir(c.LibDir, SubsystemPlayers)
 }
 
 // WorldPath returns the world-data directory, defaulting to LibDir/world.
@@ -194,7 +154,7 @@ func (c *Config) WorldPath() string {
 	if c.WorldDir != "" {
 		return c.WorldDir
 	}
-	return Dir(c.LibDir, SubsystemWorld, c.WorldFormat)
+	return Dir(c.LibDir, SubsystemWorld)
 }
 
 // GameConfigPath returns the game-tuning file to read: --config if one was
@@ -214,27 +174,15 @@ func (c *Config) GameConfigPath() string {
 	return c.LibDir + "/config/game.yaml"
 }
 
-// Known format names. These are validated here so a typo fails at startup
-// with a useful message rather than deep inside persistence setup. The
-// authoritative list is the registry in internal/persist; until those
-// packages exist, this is the list.
-var (
-	// The server runs on ascii, yaml, or better. The binary format stays
-	// readable and writable by the tooling — conversion needs both
-	// directions — but a live server will not start on it: its password
-	// field is eleven bytes, so a modern credential cannot be stored at
-	// all, and every other field is fixed-width. See
-	// docs/design/data-format.md §5.2.
-	knownPlayerFormats   = []string{"ascii", "binary", "yaml"}
-	serverPlayerFormats  = []string{"ascii", "yaml"}
-	knownWorldFormats    = []string{"classic", "yaml"}
-	knownStateFormats    = []string{"classic", "yaml"}
-	knownNamesFormats    = []string{"classic", "yaml"}
-	knownMessagesFormats = []string{"classic", "yaml"}
-	knownSocialsFormats  = []string{"classic", "yaml"}
-	knownHelpFormats     = []string{"classic", "yaml"}
-	knownLogFormats      = []string{"text", "json"}
-)
+// knownLogFormats is validated at startup so a typo fails with a useful
+// message rather than deep inside logging setup.
+//
+// There used to be seven more lists beside it, one per pluggable data
+// format. The server reads exactly one on-disk format now
+// (docs/proposals/yaml-only.md §0), so there is nothing to select and
+// nothing to validate. `dlctl` still reads every archived format there
+// ever was and keeps its own --from-format for saying which.
+var knownLogFormats = []string{"text", "json"}
 
 // Default returns the configuration used when nothing is specified. Every
 // default reproduces the C server's behaviour where one exists, with the
@@ -242,20 +190,13 @@ var (
 // telnet is implemented but off unless asked for).
 func Default() Config {
 	return Config{
-		LibDir:               "examples/stock/binary",
-		PlayerFormat:         "ascii",
-		WorldFormat:          "classic",
-		StateFormat:          "classic",
-		NamesFormat:          "classic",
-		MessagesFormat:       "classic",
-		SocialsFormat:        "classic",
-		HelpFormat:           "classic",
+		LibDir:               "examples/stock/yaml",
 		TelnetAddr:           "",
 		TelnetsAddr:          ":4443",
 		WSAddr:               "",
 		WebPassword:          "",
 		WebCaptcha:           false,
-		TLSACMECacheDir:      "examples/stock/binary/.acme",
+		TLSACMECacheDir:      "examples/stock/yaml/.acme",
 		TLSReloadInterval:    time.Minute,
 		MaxPlayers:           300,
 		MaxConnsPerIP:        8,
@@ -366,18 +307,9 @@ func Load(args []string, lookupEnv func(string) (string, bool), out io.Writer) (
 	str("log-level", "Log level: debug, info, warn, error", &logLevel)
 
 	str("lib-dir", "Runtime data directory (world, text, player data)", &cfg.LibDir)
-	str("player-dir", "Player-data directory (default: <lib-dir>/pfiles)", &cfg.PlayerDir)
+	str("player-dir", "Player-data directory (default: <lib-dir>/players)", &cfg.PlayerDir)
 	str("world-dir", "World-data directory (default: <lib-dir>/world)", &cfg.WorldDir)
 	str("config", "Game-tuning config file (default: <lib-dir>/config/game.yaml, and optional there)", &cfg.GameConfigFile)
-
-	str("player-format", "Player-file format the server runs on: "+strings.Join(serverPlayerFormats, ", ")+
-		" (the tooling also reads and writes: "+strings.Join(knownPlayerFormats, ", ")+")", &cfg.PlayerFormat)
-	str("world-format", "World-file format: "+strings.Join(knownWorldFormats, ", "), &cfg.WorldFormat)
-	str("state-format", "Boards/mail/houses/bans format: "+strings.Join(knownStateFormats, ", "), &cfg.StateFormat)
-	str("names-format", "Disallowed-name list format: "+strings.Join(knownNamesFormats, ", "), &cfg.NamesFormat)
-	str("messages-format", "Damage message table format: "+strings.Join(knownMessagesFormats, ", "), &cfg.MessagesFormat)
-	str("socials-format", "Social (do_action) table format: "+strings.Join(knownSocialsFormats, ", "), &cfg.SocialsFormat)
-	str("help-format", "Help database format: "+strings.Join(knownHelpFormats, ", "), &cfg.HelpFormat)
 
 	str("listen-telnet", "Plaintext telnet listen address (empty = disabled)", &cfg.TelnetAddr)
 	str("listen-telnets", "TLS telnet listen address (empty = disabled)", &cfg.TelnetsAddr)
@@ -474,6 +406,21 @@ func Load(args []string, lookupEnv func(string) (string, bool), out io.Writer) (
 		explicit[name] = true
 	})
 
+	// A deployment that still sets a removed flag's environment variable
+	// is told, by name, rather than ignored.
+	//
+	// internal/config derives environment names from flag names rather
+	// than declaring them separately (go-port-plan.md §10), so deleting a
+	// flag deletes its variable automatically — and silently. The most
+	// likely failure of this release is a container that has had
+	// DLMUD_WORLD_FORMAT=classic in its unit file since 2026 and now
+	// quietly ignores it, boots on data it was not pointed at, and
+	// produces a confusing error three layers down. docs/proposals/
+	// yaml-only.md §3.1 asks for exactly this check.
+	if err := rejectRemovedEnv(lookupEnv); err != nil {
+		return nil, err
+	}
+
 	// Apply the environment to everything not set on the command line.
 	for _, b := range bindings {
 		if explicit[b.name] {
@@ -502,36 +449,37 @@ func Load(args []string, lookupEnv func(string) (string, bool), out io.Writer) (
 	return &cfg, nil
 }
 
+// removedFormatFlags are the flags docs/proposals/yaml-only.md deleted,
+// kept only so that their environment variables can be refused by name.
+//
+// Not "rejected values that are not yaml" — removed. A flag whose only
+// valid value is its default is noise, and leaving it invites a future
+// reader to think the seam is still live (§3.1).
+var removedFormatFlags = []string{
+	"player-format", "world-format", "state-format",
+	"names-format", "messages-format", "socials-format", "help-format",
+}
+
+// rejectRemovedEnv fails if the environment sets a variable belonging to a
+// flag this release deleted.
+func rejectRemovedEnv(lookupEnv func(string) (string, bool)) error {
+	for _, name := range removedFormatFlags {
+		env := EnvName(name)
+		v, ok := lookupEnv(env)
+		if !ok {
+			continue
+		}
+		return fmt.Errorf("%s is set to %q and --%s no longer exists: the server reads one on-disk "+
+			"format now. Unset %s, and if the directory it named is a legacy one, convert it once "+
+			"and point --lib-dir at the result:\n"+
+			"    dlctl import --from-dir=<lib> --to-dir=<somewhere>", env, v, name, env)
+	}
+	return nil
+}
+
 // Validate reports configurations that cannot work, with an explanation of
 // what to do instead. It is called by Load and exported for tests.
 func (c *Config) Validate() error {
-	if !contains(knownPlayerFormats, c.PlayerFormat) {
-		return fmt.Errorf("--player-format: unknown format %q (have: %s)", c.PlayerFormat, strings.Join(knownPlayerFormats, ", "))
-	}
-	if !contains(serverPlayerFormats, c.PlayerFormat) {
-		return fmt.Errorf("--player-format: the server cannot run on %q; it is a conversion format only. "+
-			"Convert the roster first:\n"+
-			"    dlctl convert --type=pfile --from-format=%s --from-dir=<dir> --to-format=ascii --to-dir=<dir>",
-			c.PlayerFormat, c.PlayerFormat)
-	}
-	if !contains(knownWorldFormats, c.WorldFormat) {
-		return fmt.Errorf("--world-format: unknown format %q (have: %s)", c.WorldFormat, strings.Join(knownWorldFormats, ", "))
-	}
-	if !contains(knownStateFormats, c.StateFormat) {
-		return fmt.Errorf("--state-format: unknown format %q (have: %s)", c.StateFormat, strings.Join(knownStateFormats, ", "))
-	}
-	if !contains(knownNamesFormats, c.NamesFormat) {
-		return fmt.Errorf("--names-format: unknown format %q (have: %s)", c.NamesFormat, strings.Join(knownNamesFormats, ", "))
-	}
-	if !contains(knownSocialsFormats, c.SocialsFormat) {
-		return fmt.Errorf("--socials-format: unknown format %q (have: %s)", c.SocialsFormat, strings.Join(knownSocialsFormats, ", "))
-	}
-	if !contains(knownHelpFormats, c.HelpFormat) {
-		return fmt.Errorf("--help-format: unknown format %q (have: %s)", c.HelpFormat, strings.Join(knownHelpFormats, ", "))
-	}
-	if !contains(knownMessagesFormats, c.MessagesFormat) {
-		return fmt.Errorf("--messages-format: unknown format %q (have: %s)", c.MessagesFormat, strings.Join(knownMessagesFormats, ", "))
-	}
 	if !contains(knownLogFormats, c.LogFormat) {
 		return fmt.Errorf("--log-format: unknown format %q (have: %s)", c.LogFormat, strings.Join(knownLogFormats, ", "))
 	}

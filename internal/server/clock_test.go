@@ -23,7 +23,6 @@ import (
 func TestSaveClockPersistsTheEpoch(t *testing.T) {
 	srv, _ := newTestServer(t)
 	dir := t.TempDir()
-	srv.clockFormat = "yaml"
 	srv.clockPath = dir
 
 	ctx := context.Background()
@@ -65,7 +64,6 @@ func TestSaveClockWithNoPathConfiguredIsANoOp(t *testing.T) {
 func TestShutdownSavesTheClock(t *testing.T) {
 	srv, _ := newTestServer(t)
 	dir := t.TempDir()
-	srv.clockFormat = "yaml"
 	srv.clockPath = dir
 
 	ctx := context.Background()

@@ -266,20 +266,48 @@ func (c *codec) decode(rec []byte) (*game.PlayerRecord, error) {
 		})
 	}
 
-	p.Spares = c.decodeSpares(rec)
-
 	return p, nil
 }
 
-func (c *codec) decodeSpares(rec []byte) game.LegacySpares {
-	var s game.LegacySpares
-	for i, name := range []string{"ps.spare0", "ps.spare1", "ps.spare2", "ps.spare3", "ps.spare4", "ps.spare5"} {
+// spareFields are char_file_u's reserved slots, by layout name.
+//
+// The C server's own documentation tells people to use these when adding a
+// field, so a value in one is not necessarily junk — Disgracelands used
+// three of them, and those three (the remort vector, the spec flags and
+// the OLC zone) are named fields on game.PlayerRecord. What is left is
+// padding, and it is a property of *the stored record* rather than of the
+// character: nothing in the game can read or set it, and the only reason
+// to carry it is so that rewriting a record does not quietly discard
+// whatever is in it.
+//
+// It used to live on game.PlayerRecord as a LegacySpares field — literally
+// char_file_u's padding, in the canonical, format-neutral model whose
+// entire reason for existing is that no format's idiosyncrasy leaks into
+// it (docs/proposals/yaml-only.md §1). It is here now, and Store.Save
+// carries the bytes across from the record it is replacing, which is both
+// simpler and more honest: the spares belong to the file.
+var spareFields = struct{ bytes, ints, longs []string }{
+	bytes: []string{"ps.spare0", "ps.spare1", "ps.spare2", "ps.spare3", "ps.spare4", "ps.spare5"},
+	ints:  []string{"ps.spare10", "ps.spare11", "ps.spare12", "ps.spare13", "ps.spare14", "ps.spare15", "ps.spare16"},
+	longs: []string{"ps.spare17", "ps.spare18", "ps.spare19", "ps.spare20", "ps.spare21"},
+}
+
+// legacySpares is one record's reserved slots.
+type legacySpares struct {
+	Bytes [6]int32
+	Ints  [7]int32
+	Longs [5]int64
+}
+
+func (c *codec) decodeSpares(rec []byte) legacySpares {
+	var s legacySpares
+	for i, name := range spareFields.bytes {
 		s.Bytes[i] = c.u8(rec, name)
 	}
-	for i, name := range []string{"ps.spare10", "ps.spare11", "ps.spare12", "ps.spare13", "ps.spare14", "ps.spare15", "ps.spare16"} {
+	for i, name := range spareFields.ints {
 		s.Ints[i] = c.i32(rec, name)
 	}
-	for i, name := range []string{"ps.spare17", "ps.spare18", "ps.spare19", "ps.spare20", "ps.spare21"} {
+	for i, name := range spareFields.longs {
 		s.Longs[i] = c.varInt(rec, name)
 	}
 	return s
@@ -447,18 +475,20 @@ func (c *codec) encode(p *game.PlayerRecord) ([]byte, error) {
 		}
 	}
 
-	c.encodeSpares(rec, p.Spares)
 	return rec, nil
 }
 
-func (c *codec) encodeSpares(rec []byte, s game.LegacySpares) {
-	for i, name := range []string{"ps.spare0", "ps.spare1", "ps.spare2", "ps.spare3", "ps.spare4", "ps.spare5"} {
+// encodeSpares writes reserved slots into an already-encoded record. Only
+// Store.Save calls it, with the values it read out of the record it is
+// replacing.
+func (c *codec) encodeSpares(rec []byte, s legacySpares) {
+	for i, name := range spareFields.bytes {
 		c.putU8(rec, name, s.Bytes[i])
 	}
-	for i, name := range []string{"ps.spare10", "ps.spare11", "ps.spare12", "ps.spare13", "ps.spare14", "ps.spare15", "ps.spare16"} {
+	for i, name := range spareFields.ints {
 		c.putI32(rec, name, s.Ints[i])
 	}
-	for i, name := range []string{"ps.spare17", "ps.spare18", "ps.spare19", "ps.spare20", "ps.spare21"} {
+	for i, name := range spareFields.longs {
 		c.putVar(rec, name, s.Longs[i])
 	}
 }

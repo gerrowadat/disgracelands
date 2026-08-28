@@ -60,7 +60,7 @@ func TestReloadObjCommandEndToEnd(t *testing.T) {
 		Cost:        200,
 		Values:      [game.NumObjValues]int32{0, 3, 8, 3},
 	})
-	srv.worldFormat, srv.worldDir = "yaml", dir
+	srv.worldDir = dir
 
 	addr := listening(t, srv)
 	god := dialClient(t, addr)
@@ -100,7 +100,7 @@ func TestReloadObjCommandUnknownVnumIsRefused(t *testing.T) {
 	srv, _ := newTestServer(t)
 	dir := t.TempDir()
 	writeReloadableObject(t, dir, &game.ObjDef{Vnum: testSwordVnum, ShortDesc: "a long sword"})
-	srv.worldFormat, srv.worldDir = "yaml", dir
+	srv.worldDir = dir
 
 	addr := listening(t, srv)
 	god := dialClient(t, addr)

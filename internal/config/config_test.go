@@ -168,12 +168,11 @@ func TestValidation(t *testing.T) {
 		want string
 	}{
 		{"no listeners", []string{"--listen-telnets="}, "no listeners enabled"},
-		{"unknown player format", append(minimal, "--player-format=sqlite"), "--player-format"},
-		// The binary format is a real format the tooling reads and writes, but
-		// the server cannot run on it: its password field is eleven bytes.
-		{"binary is conversion-only", append(minimal, "--player-format=binary"), "conversion format only"},
-		{"unknown world format", append(minimal, "--world-format=json"), "--world-format"},
-		{"unknown state format", append(minimal, "--state-format=json"), "--state-format"},
+		// The seven --*-format flags are gone (docs/proposals/yaml-only.md
+		// §3.1), so what used to be four "unknown format" cases is now one
+		// property: passing one at all is an unknown flag.
+		{"player-format no longer exists", append(minimal, "--player-format=ascii"), "not defined"},
+		{"world-format no longer exists", append(minimal, "--world-format=classic"), "not defined"},
 		{"unknown log format", append(minimal, "--log-format=xml"), "--log-format"},
 		{"bad log level", append(minimal, "--log-level=chatty"), "--log-level"},
 		{"empty lib dir", append(minimal, "--lib-dir="), "--lib-dir"},
@@ -205,7 +204,7 @@ func TestTLSListenerAcceptsACME(t *testing.T) {
 
 func TestPathDerivation(t *testing.T) {
 	cfg := load(t, append(minimal, "--lib-dir=/srv/dl"), nil)
-	if got, want := cfg.PlayerPath(), "/srv/dl/pfiles"; got != want {
+	if got, want := cfg.PlayerPath(), "/srv/dl/players"; got != want {
 		t.Errorf("PlayerPath() = %q, want %q", got, want)
 	}
 	if got, want := cfg.WorldPath(), "/srv/dl/world"; got != want {
@@ -217,12 +216,38 @@ func TestPathDerivation(t *testing.T) {
 		t.Errorf("WorldPath() = %q, want the override %q", got, want)
 	}
 
-	// PlayerPath must follow --player-format, not default to ascii's
-	// answer regardless: docs/design/data-format.md's own yaml layout is
-	// players/, not pfiles/ — pfiles/ is ascii's own directory.
-	yaml := load(t, append(minimal, "--lib-dir=/srv/dl", "--player-format=yaml"), nil)
-	if got, want := yaml.PlayerPath(), "/srv/dl/players"; got != want {
-		t.Errorf("PlayerPath() with --player-format=yaml = %q, want %q", got, want)
+	// --player-dir still overrides, for a deployment that keeps its roster
+	// somewhere other than under --lib-dir.
+	elsewhere := load(t, append(minimal, "--lib-dir=/srv/dl", "--player-dir=/other/players"), nil)
+	if got, want := elsewhere.PlayerPath(), "/other/players"; got != want {
+		t.Errorf("PlayerPath() = %q, want the override %q", got, want)
+	}
+}
+
+// TestRemovedFormatEnvIsRefusedByName. Deleting a flag deletes its
+// environment variable too, because internal/config derives one from the
+// other — and does it silently. A container with DLMUD_WORLD_FORMAT=classic
+// in its unit file since 2026 quietly ignoring it is the most likely
+// failure of this release (docs/proposals/yaml-only.md §3.1).
+func TestRemovedFormatEnvIsRefusedByName(t *testing.T) {
+	for _, name := range removedFormatFlags {
+		env := EnvName(name)
+		t.Run(env, func(t *testing.T) {
+			_, err := Load(minimal, func(k string) (string, bool) {
+				if k == env {
+					return "classic", true
+				}
+				return "", false
+			}, io.Discard)
+			if err == nil {
+				t.Fatalf("Load with %s set succeeded, want a refusal", env)
+			}
+			for _, want := range []string{env, "--" + name, "dlctl import"} {
+				if !strings.Contains(err.Error(), want) {
+					t.Errorf("the refusal does not mention %q: %v", want, err)
+				}
+			}
+		})
 	}
 }
 
@@ -293,7 +318,7 @@ func TestUsageDocumentsEnvironmentVariables(t *testing.T) {
 		t.Fatal("Load([--help]) succeeded, want flag.ErrHelp")
 	}
 	out := sb.String()
-	for _, want := range []string{"DL_LIB_DIR", "DL_LISTEN_TELNETS", "DL_PLAYER_FORMAT", "Precedence is flag > environment > default"} {
+	for _, want := range []string{"DL_LIB_DIR", "DL_LISTEN_TELNETS", "DL_LOG_FORMAT", "Precedence is flag > environment > default"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("usage output missing %q\n%s", want, out)
 		}

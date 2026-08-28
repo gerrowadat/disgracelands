@@ -8,97 +8,62 @@ package config
 
 import "path/filepath"
 
-// Subsystem is one directory or file that both the live server (cmd/dlmud,
-// via LibDir) and the offline tooling (cmd/dlctl, via its own --from-dir/
-// --to-dir/--dir base directories) need to find under a lib directory.
-// Before this existed, both derived the same answer independently — dlmud
-// inline in main.go, dlctl once per import/fmt/lint/dump/verify/passwd
-// subcommand — which is how PlayerPath (below) went years answering "where
-// are the players" with the ascii location even when asked about yaml.
+// Subsystem is one directory under a lib directory that the server needs to
+// find.
 //
-// State's three classic-side homes are three separate values: the C
-// spreads clock/boards/mail/bans/the house control file under etc/, house
-// objects under house/, and the bug/idea/typo reports under misc/, even
-// though yaml collects all three under one state/ directory — matching
-// dlctl's own single --type=state, which resolves whichever of these it
-// needs for the format actually in play.
+// Before this existed, cmd/dlmud and cmd/dlctl each derived the same answers
+// independently — dlmud inline in main.go, dlctl once per subcommand — which
+// is how PlayerPath went years answering "where are the players" with the
+// ascii location even when asked about yaml.
 type Subsystem int
 
 const (
 	SubsystemWorld Subsystem = iota
+	// SubsystemPlayers is one file per character.
 	SubsystemPlayers
-	// SubsystemState covers the mud clock, the boards, the mail file, the
-	// site ban list and the house control file: classic etc/, yaml state/.
+	// SubsystemState covers the mud clock, the boards, the mail, the site
+	// ban list, the house control file and its contents, and the
+	// bug/idea/typo reports — all of them in state/.
 	SubsystemState
-	// SubsystemHouseObjects covers the per-house object files: classic
-	// house/, yaml state/ (folded in alongside everything else
-	// SubsystemState covers there).
-	SubsystemHouseObjects
-	// SubsystemReports covers the bug/idea/typo log: classic misc/, yaml
-	// state/.
-	SubsystemReports
-	// SubsystemNames covers the disallowed-name list: classic misc/, yaml
-	// config/.
+	// SubsystemNames, SubsystemMessages and SubsystemSocials are the three
+	// files under config/: the disallowed-name list, the
+	// skill_message/dam_message table and the do_action table.
 	SubsystemNames
-	// SubsystemMessages covers the skill_message/dam_message table:
-	// classic misc/, yaml config/.
 	SubsystemMessages
-	// SubsystemSocials covers the do_action table: classic misc/, yaml
-	// config/.
 	SubsystemSocials
-	// SubsystemHelp covers the help database: text/help/ under either
-	// format, distinguished by which files are present rather than by
-	// directory.
+	// SubsystemHelp is the help database, under text/help/.
 	SubsystemHelp
 )
 
-// Dir resolves a subsystem's directory under a lib directory base, given
-// the format governing it. This is the one place that knows a classic lib/
-// and a yaml one lay a lib directory out differently; cmd/dlmud and
-// cmd/dlctl both call it rather than each hand-deriving the same join.
+// Dir resolves a subsystem's directory under a lib directory base.
 //
-// format is "classic" or "yaml" for every subsystem except SubsystemPlayers,
-// which also accepts "binary" (the original playerfile format, whose
-// records live in etc/ — the only subsystem where the pre-yaml answer
-// itself has two different homes, because ascii is this port's own
-// addition and never shared etc/ with anything else).
-func Dir(libDir string, s Subsystem, format string) string {
-	yaml := format == "yaml"
+// It used to take a third parameter — the format governing the subsystem —
+// and most of its body was the two layouts that answered to: players in
+// `players/` or `etc/` or `pfiles/`, state in `state/` or `etc/`, house
+// objects in `state/` or `house/`, reports in `state/` or `misc/`, names
+// and messages and socials in `config/` or `misc/`. docs/proposals/
+// yaml-only.md §1 names that function as the clearest single piece of
+// evidence that the legacy formats were load-bearing where they had no
+// business being: nine subsystems, each answering "where do I live"
+// depending on whether the answer was 2002 or now.
+//
+// There is one layout now, so there is one answer per subsystem, and the
+// three separate classic homes that state/ collected (etc/, house/, misc/)
+// collapse into one constant rather than three.
+//
+// cmd/dlctl still has to find both layouts, because reading the old one is
+// its whole job — its own resolveDir keeps that knowledge, where it
+// belongs.
+func Dir(libDir string, s Subsystem) string {
 	switch s {
 	case SubsystemWorld:
-		// Same subpath either way: examples/stock/binary/world and
-		// examples/stock/yaml/world sit at the same relative place under
-		// their own base, and nothing about the world format changes that.
 		return filepath.Join(libDir, "world")
 	case SubsystemPlayers:
-		switch format {
-		case "yaml":
-			return filepath.Join(libDir, "players")
-		case "binary":
-			return filepath.Join(libDir, "etc")
-		default: // "ascii", and anything else classic-shaped
-			return filepath.Join(libDir, "pfiles")
-		}
+		return filepath.Join(libDir, "players")
 	case SubsystemState:
-		if yaml {
-			return filepath.Join(libDir, "state")
-		}
-		return filepath.Join(libDir, "etc")
-	case SubsystemHouseObjects:
-		if yaml {
-			return filepath.Join(libDir, "state")
-		}
-		return filepath.Join(libDir, "house")
-	case SubsystemReports:
-		if yaml {
-			return filepath.Join(libDir, "state")
-		}
-		return filepath.Join(libDir, "misc")
+		return filepath.Join(libDir, "state")
 	case SubsystemNames, SubsystemMessages, SubsystemSocials:
-		if yaml {
-			return filepath.Join(libDir, "config")
-		}
-		return filepath.Join(libDir, "misc")
+		return filepath.Join(libDir, "config")
 	case SubsystemHelp:
 		return filepath.Join(libDir, "text", "help")
 	default:

@@ -28,7 +28,7 @@ func (s *Server) ReloadObject(w *game.Live, vnum game.ObjVnum) error {
 		return ErrWorldReloadNotConfigured
 	}
 
-	src, err := world.Open(s.worldFormat, world.Config{Dir: s.worldDir, Mini: s.worldMini})
+	src, err := world.Open(DataFormat, world.Config{Dir: s.worldDir, Mini: s.worldMini})
 	if err != nil {
 		return err
 	}

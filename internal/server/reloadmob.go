@@ -40,7 +40,7 @@ func (s *Server) ReloadMobile(w *game.Live, vnum game.MobVnum) (refreshed int, e
 		return 0, ErrWorldReloadNotConfigured
 	}
 
-	src, err := world.Open(s.worldFormat, world.Config{Dir: s.worldDir, Mini: s.worldMini})
+	src, err := world.Open(DataFormat, world.Config{Dir: s.worldDir, Mini: s.worldMini})
 	if err != nil {
 		return 0, err
 	}

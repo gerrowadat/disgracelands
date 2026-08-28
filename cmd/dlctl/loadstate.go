@@ -176,20 +176,6 @@ func loadPfileState(o loadOptions) (any, error) {
 		if o.format != "yaml" && o.enc != nil {
 			transcodePlayerStrings(rec, o.enc)
 		}
-		// LegacySpares is char_file_u's reserved padding, and only the
-		// binary format has anywhere to put it — so it is a difference
-		// between the formats by construction, on every record, and
-		// reporting it would drown everything else.
-		//
-		// It is also on its way out of game.PlayerRecord entirely: the
-		// slots move into internal/persist/player/binary as part of that
-		// format's own round-trip fidelity (docs/proposals/yaml-only.md
-		// §1, its §7 row 4), at which point this clearing is a no-op and
-		// can go. Deliberately not "yaml does not carry it, so do not
-		// compare yaml": clearing it on both sides is what makes a
-		// binary-to-ascii comparison, where both sides *do* carry it,
-		// consistent with a binary-to-yaml one.
-		rec.Spares = game.LegacySpares{}
 		key := strings.ToLower(rec.Name)
 		state.Characters[key] = rec
 

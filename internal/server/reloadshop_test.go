@@ -57,7 +57,7 @@ func TestReloadShopCommandEndToEnd(t *testing.T) {
 		ProfitSell: 0.5,
 		Rooms:      []game.RoomVnum{ShopRoom},
 	})
-	srv.worldFormat, srv.worldDir = "yaml", dir
+	srv.worldDir = dir
 
 	addr := listening(t, srv)
 	god := dialClient(t, addr)
@@ -82,7 +82,7 @@ func TestReloadShopCommandUnknownVnumIsRefused(t *testing.T) {
 	srv, _ := newTestServer(t)
 	dir := t.TempDir()
 	writeReloadableShop(t, dir, &game.ShopDef{Vnum: testShopVnum, Keeper: testShopkeeperVnum})
-	srv.worldFormat, srv.worldDir = "yaml", dir
+	srv.worldDir = dir
 
 	addr := listening(t, srv)
 	god := dialClient(t, addr)

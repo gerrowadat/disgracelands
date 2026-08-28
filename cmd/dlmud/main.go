@@ -25,7 +25,6 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"path/filepath"
 	"syscall"
 	"time"
 
@@ -43,27 +42,29 @@ import (
 	"github.com/gerrowadat/disgracelands/internal/persist/mail"
 	"github.com/gerrowadat/disgracelands/internal/persist/names"
 	"github.com/gerrowadat/disgracelands/internal/persist/player"
-	"github.com/gerrowadat/disgracelands/internal/persist/player/binary"
 	"github.com/gerrowadat/disgracelands/internal/persist/reports"
 	"github.com/gerrowadat/disgracelands/internal/persist/world"
 	"github.com/gerrowadat/disgracelands/internal/rng"
 	"github.com/gerrowadat/disgracelands/internal/server"
 	"github.com/gerrowadat/disgracelands/internal/signals"
 
-	// Register the formats the server can be configured to use.
-	_ "github.com/gerrowadat/disgracelands/internal/persist/bans/classic"
+	// Register the one format the server reads.
+	//
+	// The classic, ascii and binary decoders are deliberately *not* here.
+	// They are not deleted from the tree — `dlctl` still reads every
+	// archived format there ever was, and always will — but they are not
+	// linked into the server binary at all, which is a stronger statement
+	// than refusing them at startup would be: a legacy format is absent
+	// from this program rather than merely rejected by it
+	// (docs/proposals/yaml-only.md §3.2). There is a test for that
+	// property, because it is the kind of thing a stray import undoes
+	// silently.
 	_ "github.com/gerrowadat/disgracelands/internal/persist/bans/yaml"
-	_ "github.com/gerrowadat/disgracelands/internal/persist/boards/classic"
 	_ "github.com/gerrowadat/disgracelands/internal/persist/boards/yaml"
-	_ "github.com/gerrowadat/disgracelands/internal/persist/houses/classic"
 	_ "github.com/gerrowadat/disgracelands/internal/persist/houses/yaml"
-	_ "github.com/gerrowadat/disgracelands/internal/persist/mail/classic"
 	_ "github.com/gerrowadat/disgracelands/internal/persist/mail/yaml"
-	_ "github.com/gerrowadat/disgracelands/internal/persist/player/ascii"
 	_ "github.com/gerrowadat/disgracelands/internal/persist/player/yaml"
-	_ "github.com/gerrowadat/disgracelands/internal/persist/reports/classic"
 	_ "github.com/gerrowadat/disgracelands/internal/persist/reports/yaml"
-	_ "github.com/gerrowadat/disgracelands/internal/persist/world/classic"
 	_ "github.com/gerrowadat/disgracelands/internal/persist/world/yaml"
 )
 
@@ -197,11 +198,16 @@ func run(args []string) (int, error) {
 		"commit", info.ShortCommit(),
 		"go", info.GoVersion,
 		"lib_dir", cfg.LibDir,
-		"player_format", cfg.PlayerFormat,
-		"world_format", cfg.WorldFormat,
 	)
 	for _, w := range cfg.Warnings() {
 		logger.Warn(w)
+	}
+
+	// A legacy lib/ is refused before anything is opened, with the
+	// command to convert it — rather than getting three subsystems in and
+	// failing on a missing file (docs/proposals/yaml-only.md §3.3).
+	if err := config.CheckNotLegacy(cfg.LibDir); err != nil {
+		return exitFailed, err
 	}
 
 	// The yaml data format's own version stamp (docs/design/
@@ -270,10 +276,16 @@ func run(args []string) (int, error) {
 	)
 	defer sigs.Stop()
 
+	// One directory for every piece of runtime state: the clock, the
+	// boards, the mail, the bans, the houses and the reports. Under the
+	// classic layout these were spread across etc/, house/ and misc/ and
+	// each one derived its own path; there is one now.
+	statePath := config.Dir(cfg.LibDir, config.SubsystemState)
+
 	// Load the world before anything can connect to it. A world that will
 	// not load is a boot failure, not something to serve around.
-	logger.Info("loading the world", "dir", cfg.WorldPath(), "format", cfg.WorldFormat)
-	worldSrc, err := world.Open(cfg.WorldFormat, world.Config{Dir: cfg.WorldPath(), Mini: cfg.MiniMUD})
+	logger.Info("loading the world", "dir", cfg.WorldPath())
+	worldSrc, err := world.Open(server.DataFormat, world.Config{Dir: cfg.WorldPath(), Mini: cfg.MiniMUD})
 	if err != nil {
 		return exitFailed, err
 	}
@@ -285,15 +297,11 @@ func run(args []string) (int, error) {
 	}
 	live := game.NewLive(defs)
 
-	// The mud clock's persisted epoch: etc/time under classic, the same
-	// state/clock.yaml directory the other four state stores share under
-	// yaml (docs/design/data-format.md §9). Applied before anyone can
-	// see the clock — BootReset and every command after it read MudTime().
-	clockPath := config.Dir(cfg.LibDir, config.SubsystemState, cfg.StateFormat)
-	if cfg.StateFormat != "yaml" {
-		clockPath = filepath.Join(clockPath, "time")
-	}
-	epoch, err := clock.Load(cfg.StateFormat, clockPath)
+	// The mud clock's persisted epoch, from the state/ directory the rest
+	// of the state shares (docs/design/data-format.md §9). Applied before
+	// anyone can see the clock — BootReset and every command after it read
+	// MudTime().
+	epoch, err := clock.Load(server.DataFormat, statePath)
 	if err != nil {
 		return exitFailed, err
 	}
@@ -303,102 +311,76 @@ func run(args []string) (int, error) {
 		"rooms", len(defs.Rooms), "mobiles", len(defs.Mobiles),
 		"objects", len(defs.Objects), "zones", len(defs.Zones), "shops", len(defs.Shops))
 
-	players, err := player.Open(cfg.PlayerFormat, player.Config{Dir: cfg.PlayerPath()})
+	players, err := player.Open(server.DataFormat, player.Config{Dir: cfg.PlayerPath()})
 	if err != nil {
 		return exitFailed, err
 	}
 	defer func() { _ = players.Close() }()
 
-	// The rent files are not pluggable the way the roster is, with one
-	// exception: yaml folds them into the same file as the roster
-	// (docs/design/data-format.md §8, "one player, one file"), so a
-	// Store that is also an ObjectStore serves both — there is no separate
-	// plrobjs/ to point a second store at. Every other format keeps them in
-	// `plrobjs/` in the C's own file format, whatever the roster is kept as,
-	// since the C has one format for them and ascii's own roster format is
-	// this port's own addition.
+	// The rent files come from the same store as the roster, because yaml
+	// keeps them in the same *file* (docs/design/data-format.md §8, "one
+	// player, one file").
 	//
-	// Under the player directory, not beside it: a served lib/ keeps a
-	// roster and its rent files together, which is this port's layout and
-	// not the C's. The C builds `etc/players` and `plrobjs/` from its own
-	// cwd, so an *archived* tree has them as siblings — that is a
-	// conversion-time concern (player.Config.ObjectsDir, and `dlctl pfile
-	// import --from-objs-dir`), not one for a directory this server wrote.
+	// This used to be a type assertion with a fallback to
+	// binary.NewObjectStore for a roster format that was not also an
+	// ObjectStore — which meant a server running on ascii wrote its rent
+	// files as 2001 struct dumps, and is why real container nesting had to
+	// be format-gated as a deviation rather than simply implemented
+	// (docs/proposals/yaml-only.md §1). There is one roster format now, it
+	// implements both, and the fallback (and the only reason this command
+	// imported the binary package at all) is gone. Still an assertion
+	// rather than a wider interface: player.Store and player.ObjectStore
+	// are a reasonable split independent of formats — a corpse-only store,
+	// a read-only roster — and collapsing them would be a different
+	// decision than this one.
 	objects, ok := players.(player.ObjectStore)
 	if !ok {
-		objects, err = binary.NewObjectStore(player.Config{Dir: cfg.PlayerPath()})
-		if err != nil {
-			return exitFailed, err
-		}
+		return exitFailed, fmt.Errorf("the %s player store does not implement player.ObjectStore, "+
+			"so there is nowhere to keep rent files", players.Name())
 	}
 
-	// The bulletin boards: beside the player data in the etc directory under
-	// classic, or state/boards.yaml under yaml.
-	boardDir := config.Dir(cfg.LibDir, config.SubsystemState, cfg.StateFormat)
-	boardStore, err := boards.Open(cfg.StateFormat, boards.Config{Dir: boardDir})
+	// The bulletin boards: state/boards.yaml.
+	boardStore, err := boards.Open(server.DataFormat, boards.Config{Dir: statePath})
 	if err != nil {
 		return exitFailed, err
 	}
 
-	// The mud mail file: classic's block-allocator file, or
-	// state/mail.yaml under yaml.
-	mailPath := config.Dir(cfg.LibDir, config.SubsystemState, cfg.StateFormat)
-	if cfg.StateFormat != "yaml" {
-		mailPath = filepath.Join(mailPath, "plrmail")
-	}
-	mailStore, err := mail.Open(cfg.StateFormat, mail.Config{Path: mailPath})
+	// The mud mail: state/mail.yaml.
+	mailStore, err := mail.Open(server.DataFormat, mail.Config{Path: statePath})
 	if err != nil {
 		return exitFailed, err
 	}
 
-	// The house control file and the per-house object files: classic's two
-	// separate paths, or state/houses.yaml (everything folded in) under
-	// yaml.
-	houseCfg := houses.Config{ObjectDir: config.Dir(cfg.LibDir, config.SubsystemHouseObjects, cfg.StateFormat)}
-	if cfg.StateFormat != "yaml" {
-		houseCfg.ControlPath = filepath.Join(config.Dir(cfg.LibDir, config.SubsystemState, cfg.StateFormat), "hcontrol")
-	}
-	houseStore, err := houses.Open(cfg.StateFormat, houseCfg)
+	// The houses: state/houses.yaml, control records and contents in one
+	// file where classic had hcontrol plus a directory of per-room files.
+	houseStore, err := houses.Open(server.DataFormat, houses.Config{ObjectDir: statePath})
 	if err != nil {
 		return exitFailed, err
 	}
 
-	// The site ban list — the one archive file that is plain text, under
-	// classic; a state/bans.yaml file under yaml.
-	banPath := config.Dir(cfg.LibDir, config.SubsystemState, cfg.StateFormat)
-	if cfg.StateFormat != "yaml" {
-		banPath = filepath.Join(banPath, "badsites")
-	}
-	banStore, err := bans.Open(cfg.StateFormat, bans.Config{Path: banPath})
+	// The site ban list: state/bans.yaml.
+	banStore, err := bans.Open(server.DataFormat, bans.Config{Path: statePath})
 	if err != nil {
 		return exitFailed, err
 	}
 
-	// The bug/idea/typo log: misc/{bugs,ideas,typos} under classic, or the
-	// same state/ directory the other four state stores share under
-	// yaml.
-	reportsDir := config.Dir(cfg.LibDir, config.SubsystemReports, cfg.StateFormat)
-	reportStore, err := reports.Open(cfg.StateFormat, reports.Config{Dir: reportsDir})
+	// The bug/idea/typo log: state/reports.yaml.
+	reportStore, err := reports.Open(server.DataFormat, reports.Config{Dir: statePath})
 	if err != nil {
 		return exitFailed, err
 	}
 
-	// The disallowed-name list: misc/xnames under classic, or
-	// config/names.yaml under yaml. Missing is not an error — see
-	// names.Load's doc comment — so a server with no list disallows
+	// The disallowed-name list: config/names.yaml. Missing is not an error
+	// — see names.Load's doc comment — so a server with no list disallows
 	// nothing, matching Valid_Name's own posture.
-	namesPath := config.Dir(cfg.LibDir, config.SubsystemNames, cfg.NamesFormat)
-	if cfg.NamesFormat != "yaml" {
-		namesPath = filepath.Join(namesPath, "xnames")
-	}
-	disallowedNames, err := names.Load(cfg.NamesFormat, namesPath)
+	disallowedNames, err := names.Load(server.DataFormat, config.Dir(cfg.LibDir, config.SubsystemNames))
 	if err != nil {
 		return exitFailed, err
 	}
 
 	// The greeting and the credits are licence obligations; LoadText refuses
 	// to return if either is missing, which is deliberate.
-	text, err := server.LoadText(cfg.LibDir, cfg.MessagesFormat, cfg.SocialsFormat, cfg.HelpFormat)
+	text, err := server.LoadText(cfg.LibDir)
 	if err != nil {
 		return exitFailed, err
 	}
@@ -432,9 +414,7 @@ func run(args []string) (int, error) {
 		Bans:          banStore,
 		Reports:       reportStore,
 		Names:         disallowedNames,
-		ClockFormat:   cfg.StateFormat,
-		ClockPath:     clockPath,
-		WorldFormat:   cfg.WorldFormat,
+		ClockPath:     statePath,
 		WorldDir:      cfg.WorldPath(),
 		WorldMini:     cfg.MiniMUD,
 		Auth:          auth.Verifier{AllowLegacy: cfg.AllowLegacyPasswords},

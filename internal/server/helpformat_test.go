@@ -15,7 +15,7 @@ import (
 	"github.com/gerrowadat/disgracelands/internal/persist/help"
 )
 
-// End to end: LoadText(dir, ..., "yaml") reads text/help/help.yaml plus
+// End to end: LoadText(dir) reads text/help/help.yaml plus
 // one .txt file per entry, not text/help/index plus the .hlp files, and
 // the real archive's CIRCLEMUD credits entry — the licence-obligation
 // lookup TestCreditsAndHelpCircleMUD already proves for classic — comes
@@ -48,7 +48,7 @@ func TestYamlHelpFormatEndToEnd(t *testing.T) {
 		t.Fatalf("Save(yaml): %v", err)
 	}
 
-	text, err := LoadText(dir, "classic", "classic", "yaml")
+	text, err := LoadText(dir)
 	if err != nil {
 		t.Fatalf("LoadText: %v", err)
 	}

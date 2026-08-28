@@ -107,7 +107,7 @@ func testText(t *testing.T) *Text {
 		filepath.Join(dir, socialsConfigDir, "socials.yaml"))
 	copyInto(t, filepath.Join(stockYaml, helpDir), filepath.Join(dir, helpDir))
 
-	text, err := LoadText(dir, "yaml", "yaml", "yaml")
+	text, err := LoadText(dir)
 	if err != nil {
 		t.Fatal(err)
 	}

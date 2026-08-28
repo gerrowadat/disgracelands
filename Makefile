@@ -23,7 +23,7 @@ OUT     ?= out
 
 # Where the server reads its data. `make run LIB=/srv/disgracelands/lib` runs
 # against a real directory; the default is the one in the repository.
-LIB     ?= examples/stock/binary
+LIB     ?= examples/stock/yaml
 
 # Listen addresses for the dev targets. The plaintext port is the C server's
 # habitual 4000; 4443 is the TLS one; 9090 carries /metrics, /healthz, /readyz.
@@ -118,18 +118,20 @@ health: ## Print /healthz, /readyz and the server's own metrics from a running s
 	@curl -sS http://$(HOST):$(METRICS_PORT)/metrics | grep '^dlmud_' || true
 
 # cp -a then delete the player state: a fresh directory is the point, and
-# $(LIB)/pfiles may hold real ex-players' hashes and mail if LIB has been
+# $(LIB)/players may hold real ex-players' hashes and mail if LIB has been
 # pointed at a converted archive, which have no business being copied around.
 # The empty directories are recreated because a missing one is a first-login
 # failure rather than an empty roster.
+#
+# Two directories where there were seven: one on-disk layout now
+# (docs/proposals/yaml-only.md §1).
 $(SCRATCH):
 	@echo "==> Building a scratch data directory in $(SCRATCH) from $(LIB)"
 	@rm -rf $(SCRATCH)
 	@mkdir -p $(dir $(SCRATCH))
 	@cp -a $(LIB)/. $(SCRATCH)/
-	@rm -rf $(SCRATCH)/pfiles $(SCRATCH)/plrobjs $(SCRATCH)/plralias $(SCRATCH)/house \
-	        $(SCRATCH)/etc/players $(SCRATCH)/etc/plrmail
-	@mkdir -p $(SCRATCH)/pfiles $(SCRATCH)/plrobjs $(SCRATCH)/plralias $(SCRATCH)/house
+	@rm -rf $(SCRATCH)/players $(SCRATCH)/state
+	@mkdir -p $(SCRATCH)/players $(SCRATCH)/state
 
 .PHONY: scratch
 scratch: $(SCRATCH) ## Rebuild the throwaway data directory used by run-fresh
@@ -433,26 +435,17 @@ ci-clean: ## Remove this repo's act containers, volumes and cache (waits for any
 
 .PHONY: world-lint
 world-lint: ## Lint the world files under LIB
-	$(GO) run ./cmd/dlctl lint --type=world --dir=$(LIB)
+	$(GO) run ./cmd/dlctl lint --type=world --dir=$(LIB) --format=yaml
 
 .PHONY: world-dump
 world-dump: ## Dump the loaded world as canonical JSON to out/world.json
 	@mkdir -p $(OUT)
-	$(GO) run ./cmd/dlctl dump --type=world --dir=$(LIB) --out=$(OUT)/world.json
+	$(GO) run ./cmd/dlctl dump --type=world --dir=$(LIB) --format=yaml --out=$(OUT)/world.json
 	@echo "==> $(OUT)/world.json"
 
-# The one-off that turns an archived CircleMUD lib/ into something this server
-# will run on: player database reformatted, text transcoded to UTF-8. Convert
-# once, then `make run LIB=$(TO)`.
-.PHONY: convert
-convert: ## Convert an original data directory: make convert FROM=/path/to/lib TO=out/converted
-	@test -n "$(FROM)" && test -n "$(TO)" || { echo 'usage: make convert FROM=/path/to/lib TO=out/converted'; exit 2; }
-	$(GO) run ./cmd/dlctl convert --from-dir=$(FROM) --to-dir=$(TO)
-
-# The yaml equivalent: every subsystem, one lib/ to one fresh yaml
-# directory, in one command. Point it at the original archive, not at
-# $(TO) above — the two do not chain, see docs/operations.md. Then
-# `make run LIB=$(TO) FLAGS="--world-format=yaml --state-format=yaml --names-format=yaml --messages-format=yaml --socials-format=yaml --help-format=yaml"`.
+# Every subsystem, one legacy lib/ to one fresh directory the server can
+# run on, in one command -- and the only way to get one. Then
+# `make run LIB=$(TO)`.
 .PHONY: lib-import
 lib-import: ## Convert an original data directory into yaml: make lib-import FROM=/path/to/lib TO=out/yaml
 	@test -n "$(FROM)" && test -n "$(TO)" || { echo 'usage: make lib-import FROM=/path/to/lib TO=out/yaml'; exit 2; }
@@ -460,7 +453,7 @@ lib-import: ## Convert an original data directory into yaml: make lib-import FRO
 
 .PHONY: roster
 roster: ## List the characters in the player directory under LIB
-	$(GO) run ./cmd/dlctl dump --type=pfile --dir=$(LIB)
+	$(GO) run ./cmd/dlctl dump --type=pfile --dir=$(LIB) --format=yaml
 
 .PHONY: ctl
 ctl: ## Run dlctl: make ctl ARGS="dump --type=pfile --name=Someone"

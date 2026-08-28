@@ -7,6 +7,7 @@
 package binary
 
 import (
+	"context"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -14,6 +15,8 @@ import (
 	"time"
 
 	"github.com/gerrowadat/disgracelands/internal/game"
+
+	"github.com/gerrowadat/disgracelands/internal/persist/player"
 )
 
 // generateFixture builds reference/tools/pfilegen.c for the given model and
@@ -157,14 +160,30 @@ func wantRecord(i int) *game.PlayerRecord {
 		Modifier: int32(-(i % 10)), Location: int32(i % 5),
 	}}
 
-	p.Spares.Bytes = [6]int32{int32(byte(i)), int32(byte(i + 1)), int32(byte(i + 2)),
-		int32(byte(i + 3)), int32(byte(i + 4)), int32(byte(i + 5))}
-	p.Spares.Ints = [7]int32{int32(i * 10), int32(i * 11), int32(i * 12),
-		int32(i * 13), int32(i * 14), int32(i * 15), int32(i * 16)}
-	p.Spares.Longs = [5]int64{int64(i * 17), int64(i * 18), int64(i * 19),
-		int64(i * 20), int64(i * 21)}
-
+	// The reserved slots are not on the record any more — they are a
+	// property of the stored bytes, and wantSpares below is what
+	// pfilegen.c writes into them.
 	return p
+}
+
+// wantSpares is what reference/tools/pfilegen.c fills char_file_u's
+// reserved slots with, for record i.
+//
+// They moved off game.PlayerRecord and into this package
+// (docs/proposals/yaml-only.md §1): they are padding, nothing in the game
+// reads or sets one, and carrying them in the canonical format-neutral
+// model was exactly the sort of leak that model exists to prevent. They
+// still have to survive a decode and re-encode of a record, which is what
+// TestSparesSurviveARewrite asserts.
+func wantSpares(i int) legacySpares {
+	var s legacySpares
+	s.Bytes = [6]int32{int32(byte(i)), int32(byte(i + 1)), int32(byte(i + 2)),
+		int32(byte(i + 3)), int32(byte(i + 4)), int32(byte(i + 5))}
+	s.Ints = [7]int32{int32(i * 10), int32(i * 11), int32(i * 12),
+		int32(i * 13), int32(i * 14), int32(i * 15), int32(i * 16)}
+	s.Longs = [5]int64{int64(i * 17), int64(i * 18), int64(i * 19),
+		int64(i * 20), int64(i * 21)}
+	return s
 }
 
 func pad6(n int) string {
@@ -389,7 +408,6 @@ func compareRecords(t *testing.T, i int, got, want *game.PlayerRecord) {
 	check("Points", got.Points, want.Points)
 	check("SavingThrows", got.SavingThrows, want.SavingThrows)
 	check("Conditions", got.Conditions, want.Conditions)
-	check("Spares", got.Spares, want.Spares)
 
 	if len(got.Skills) != len(want.Skills) {
 		t.Errorf("record %d: %d skills, want %d (%v vs %v)", i, len(got.Skills), len(want.Skills), got.Skills, want.Skills)
@@ -407,5 +425,69 @@ func compareRecords(t *testing.T, i int, got, want *game.PlayerRecord) {
 		if got.Affects[j] != want.Affects[j] {
 			t.Errorf("record %d: affect %d = %+v, want %+v", i, j, got.Affects[j], want.Affects[j])
 		}
+	}
+}
+
+// TestSparesSurviveARewrite. char_file_u's reserved slots are not on
+// game.PlayerRecord any more, so a decode-then-encode cannot carry them:
+// Store.Save copies them out of the record it is replacing instead.
+//
+// This is what stops the move from being a data loss. The slots are
+// padding as far as this server is concerned, but the C's own
+// documentation tells people to put fields in them, so a value in one is
+// not necessarily junk — and a server that zeroed them on every save
+// would be quietly destroying whatever a future C server had stored.
+//
+// The fixture is built in Go rather than by pfilegen.c, deliberately:
+// what is being tested is this package's own save path, not the layout
+// (which layout_test.go pins against gcc), and a test that skipped
+// without gcc-multilib would be a test that never ran on an ordinary
+// push.
+func TestSparesSurviveARewrite(t *testing.T) {
+	dir := t.TempDir()
+	c := newCodec(ilp32)
+
+	rec := &game.PlayerRecord{Name: "Test1", IDNum: 1, Level: 5}
+	encoded, err := c.encode(rec)
+	if err != nil {
+		t.Fatalf("encode: %v", err)
+	}
+	want := wantSpares(1)
+	c.encodeSpares(encoded, want)
+	if err := os.WriteFile(filepath.Join(dir, FileName), encoded, 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	store, err := New(player.Config{Dir: dir})
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	defer func() { _ = store.Close() }()
+
+	ctx := context.Background()
+	back, err := store.Load(ctx, "Test1")
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	back.Title = "the Rewritten"
+	if err := store.Save(ctx, back); err != nil {
+		t.Fatalf("Save: %v", err)
+	}
+
+	data, err := os.ReadFile(filepath.Join(dir, FileName))
+	if err != nil {
+		t.Fatalf("reading back: %v", err)
+	}
+	if got := c.decodeSpares(data); got != want {
+		t.Errorf("after a rewrite the reserved slots are %+v, want %+v", got, want)
+	}
+
+	// And the change that was actually asked for did land.
+	after, err := store.Load(ctx, "Test1")
+	if err != nil {
+		t.Fatalf("Load after Save: %v", err)
+	}
+	if after.Title != "the Rewritten" {
+		t.Errorf("title = %q, want %q", after.Title, "the Rewritten")
 	}
 }

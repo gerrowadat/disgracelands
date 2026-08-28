@@ -11,43 +11,35 @@ import (
 	"testing"
 )
 
-// TestSubsystemDir pins every subsystem/format pair cmd/dlmud and cmd/dlctl
-// both rely on Dir for, so a future edit that reshuffles one of them fails
-// here rather than as a live-server boot failure or a silent dlctl miss.
+// TestSubsystemDir pins every subsystem cmd/dlmud relies on Dir for, so a
+// future edit that reshuffles one fails here rather than as a live-server
+// boot failure.
+//
+// It used to pin nineteen subsystem/format *pairs*, because Dir answered
+// differently depending on whether the answer was 2002 or now. There is
+// one layout now (docs/proposals/yaml-only.md §1); the legacy half of the
+// table moved to cmd/dlctl, along with the code, and is pinned there.
 func TestSubsystemDir(t *testing.T) {
 	base := filepath.FromSlash("/srv/dl")
 	join := func(parts ...string) string { return filepath.Join(append([]string{base}, parts...)...) }
 
 	cases := []struct {
-		name   string
-		s      Subsystem
-		format string
-		want   string
+		name string
+		s    Subsystem
+		want string
 	}{
-		{"world classic", SubsystemWorld, "classic", join("world")},
-		{"world yaml", SubsystemWorld, "yaml", join("world")},
-		{"players binary", SubsystemPlayers, "binary", join("etc")},
-		{"players ascii", SubsystemPlayers, "ascii", join("pfiles")},
-		{"players yaml", SubsystemPlayers, "yaml", join("players")},
-		{"state classic", SubsystemState, "classic", join("etc")},
-		{"state yaml", SubsystemState, "yaml", join("state")},
-		{"house objects classic", SubsystemHouseObjects, "classic", join("house")},
-		{"house objects yaml", SubsystemHouseObjects, "yaml", join("state")},
-		{"reports classic", SubsystemReports, "classic", join("misc")},
-		{"reports yaml", SubsystemReports, "yaml", join("state")},
-		{"names classic", SubsystemNames, "classic", join("misc")},
-		{"names yaml", SubsystemNames, "yaml", join("config")},
-		{"messages classic", SubsystemMessages, "classic", join("misc")},
-		{"messages yaml", SubsystemMessages, "yaml", join("config")},
-		{"socials classic", SubsystemSocials, "classic", join("misc")},
-		{"socials yaml", SubsystemSocials, "yaml", join("config")},
-		{"help classic", SubsystemHelp, "classic", join("text", "help")},
-		{"help yaml", SubsystemHelp, "yaml", join("text", "help")},
+		{"world", SubsystemWorld, join("world")},
+		{"players", SubsystemPlayers, join("players")},
+		{"state", SubsystemState, join("state")},
+		{"names", SubsystemNames, join("config")},
+		{"messages", SubsystemMessages, join("config")},
+		{"socials", SubsystemSocials, join("config")},
+		{"help", SubsystemHelp, join("text", "help")},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			if got := Dir(base, tc.s, tc.format); got != tc.want {
-				t.Errorf("Dir(%q, %v, %q) = %q, want %q", base, tc.s, tc.format, got, tc.want)
+			if got := Dir(base, tc.s); got != tc.want {
+				t.Errorf("Dir(%q, %v) = %q, want %q", base, tc.s, got, tc.want)
 			}
 		})
 	}

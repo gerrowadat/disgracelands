@@ -38,17 +38,14 @@ syslog.CRASH
 reference/moderncserver/log/*
 !reference/moderncserver/log/.gitkeep
 
-# --- examples/stock/binary/: the default --lib-dir ------------------------
+# --- examples/stock/binary/: a conversion source, not a --lib-dir ---------
 # examples/stock/binary/ is a checked-in, static example (stock CircleMUD's
-# own lib/), but it is also the server's default --lib-dir (internal/config/
-# config.go): running dlmud with no flags at all boots against it, and a
-# fresh boot writes runtime state into whatever --lib-dir is. None of that
-# runtime state belongs in git, the same reasoning the old data/'s rules had
-# from when *that* was the default (db.c's build_player_index()
-# auto-creates an empty etc/players via touch() if it's missing, and db.c's
-# "if this is our first player --- he be God" (~line 2705-2714) promotes
-# whoever registers first to LVL_IMPL automatically - a blank etc/players is
-# the *normal* fresh-boot state, not a broken one).
+# own lib/). It used to be the server's default --lib-dir, and a fresh boot
+# wrote runtime state into it; it cannot be one any more (the server reads
+# one format and refuses a legacy directory outright, docs/proposals/
+# yaml-only.md §3.3), so these rules cover what an *older* build left
+# behind and what the C server in reference/ still writes through its own
+# lib symlink.
 examples/stock/binary/etc/players
 examples/stock/binary/etc/players.beforewipe
 examples/stock/binary/etc/plrmail
@@ -63,11 +60,21 @@ examples/stock/binary/house/*
 !examples/stock/binary/house/.gitkeep
 examples/stock/binary/.acme/
 
-# examples/stock/yaml/ is not the default --lib-dir, so reaching it needs an
-# explicit --lib-dir/--player-format flag, but the same runtime-state
-# protection still applies if someone points a demo server at it.
-examples/stock/yaml/pfiles/
+# --- examples/stock/yaml/: the default --lib-dir --------------------------
+# Running dlmud with no flags at all boots against this, and a fresh boot
+# writes runtime state into whatever --lib-dir is: a roster under players/,
+# and the clock, boards, mail, bans, houses and reports under state/. None
+# of that belongs in git.
+#
+# state/ is *not* ignored wholesale — clock.yaml and houses.yaml are
+# checked in as part of the example (an empty houses file is what a server
+# with no houses looks like, not a missing one), and the files a running
+# server adds beside them are listed individually.
 examples/stock/yaml/players/
+examples/stock/yaml/state/boards.yaml
+examples/stock/yaml/state/mail.yaml
+examples/stock/yaml/state/bans.yaml
+examples/stock/yaml/state/reports.yaml
 examples/stock/yaml/.acme/
 
 # examples/mini/ is the tutorial world. test/play copies it to a temp directory
