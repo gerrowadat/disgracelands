@@ -290,6 +290,16 @@ Two smaller consequences, listed so they are not mistaken for slips:
   still the auction/autoexit pair, and `an`, which matched nothing before, is
   the only abbreviation this adds. Same device as `reloadmob` and friends;
   `coverage_test.go`'s `newCommands` records it.
+- **`help announce` has to be written by hand, and only lives where it was
+  written.** `announce` has no `interpreter.c` row and so no stock help
+  entry either — `load_help` (db.c) only ever knows what a `.hlp` file
+  tells it, and no version of that file has ever mentioned a command that
+  did not exist yet. `examples/mini/binary/text/help/commands.hlp` carries
+  one now, alongside the stock `ANSI COLOR`/`AUCTION GOSSIP ...` entries it
+  sits next to, with `examples/mini/yaml` regenerated from it
+  (`dlctl import`) the same way a release does. `examples/stock` does not
+  get one: it is stock CircleMUD's own help database, unmodified, and
+  adding port-specific content to it would stop it being that.
 
 ---
 
