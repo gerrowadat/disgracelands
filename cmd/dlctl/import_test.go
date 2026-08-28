@@ -146,3 +146,54 @@ func TestImportMatchesTheCheckedInExamples(t *testing.T) {
 		})
 	}
 }
+
+// TestCopyGameConfigCarriesTheTuning. The game tuning lives in the data
+// directory now (docs/design/data-format.md §6), which makes it something a
+// conversion can lose: a lib/ with free_rent turned off that came out the
+// other side without its config/game.yaml would be a server quietly back on
+// config.c's defaults, with nothing in the output saying so. It is copied
+// rather than converted because there is nothing to convert — the file is
+// this project's own yaml in either format.
+func TestCopyGameConfigCarriesTheTuning(t *testing.T) {
+	from, to := t.TempDir(), t.TempDir()
+	if err := os.MkdirAll(filepath.Join(from, "config"), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	const body = "free_rent: false\n"
+	if err := os.WriteFile(filepath.Join(from, "config", "game.yaml"), []byte(body), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	copied, err := copyGameConfig(from, to)
+	if err != nil {
+		t.Fatalf("copyGameConfig: %v", err)
+	}
+	if !copied {
+		t.Error("copyGameConfig reported no file, want the one that is there")
+	}
+	got, err := os.ReadFile(filepath.Join(to, "config", "game.yaml"))
+	if err != nil {
+		t.Fatalf("reading the copy: %v", err)
+	}
+	if string(got) != body {
+		t.Errorf("the copy = %q, want %q", got, body)
+	}
+}
+
+// TestCopyGameConfigWithNoneIsNotAnError: every stock and archived lib/ in
+// existence has no config/game.yaml, so importing one must not be a failure
+// — and must not leave an empty config/ behind either, since names/messages/
+// socials are what own that directory's existence.
+func TestCopyGameConfigWithNoneIsNotAnError(t *testing.T) {
+	to := t.TempDir()
+	copied, err := copyGameConfig(t.TempDir(), to)
+	if err != nil {
+		t.Fatalf("copyGameConfig with no file: %v", err)
+	}
+	if copied {
+		t.Error("copyGameConfig reported a file where there was none")
+	}
+	if _, err := os.Stat(filepath.Join(to, "config")); !os.IsNotExist(err) {
+		t.Errorf("config/ was created for a file that does not exist: %v", err)
+	}
+}

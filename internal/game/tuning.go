@@ -137,8 +137,8 @@ func Tuning() GameTuning {
 }
 
 // SetTuning replaces the live game tuning, atomically. cmd/dlmud calls this
-// once at boot (after loading config/game.yaml, if any) and again on every
-// SIGHUP that passes GameTuning.Validate.
+// once at boot (after loading the data directory's own config/game.yaml, if
+// it has one) and again on every SIGHUP that passes GameTuning.Validate.
 func SetTuning(t GameTuning) {
 	cp := t
 	current.Store(&cp)

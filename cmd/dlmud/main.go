@@ -116,30 +116,35 @@ const (
 	exitReboot = 2 // `shutdown reboot` / `shutdown now`: start me again.
 )
 
-// reloadGameTuning is what SIGHUP does: re-read --config's game-tuning file
-// and publish it, without a restart (go-port-plan.md §9.1).
+// reloadGameTuning is what SIGHUP does: re-read the game-tuning file —
+// <lib-dir>/config/game.yaml, or --config where one was given — and publish
+// it, without a restart (go-port-plan.md §9.1).
 //
-// Two things it deliberately does not do. It does not fail: a file that
+// Three things it deliberately does not do. It does not fail: a file that
 // will not parse, or parses and will not validate, is logged and the
 // previous tuning kept, because a typo in a config file must never be able
 // to stop a game that is already running. And it does not touch the world —
 // game.SetTuning is an atomic publish, which is what makes this safe to
 // call from the signal goroutine while the world goroutine is mid-pulse.
 // Reloading world *data* is a different thing with different rules; see
-// docs/design/signal-handling.md §4 for why no signal does it.
+// docs/design/signal-handling.md §4 for why no signal does it. And it does
+// not reset a server that has no tuning file back to the defaults: a file
+// that is not there means "nothing to reload", the same as it does at boot,
+// rather than "revert whatever is running".
 func reloadGameTuning(logger *slog.Logger, cfg *config.Config) {
-	if cfg.GameConfigFile == "" {
-		logger.Warn("SIGHUP received but no --config is set; nothing to reload")
-		return
-	}
-	t, err := config.LoadGameTuning(cfg.GameConfigFile)
+	t, path, err := config.LoadGameTuningFor(cfg)
 	if err != nil {
 		logger.Error("SIGHUP: game tuning reload failed, keeping previous values",
-			"file", cfg.GameConfigFile, "error", err)
+			"file", cfg.GameConfigPath(), "error", err)
+		return
+	}
+	if path == "" {
+		logger.Warn("SIGHUP received but there is no game tuning file; nothing to reload",
+			"file", cfg.GameConfigPath())
 		return
 	}
 	game.SetTuning(t)
-	logger.Info("SIGHUP: reloaded game tuning", "file", cfg.GameConfigFile)
+	logger.Info("SIGHUP: reloaded game tuning", "file", path)
 }
 
 func main() {
@@ -214,17 +219,18 @@ func run(args []string) (int, error) {
 		logger.Warn(warning)
 	}
 
-	// config.c's runtime-tunable values (game.GameTuning): --config's file
-	// overlaid on the archive's own defaults. Set before anything below can
-	// read it — SIGHUP reloads this same path later, once the signal
-	// handling below exists to carry it.
-	tuning, err := config.LoadGameTuning(cfg.GameConfigFile)
+	// config.c's runtime-tunable values (game.GameTuning): the data
+	// directory's own config/game.yaml (or --config's file) overlaid on the
+	// archive's own defaults. Set before anything below can read it — SIGHUP
+	// reloads this same path later, once the signal handling below exists to
+	// carry it. No file at all is not a failure; see LoadGameTuningFor.
+	tuning, tuningPath, err := config.LoadGameTuningFor(cfg)
 	if err != nil {
 		return exitFailed, fmt.Errorf("game tuning: %w", err)
 	}
 	game.SetTuning(tuning)
-	if cfg.GameConfigFile != "" {
-		logger.Info("loaded game tuning", "file", cfg.GameConfigFile)
+	if tuningPath != "" {
+		logger.Info("loaded game tuning", "file", tuningPath)
 	}
 
 	metrics := obs.NewMetrics(cfg.PulseInterval)

@@ -144,6 +144,15 @@ here either, and the first character created is promoted to Implementor
 the same way `examples/stock/`'s is (`db.c`'s "if this is our first
 player --- he be God").
 
+`config/game.yaml` is the shipped, fully-commented example of the game
+tuning (`docs/configuration.md`) — the same file `examples/stock/` ships,
+in both formats, because the tuning lives in the data directory it
+configures. Every value in it is commented out at its `config.c` default,
+so it changes nothing until something is uncommented: copy it into your own
+data directory, edit it, and `SIGHUP` the server. The Travelers' Rest's own
+room description above is about `free_rent`, which is the first line in
+it.
+
 `misc/socials` and `misc/messages` are the real archive's own files,
 copied across unchanged — socials and combat messages are not zone
 content, so there was nothing to invent, and a tutorial that could not

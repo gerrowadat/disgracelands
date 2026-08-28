@@ -1302,8 +1302,8 @@ Listed here so they are not mistaken for deliberate differences.
   `autosave_time`, the two corpse timers, `level_can_shout`,
   `holler_move_cost`, `max_filesize` and `max_bad_pws` (the last added
   2026-08-28, with the behaviour it governs — see below) moved from a
-  compiled-in value to `game.GameTuning`
-  (`internal/game/tuning.go`), overridable by `--config`'s game.yaml and
+  compiled-in value to `game.GameTuning` (`internal/game/tuning.go`),
+  overridable by the data directory's own `config/game.yaml` and
   hot-reloadable on `SIGHUP`. This is a deliberate, field-by-field reversal
   of "the archive wins" — a decision, not a format pass — made 2026-08-23.
   Every field still *defaults* to the archive's own `config.c` value, so an
@@ -1317,7 +1317,32 @@ Listed here so they are not mistaken for deliberate differences.
   "Rent is free here.  Just quit, and your objects will be saved!" and
   stops. Every price in `Crash_offer_rent` was dead code at that
   setting — ported anyway, and now genuinely reachable by turning
-  `free_rent` off in `config/game.yaml`.
+  `free_rent` off in `<lib-dir>/config/game.yaml`.
+
+- **The game tuning lives in the data directory**, at
+  `<lib-dir>/config/game.yaml`. A new file in what `--lib-dir` points at, so
+  it is written down here even though the C never had a file to differ from:
+  it changes what a `--lib-dir` contains, which is the compatibility half of
+  CLAUDE.md's phase-two rule. Shipped 2026-08-23 as a repo-level
+  `config/game.yaml` named by `--config`, moved into the data directory
+  2026-08-28 — the placement `docs/design/data-format.md` §6 had specified
+  from the start, and the line it draws is the reason: **the data directory
+  holds rules, the command line holds deployment.** Whether rent is free is
+  a property of *this game*, travels with the world, belongs in its backup
+  and is worth reviewing alongside it; which port to listen on and where the
+  certificate lives are properties of *this deployment* and must not be in a
+  directory that gets copied between them.
+
+  Three consequences worth stating. The file is **optional** — every stock
+  and archived `lib/` has no `config/game.yaml` in it, and all of them boot
+  on `config.c`'s own values exactly, so a missing file is not an error.
+  `--config` (`DL_CONFIG`) **stays**, as a path override for the deployment
+  that wants the file elsewhere, and a `--config` that is missing *is* an
+  error: it names a file somebody asked for by name. And `dlctl import`
+  **carries the file across** unchanged rather than converting it (it is
+  this project's own yaml in either format, like `text/`'s prose): a lib/
+  that had been tuned must not come out of a format conversion quietly back
+  on the defaults.
 
 - **`tunnel_size` was picked for tunability, then found unbuilt.** The
   `TUNNEL` room flag is recognised (parsed, named) but nothing enforces an

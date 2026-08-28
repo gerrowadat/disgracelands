@@ -148,7 +148,7 @@ the use.
 |---|---|---|
 | `SIGTERM` | Graceful shutdown: stop accepting, tell everyone connected, save, exit | Stopping the server. What `docker stop`, `systemctl stop` and a pod delete send for you |
 | `SIGINT` | The same | Ctrl-C at a terminal. A *second* one during shutdown kills the process instead of being swallowed, so a shutdown that will not finish can still be interrupted |
-| `SIGHUP` | Re-reads `--config` and applies it live | After editing the game tuning file. No restart, nobody disconnected |
+| `SIGHUP` | Re-reads the game tuning (`<lib-dir>/config/game.yaml`, or `--config`) and applies it live | After editing that file. No restart, nobody disconnected |
 | `SIGQUIT` | Not handled, on purpose: the Go runtime dumps every goroutine's stack and the process dies | The server has stopped responding. The stacks name the goroutine that is stuck, and they are what to attach to the bug report |
 
 Anything else keeps its default disposition. In particular there is no
@@ -182,7 +182,7 @@ preference.
 
 | What | How | Notes |
 |---|---|---|
-| Game tuning (`--config`'s `game.yaml`) | `SIGHUP` | Takes effect on the next thing that reads it. See `docs/configuration.md` |
+| Game tuning (`<lib-dir>/config/game.yaml`) | `SIGHUP` | Takes effect on the next thing that reads it. See `docs/configuration.md` |
 | The canned text: `greetings`, `motd`, `imotd`, `credits`, `news`, `wizlist`, `immlist`, `info`, `policy`, `handbook`, `background`, `help` | `reload <name>` in-game (implementor) | `reload all` does all twelve. It does **not** include the help database — that is `reload xhelp`, separately, exactly as in the C |
 | World data: rooms, mobiles, objects, zones, shops | `reloadmob`, `reloadzone`, `reloadobj`, `reloadshop` in-game (greater god) | By vnum, after editing the files on disk |
 
@@ -194,11 +194,13 @@ somebody to give the answer to, and a signal has neither.
 Everything else — the flags, the listeners, `--lib-dir`, the data formats —
 needs a restart.
 
-**A reload that fails changes nothing.** A `--config` file that will not
+**A reload that fails changes nothing.** A tuning file that will not
 parse, or parses and will not validate (`autosave_time: 0`, a negative
 cost), is logged as an error and ignored: the server keeps the values it
 already had, and the players stay connected. A typo in a file you are
-editing on a live server costs you the reload and nothing else.
+editing on a live server costs you the reload and nothing else. A `SIGHUP`
+at a data directory with no `config/game.yaml` in it at all logs that there
+was nothing to re-read, and likewise changes nothing.
 
 ## Shutdown
 
@@ -380,6 +382,9 @@ Of particular note, and none of it in git for good reason:
 - `house/`, `etc/hcontrol` — player housing and its contents.
 - `etc/plrmail` — in-game mail.
 - `world/` — the world itself, which changes if anyone builds in-game.
+- `config/game.yaml` — the game tuning, if this server has been tuned. It
+  lives in the data directory precisely so it lands in this backup with the
+  world it configures (`docs/configuration.md`).
 
 The repo deliberately ships no player data; see the "Player data" section
 of the top-level `README.md`.
@@ -504,12 +509,14 @@ That is the seven `import --type=world`/`pfile`/`state`/`names`/
 `--from-dir`'s own `world/`/`etc/`/`misc/`/`house/`/`text/`
 subdirectories (`dlctl` works out which of those a given `--type` needs —
 see "Pointing dlctl at a directory" below), plus the plain-text files
-under `text/` copied across unchanged and, once everything else has
-succeeded, `--to-dir` stamped with this build's own release version
-(`docs/design/data-format-versioning.md`) — which is what a later `dlmud`
-compares against its own before it will boot on the result. Use a released
-`dlctl` for a directory you intend to run: an unreleased build has no
-version to stamp with, and says so instead of writing one.
+under `text/` and the game tuning at `config/game.yaml` copied across
+unchanged — a tuned directory keeps its tuning through the conversion —
+and, once everything else has succeeded, `--to-dir` stamped with this
+build's own release version (`docs/design/data-format-versioning.md`) —
+which is what a later `dlmud` compares against its own before it will boot
+on the result. Use a released `dlctl` for a directory you intend to run: an
+unreleased build has no version to stamp with, and says so instead of
+writing one.
 
 **Check the result for text that did not get transcoded.** Only two of
 the seven — `world` and `pfile` — have their own `--encoding` flag and

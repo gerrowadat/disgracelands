@@ -16,7 +16,13 @@ them.
   and it is `dlmud`'s default `--lib-dir` — see PR #29 for why what ships
   here is stock rather than the archive's own world. (It used to live at
   `data/` in the repository root, which several older documents still call
-  it; there is no `data/` directory now.)
+  it; there is no `data/` directory now.) With one addition CircleMUD never
+  had: `config/game.yaml`, the game tuning (`docs/configuration.md`), which
+  lives in the data directory it configures and so is shipped in each of
+  these four directories. Every value in it is commented out at its
+  `config.c` default, so it changes nothing until something is uncommented —
+  and this being the default `--lib-dir` is the point: a fresh clone has the
+  template sitting where it would be edited.
 - **`yaml/`** is the same world, converted through this project's own
   yaml format (`docs/design/data-format.md`), one file per zone
   plus `config/`, `state/` and `text/help/help.yaml`.
@@ -33,12 +39,16 @@ go run ./cmd/dlctl import --from-dir=examples/stock/binary --to-dir=examples/sto
 `import` with no `--type` is `import --type=world`/`pfile`/`state`/`names`/
 `messages`/`socials`/`help`, run in that order against the matching
 subdirectories of `--from-dir` (`dlctl` resolves each `--type`'s own
-subpath, the same way `--lib-dir` does for a running server), plus two
-things none of those seven do on their own: `text/`'s eleven plain-text files
-(`motd`, `credits`, `greetings`, ...) — not a pluggable format, since both
-classic and yaml read them from the same `text/<name>` path regardless of
-`--*-format` (`internal/server/text.go`) — are copied across unchanged
-rather than converted; and, once every step above has actually succeeded,
+subpath, the same way `--lib-dir` does for a running server), plus three
+things none of those seven do on their own: `text/`'s eleven plain-text
+files (`motd`, `credits`, `greetings`, ...) — not a pluggable format, since
+both classic and yaml read them from the same `text/<name>` path regardless
+of `--*-format` (`internal/server/text.go`) — are copied across unchanged
+rather than converted; `config/game.yaml`, the game tuning, is copied for
+the same reason (it is this project's own yaml either way) and because a
+directory that has been tuned must not come out of a conversion back on the
+defaults — which is how `yaml/config/game.yaml` here got there, byte for
+byte from `binary/`'s; and, once every step above has actually succeeded,
 `--to-dir` is stamped with a `.dlversion` file
 (`docs/design/data-format-versioning.md`) recording which release of
 `dlctl` wrote it. There is no `.dlversion` under `yaml/` here, and that is
