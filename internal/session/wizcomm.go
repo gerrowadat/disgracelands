@@ -12,6 +12,7 @@ import (
 
 	"github.com/gerrowadat/disgracelands/internal/colour"
 	"github.com/gerrowadat/disgracelands/internal/game"
+	"github.com/gerrowadat/disgracelands/internal/obs"
 )
 
 // Talking as a god, and making other people act, ported from act.wizard.c.
@@ -122,6 +123,12 @@ func doForce(c *Context) error {
 		default:
 			c.Send("Okay.\r\n")
 			victim.Tell("%s", told)
+			// mudlog(buf, NRM, MAX(LVL_GOD, GET_INVIS_LEV(ch)), TRUE)
+			// (act.wizard.c:1832-1833), before the forced command runs —
+			// which matters, because that command may well be the last
+			// thing either character does.
+			c.wizlogInvis(obs.LogNormal, game.LevelGod, c.Character,
+				"(GC) %s forced %s to %s", c.Character.Name, victim.Name, command)
 			c.runAs(victim, command)
 		}
 		return nil
@@ -130,7 +137,15 @@ func doForce(c *Context) error {
 	c.Send("Okay.\r\n")
 	targets := c.World.Occupants(c.Character.Room)
 	if group == "all" {
+		// mudlog(buf, NRM, MAX(LVL_GOD, GET_INVIS_LEV(ch)), TRUE)
+		// (act.wizard.c:1851-1852).
+		c.wizlogInvis(obs.LogNormal, game.LevelGod, c.Character,
+			"(GC) %s forced all to %s", c.Character.Name, command)
 		targets = c.World.Players()
+	} else {
+		// (act.wizard.c:1839-1840). The C prints the room's vnum.
+		c.wizlogInvis(obs.LogNormal, game.LevelGod, c.Character,
+			"(GC) %s forced room %d to %s", c.Character.Name, c.Character.Room, command)
 	}
 	for _, victim := range append([]*game.Character(nil), targets...) {
 		if !victim.IsNPC() && levelOf(victim) >= levelOf(c.Character) {

@@ -108,7 +108,8 @@ func TestPaginateSkipsAnsiCodesWhenCountingColumns(t *testing.T) {
 func TestSessionConnectedNameDuringPaging(t *testing.T) {
 	// Ordinary case: every paginated command but `background` runs from
 	// StatePlaying, so a reader mid-page still shows "Playing".
-	ordinary := &Session{state: StatePaging, pagerReturn: StatePlaying}
+	ordinary := &Session{pagerReturn: StatePlaying}
+	ordinary.setState(StatePaging)
 	if got := ordinary.ConnectedName(); got != "Playing" {
 		t.Errorf("ConnectedName() = %q, want %q for an ordinary paginated command", got, "Playing")
 	}
@@ -118,14 +119,16 @@ func TestSessionConnectedNameDuringPaging(t *testing.T) {
 	// connection in once background's own paging finishes (CON_RMOTD) —
 	// so that is what pagerReturn captures, and what a reader mid-page
 	// should show, not "Playing".
-	fromBackground := &Session{state: StatePaging, pagerReturn: StateReadMOTD}
+	fromBackground := &Session{pagerReturn: StateReadMOTD}
+	fromBackground.setState(StatePaging)
 	if got := fromBackground.ConnectedName(); got != "Reading MOTD" {
 		t.Errorf("ConnectedName() = %q, want %q while background's own page is open", got, "Reading MOTD")
 	}
 
 	// Not paging at all: ConnectedName is just State.ConnectedName, same
 	// as it always was.
-	playing := &Session{state: StatePlaying}
+	playing := &Session{}
+	playing.setState(StatePlaying)
 	if got := playing.ConnectedName(); got != "Playing" {
 		t.Errorf("ConnectedName() = %q, want %q outside the pager entirely", got, "Playing")
 	}

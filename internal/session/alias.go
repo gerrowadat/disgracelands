@@ -174,7 +174,7 @@ func ExpandAlias(aliases []game.Alias, line string) (commands []string, matched 
 // or aliases to check, comes back as itself, unchanged — matching
 // perform_alias leaving orig untouched and returning 0.
 func (s *Session) expandAliasedLine(text string) []string {
-	if s.state != StatePlaying {
+	if s.State() != StatePlaying {
 		return []string{text}
 	}
 	c := s.Character()

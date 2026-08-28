@@ -668,6 +668,13 @@ func (s *Server) Enter(ctx context.Context, sess *session.Session, c *game.Chara
 			game.Start(c.Record, s.rng)
 			s.logger.Info("new character entering the world for the first time",
 				"character", c.Name, "class", game.ClassName(c.Record.Class))
+			// mudlog(buf, BRF, MAX(LVL_IMMORT, GET_INVIS_LEV(ch)), TRUE)
+			// (class.c:1836-1837), the tail of do_start itself: every new
+			// character is logged as advancing to level 1, which is how
+			// gods on the real server saw somebody actually start playing
+			// rather than merely creating a name.
+			s.wizlogInvis(obs.LogBrief, game.LevelImmortal, c,
+				"%s advanced to level %d", c.Name, c.Record.Level)
 			if err := s.players.Save(ctx, c.Record); err != nil {
 				// The C saves here too. A failure is worth reporting but not
 				// worth refusing them entry over: the autosave will catch it.
@@ -757,6 +764,16 @@ func (s *Server) Leave(ctx context.Context, sess *session.Session, c *game.Chara
 	// (act.other.c:203): anything dropped in a house before quitting is
 	// theirs to find again.
 	s.SaveChangedHouses(ctx)
+
+	// mudlog(buf, NRM, MAX(LVL_IMMORT, GET_INVIS_LEV(link_challenged)),
+	// TRUE) (comm.c:1973-1974): close_socket's IS_PLAYING branch, which is
+	// what this method is. Note whose invis level the MAX is taken
+	// against — the player being dropped, not anybody acting on them; and
+	// note that the C reads it from `d->original ? d->original :
+	// d->character`, so a god who was switched into a mobile is still
+	// hidden at their own level rather than the mobile's.
+	s.wizlogInvis(obs.LogNormal, game.LevelImmortal, c,
+		"Closing link to: %s.", c.Name)
 
 	return s.engine.DoSync(ctx, func(w *game.Live) {
 		if c.Client == sess {
@@ -983,6 +1000,15 @@ func (s *Server) RunAutosave(ctx context.Context) {
 				}
 				delete(linkdeadSince, c)
 				s.logger.Info("reaping a linkdead character", "character", c.Name)
+				// mudlog(buf, CMP, LVL_GOD, TRUE) (limits.c:447-448), the
+				// tail of check_idling. The C force-rents on the way out
+				// (Crash_idlesave) and this port has already crash-saved
+				// at link loss (see Leave), so the wording is the C's for
+				// an event that got there by a different route: what a
+				// god sees is a body that nobody came back for being
+				// taken away, which is the same thing either way.
+				s.wizlog(obs.LogComplete, game.LevelGod,
+					"%s force-rented and extracted (idle).", c.Name)
 				_ = s.engine.DoSync(ctx, func(w *game.Live) { w.Remove(c) })
 			}
 		}

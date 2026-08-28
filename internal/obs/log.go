@@ -26,7 +26,11 @@ import (
 )
 
 // WizVisKey is the attribute key carrying the minimum immortal level that
-// should see a log line echoed in-game. Lines without it are log-only.
+// should see a log line echoed in-game. Lines without it are log-only, and
+// so are lines carrying a *negative* one — mudlog returns before its echo
+// loop when `level < 0` (utils.c:238-239), which do_skillset relies on
+// (modify.c:344). Applying that is the echo's job, not this package's:
+// see [WizVisEcho].
 const WizVisKey = "wizvis"
 
 // WizVisTypeKey carries mudlog()'s own `type` argument (BRF/NRM/CMP/OFF,
@@ -51,8 +55,9 @@ const (
 
 // WizLevel returns an attribute marking a log line for in-game echo to
 // immortals of at least the given level, mirroring mudlog()'s level
-// argument. Needs a [WizType] alongside it, or [WithWizVisEcho] will not
-// echo the line at all.
+// argument — including a negative one, which reaches nobody. Needs a
+// [WizType] alongside it, or [WithWizVisEcho] will not echo the line at
+// all.
 func WizLevel(level int) slog.Attr {
 	return slog.Int(WizVisKey, level)
 }
@@ -64,7 +69,8 @@ func WizType(typ int) slog.Attr {
 }
 
 // WizVisEcho delivers one wizvis-tagged log line to whichever online
-// immortals qualify for it — mudlog()'s own in-game half (utils.c:243-258).
+// immortals qualify for it — mudlog()'s own in-game half (utils.c:236-258),
+// the `level < 0` early return included.
 // A seam rather than a direct dependency: this package cannot import
 // internal/session (the connections it would need to reach live there), so
 // the server package supplies the implementation instead, the same shape

@@ -1821,6 +1821,87 @@ interleaved check.
 
 ---
 
+## `mudlog`'s level argument is not only a threshold
+
+```c
+void mudlog(const char *str, int type, int level, int file)
+{
+  ...
+  if (file)
+    log("%s", str);
+  if (level < 0)
+    return;
+```
+
+`mudlog` does two things: writes the line to the log file, and echoes it in
+green to every online immortal at or above `level` whose own `syslog`
+verbosity is at least `type`. Read as a level threshold, `level` is
+straightforward — `LVL_IMMORT` reaches everybody immortal, `LVL_GRGOD`
+reaches almost nobody.
+
+There is exactly one call site in the tree that passes something else:
+
+```c
+mudlog(buf2, BRF, -1, TRUE);          /* do_skillset */
+```
+
+`-1` looks like "even lower than LVL_IMMORT, so everybody sees it". It is
+the opposite. The early return above fires first, so **`skillset` writes
+its line to the log and shows it to nobody at all**, however high a god has
+turned their syslog up — the one command in `do_wizutil`'s neighbourhood
+that changes another character permanently, and the one whose line no
+immortal ever saw.
+
+Two further things about the same signature, both easy to miss:
+
+- **`file` is not always TRUE.** Four call sites pass FALSE — `bug`/`idea`/
+  `typo` (`act.other.c:905`), the auto zone reset (`db.c:1937`), autowiz
+  (`limits.c:256`), and one that is `#if 0`'d out (`comm.c:1409`) — so
+  those lines are echoed in game and never written down. This port writes
+  every one of them to the structured log regardless; see
+  [`deviations.md`](deviations.md).
+- **The echo has no "except the actor" rule.** A god who freezes somebody
+  and is watching syslog sees their own line come back, which is why the
+  reply and the log text are so often built from the same `sprintf`.
+
+*Source*: `utils.c:229-258`, `modify.c:344`. Ported as `Server.echoWizVis`
+(`internal/server/wizvis.go`), whose own `level < 0` early return is the
+first thing it does; `TestSkillsetEchoesToNobody`
+(`internal/server/wizvis_test.go`) is the check.
+
+## `nanny` builds the "new player" log line and then overwrites it
+
+```c
+    sprintf(buf, "%s [%s] new player.", GET_NAME(d->character), d->host);
+
+        /* <DoC> */
+        snprintf(buf, sizeof(buf), "A voice whispers in your ear, 'All hail %s, a newcomer!'", GET_NAME(d->character));
+        send_to_all_color(buf, KCYN);
+        ...
+    mudlog(buf, NRM, LVL_IMMORT, TRUE);
+```
+
+`CON_QCLASS` writes the log line into `buf`, and then the local `<DoC>`
+block that was inserted between the `sprintf` and the `mudlog` reuses the
+same buffer for its broadcast. Twenty-three lines later the `mudlog` fires
+against whatever `buf` holds now.
+
+So on the server that was actually played, **"%s [%s] new player." was
+never logged and never seen**; what reached the log and the gods' syslogs
+was a second copy of the "All hail" line every player in the game had just
+been shown in cyan. The host — the only reason the line was worth having —
+was gone.
+
+This is a *deviation*: the port logs what the call site was written to log.
+Reproducing it would mean deliberately duplicating a broadcast into the
+syslog, which is noise rather than behaviour, and no player-visible or
+on-disk thing depends on it. [`deviations.md`](deviations.md) records it.
+
+*Source*: `interpreter.c:1606-1629`. Ported in
+`Session.handleQueryClass` (`internal/session/login.go`).
+
+---
+
 ## What to do about all this
 
 The rule that has worked: **anything with a division, a cast, or a comment

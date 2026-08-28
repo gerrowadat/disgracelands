@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/gerrowadat/disgracelands/internal/game"
+	"github.com/gerrowadat/disgracelands/internal/obs"
 )
 
 // The special procedures themselves, ported from spec_procs.c.
@@ -359,7 +360,14 @@ func specDump(sc *SpecialCall) bool {
 	sc.ToRoom("%s has been awarded for being a good citizen.\r\n", sc.Actor.Name)
 
 	if sc.Actor.Level() < 3 {
-		game.GainExperience(sc.Actor.Record, value, sc.RNG)
+		// gain_exp's own mudlog, at the one specproc call site that can
+		// reach it (limits.c:299-305) — see Server.announceGain for why
+		// this lives at the callers rather than in internal/game.
+		if out := game.GainExperience(sc.Actor.Record, value, sc.RNG); out.Levels > 0 {
+			sc.wizlogInvis(obs.LogBrief, game.LevelImmortal, sc.Actor,
+				"%s advanced %d level%s to level %d.", sc.Actor.Name,
+				out.Levels, plural(int(out.Levels)), sc.Actor.Record.Level)
+		}
 		return true
 	}
 	sc.Actor.Record.Points.Gold += value

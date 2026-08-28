@@ -12,6 +12,7 @@ import (
 
 	"github.com/gerrowadat/disgracelands/internal/auth"
 	"github.com/gerrowadat/disgracelands/internal/game"
+	"github.com/gerrowadat/disgracelands/internal/obs"
 )
 
 // The main menu and everything reachable from it, ported from nanny's
@@ -59,7 +60,7 @@ func (s *Session) handleMenu(ctx context.Context, deps Deps, line string) error 
 		s.Send("Enter the new text you'd like others to see when they look at you.\r\n")
 		s.Send("Terminate with a '%s' on a new line.\r\n", descriptionTerminator)
 		s.editorBuf = editText{}
-		s.state = StateEnterDescription
+		s.setState(StateEnterDescription)
 		s.Send("] ")
 		return nil
 
@@ -70,15 +71,15 @@ func (s *Session) handleMenu(ctx context.Context, deps Deps, line string) error 
 		// captures it as what paging interrupted (Session.pagerReturn)
 		// rather than the menu state background is actually being run
 		// from.
-		s.state = StateReadMOTD
+		s.setState(StateReadMOTD)
 		s.SendPaged("%s", ensureTrailingNewline(deps.Text.Background()))
 		// sendPaged never sends the pager's own "Return to continue" line
 		// itself — every other caller relies on Dispatcher.Do's own tail
 		// for that (prompt(s) resolves to pagingPrompt() once StatePaging
 		// is set), and this menu handler is not run through it. A short
-		// background leaves s.state exactly as StateReadMOTD, set above,
+		// background leaves s.State() exactly as StateReadMOTD, set above,
 		// so this only fires when pagination actually happened.
-		if s.state == StatePaging {
+		if s.State() == StatePaging {
 			s.Send("%s", prompt(s))
 		}
 		return nil
@@ -86,13 +87,13 @@ func (s *Session) handleMenu(ctx context.Context, deps Deps, line string) error 
 	case '4':
 		s.EchoOff()
 		s.Send("\r\nEnter your old password: ")
-		s.state = StateChangePasswordOld
+		s.setState(StateChangePasswordOld)
 		return nil
 
 	case '5':
 		s.EchoOff()
 		s.Send("\r\nEnter your password for verification: ")
-		s.state = StateDeleteVerify
+		s.setState(StateDeleteVerify)
 		return nil
 	}
 
@@ -126,7 +127,7 @@ func (s *Session) enterWorld(ctx context.Context, deps Deps) error {
 		s.Close()
 		return nil
 	}
-	s.state = StatePlaying
+	s.setState(StatePlaying)
 	// Back in the world, so the disconnect handling applies again. Somebody
 	// who quit to the menu and then chose 1 is an ordinary playing session
 	// and must get the "$n has lost $s link." treatment if their connection
@@ -168,7 +169,7 @@ func (s *Session) handleEnterDescription(ctx context.Context, deps Deps, line st
 				s.logger.Error("saving a description", "character", s.character.Name, "error", err)
 			}
 		}
-		s.state = StateMenu
+		s.setState(StateMenu)
 		s.Send("%s", deps.Text.Menu())
 		return nil
 	}
@@ -195,17 +196,17 @@ func (s *Session) handleChangePasswordOld(ctx context.Context, deps Deps, line s
 		s.EchoOn()
 		s.logger.Error("checking a password", "character", s.character.Name, "error", err)
 		s.Send("\r\nSomething went wrong checking that.\r\n%s", deps.Text.Menu())
-		s.state = StateMenu
+		s.setState(StateMenu)
 		return nil
 	}
 	if !ok {
 		s.EchoOn()
 		s.Send("\r\nIncorrect password.\r\n%s", deps.Text.Menu())
-		s.state = StateMenu
+		s.setState(StateMenu)
 		return nil
 	}
 	s.Send("\r\nEnter a new password: ")
-	s.state = StateChangePasswordNew
+	s.setState(StateChangePasswordNew)
 	return nil
 }
 
@@ -216,7 +217,7 @@ func (s *Session) handleChangePasswordNew(deps Deps, line string) error {
 		return nil
 	}
 	s.pendingPassword = password
-	s.state = StateChangePasswordVerify
+	s.setState(StateChangePasswordVerify)
 	s.Send("\r\nPlease retype password: ")
 	return nil
 }
@@ -224,7 +225,7 @@ func (s *Session) handleChangePasswordNew(deps Deps, line string) error {
 func (s *Session) handleChangePasswordVerify(ctx context.Context, deps Deps, line string) error {
 	if strings.TrimSpace(line) != s.pendingPassword {
 		s.pendingPassword = ""
-		s.state = StateChangePasswordNew
+		s.setState(StateChangePasswordNew)
 		s.Send("\r\nPasswords don't match... start over.\r\nPassword: ")
 		return nil
 	}
@@ -236,12 +237,12 @@ func (s *Session) handleChangePasswordVerify(ctx context.Context, deps Deps, lin
 	if err := deps.Login.SetPassword(ctx, s.character, password); err != nil {
 		s.logger.Error("changing a password", "character", s.character.Name, "error", err)
 		s.Send("\r\nSomething went wrong saving that.\r\n%s", deps.Text.Menu())
-		s.state = StateMenu
+		s.setState(StateMenu)
 		return nil
 	}
 	s.logger.Info("password changed", "character", s.character.Name)
 	s.Send("\r\nDone.\r\n%s", deps.Text.Menu())
-	s.state = StateMenu
+	s.setState(StateMenu)
 	return nil
 }
 
@@ -255,14 +256,14 @@ func (s *Session) handleDeleteVerify(ctx context.Context, deps Deps, line string
 			s.logger.Error("checking a password", "character", s.character.Name, "error", err)
 		}
 		s.Send("\r\nIncorrect password.\r\n%s", deps.Text.Menu())
-		s.state = StateMenu
+		s.setState(StateMenu)
 		return nil
 	}
 
 	s.Send("\r\nYOU ARE ABOUT TO DELETE THIS CHARACTER PERMANENTLY.\r\n" +
 		"ARE YOU ABSOLUTELY SURE?\r\n\r\n" +
 		"Please type \"yes\" to confirm: ")
-	s.state = StateDeleteConfirm
+	s.setState(StateDeleteConfirm)
 	return nil
 }
 
@@ -273,7 +274,7 @@ func (s *Session) handleDeleteConfirm(ctx context.Context, deps Deps, line strin
 	answer := strings.TrimSpace(line)
 	if answer != "yes" && answer != "YES" {
 		s.Send("\r\nCharacter not deleted.\r\n%s", deps.Text.Menu())
-		s.state = StateMenu
+		s.setState(StateMenu)
 		return nil
 	}
 
@@ -288,11 +289,17 @@ func (s *Session) handleDeleteConfirm(ctx context.Context, deps Deps, line strin
 	if err := deps.Login.Delete(ctx, s.character); err != nil {
 		s.logger.Error("deleting a character", "character", s.character.Name, "error", err)
 		s.Send("\r\nSomething went wrong deleting that character.\r\n%s", deps.Text.Menu())
-		s.state = StateMenu
+		s.setState(StateMenu)
 		return nil
 	}
 
 	s.logger.Info("character self-deleted", "character", s.character.Name, "level", s.character.Level())
+	// mudlog(buf, NRM, LVL_GOD, TRUE) (interpreter.c:1778-1780), a bare
+	// LVL_GOD with no GET_INVIS_LEV() around it — an immortal deleting
+	// themselves cannot hide it. The level in the text is the one they
+	// had when they went.
+	wizlog(s.logger, obs.LogNormal, game.LevelGod,
+		"%s (lev %d) has self-deleted.", s.character.Name, s.character.Level())
 	s.Send("Character '%s' deleted!\r\nGoodbye.\r\n", s.character.Name)
 	// Not MarkQuit: they were never in the world, so there is nothing to
 	// remove from it.

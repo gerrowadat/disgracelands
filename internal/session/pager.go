@@ -136,8 +136,8 @@ func (s *Session) sendPaged(want colour.Level, format string, args ...any) {
 	s.pagerPages = pages
 	s.sendRendered(pages[0])
 	s.pagerIndex = 1
-	s.pagerReturn = s.state
-	s.state = StatePaging
+	s.pagerReturn = s.State()
+	s.setState(StatePaging)
 }
 
 // handlePaging is show_string: one line of input while a pager is open.
@@ -148,7 +148,7 @@ func (s *Session) handlePaging(line string) error {
 	case strings.EqualFold(arg, "q"):
 		s.pagerPages = nil
 		s.pagerIndex = 0
-		s.state = s.pagerReturn
+		s.setState(s.pagerReturn)
 		s.sendPromptIfPlaying()
 		return nil
 	case strings.EqualFold(arg, "r"):
@@ -173,7 +173,7 @@ func (s *Session) handlePaging(line string) error {
 		s.sendRendered(s.pagerPages[s.pagerIndex])
 		s.pagerPages = nil
 		s.pagerIndex = 0
-		s.state = s.pagerReturn
+		s.setState(s.pagerReturn)
 		s.sendPromptIfPlaying()
 		return nil
 	}
@@ -198,7 +198,7 @@ func (s *Session) handlePaging(line string) error {
 // game-style HP/mana/move prompt there would be nonsense — nobody is
 // playing yet.
 func (s *Session) sendPromptIfPlaying() {
-	if s.state == StatePlaying {
+	if s.State() == StatePlaying {
 		s.Send("%s", prompt(s))
 	}
 }

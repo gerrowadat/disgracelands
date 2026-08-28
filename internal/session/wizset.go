@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/gerrowadat/disgracelands/internal/game"
+	"github.com/gerrowadat/disgracelands/internal/obs"
 )
 
 // do_set and perform_set, ported from act.wizard.c:2773 and :2426.
@@ -314,6 +315,12 @@ var setFields = []setField{
 			s.refuse("That password could not be set.\r\n")
 			return
 		}
+		// mudlog(buf, BRF, MAX(LVL_GOD, GET_INVIS_LEV(ch)), TRUE)
+		// (act.wizard.c:2721-2722). The one field in the whole of do_set's
+		// table that logs — the C added it to this case alone, and this is
+		// obviously the one it would.
+		s.c.wizlogInvis(obs.LogBrief, game.LevelGod, s.c.Character,
+			"(GC) %s has set password for %s.", s.c.Character.Name, s.victim.Name)
 		// The C echoes the new password back in clear. Not reproduced; see
 		// docs/deviations.md.
 		s.output = "Password changed."

@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/gerrowadat/disgracelands/internal/game"
+	"github.com/gerrowadat/disgracelands/internal/obs"
 	"github.com/gerrowadat/disgracelands/internal/persist/player"
 	"github.com/gerrowadat/disgracelands/internal/session"
 )
@@ -45,6 +46,12 @@ func (s *Server) loadObjects(ctx context.Context, c *game.Character) (lost bool,
 		// "%s entering game with no equipment." Not an error: it is every
 		// character who has never left the game carrying anything.
 		s.logger.Info("entering the game with no equipment", "character", c.Name)
+		// mudlog(buf, NRM, MAX(LVL_IMMORT, GET_INVIS_LEV(ch)), TRUE)
+		// (objsave.c:457-458). The C reaches it on any fopen failure, not
+		// just ENOENT — the SYSERR and the NOTICE above it are extra, not
+		// instead — so the branch below logs it too.
+		s.wizlogInvis(obs.LogNormal, game.LevelImmortal, c,
+			"%s entering game with no equipment.", c.Name)
 		return false, nil
 	}
 	if err != nil {
@@ -55,6 +62,8 @@ func (s *Server) loadObjects(ctx context.Context, c *game.Character) (lost bool,
 		c.Tell("\r\n********************* NOTICE *********************\r\n" +
 			"There was a problem loading your objects from disk.\r\n" +
 			"Contact a God for assistance.\r\n")
+		s.wizlogInvis(obs.LogNormal, game.LevelImmortal, c,
+			"%s entering game with no equipment.", c.Name)
 		return false, nil
 	}
 
@@ -71,6 +80,12 @@ func (s *Server) loadObjects(ctx context.Context, c *game.Character) (lost bool,
 			s.logger.Info("entering the game, rented equipment lost (no $)",
 				"character", c.Name, "cost", cost,
 				"gold", c.Record.Points.Gold, "bank", c.Record.Points.BankGold)
+			// mudlog(buf, BRF, MAX(LVL_IMMORT, GET_INVIS_LEV(ch)), TRUE)
+			// (objsave.c:474-475) — BRF, unlike every other line in
+			// Crash_load, because somebody has just lost everything they
+			// owned and a god ought to hear about it on any setting.
+			s.wizlogInvis(obs.LogBrief, game.LevelImmortal, c,
+				"%s entering game, rented equipment lost (no $).", c.Name)
 			// The C crash-saves them here — with nothing, since the objects
 			// were never loaded — which is what actually destroys the file's
 			// contents. "Donated to the Salvation Army", says the message.
@@ -86,12 +101,47 @@ func (s *Server) loadObjects(ctx context.Context, c *game.Character) (lost bool,
 
 	s.logger.Info("retrieving saved items and entering the game",
 		"character", c.Name, "rentcode", f.Code.String(), "items", len(f.Objects))
+	// The rentcode switch (objsave.c:484-506), one mudlog per case, all
+	// NRM at MAX(LVL_IMMORT, GET_INVIS_LEV(ch)) except the default, which
+	// is BRF because an undefined code means the file is wrong.
+	switch f.Code {
+	case player.RentRented:
+		s.wizlogInvis(obs.LogNormal, game.LevelImmortal, c,
+			"%s un-renting and entering game.", c.Name)
+	case player.RentCrash:
+		s.wizlogInvis(obs.LogNormal, game.LevelImmortal, c,
+			"%s retrieving crash-saved items and entering game.", c.Name)
+	case player.RentCryo:
+		s.wizlogInvis(obs.LogNormal, game.LevelImmortal, c,
+			"%s un-cryo'ing and entering game.", c.Name)
+	case player.RentForced, player.RentTimedOut:
+		s.wizlogInvis(obs.LogNormal, game.LevelImmortal, c,
+			"%s retrieving force-saved items and entering game.", c.Name)
+	default:
+		s.wizlogInvis(obs.LogBrief, game.LevelImmortal, c,
+			"SYSERR: %s entering game with undefined rent code %d.", c.Name, int(f.Code))
+	}
 
 	if err := s.engine.DoSync(ctx, func(w *game.Live) {
 		restoreObjects(w, c, f.Objects)
 	}); err != nil {
 		return false, err
 	}
+
+	// "Little hoarding check. -gg 3/1/98" (objsave.c:618-622): every load
+	// reports the object count against max_obj_save, and nothing enforces
+	// it — the receptionist is the only thing that refuses (see
+	// game.MaxObjSave's own note). MAX(GET_INVIS_LEV(ch), LVL_GOD), the
+	// arguments the other way round from everywhere else in the file and
+	// at a higher floor: this one is for gods, not immortals.
+	//
+	// The count is the top level of the file, which is what the C's
+	// num_objs counts too — its rent file is flat, and so are this port's
+	// binary and ascii ones. A yaml file with real containment can hold
+	// more objects than this number names.
+	s.wizlogInvis(obs.LogNormal, game.LevelGod, c,
+		"%s (level %d) has %d object%s (max %d).", c.Name, c.Record.Level,
+		len(f.Objects), pluralS(len(f.Objects)), game.Tuning().MaxObjSave)
 
 	// Turn it into a crash file, as the C does by rewinding and rewriting the
 	// header (objsave.c:617): the same file cannot be un-rented twice, and a
@@ -350,6 +400,19 @@ func (s *Server) RentCharacter(w *game.Live, c *game.Character, mode session.Ren
 		s.logger.Info("has rented", "character", c.Name,
 			"mode", code.String(), "per_day", cost,
 			"total", c.Record.Points.Gold+c.Record.Points.BankGold)
+		// mudlog(buf, NRM, MAX(LVL_IMMORT, GET_INVIS_LEV(ch)), TRUE)
+		// (objsave.c:1138), which gen_receptionist reaches once for both
+		// of its branches — `buf` was written differently in each
+		// (objsave.c:1126-1127 for rent, :1135 for cryo) and the log call
+		// sits after the if/else, so the two texts are quite unalike.
+		if code == player.RentCryo {
+			s.wizlogInvis(obs.LogNormal, game.LevelImmortal, c,
+				"%s has cryo-rented.", c.Name)
+		} else {
+			s.wizlogInvis(obs.LogNormal, game.LevelImmortal, c,
+				"%s has rented (%d/day, %d tot.)", c.Name, cost,
+				c.Record.Points.Gold+c.Record.Points.BankGold)
+		}
 		// extract_char: they leave the game. Closing the session takes the
 		// usual Leave path, which is what removes them from the world.
 		if leaver != nil {
@@ -404,4 +467,14 @@ func (s *Server) crashSaveAll(ctx context.Context) {
 			s.logger.Error("crash-saving", "character", c.Name, "error", err)
 		}
 	}
+}
+
+// pluralS is the C's own `n != 1 ? "s" : ""`, written inline at each of the
+// mudlog call sites that counts something — the hoarding check
+// (objsave.c:620) and gain_exp's level line (limits.c:302).
+func pluralS(n int) string {
+	if n == 1 {
+		return ""
+	}
+	return "s"
 }

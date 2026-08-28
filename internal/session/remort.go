@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/gerrowadat/disgracelands/internal/game"
+	"github.com/gerrowadat/disgracelands/internal/obs"
 )
 
 // remort and redeem, ported from do_remort (act.wizard.c:355) and
@@ -163,6 +164,11 @@ func doRedeem(c *Context) error {
 	game.SetSpecFlags(rec, game.SpecFlagsOf(rec).Clear(game.PaladinFallen))
 	c.Send("Redeemed.\r\n")
 	victim.Tell("You feel your paladinly powers restored! Rejoice! You live again in God's glory!\r\n")
+	// mudlog(buf, BRF, MAX(LVL_GOD, GET_INVIS_LEV(ch)), TRUE)
+	// (act.wizard.c:2065-2066) — a `<DoC>` addition that still follows
+	// SCMD_PARDON's shape exactly, victim's name first.
+	c.wizlogInvis(obs.LogBrief, game.LevelGod, c.Character,
+		"(GC) %s redeemed by %s", victim.Name, c.Character.Name)
 	c.saveVictim(victim)
 	return nil
 }
