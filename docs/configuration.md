@@ -19,8 +19,9 @@ every flag appears here, but it cannot check that the prose is accurate.
 > core, the economy, communication, boards, mail, houses, special
 > procedures and the immortal commands are all built. Phase 6 (OasisOLC)
 > was decided against, in favour of `reloadmob`/`reloadzone`/`reloadobj`/
-> `reloadshop` — edit `data/world` directly and reload it into the running
-> server without a restart; see `docs/proposals/go-port-plan.md`'s own
+> `reloadshop` — edit the world files in your `--lib-dir` directly and
+> reload them into the running server without a restart; see
+> `docs/proposals/go-port-plan.md`'s own
 > Phase 6 write-up. Phase 7 (cutover) has not started. Settings marked
 > *(inert)* are accepted and
 > validated but do not yet affect anything, for reasons of their own —
@@ -75,6 +76,11 @@ container nesting (an item saved inside a bag comes back inside it): every
 other player format's on-disk shape has nowhere to record that, a
 deliberate, documented deviation — see `docs/deviations.md`, "Renting
 empties your bags and strips your body".
+
+Throughout the examples below, `data` stands for whatever lib-dir you are
+converting — it is `dlctl`'s own default for these flags, not a directory
+this repository has. The one that ships is `examples/stock/binary`, which
+is also `dlmud`'s default `--lib-dir`.
 
 Convert a whole `lib/`-shaped directory — world, roster, bans, boards,
 mail, houses, reports, the clock, xnames, damage messages, socials and

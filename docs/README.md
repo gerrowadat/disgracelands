@@ -122,6 +122,13 @@ the port progresses.
 - **[ascii-pfile-format.md](investigations/ascii-pfile-format.md)** — the
   ascii_pfiles format, field by field. Read as a specification rather than
   a finding: it is what the Go implementation is written against.
+- **[lib-directory-format.md](investigations/lib-directory-format.md)** —
+  every file in the real archived `lib/`: what writes it, what reads it,
+  and what its format actually is as opposed to what it is supposed to be.
+  The empirical companion to `design/data-format.md`, which was written
+  against the *stock* `lib/` and a partial survey; §9 says which parts
+  should reach the Go server's data directory and corrects where that
+  document guessed wrong.
 
 ## Not this directory
 

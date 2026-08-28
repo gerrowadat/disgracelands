@@ -226,7 +226,7 @@ everything else — the
 32-bit ILP32/shop-price checks (`gcc-multilib`, installed unconditionally
 there, not path-filtered: a release is exactly the point where "probably
 didn't touch the layout code" stops being good enough), the C-vs-Go
-world-parity check, the licence check, two doc-coverage checks, a check
+world-parity check, the licence check, three doc-coverage checks, a check
 that `examples/stock/yaml`/`examples/mini/yaml` still match a fresh
 `dlctl lib import` of their binary source, a container build, and a
 cross-compile of both binaries for every published platform

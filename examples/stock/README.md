@@ -10,11 +10,13 @@ them.
   read. The name is CircleMUD's own historical shorthand for "the original
   distribution format" (`bin2ascii`, `ascii2bin`, ...) rather than a literal
   binary encoding — every file in here is plain ASCII, same as it always
-  was. It is a copy of this repo's own `data/` directory, which is in turn
-  fetched unmodified from
+  was. It is fetched unmodified from
   `https://www.circlemud.org/pub/CircleMUD/3.x/Old-Betas/circle30bpl20.tar.gz`
-  (sha256 `1cd2cf0268c27dd6e6ae4d996a620bbd56da2552beb434bf372b4c01cd8bb415`)
-  — see PR #29 for why `data/` is stock rather than the archive's own world.
+  (sha256 `1cd2cf0268c27dd6e6ae4d996a620bbd56da2552beb434bf372b4c01cd8bb415`),
+  and it is `dlmud`'s default `--lib-dir` — see PR #29 for why what ships
+  here is stock rather than the archive's own world. (It used to live at
+  `data/` in the repository root, which several older documents still call
+  it; there is no `data/` directory now.)
 - **`yaml/`** is the same world, converted through this project's own
   yaml format (`docs/design/data-format.md`), one file per zone
   plus `config/`, `state/` and `text/help/help.yaml`.
@@ -47,9 +49,24 @@ produced only `clock.yaml` and an empty `houses.yaml`; there is no
 `pfiles/` to convert because there is no roster.
 
 Re-run the command above after editing anything in `binary/` to keep
-`yaml/` in sync — nothing checks the two stay matched automatically, the
-same way nothing checks `data/`'s own single copy against anything. The
-seven subsystem commands `lib import` wraps are still there individually,
+`yaml/` in sync. Nothing checks it on an ordinary push, but a release
+does: `scripts/release.sh` regenerates both example worlds before it
+dispatches anything, and `release.yml` then re-runs `lib import` into a
+temporary directory and diffs it against what is checked in, for
+`examples/mini` as well as this one. A mismatch there stops the release.
+
+**Delete `binary/etc/time` before regenerating.** `binary/` is also the
+server's default `--lib-dir`, so running `dlmud` with no flags at all — or
+`make run`, or the compose stack — writes the mud clock's epoch there on
+shutdown. `lib import` reads it, and the regenerated `state/clock.yaml`
+then carries whenever *you* last stopped a server rather than the epoch
+this example is supposed to ship. It is deliberately not gitignored, so it
+shows up in `git status` as the untracked file it is; delete it and
+regenerate. Nothing else the server writes into `binary/` reaches
+`lib import`'s output, because the rest is player data and there is none
+here to import.
+
+The seven subsystem commands `lib import` wraps are still there individually,
 for converting just one of them, or into a directory laid out differently
 than `--to-dir`'s own subdirectory-per-subsystem default.
 

@@ -273,7 +273,7 @@ answer:
   `scripts/release.sh`, or by a `v*.*.*` tag push, or by hand via
   `workflow_dispatch`): everything above, unconditionally installing the
   32-bit toolchain and enforcing that those tests did *not* skip, plus
-  world parity (`make parity`), the license check, the two doc-coverage
+  world parity (`make parity`), the license check, the three doc-coverage
   checks, a check that `examples/stock/yaml`/`examples/mini/yaml` still
   match a fresh `dlctl lib import` of their binary source, the play
   regression suite (`make play`, below), a container build, and a
@@ -863,10 +863,17 @@ internal/engine/    the pulse loop
 internal/server/    listeners, connections, the login flow, combat, ticks
 internal/session/   per-connection state and the commands themselves
 internal/telnet/    telnet negotiation, CHARSET, GMCP
+internal/colour/    the &-code renderer, and stripping it for a plain client
+internal/signals/   the whole signal disposition: one channel, one dispatcher
 internal/auth/      password verification; auth/descrypt is the DES port
 internal/rng/       the two generators behind --rng
-internal/obs/       metrics, health and readiness
+internal/obs/       metrics, health, readiness, and the OpenTelemetry log format
+internal/parity/    driving both servers and diffing transcripts, for test/parity
 internal/buildinfo/ version stamping
+test/play/          the play regression suite (build tag `play`, `make play`)
+test/parity/        session parity (build tag `parity`, `make session-parity`)
+testdata/parity/    the session scripts test/parity types at both servers
+config/             game.yaml, the commented example for --config
 examples/           runtime data: stock world, text, and (never committed) players
 reference/          the C server and other lineage codebases, for comparison
 docs/proposals/go-port-plan.md   the design and the phase order

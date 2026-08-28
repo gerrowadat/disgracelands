@@ -118,9 +118,9 @@ a linkdead body stays to reconnect to, and it shuts down cleanly on SIGTERM.
 
 310 of the C's 318 commands answer and every slice of Phase 5 is built. What is
 left — seven OasisOLC editors and `slowns` — is declined rather than pending:
-Phase 6 was decided against, in favour of editing `data/world` directly and
-reloading it into the running server without a restart
-(`reloadmob`/`reloadzone`/`reloadobj`/`reloadshop`) — see
+Phase 6 was decided against, in favour of editing the world files in your
+`--lib-dir` directly and reloading them into the running server without a
+restart (`reloadmob`/`reloadzone`/`reloadobj`/`reloadshop`) — see
 `docs/proposals/go-port-plan.md` §10 for the eight, and its own Phase 6
 write-up for what it became instead. Phase 7 (cutover) has not started.
 
@@ -143,8 +143,11 @@ docker compose -f build/docker-compose.yml up --build
 
 The runtime image is distroless/static with no shell (~13MB), which is why
 `autorun`'s restart-in-a-shell-loop model is replaced by the container
-runtime's restart policy plus SIGTERM handling in the server. `data/` is a
-volume, since it is mutable state.
+runtime's restart policy plus SIGTERM handling in the server. The image
+declares `/data` as a volume and defaults to `--lib-dir=/data`; it ships no
+world of its own, so that volume is where you mount one. It is mutable
+state — players, houses, boards, mail — and an image rebuild must not lose
+it.
 
 ## Where the game data lives
 

@@ -1,7 +1,7 @@
 # Day-to-day CI for the Go port: correctness and lint, nothing else.
 #
 # This used to also run the 32-bit layout/price checks, the C-vs-Go world
-# parity check, the license check, a container build and two doc-coverage
+# parity check, the license check, a container build and three doc-coverage
 # checks, on every push and pull request. All of that moved to
 # release.yml, which runs the same things (plus a version bump and a
 # release) but only when a release is actually being cut — see that file's
