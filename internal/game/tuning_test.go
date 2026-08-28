@@ -24,6 +24,7 @@ func TestDefaultGameTuningMatchesConfigC(t *testing.T) {
 		LevelCanShout:    1,     // config.c:61
 		HollerMoveCost:   20,    // config.c:64
 		MaxFileSize:      50000, // config.c:233
+		MaxBadPws:        3,     // config.c:236
 	}
 	if d != want {
 		t.Errorf("DefaultGameTuning() = %+v, want %+v", d, want)
@@ -76,6 +77,11 @@ func TestGameTuningValidate(t *testing.T) {
 		{"negative level_can_shout", func(g *GameTuning) { g.LevelCanShout = -1 }, true},
 		{"negative holler_move_cost", func(g *GameTuning) { g.HollerMoveCost = -1 }, true},
 		{"negative max_filesize", func(g *GameTuning) { g.MaxFileSize = -1 }, true},
+		// One is the floor rather than zero: `++(d->bad_pws) >= max_bad_pws`
+		// at zero would disconnect before a password could be typed.
+		{"one max_bad_pws", func(g *GameTuning) { g.MaxBadPws = 1 }, false},
+		{"zero max_bad_pws", func(g *GameTuning) { g.MaxBadPws = 0 }, true},
+		{"negative max_bad_pws", func(g *GameTuning) { g.MaxBadPws = -1 }, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

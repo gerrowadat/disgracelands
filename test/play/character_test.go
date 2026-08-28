@@ -9,6 +9,7 @@
 package play
 
 import (
+	"strings"
 	"testing"
 	"time"
 )
@@ -438,8 +439,17 @@ func TestADisplacedConnectionDoesNotSaveOverTheBody(t *testing.T) {
 	m.noServerErrors()
 }
 
-// TestTheWrongPassword, and that the server says nothing useful about which
-// half was wrong.
+// TestTheWrongPassword: max_bad_pws (config.c:236) end to end, and that the
+// server says nothing useful about which half was wrong.
+//
+// Three things at once, because they are one sequence a player types: the
+// first two wrong passwords ask again rather than hanging up
+// (interpreter.c:1470-1472), the third disconnects (:1467-1469), and the next
+// successful login is told how many there were (:1511-1518). The count that
+// survives the disconnect is written to the *pfile*, which is why this is
+// worth having here as well as in internal/server: this is the only suite
+// that boots a real server on a real lib directory and so the only one where
+// that write is the real one.
 func TestTheWrongPassword(t *testing.T) {
 	m := start(t, miniClassic)
 	c := m.dial()
@@ -451,8 +461,43 @@ func TestTheWrongPassword(t *testing.T) {
 	back.expect("By what name")
 	back.send("Tourist")
 	back.expect("Password:")
-	back.send("nottherightone")
-	back.expect("Wrong password.")
+
+	// Two strikes, each answered with another prompt. The prompts are
+	// counted rather than matched: there is already a "Password:" in the
+	// transcript, from before any of this.
+	for i := 1; i <= 2; i++ {
+		back.send("nottherightone")
+		back.expectCount("Wrong password.", i)
+		back.expectCount("Password:", i+1)
+	}
+
+	// The third is the door, and it says something different on the way out.
+	back.send("stillnottherightone")
+	contains(t, "the third wrong password", back.expectEOF(),
+		"Wrong password... disconnecting.")
+	back.close()
+
+	// A fresh connection starts from zero strikes -- the counter max_bad_pws
+	// is measured against belongs to the socket (structs.h:1019), not to the
+	// character -- and is told what happened while nobody was looking.
+	fresh := m.dial()
+	fresh.expect("By what name")
+	fresh.send("Tourist")
+	fresh.expect("Password:")
+	fresh.send("tourpass")
+	contains(t, "the login after three failures", fresh.expect("PRESS RETURN"),
+		"3 LOGIN FAILURES SINCE LAST SUCCESSFUL LOGIN.")
+	fresh.send("")
+	fresh.enterGame()
+	fresh.quit()
+	fresh.close()
+
+	// Reporting it clears it: the next login is a quiet one.
+	quiet := m.dial()
+	quiet.login("Tourist", "tourpass")
+	if strings.Contains(quiet.transcript(), "LOGIN FAILURE") {
+		t.Errorf("a clean login was told about failures anyway:\n%s", quiet.transcript())
+	}
 
 	m.noServerErrors()
 }

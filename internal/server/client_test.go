@@ -9,6 +9,8 @@ package server
 import (
 	"bytes"
 	"context"
+	"errors"
+	"io"
 	"net"
 	"strings"
 	"testing"
@@ -240,6 +242,33 @@ func (c *client) sendRaw(b []byte) {
 }
 
 func (c *client) close() { _ = c.conn.Close() }
+
+// expectEOF reads until the server hangs up, and fails if it does not.
+//
+// It is the assertion for anything that ends with a disconnect rather than a
+// message: the message on its own proves nothing, because sending it and
+// closing the socket are two separate things and the C's CON_CLOSE only does
+// the second one on the next pass through the game loop.
+func (c *client) expectEOF() string {
+	c.t.Helper()
+
+	_ = c.conn.SetReadDeadline(time.Now().Add(5 * time.Second))
+	buf := make([]byte, 4096)
+	for {
+		n, err := c.conn.Read(buf)
+		if n > 0 {
+			c.raw = append(c.raw, buf[:n]...)
+			c.text.Write(c.parser.Feed(nil, buf[:n]))
+			c.parser.Events()
+		}
+		if errors.Is(err, io.EOF) {
+			return c.text.String()
+		}
+		if err != nil {
+			c.t.Fatalf("waiting for the server to hang up, the transcript was:\n%s\n(%v)", c.text.String(), err)
+		}
+	}
+}
 
 // echoRestored reports whether the bytes contain IAC WONT ECHO — the server
 // telling the client it may echo again.

@@ -694,7 +694,9 @@ historical 100ms), `--allow-legacy-passwords`, `--max-players`,
 
 Much of `reference/moderncserver/src/config.c` is compile-time game tuning
 (rent costs, level caps, OK/NOPERSON message strings, autosave behaviour).
-**Built 2026-08-23** for the ten fields decided worth it (`docs/deviations.md`
+**Built 2026-08-23** for the ten fields decided worth it, and an eleventh
+(`max_bad_pws`) on 2026-08-28 once the behaviour behind it existed to tune
+(`docs/deviations.md`
 has the list and the reasoning field by field): a YAML **config file** —
 `--config`, `config/game.yaml` as the shipped, fully-commented example —
 with every value defaulting to today's `config.c` value so an empty (or
@@ -2310,7 +2312,9 @@ they touch:
    why. Two behaviours picked for tunability turned out not to exist yet
    at all (`max_bad_pws`'s disconnect, `tunnel_size`'s occupancy limit) —
    `docs/deviations.md` covers those as their own gap, separate from the
-   config-file work.
+   config-file work. `max_bad_pws`'s half was built on 2026-08-28 (issue
+   #135), `GameTuning.MaxBadPws` added with it; `tunnel_size` is still
+   open.
 4. ~~**Does `background`'s own pager need wiring up?**~~ **Settled: yes,
    and the design cost was smaller than it looked from here.** The
    worry was that `StatePaging` had never had to answer "what state do I

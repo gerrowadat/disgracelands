@@ -1277,10 +1277,12 @@ Listed here so they are not mistaken for deliberate differences.
   the C's order depends on whether the server has been restarted since the
   message was sent.
 
-- **Ten of `config.c`'s constants are runtime settings now, named by name.**
-  `free_rent`, `min_rent_cost`, `max_obj_save`, `auto_save`, `autosave_time`,
-  the two corpse timers, `level_can_shout`, `holler_move_cost` and
-  `max_filesize` moved from a compiled-in value to `game.GameTuning`
+- **Eleven of `config.c`'s constants are runtime settings now, named by
+  name.** `free_rent`, `min_rent_cost`, `max_obj_save`, `auto_save`,
+  `autosave_time`, the two corpse timers, `level_can_shout`,
+  `holler_move_cost`, `max_filesize` and `max_bad_pws` (the last added
+  2026-08-28, with the behaviour it governs — see below) moved from a
+  compiled-in value to `game.GameTuning`
   (`internal/game/tuning.go`), overridable by `--config`'s game.yaml and
   hot-reloadable on `SIGHUP`. This is a deliberate, field-by-field reversal
   of "the archive wins" — a decision, not a format pass — made 2026-08-23.
@@ -1297,16 +1299,37 @@ Listed here so they are not mistaken for deliberate differences.
   setting — ported anyway, and now genuinely reachable by turning
   `free_rent` off in `config/game.yaml`.
 
-- **`max_bad_pws` and `tunnel_size` were picked for tunability, then found
-  unbuilt.** `PlayerRecord.BadPasswords` counts consecutive failed logins
-  but nothing reads it to disconnect anyone, and the `TUNNEL` room flag is
-  recognised (parsed, named) but nothing enforces an occupancy limit on it.
-  Both behaviours are missing from the port entirely, not merely hardcoded,
-  so there is no constant to unhardcode yet. Deferred rather than built as
-  a side effect of a config-file change: whoever ports do_gen_comm's tunnel
-  check or the bad-password disconnect should also wire it to
-  `GameTuning.MaxBadPws`/`TunnelSize` at the same time, rather than
-  reopening `config.c` again for it.
+- **`tunnel_size` was picked for tunability, then found unbuilt.** The
+  `TUNNEL` room flag is recognised (parsed, named) but nothing enforces an
+  occupancy limit on it. The behaviour is missing from the port entirely,
+  not merely hardcoded, so there is no constant to unhardcode yet. Deferred
+  rather than built as a side effect of a config-file change: whoever ports
+  do_gen_comm's tunnel check should wire it to a `GameTuning.TunnelSize` at
+  the same time, rather than reopening `config.c` again for it.
+
+  `max_bad_pws` was the other half of this entry until 2026-08-28, and is
+  no longer a gap: the disconnect it governs is built (issue #135), and
+  `GameTuning.MaxBadPws` was added with it, exactly as this entry asked
+  for. The one difference from the C is the next entry.
+
+- **A wrong password does not overwrite a player who is already logged in.**
+  `nanny`'s CON_PASSWORD counts the attempt on the character's own record
+  and saves it — `GET_BAD_PWS(d->character)++; save_char(d->character);`
+  (`interpreter.c:1466-1467`). `d->character` there is the copy `load_char`
+  made when the name was typed, so if the character being guessed at is
+  *already playing*, that `save_char` writes their login-time snapshot over
+  everything they have done since. Somebody else's typo could cost you the
+  last half hour.
+
+  This port bumps the tally on the record as it is *on disk* — load,
+  increment, write back (`Server.RecordBadPassword`,
+  `internal/server/server.go`) — and never touches the live character. The
+  counter still counts, the notice still reports, and nothing is lost. The
+  live player's own next save then writes their in-memory tally back over
+  it, so attempts made while they were online are not reported to them
+  afterwards; the C loses those too, by a different route. Failing to write
+  the counter at all is not treated as a failed login, which is what the C
+  does with `save_char`'s ignored return.
 
 - **`auto_save` does not (yet) gate `do_save`.** `config.c`'s comment on
   `auto_save` is really about two things: the periodic sweep (now tunable,

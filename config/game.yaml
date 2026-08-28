@@ -49,3 +49,10 @@
 # max_filesize (config.c:233), in bytes: bug/idea/typo reports refuse to
 # append once their file reaches this size.
 # max_filesize: 50000
+
+# max_bad_pws (config.c:236): how many wrong passwords one connection may
+# type at the login prompt before it is disconnected. Counted per connection,
+# not per character — reconnecting starts again from zero. The per-character
+# tally is what the "N LOGIN FAILURES SINCE LAST SUCCESSFUL LOGIN" notice
+# reports on the next successful login.
+# max_bad_pws: 3

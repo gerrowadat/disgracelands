@@ -452,9 +452,9 @@ Two C options have no flag equivalent:
 ## A config file: `--config`
 
 `--config` (`DL_CONFIG`) names a YAML file of `reference/moderncserver/src/
-config.c`'s runtime-tunable values — ten fields, picked deliberately rather
-than reopening `config.c` wholesale; see `docs/deviations.md` for which
-and why. `config/game.yaml` in this repo is the shipped example, every
+config.c`'s runtime-tunable values — eleven fields, picked deliberately
+rather than reopening `config.c` wholesale; see `docs/deviations.md` for
+which and why. `config/game.yaml` in this repo is the shipped example, every
 key present but commented out at its `config.c` default, so it can be
 copied and edited rather than written from scratch.
 
@@ -465,7 +465,8 @@ for exactly this reason.
 
 The running server rereads this file on `SIGHUP` and applies it live, no
 restart needed. A file that fails to parse, or parses but fails validation
-(`autosave_time: 0`, a negative cost, ...), is logged and ignored — the
+(`autosave_time: 0`, `max_bad_pws: 0`, a negative cost, ...), is logged and
+ignored — the
 server keeps running on whatever tuning it had before. `docs/operations.md`
 has how to send a signal under each runtime, and what else can be reloaded
 without a restart.
@@ -474,6 +475,7 @@ without a restart.
 free_rent: false
 min_rent_cost: 250
 level_can_shout: 5
+max_bad_pws: 3
 ```
 
 Everything else in `config.c` — `pk_allowed`, the room vnums, autowiz, the
