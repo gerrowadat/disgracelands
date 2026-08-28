@@ -9,6 +9,9 @@ entries:
   - ALIASES
   file: alias-aliases.txt
 - keywords:
+  - ANNOUNCE
+  file: announce.txt
+- keywords:
   - ANSI
   - COLOR
   file: ansi-color.txt

@@ -1,0 +1,24 @@
+ANNOUNCE
+
+Usage: announce [off | brief | all]
+
+The game-wide news is not a channel and not a room: it is a line sent to
+every player online at once, for four events -- somebody arriving for
+the first time, a death trap claiming a victim, a remort, and anybody at
+all rising a level.  ANNOUNCE controls how much of that you hear.
+
+  > announce off
+  Your announcements are now Off.  You will hear none of them.
+
+  > announce brief
+  Your announcements are now Brief.  You will hear about newcomers,
+  death traps and remorts, but not levels.
+
+  > announce all
+  Your announcements are now All.  You will hear everything, which is
+  where every new character starts.
+
+'announce' with no argument shows your current setting instead of
+changing it.
+
+See also: COLOR, SYSLOG
