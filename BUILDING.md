@@ -75,8 +75,9 @@ one to a release is a line in `PLATFORMS` in `scripts/build-dist.sh`.
 Windows is a *build* target, not a tested one: the release checks that
 both binaries compile and link for it, and the test suite runs on Linux
 only. The server has no Unix-only runtime dependency (no cgo, no unix
-sockets, no `syscall` beyond signal names), but `SIGHUP`-to-reload
-`--config` is a Unix signal and will never fire there — restart instead.
+sockets, no `syscall` beyond signal names), but the `SIGHUP` that reloads
+the game tuning is a Unix signal and will never fire there — restart
+instead.
 
 Two binaries:
 

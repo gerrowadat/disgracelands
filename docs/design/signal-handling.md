@@ -28,7 +28,7 @@ communicated with it by touching files (`.killscript`, `.fastboot`,
 
 Two of those had Go counterparts before this document existed, wired
 independently: `signal.NotifyContext` for `SIGINT`/`SIGTERM`, and a
-goroutine of its own for the `SIGHUP` that re-reads `--config`. Both worked,
+goroutine of its own for the `SIGHUP` that re-reads the game tuning. Both worked,
 and neither said what should happen to the other six, what a reload was
 allowed to touch, or what an operator sends a server that has stopped
 responding. Those are the questions this settles.
@@ -105,7 +105,7 @@ Three classes, and the line between the first two is the whole point of
 this section.
 
 **A. Whole-value files — a signal may reload these.** Game tuning
-(`--config`), the canned text `LoadText` reads, the ban list, the
+(`<lib-dir>/config/game.yaml`), the canned text `LoadText` reads, the ban list, the
 disallowed-name list. Each is read wholesale into a fresh value and swapped
 behind an atomic pointer or a mutex; nothing in the running world holds a
 pointer into them. There is no argument to supply and no way for the reload
@@ -114,8 +114,8 @@ to refuse, which is what makes them expressible as a signal at all.
 `SIGHUP` does the lot, in one pass, each independently: a broken `bans` file
 does not stop the tuning reload. One log line per subsystem, plus a summary.
 *Built so far: the game tuning. The other three are §9 item 3, and until it
-lands a `SIGHUP` with no `--config` set warns that there is nothing to
-re-read rather than reloading the rest.*
+lands a `SIGHUP` at a data directory with no `config/game.yaml` in it warns
+that there is nothing to re-read rather than reloading the rest.*
 
 **B. World data — only commands may reload this.** Rooms, mobiles, objects,
 zones, shops. Reloading a prototype is surgery on live instances, not a

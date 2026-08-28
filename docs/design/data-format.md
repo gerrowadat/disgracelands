@@ -987,6 +987,18 @@ wizlist:
   autowiz: false
 ```
 
+**Built 2026-08-23, and living here since 2026-08-28.** Ten of the fields
+sketched above shipped — `docs/deviations.md` has which, and why the rest
+of `config.c` stayed a constant — as flat keys rather than the sections
+above, there being ten of them and no `schema:` stamp yet. The *location*
+is this section's, unchanged: `<lib-dir>/config/game.yaml`, read at boot
+and re-read on `SIGHUP`, optional (no file is `config.c`'s own behaviour
+exactly), and carried across unconverted by `dlctl import`. It shipped
+first as a repo-level `config/` directory named by `--config`, which was
+the wrong place for exactly the reason the next paragraph gives; `--config`
+remains as a path override. Every `examples/` data directory ships the
+annotated template, in both formats.
+
 The line between this file and the flags in `docs/configuration.md` is
 worth stating because it will otherwise be relitigated every time something
 new is added:

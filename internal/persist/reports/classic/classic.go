@@ -58,8 +58,8 @@ type Store struct {
 	// was non-zero, which today is only ever the tests pinning a small size
 	// to exercise the file-full refusal (act.other.c:908-911). Everywhere
 	// else, Append reads game.Tuning().MaxFileSize fresh on every call, so a
-	// SIGHUP reload of config/game.yaml (cmd/dlmud) takes effect on the next
-	// report filed, with no plumbing back into this Store required.
+	// SIGHUP reload of <lib-dir>/config/game.yaml (cmd/dlmud) takes effect on
+	// the next report filed, with no plumbing back into this Store required.
 	maxFileSize int64
 }
 

@@ -11,10 +11,11 @@
 // variable name is derived from the flag name rather than written out
 // separately, so the two cannot drift apart.
 //
-// A config file layer (§9.1) will sit between environment and defaults when
-// the game-tuning values currently living in the C tree's src/config.c are
-// ported. The precedence chain here already has the slot for it; there is
-// nothing to put in it yet.
+// The config-file layer (§9.1) that sits between environment and defaults is
+// the game tuning ported out of the C tree's src/config.c: see GameConfigPath
+// and LoadGameTuningFor. It is deliberately not part of this precedence
+// chain's own settings — it configures the game, not the deployment, so it
+// lives in the data directory and is resolved from it.
 package config
 
 import (
@@ -39,10 +40,11 @@ type Config struct {
 	PlayerDir string // empty means "derive from LibDir"
 	WorldDir  string // empty means "derive from LibDir"
 
-	// GameConfigFile is a game.yaml overlaying config.c's runtime-tunable
-	// values (game.GameTuning) on top of their archive defaults. Empty means
-	// no file: pure defaults, which is config.c's own behaviour exactly. See
-	// LoadGameTuning and cmd/dlmud's SIGHUP handling.
+	// GameConfigFile overrides where the game-tuning file is read from.
+	// Empty — the usual case — means <lib-dir>/config/game.yaml, which is
+	// optional: a data directory that has never been tuned has no such
+	// file, and no file is config.c's own behaviour exactly. See
+	// GameConfigPath, LoadGameTuningFor and cmd/dlmud's SIGHUP handling.
 	GameConfigFile string
 
 	// Pluggable format selection (docs/proposals/go-port-plan.md §5, §6).
@@ -176,6 +178,23 @@ func (c *Config) WorldPath() string {
 		return c.WorldDir
 	}
 	return Dir(c.LibDir, SubsystemWorld, c.WorldFormat)
+}
+
+// GameConfigPath returns the game-tuning file to read: --config if one was
+// given, otherwise LibDir/config/game.yaml.
+//
+// The tuning is game configuration rather than deployment configuration —
+// whether rent is free is a property of this game, travels with the world,
+// belongs in its backup and is worth reviewing alongside it, in the way a
+// listen address or a certificate path is not (docs/design/data-format.md
+// §6). So it lives in the data directory, next to config/names.yaml and the
+// rest, rather than in a directory of its own beside the binary. --config
+// stays for the deployment that genuinely wants it elsewhere.
+func (c *Config) GameConfigPath() string {
+	if c.GameConfigFile != "" {
+		return c.GameConfigFile
+	}
+	return c.LibDir + "/config/game.yaml"
 }
 
 // Known format names. These are validated here so a typo fails at startup
@@ -330,7 +349,7 @@ func Load(args []string, lookupEnv func(string) (string, bool), out io.Writer) (
 	str("lib-dir", "Runtime data directory (world, text, player data)", &cfg.LibDir)
 	str("player-dir", "Player-data directory (default: <lib-dir>/pfiles)", &cfg.PlayerDir)
 	str("world-dir", "World-data directory (default: <lib-dir>/world)", &cfg.WorldDir)
-	str("config", "Game-tuning config file, e.g. config/game.yaml (empty = config.c's own defaults)", &cfg.GameConfigFile)
+	str("config", "Game-tuning config file (default: <lib-dir>/config/game.yaml, and optional there)", &cfg.GameConfigFile)
 
 	str("player-format", "Player-file format the server runs on: "+strings.Join(serverPlayerFormats, ", ")+
 		" (the tooling also reads and writes: "+strings.Join(knownPlayerFormats, ", ")+")", &cfg.PlayerFormat)

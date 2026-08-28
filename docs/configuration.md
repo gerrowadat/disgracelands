@@ -38,7 +38,7 @@ every flag appears here, but it cannot check that the prose is accurate.
 | `--lib-dir` | `examples/stock/binary` | Runtime data directory: world files, help text, boards, player data. The same directory the C server takes with `-d`. |
 | `--player-dir` | *(empty)* | Player-data directory. Empty means `<lib-dir>/pfiles` (`ascii`/`binary`) or `<lib-dir>/players` (`yaml`), following `--player-format`. |
 | `--world-dir` | *(empty)* | World-data directory. Empty means `<lib-dir>/world`. |
-| `--config` | *(empty)* | Game-tuning config file (see "A config file: `--config`" below). Empty means `config.c`'s own defaults. |
+| `--config` | *(empty)* | Overrides where the game-tuning file is read from (see "A config file: `<lib-dir>/config/game.yaml`" below). Empty means `<lib-dir>/config/game.yaml`, and no file there means `config.c`'s own defaults. |
 
 The default points at `examples/stock/README.md`'s checked-in stock world
 so a fresh clone boots something playable with no setup — point
@@ -449,27 +449,45 @@ Two C options have no flag equivalent:
   pointing at `--listen-telnet`/`--listen-telnets`. There are three
   listeners now and no sensible way to guess which one was meant.
 
-## A config file: `--config`
+## A config file: `<lib-dir>/config/game.yaml`
 
-`--config` (`DL_CONFIG`) names a YAML file of `reference/moderncserver/src/
-config.c`'s runtime-tunable values — eleven fields, picked deliberately
-rather than reopening `config.c` wholesale; see `docs/deviations.md` for
-which and why. `config/game.yaml` in this repo is the shipped example, every
-key present but commented out at its `config.c` default, so it can be
-copied and edited rather than written from scratch.
+The game tuning is a YAML file of `reference/moderncserver/src/config.c`'s
+runtime-tunable values — eleven fields, picked deliberately rather than
+reopening `config.c` wholesale; see `docs/deviations.md` for which and why.
 
-An empty file, a comments-only file (the shipped example, as-is), or no
-`--config` at all all reproduce `config.c`'s own values exactly — the
-precedence chain's config-file slot sits between environment and defaults
-for exactly this reason.
+**It lives in the data directory**, at `<lib-dir>/config/game.yaml`, beside
+`config/names.yaml` and the rest. That is where game configuration belongs
+and deployment configuration does not: whether rent is free is a property
+of *this game*, travels with the world, goes into the same backup and is
+worth reviewing alongside it, in the way a listen address, a certificate
+path or a log level never is (`docs/design/data-format.md` §6). Nothing on
+the command line names it, and a server given nothing but `--lib-dir` is
+configured by the world it is running.
 
-The running server rereads this file on `SIGHUP` and applies it live, no
-restart needed. A file that fails to parse, or parses but fails validation
-(`autosave_time: 0`, `max_bad_pws: 0`, a negative cost, ...), is logged and
-ignored — the
-server keeps running on whatever tuning it had before. `docs/operations.md`
-has how to send a signal under each runtime, and what else can be reloaded
-without a restart.
+Every example data directory ships the annotated template — the default
+`--lib-dir` included, at `examples/stock/binary/config/game.yaml` — with
+every key present but commented out at its `config.c` default. Copy it into
+your own data directory and edit it rather than writing one from scratch.
+
+The file is optional. No file, an empty file, or a comments-only file (the
+shipped example, as-is) all reproduce `config.c`'s own values exactly —
+every stock and archived `lib/` in existence has no `config/game.yaml` in
+it, and every one of them has to boot. The precedence chain's config-file
+slot sits between environment and defaults for exactly this reason.
+
+`--config` (`DL_CONFIG`) overrides the path, for a deployment that wants the
+file somewhere else — mounted from a secret store, shared between two
+servers on one world. Unlike the default path, a `--config` that is not
+there is a boot failure: it names a file that was asked for by name, so a
+typo in it is a mistake rather than a directory that has never been tuned.
+
+The running server rereads whichever file it is on `SIGHUP` and applies it
+live, no restart needed. A file that fails to parse, or parses but fails
+validation (`autosave_time: 0`, `max_bad_pws: 0`, a negative cost, ...), is
+logged and ignored — the server keeps running on whatever tuning it had
+before, and a `SIGHUP` with no file to read at all says so and changes
+nothing. `docs/operations.md` has how to send a signal under each runtime,
+and what else can be reloaded without a restart.
 
 ```yaml
 free_rent: false

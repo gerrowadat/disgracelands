@@ -698,9 +698,12 @@ Much of `reference/moderncserver/src/config.c` is compile-time game tuning
 (`max_bad_pws`) on 2026-08-28 once the behaviour behind it existed to tune
 (`docs/deviations.md`
 has the list and the reasoning field by field): a YAML **config file** —
-`--config`, `config/game.yaml` as the shipped, fully-commented example —
-with every value defaulting to today's `config.c` value so an empty (or
-comments-only) file reproduces current behaviour exactly
+`<lib-dir>/config/game.yaml`, in the data directory it configures
+(`docs/design/data-format.md` §6; moved there 2026-08-28 from a repo-level
+`config/` directory, with `--config` kept as a path override), shipped as a
+fully-commented template in every `examples/` data directory — with every
+value defaulting to today's `config.c` value, so no file at all, an empty
+one, or a comments-only one reproduces current behaviour exactly
 (`game.GameTuning`, `internal/game/tuning.go`). Hot-reload on `SIGHUP`
 shipped with it rather than after, since the atomic-pointer publish
 (`game.SetTuning`) that makes the config safe to read from three unrelated
@@ -2308,8 +2311,9 @@ they touch:
    rather than folded into `reloadzone`'s sweep — see Phase 6's own
    write-up for the full account.
 3. ~~`config/game.yaml` (§6) — deliberately set aside.~~ **Decided and
-   built, 2026-08-23**: §9.1 and `docs/deviations.md` have what moved and
-   why. Two behaviours picked for tunability turned out not to exist yet
+   built, 2026-08-23**, and moved into the data directory it configures
+   2026-08-28, where §6 had put it all along: §9.1 and `docs/deviations.md`
+   have what moved and why. Two behaviours picked for tunability turned out not to exist yet
    at all (`max_bad_pws`'s disconnect, `tunnel_size`'s occupancy limit) —
    `docs/deviations.md` covers those as their own gap, separate from the
    config-file work. `max_bad_pws`'s half was built on 2026-08-28 (issue

@@ -1,4 +1,13 @@
-# Disgracelands game-tuning config, for --config (or DL_CONFIG).
+# Disgracelands game-tuning config.
+#
+# This file lives in the data directory the server runs on:
+# <lib-dir>/config/game.yaml, read at boot if it is there and ignored if it
+# is not. It is game configuration, so it travels with the world it
+# configures, gets backed up with it and is reviewable alongside it —
+# unlike the listen addresses, the TLS certificate and the log level, which
+# are properties of a deployment and stay on the command line
+# (docs/design/data-format.md §6). `--config` (or DL_CONFIG) overrides the
+# path for the unusual case that wants the file somewhere else.
 #
 # This is the subset of reference/moderncserver/src/config.c that this port
 # makes a runtime setting rather than an archive fact — see
@@ -6,8 +15,9 @@
 # config.c is deliberately not here.
 #
 # Every value below is commented out and set to config.c's own default:
-# an empty file, or no --config at all, reproduces the archive's behaviour
-# exactly. Uncomment and change only what you mean to change.
+# this file as shipped, an empty file, or no file at all all reproduce the
+# archive's behaviour exactly. Uncomment and change only what you mean to
+# change.
 #
 # The running server rereads this file on SIGHUP and applies it live — no
 # restart needed. A file that fails to parse or fails validation is logged

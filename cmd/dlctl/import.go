@@ -63,7 +63,9 @@ type importOptions struct {
 // bother running) — plus copying text/'s plain-prose files unchanged
 // (internal/server/text.go reads them from the same text/<name> path
 // regardless of any --*-format flag, so they are never a pluggable format)
-// and, once everything has actually succeeded, stamping --to-dir with this
+// and config/game.yaml, the game tuning, for the same reason and a
+// stronger one (see copyGameConfig), and, once everything has actually
+// succeeded, stamping --to-dir with this
 // build's own data-format version (docs/design/data-format-versioning.md).
 // This is what used to be the separate `dlctl lib import` command; folding
 // it into `import` with --type omitted means one flag surface serves both
@@ -177,6 +179,18 @@ func cmdImportAll(o importOptions) error {
 	}
 	fmt.Println()
 
+	fmt.Println("== game config ==")
+	switch copied, err := copyGameConfig(o.fromDir, o.toDir); {
+	case err != nil:
+		fmt.Fprintf(os.Stderr, "copying config/game.yaml: %v\n", err)
+		failed = append(failed, "game config")
+	case copied:
+		fmt.Println("copied config/game.yaml unchanged (already this project's own yaml)")
+	default:
+		fmt.Println("no config/game.yaml to copy; the defaults are config.c's own")
+	}
+	fmt.Println()
+
 	if len(failed) > 0 {
 		fmt.Printf("Failed: %s. %s was not stamped with a release version — fix these and re-run.\n",
 			strings.Join(failed, ", "), o.toDir)
@@ -202,6 +216,34 @@ func cmdImportAll(o importOptions) error {
 	}
 	fmt.Printf("%s is a complete yaml directory, written by release %s.\n", o.toDir, current)
 	return nil
+}
+
+// copyGameConfig copies fromDir/config/game.yaml across unchanged, and
+// reports whether there was one.
+//
+// It is not converted because there is nothing to convert: the game tuning
+// (internal/config's LoadGameTuning, docs/design/data-format.md §6) is this
+// project's own invention rather than anything the C wrote, so it is the
+// same yaml file in a classic directory as in a yaml one — the same
+// reasoning that copies text/'s prose rather than importing it. Carrying it
+// is the point: a lib/ that has been tuned must not silently lose its
+// tuning on the way through a format conversion.
+func copyGameConfig(fromDir, toDir string) (bool, error) {
+	from := filepath.Join(fromDir, "config", "game.yaml")
+	if _, err := os.Stat(from); os.IsNotExist(err) {
+		return false, nil
+	} else if err != nil {
+		return false, fmt.Errorf("reading %s: %w", from, err)
+	}
+
+	to := filepath.Join(toDir, "config")
+	if err := os.MkdirAll(to, 0o750); err != nil {
+		return false, fmt.Errorf("creating %s: %w", to, err)
+	}
+	if err := copyFile(from, filepath.Join(to, "game.yaml")); err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 // copyTextFiles copies every regular file directly inside fromDir/text —
