@@ -65,6 +65,22 @@ const (
 	PrefRoomFlags Flags = 1 << 21
 	// PrefClearScreen is OasisOLC's.
 	PrefClearScreen Flags = 1 << 22
+
+	// PrefNoAnnounce1 and PrefNoAnnounce2 are a local addition: a two-bit
+	// level saying how much of the `<DoC>` broadcast stream a player wants
+	// (see AnnounceLevel in announce.go). Not in the C, which has no control
+	// over them at all — recorded in docs/deviations.md.
+	//
+	// **They count suppression, not volume, and that is deliberate.** The
+	// pfile is a raw fwrite of a struct and `pref` is a `long`
+	// (structs.h:858), so on the ILP32 data model the archived data uses
+	// there are exactly nine spare bits here — 23 through 31 — and every
+	// one of them is *clear* in every record ever written. A level where
+	// zero meant "off" would therefore mute the entire roster the moment
+	// this shipped. Zero means the full stream, the way PrefNoGoss and its
+	// neighbours already read.
+	PrefNoAnnounce1 Flags = 1 << 23
+	PrefNoAnnounce2 Flags = 1 << 24
 )
 
 // The ROOM_* bits, from structs.h:75.

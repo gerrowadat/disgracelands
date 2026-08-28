@@ -117,7 +117,7 @@ func doRemort(c *Context) error {
 		//
 		// Note the C's own unbalanced quoting, kept: the whisper opens with a
 		// `'` and closes with a newline, never a matching one.
-		c.broadcastAt(colour.Normal,
+		c.broadcastAt(game.AnnouncementRare, colour.Normal,
 			"{{cyan}}A voice whispers in your ear, 'All hail %s! Living again as a %s!{{/}}\r\n",
 			victim.Name, short)
 	}

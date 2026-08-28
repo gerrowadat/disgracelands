@@ -98,7 +98,13 @@ func wantRecord(i int) *game.PlayerRecord {
 		IDNum:       int64(1 + i),
 		PlayerFlags: game.Flags(1) << uint(i%20),
 		AffectFlags: game.Flags(1) << uint(i%15),
-		Preferences: game.Flags(1) << uint(i%22),
+		// Up to bit 24, so the run covers PrefNoAnnounce1 and
+		// PrefNoAnnounce2 at 23 and 24 — the local announcement level, whose
+		// whole design rests on those bits surviving a round trip through
+		// the real ILP32 pfile. `pref` is a `long` (structs.h:858), so on
+		// that data model there are nine spare bits and these are two of
+		// them; on LP64 there are forty-one.
+		Preferences: game.Flags(1) << uint(i%25),
 
 		WimpLevel:     int32(i),
 		FreezeLevel:   int32(i % 5),

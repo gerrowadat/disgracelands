@@ -372,6 +372,57 @@ func doToggle(c *Context) error {
 		on(game.PrefAutoExit), on(game.PrefDeaf), wimp)
 	c.Send(" Gossip Channel: %-3s    Auction Channel: %-3s      Grats Channel: %-3s\r\n",
 		on(game.PrefNoGoss), on(game.PrefNoAuct), on(game.PrefNoGratz))
+	// A local addition to a ported listing, and the only one: `announce` is
+	// not in the C and so neither is this row. It is here because a setting
+	// `toggle` does not list is a setting nobody finds — the command exists
+	// to be the one place a player can see what they have switched on.
+	// docs/deviations.md records both halves.
+	c.Send("  Announcements: %-3s\r\n", game.AnnounceLevelOf(rec))
+	return nil
+}
+
+// doAnnounce sets how much of the `<DoC>` broadcast stream a player hears.
+//
+// **Not a port. There is no such command in the C**, and no such setting: the
+// four send_to_all_color call sites reach everybody who is playing and not
+// mid-edit, and that is the whole of it. Recorded in docs/deviations.md.
+//
+// Written to look like `color` and `syslog` — the two graded settings the C
+// does have — down to the prefix match and the "Usage:" line, so that it
+// reads as part of the same family rather than as something bolted on. The
+// difference is underneath: the bits count *suppression*, so that a record
+// written before this existed hears everything. See game.PrefNoAnnounce1.
+func doAnnounce(c *Context) error {
+	rec := c.Character.Record
+	if c.Character.IsNPC() || rec == nil {
+		return nil
+	}
+	arg, _ := oneArgument(c.Arg)
+
+	if arg == "" {
+		c.Send("Your announcements are currently %s.\r\n", game.AnnounceLevelOf(rec))
+		return nil
+	}
+
+	level, ok := game.ParseAnnounceLevel(arg)
+	if !ok {
+		c.Send("Usage: announce { Off | Brief | All }\r\n")
+		return nil
+	}
+	game.SetAnnounceLevel(rec, level)
+
+	// What each setting actually means, said once at the moment somebody
+	// chooses it: "Brief" is not self-explanatory, and a player who cannot
+	// tell which messages they have just lost will turn it back on.
+	switch level {
+	case game.AnnounceOff:
+		c.Send("Your announcements are now Off. You will hear none of them.\r\n")
+	case game.AnnounceBrief:
+		c.Send("Your announcements are now Brief. " +
+			"You will hear about newcomers, death traps and remorts, but not levels.\r\n")
+	default:
+		c.Send("Your announcements are now All. You will hear everything.\r\n")
+	}
 	return nil
 }
 

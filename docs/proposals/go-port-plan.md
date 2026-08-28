@@ -1969,6 +1969,18 @@ did drift, one whisper ending in `\r\n` and the other not
 (`docs/weirdnumbers.md`, "`gain_exp` and `gain_exp_regardless` are copies
 that drifted"), which is reproduced rather than tidied.
 
+**`announce` lets a player turn that stream down ✅.** A deviation, not a
+port, and the first new *player* command this port has added — the others
+(`reload*`) are immortal tooling. `announce { Off | Brief | All }` in the
+shape `color` and `syslog` already have, filtering at the one choke point
+#212 created. Graded rather than binary because the four broadcasts differ
+enormously in frequency and only the level-gain line is the problem. The
+two preference bits count **suppression**, so a record written before the
+setting existed reads as `All`: `pref` is a `long` in a raw-`fwrite` pfile
+and every spare bit is clear in every archived record, so the other way
+round would have muted the whole roster on day one. `docs/deviations.md`
+has it, with the `toggle` row and the synthetic `CLine`.
+
 **Death traps kill now ✅ (#209).** `do_simple_move`'s closing
 `log_death_trap(ch); death_cry(ch); extract_char(ch);`
 (`act.movement.c:171-176`) is `Context.deathTrap`. Both halves of

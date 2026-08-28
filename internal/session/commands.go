@@ -557,6 +557,14 @@ func init() {
 		{Name: "ungroup", Help: "Disband your group, or expel somebody.", Run: doUngroup, CLine: 523},
 
 		{Name: "autoexit", Help: "Show the exits after every move.", Run: toggleCommand("autoexit"), CLine: 232},
+		// announce is not in the C at all — new capability, not a port (see
+		// docs/deviations.md, coverage_test.go's newCommands). CLine is
+		// synthetic and shares `autoexit`'s, which puts it after every real
+		// a-command in the table: `a` still means `alias` for a mortal and
+		// `at` for a god, `au` is still ambiguous between auction and
+		// autoexit exactly as it was, and `an` — which meant nothing before
+		// — is the only abbreviation this adds.
+		{Name: "announce", Help: "Choose how much of the game-wide news you hear.", Run: doAnnounce, CLine: 232},
 		{Name: "brief", Help: "Skip room descriptions you have seen.", Run: toggleCommand("brief"), CLine: 244},
 
 		// The immortal half of do_gen_tog (interpreter.c:336, :380, :386,
@@ -1666,7 +1674,7 @@ func (c *Context) deathTrap(who *game.Character, room *game.RoomDef) {
 	// gods. Note the quoting, which is the C's verbatim — the room name is
 	// wrapped in its own pair of single quotes *inside* the whisper's, and
 	// the whisper's closing quote lands after the full stop.
-	c.broadcastAt(colour.Normal,
+	c.broadcastAt(game.AnnouncementRare, colour.Normal,
 		"{{cyan}}A voice whispers in your ear, '%s has met their demise in the fatal death trap, '%s'.'{{/}}\r\n",
 		who.Name, room.Name)
 
