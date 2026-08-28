@@ -54,6 +54,9 @@ type importOptions struct {
 	// neither this port's own (child of the roster directory) nor the C's
 	// (sibling of it).
 	fromObjsDir, fromAliasDir string
+	// verify runs the comparison in verifyImport once the conversion is
+	// done, and is on by default.
+	verify bool
 }
 
 // cmdImport converts a classic (or, for pfile, binary/ascii) directory into
@@ -94,6 +97,8 @@ func cmdImport(args []string) error {
 		"(--type=pfile only; default: beside or inside --from-dir, whichever exists)")
 	fromAliasDir := fs.String("from-alias-dir", "", "Source plralias/ directory "+
 		"(--type=pfile only; default: beside or inside --from-dir, whichever exists)")
+	verify := fs.Bool("verify", true, "After importing, load both directories and check they agree "+
+		"(`dlctl verify --against`); --verify=false to skip it")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
@@ -102,6 +107,7 @@ func cmdImport(args []string) error {
 		fromDir: *fromDir, toDir: *toDir, fromFormat: *fromFormat, encName: *encName, mini: *mini,
 		fromHouseDir: *fromHouseDir, fromMiscDir: *fromMiscDir,
 		fromObjsDir: *fromObjsDir, fromAliasDir: *fromAliasDir,
+		verify: *verify,
 	}
 
 	if *typeRaw == "" {
@@ -111,7 +117,40 @@ func cmdImport(args []string) error {
 	if err != nil {
 		return err
 	}
-	return runImport(t, o)
+	if err := runImport(t, o); err != nil {
+		return err
+	}
+	return verifyImport([]dirType{t}, o)
+}
+
+// verifyImport is `dlctl verify --against` run on what `import` has just
+// written, and it is **on by default**.
+//
+// docs/proposals/yaml-only.md §3.4 asks for that, and the reason it is
+// the default rather than a flag somebody remembers is the release this
+// is for: after it, `dlctl import` is the only path from an archived
+// lib/ to a running server, run once, by an operator who has no way to
+// tell a complete conversion from a nearly-complete one. Every finding
+// this checking has produced so far — a write-only escape hatch, two
+// missing fields, a reversed ban list, keywords mangled into U+FFFD —
+// was silent, and every one of them would have been shipped by an import
+// that reported success and stopped there.
+func verifyImport(types []dirType, o importOptions) error {
+	if !o.verify {
+		return nil
+	}
+	enc, ok := convert.Encodings[o.encName]
+	if !ok {
+		return fmt.Errorf("unknown encoding %q (have: %v)", o.encName, encodingNames())
+	}
+	fmt.Println("== verify ==")
+	left := loadOptions{
+		base: withDefaultBase(o.fromDir), format: o.fromFormat, enc: enc, mini: o.mini,
+		objsDir: o.fromObjsDir, aliasDir: o.fromAliasDir,
+		houseDir: o.fromHouseDir, miscDir: o.fromMiscDir,
+	}
+	right := loadOptions{base: withDefaultBase(o.toDir), format: "yaml", enc: enc, mini: o.mini}
+	return verifyAgainst(types, left, right)
 }
 
 // withDefaultBase applies "data" as a --type-scoped import/export's own
@@ -206,6 +245,13 @@ func cmdImportAll(o importOptions) error {
 	// Say so: an operator who expected a stamp should find out here, from
 	// the tool that did not write it, rather than from a server that
 	// later checked nothing.
+	if err := verifyImport(allTypes, o); err != nil {
+		fmt.Printf("%s was not stamped with a release version: it does not load to the same state as %s.\n",
+			o.toDir, o.fromDir)
+		return err
+	}
+	fmt.Println()
+
 	current, ok := dataversion.Current()
 	if !ok {
 		fmt.Printf("%s is a complete yaml directory. This build (%s) has no release version, so it was not stamped with one.\n",
@@ -379,6 +425,24 @@ func importWorld(o importOptions) error {
 	}
 
 	transcoded := transcodeWorldStrings(w, enc)
+
+	// A world with records and no zones converts to an empty directory,
+	// silently. The yaml format is organised one file per zone, and a
+	// record whose vnum falls outside every zone's range is written under
+	// the zone whose range begins nearest below it (writer.go's
+	// fallbackZone) — which works for every real world and has nowhere to
+	// put anything at all when the zone list is empty.
+	//
+	// Refusing is right rather than warning: the output would be a
+	// complete, well-formed, empty world, and `import` would report
+	// success next to it. Found by FuzzClassicRecordRoundTrip, which
+	// generated exactly this shape within seconds.
+	if len(w.Zones) == 0 && len(w.Rooms)+len(w.Mobiles)+len(w.Objects)+len(w.Shops) > 0 {
+		return fmt.Errorf("%s has %d room(s), %d mobile(s), %d object(s) and %d shop(s) but no zones; "+
+			"the yaml format is organised one file per zone and has nowhere to put them "+
+			"(check %s/zon/index)",
+			fromDir, len(w.Rooms), len(w.Mobiles), len(w.Objects), len(w.Shops), fromDir)
+	}
 
 	if err := os.MkdirAll(toDir, 0o755); err != nil { //nolint:gosec // world data, not secrets
 		return err
@@ -755,6 +819,18 @@ func importHelp(o importOptions) error {
 	for i := range entries {
 		if transcodeString(&entries[i].Body, enc) {
 			transcoded++
+		}
+		// The keywords too. They used to be skipped, for the same
+		// reason and with the same result as the world importer's own
+		// keyword lists: a keyword left in CP1252 is not valid UTF-8, so
+		// the yaml encoder substitutes U+FFFD for the offending byte and
+		// the entry becomes unreachable by the word it was filed under.
+		// They are also what game.HelpSlug names the entry's own .txt
+		// file from, so a mangled keyword mangles a filename too.
+		for j := range entries[i].Keywords {
+			if transcodeString(&entries[i].Keywords[j], enc) {
+				transcoded++
+			}
 		}
 	}
 	if err := help.Save("yaml", toDir, entries); err != nil {

@@ -14,6 +14,8 @@ import (
 
 	"github.com/gerrowadat/disgracelands/internal/game"
 	"github.com/goccy/go-yaml"
+
+	"github.com/gerrowadat/disgracelands/internal/persist/yamlenc"
 )
 
 // WriteZone implements world.Sink: it writes one zone and everything whose
@@ -21,7 +23,7 @@ import (
 // (§3's "one writer per file").
 func (s *Source) WriteZone(_ context.Context, zone *game.ZoneDef, w *game.World) error {
 	doc := zoneDocFrom(zone, w)
-	out, err := yaml.MarshalWithOptions(doc, yaml.Indent(2))
+	out, err := yaml.MarshalWithOptions(doc, yamlenc.Options()...)
 	if err != nil {
 		return fmt.Errorf("yaml: zone %d: %w", zone.Vnum, err)
 	}
@@ -175,14 +177,11 @@ func roomDocFrom(r *game.RoomDef) roomDoc {
 	return rd
 }
 
-func sectorName(v int32) string {
-	name, ok := game.NameByValue(v, game.YamlSectorNames())
-	if !ok {
-		return fmt.Sprintf("unknown-%d", v)
-	}
-	return name
-}
+func sectorName(v int32) string { return game.NameOrNumber(v, game.YamlSectorNames()) }
 
+// doorName has no numeric fallback and does not need one: the C's door
+// flag is a two-bit field and YamlExitDoorNames covers all four values,
+// so there is nothing outside the table for one to catch.
 func doorName(flag int32) string {
 	name, _ := game.NameByValue(flag, game.YamlExitDoorNames())
 	return name
@@ -224,12 +223,16 @@ func mobDocFrom(m *game.MobDef) mobDoc {
 	return md
 }
 
+// valueName names a value from a symbolic table, falling back to game's
+// own "#N" convention for one the table has no name for.
+//
+// It used to write "unknown-%d", which is worse than useless: the reader
+// looks the name up in the same table, does not find "unknown-104"
+// either, and reports a load error — so a world with one out-of-range
+// enum in it converted successfully into a directory that would not load.
+// "#104" reads back as 104. See game.NameOrNumber.
 func valueName(v int32, table []string) string {
-	name, ok := game.NameByValue(v, table)
-	if !ok {
-		return fmt.Sprintf("unknown-%d", v)
-	}
-	return name
+	return game.NameOrNumber(v, table)
 }
 
 func diceDocString(d game.Dice) string {

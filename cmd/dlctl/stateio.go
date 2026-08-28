@@ -100,9 +100,19 @@ func importBans(fromDir, toDir string, out *bufio.Writer) error {
 	}
 	defer func() { _ = dst.Close() }()
 
+	// Oldest first, because Add prepends. bans.Store.List is documented
+	// "newest first" and both implementations honour it by pushing onto
+	// the front of the list the way ban.c's own linked list does — so
+	// replaying a newest-first list through Add in the order it was
+	// handed over builds the reverse of it, and the converted ban list
+	// came out backwards. Nothing in the game reads the list by position,
+	// but `ban` prints it in list order, so it is visible, and it is the
+	// kind of difference that is obvious the moment something compares
+	// the two and invisible until then.
+	list := src.List()
 	n := 0
-	for _, ban := range src.List() {
-		if _, err := dst.Add(ban); err != nil {
+	for i := len(list) - 1; i >= 0; i-- {
+		if _, err := dst.Add(list[i]); err != nil {
 			return err
 		}
 		n++

@@ -27,6 +27,8 @@ import (
 	"strings"
 
 	"github.com/goccy/go-yaml"
+
+	"github.com/gerrowadat/disgracelands/internal/persist/yamlenc"
 )
 
 // ClassicFile is misc/xnames under whatever directory holds it.
@@ -127,7 +129,7 @@ func loadYaml(dir string) ([]string, error) {
 func saveYaml(dir string, list []string) error {
 	path := filepath.Join(dir, YamlFile)
 	d := doc{Schema: namesSchema, Disallowed: list}
-	out, err := yaml.MarshalWithOptions(d, yaml.Indent(2))
+	out, err := yaml.MarshalWithOptions(d, yamlenc.Options()...)
 	if err != nil {
 		return fmt.Errorf("writing %s: %w", path, err)
 	}

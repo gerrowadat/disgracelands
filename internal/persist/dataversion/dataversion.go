@@ -31,6 +31,8 @@ import (
 
 	"github.com/goccy/go-yaml"
 
+	"github.com/gerrowadat/disgracelands/internal/persist/yamlenc"
+
 	"github.com/gerrowadat/disgracelands/internal/buildinfo"
 )
 
@@ -200,7 +202,7 @@ func CheckBuild(dir string) (warning string, err error) {
 func Write(dir string, v Version) error {
 	path := filepath.Join(dir, FileName)
 	d := doc{Schema: schema, Format: "yaml", Version: v.String()}
-	out, err := yaml.MarshalWithOptions(d, yaml.Indent(2))
+	out, err := yaml.MarshalWithOptions(d, yamlenc.Options()...)
 	if err != nil {
 		return fmt.Errorf("writing %s: %w", path, err)
 	}

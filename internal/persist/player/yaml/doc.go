@@ -72,6 +72,21 @@ type playerDoc struct {
 	FrozenByLevel       int32 `yaml:"frozen_by_level,omitempty"`
 	BadPasswordAttempts int32 `yaml:"bad_password_attempts,omitempty"`
 
+	// SpecFlags and OLCZone are the two Disgracelands-local fields that
+	// live in what were char_file_u's spare slots — the remort vector is
+	// the third and it is `identity.remort` above, because it has a name
+	// table to be symbolic against and these two do not.
+	//
+	// They were simply missing from this format until `dlctl verify
+	// --against` compared a converted roster to its source, which is the
+	// worst kind of gap: nothing was reported, the file looked complete,
+	// and every builder's permitted OLC zone was gone. There is no
+	// vocabulary to name spec_flags' bits with (it is a local field whose
+	// meanings are not written down anywhere in the archive), so it stays
+	// a number rather than being given invented names.
+	SpecFlags uint64 `yaml:"spec_flags,omitempty"`
+	OLCZone   int32  `yaml:"olc_zone,omitempty"`
+
 	Skills  map[string]int32 `yaml:"skills,omitempty"`
 	Affects []affectDoc      `yaml:"affects,omitempty"`
 	Aliases []aliasDoc       `yaml:"aliases,omitempty"`

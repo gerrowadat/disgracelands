@@ -67,6 +67,36 @@ func (c *codec) i32(rec []byte, name string) int32 {
 // varInt reads a field whose width depends on the data model — `long` and
 // `time_t`. Returning int64 regardless is the point: the caller never has to
 // know which model produced the file.
+// varBits reads a variable-width field that is a *bitvector* rather than a
+// number: `bitvector_t` is `unsigned long` (structs.h:599), so the top bit
+// is a flag and not a sign.
+//
+// This is varInt's counterpart and exists because using varInt for these
+// was wrong in a way nothing noticed for the whole port. varInt widens a
+// 4-byte field through int32, so a stored 0xFFFFFFFF -- every player flag
+// set, which is what a 32-bit `unsigned long` full of flags looks like --
+// sign-extended to -1 and then reinterpreted as game.Flags, which is 64
+// bits, giving all sixty-four bits set. flagsOf's own doc comment already
+// said "a value with the top bit set is a flag, not a negative number";
+// the value had been through int32 before flagsOf ever saw it.
+//
+// It was invisible because no fixture had a flag above bit 30 in it until
+// examples/torture (docs/proposals/yaml-only.md §5.1), and because it is
+// symmetric on write -- the value round-trips through this package
+// unchanged -- so the package's own byte-for-byte round-trip test could
+// not see it either. What sees it is comparing the decoded record against
+// what another format decoded, which is `dlctl verify --against`.
+func (c *codec) varBits(rec []byte, name string) game.Flags {
+	p := c.layout.at(name)
+	switch p.Size {
+	case 4:
+		return game.Flags(byteOrder.Uint32(rec[p.Offset:]))
+	case 8:
+		return game.Flags(byteOrder.Uint64(rec[p.Offset:]))
+	}
+	panic(fmt.Sprintf("binary: %s has unexpected width %d", name, p.Size))
+}
+
 func (c *codec) varInt(rec []byte, name string) int64 {
 	p := c.layout.at(name)
 	switch p.Size {
@@ -117,10 +147,6 @@ func widen32(u uint32) int32 { return int32(u) } //nolint:gosec // reinterpretat
 
 func widen64(u uint64) int64 { return int64(u) } //nolint:gosec // reinterpretation, not truncation
 
-// flagsOf reinterprets a stored bitvector. The C type is `unsigned long`, so
-// a value with the top bit set is a flag, not a negative number.
-func flagsOf(v int64) game.Flags { return game.Flags(uint64(v)) } //nolint:gosec // reinterpretation, not truncation
-
 // --- record decoding ---------------------------------------------------
 
 // decode converts one on-disk record into the canonical model.
@@ -149,9 +175,9 @@ func (c *codec) decode(rec []byte) (*game.PlayerRecord, error) {
 		Alignment: c.i32(rec, "cs.alignment"),
 		IDNum:     c.varInt(rec, "cs.idnum"),
 
-		PlayerFlags: flagsOf(c.varInt(rec, "cs.act")),
-		AffectFlags: flagsOf(c.varInt(rec, "cs.affected_by")),
-		Preferences: flagsOf(c.varInt(rec, "ps.pref")),
+		PlayerFlags: c.varBits(rec, "cs.act"),
+		AffectFlags: c.varBits(rec, "cs.affected_by"),
+		Preferences: c.varBits(rec, "ps.pref"),
 
 		WimpLevel:     c.i32(rec, "ps.wimp_level"),
 		FreezeLevel:   c.i8(rec, "ps.freeze_level"),

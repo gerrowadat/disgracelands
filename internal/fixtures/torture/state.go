@@ -69,16 +69,22 @@ func writeBans(etc, _, _ string) error {
 	}
 	defer func() { _ = store.Close() }()
 
-	when := time.Unix(1100000000, 0).UTC()
+	// Distinct, ascending timestamps. bans.Store.List is documented
+	// "newest first", so equal timestamps leave the order to whatever the
+	// underlying storage happened to do — classic appends and yaml does
+	// not, so a corpus where every ban was made in the same second
+	// reports a reversed list as a difference and says nothing about the
+	// conversion. No two real bans share a second either.
+	when := func(n int) time.Time { return time.Unix(1100000000+int64(n)*3600, 0).UTC() }
 	list := []bans.Ban{
-		{Site: "new.example.org", Type: bans.TypeNew, When: when, By: "Torturer"},
-		{Site: "select.example.org", Type: bans.TypeSelect, When: when, By: "Torturer"},
-		{Site: "all.example.org", Type: bans.TypeAll, When: when, By: "Torturer"},
+		{Site: "new.example.org", Type: bans.TypeNew, When: when(0), By: "Torturer"},
+		{Site: "select.example.org", Type: bans.TypeSelect, When: when(1), By: "Torturer"},
+		{Site: "all.example.org", Type: bans.TypeAll, When: when(2), By: "Torturer"},
 		// BANNED_SITE_LENGTH is 50 and classic truncates to it, so a site
 		// of exactly that length is the one that shows whether the
 		// boundary is off by one in either direction.
 		{Site: strings.Repeat("a", bans.MaxSiteLength-len(".example.org")) + ".example.org",
-			Type: bans.TypeAll, When: when, By: strings.Repeat("A", 1) + strings.Repeat("b", 18)},
+			Type: bans.TypeAll, When: when(3), By: strings.Repeat("A", 1) + strings.Repeat("b", 18)},
 	}
 	for _, b := range list {
 		if _, err := store.Add(b); err != nil {
@@ -113,7 +119,7 @@ func writeBoards(etc, _, _ string) error {
 		full = append(full, boards.Message{
 			Heading: fmt.Sprintf("Aug %02d 2003 (Torturer)  :: message %d of %d", 1+i%28, i+1, maxBoardMessages),
 			Level:   int32(i % 35),
-			Body:    fmt.Sprintf("Body of message %d.\n", i+1),
+			Body:    fmt.Sprintf("Body of message %d.\r\n", i+1),
 		})
 	}
 	if err := store.Save("board.mort", full); err != nil {
@@ -127,7 +133,7 @@ func writeBoards(etc, _, _ string) error {
 		{
 			Heading: "Aug 01 2003 (Torturer)  :: a body of exactly 4096 bytes",
 			Level:   game.LevelImplementor,
-			Body:    strings.Repeat("x", maxMessageLength-1) + "\n",
+			Body:    strings.Repeat("x", maxMessageLength-2) + "\r\n",
 		},
 		{
 			Heading: "Aug 02 2003 (Torturer)  :: an empty body",
@@ -146,7 +152,7 @@ func writeBoards(etc, _, _ string) error {
 		{
 			Heading: "Aug 03 2003 (Torturer)  :: caf\x92 opening hours",
 			Level:   0,
-			Body:    "The caf\xe9 opens at 9. Bring \xa35 \x96 or don\x92t.\n",
+			Body:    "The caf\xe9 opens at 9. Bring \xa35 \x96 or don\x92t.\r\n",
 		},
 	})
 }
@@ -167,14 +173,14 @@ func writeMail(etc, _, _ string) error {
 
 	sent := time.Unix(1100000000, 0).UTC()
 	for _, m := range []mail.Message{
-		{To: 1, From: 2, Sent: sent, Text: "Short enough for one block.\n"},
+		{To: 1, From: 2, Sent: sent, Text: "Short enough for one block.\r\n"},
 		{To: 1, From: 3, Sent: sent, Text: strings.Repeat("A long letter, spanning blocks. ", 200)},
 		// Exactly BLOCK_SIZE-worth of body, the boundary between "one
 		// block" and "a chain": mail.c's own allocator is the whole of
 		// this format, and a body that does not cross a block exercises
 		// none of it.
 		{To: 4, From: 1, Sent: sent, Text: strings.Repeat("z", 100)},
-		{To: 2, From: 1, Sent: sent, Text: "Caf\xe9 at nine \x97 don\x92t be late.\n"},
+		{To: 2, From: 1, Sent: sent, Text: "Caf\xe9 at nine \x97 don\x92t be late.\r\n"},
 	} {
 		if err := store.Send(m); err != nil {
 			return err

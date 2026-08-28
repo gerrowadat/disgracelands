@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/goccy/go-yaml"
+	"github.com/gerrowadat/disgracelands/internal/persist/yamlenc"
 )
 
 // Text and NestedText are world strings in the yaml format. Both decode
@@ -104,11 +104,18 @@ func (t NestedText) MarshalYAML() ([]byte, error) {
 	return []byte(literalBlock(s, 10, false)), nil
 }
 
-// marshalSingleLine delegates to the library for its own quoting rules —
-// verified to already do the one thing this format needs on top of stock
-// YAML: a value beginning "{{" (§5.3's colour markup) is quoted rather
-// than misread as a flow-mapping opener.
-func marshalSingleLine(s string) ([]byte, error) { return yaml.Marshal(s) }
+// marshalSingleLine writes a string with no newline in it, through the
+// same policy every other string in every other document is written
+// through (internal/persist/yamlenc): plain only when a plain scalar can
+// be trusted to carry it back, quoted otherwise.
+//
+// This used to be a bare yaml.Marshal here, delegating the quoting
+// decision to the library. FuzzTextRoundTrip disproved that in about four
+// seconds, four different ways, and FuzzBinaryRecordRoundTrip then found
+// the same hole in every plain `string` field of every other format —
+// which is why the rule ended up in a package of its own rather than in
+// this file. yamlenc.PlainlySafe has the list.
+func marshalSingleLine(s string) ([]byte, error) { return yamlenc.MarshalString(s) }
 
 // quotedScalar renders s as a YAML double-quoted scalar, rather than asking
 // the library to pick a style for it.
@@ -134,16 +141,37 @@ func quotedScalar(s string) []byte { return []byte(strconv.Quote(s) + "\n") }
 //
 //   - A bare carriage return. Unrepresentable in the style at all; see the
 //     package doc comment.
+//
 //   - Trailing blank lines. goccy re-parses and re-prints whatever a custom
 //     MarshalYAML returns, and its re-print of a literal node
 //     (ast.LiteralNode.String(), which unconditionally right-trims every
 //     trailing newline off the node's content) collapses any number of them
 //     to one, regardless of the "+"/keep chomping indicator asking it not
 //     to. Nothing about how the returned bytes are built changes that.
+//
 //   - Trailing whitespace on a last line that has no newline after it. The
 //     same re-print drops it. A trailing *tab* there happens to survive
 //     where a trailing *space* does not, which is exactly the kind of
 //     distinction not worth depending on: both are quoted.
+//
+//   - A string that is nothing but whitespace. literalBlock right-trims
+//     the trailing newlines to build its body, and goccy's re-print drops
+//     a body that is then only spaces and tabs, so the whole string comes
+//     back as "". Two or more trailing newlines were already covered by
+//     the case above; "\n" and " \n" were not, and a description that is
+//     a single blank line — which is what a world file with one empty
+//     line before its closing tilde produces — silently became the empty
+//     string.
+//
+//     Note this is about the *whole* body, not about individual lines: a
+//     whitespace-only line inside a longer description survives the block
+//     perfectly well (checked, not assumed), which is why the test is
+//     TrimSpace over the string rather than over each line.
+//
+//     Found by FuzzTextRoundTrip, on its *seed* corpus, within seconds of
+//     the target first existing. docs/proposals/yaml-only.md §5.3
+//     predicted exactly that: "this is the gap most likely to be hiding
+//     the next one".
 //
 // This used to be TrimsTrailingBlankLines, which named the second case and
 // reported it as an accepted lossy transform for a linter to warn about.
@@ -157,6 +185,9 @@ func needsQuoting(s string) bool {
 		return true
 	}
 	if strings.HasSuffix(s, "\n\n") {
+		return true
+	}
+	if s != "" && strings.TrimSpace(s) == "" {
 		return true
 	}
 	if n := len(s); n > 0 && (s[n-1] == ' ' || s[n-1] == '\t') {
@@ -230,7 +261,25 @@ func literalBlock(s string, nominalIndent int, withIndicator bool) string {
 // the same input and is equally safe.
 func needsIndentIndicator(lines []string) bool {
 	for _, l := range lines {
-		if strings.TrimSpace(l) == "" {
+		// A *genuinely* empty line carries no indentation information and
+		// is emitted with no prefix at all, so it says nothing about where
+		// the block's content column is. A line of spaces or tabs is a
+		// different thing entirely: it *is* emitted with the prefix, so it
+		// is the line YAML infers the block's indentation from, and it has
+		// leading whitespace.
+		//
+		// This used to skip both, and " \n0" — a first line of one space,
+		// then content — came back as "\n0" with the space gone: the
+		// indicator was not emitted, the parser inferred the content
+		// column from that first line's three columns, and the "0" line at
+		// two columns ended the block early. Found by FuzzTextRoundTrip.
+		//
+		// Fixing the inference here rather than quoting the whole string
+		// keeps the real corpus's hand-drawn signs as readable blocks —
+		// examples/stock has one whose second line is twenty-one spaces,
+		// and quoting for this would have turned it into an escaped
+		// one-liner for a case that was never the problem.
+		if l == "" {
 			continue
 		}
 		return leadingWhitespace(l) > 0
