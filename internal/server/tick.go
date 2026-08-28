@@ -188,37 +188,6 @@ func (s *Server) weatherAndTime(w *game.Live) {
 	}
 }
 
-// deathCry is death_cry (fight.c:367): the room hears whose it was, and every
-// room one step away hears that it was somebody.
-//
-// The neighbours are reached through CAN_GO, so a closed door muffles it —
-// the same condition `exits` uses to decide what to list. Two exits leading
-// to the same room send it there twice, which the C does not guard against
-// and neither does this.
-func (s *Server) deathCry(w *game.Live, c *game.Character) {
-	for _, other := range w.Occupants(c.Room) {
-		if other == c {
-			continue
-		}
-		other.Tell("%s", w.Act("Your blood freezes as you hear $n's death cry.",
-			game.ActArgs{Actor: c}, other))
-	}
-
-	room := w.Room(c.Room)
-	if room == nil {
-		return
-	}
-	for dir := game.Direction(0); dir < game.NumDirections; dir++ {
-		exit := room.Exits[dir]
-		if exit == nil || exit.ToRoom == game.NoRoom || exit.State.Has(game.ExitClosed) {
-			continue
-		}
-		for _, other := range w.Occupants(exit.ToRoom) {
-			other.Tell("Your blood freezes as you hear someone's death cry.\r\n")
-		}
-	}
-}
-
 // die leaves a body and puts the character back on their feet somewhere else,
 // porting die() and raw_kill() (fight.c) as far as this phase goes.
 //
@@ -233,7 +202,7 @@ func (s *Server) die(w *game.Live, c *game.Character) {
 	// ever called. Sending it here too is what made a kill say it twice —
 	// and made an implementor's `kill`, which reaches raw_kill without going
 	// through damage() at all, say it when the C says nothing of the kind.
-	s.deathCry(w, c)
+	w.DeathCry(c)
 
 	w.MakeCorpse(c)
 	w.StopFighting(c)

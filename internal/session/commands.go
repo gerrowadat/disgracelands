@@ -1592,8 +1592,83 @@ func (c *Context) moveCharacterChecking(who *game.Character, dir game.Direction,
 		who.Tell("%s", roomDescription(c.World, room, who, false))
 	}
 
+	// The death trap (act.movement.c:171-176), and note where it sits: after
+	// the room description, so the last thing anybody sees is the room that
+	// killed them. do_simple_move returns 0 from here, and perform_move takes
+	// that as a failure and drags nobody after them (act.movement.c:202) — so
+	// a group whose leader walks into a death trap loses exactly one member.
+	if room := c.World.Room(who.Room); room != nil &&
+		room.Flags.Has(game.RoomDeathTrap) && who.Level() < game.LevelImmortal {
+		c.deathTrap(who, room)
+		return false
+	}
+
 	c.moveFollowers(who, leaving, dir)
 	return true
+}
+
+// deathTrap is log_death_trap (utils.c:164), death_cry() and extract_char()
+// — the three lines do_simple_move ends on for a mortal standing in a
+// ROOM_DEATH room (act.movement.c:172-175).
+//
+// It is deliberately *not* a death. Nothing here calls die() or raw_kill():
+// there is no corpse, no experience is lost, the killer's alignment is not
+// touched and no message says anybody died. The character is simply removed
+// from the world with their things left lying in the room, saved, and put
+// back at the menu — which on the real server is why a death trap costs
+// everything you were carrying and nothing else.
+func (c *Context) deathTrap(who *game.Character, room *game.RoomDef) {
+	// mudlog(buf, BRF, LVL_IMMORT, TRUE) (utils.c:170). BRF, so it reaches
+	// every immortal watching the syslog at all — a death trap is the one
+	// event a god is most likely to be asked about afterwards. The vnum is
+	// GET_ROOM_VNUM, printed with %d and so unpadded.
+	c.wizlog(obs.LogBrief, game.LevelImmortal, "%s hit death trap #%d (%s)",
+		who.Name, room.Vnum, room.Name)
+
+	// The `<DoC>` half of log_death_trap (utils.c:172-173): a
+	// send_to_all_color in cyan, so the whole game hears it and not just the
+	// gods. Note the quoting, which is the C's verbatim — the room name is
+	// wrapped in its own pair of single quotes *inside* the whisper's, and
+	// the whisper's closing quote lands after the full stop.
+	c.broadcastAt(colour.Normal,
+		"{{cyan}}A voice whispers in your ear, '%s has met their demise in the fatal death trap, '%s'.'{{/}}\r\n",
+		who.Name, room.Name)
+
+	c.World.DeathCry(who)
+
+	// extract_char (handler.c:1007), whose player half this port already has
+	// as the Extract seam — the same one `quit` uses, and for the same
+	// reason: the connection stays open and the C's extract_char_final ends
+	// at CON_MENU (handler.c:931).
+	//
+	// The belongings go on the floor *first*. That is the C's order
+	// (handler.c:906-914 runs before the save at :938), and here it is also
+	// what makes the crash file right: Extract snapshots what the character
+	// is still holding, which by then is nothing, and writing an empty rent
+	// file deletes it — Crash_delete_crashfile (handler.c:940) by another
+	// name.
+	c.World.DropEverything(who)
+
+	if who.IsNPC() {
+		// extract_char_final's mobile branch (handler.c:934): out of the
+		// mobile list as well as the room, so the zone's population cap
+		// frees up and the next reset can replace it. A wandering mobile
+		// never walks into a death trap (mobact.c:104), but a charmed one
+		// dragged in behind its master does.
+		c.World.RemoveMobile(who)
+		return
+	}
+
+	if c.Extract != nil {
+		c.Extract(c.World, who)
+	}
+	// Reached through the Client interface rather than the session, because
+	// the victim need not be whoever typed the direction: a follower dragged
+	// into the trap is extracted with their own descriptor, and it is their
+	// screen the menu belongs on. Same shape as `purge` (wizchange.go).
+	if menu, ok := who.Client.(interface{ ReturnToMenu(string) }); ok {
+		menu.ReturnToMenu(c.Text.Menu())
+	}
 }
 
 // announce tells everyone in a room something, except the character it is

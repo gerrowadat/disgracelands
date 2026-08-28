@@ -1073,15 +1073,15 @@ compared against is not:
 
 Listed here so they are not mistaken for deliberate differences.
 
-- **A death trap does not kill.** `do_simple_move` ends with
-  `if (ROOM_FLAGGED(IN_ROOM(ch), ROOM_DEATH) && GET_LEVEL(ch) < LVL_IMMORT)
-  { log_death_trap(ch); death_cry(ch); extract_char(ch); return (0); }`
-  (`act.movement.c:171-176`) and none of it is ported: `ROOM_DEATH` is
-  read, stored, shown by `show death` and avoided by wandering mobiles and
-  by `spell_teleport`, but walking into one of those rooms yourself is
-  survivable here and was not on the real server. Found while auditing
-  `mudlog()` call sites for #134 — `log_death_trap` (`utils.c:165`) is one
-  of them, and it has nothing to log from. Filed as #209.
+- ~~**A death trap does not kill.**~~ Ported (#209). `do_simple_move`'s
+  last three lines — `log_death_trap(ch); death_cry(ch); extract_char(ch);`
+  (`act.movement.c:171-176`) — are `Context.deathTrap`
+  (`internal/session/commands.go`). Worth knowing what it is *not*: not a
+  death. Nothing calls `die()` or `raw_kill()`, so there is no corpse, no
+  experience is lost, no alignment changes hands and no message says
+  anybody died. `extract_char_final` puts the belongings loose on the floor
+  of the room (`handler.c:906-914`) and the descriptor at `CON_MENU`
+  (`:931`), which is the same ending `quit` has.
 - **Whatever `--lib-dir` points at is the on-disk contract**, decided
   rather than deviated: both servers read the same directory, which is
   what the world-parity harness and the Phase 7 shadow run depend on. In
@@ -1294,12 +1294,11 @@ Listed here so they are not mistaken for deliberate differences.
     not, because `TextEditor.SetTextField` owns the write and reports
     only a bad field name.
   - `comm.c:1409`'s "New connection from" is inside `#if 0` in the C.
-  - `log_death_trap` (`utils.c:165`, called from `act.movement.c:173`) has
-    nothing to log from: **walking into a `ROOM_DEATH` room does not kill
-    anybody in this port**, because `do_simple_move`'s death-trap branch
-    was never written. That is a gameplay gap and not a logging one —
-    found by this audit, filed as #209, and listed again under "Not
-    deviations — gaps still to fill" above.
+  - ~~`log_death_trap` (`utils.c:165`, called from `act.movement.c:173`)
+    has nothing to log from.~~ It does now: `do_simple_move`'s death-trap
+    branch is ported (#209), and both halves of `log_death_trap` with it —
+    the `mudlog` at BRF/`LVL_IMMORT` and the `<DoC>` `send_to_all_color`
+    that tells the whole game, in cyan, whose demise it was.
   - `check_killer`'s "PC Killer bit set on ..." (`fight.c:231`) and the
     sanctioned-pkill line (`fight.c:272`) have no code to sit in either:
     nothing in this port sets `PLR_KILLER` on an attack. Filed as #213.
