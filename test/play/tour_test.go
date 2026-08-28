@@ -9,6 +9,7 @@
 package play
 
 import (
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -127,7 +128,41 @@ func TestMovementAndLooking(t *testing.T) {
 	contains(t, "score", c.do("score"), "You have", "hit,", "mana and", "movement points.",
 		"This ranks you as Tourist", "(level 1)", "You are standing.")
 
+	// Walking costs movement points, and the prompt is where a player sees
+	// it (issue #189). Every room on the tour is SECT_INSIDE, so a step is
+	// (1 + 1) / 2 = 1 — the number on the prompt goes down by one per room
+	// and comes back up only on the regeneration tick.
+	before := promptMovement(t, c.do("look"))
+	after := promptMovement(t, c.do("south"))
+	if after != before-1 {
+		t.Errorf("a step south left %d movement points on the prompt, want %d", after, before-1)
+	}
+
 	m.noServerErrors()
+}
+
+// promptMovement reads the V figure off the last prompt in some output.
+//
+// The prompt is the only place movement points are shown as a player plays,
+// which is what makes it the right thing to assert on: `score` would prove
+// the field changed, and the prompt proves the player can see it.
+func promptMovement(t *testing.T, out string) int {
+	t.Helper()
+
+	i := strings.LastIndex(out, promptMarker)
+	if i < 0 {
+		t.Fatalf("no prompt in:\n%s", out)
+	}
+	// Back up over the digits immediately before the "V".
+	j := i
+	for j > 0 && out[j-1] >= '0' && out[j-1] <= '9' {
+		j--
+	}
+	n, err := strconv.Atoi(out[j:i])
+	if err != nil {
+		t.Fatalf("the prompt %q has no movement figure: %v", out[j:i+len(promptMarker)], err)
+	}
+	return n
 }
 
 // TestDoors, both of them: the plain closed one, and the locked one whose key

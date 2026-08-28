@@ -1461,6 +1461,9 @@ func sendRoomInfo(s *Session, room *game.RoomDef) {
 // move returns the command for one direction.
 func move(dir game.Direction) func(*Context) error {
 	return func(c *Context) error {
+		// do_move is the one caller that passes need_specials_check = 0
+		// (act.movement.c:249). Everything else — enter, leave, following,
+		// a mobile wandering — passes 1.
 		c.moveCharacter(c.Character, dir)
 		return nil
 	}
@@ -1475,6 +1478,18 @@ func move(dir game.Direction) func(*Context) error {
 // whoever gave the order. The recursion is the C's, and it terminates because
 // following in loops is refused when the link is made.
 func (c *Context) moveCharacter(who *game.Character, dir game.Direction) bool {
+	return c.moveCharacterChecking(who, dir, false)
+}
+
+// moveCharacterChecking is moveCharacter with do_simple_move's
+// need_specials_check argument, which reaches exactly one thing this port has
+// ported: which of the two exhaustion messages a character gets. `do_move`
+// passes 0 and everything else passes 1 (act.movement.c:249 against :233,
+// :522, :535, :555), so somebody who walks into a wall of their own accord is
+// "too exhausted" and somebody dragged after a leader is "too exhausted to
+// follow" — and only if they have a master at all, which is the C's own
+// second condition.
+func (c *Context) moveCharacterChecking(who *game.Character, dir game.Direction, specialsCheck bool) bool {
 	exit := c.World.Exit(who.Room, dir)
 	if exit == nil || exit.ToRoom == game.NoRoom {
 		who.Tell("Alas, you cannot go that way...\r\n")
@@ -1498,6 +1513,26 @@ func (c *Context) moveCharacter(who *game.Character, dir game.Direction) bool {
 		return false
 	}
 
+	// need_movement (act.movement.c:127): the truncated average of the two
+	// rooms' movement loss. Checked here, *before* the atrium check, because
+	// that is the C's order — a player with no movement left standing in an
+	// atrium is told they are exhausted rather than that the house is
+	// private.
+	//
+	// The refusal is `!IS_NPC(ch)` only, so an immortal with no movement left
+	// is refused too; what the level test guards is the *charge*
+	// (act.movement.c:161), so an immortal never spends any and so never
+	// reaches the refusal. A mobile is neither charged nor refused.
+	cost := game.MovementCost(c.World.Room(who.Room), c.World.Room(exit.ToRoom))
+	if !who.IsNPC() && who.Record != nil && who.Record.Points.Move < cost {
+		if specialsCheck && who.Master != nil {
+			who.Tell("You are too exhausted to follow.\r\n")
+		} else {
+			who.Tell("You are too exhausted.\r\n")
+		}
+		return false
+	}
+
 	// House_can_enter (act.movement.c:133). Note it is guarded by the room
 	// you are *leaving* being an atrium, not by the room you are entering
 	// being a house — so a house reachable any other way than through its
@@ -1508,6 +1543,12 @@ func (c *Context) moveCharacter(who *game.Character, dir game.Direction) bool {
 			who.Tell("That's private property -- no trespassing!\r\n")
 			return false
 		}
+	}
+
+	// "Now we know we're allowed to go into the room." Mobiles and immortals
+	// walk for nothing.
+	if !who.IsNPC() && who.Record != nil && who.Level() < game.LevelImmortal {
+		who.Record.Points.Move -= cost
 	}
 
 	leaving := who.Room

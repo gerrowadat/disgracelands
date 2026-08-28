@@ -313,6 +313,6 @@ func (c *Context) moveFollowers(leader *game.Character, from game.RoomVnum, dir 
 			continue
 		}
 		f.Tell("You follow %s.\r\n", leader.Name)
-		c.moveCharacter(f, dir)
+		c.moveCharacterChecking(f, dir, true)
 	}
 }

@@ -635,16 +635,45 @@ port is right and the thing it is compared against is wrong.
   been read wrong, not a design difference — exactly the shape CLAUDE.md
   says wants a C oracle rather than another reading.
   **Tracked:** #188.
-- **Walking is free here.** `do_simple_move` (act.movement.c) charges
+- ~~**Walking is free here.**~~ `do_simple_move` (act.movement.c) charges
   `need_movement` movement points per room, from the two rooms' sector
   types, and refuses with "You are too exhausted." when there are not
-  enough. `Context.moveCharacter` charges nothing: the C's prompt counts
-  down 84, 83, 82 across three rooms and this port's stays at 84.
+  enough. `Context.moveCharacter` charged nothing: the C's prompt counts
+  down 84, 83, 82 across three rooms and this port's stayed at 84.
   *Ruling (2026-08-26):*
   **Blocker.** Movement cost is gameplay and balance, not presentation: it
   is what gates exploration, and the prompt currently displays a number
   that never changes.
-  **Tracked:** #189.
+  **Fixed 2026-08-28** (#189). `movement_loss[]` (constants.c:768) is
+  ported and re-parsed out of the C by a test rather than eyeballed — it is
+  a table of numbers indexed by sector, so a transposed pair would read as
+  perfectly plausible terrain costs. `game.MovementCost` is
+  `(movement_loss[from] + movement_loss[to]) / 2` and **that division
+  truncates**, which is where the surprises are: city to field is
+  (1+2)/2 = 1, as cheap as walking down the street, and only field to
+  forest reaches 2. It is symmetric, so a loop costs the same either way
+  round, and the minimum is 1, so nothing is free — see
+  `docs/weirdnumbers.md`.
+
+  Three guards, and they are not the same guard. The **refusal** is
+  `!IS_NPC(ch)` alone (act.movement.c:130), so an immortal is refused too;
+  the **charge** is additionally `GET_LEVEL(ch) < LVL_IMMORT`
+  (act.movement.c:161), so an immortal never spends any and so never
+  reaches the refusal. The check sits *before* the atrium check, which is
+  the C's order — an exhausted player standing in an atrium is told they
+  are exhausted, not that the house is private.
+
+  The **wording** needed `do_simple_move`'s `need_specials_check`
+  argument, which reaches nothing else this port has ported: `do_move`
+  passes 0 and every other caller passes 1 (act.movement.c:249 against
+  :233, :522, :535, :555), so somebody who walks into a wall of their own
+  accord is "too exhausted" and somebody dragged after a leader is "too
+  exhausted to follow" — and only if they have a master at all. That is
+  `Context.moveCharacterChecking`.
+
+  Still not ported, and unchanged by this: the boat, tunnel and godroom
+  checks that surround it in `do_simple_move`, and `AFF_SNEAK` suppressing
+  the leave and arrive messages. The tunnel one has its own entry below.
 - **The C colours what it prints and the port does not.** New characters get
   colour turned on for them in both (interpreter.c:1616, a `<DoC>` local
   change the port has as `game.ApplyNewCharacterDefaults`), but the C wraps
