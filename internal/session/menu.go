@@ -126,6 +126,11 @@ func (s *Session) enterWorld(ctx context.Context, deps Deps) error {
 		return nil
 	}
 	s.state = StatePlaying
+	// Back in the world, so the disconnect handling applies again. Somebody
+	// who quit to the menu and then chose 1 is an ordinary playing session
+	// and must get the "$n has lost $s link." treatment if their connection
+	// drops, not the menu's silence.
+	s.clearExtracted()
 	s.logger.Info("entered the world", "character", s.character.Name)
 
 	if firstTime {

@@ -9,9 +9,7 @@
 package play
 
 import (
-	"strings"
 	"testing"
-	"time"
 )
 
 // Everything that needs a second person in the room. Graduation Hall's own
@@ -192,18 +190,22 @@ func TestQuittingIsSeenByTheRoom(t *testing.T) {
 	alfie, bertha := twoInARoom(t, m)
 
 	bertha.quit()
-	bertha.close()
 
 	contains(t, "what the room saw", alfie.do("look"), "Bertha has left the game.")
 
-	// Being taken out of the world happens in the connection's teardown,
-	// after the command that printed the goodbye -- so `who` needs its own
-	// wait rather than riding on the message the room already saw.
-	if !eventually(10*time.Second, func() bool {
-		return strings.Contains(alfie.do("who"), "1 character playing.")
-	}) {
-		t.Errorf("Bertha was still listed after quitting:\n%s", alfie.do("who"))
-	}
+	// `quit` takes the character out of the world in the command itself now
+	// (issue #187: do_quit ends in extract_char and the connection goes to
+	// the menu, it does not disconnect), so the room seeing the goodbye is
+	// enough of a wait -- both happen on the world goroutine, in that order.
+	// This used to need its own poll because the removal was deferred to the
+	// connection's teardown.
+	contains(t, "who after quitting", alfie.do("who"), "One lonely character displayed.")
+
+	// And the quitter is at the menu, on the same connection, able to go
+	// back in.
+	contains(t, "the menu after quitting", bertha.expectCount("Make your choice:", 2),
+		"Make your choice:")
+	bertha.close()
 
 	m.noServerErrors()
 }

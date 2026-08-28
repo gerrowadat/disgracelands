@@ -172,33 +172,51 @@ func (s *Server) crashSave(ctx context.Context, c *game.Character) error {
 		return nil
 	}
 
-	f := &player.RentFile{Code: player.RentCrash, Written: time.Now()}
-	if err := s.engine.DoSync(ctx, func(_ *game.Live) {
-		f.Gold, f.Bank = c.Record.Points.Gold, c.Record.Points.BankGold
-		// Equipment first, in wear-position order, then inventory — the order
-		// Crash_crashsave writes them in. Each entry is the full nested tree
-		// of what it contains (storedTreeFrom); a format that cannot record
-		// that flattens it back out itself before writing — see
-		// player.FlattenStoredObjects and player.StoredObject.Contains.
-		for _, worn := range c.Equipment {
-			if worn != nil {
-				f.Objects = append(f.Objects, storedTreeFrom(worn))
-			}
-		}
-		for i := len(c.Carrying) - 1; i >= 0; i-- {
-			f.Objects = append(f.Objects, storedTreeFrom(c.Carrying[i]))
-		}
-	}); err != nil {
+	var f *player.RentFile
+	if err := s.engine.DoSync(ctx, func(_ *game.Live) { f = crashFileFor(c) }); err != nil {
 		return err
 	}
+	return s.writeCrashFile(ctx, c.Name, f)
+}
 
+// crashFileFor reads a character's belongings into a rent file. **It must be
+// called on the world goroutine**: it walks the live inventory and equipment.
+//
+// Split out of crashSave so ExtractCharacter can take the snapshot inline —
+// it is already on that goroutine, and `quit` now leaves the connection open,
+// so waiting to read the character later would race the player entering the
+// world again from the menu.
+func crashFileFor(c *game.Character) *player.RentFile {
+	f := &player.RentFile{Code: player.RentCrash, Written: time.Now()}
+	f.Gold, f.Bank = c.Record.Points.Gold, c.Record.Points.BankGold
+	// Equipment first, in wear-position order, then inventory — the order
+	// Crash_crashsave writes them in. Each entry is the full nested tree
+	// of what it contains (storedTreeFrom); a format that cannot record
+	// that flattens it back out itself before writing — see
+	// player.FlattenStoredObjects and player.StoredObject.Contains.
+	for _, worn := range c.Equipment {
+		if worn != nil {
+			f.Objects = append(f.Objects, storedTreeFrom(worn))
+		}
+	}
+	for i := len(c.Carrying) - 1; i >= 0; i-- {
+		f.Objects = append(f.Objects, storedTreeFrom(c.Carrying[i]))
+	}
+	return f
+}
+
+// writeCrashFile is the disk half, safe to call from anywhere.
+func (s *Server) writeCrashFile(ctx context.Context, name string, f *player.RentFile) error {
+	if s.objects == nil || f == nil {
+		return nil
+	}
 	if len(f.Objects) == 0 {
 		// Nothing to store. The C writes the header anyway on this path and
 		// only deletes on the idle-save one; deleting here is the same thing
 		// to a reader and leaves no file behind for a naked character.
-		return s.objects.DeleteObjects(ctx, c.Name)
+		return s.objects.DeleteObjects(ctx, name)
 	}
-	return s.objects.SaveObjects(ctx, c.Name, f)
+	return s.objects.SaveObjects(ctx, name, f)
 }
 
 // storedTreeFrom builds the full nested StoredObject tree for obj and

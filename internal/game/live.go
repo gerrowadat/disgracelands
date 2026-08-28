@@ -444,6 +444,19 @@ func (l *Live) Remove(c *Character) {
 	// somebody who has left the world.
 	l.DieFollower(c)
 
+	// And every fight, both ways round (handler.c:953-960). Their own is
+	// stop_fighting(ch); the loop over combat_list is the one that matters,
+	// because a mobile left with FIGHTING() pointing at somebody who is no
+	// longer in the world swings at them every round forever. do_quit
+	// refuses while POS_FIGHTING, so this is reached by the ways out that do
+	// not: renting, and being extracted by a god.
+	l.StopFighting(c)
+	for _, other := range l.Combatants() {
+		if other.Fighting == c {
+			l.StopFighting(other)
+		}
+	}
+
 	l.Leave(c)
 	delete(l.byName, strings.ToLower(c.Name))
 }

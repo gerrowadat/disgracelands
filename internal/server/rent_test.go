@@ -35,6 +35,18 @@ func waitForLogout(t *testing.T, srv *Server, name string) {
 		var gone bool
 		inWorld(t, srv, func(w *game.Live) { gone = w.Find(name) == nil })
 		if gone {
+			// Gone from the world is not written to disk. `quit` takes the
+			// character out on the world goroutine and saves afterwards, off
+			// it (Server.ExtractCharacter) -- exactly the shape renting has
+			// always had, and the reason CLAUDE.md says to be careful which
+			// signal a test waits on.
+			//
+			// WaitForWrites is safe here and only here: the inWorld above has
+			// already synchronized with the world goroutine, so the
+			// background()'s writes.Add(1) has happened before this Wait.
+			// Calling it straight after a socket-level expect() would be the
+			// documented unsafe case, Add-at-zero racing Wait.
+			srv.WaitForWrites()
 			return
 		}
 		time.Sleep(10 * time.Millisecond)
