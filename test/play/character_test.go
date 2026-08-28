@@ -24,7 +24,7 @@ import (
 // (docs/proposals/go-port-plan.md §12). scripts/license-check.sh checks the
 // file says so; this checks a connecting player is actually shown it.
 func TestTheGreetingNamesTheCreators(t *testing.T) {
-	m := start(t, miniClassic)
+	m := start(t, mini)
 	c := m.dial()
 
 	greeting := c.expect("By what name do you wish to be known?")
@@ -38,7 +38,7 @@ func TestTheGreetingNamesTheCreators(t *testing.T) {
 // on the way, because every one of them is a state in the login machine that
 // a player can reach by typing something ordinary.
 func TestCreatingACharacter(t *testing.T) {
-	m := start(t, miniClassic)
+	m := start(t, mini)
 	c := m.dial()
 
 	c.expect("By what name do you wish to be known?")
@@ -82,7 +82,7 @@ func TestCreatingACharacter(t *testing.T) {
 // --- he be God": the first character created on an empty roster comes out at
 // level 34, and this is the one test that wants the roster genuinely empty.
 func TestTheFirstCharacterIsAnImplementor(t *testing.T) {
-	m := start(t, miniClassic, startOptions{noFounder: true})
+	m := start(t, mini, startOptions{noFounder: true})
 	c := m.dial()
 	c.create("First", "firstpass", "m", "w")
 
@@ -104,7 +104,7 @@ func TestTheFirstCharacterIsAnImplementor(t *testing.T) {
 
 // TestTheMenu. Every option on it, in the order it lists them.
 func TestTheMenu(t *testing.T) {
-	m := start(t, miniClassic)
+	m := start(t, mini)
 	c := m.dial()
 	c.create("Tourist", "tourpass", "m", "w")
 
@@ -163,7 +163,7 @@ func TestTheMenu(t *testing.T) {
 // TestTheNewPasswordIsTheOneThatWorks is the other half of the menu's option
 // 4: a password change nobody logs in with again is not a password change.
 func TestTheNewPasswordIsTheOneThatWorks(t *testing.T) {
-	m := start(t, miniClassic)
+	m := start(t, mini)
 	c := m.dial()
 	c.create("Tourist", "tourpass", "m", "w")
 	c.quit()
@@ -212,37 +212,33 @@ func TestTheNewPasswordIsTheOneThatWorks(t *testing.T) {
 // supposed to be enough: the belongings are written to a rent file on the way
 // out and handed back on the way in.
 func TestWhatYouWereCarryingSurvivesAQuit(t *testing.T) {
-	for _, l := range bothFormats {
-		t.Run(l.name, func(t *testing.T) {
-			m := start(t, l)
-			c := m.dial()
-			c.create("Tourist", "tourpass", "m", "w")
+	m := start(t, mini)
+	c := m.dial()
+	c.create("Tourist", "tourpass", "m", "w")
 
-			c.toRoom(roomArmory)
-			c.do("get all")
-			c.do("wear tunic")
-			c.do("wield sword")
-			contains(t, "before quitting", c.do("inventory"), "a small brass lantern")
+	c.toRoom(roomArmory)
+	c.do("get all")
+	c.do("wear tunic")
+	c.do("wield sword")
+	contains(t, "before quitting", c.do("inventory"), "a small brass lantern")
 
-			c.quit()
-			c.close()
+	c.quit()
+	c.close()
 
-			back := m.dial()
-			back.login("Tourist", "tourpass")
+	back := m.dial()
+	back.login("Tourist", "tourpass")
 
-			// Everything comes back carried, including what was being worn
-			// and wielded. That is Crash_crashsave's own doing and not an
-			// omission: the C's rent files record no wear position at all,
-			// so Crash_load hands the lot back as inventory and the player
-			// dresses again. A port that restored the equipment worn would
-			// be a nicer game and a wrong one.
-			contains(t, "what came back", back.do("inventory"),
-				"a rusty key", "a small brass lantern", "a leather tunic", "a training sword")
-			contains(t, "nothing came back worn", back.do("equipment"), "Nothing.")
+	// Everything comes back carried, including what was being worn
+	// and wielded. That is Crash_crashsave's own doing and not an
+	// omission: the C's rent files record no wear position at all,
+	// so Crash_load hands the lot back as inventory and the player
+	// dresses again. A port that restored the equipment worn would
+	// be a nicer game and a wrong one.
+	contains(t, "what came back", back.do("inventory"),
+		"a rusty key", "a small brass lantern", "a leather tunic", "a training sword")
+	contains(t, "nothing came back worn", back.do("equipment"), "Nothing.")
 
-			m.noServerErrors()
-		})
-	}
+	m.noServerErrors()
 }
 
 // TestSaveWritesTheAliasesAndSaysSo is do_save's duplication guard
@@ -259,7 +255,7 @@ func TestWhatYouWereCarryingSurvivesAQuit(t *testing.T) {
 // guarded save that wrote nothing at all would lose an alias defined this
 // session.
 func TestSaveWritesTheAliasesAndSaysSo(t *testing.T) {
-	m := start(t, miniClassic)
+	m := start(t, mini)
 	c := m.dial()
 	c.create("Tourist", "tourpass", "m", "w")
 
@@ -280,7 +276,7 @@ func TestSaveWritesTheAliasesAndSaysSo(t *testing.T) {
 // quitting leaves the character standing in the world; logging in again picks
 // the same body back up rather than making a second one.
 func TestReconnectingToALinkdeadCharacter(t *testing.T) {
-	m := start(t, miniClassic)
+	m := start(t, mini)
 	c := m.dial()
 	c.create("Tourist", "tourpass", "m", "w")
 	c.toRoom(roomArmory)
@@ -325,7 +321,7 @@ func TestReconnectingToALinkdeadCharacter(t *testing.T) {
 }
 
 func TestLoggingInTwiceTakesOverTheBody(t *testing.T) {
-	m := start(t, miniClassic)
+	m := start(t, mini)
 	first := m.dial()
 	first.create("Tourist", "tourpass", "m", "w")
 
@@ -377,7 +373,7 @@ func TestLoggingInTwiceTakesOverTheBody(t *testing.T) {
 // there is nothing to take over -- but it is still a duplicate, and leaving
 // it there is how a player ends up with two connections that both save.
 func TestADuplicateLoginAtTheMenuIsDisconnected(t *testing.T) {
-	m := start(t, miniClassic)
+	m := start(t, mini)
 	c := m.dial()
 	c.create("Tourist", "tourpass", "m", "w")
 	c.quit()
@@ -425,7 +421,7 @@ func TestADuplicateLoginAtTheMenuIsDisconnected(t *testing.T) {
 // nothing over the rent file, and the player would come back to an empty
 // pack.
 func TestADisplacedConnectionDoesNotSaveOverTheBody(t *testing.T) {
-	m := start(t, miniClassic)
+	m := start(t, mini)
 	c := m.dial()
 	c.create("Tourist", "tourpass", "m", "w")
 	c.toRoom(roomArmory)
@@ -482,7 +478,7 @@ func TestADisplacedConnectionDoesNotSaveOverTheBody(t *testing.T) {
 // that boots a real server on a real lib directory and so the only one where
 // that write is the real one.
 func TestTheWrongPassword(t *testing.T) {
-	m := start(t, miniClassic)
+	m := start(t, mini)
 	c := m.dial()
 	c.create("Tourist", "tourpass", "m", "w")
 	c.quit()
@@ -536,7 +532,7 @@ func TestTheWrongPassword(t *testing.T) {
 // TestDeletingACharacter, menu option 5 -- the one menu entry that cannot be
 // undone, and which therefore asks twice.
 func TestDeletingACharacter(t *testing.T) {
-	m := start(t, miniClassic)
+	m := start(t, mini)
 	c := m.dial()
 	c.create("Doomed", "doompass", "m", "w")
 	c.quit()
@@ -580,7 +576,7 @@ func TestDeletingACharacter(t *testing.T) {
 // TestQuittingFromTheMenu, option 0, which is the other way out and the one
 // that never enters the world at all.
 func TestQuittingFromTheMenu(t *testing.T) {
-	m := start(t, miniClassic)
+	m := start(t, mini)
 	c := m.dial()
 	c.create("Tourist", "tourpass", "m", "w")
 	c.quit()

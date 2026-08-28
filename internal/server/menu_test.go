@@ -147,10 +147,17 @@ func TestTheDescriptionEditor(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// The ascii format stores multi-line text with bare newlines and no
-	// trailing one; Session.Send puts the carriage returns back on the way
-	// out. What matters is that both lines survived, in order.
-	want := "A short, angry man.\nHe is holding a clipboard."
+	// What the editor actually produced: every line CRLF-terminated,
+	// including the last, which is the shape every string in the C has.
+	//
+	// This used to expect "A short, angry man.\nHe is holding a
+	// clipboard." — bare newlines and no trailing one — with a comment
+	// saying that is how *the ascii format* stores multi-line text. It
+	// was true and it was a fact about ascii's normalisation rather than
+	// about the editor: yaml round-trips the description unchanged, so
+	// moving this harness onto it (docs/proposals/yaml-only.md §5.4) is
+	// what showed what the editor had been writing all along.
+	want := "A short, angry man.\r\nHe is holding a clipboard.\r\n"
 	if rec.Description != want {
 		t.Errorf("description saved as %q, want %q", rec.Description, want)
 	}

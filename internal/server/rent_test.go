@@ -134,7 +134,12 @@ func TestWhatYouCarryOutIsWhatYouCarryBackIn(t *testing.T) {
 // location member. This is the C's behaviour, and worth a test precisely
 // because it looks like a bug in the port.
 func TestRentingEmptiesYourBags(t *testing.T) {
-	srv, _ := newTestServer(t)
+	// Deliberately the legacy harness: this test's subject *is* the
+	// legacy format's limitation, and on yaml (which the rest of this
+	// package now runs on) the ring comes back inside the bag — see
+	// TestRentingUnderYamlKeepsTheRingInTheBag, which asserts exactly
+	// that. Moved onto yaml, this test would pass vacuously.
+	srv, _ := newLegacyTestServer(t)
 	addr := listening(t, srv)
 
 	c := dialClient(t, addr)

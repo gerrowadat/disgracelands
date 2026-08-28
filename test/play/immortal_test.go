@@ -29,7 +29,7 @@ func (m *mud) god() *client {
 
 // TestTheImplementorCanMoveAround: goto by vnum, and back.
 func TestGoto(t *testing.T) {
-	m := start(t, miniClassic)
+	m := start(t, mini)
 	c := m.god()
 
 	contains(t, "goto a vnum", c.do("goto 3011"), "The General Store")
@@ -42,7 +42,7 @@ func TestGoto(t *testing.T) {
 // TestStat, on a room, a player, a mobile and an object -- four different
 // branches of do_stat, all of which need real loaded data to say anything.
 func TestStat(t *testing.T) {
-	m := start(t, miniClassic)
+	m := start(t, mini)
 	c := m.god()
 
 	contains(t, "stat room", c.do("stat room"), "Room name:", "The Testing Grounds", "Zone:")
@@ -59,7 +59,7 @@ func TestStat(t *testing.T) {
 // TestLoadAndPurge: making something out of nothing and then unmaking it,
 // which is how an operator fixes a world that has gone wrong.
 func TestLoadAndPurge(t *testing.T) {
-	m := start(t, miniClassic)
+	m := start(t, mini)
 	c := m.god()
 
 	contains(t, "load a mobile", c.do("load mob 130"), "a training dummy")
@@ -94,7 +94,7 @@ func TestLoadAndPurge(t *testing.T) {
 // prompt of the command that caused it. Waiting for the line itself is
 // the barrier; waiting for a prompt is not.
 func TestSyslogEchoesMudlogLines(t *testing.T) {
-	m := start(t, miniClassic)
+	m := start(t, mini)
 	c := m.god()
 
 	contains(t, "turning it on", c.do("syslog complete"),
@@ -141,7 +141,7 @@ func TestSyslogEchoesMudlogLines(t *testing.T) {
 // where a new character finds it: `syslog` defaults to off, and mudlog's
 // `if (tp < type) continue` (utils.c:252-253) then discards everything.
 func TestSyslogOffShowsNothing(t *testing.T) {
-	m := start(t, miniClassic)
+	m := start(t, mini)
 	c := m.god()
 
 	contains(t, "it starts off", c.do("syslog"), "Your syslog is currently off.")
@@ -166,7 +166,7 @@ func TestSyslogOffShowsNothing(t *testing.T) {
 // loaded off disk at boot, which is the one thing this suite has and the
 // unit tests fake.
 func TestTeditMarksTheEditorAsWriting(t *testing.T) {
-	m := start(t, miniClassic)
+	m := start(t, mini)
 	god := m.god()
 
 	other := m.dial()
@@ -194,7 +194,7 @@ func TestTeditMarksTheEditorAsWriting(t *testing.T) {
 // TestSet changes a field on a character who is logged in, and the change is
 // visible where a player would see it.
 func TestSet(t *testing.T) {
-	m := start(t, miniClassic)
+	m := start(t, mini)
 	c := m.god()
 
 	contains(t, "set gold", c.do("set Founder gold 500"), "Founder's gold set to 500.")
@@ -209,7 +209,7 @@ func TestSet(t *testing.T) {
 // characters, which is the difference that matters when somebody is stuck at
 // a login prompt.
 func TestUsersAndWho(t *testing.T) {
-	m := start(t, miniClassic)
+	m := start(t, mini)
 	c := m.god()
 
 	mortal := m.dial()
@@ -224,7 +224,7 @@ func TestUsersAndWho(t *testing.T) {
 // TestForceAndEcho: making somebody else act, and speaking as the world
 // rather than as a character.
 func TestForceAndEcho(t *testing.T) {
-	m := start(t, miniClassic)
+	m := start(t, mini)
 	c := m.god()
 
 	mortal := m.dial()
@@ -241,7 +241,7 @@ func TestForceAndEcho(t *testing.T) {
 
 // TestTransferAndAt: moving somebody else, and acting somewhere you are not.
 func TestTransferAndAt(t *testing.T) {
-	m := start(t, miniClassic)
+	m := start(t, mini)
 	c := m.god()
 
 	mortal := m.dial()
@@ -261,7 +261,7 @@ func TestTransferAndAt(t *testing.T) {
 // TestWizinvis. An invisible immortal is not in the room as far as a mortal
 // is concerned, which is the whole point of it.
 func TestWizinvis(t *testing.T) {
-	m := start(t, miniClassic)
+	m := start(t, mini)
 	c := m.god()
 
 	mortal := m.dial()
@@ -310,7 +310,7 @@ func TestWizinvis(t *testing.T) {
 // TestRestore puts a character back to full, which is the command an operator
 // reaches for after something has gone wrong in a fight.
 func TestRestore(t *testing.T) {
-	m := start(t, miniClassic)
+	m := start(t, mini)
 	c := m.god()
 
 	mortal := m.dial()
@@ -336,7 +336,7 @@ func TestRestore(t *testing.T) {
 // in the state format the flags asked for -- and a server whose houses were
 // never opened answers "Houses are not enabled on this server." to both.
 func TestHouses(t *testing.T) {
-	m := start(t, miniClassic)
+	m := start(t, mini)
 	c := m.god()
 
 	contains(t, "nothing built yet", c.do("show houses"), "No houses have been defined.")
@@ -360,7 +360,7 @@ func TestHouses(t *testing.T) {
 // TestWizhelpLists the immortal commands, which is the only discoverable
 // index of them there is.
 func TestWizhelp(t *testing.T) {
-	m := start(t, miniClassic)
+	m := start(t, mini)
 	c := m.god()
 
 	contains(t, "wizhelp", c.doUntil("wizhelp", promptMarker), "goto", "stat", "purge")
@@ -372,7 +372,7 @@ func TestWizhelp(t *testing.T) {
 // between an ordinary player and `purge`, and it is worth one test of its
 // own.
 func TestAMortalCannotUseImmortalCommands(t *testing.T) {
-	m := start(t, miniClassic)
+	m := start(t, mini)
 	c := m.dial()
 	c.create("Tourist", "tourpass", "m", "w")
 

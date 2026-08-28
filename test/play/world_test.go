@@ -32,68 +32,52 @@ func (m *mud) find(msg string) (logLine, bool) {
 	return logLine{}, false
 }
 
-// TestTheWorldLoadsTheSameInBothFormats.
+// The world the server actually boots on: it loads, the zones reset into
+// it, and the specials attach.
 //
-// examples/mini/yaml is examples/mini/binary put through `dlctl import`,
-// and cmd/dlctl's own tests already check that the conversion is clean and
-// that the two dump identically. This asks the question those cannot: does a
-// server booted on the converted directory come up with the same world in it?
-func TestTheWorldLoadsTheSameInBothFormats(t *testing.T) {
-	counts := map[string]string{}
+// This used to be TestTheWorldLoadsTheSameInBothFormats, booting a server
+// on examples/mini/binary and another on examples/mini/yaml and comparing
+// the two "world loaded" log lines. That question is answered far better
+// one level down now: `dlctl verify --against` compares every field of
+// every record of every subsystem across all three corpora, on every push
+// (docs/proposals/yaml-only.md §5.4), where this compared five counts
+// across two boots and only at release time.
+//
+// What is left is the half that suite alone can answer: that a server
+// booted on the shipping directory comes up with a world in it. That is
+// not a comparison at all, and internal/server's tests cannot ask it —
+// they build their world in Go and never read a file.
+func TestTheWorldBootsWithItsZonesAndSpecials(t *testing.T) {
+	m := start(t, mini)
 
-	for _, l := range bothFormats {
-		t.Run(l.name, func(t *testing.T) {
-			m := start(t, l)
-
-			loaded, ok := m.find("world loaded")
-			if !ok {
-				t.Fatalf("the server never logged what it loaded. Its log was:\n%s", m.logText())
-			}
-			counts[l.name] = loaded.raw
-
-			// The zone reset is what puts anything *in* the rooms: without
-			// it the mini world is sixteen empty rooms.
-			populated, ok := m.find("world populated")
-			if !ok {
-				t.Fatalf("the zones were never reset. The log was:\n%s", m.logText())
-			}
-			if strings.Contains(populated.raw, `"problems":0`) == false {
-				t.Errorf("the zone reset reported problems: %s", populated.raw)
-			}
-
-			// And the specials, which are attached by vnum from a fixed
-			// table (internal/game/specassign.go) rather than declared by
-			// the world files. The mini world reuses the real table's vnums
-			// on purpose so that its guildmaster, postmaster, receptionist,
-			// bank and board are real ones -- examples/mini/README.md's
-			// "Vnums" section is about exactly this, and it is the sort of
-			// thing that silently stops being true.
-			specials, ok := m.find("special procedures assigned")
-			if !ok {
-				t.Fatal("no specials were assigned")
-			}
-			contains(t, "the specials", specials.raw, `"attached":5`, `"shopkeepers":1`)
-
-			m.noServerErrors()
-		})
+	if _, ok := m.find("world loaded"); !ok {
+		t.Fatalf("the server never logged what it loaded. Its log was:\n%s", m.logText())
 	}
 
-	if counts["classic"] != "" && counts["yaml"] != "" {
-		classic := afterMsg(counts["classic"])
-		yaml := afterMsg(counts["yaml"])
-		if classic != yaml {
-			t.Errorf("the two formats loaded different worlds:\nclassic: %s\nyaml:    %s", classic, yaml)
-		}
+	// The zone reset is what puts anything *in* the rooms: without
+	// it the mini world is sixteen empty rooms.
+	populated, ok := m.find("world populated")
+	if !ok {
+		t.Fatalf("the zones were never reset. The log was:\n%s", m.logText())
 	}
-}
+	if !strings.Contains(populated.raw, `"problems":0`) {
+		t.Errorf("the zone reset reported problems: %s", populated.raw)
+	}
 
-// afterMsg is the tail of a log line from the counts onward, so that two
-// lines can be compared without their timestamps.
-func afterMsg(line string) string {
-	if i := strings.Index(line, `"rooms"`); i >= 0 {
-		return line[i:]
+	// And the specials, which are attached by vnum from a fixed
+	// table (internal/game/specassign.go) rather than declared by
+	// the world files. The mini world reuses the real table's vnums
+	// on purpose so that its guildmaster, postmaster, receptionist,
+	// bank and board are real ones -- examples/mini/README.md's
+	// "Vnums" section is about exactly this, and it is the sort of
+	// thing that silently stops being true.
+	specials, ok := m.find("special procedures assigned")
+	if !ok {
+		t.Fatal("no specials were assigned")
 	}
-	return line
+	contains(t, "the specials", specials.raw, `"attached":5`, `"shopkeepers":1`)
+
+	m.noServerErrors()
 }
 
 // TestAZoneResetPutsEverythingBack.
@@ -105,7 +89,7 @@ func afterMsg(line string) string {
 // is the immortal command that runs it on demand, which is the only way to
 // see it happen in a test that is not twenty minutes long.
 func TestAZoneResetPutsEverythingBack(t *testing.T) {
-	m := start(t, miniClassic)
+	m := start(t, mini)
 
 	tourist := m.dial()
 	tourist.create("Tourist", "tourpass", "m", "w")
@@ -153,26 +137,22 @@ func TestAZoneResetPutsEverythingBack(t *testing.T) {
 // obligation (docs/proposals/go-port-plan.md §12) that only means anything if
 // a player can actually reach it.
 func TestTheHelpDatabaseIsReadable(t *testing.T) {
-	for _, l := range bothFormats {
-		t.Run(l.name, func(t *testing.T) {
-			m := start(t, l)
-			c := m.dial()
-			c.create("Tourist", "tourpass", "m", "w")
+	m := start(t, mini)
+	c := m.dial()
+	c.create("Tourist", "tourpass", "m", "w")
 
-			contains(t, "help", c.doUntil("help", promptMarker),
-				"Further information available by HELP <keyword>")
+	contains(t, "help", c.doUntil("help", promptMarker),
+		"Further information available by HELP <keyword>")
 
-			// The licence entry, and the credits command beside it.
-			credits := c.doUntil("help circlemud", "Return to continue")
-			contains(t, "help circlemud", credits, "CircleMUD")
-			c.doUntil("q", promptMarker)
+	// The licence entry, and the credits command beside it.
+	credits := c.doUntil("help circlemud", "Return to continue")
+	contains(t, "help circlemud", credits, "CircleMUD")
+	c.doUntil("q", promptMarker)
 
-			contains(t, "an unknown keyword", c.do("help nosuchhelptopic"),
-				"There is no help on that word.")
+	contains(t, "an unknown keyword", c.do("help nosuchhelptopic"),
+		"There is no help on that word.")
 
-			m.noServerErrors()
-		})
-	}
+	m.noServerErrors()
 }
 
 // TestTheClockKeepsTimeAcrossARestart.
@@ -182,7 +162,7 @@ func TestTheHelpDatabaseIsReadable(t *testing.T) {
 // back to the beginning of time. save_mud_time runs on the way down, which
 // makes this a shutdown test as much as a clock one.
 func TestTheClockKeepsTimeAcrossARestart(t *testing.T) {
-	m := start(t, miniClassic)
+	m := start(t, mini)
 	c := m.dial()
 	c.create("Tourist", "tourpass", "m", "w")
 
@@ -191,7 +171,7 @@ func TestTheClockKeepsTimeAcrossARestart(t *testing.T) {
 	c.quit()
 	c.close()
 
-	m2 := m.restart(miniClassic)
+	m2 := m.restart(mini)
 	back := m2.dial()
 	back.login("Tourist", "tourpass")
 
@@ -230,7 +210,7 @@ func day(out string) string {
 // something it did not check fails here without anybody having had to think
 // of the case.
 func TestTheServerSurvivesNonsense(t *testing.T) {
-	m := start(t, miniClassic)
+	m := start(t, mini)
 	c := m.dial()
 	c.create("Tourist", "tourpass", "m", "w")
 
@@ -267,7 +247,7 @@ func TestTheServerSurvivesNonsense(t *testing.T) {
 // player's: a server that has been stopped and started again is the same
 // game, with the same characters, their things and their money.
 func TestARestartKeepsWhatWasSaved(t *testing.T) {
-	m := start(t, miniClassic)
+	m := start(t, mini)
 	c := m.dial()
 	c.create("Tourist", "tourpass", "m", "w")
 	c.toRoom(roomSparringRing)
@@ -280,7 +260,7 @@ func TestARestartKeepsWhatWasSaved(t *testing.T) {
 		t.Fatal("the character never reached the roster index")
 	}
 
-	m2 := m.restart(miniClassic)
+	m2 := m.restart(mini)
 	back := m2.dial()
 	back.login("Tourist", "tourpass")
 

@@ -28,10 +28,10 @@ import (
 	"sync"
 	"time"
 
-	playerbinary "github.com/gerrowadat/disgracelands/internal/persist/player/binary"
-
+	"github.com/gerrowadat/disgracelands/internal/persist/atomicfile"
 	"github.com/gerrowadat/disgracelands/internal/persist/houses"
 	"github.com/gerrowadat/disgracelands/internal/persist/player"
+	playerbinary "github.com/gerrowadat/disgracelands/internal/persist/player/binary"
 )
 
 // FormatName is the name this format registers under, and the default the
@@ -131,12 +131,7 @@ func (s *Store) Save(list []houses.House) error {
 	if err := os.MkdirAll(filepath.Dir(s.path), 0o750); err != nil {
 		return fmt.Errorf("writing the house control file: %w", err)
 	}
-	tmp := s.path + ".tmp"
-	if err := os.WriteFile(tmp, out, 0o600); err != nil {
-		return fmt.Errorf("writing the house control file: %w", err)
-	}
-	if err := os.Rename(tmp, s.path); err != nil {
-		_ = os.Remove(tmp)
+	if err := atomicfile.Write(s.path, out, 0o600); err != nil {
 		return fmt.Errorf("writing the house control file: %w", err)
 	}
 	return nil
@@ -198,12 +193,7 @@ func (s *Store) SaveObjects(vnum int32, objs []player.StoredObject) error {
 	if err := os.MkdirAll(s.dir, 0o750); err != nil {
 		return fmt.Errorf("writing house %d: %w", vnum, err)
 	}
-	tmp := path + ".tmp"
-	if err := os.WriteFile(tmp, b, 0o600); err != nil {
-		return fmt.Errorf("writing house %d: %w", vnum, err)
-	}
-	if err := os.Rename(tmp, path); err != nil {
-		_ = os.Remove(tmp)
+	if err := atomicfile.Write(path, b, 0o600); err != nil {
 		return fmt.Errorf("writing house %d: %w", vnum, err)
 	}
 	return nil

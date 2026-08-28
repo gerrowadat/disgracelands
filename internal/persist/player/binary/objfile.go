@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/gerrowadat/disgracelands/internal/game"
+	"github.com/gerrowadat/disgracelands/internal/persist/atomicfile"
 	"github.com/gerrowadat/disgracelands/internal/persist/player"
 )
 
@@ -372,12 +373,7 @@ func (s *ObjectStore) SaveObjects(_ context.Context, name string, f *player.Rent
 	// truncates first, so a crash mid-write leaves a file that is neither the
 	// old contents nor the new — and this is the crash-save path, where a
 	// crash mid-write is the case that matters.
-	tmp := path + ".tmp"
-	if err := os.WriteFile(tmp, b, 0o600); err != nil {
-		return fmt.Errorf("writing %s's rent file: %w", name, err)
-	}
-	if err := os.Rename(tmp, path); err != nil {
-		_ = os.Remove(tmp)
+	if err := atomicfile.Write(path, b, 0o600); err != nil {
 		return fmt.Errorf("writing %s's rent file: %w", name, err)
 	}
 	return nil

@@ -40,7 +40,7 @@ import (
 // stops short of sending a real SIGTERM to a real server and then looking at
 // what is on disk can see that.
 func TestShutdownSavesEveryoneStillInTheWorld(t *testing.T) {
-	m := start(t, miniClassic)
+	m := start(t, mini)
 	c := m.dial()
 	c.create("Tourist", "tourpass", "m", "w")
 
@@ -69,7 +69,7 @@ func TestShutdownSavesEveryoneStillInTheWorld(t *testing.T) {
 
 	// And the proof: a new server on the same data directory hands it all
 	// back.
-	m2 := startAt(t, miniClassic, m.dir, startOptions{noFounder: true})
+	m2 := startAt(t, mini, m.dir, startOptions{noFounder: true})
 	back := m2.dial()
 	back.login("Tourist", "tourpass")
 
@@ -84,7 +84,7 @@ func TestShutdownSavesEveryoneStillInTheWorld(t *testing.T) {
 // the saves would be worse than no shutdown command at all (cmd/dlmud's own
 // comment on it).
 func TestShutdownFromInsideTheGame(t *testing.T) {
-	m := start(t, miniClassic)
+	m := start(t, mini)
 	god := m.god()
 	god.do("set Founder gold 250")
 
@@ -105,7 +105,7 @@ func TestShutdownFromInsideTheGame(t *testing.T) {
 		t.Errorf("the shutdown logged an error: %s", line)
 	}
 
-	m2 := startAt(t, miniClassic, m.dir, startOptions{noFounder: true})
+	m2 := startAt(t, mini, m.dir, startOptions{noFounder: true})
 	back := m2.dial()
 	back.login(founderName, founderPassword)
 	contains(t, "what was saved on the way down", back.do("score"), "250 gold coins")
@@ -155,7 +155,7 @@ func TestTheExitCodeSaysWhetherToComeBack(t *testing.T) {
 		{"shutdown reboot", 2, func(m *mud) { m.god().send("shutdown reboot") }},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			m := start(t, miniClassic)
+			m := start(t, mini)
 			tc.how(m)
 
 			if got := m.wait(); got != tc.want {

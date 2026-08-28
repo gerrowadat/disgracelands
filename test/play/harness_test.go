@@ -152,12 +152,11 @@ func repoRoot() string {
 // lib describes one of the checked-in example data directories, and the
 // flags the server needs to read it.
 //
-// Both of examples/mini's formats are played through, not just the classic
-// one: `dlctl import` converting cleanly (cmd/dlctl's own tests) and the
-// world dumps matching are necessary but not sufficient -- the question this
-// answers is whether a server booted on the converted directory is a game
-// you can play. That is a different question, and it is the one that would
-// bite an operator who converted their archive.
+// There is one of them now (see mini below). The type stays a type rather
+// than collapsing into two constants because what it carries — a source
+// directory and the flags to read it — is still the pair every start()
+// needs, and because a second entry is exactly what a future format would
+// add.
 type lib struct {
 	// name is the subtest name.
 	name string
@@ -167,22 +166,30 @@ type lib struct {
 	flags []string
 }
 
-var (
-	miniClassic = lib{name: "classic", dir: "examples/mini/binary"}
-	miniYAML    = lib{
-		name: "yaml",
-		dir:  "examples/mini/yaml",
-		flags: []string{
-			"--world-format=yaml", "--state-format=yaml", "--names-format=yaml",
-			"--messages-format=yaml", "--socials-format=yaml", "--help-format=yaml",
-		},
-	}
-)
-
-// bothFormats is what a test ranges over when it should hold in either
-// format. Tests about a rule rather than about the data use miniClassic
-// alone; there is no point paying for a second boot to re-prove arithmetic.
-var bothFormats = []lib{miniClassic, miniYAML}
+// mini is the tutorial world, in the format the server ships on.
+//
+// There used to be two — mini and mini — and a bothFormats
+// slice that a handful of tests ranged over to prove a scenario behaved
+// the same on either. That was exactly right while the server ran on
+// both, and became half-wasted work the moment it did not: those runs
+// were verifying that a scenario behaves the same on a format the server
+// will no longer boot (docs/proposals/yaml-only.md §5.4).
+//
+// Losing that coverage is the point rather than a cost. What replaces it
+// is the differential layer one level down — `dlctl verify --against`
+// over all three corpora, in cmd/dlctl's own tests — where the comparison
+// is cheap and *total* instead of expensive and sampled: it compares every
+// field of every record of every subsystem, on every push, rather than
+// booting two servers and typing at them.
+var mini = lib{
+	name: "yaml",
+	dir:  "examples/mini/yaml",
+	flags: []string{
+		"--world-format=yaml", "--state-format=yaml", "--names-format=yaml",
+		"--messages-format=yaml", "--socials-format=yaml", "--help-format=yaml",
+		"--player-format=yaml",
+	},
+}
 
 // mud is a running server and the temporary data directory it runs on.
 type mud struct {
@@ -374,8 +381,9 @@ func stageLib(t *testing.T, l lib) string {
 	// The directories a real lib/ has and an example does not, because they
 	// only ever hold player state. A missing one is a first-login failure
 	// rather than an empty roster -- the same reason the Makefile's own
-	// scratch target recreates them.
-	for _, sub := range []string{"pfiles", "plrobjs", "plralias", "house", "etc", "misc", "state"} {
+	// scratch target recreates them. Two of them under yaml, where the
+	// classic layout needed seven.
+	for _, sub := range []string{"players", "state"} {
 		if err := os.MkdirAll(filepath.Join(dir, sub), 0o700); err != nil {
 			t.Fatal(err)
 		}
@@ -551,8 +559,9 @@ func (m *mud) path(elem ...string) string {
 	return filepath.Join(append([]string{m.dir}, elem...)...)
 }
 
-// pfile is where the ascii roster keeps one character: pfiles/<initial>/<name>,
-// lowercased, no extension (internal/persist/player/ascii's Store.path).
+// pfile is where the yaml roster keeps one character:
+// players/<initial>/<name>.yaml, lowercased (internal/persist/player/yaml's
+// Store.pathFor).
 //
 // Tests wait on this file rather than on anything they can see over the
 // socket, because the save is pushed off the world goroutine on purpose --
@@ -560,25 +569,20 @@ func (m *mud) path(elem ...string) string {
 // before the record exists.
 func (m *mud) pfile(name string) string {
 	lower := strings.ToLower(name)
-	return m.path("pfiles", lower[:1], lower)
+	return m.path("players", lower[:1], lower+".yaml")
 }
 
-// rosterHas reports whether the ascii roster index lists name.
+// rosterHas reports whether the roster holds a character.
 //
-// plr_index is the file get_id_by_name is ported against, so this is the
-// same question the postmaster and the house control ask.
+// This used to read pfiles/plr_index, the file get_id_by_name is ported
+// against. The yaml format has no index to read -- it walks the directory
+// instead, deliberately, because an index is a second copy of the truth
+// (docs/design/data-format.md §3) -- so the question is asked of the tree
+// directly. It is the same question the postmaster and the house control
+// ask, by the same route the server itself takes.
 func (m *mud) rosterHas(name string) bool {
-	b, err := os.ReadFile(m.path("pfiles", "plr_index"))
-	if err != nil {
-		return false
-	}
-	for _, line := range strings.Split(string(b), "\n") {
-		fields := strings.Fields(line)
-		if len(fields) >= 2 && strings.EqualFold(fields[1], name) {
-			return true
-		}
-	}
-	return false
+	_, err := os.Stat(m.pfile(name))
+	return err == nil
 }
 
 // eventually polls until a condition holds or the deadline passes.

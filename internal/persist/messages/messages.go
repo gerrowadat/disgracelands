@@ -22,9 +22,9 @@ import (
 
 	"github.com/goccy/go-yaml"
 
-	"github.com/gerrowadat/disgracelands/internal/persist/yamlenc"
-
 	"github.com/gerrowadat/disgracelands/internal/game"
+	"github.com/gerrowadat/disgracelands/internal/persist/atomicfile"
+	"github.com/gerrowadat/disgracelands/internal/persist/yamlenc"
 )
 
 // ClassicFile is misc/messages under whatever directory holds it.
@@ -165,12 +165,7 @@ func saveYaml(dir string, records []game.FightMessage) error {
 	if err := os.MkdirAll(dir, 0o750); err != nil {
 		return fmt.Errorf("writing %s: %w", path, err)
 	}
-	tmp := path + ".tmp"
-	if err := os.WriteFile(tmp, out, 0o600); err != nil {
-		return fmt.Errorf("writing %s: %w", path, err)
-	}
-	if err := os.Rename(tmp, path); err != nil {
-		_ = os.Remove(tmp)
+	if err := atomicfile.Write(path, out, 0o600); err != nil {
 		return fmt.Errorf("writing %s: %w", path, err)
 	}
 	return nil

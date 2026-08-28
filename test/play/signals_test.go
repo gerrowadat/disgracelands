@@ -64,7 +64,7 @@ func waitForLog(t *testing.T, m *mud, msg string) {
 func TestSIGHUPReloadsTheConfiguration(t *testing.T) {
 	cfg := writeConfig(t, filepath.Join(t.TempDir(), "game.yaml"), "level_can_shout: 30\n")
 
-	m := start(t, miniClassic, startOptions{extraFlags: []string{"--config=" + cfg}})
+	m := start(t, mini, startOptions{extraFlags: []string{"--config=" + cfg}})
 	c := m.dial()
 	c.create("Yeller", "yellpass", "m", "w")
 
@@ -90,7 +90,7 @@ func TestSIGHUPReloadsTheConfiguration(t *testing.T) {
 func TestSIGHUPKeepsTheOldConfigurationWhenTheNewOneIsBroken(t *testing.T) {
 	cfg := writeConfig(t, filepath.Join(t.TempDir(), "game.yaml"), "level_can_shout: 30\n")
 
-	m := start(t, miniClassic, startOptions{extraFlags: []string{"--config=" + cfg}})
+	m := start(t, mini, startOptions{extraFlags: []string{"--config=" + cfg}})
 	c := m.dial()
 	c.create("Yeller", "yellpass", "m", "w")
 
@@ -122,10 +122,10 @@ func TestSIGHUPKeepsTheOldConfigurationWhenTheNewOneIsBroken(t *testing.T) {
 // an operator will actually use, and made from the socket for the same
 // reason: "it read the file" and "the game changed" are different claims.
 func TestTheDataDirectoryConfiguresTheGame(t *testing.T) {
-	dir := stageLib(t, miniClassic)
+	dir := stageLib(t, mini)
 	cfg := writeConfig(t, filepath.Join(dir, "config", "game.yaml"), "level_can_shout: 30\n")
 
-	m := startAt(t, miniClassic, dir, startOptions{})
+	m := startAt(t, mini, dir, startOptions{})
 	c := m.dial()
 	c.create("Yeller", "yellpass", "m", "w")
 
@@ -148,12 +148,12 @@ func TestTheDataDirectoryConfiguresTheGame(t *testing.T) {
 // nothing would leave an operator who mistyped the filename waiting for a
 // change that is never coming.
 func TestSIGHUPWithNoConfigFileSaysSo(t *testing.T) {
-	dir := stageLib(t, miniClassic)
+	dir := stageLib(t, mini)
 	if err := os.Remove(filepath.Join(dir, "config", "game.yaml")); err != nil {
 		t.Fatalf("removing the staged tuning file: %v", err)
 	}
 
-	m := startAt(t, miniClassic, dir, startOptions{})
+	m := startAt(t, mini, dir, startOptions{})
 
 	m.signal(syscall.SIGHUP)
 	waitForLog(t, m, "SIGHUP received but there is no game tuning file; nothing to reload")

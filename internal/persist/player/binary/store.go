@@ -202,7 +202,8 @@ func (s *Store) List(ctx context.Context) iter.Seq2[player.IndexEntry, error] {
 				continue
 			}
 			if !yield(player.IndexEntry{
-				Name: rec.Name, IDNum: rec.IDNum,
+				// Lower-cased: see player.IndexEntry.Name.
+				Name: strings.ToLower(rec.Name), IDNum: rec.IDNum,
 				Level: rec.Level, Flags: rec.PlayerFlags,
 			}, nil) {
 				return

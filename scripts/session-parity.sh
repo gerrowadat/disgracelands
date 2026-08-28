@@ -114,6 +114,24 @@ for script in $SCRIPTS; do
 	prepare_lib "$CLIB"
 	prepare_lib "$GLIB"
 
+	# The Go side plays on a yaml conversion of its staged directory; the
+	# C side keeps the classic one, because it is the only thing it reads.
+	#
+	# This is docs/proposals/yaml-only.md §5.4's third change, and it is
+	# what makes this harness compare the *shipping* Go configuration
+	# against the C for the first time -- which is what
+	# docs/proposals/go-port-plan.md §11 wanted from it. Until now both
+	# sides booted on the same classic directory, so the one Go
+	# configuration a player will ever meet was the one thing the parity
+	# suite never exercised.
+	GYAML="$OUT/$RUN/gyaml"
+	if ! go run ./cmd/dlctl import --from-dir="$GLIB" --to-dir="$GYAML" \
+		>"$OUT/$RUN/import.log" 2>&1; then
+		echo "!!! converting the Go side to yaml failed" >&2
+		tail -30 "$OUT/$RUN/import.log" >&2 || true
+		exit 1
+	fi
+
 	CPORT=$(free_port)
 	GPORT=$(free_port)
 
@@ -124,7 +142,10 @@ for script in $SCRIPTS; do
 	"$ROOT/$CSERVER/bin/circle" -q -M -W -S "$SEED" -d "$CLIB" "$CPORT" >"$OUT/$RUN/c.log" 2>&1 &
 	CPID=$!
 	go run ./cmd/dlmud \
-		--lib-dir="$GLIB" \
+		--lib-dir="$GYAML" \
+		--world-format=yaml --state-format=yaml --names-format=yaml \
+		--messages-format=yaml --socials-format=yaml --help-format=yaml \
+		--player-format=yaml \
 		--listen-telnets= --listen-telnet="127.0.0.1:$GPORT" \
 		--rng=circle --rng-seed="$SEED" --freeze-mobiles --freeze-weather \
 		--log-level=error >"$OUT/$RUN/g.log" 2>&1 &

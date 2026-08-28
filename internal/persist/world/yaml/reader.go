@@ -12,8 +12,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gerrowadat/disgracelands/internal/game"
 	"github.com/goccy/go-yaml"
+
+	"github.com/gerrowadat/disgracelands/internal/game"
 )
 
 // loadZoneFile decodes one zone file and appends its records to w.
