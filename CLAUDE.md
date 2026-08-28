@@ -1,7 +1,8 @@
 # Working on Disgracelands
 
 Notes for anyone — human or agent — picking this up cold. The authoritative
-documents are `docs/proposals/yaml-only.md` (what we are doing next),
+documents are `docs/proposals/yaml-only.md` (what we are doing next) and
+`docs/proposals/idiomatic-go.md` (what follows it),
 `docs/proposals/go-port-plan.md` (how the port got here, and the
 architecture it built), `docs/deviations.md` (every deliberate difference
 from the C) and `docs/weirdnumbers.md` (every surprising constant, with its
@@ -333,8 +334,9 @@ the day-to-day/release split being reversible piecemeal.**
 - A deliberate difference from the C → `docs/deviations.md`, with reasoning.
 - Something not yet ported, that a reader would expect to be →
   `docs/deviations.md` too, so the gap is visible.
-- Status of work still to come → `docs/proposals/yaml-only.md`. Keep it
-  current; it is the map future work is planned from.
+- Status of work still to come → `docs/proposals/yaml-only.md`, then
+  `docs/proposals/idiomatic-go.md`. Keep them current; between them they are
+  the map future work is planned from.
 - Phase and slice status for the port itself →
   `docs/proposals/go-port-plan.md`. A historical record now, corrected when
   it turns out to be wrong about what landed, not extended with new plans.

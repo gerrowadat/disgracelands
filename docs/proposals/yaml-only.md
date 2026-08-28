@@ -640,6 +640,11 @@ stays in `proposals/` as the record of the decision.
 
 ## Related documents
 
+- `docs/proposals/idiomatic-go.md` — what this unblocks and what comes next:
+  taking the C's data structures out of the game model, once nothing decodes
+  a C file into it. Its §1 is the argument for that ordering; its slice 6 and
+  this plan's row 4 are the same work (retiring `LegacySpares` from
+  `internal/game`) and only one of them does it.
 - `docs/proposals/go-port-plan.md` — the port itself, Phases 0–6, superseded
   by this document as the forward plan and still authoritative as the record
   and the architecture reference. §5 and §6 (the pluggable seams) are what

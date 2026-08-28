@@ -47,10 +47,11 @@ both the C tree and the Go tree.
 ## `docs/proposals/` — the plan, still moving
 
 What is going to happen, and the record of how the port got to where it is.
-Two documents, and which is which matters: **`yaml-only.md` is the plan work
-is planned from**, and `go-port-plan.md` is the port that got us here —
-still authoritative for the architecture and for what each phase did and did
-not contain, but no longer extended with new plans.
+Three documents, and which is which matters: **`yaml-only.md` is the plan
+work is planned from** and `idiomatic-go.md` is what follows it, while
+`go-port-plan.md` is the port that got us here — still authoritative for the
+architecture and for what each phase did and did not contain, but no longer
+extended with new plans.
 
 - **[yaml-only.md](proposals/yaml-only.md)** — retiring `classic`, `ascii`
   and `binary` from the server, so it understands only `yaml`: what leaks
@@ -61,6 +62,15 @@ not contain, but no longer extended with new plans.
   `lib/` to a running server is `dlctl import`. Not started; its rows 1–2
   (a deliberately hostile fixture, and `dlctl verify --against`) are worth
   landing on their own either way.
+- **[idiomatic-go.md](proposals/idiomatic-go.md)** — what follows yaml-only:
+  taking the C's data structures out of the game model now that nothing
+  decodes a C file into it. One flag type per domain instead of one
+  `bitvector_t` for all eight, typed object values instead of `Values[2]`,
+  named identifier types instead of nine namespaces sharing `int32`. Explicit
+  about what it may *not* touch — the command table's ordering, argument
+  splitting, and every number in `weirdnumbers.md` — because "modernise the
+  implementation" needs a boundary written down. Nothing it does changes a
+  byte on disk. Not started.
 - **[go-port-plan.md](proposals/go-port-plan.md)** — the design and phasing
   for reimplementing the engine in Go: 64-bit safety, pluggable player- and
   world-file formats, the concurrency model, licensing constraints, and the
