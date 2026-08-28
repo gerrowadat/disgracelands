@@ -1835,7 +1835,9 @@ too, since a switched god's *current* character is the mobile they are
 inside — `IS_NPC` alone already excludes them, and the C has no separate
 "switched" check to reproduce. `PLR_WRITING` (mid-edit) is excluded for
 the same reason the C excludes it: a log line arriving inside somebody's
-own text buffer would be worse than not seeing it. `session.SyslogLevel`
+own text buffer would be worse than not seeing it. (That check was a
+connection-state stand-in until #214 gave the flag a setter.)
+`session.SyslogLevel`
 (exported from `internal/session/wizcomm.go`, unexported until now since
 nothing outside the package needed it) is `do_syslog`'s own two-bits-as-
 one-number arithmetic, reused rather than re-derived.
@@ -1888,7 +1890,40 @@ off the world goroutine (#210), `wizlock` does not keep mortals out
 because `Server.AllowedIn` is never called (#211), the three `<DoC>` cyan
 broadcasts are unported (#212), nothing sets `PLR_KILLER` on an attack
 (#213), and nothing sets `PLR_WRITING` either, which leaves four checks
-on it dead (#214).
+on it dead (#214 — fixed, below).
+
+**`PLR_WRITING` is a real flag ✅ (#214).** The C sets it in
+`string_write` (`modify.c:100-101`) and clears it in `string_add`'s
+cleanup (`:218-219`), so anybody in the line editor carries it. Nothing
+in this port set it, and every check on it was dead: `tell` never
+refused, the channels and `wiznet` never skipped, the room never said
+"(writing)", `gain_condition` never held its tongue, and the syslog echo
+had to stand in a connection-state check. `Session.beginEditor` sets it
+now and `finishEditing` clears it, and `mail` sets `PLR_MAILING`
+alongside as `do_mail` does (`mail.c:567`).
+
+The awkward half was the clearing. Everything a *command* touches is
+already serialised by `Dispatcher.Do`; the line editor is the one thing
+a playing character drives from the session's own goroutine, line by
+line, and its cleanup writes world state — the flag, a board's message
+list, a note's action description. In the C all of that runs inside
+`string_add`, in the game loop, like everything else. So
+`CommandHandler` grew an `InWorld` hop and `finishEditing` runs its
+whole cleanup through it, which fixes the board and note writes at the
+same time as the flag.
+
+Two findings came with it. `wiznet @`'s "(Writing mail)" arm can never
+fire, because `do_mail` sets `PLR_MAILING` and then `string_write` sets
+`PLR_WRITING`, and the site tests writing first — while `do_who` tests
+the same two bits the other way round and so has the opposite dead arm.
+Both orders are reproduced; `docs/weirdnumbers.md` has the write-up. And
+the C's menu option 2 sets `d->str` and `CON_EXDESC` **directly** rather
+than calling `string_write` (`interpreter.c:1706-1709`), so the
+description editor never sets the flag on the real server either — which
+is why this port does not set it there.
+
+One gap came out of it: `do_who` prints none of its annotations at all,
+not just the writing one (#216).
 
 **`wizlock` keeps mortals out ✅ (#211).** Nanny tests `circle_restrict`
 twice — `if (circle_restrict)` at CON_NAME_CNFRM (`interpreter.c:1421`)

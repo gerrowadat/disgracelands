@@ -110,14 +110,18 @@ func sendWizVis(w *game.Live, typ, level int, message string) {
 		}
 		// PLR_WRITING (utils.c:248): mid-edit, a line arriving inside
 		// somebody's own text buffer would be worse than not seeing it
-		// at all. The C sets that bit in string_write (modify.c:100-101)
-		// and clears it in the cleanup (:218-219); nothing in this port
-		// sets it, and the equivalent fact here is the *connection
-		// state* — StateEditing, or StatePaging for somebody halfway
-		// through a page. Read through the client rather than from a
-		// session list, and safe on this goroutine because Session.state
-		// is an atomic (see its own note).
-		if rec.PlayerFlags.Has(game.PlayerWriting) || interrupted(ch) {
+		// at all. The flag is real as of #214 — Session.beginEditor sets
+		// it and the editor's cleanup clears it, both on this goroutine,
+		// exactly as string_write and string_add do (modify.c:100-101,
+		// :218-219).
+		//
+		// #134 had a stand-in here, reading StateEditing or StatePaging
+		// off the client, and it is gone with the flag in place. Note
+		// that it also excluded somebody *paging*, which the C does not:
+		// page_string never changes STATE(d), so a reader halfway
+		// through a listing is still CON_PLAYING and still gets the
+		// line, interleaved with the page. That is the behaviour now.
+		if rec.PlayerFlags.Has(game.PlayerWriting) {
 			continue
 		}
 		if session.SyslogLevel(rec) < typ {
@@ -126,23 +130,4 @@ func sendWizVis(w *game.Live, typ, level int, message string) {
 		// CCGRN(i->character, C_NRM) ... "[ %s ]\r\n" ... CCNRM (utils.c:255-257).
 		ch.TellAt(colour.Normal, "{{green}}[ %s ]{{/}}\r\n", message)
 	}
-}
-
-// interrupted reports whether a character's connection is somewhere a
-// syslog line should not land: in the line editor, or partway through a
-// paged listing. See sendWizVis.
-//
-// A character with no client at all — a linkdead body — is not
-// interrupted; it simply has nowhere for the line to go, and TellAt
-// handles that.
-func interrupted(ch *game.Character) bool {
-	sess, ok := ch.Client.(*session.Session)
-	if !ok {
-		return false
-	}
-	switch sess.State() {
-	case session.StateEditing, session.StatePaging:
-		return true
-	}
-	return false
 }

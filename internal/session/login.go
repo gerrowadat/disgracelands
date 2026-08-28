@@ -59,7 +59,7 @@ func (s *Session) handle(ctx context.Context, deps Deps, line string) error {
 	case StateEnterDescription:
 		return s.handleEnterDescription(ctx, deps, line)
 	case StateEditing:
-		return s.handleEditing(line)
+		return s.handleEditing(ctx, deps, line)
 	case StatePaging:
 		return s.handlePaging(line)
 	case StateChangePasswordOld:

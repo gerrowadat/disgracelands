@@ -1073,6 +1073,15 @@ compared against is not:
 
 Listed here so they are not mistaken for deliberate differences.
 
+- **`who` prints no annotations.** `do_who` marks each line with
+  `(i<n>)`/`(invis)`, `(mailing)`/`(writing)`, `(deaf)`, `(notell)`,
+  `(nogossip)`, `(quest)`, `(THIEF)`, `(KILLER)` and the `<DoC>` paladin
+  `(UNWORTHY)`/`(FALLEN)` (`act.informative.c:1169-1201`); `doWho`
+  prints the bracket, the name, the title and the remort colour, and
+  none of the rest. Every fact behind them is already in this port. The
+  room listing's own `" (writing)"` (`list_one_char`,
+  `act.informative.c:306`) *is* ported and works. Filed as #216; found
+  while fixing #214.
 - ~~**A death trap does not kill.**~~ Ported (#209). `do_simple_move`'s
   last three lines — `log_death_trap(ch); death_cry(ch); extract_char(ch);`
   (`act.movement.c:171-176`) — are `Context.deathTrap`
@@ -1217,7 +1226,7 @@ Listed here so they are not mistaken for deliberate differences.
   `level < 0` reaching nobody at all — see
   [`weirdnumbers.md`](weirdnumbers.md)) and sends it in green.
 
-  Two of those conditions are reached differently from the C, both for
+  One of those conditions is reached differently from the C, for
   goroutine-ownership reasons rather than behavioural ones. The loop
   walks the *world's* players rather than the server's session list,
   which is the same set `descriptor_list` plus `STATE(i) == CON_PLAYING`
@@ -1227,11 +1236,16 @@ Listed here so they are not mistaken for deliberate differences.
   wherever the log call was made is a data race; that was latent while
   `bug` was the only producer (a command already runs on the world
   goroutine) and immediate once #134 added producers on the login
-  goroutine. And "mid-edit" is the connection state (`StateEditing`,
-  plus `StatePaging`) rather than `PLR_WRITING`, because nothing in this
-  port sets that bit — see #214, where three other checks on it are
-  dead. `Session.state` became an `atomic.Int32` for this: it is read
-  from the world goroutine now, and written by each session's own.
+  goroutine.
+
+  "Mid-edit" was a second such difference for one change only: #134 had
+  no `PLR_WRITING` bit to read, since nothing set it, and stood in a
+  connection-state check. #214 made the flag real and the stand-in is
+  gone. That also put back a small piece of fidelity the stand-in had
+  cost: it excluded a *paging* reader, and the C does not —
+  `page_string` never changes `STATE(d)`, so somebody halfway through a
+  listing is still `CON_PLAYING` and still gets the line, interleaved
+  with the page.
 
   The producers are `Context.wizlog`/`wizlogInvis`
   (`internal/session/wizlog.go`) and `Server.wizlog`/`wizlogInvis`
@@ -1274,8 +1288,6 @@ Listed here so they are not mistaken for deliberate differences.
     "a connection that typed nothing"; here a session with no character is
     the same object as one that never authenticated, and the line would
     fire on every port-scan.
-  - `mudlog`'s own `PLR_WRITING` exclusion (`utils.c:248`) has a
-    stand-in rather than the flag, as above. The flag itself is #214.
   - `parse_action`'s "SYSERR: invalid command passed to parse_action"
     (`improved-edit.c:473`) is unreachable in the C —
     `improved_editor_execute` only ever passes valid `PARSE_*` constants,

@@ -243,7 +243,13 @@ func GainCondition(rec *PlayerRecord, cond Condition, delta int32) ConditionChan
 	value = min(MaxCondition, value)
 	rec.Conditions[cond] = value
 
-	if value != 0 {
+	// `if (GET_COND(ch, condition) || PLR_FLAGGED(ch, PLR_WRITING)) return;`
+	// (limits.c:394). Note what PLR_WRITING suppresses: the *message*, not
+	// the change — hunger and thirst go right on advancing while you are
+	// in the editor, you just are not told about it until you come out.
+	// The bit is real as of #214; before that this branch could not have
+	// been written, since nothing set it.
+	if value != 0 || rec.PlayerFlags.Has(PlayerWriting) {
 		return ConditionChange{Changed: true}
 	}
 

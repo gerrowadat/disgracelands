@@ -257,6 +257,33 @@ func TestGainCondition(t *testing.T) {
 	}
 }
 
+// PLR_WRITING suppresses the message and nothing else: `if (GET_COND(ch,
+// condition) || PLR_FLAGGED(ch, PLR_WRITING)) return;` (limits.c:394) sits
+// *after* the condition has already been changed and clamped. Somebody in
+// the line editor goes on getting hungry; they are simply not interrupted
+// to be told so.
+func TestWritingSuppressesTheConditionMessageButNotTheChange(t *testing.T) {
+	rec := &PlayerRecord{Conditions: [3]int32{5, 24, 24}}
+	rec.PlayerFlags = rec.PlayerFlags.Set(PlayerWriting)
+
+	rec.Conditions[CondFull] = 1
+	change := GainCondition(rec, CondFull, -5)
+	if change.Message != "" {
+		t.Errorf("somebody in the editor was told %q", change.Message)
+	}
+	if rec.Conditions[CondFull] != 0 {
+		t.Errorf("full is %d, want 0 — the change happens either way",
+			rec.Conditions[CondFull])
+	}
+
+	// Out of the editor, the same step does say so.
+	rec.PlayerFlags = rec.PlayerFlags.Clear(PlayerWriting)
+	rec.Conditions[CondFull] = 1
+	if change := GainCondition(rec, CondFull, -5); change.Message != "You are hungry.\r\n" {
+		t.Errorf("outside the editor, reaching zero food said %q", change.Message)
+	}
+}
+
 // TestImmortalsNeverGetHungry: a condition of -1 means "does not apply", and
 // the C returns before touching it.
 func TestImmortalsNeverGetHungry(t *testing.T) {
