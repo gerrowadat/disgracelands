@@ -236,17 +236,33 @@ func TestContainers(t *testing.T) {
 		"A leather bag lies open on the floor.",
 		"A small wooden chest sits against the wall, its lid closed.")
 
-	// `look` describes a container; it does not open it. The room text used
-	// to claim otherwise, and a live playtest is what caught it
-	// (examples/mini/README.md, "Two things this was wrong about"). This
-	// asserts the behaviour that survived, so a change to do_look that
-	// "fixed" it would fail here.
+	// `look chest` is look_at_target, not look_in_obj: nothing matches an
+	// extra description, so show_obj_to_char's SHOW_OBJ_ACTION default
+	// answers "You see nothing special.." -- two full stops, and the chest
+	// not named, because the sentence was written to run into
+	// show_obj_modifiers on the same line (act.informative.c:131, :644).
+	// This expected the chest's *long* description until #198; that is what
+	// `look` at the room prints, and #177 fixed it after checking the real C
+	// server. The assertion this test is really for is the one below: `look
+	// <container>` does not open it.
 	look := c.do("look chest")
-	contains(t, "look at a container", look, "A small wooden chest sits against the wall")
+	contains(t, "look at a container", look, "You see nothing special..")
 	missing(t, "look at a container", look, "When you look inside")
+
+	// `look in chest` is the other branch of do_look's dispatch, and it is
+	// the one that opens the container -- once the container itself is open.
+	// A shut one answers "It is closed." and nothing else
+	// (act.informative.c:519).
+	contains(t, "look in a closed container", c.do("look in chest"), "It is closed.")
 
 	contains(t, "opening the chest", c.do("open chest"), "Okay.")
 	contains(t, "examine", c.do("examine chest"), "When you look inside, you see:", "a gold ring")
+
+	// Open, `look in` lists the contents under the object's own first
+	// keyword and where it was found -- "(here)" for one on the floor, which
+	// is the part of look_in_obj that needed generic_find to port at all
+	// (act.informative.c:521-534).
+	contains(t, "look in an open container", c.do("look in chest"), "chest (here):", "a gold ring")
 
 	contains(t, "getting from a container", c.do("get ring from chest"),
 		"You get a gold ring from a small wooden chest.")
@@ -577,7 +593,7 @@ var tourCommands = map[int][]string{
 	roomDoorRoom:        {"open door", "close door", "open door", "get key"},
 	roomLockedVault:     {"unlock door with key", "open door", "pick door"},
 	roomArmory:          {"get all", "wear tunic", "wield sword", "inventory", "equipment", "remove tunic"},
-	roomClutteredCloset: {"open chest", "examine chest", "get ring from chest", "get bag", "put ring in bag", "examine bag", "get ring from bag"},
+	roomClutteredCloset: {"look chest", "look in bag", "open chest", "examine chest", "get ring from chest", "get bag", "put ring in bag", "examine bag", "get ring from bag"},
 	roomDiningHall:      {"get bread", "eat bread", "get waterskin", "fill waterskin from fountain", "drink fountain"},
 	roomSparringRing:    {"get all", "hold wand", "kill dummy"},
 	roomRestingRoom:     {"rest", "sleep", "wake", "stand"},

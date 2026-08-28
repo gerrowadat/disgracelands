@@ -360,7 +360,7 @@ func TestLoggingInTwiceTakesOverTheBody(t *testing.T) {
 		"Tourist's body has been taken over by a new spirit!")
 
 	// One character, one body: the whole point of the check.
-	contains(t, "who", second.do("who"), "Tourist", "Watcher", "2 characters playing.")
+	contains(t, "who", second.do("who"), "Tourist", "Watcher", "2 characters displayed.")
 
 	// And the taken-over body is the live one, still where it was left and
 	// still holding what it was holding -- not a second copy loaded from

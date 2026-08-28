@@ -124,7 +124,13 @@ func TestWho(t *testing.T) {
 	m := start(t, miniClassic)
 	alfie, _ := twoInARoom(t, m)
 
-	contains(t, "who", alfie.do("who"), "Players", "Alfie", "Bertha", "2 characters playing.")
+	// "displayed", not "playing", and the class abbreviation in the brackets:
+	// the rows are "[%s %2d] %s %s" (act.informative.c:1163) and the count
+	// line below them counts in words under two (:1212-1216). #179 put both
+	// right, and this expectation was left behind because the play suite only
+	// runs at release time -- the same way #198's did.
+	contains(t, "who", alfie.do("who"),
+		"Players", "[Wa  1] Alfie", "[Cl  1] Bertha", "2 characters displayed.")
 
 	m.noServerErrors()
 }
