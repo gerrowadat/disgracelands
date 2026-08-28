@@ -366,15 +366,25 @@ func (s *Server) stopFollowing(w *game.Live, follower *game.Character) {
 
 // startFighting puts both parties into the fight if they are not already,
 // porting the middle of damage().
+//
+// check_killer's own mudlog line and set_fighting's sanctioned-pkill one
+// (fight.c:219-233, :268-273, #213) come back from SetFighting itself as a
+// string, "" when there is nothing to log — internal/game has no logger to
+// put it in, the same reason gain_exp's mudlog sits at its callers instead
+// (see announceGain).
 func (s *Server) startFighting(w *game.Live, attacker, victim *game.Character) {
 	if attacker == victim {
 		return
 	}
 	if attacker.Position > game.PosStunned && attacker.Fighting == nil {
-		w.SetFighting(attacker, victim)
+		if _, message := w.SetFighting(attacker, victim); message != "" {
+			s.wizlog(obs.LogBrief, game.LevelImmortal, "%s", message)
+		}
 	}
 	if victim.Position > game.PosStunned && victim.Fighting == nil {
-		w.SetFighting(victim, attacker)
+		if _, message := w.SetFighting(victim, attacker); message != "" {
+			s.wizlog(obs.LogBrief, game.LevelImmortal, "%s", message)
+		}
 	}
 }
 

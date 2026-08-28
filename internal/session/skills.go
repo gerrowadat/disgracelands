@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/gerrowadat/disgracelands/internal/game"
+	"github.com/gerrowadat/disgracelands/internal/obs"
 )
 
 // The four combat skills, ported from act.offensive.c.
@@ -153,7 +154,9 @@ func doBackstab(c *Context) error {
 	if victim.HasMobFlag(game.MobAware) && victim.Position.Awake() {
 		c.Send("You notice %s lunging at you!\r\n", victim.Name)
 		victim.Tell("You notice %s lunging at you!\r\n", c.Character.Name)
-		c.World.SetFighting(victim, c.Character)
+		if _, message := c.World.SetFighting(victim, c.Character); message != "" {
+			c.wizlog(obs.LogBrief, game.LevelImmortal, "%s", message)
+		}
 		c.Character.Wait(2, c.roundLength())
 		return nil
 	}
@@ -231,8 +234,12 @@ func doRescue(c *Context) error {
 	c.World.StopFighting(attacker)
 	c.World.StopFighting(c.Character)
 
-	c.World.SetFighting(c.Character, attacker)
-	c.World.SetFighting(attacker, c.Character)
+	if _, message := c.World.SetFighting(c.Character, attacker); message != "" {
+		c.wizlog(obs.LogBrief, game.LevelImmortal, "%s", message)
+	}
+	if _, message := c.World.SetFighting(attacker, c.Character); message != "" {
+		c.wizlog(obs.LogBrief, game.LevelImmortal, "%s", message)
+	}
 
 	// The lag lands on the *rescued* character, not the rescuer — they are
 	// "confused", as the message says.

@@ -1345,9 +1345,17 @@ Listed here so they are not mistaken for deliberate differences.
     branch is ported (#209), and both halves of `log_death_trap` with it —
     the `mudlog` at BRF/`LVL_IMMORT` and the `<DoC>` `send_to_all_color`
     that tells the whole game, in cyan, whose demise it was.
-  - `check_killer`'s "PC Killer bit set on ..." (`fight.c:231`) and the
+  - ~~`check_killer`'s "PC Killer bit set on ..." (`fight.c:231`) and the
     sanctioned-pkill line (`fight.c:272`) have no code to sit in either:
-    nothing in this port sets `PLR_KILLER` on an attack. Filed as #213.
+    nothing in this port sets `PLR_KILLER` on an attack. Filed as #213.~~
+    Both are wired up (#213): `game.Live.SetFighting`
+    (`internal/game/violence.go`) runs check_killer and set_fighting's own
+    sanctioned-pkill branch (`fight.c:219-233`, `:250-275`) itself, the
+    moment a fight starts, and hands the caller back the already-formatted
+    mudlog line — `internal/game` still has no logger, the same reason
+    `gain_exp`'s sits at its callers above — for `Server.wizlog`/
+    `Context.wizlog` to log from `startFighting`, `beAggressive`,
+    `doBackstab`, `doRescue` and a botched violent spell's provocation.
   - ~~The two **wizlock** refusals (`interpreter.c:1425` for a new
     character, `:1496` for an existing one) have no refusal to attach
     to.~~ Both are wired up (#211), at the two prompts the C checks them

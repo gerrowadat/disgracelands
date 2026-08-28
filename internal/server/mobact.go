@@ -8,6 +8,7 @@ package server
 
 import (
 	"github.com/gerrowadat/disgracelands/internal/game"
+	"github.com/gerrowadat/disgracelands/internal/obs"
 	"github.com/gerrowadat/disgracelands/internal/session"
 )
 
@@ -143,7 +144,9 @@ func (s *Server) beAggressive(w *game.Live, mob *game.Character) {
 				other.Tell("%s attacks %s!\r\n", mob.Name, victim.Name)
 			}
 		}
-		w.SetFighting(mob, victim)
+		if _, message := w.SetFighting(mob, victim); message != "" {
+			s.wizlog(obs.LogBrief, game.LevelImmortal, "%s", message)
+		}
 		return
 	}
 }

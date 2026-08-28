@@ -29,8 +29,12 @@ const medusaVnum game.MobVnum = 14205
 const medusaRefuge game.RoomVnum = 14284
 
 // pkAllowed is config.c's pk_allowed. Off, as it is there — which is what
-// makes an area spell skip other players entirely.
-const pkAllowed = false
+// makes an area spell skip other players entirely. game.PKAllowed is the
+// same constant, kept in the game package because game.Live.SetFighting
+// (check_killer's own home, fight.c:219-233) needs it too; aliased here
+// under its old name so every existing pk-gated call site in this package
+// is untouched.
+const pkAllowed = game.PKAllowed
 
 // spellAlterObject applies an object-altering spell, porting mag_alter_objs.
 //
