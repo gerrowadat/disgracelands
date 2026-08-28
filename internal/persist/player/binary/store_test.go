@@ -136,7 +136,11 @@ func TestSaveUpdatesInPlace(t *testing.T) {
 	if len(names) != 3 {
 		t.Fatalf("roster is %v, want three characters", names)
 	}
-	if names[1] != "Bob" {
+	// Lower case: player.IndexEntry.Name is the C's own player_table
+	// name, which boot_db lowercases as it builds it (db.c:607). This
+	// used to be "Bob" here and lower case in ascii, which is how the
+	// three formats came to disagree about a shared model field.
+	if names[1] != "bob" {
 		t.Errorf("roster order changed: %v", names)
 	}
 

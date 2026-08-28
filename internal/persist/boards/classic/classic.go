@@ -27,6 +27,7 @@ import (
 	"path/filepath"
 	"sync"
 
+	"github.com/gerrowadat/disgracelands/internal/persist/atomicfile"
 	"github.com/gerrowadat/disgracelands/internal/persist/boards"
 )
 
@@ -128,12 +129,7 @@ func (s *Store) Save(name string, msgs []boards.Message) error {
 	}
 	// Temporary and rename, as with the rent files: the C truncates first,
 	// and a crash mid-write would leave a board that is neither.
-	tmp := path + ".tmp"
-	if err := os.WriteFile(tmp, encode(msgs), 0o600); err != nil {
-		return fmt.Errorf("writing board %s: %w", name, err)
-	}
-	if err := os.Rename(tmp, path); err != nil {
-		_ = os.Remove(tmp)
+	if err := atomicfile.Write(path, encode(msgs), 0o600); err != nil {
 		return fmt.Errorf("writing board %s: %w", name, err)
 	}
 	return nil

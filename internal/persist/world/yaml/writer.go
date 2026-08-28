@@ -12,9 +12,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/gerrowadat/disgracelands/internal/game"
 	"github.com/goccy/go-yaml"
 
+	"github.com/gerrowadat/disgracelands/internal/game"
 	"github.com/gerrowadat/disgracelands/internal/persist/yamlenc"
 )
 

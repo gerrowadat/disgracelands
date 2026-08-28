@@ -28,6 +28,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/gerrowadat/disgracelands/internal/persist/atomicfile"
 	"github.com/gerrowadat/disgracelands/internal/persist/mail"
 )
 
@@ -327,12 +328,7 @@ func (s *Store) flushLocked() error {
 		out = append(out, block...)
 	}
 
-	tmp := s.path + ".tmp"
-	if err := os.WriteFile(tmp, out, 0o600); err != nil {
-		return fmt.Errorf("writing the mail file: %w", err)
-	}
-	if err := os.Rename(tmp, s.path); err != nil {
-		_ = os.Remove(tmp)
+	if err := atomicfile.Write(s.path, out, 0o600); err != nil {
 		return fmt.Errorf("writing the mail file: %w", err)
 	}
 	return nil

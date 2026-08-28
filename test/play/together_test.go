@@ -42,7 +42,7 @@ func twoInARoom(t *testing.T, m *mud) (*client, *client) {
 // commands their own path in the interpreter, and it is the form people
 // actually type.
 func TestSayingThings(t *testing.T) {
-	m := start(t, miniClassic)
+	m := start(t, mini)
 	alfie, bertha := twoInARoom(t, m)
 
 	contains(t, "say", alfie.do("say hello there"), "You say, 'hello there'")
@@ -57,7 +57,7 @@ func TestSayingThings(t *testing.T) {
 // TestTellingAndWhispering: the directed forms, which go to one person and
 // not to the room.
 func TestTellingAndWhispering(t *testing.T) {
-	m := start(t, miniClassic)
+	m := start(t, mini)
 	alfie, bertha := twoInARoom(t, m)
 
 	contains(t, "tell", alfie.do("tell Bertha psst"), "You tell Bertha, 'psst'")
@@ -80,7 +80,7 @@ func TestTellingAndWhispering(t *testing.T) {
 // table is a third of the command table (examples/mini/binary/misc/socials is
 // the archive's own file), so this is also a check that it loaded at all.
 func TestSocials(t *testing.T) {
-	m := start(t, miniClassic)
+	m := start(t, mini)
 	alfie, bertha := twoInARoom(t, m)
 
 	// The exact wording is the socials file's, not the port's: these four
@@ -106,7 +106,7 @@ func TestSocials(t *testing.T) {
 // TestEmote, and the one-character form of it, which is `:` for the same
 // reason `'` is say.
 func TestEmote(t *testing.T) {
-	m := start(t, miniClassic)
+	m := start(t, mini)
 	alfie, bertha := twoInARoom(t, m)
 
 	alfie.do("emote looks around slowly.")
@@ -121,7 +121,7 @@ func TestEmote(t *testing.T) {
 // TestWho lists both of them, and `who` is what a player uses to find out
 // whether anybody else is on at all.
 func TestWho(t *testing.T) {
-	m := start(t, miniClassic)
+	m := start(t, mini)
 	alfie, _ := twoInARoom(t, m)
 
 	// "displayed", not "playing", and the class abbreviation in the brackets:
@@ -138,7 +138,7 @@ func TestWho(t *testing.T) {
 // TestFollowingAndGrouping: `follow`, moving as a pair, `group` and
 // `ungroup`.
 func TestFollowingAndGrouping(t *testing.T) {
-	m := start(t, miniClassic)
+	m := start(t, mini)
 	alfie, bertha := twoInARoom(t, m)
 
 	contains(t, "follow", bertha.do("follow Alfie"), "You now follow Alfie.")
@@ -171,7 +171,7 @@ func TestFollowingAndGrouping(t *testing.T) {
 // TestGivingSomethingToSomebody, which is the other half of `get`: an object
 // changing hands, and the two messages that go with it.
 func TestGivingSomethingToSomebody(t *testing.T) {
-	m := start(t, miniClassic)
+	m := start(t, mini)
 	alfie, bertha := twoInARoom(t, m)
 
 	alfie.toRoom(roomArmory)
@@ -192,7 +192,7 @@ func TestGivingSomethingToSomebody(t *testing.T) {
 // TestQuittingIsSeenByTheRoom. Somebody leaving is an event other people
 // notice, and it is also the point at which the server saves them.
 func TestQuittingIsSeenByTheRoom(t *testing.T) {
-	m := start(t, miniClassic)
+	m := start(t, mini)
 	alfie, bertha := twoInARoom(t, m)
 
 	bertha.quit()

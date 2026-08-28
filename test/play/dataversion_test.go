@@ -49,7 +49,7 @@ func stamp(t *testing.T, dir, version string) {
 // finds out from a failed start with a message naming both versions, not
 // from a half-loaded world.
 func TestTheServerRefusesToBootOnAnotherMajorVersionsData(t *testing.T) {
-	dir := stageLib(t, miniClassic)
+	dir := stageLib(t, mini)
 	stamp(t, dir, "8.0.0")
 
 	out, err := runServer(t, "--lib-dir="+dir, "--listen-telnet=127.0.0.1:0",
@@ -70,7 +70,7 @@ func TestTheServerRefusesToBootOnAnotherMajorVersionsData(t *testing.T) {
 // subset of what it understands; across a major bump it is a different
 // agreement about what the files mean.
 func TestTheServerRefusesToBootOnAnOlderMajorVersionsData(t *testing.T) {
-	dir := stageLib(t, miniClassic)
+	dir := stageLib(t, mini)
 	stamp(t, dir, "6.9.9")
 
 	out, err := runServer(t, "--lib-dir="+dir, "--listen-telnet=127.0.0.1:0",
@@ -89,10 +89,10 @@ func TestTheServerRefusesToBootOnAnOlderMajorVersionsData(t *testing.T) {
 // a fatal error would be caught by the first half of this alone, but one
 // that logged the warning and then left the world half-loaded would not.
 func TestADifferingMinorVersionWarnsAndPlaysAnyway(t *testing.T) {
-	dir := stageLib(t, miniClassic)
+	dir := stageLib(t, mini)
 	stamp(t, dir, "7.9.0")
 
-	m := startAt(t, miniClassic, dir, startOptions{})
+	m := startAt(t, mini, dir, startOptions{})
 	c := m.dial()
 	c.create("Minorwarn", "tourpass", "m", "w")
 	contains(t, "the world still loaded", c.do("look"), "The Testing Grounds")
@@ -117,9 +117,9 @@ func TestADifferingMinorVersionWarnsAndPlaysAnyway(t *testing.T) {
 // through a check that finds nothing and says nothing. If that ever stops
 // being true, the silence the rest of the suite relies on has gone.
 func TestAnUnstampedDirectoryIsSilent(t *testing.T) {
-	m := start(t, miniClassic)
+	m := start(t, mini)
 	if _, err := os.Stat(filepath.Join(m.dir, ".dlversion")); !os.IsNotExist(err) {
-		t.Fatalf("%s is stamped after all, so this test proves nothing: %v", miniClassic.dir, err)
+		t.Fatalf("%s is stamped after all, so this test proves nothing: %v", mini.dir, err)
 	}
 	if line, ok := logContaining(m, ".dlversion"); ok {
 		t.Errorf("an unstamped directory logged something about the stamp: %s", line.raw)

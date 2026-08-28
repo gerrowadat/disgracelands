@@ -175,8 +175,10 @@ func TestList(t *testing.T) {
 	for _, e := range entries {
 		byName[e.Name] = e
 	}
-	if byName["Bob"].Level != 20 || !byName["Bob"].Flags.Has(game.PlayerSiteOK) {
-		t.Fatalf("Bob's index entry wrong: %+v", byName["Bob"])
+	// Lower case: player.IndexEntry.Name is the C's own player_table name,
+	// which boot_db lowercases as it builds it (db.c:607).
+	if byName["bob"].Level != 20 || !byName["bob"].Flags.Has(game.PlayerSiteOK) {
+		t.Fatalf("Bob's index entry wrong: %+v", byName["bob"])
 	}
 }
 

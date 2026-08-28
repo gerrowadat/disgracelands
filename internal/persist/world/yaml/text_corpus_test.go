@@ -10,9 +10,10 @@ import (
 	"context"
 	"testing"
 
+	"github.com/goccy/go-yaml"
+
 	"github.com/gerrowadat/disgracelands/internal/persist/world"
 	"github.com/gerrowadat/disgracelands/internal/persist/world/classic"
-	"github.com/goccy/go-yaml"
 )
 
 // roundTripString encodes s through Text and decodes it back, the same path

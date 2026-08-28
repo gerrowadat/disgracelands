@@ -24,10 +24,10 @@ import (
 
 	"github.com/goccy/go-yaml"
 
-	"github.com/gerrowadat/disgracelands/internal/persist/yamlenc"
-
+	"github.com/gerrowadat/disgracelands/internal/persist/atomicfile"
 	"github.com/gerrowadat/disgracelands/internal/persist/mail"
 	worldtext "github.com/gerrowadat/disgracelands/internal/persist/world/yaml"
+	"github.com/gerrowadat/disgracelands/internal/persist/yamlenc"
 )
 
 // FormatName is the name this format registers under.
@@ -223,12 +223,7 @@ func (s *Store) save() error {
 	if err := os.MkdirAll(filepath.Dir(s.path), 0o750); err != nil {
 		return fmt.Errorf("writing %s: %w", s.path, err)
 	}
-	tmp := s.path + ".tmp"
-	if err := os.WriteFile(tmp, out, 0o600); err != nil {
-		return fmt.Errorf("writing %s: %w", s.path, err)
-	}
-	if err := os.Rename(tmp, s.path); err != nil {
-		_ = os.Remove(tmp)
+	if err := atomicfile.Write(s.path, out, 0o600); err != nil {
 		return fmt.Errorf("writing %s: %w", s.path, err)
 	}
 	return nil

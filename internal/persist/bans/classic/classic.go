@@ -23,6 +23,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/gerrowadat/disgracelands/internal/persist/atomicfile"
 	"github.com/gerrowadat/disgracelands/internal/persist/bans"
 )
 
@@ -204,12 +205,7 @@ func (s *Store) save() error {
 	}
 	s.mu.RUnlock()
 
-	tmp := s.path + ".tmp"
-	if err := os.WriteFile(tmp, []byte(b.String()), 0o600); err != nil {
-		return fmt.Errorf("writing the ban file: %w", err)
-	}
-	if err := os.Rename(tmp, s.path); err != nil {
-		_ = os.Remove(tmp)
+	if err := atomicfile.Write(s.path, []byte(b.String()), 0o600); err != nil {
 		return fmt.Errorf("writing the ban file: %w", err)
 	}
 	return nil

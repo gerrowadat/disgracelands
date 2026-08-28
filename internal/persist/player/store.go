@@ -66,6 +66,17 @@ type Store interface {
 // IndexEntry is the summary of a character that listing produces, cheap
 // enough to build for every record in the roster.
 type IndexEntry struct {
+	// Name is lower-cased, matching the C's own player_table: boot_db
+	// lowercases every name as it builds it (db.c:607), and
+	// get_name_by_id reads that table — which is why the mud mail header
+	// has always shouted in lower case (see internal/server/mail.go).
+	//
+	// Every format has to agree about this, and for a long time they did
+	// not: ascii lowercases as it writes its plr_index, binary returned
+	// the record's own stored case, and yaml returned the document's. It
+	// was invisible while the server only ever ran on ascii, and became a
+	// wrong mail header the moment internal/server's tests moved onto
+	// yaml (docs/proposals/yaml-only.md §5.4).
 	Name  string
 	IDNum int64
 	Level int32

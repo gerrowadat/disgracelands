@@ -13,11 +13,11 @@ package yaml
 import (
 	"context"
 	"fmt"
-	"os"
 	"path/filepath"
 	"sort"
 
 	"github.com/gerrowadat/disgracelands/internal/game"
+	"github.com/gerrowadat/disgracelands/internal/persist/atomicfile"
 	"github.com/gerrowadat/disgracelands/internal/persist/world"
 )
 
@@ -132,25 +132,13 @@ func noteOr(note, fallback string) string {
 
 // atomicWrite writes data to path via a temp file and rename, so a reader
 // never sees a half-written file — §3's "one writer per file" rule.
+//
+// This is where the pattern was written correctly first, with a *unique*
+// temp name from os.CreateTemp. Every other format in the tree had its own
+// copy using a fixed `path + ".tmp"` instead, which raced with itself; the
+// shared implementation in internal/persist/atomicfile is this one,
+// generalised, and this is now a thin call into it rather than a
+// seventeenth variant.
 func atomicWrite(path string, data []byte) error {
-	dir := filepath.Dir(path)
-	tmp, err := os.CreateTemp(dir, ".tmp-*.yaml")
-	if err != nil {
-		return err
-	}
-	tmpName := tmp.Name()
-	defer func() { _ = os.Remove(tmpName) }()
-
-	if _, err := tmp.Write(data); err != nil {
-		_ = tmp.Close()
-		return err
-	}
-	if err := tmp.Sync(); err != nil {
-		_ = tmp.Close()
-		return err
-	}
-	if err := tmp.Close(); err != nil {
-		return err
-	}
-	return os.Rename(tmpName, path)
+	return atomicfile.Write(path, data, 0o600)
 }

@@ -54,9 +54,10 @@ const seed = "20080101"
 
 // paths worked out once by TestMain.
 var (
-	root     string
-	goBinary string
-	cBinary  string
+	root      string
+	goBinary  string
+	ctlBinary string
+	cBinary   string
 	// cServerErr is why there is no C server, if there is not one. Every
 	// test skips on it rather than failing: a machine with no C toolchain
 	// has not been told anything about the Go server by a red suite.
@@ -87,6 +88,16 @@ func build(m *testing.M) (int, error) {
 	buildGo.Stdout, buildGo.Stderr = os.Stderr, os.Stderr
 	if err := buildGo.Run(); err != nil {
 		return 0, fmt.Errorf("building cmd/dlmud: %w", err)
+	}
+
+	// dlctl too, because the Go side now plays on a yaml conversion of its
+	// staged directory (startPair) rather than on the classic one.
+	ctlBinary = filepath.Join(dir, "dlctl")
+	buildCtl := exec.Command("go", "build", "-o", ctlBinary, "./cmd/dlctl") //nolint:gosec // fixed arguments
+	buildCtl.Dir = root
+	buildCtl.Stdout, buildCtl.Stderr = os.Stderr, os.Stderr
+	if err := buildCtl.Run(); err != nil {
+		return 0, fmt.Errorf("building cmd/dlctl: %w", err)
 	}
 
 	cBinary, cServerErr = ensureCServer(dir)
@@ -185,6 +196,18 @@ func startPair(t *testing.T) *pair {
 	}
 	cDir, gDir := lib("clib"), lib("glib")
 
+	// The Go side plays on a yaml conversion of its staged directory; the
+	// C side keeps the classic one, because it is the only thing it reads.
+	// docs/proposals/yaml-only.md §5.4 — until this, both sides booted on
+	// the same classic directory, so the one Go configuration a player
+	// will ever meet was the one thing this suite never exercised.
+	gYaml := filepath.Join(scratch, "gyaml")
+	convert := exec.Command(ctlBinary, "import", "--from-dir="+gDir, "--to-dir="+gYaml) //nolint:gosec // paths this function made
+	convert.Dir = root
+	if out, err := convert.CombinedOutput(); err != nil {
+		t.Fatalf("converting the Go side to yaml: %v\n%s", err, out)
+	}
+
 	cPort, gPort := freePort(t), freePort(t)
 
 	// -q skips the rent scan, -S fixes the seed, -M holds the mobiles still
@@ -196,9 +219,12 @@ func startPair(t *testing.T) *pair {
 
 	// The Go server's own spelling of the same four, plus the C's own
 	// generator so that both are rolling the same dice from the same seed.
-	g := &server{name: "dlmud", dir: gDir, addr: fmt.Sprintf("127.0.0.1:%d", gPort)}
+	g := &server{name: "dlmud", dir: gYaml, addr: fmt.Sprintf("127.0.0.1:%d", gPort)}
 	g.cmd = exec.Command(goBinary, //nolint:gosec // the binary this suite built
-		"--lib-dir="+gDir,
+		"--lib-dir="+gYaml,
+		"--world-format=yaml", "--state-format=yaml", "--names-format=yaml",
+		"--messages-format=yaml", "--socials-format=yaml", "--help-format=yaml",
+		"--player-format=yaml",
 		"--listen-telnets=",
 		"--listen-telnet="+g.addr,
 		"--metrics-addr=",

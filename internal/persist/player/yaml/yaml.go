@@ -21,10 +21,10 @@ import (
 
 	"github.com/goccy/go-yaml"
 
-	"github.com/gerrowadat/disgracelands/internal/persist/yamlenc"
-
 	"github.com/gerrowadat/disgracelands/internal/game"
+	"github.com/gerrowadat/disgracelands/internal/persist/atomicfile"
 	"github.com/gerrowadat/disgracelands/internal/persist/player"
+	"github.com/gerrowadat/disgracelands/internal/persist/yamlenc"
 )
 
 // FormatName is the name this format registers under.
@@ -133,22 +133,7 @@ func writeDoc(path string, doc *playerDoc) error {
 		return err
 	}
 	// 0600: a player file holds a credential and connection hosts.
-	return atomicWrite(path, out, 0o600)
-}
-
-// atomicWrite is the same temp-file-then-rename pattern
-// internal/persist/world/yaml uses, duplicated rather than exported from
-// there: a one-off helper neither package's public surface needs to carry.
-func atomicWrite(path string, data []byte, perm os.FileMode) error {
-	tmp := path + ".tmp"
-	if err := os.WriteFile(tmp, data, perm); err != nil {
-		return err
-	}
-	if err := os.Rename(tmp, path); err != nil {
-		_ = os.Remove(tmp)
-		return err
-	}
-	return nil
+	return atomicfile.Write(path, out, 0o600)
 }
 
 // Load implements player.Store.
@@ -242,33 +227,42 @@ func (s *Store) Delete(ctx context.Context, name string) error {
 
 // List implements player.Store by walking the directory tree — no index
 // to trust or rebuild, per §3.
+//
+// The lock is taken and released *per file* rather than held across the
+// whole iteration, and that is load-bearing rather than a micro-
+// optimisation. A caller ranging over List and calling Save or
+// DeleteObjects on what it finds is an ordinary shape — SweepRentFiles and
+// `dlctl fmt --type=pfile` both do it — and with the lock held for the
+// duration it is a permanent self-deadlock: Go's RWMutex is not reentrant,
+// and a writer arriving while a reader holds the lock blocks, on the same
+// goroutine that would have released it.
+//
+// It was not a hazard while this store was only ever the *roster* and a
+// separate binary.ObjectStore held the rent files, because the two had
+// separate locks. It became one the moment a server ran on yaml, where one
+// store is both — which is what moving internal/server's harness onto yaml
+// (docs/proposals/yaml-only.md §5.4) turned up, as a rent sweep that hung
+// the server for good the first time it had a file to delete.
+//
+// What the narrower locking gives up is a consistent snapshot: a character
+// saved while a listing is in flight may or may not appear, and one deleted
+// may be yielded and then be gone. Neither matters to any caller — the C's
+// own equivalents walk a directory with no locking at all — and both are
+// better than a hang.
 func (s *Store) List(ctx context.Context) iter.Seq2[player.IndexEntry, error] {
 	return func(yield func(player.IndexEntry, error) bool) {
-		s.mu.RLock()
-		defer s.mu.RUnlock()
-
-		var paths []string
-		walkErr := filepath.WalkDir(s.dir, func(path string, d fs.DirEntry, err error) error {
-			if err != nil {
-				return err
-			}
-			if !d.IsDir() && strings.HasSuffix(path, ".yaml") {
-				paths = append(paths, path)
-			}
-			return nil
-		})
-		if walkErr != nil && !errors.Is(walkErr, fs.ErrNotExist) {
-			yield(player.IndexEntry{}, walkErr)
+		paths, err := s.listPaths()
+		if err != nil {
+			yield(player.IndexEntry{}, err)
 			return
 		}
-		sort.Strings(paths)
 
 		for _, path := range paths {
 			if err := ctx.Err(); err != nil {
 				yield(player.IndexEntry{}, err)
 				return
 			}
-			doc, found, err := s.loadDoc(path)
+			doc, found, err := s.loadDocLocking(path)
 			if err != nil {
 				if !yield(player.IndexEntry{}, fmt.Errorf("%s: %w", path, err)) {
 					return
@@ -280,12 +274,48 @@ func (s *Store) List(ctx context.Context) iter.Seq2[player.IndexEntry, error] {
 			}
 			act, _ := game.ParseBitNames(doc.Flags.Act, game.YamlPlayerFlagNames())
 			act = act.Set(game.Flags(doc.Flags.ActRaw))
-			entry := player.IndexEntry{Name: doc.Name, IDNum: doc.ID, Level: doc.Identity.Level, Flags: act}
+			// Lower-cased: see player.IndexEntry.Name.
+			entry := player.IndexEntry{
+				Name: strings.ToLower(doc.Name), IDNum: doc.ID,
+				Level: doc.Identity.Level, Flags: act,
+			}
 			if !yield(entry, nil) {
 				return
 			}
 		}
 	}
+}
+
+// listPaths is every character file in the tree, sorted, read under the
+// lock and returned rather than iterated with it held. See List.
+func (s *Store) listPaths() ([]string, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	var paths []string
+	err := filepath.WalkDir(s.dir, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if !d.IsDir() && strings.HasSuffix(path, ".yaml") {
+			paths = append(paths, path)
+		}
+		return nil
+	})
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return nil, err
+	}
+	sort.Strings(paths)
+	return paths, nil
+}
+
+// loadDocLocking is loadDoc with the read lock taken around it, for List's
+// per-file reads. A file that has been deleted since listPaths ran is not
+// an error: loadDoc reports it as not found, which List skips.
+func (s *Store) loadDocLocking(path string) (*playerDoc, bool, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.loadDoc(path)
 }
 
 // LoadObjects implements player.ObjectStore.

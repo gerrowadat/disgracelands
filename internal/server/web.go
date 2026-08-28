@@ -25,6 +25,7 @@ import (
 	"time"
 
 	"github.com/coder/websocket"
+
 	"github.com/gerrowadat/disgracelands/internal/session"
 )
 

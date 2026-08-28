@@ -93,26 +93,22 @@ func arrive(t *testing.T, l lib, name string, room int) (*mud, *client, string) 
 // renumbered its corridor to start there. If this fails, a new character is
 // "nowhere at all" and nothing else in the suite means anything.
 func TestTheStartRoom(t *testing.T) {
-	for _, l := range bothFormats {
-		t.Run(l.name, func(t *testing.T) {
-			m := start(t, l)
-			c := m.dial()
-			c.create("Tourist", "tourpass", "m", "w")
+	m := start(t, mini)
+	c := m.dial()
+	c.create("Tourist", "tourpass", "m", "w")
 
-			contains(t, "arriving in the world", c.do("look"),
-				"The Testing Grounds",
-				"Welcome to the Testing Grounds",
-				"[ Exits: n ]",
-			)
-			m.noServerErrors()
-		})
-	}
+	contains(t, "arriving in the world", c.do("look"),
+		"The Testing Grounds",
+		"Welcome to the Testing Grounds",
+		"[ Exits: n ]",
+	)
+	m.noServerErrors()
 }
 
 // TestMovementAndLooking, the Hall of Movement's own lesson: the directions,
 // their one-letter forms, `look`, `exits` and `score`.
 func TestMovementAndLooking(t *testing.T) {
-	m, c, out := arrive(t, miniClassic, "Tourist", roomHallOfMovement)
+	m, c, out := arrive(t, mini, "Tourist", roomHallOfMovement)
 
 	contains(t, "walking north", out, "Hall of Movement", "[ Exits: n s ]")
 	contains(t, "look", c.do("look"), "Hall of Movement")
@@ -168,7 +164,7 @@ func promptMovement(t *testing.T, out string) int {
 // TestDoors, both of them: the plain closed one, and the locked one whose key
 // is a room behind it.
 func TestDoors(t *testing.T) {
-	m, c, out := arrive(t, miniClassic, "Tourist", roomDoorRoom)
+	m, c, out := arrive(t, mini, "Tourist", roomDoorRoom)
 
 	contains(t, "the Door Room", out, "The Door Room", "A rusty key is lying on the floor here.")
 
@@ -197,7 +193,7 @@ func TestDoors(t *testing.T) {
 // with an object -- pick it up, put it on, look at what is on, take it off,
 // drop it.
 func TestGettingAndWearing(t *testing.T) {
-	m, c, out := arrive(t, miniClassic, "Tourist", roomArmory)
+	m, c, out := arrive(t, mini, "Tourist", roomArmory)
 
 	contains(t, "the Armory", out, "The Armory",
 		"A plain, unadorned training sword has been left on the ground.",
@@ -230,7 +226,7 @@ func TestGettingAndWearing(t *testing.T) {
 // TestContainers: the Cluttered Closet. The bag is open and the chest is
 // shut, which is the point of having both.
 func TestContainers(t *testing.T) {
-	m, c, out := arrive(t, miniClassic, "Tourist", roomClutteredCloset)
+	m, c, out := arrive(t, mini, "Tourist", roomClutteredCloset)
 
 	contains(t, "the Cluttered Closet", out, "The Cluttered Closet",
 		"A leather bag lies open on the floor.",
@@ -278,7 +274,7 @@ func TestContainers(t *testing.T) {
 
 // TestEatingAndDrinking: the Dining Hall.
 func TestEatingAndDrinking(t *testing.T) {
-	m, c, out := arrive(t, miniClassic, "Tourist", roomDiningHall)
+	m, c, out := arrive(t, mini, "Tourist", roomDiningHall)
 
 	contains(t, "the Dining Hall", out, "The Dining Hall",
 		"A loaf of bread sits on the table, still faintly warm.",
@@ -319,7 +315,7 @@ func TestEatingAndDrinking(t *testing.T) {
 // TestFightingAndTheCorpse: the Sparring Ring. A whole fight, from `kill` to
 // the corpse and what is in it.
 func TestFightingAndTheCorpse(t *testing.T) {
-	m, c, _ := arrive(t, miniClassic, "Tourist", roomArmory)
+	m, c, _ := arrive(t, mini, "Tourist", roomArmory)
 
 	// Armed on the way through, which is what the tutorial has just spent a
 	// room teaching -- and it is also what keeps this test to a handful of
@@ -355,7 +351,7 @@ func TestFightingAndTheCorpse(t *testing.T) {
 // and a staff are four different item types with four different verbs, and
 // `use` needs the thing held first.
 func TestUsingMagicItems(t *testing.T) {
-	m, c, _ := arrive(t, miniClassic, "Tourist", roomSparringRing)
+	m, c, _ := arrive(t, mini, "Tourist", roomSparringRing)
 
 	c.do("get all")
 	contains(t, "reciting", c.do("recite scroll"), "You recite a scroll which dissolves.")
@@ -375,7 +371,7 @@ func TestUsingMagicItems(t *testing.T) {
 // TestPositions: the Resting Room, and the four positions a living character
 // moves between.
 func TestPositions(t *testing.T) {
-	m, c, _ := arrive(t, miniClassic, "Tourist", roomRestingRoom)
+	m, c, _ := arrive(t, mini, "Tourist", roomRestingRoom)
 
 	contains(t, "rest", c.do("rest"), "You sit down and rest your tired bones.")
 	contains(t, "resting shows in score", c.do("score"), "You are resting.")
@@ -394,7 +390,7 @@ func TestPositions(t *testing.T) {
 // TestPractising: the guildmaster, who teaches whatever the caller's own
 // class knows rather than a fixed list.
 func TestPractising(t *testing.T) {
-	m, c, out := arrive(t, miniClassic, "Tourist", roomGuildhall)
+	m, c, out := arrive(t, mini, "Tourist", roomGuildhall)
 
 	contains(t, "the Guildhall", out, "Outside the Guildhall",
 		"A guildmaster stands here, ready to teach.")
@@ -417,7 +413,7 @@ func TestPractising(t *testing.T) {
 // applied to the objects' own costs, so they are asserted exactly -- a change
 // to either is a change a player would notice.
 func TestShopping(t *testing.T) {
-	m, c, out := arrive(t, miniClassic, "Tourist", roomGeneralStore)
+	m, c, out := arrive(t, mini, "Tourist", roomGeneralStore)
 
 	contains(t, "the General Store", out, "The General Store",
 		"A shopkeeper stands behind the counter, tallying the day's takings.")
@@ -437,7 +433,7 @@ func TestShopping(t *testing.T) {
 // TestShoppingWithMoney is the same shop with a purse, which needs the coins
 // the dummy is guarding two rooms south.
 func TestShoppingWithMoney(t *testing.T) {
-	m, c, _ := arrive(t, miniClassic, "Tourist", roomSparringRing)
+	m, c, _ := arrive(t, mini, "Tourist", roomSparringRing)
 
 	// The pouch on the floor of the Sparring Ring is 75 coins.
 	contains(t, "picking up coins", c.do("get pouch"), "There were 75 coins.")
@@ -456,7 +452,7 @@ func TestShoppingWithMoney(t *testing.T) {
 // mobile (examples/mini/README.md's second finding -- spec_assign.c attaches
 // "bank" to two object vnums and to no mobile at all).
 func TestBanking(t *testing.T) {
-	m, c, _ := arrive(t, miniClassic, "Tourist", roomSparringRing)
+	m, c, _ := arrive(t, mini, "Tourist", roomSparringRing)
 
 	c.do("get pouch")
 	c.north(4)
@@ -477,7 +473,7 @@ func TestBanking(t *testing.T) {
 // TestTheReceptionist: the Travelers' Rest. free_rent is on (config.c:133),
 // so the whole of renting is the receptionist saying so.
 func TestTheReceptionist(t *testing.T) {
-	m, c, out := arrive(t, miniClassic, "Tourist", roomTravelersRest)
+	m, c, out := arrive(t, mini, "Tourist", roomTravelersRest)
 
 	contains(t, "the Travelers' Rest", out, "The Travelers' Rest",
 		"The receptionist is here, ready to offer you a place to stay.")
@@ -494,7 +490,7 @@ func TestTheReceptionist(t *testing.T) {
 // special (internal/game/board.go's table, vnum 3099), and writing to it goes
 // through the editor.
 func TestTheNoticeBoard(t *testing.T) {
-	m, c, out := arrive(t, miniClassic, "Tourist", roomNoticeBoard)
+	m, c, out := arrive(t, mini, "Tourist", roomNoticeBoard)
 
 	contains(t, "the Notice Board", out, "The Notice Board",
 		"A bulletin board is mounted on the wall here.")
@@ -519,7 +515,7 @@ func TestTheNoticeBoard(t *testing.T) {
 // TestTheEndOfTheTour: Graduation Hall, and the way back. The corridor is not
 // one-way, which is a claim its own README makes and nothing else checks.
 func TestTheEndOfTheTour(t *testing.T) {
-	m, c, out := arrive(t, miniClassic, "Tourist", roomGraduationHall)
+	m, c, out := arrive(t, mini, "Tourist", roomGraduationHall)
 
 	contains(t, "Graduation Hall", out, "Graduation Hall", "[ Exits: s ]")
 
@@ -543,40 +539,36 @@ func TestTheEndOfTheTour(t *testing.T) {
 // time player takes, and it runs in both data formats because the answer
 // should not depend on which one the server was booted on.
 func TestTheWholeTourInOneSitting(t *testing.T) {
-	for _, l := range bothFormats {
-		t.Run(l.name, func(t *testing.T) {
-			m := start(t, l)
-			c := m.dial()
-			c.create("Tourist", "tourpass", "m", "w")
+	m := start(t, mini)
+	c := m.dial()
+	c.create("Tourist", "tourpass", "m", "w")
 
-			for room := roomHallOfMovement; room <= roomGraduationHall; room++ {
-				out := c.do("north")
-				if !strings.Contains(out, tourRoomNames[room]) {
-					t.Fatalf("expected to reach %s; the move printed:\n%s", tourRoomNames[room], out)
-				}
+	for room := roomHallOfMovement; room <= roomGraduationHall; room++ {
+		out := c.do("north")
+		if !strings.Contains(out, tourRoomNames[room]) {
+			t.Fatalf("expected to reach %s; the move printed:\n%s", tourRoomNames[room], out)
+		}
 
-				for _, cmd := range tourCommands[room] {
-					got := c.do(cmd)
-					if strings.Contains(got, "Huh?!?") {
-						t.Errorf("in %s, %q was not understood:\n%s", tourRoomNames[room], cmd, got)
-					}
-				}
-
-				// The dummy has to finish dying before the tour can move on:
-				// do_simple_move refuses outright while FIGHTING, so every
-				// command after `kill` would answer "No way!  You're fighting
-				// for your life!" and the walk would stall in the ring. The
-				// rest of the fight arrives on the violence pulse rather than
-				// in reply to anything typed, so this waits on the socket.
-				if room == roomSparringRing {
-					c.expect("R.I.P.")
-					c.do("look")
-				}
+		for _, cmd := range tourCommands[room] {
+			got := c.do(cmd)
+			if strings.Contains(got, "Huh?!?") {
+				t.Errorf("in %s, %q was not understood:\n%s", tourRoomNames[room], cmd, got)
 			}
+		}
 
-			m.noServerErrors()
-		})
+		// The dummy has to finish dying before the tour can move on:
+		// do_simple_move refuses outright while FIGHTING, so every
+		// command after `kill` would answer "No way!  You're fighting
+		// for your life!" and the walk would stall in the ring. The
+		// rest of the fight arrives on the violence pulse rather than
+		// in reply to anything typed, so this waits on the socket.
+		if room == roomSparringRing {
+			c.expect("R.I.P.")
+			c.do("look")
+		}
 	}
+
+	m.noServerErrors()
 }
 
 // tourCommands is what the tutorial's own room descriptions tell a player to
@@ -620,7 +612,7 @@ var tourCommands = map[int][]string{
 // (comm.c:1008), keyed off the pointer being written to rather than off the
 // connection state, so every line typed into an editor gets one back.
 func TestWritingOnTheBoard(t *testing.T) {
-	m, c, _ := arrive(t, miniClassic, "Scribbler", roomNoticeBoard)
+	m, c, _ := arrive(t, mini, "Scribbler", roomNoticeBoard)
 
 	// The command that opens the editor prompts with "] " rather than with
 	// the H/M/V prompt, so the walk's usual barrier is no good here.

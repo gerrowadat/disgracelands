@@ -30,16 +30,17 @@ import (
 	"github.com/gerrowadat/disgracelands/internal/engine"
 	"github.com/gerrowadat/disgracelands/internal/game"
 	"github.com/gerrowadat/disgracelands/internal/persist/bans"
-	bansclassic "github.com/gerrowadat/disgracelands/internal/persist/bans/classic"
+	bansyaml "github.com/gerrowadat/disgracelands/internal/persist/bans/yaml"
 	"github.com/gerrowadat/disgracelands/internal/persist/boards"
-	boardsclassic "github.com/gerrowadat/disgracelands/internal/persist/boards/classic"
+	boardsyaml "github.com/gerrowadat/disgracelands/internal/persist/boards/yaml"
 	"github.com/gerrowadat/disgracelands/internal/persist/houses"
-	housesclassic "github.com/gerrowadat/disgracelands/internal/persist/houses/classic"
+	housesyaml "github.com/gerrowadat/disgracelands/internal/persist/houses/yaml"
 	"github.com/gerrowadat/disgracelands/internal/persist/mail"
-	mailclassic "github.com/gerrowadat/disgracelands/internal/persist/mail/classic"
+	mailyaml "github.com/gerrowadat/disgracelands/internal/persist/mail/yaml"
 	"github.com/gerrowadat/disgracelands/internal/persist/player"
 	"github.com/gerrowadat/disgracelands/internal/persist/player/ascii"
 	"github.com/gerrowadat/disgracelands/internal/persist/player/binary"
+	playeryaml "github.com/gerrowadat/disgracelands/internal/persist/player/yaml"
 	"github.com/gerrowadat/disgracelands/internal/rng"
 	"github.com/gerrowadat/disgracelands/internal/session"
 	"github.com/gerrowadat/disgracelands/internal/telnet"
@@ -78,46 +79,80 @@ func testText(t *testing.T) *Text {
 			t.Fatal(err)
 		}
 	}
-	// The real socials file, because the socials are a third of the command
-	// table and the tests that care about abbreviations need the whole of it.
-	if err := os.MkdirAll(filepath.Join(dir, "misc"), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	socials, err := os.ReadFile(filepath.Join(repoRoot(t), "examples", "stock", "binary", socialsFile))
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(filepath.Join(dir, socialsFile), socials, 0o600); err != nil {
-		t.Fatal(err)
-	}
+	// The real socials table, because the socials are a third of the
+	// command table and the tests that care about abbreviations need the
+	// whole of it — and the real help data, because the tests that need
+	// `help circlemud` to actually work (the licence requirement
+	// go-port-plan.md §12 describes) need the real table rather than a
+	// synthetic stand-in.
+	//
+	// Both come from examples/stock/**yaml**, not from binary/. That is
+	// the change docs/proposals/yaml-only.md §5.4 asks for: this harness
+	// is what every integration test in this package runs on, and it was
+	// running on the formats the server is about to stop supporting. It
+	// now proves the format the server ships on.
+	//
+	// The tests that load classic *deliberately*, to compare the two
+	// (helpformat_test.go, socialsformat_test.go, damagemessages_test.go),
+	// are untouched: they are differential tests, and this release makes
+	// them more important rather than less.
+	stockYaml := filepath.Join(repoRoot(t), "examples", "stock", "yaml")
+	// socials.yaml specifically, not the whole of config/. That directory
+	// also holds messages.yaml, and copying it registers the real
+	// fight-message table for every test in this package — which is not
+	// the default the harness had before and which silently defeats the
+	// three tests whose subject is what happens with *nothing* registered
+	// (damagemessages_test.go). Found by exactly those three failing.
+	copyFile(t, filepath.Join(stockYaml, socialsConfigDir, "socials.yaml"),
+		filepath.Join(dir, socialsConfigDir, "socials.yaml"))
+	copyInto(t, filepath.Join(stockYaml, helpDir), filepath.Join(dir, helpDir))
 
-	// The real help data too, for the same reason as socials: the tests
-	// that need `help circlemud` to actually work — the licence
-	// requirement go-port-plan.md §12 describes — need the real table,
-	// not a synthetic stand-in.
-	realHelpDir := filepath.Join(repoRoot(t), "examples", "stock", "binary", helpDir)
-	entries, err := os.ReadDir(realHelpDir)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := os.MkdirAll(filepath.Join(dir, helpDir), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	for _, e := range entries {
-		b, err := os.ReadFile(filepath.Join(realHelpDir, e.Name()))
-		if err != nil {
-			t.Fatal(err)
-		}
-		if err := os.WriteFile(filepath.Join(dir, helpDir, e.Name()), b, 0o600); err != nil {
-			t.Fatal(err)
-		}
-	}
-
-	text, err := LoadText(dir, "classic", "classic", "classic")
+	text, err := LoadText(dir, "yaml", "yaml", "yaml")
 	if err != nil {
 		t.Fatal(err)
 	}
 	return text
+}
+
+// copyFile copies one file, creating the destination's directory.
+func copyFile(t *testing.T, from, to string) {
+	t.Helper()
+	b, err := os.ReadFile(from) //nolint:gosec // a fixture in this repository
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(filepath.Dir(to), 0o755); err != nil { //nolint:gosec // a test's own temp directory
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(to, b, 0o600); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// copyInto copies every regular file in one directory into another,
+// creating it. Not recursive: both directories it is used for
+// (config/, text/help/) are flat.
+func copyInto(t *testing.T, from, to string) {
+	t.Helper()
+	entries, err := os.ReadDir(from)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(to, 0o755); err != nil { //nolint:gosec // a test's own temp directory
+		t.Fatal(err)
+	}
+	for _, e := range entries {
+		if e.IsDir() {
+			continue
+		}
+		b, err := os.ReadFile(filepath.Join(from, e.Name())) //nolint:gosec // a fixture in this repository
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(to, e.Name()), b, 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
 }
 
 // repoRoot walks up to the directory holding go.mod.
@@ -563,8 +598,42 @@ var testAuth = auth.Verifier{
 const testRoundLength = 100 * time.Millisecond
 
 // newTestServer builds a server on a temporary player directory and starts
-// its engine, on ascii/binary — the server's real defaults.
+// its engine, on yaml — the format the server ships on.
+//
+// It used to build one on ascii/binary, "the server's real defaults", and
+// every integration test in this package therefore proved the behaviour of
+// formats the server is about to stop supporting (docs/proposals/
+// yaml-only.md §5.4). The coupling is concentrated here, so the switch is
+// contained and the payoff is total: every test below now runs on the
+// shipping configuration.
+//
+// One yaml store serves as both the roster and the rent files, because
+// that is what the format is — one file per character holding both (§8,
+// "one player, one file"). The split-store shape newTestServerWith still
+// takes is what ascii and binary need, and newLegacyTestServer is what
+// still uses it.
 func newTestServer(t *testing.T) (*Server, player.Store) {
+	t.Helper()
+
+	store, err := playeryaml.New(player.Config{Dir: filepath.Join(t.TempDir(), "players")})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = store.Close() })
+
+	return newTestServerWith(t, store, store, nil, nil, nil, nil)
+}
+
+// newLegacyTestServer builds one on ascii/binary instead, for the handful
+// of tests whose subject *is* a legacy format's behaviour.
+//
+// There is exactly one such test today — TestRentingEmptiesYourBags, which
+// asserts that a container's contents come back loose because
+// struct obj_file_elem has no location member — and it would pass
+// vacuously if it were quietly moved onto a format that does not have that
+// limitation. Keeping the legacy harness available, named for what it is,
+// is what stops that happening by accident.
+func newLegacyTestServer(t *testing.T) (*Server, player.Store) {
 	t.Helper()
 
 	store, err := ascii.New(player.Config{Dir: filepath.Join(t.TempDir(), "pfiles")})
@@ -574,8 +643,7 @@ func newTestServer(t *testing.T) (*Server, player.Store) {
 	t.Cleanup(func() { _ = store.Close() })
 
 	// The rent files live beside the roster, as they do in a real data
-	// directory. Every test server gets one, so `quit` and logging back in
-	// exercise the same path the real server takes.
+	// directory.
 	objects, err := binary.NewObjectStore(player.Config{Dir: filepath.Join(t.TempDir(), "plrobjs-lib")})
 	if err != nil {
 		t.Fatal(err)
@@ -589,16 +657,17 @@ func newTestServer(t *testing.T) (*Server, player.Store) {
 // own alias_test.go-style containment test, chiefly — does not have to
 // duplicate the engine/world/board/mail/house/text wiring to get one.
 //
-// banStore, boardStore and mailStore override the default classic ones when
-// non-nil — the shape this will likely grow for houses too once it is
-// pluggable — see docs/design/data-format.md §9 step 6a.
+// banStore, boardStore, mailStore and houseStore override the default yaml
+// ones when non-nil — see docs/design/data-format.md §9 step 6a. Those
+// defaults were classic until docs/proposals/yaml-only.md §5.4; they are
+// yaml now, for the reason newTestServer's own comment gives.
 func newTestServerWith(t *testing.T, store player.Store, objects player.ObjectStore, banStore bans.Store, boardStore boards.Store, mailStore mail.Store, houseStore houses.Store) (*Server, player.Store) {
 	t.Helper()
 
 	// Board files, in their own throwaway directory.
 	if boardStore == nil {
 		var err error
-		boardStore, err = boardsclassic.New(boards.Config{Dir: filepath.Join(t.TempDir(), "etc")})
+		boardStore, err = boardsyaml.New(boards.Config{Dir: filepath.Join(t.TempDir(), "state")})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -606,7 +675,7 @@ func newTestServerWith(t *testing.T, store player.Store, objects player.ObjectSt
 
 	if mailStore == nil {
 		var err error
-		mailStore, err = mailclassic.New(mail.Config{Path: filepath.Join(t.TempDir(), "plrmail")})
+		mailStore, err = mailyaml.New(mail.Config{Path: filepath.Join(t.TempDir(), "state")})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -614,17 +683,17 @@ func newTestServerWith(t *testing.T, store player.Store, objects player.ObjectSt
 
 	var err error
 	if banStore == nil {
-		banStore, err = bansclassic.New(bans.Config{Path: filepath.Join(t.TempDir(), "badsites")})
+		banStore, err = bansyaml.New(bans.Config{Path: filepath.Join(t.TempDir(), "state")})
 		if err != nil {
 			t.Fatal(err)
 		}
 	}
 
 	if houseStore == nil {
-		houseDir := t.TempDir()
-		houseStore, err = housesclassic.New(houses.Config{
-			ControlPath: filepath.Join(houseDir, "hcontrol"), ObjectDir: filepath.Join(houseDir, "house"),
-		})
+		// One directory: yaml keeps a house's control record and its
+		// contents in the same file, which is the point of state/houses.yaml
+		// (docs/design/data-format.md §9).
+		houseStore, err = housesyaml.New(houses.Config{ObjectDir: t.TempDir()})
 		if err != nil {
 			t.Fatal(err)
 		}

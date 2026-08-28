@@ -14,10 +14,12 @@ import (
 
 	"github.com/gerrowadat/disgracelands/internal/game"
 	"github.com/gerrowadat/disgracelands/internal/persist/houses"
+	housesclassic "github.com/gerrowadat/disgracelands/internal/persist/houses/classic"
 	housesyaml "github.com/gerrowadat/disgracelands/internal/persist/houses/yaml"
 	"github.com/gerrowadat/disgracelands/internal/persist/player"
 	"github.com/gerrowadat/disgracelands/internal/persist/player/ascii"
 	"github.com/gerrowadat/disgracelands/internal/persist/player/binary"
+	playeryaml "github.com/gerrowadat/disgracelands/internal/persist/player/yaml"
 )
 
 // Player housing, end to end.
@@ -342,7 +344,31 @@ func TestWhatYouLeaveInYourHouseStaysThereUnderYaml(t *testing.T) {
 // longer leads to its atrium, is dropped rather than becoming a room nobody
 // can enter and nobody can destroy.
 func TestHouseBootDropsRecordsThatNoLongerMakeSense(t *testing.T) {
-	srv, _ := newTestServer(t)
+	// Deliberately the classic house store, because the fixture below is
+	// six control records for what is mostly the same room, and
+	// state/houses.yaml cannot hold that: it keys a house by its room
+	// vnum, since a house's contents are nested inside its own entry
+	// (docs/design/data-format.md §9), so duplicates collapse to the last
+	// one written. The C's hcontrol is a flat array and does not care.
+	//
+	// That uniqueness is a property of the yaml format worth knowing
+	// about rather than working around — two houses at the same room is
+	// nonsense the C's array merely fails to prevent — and House_boot's
+	// per-record sanity checks are what this test is about, which need a
+	// store that will hand over contradictory records to check.
+	houseDir := t.TempDir()
+	houseStore, err := housesclassic.New(houses.Config{
+		ControlPath: filepath.Join(houseDir, "hcontrol"), ObjectDir: filepath.Join(houseDir, "house"),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	store, err := playeryaml.New(player.Config{Dir: filepath.Join(t.TempDir(), "players")})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = store.Close() })
+	srv, _ := newTestServerWith(t, store, store, nil, nil, nil, houseStore)
 	c := dialClient(t, listening(t, srv))
 	c.create("Founder", "firstsettler", "m", "m")
 	ownerID := idOf(t, srv, "Founder")
