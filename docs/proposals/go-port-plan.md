@@ -1890,6 +1890,15 @@ broadcasts are unported (#212), nothing sets `PLR_KILLER` on an attack
 (#213), and nothing sets `PLR_WRITING` either, which leaves four checks
 on it dead (#214).
 
+**Death traps kill now ✅ (#209).** `do_simple_move`'s closing
+`log_death_trap(ch); death_cry(ch); extract_char(ch);`
+(`act.movement.c:171-176`) is `Context.deathTrap`. Both halves of
+`log_death_trap` came with it, which settles the third of #212's cyan
+broadcasts — the two that remain are the new-player hail and the
+level-gain one. `death_cry` moved to `game.Live.DeathCry` so that the
+combat round and the trap share it; the trap does not otherwise touch
+`die()`, because the C does not.
+
 **`native` is `yaml` throughout ✅ — a rename, not a redesign, because the
 name stopped being true.** §5.7/§5.8/§6.3 already called the format
 `native`, back when it was the only alternative to `classic`/`ascii`/

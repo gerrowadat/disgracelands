@@ -7,6 +7,7 @@
 package session
 
 import (
+	"github.com/gerrowadat/disgracelands/internal/colour"
 	"github.com/gerrowadat/disgracelands/internal/game"
 )
 
@@ -181,6 +182,20 @@ func (c *Context) findSpellTarget(info game.SpellInfo, name string) (*game.Chara
 func (c *Context) broadcast(format string, args ...any) {
 	for _, other := range c.World.Players() {
 		other.Tell(format, args...)
+	}
+}
+
+// broadcastAt is broadcast for the colour send_to_all_color actually applies
+// (comm.c:2256): the message is wrapped in the colour it was called with, but
+// only for a reader whose own COLOR_LEV is at least C_NRM, which is what
+// TellAt's threshold argument means.
+//
+// Not folded into broadcast, because the two are not the same call: the C has
+// send_to_all as well as send_to_all_color, and a caller that passes no
+// colour is not passing KNRM.
+func (c *Context) broadcastAt(want colour.Level, format string, args ...any) {
+	for _, other := range c.World.Players() {
+		other.TellAt(want, format, args...)
 	}
 }
 
