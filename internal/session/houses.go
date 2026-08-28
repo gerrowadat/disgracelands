@@ -181,7 +181,8 @@ func hcontrolPay(c *Context, arg string) {
 	c.Send("Payment recorded.\r\n")
 }
 
-// hcontrolShow is hcontrol_list_houses (house.c:303).
+// hcontrolShow is hcontrol_list_houses (house.c:303). `show houses` is the
+// same listing — the C's do_show calls straight into it (act.wizard.c:2321).
 func hcontrolShow(c *Context) {
 	houses := c.World.Houses()
 	if len(houses) == 0 {
@@ -193,26 +194,33 @@ func hcontrolShow(c *Context) {
 	b.WriteString("Address  Atrium  Build Date  Guests  Owner        Last Paymt\r\n")
 	b.WriteString("-------  ------  ----------  ------  ------------ ----------\r\n")
 	for _, h := range houses {
+		// "Avoid seeing <UNDEF> entries from self-deleted people. -gg
+		// 6/21/98" (house.c:318): an owner who has deleted their character
+		// takes the whole house off the listing rather than showing it
+		// ownerless. The house itself is still there — House_boot's sanity
+		// pass is what removes those, at boot, not this.
 		owner := c.Houses.NameByID(h.Owner)
 		if owner == "" {
-			owner = "<UNDEF>"
+			continue
 		}
-		fmt.Fprintf(&b, "%7d %7d  %-10s    %2d    %-12s %-10s\r\n",
-			h.Vnum, h.Atrium, houseDate(h.BuiltOn), len(h.Guests),
-			capitaliseFirst(owner), houseDate(h.LastPayment))
+		fmt.Fprintf(&b, "%7d %7d  %-10s    %2d    %-12s %s\r\n",
+			h.Vnum, h.Atrium, houseDate(h.BuiltOn, "Unknown"), len(h.Guests),
+			capitaliseFirst(owner), houseDate(h.LastPayment, "None"))
+		writeGuests(c, &b, h, true)
 	}
 	c.Send("%s", b.String())
-
-	for _, h := range houses {
-		listGuests(c, h, true)
-	}
 }
 
 // houseDate is the C's `*(timestr + 10) = '\0'` on asctime output: the same
 // weekday-and-day truncation the boards use, and for the same reason.
-func houseDate(t time.Time) string {
+//
+// `zero` is what the caller wants for a timestamp of 0, and the listing wants
+// two different words out of the same line: a house with no build date reads
+// "Unknown" (house.c:327) and one that has never been paid for reads "None"
+// (house.c:334).
+func houseDate(t time.Time, zero string) string {
 	if t.IsZero() {
-		return "None"
+		return zero
 	}
 	stamp := t.Format("Mon Jan _2 15:04:05 2006")
 	if len(stamp) > 10 {
@@ -275,20 +283,31 @@ func doHouse(c *Context) error {
 	return nil
 }
 
-// listGuests is House_list_guests (house.c:602).
+// listGuests is House_list_guests (house.c:602), for `house` — which prints
+// nothing else, so it sends its own line.
+func listGuests(c *Context, h *game.House, quiet bool) {
+	var b strings.Builder
+	writeGuests(c, &b, h, quiet)
+	if b.Len() > 0 {
+		c.Send("%s", b.String())
+	}
+}
+
+// writeGuests is the body of it. `hcontrol show` prints one of these after
+// each house's line, interleaved, so it appends rather than sending.
 //
 // A guest whose character has been deleted is skipped silently, which is the
-// C's fix for "Avoid <UNDEF>. -gg 6/21/98" — so the count in `hcontrol show`
-// and the names listed here can disagree.
-func listGuests(c *Context, h *game.House, quiet bool) {
+// C's fix for "Avoid <UNDEF>. -gg 6/21/98" (house.c:616) — so the count in
+// `hcontrol show` and the names listed here can disagree, and a list of
+// nothing but deleted characters is a bare "  Guests: ".
+func writeGuests(c *Context, b *strings.Builder, h *game.House, quiet bool) {
 	if len(h.Guests) == 0 {
 		if !quiet {
-			c.Send("  Guests: None\r\n")
+			b.WriteString("  Guests: None\r\n")
 		}
 		return
 	}
 
-	var b strings.Builder
 	b.WriteString("  Guests: ")
 	for _, id := range h.Guests {
 		name := c.Houses.NameByID(id)
@@ -298,5 +317,4 @@ func listGuests(c *Context, h *game.House, quiet bool) {
 		b.WriteString(capitaliseFirst(name) + " ")
 	}
 	b.WriteString("\r\n")
-	c.Send("%s", b.String())
 }

@@ -1172,12 +1172,6 @@ Listed here so they are not mistaken for deliberate differences.
   `docs/operations.md` — so `reboot` and `now` ask to come back and `die` and
   `pause` ask not to, and the answer is an exit code rather than a file.
 
-- **`show houses` is not ported**, on its own: `hcontrol show` already
-  answers the same question, so `show houses` says "Sorry, I don't
-  understand that." rather than duplicating it. `show rent` and `show
-  shops` are off this list — see "Player-visible behaviour" above for the
-  two small differences building them turned up.
-
 - **`show stats` does not report buffer counts.** `buf_largecount`,
   `buf_switches` and `buf_overflows` count the C's own string-buffer
   recycling, which this port does not have. The three lines are dropped

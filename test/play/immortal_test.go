@@ -214,6 +214,37 @@ func TestRestore(t *testing.T) {
 	m.noServerErrors()
 }
 
+// TestHouses: hcontrol builds one, both listings show it, and hcontrol
+// destroys it again.
+//
+// `show houses` is do_show's case 9 calling straight into
+// hcontrol_list_houses (act.wizard.c:2321), so the two commands print the
+// same table. Here rather than in internal/server because the housing store
+// is wired up by the boot sequence -- `--lib-dir`'s house directory, opened
+// in the state format the flags asked for -- and a server whose houses were
+// never opened answers "Houses are not enabled on this server." to both.
+func TestHouses(t *testing.T) {
+	m := start(t, miniClassic)
+	c := m.god()
+
+	contains(t, "nothing built yet", c.do("show houses"), "No houses have been defined.")
+
+	// Graduation Hall is a dead end with one two-way door, which is what a
+	// house has to be: the trespassing check guards the room you are
+	// *leaving*, so a second way in would not be guarded at all.
+	contains(t, "build a house", c.do("hcontrol build 3016 south Founder"),
+		"House built.")
+
+	contains(t, "show houses", c.do("show houses"),
+		"Address  Atrium  Build Date", "   3016    3015", "Founder")
+	contains(t, "hcontrol show", c.do("hcontrol show"), "   3016    3015")
+
+	contains(t, "destroy it", c.do("hcontrol destroy 3016"), "House deleted.")
+	contains(t, "and it is gone", c.do("show houses"), "No houses have been defined.")
+
+	m.noServerErrors()
+}
+
 // TestWizhelpLists the immortal commands, which is the only discoverable
 // index of them there is.
 func TestWizhelp(t *testing.T) {
