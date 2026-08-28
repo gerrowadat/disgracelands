@@ -6,7 +6,11 @@
 
 package game
 
-import "strings"
+import (
+	"fmt"
+	"strconv"
+	"strings"
+)
 
 // The names the game prints for its bitfields, from constants.c, and the two
 // functions that print them.
@@ -243,6 +247,40 @@ func ValueByName(name string, table []string) (value int32, ok bool) {
 		return 0, false
 	}
 	return int32(i), true //nolint:gosec // table indices are small
+}
+
+// NameOrNumber names a value from a table, falling back to "#N" for one
+// the table has no name for.
+//
+// The convention is SpellNameOrNumber's own (spell.go:131), reused here
+// because the problem is the same: a symbolic format has to write
+// *something* for a number outside its vocabulary, and the two choices
+// that are not "#N" are both wrong. Dropping it loses data silently —
+// which is what an object affect's location did, turning APPLY_104 into
+// APPLY_NONE on the way through yaml, found by
+// FuzzBinaryRecordRoundTrip. Writing "unknown-104", as the world writer
+// used to, produces a document that will not load: the reader looks the
+// name up in the same table and does not find it either.
+//
+// A leading '#' cannot collide with a real name: every table here is
+// lower_snake_case by the naming convention in docs/design/data-format.md
+// §4.1.
+func NameOrNumber(value int32, table []string) string {
+	if name, ok := NameByValue(value, table); ok {
+		return name
+	}
+	return fmt.Sprintf("#%d", value)
+}
+
+// ValueByNameOrNumber is NameOrNumber's inverse.
+func ValueByNameOrNumber(name string, table []string) (value int32, ok bool) {
+	if v, found := ValueByName(name, table); found {
+		return v, true
+	}
+	if n, err := strconv.ParseInt(strings.TrimPrefix(name, "#"), 10, 32); err == nil && strings.HasPrefix(name, "#") {
+		return int32(n), true //nolint:gosec // parsed as 32-bit
+	}
+	return 0, false
 }
 
 func indexOf(table []string, name string) int {

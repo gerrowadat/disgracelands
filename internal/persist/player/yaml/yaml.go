@@ -21,6 +21,8 @@ import (
 
 	"github.com/goccy/go-yaml"
 
+	"github.com/gerrowadat/disgracelands/internal/persist/yamlenc"
+
 	"github.com/gerrowadat/disgracelands/internal/game"
 	"github.com/gerrowadat/disgracelands/internal/persist/player"
 )
@@ -123,7 +125,7 @@ func (s *Store) loadDoc(path string) (*playerDoc, bool, error) {
 
 // writeDoc marshals and atomically writes doc.
 func writeDoc(path string, doc *playerDoc) error {
-	out, err := yaml.MarshalWithOptions(doc, yaml.Indent(2))
+	out, err := yaml.MarshalWithOptions(doc, yamlenc.Options()...)
 	if err != nil {
 		return err
 	}

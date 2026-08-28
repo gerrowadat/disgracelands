@@ -81,7 +81,7 @@ func (l *loader) roomFromDoc(path string, rd roomDoc) *game.RoomDef {
 		Name:        string(rd.Name),
 		Description: FromStored(string(rd.Desc)),
 	}
-	sector, ok := game.ValueByName(rd.Sector, game.YamlSectorNames())
+	sector, ok := game.ValueByNameOrNumber(rd.Sector, game.YamlSectorNames())
 	if !ok {
 		l.errorf("%s: room #%d: unknown sector %q", path, rd.Vnum, rd.Sector)
 	}
@@ -153,17 +153,17 @@ func (l *loader) mobFromDoc(path string, md mobDoc) *game.MobDef {
 		l.errorf("%s: mob #%d: bad damage dice %q", path, md.Vnum, md.Damage)
 	}
 
-	if pos, ok := game.ValueByName(md.Position, game.YamlPositionNames()); ok {
+	if pos, ok := game.ValueByNameOrNumber(md.Position, game.YamlPositionNames()); ok {
 		mob.Position = pos
 	} else {
 		l.errorf("%s: mob #%d: unknown position %q", path, md.Vnum, md.Position)
 	}
-	if pos, ok := game.ValueByName(md.DefaultPosition, game.YamlPositionNames()); ok {
+	if pos, ok := game.ValueByNameOrNumber(md.DefaultPosition, game.YamlPositionNames()); ok {
 		mob.DefaultPosition = pos
 	} else {
 		l.errorf("%s: mob #%d: unknown default_position %q", path, md.Vnum, md.DefaultPosition)
 	}
-	if sex, ok := game.ValueByName(md.Sex, game.YamlSexNames()); ok {
+	if sex, ok := game.ValueByNameOrNumber(md.Sex, game.YamlSexNames()); ok {
 		mob.Sex = sex
 	} else {
 		l.errorf("%s: mob #%d: unknown sex %q", path, md.Vnum, md.Sex)
@@ -188,7 +188,7 @@ func (l *loader) objFromDoc(path string, od objDoc) *game.ObjDef {
 		RentPerDay:  od.Rent,
 		MinLevel:    od.MinLevel,
 	}
-	typ, ok := game.ValueByName(od.Type, game.YamlItemTypeNames())
+	typ, ok := game.ValueByNameOrNumber(od.Type, game.YamlItemTypeNames())
 	if !ok {
 		l.errorf("%s: object #%d: unknown type %q", path, od.Vnum, od.Type)
 	}
@@ -204,7 +204,7 @@ func (l *loader) objFromDoc(path string, od objDoc) *game.ObjDef {
 	obj.Values = l.objValues(path, od)
 
 	for _, ad := range od.Affects {
-		loc, ok := game.ValueByName(ad.Location, game.YamlApplyTypeNames())
+		loc, ok := game.ValueByNameOrNumber(ad.Location, game.YamlApplyTypeNames())
 		if !ok {
 			l.errorf("%s: object #%d: unknown affect location %q", path, od.Vnum, ad.Location)
 		}
@@ -275,7 +275,7 @@ func (l *loader) shopFromDoc(path string, sd shopDoc) *game.ShopDef {
 	}
 
 	for _, b := range sd.Buys {
-		typ, ok := game.ValueByName(b.Type, game.YamlItemTypeNames())
+		typ, ok := game.ValueByNameOrNumber(b.Type, game.YamlItemTypeNames())
 		if !ok {
 			l.errorf("%s: shop #%d: unknown buy type %q", path, sd.Vnum, b.Type)
 		}
@@ -390,7 +390,7 @@ func valOr(p *int32, fallback int32) int32 {
 }
 
 func wearSlotByName(name string) (int32, bool) {
-	return game.ValueByName(name, game.YamlWearPositionNames())
+	return game.ValueByNameOrNumber(name, game.YamlWearPositionNames())
 }
 
 func parseDiceString(s string) (game.Dice, bool) {

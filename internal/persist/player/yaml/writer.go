@@ -21,8 +21,11 @@ import (
 // are called at different times over the same file (yaml.go's
 // read-merge-write).
 func docFromRecord(rec *game.PlayerRecord) playerDoc {
-	sex, _ := game.NameByValue(rec.Sex, game.YamlSexNames())
-	class, _ := game.NameByValue(rec.Class, game.YamlClassNames())
+	// NameOrNumber rather than NameByValue: a value outside the table
+	// used to be written as the empty string and read back as 0, so a
+	// record with an out-of-range sex or class came back as neither.
+	sex := game.NameOrNumber(rec.Sex, game.YamlSexNames())
+	class := game.NameOrNumber(rec.Class, game.YamlClassNames())
 	remort, remortRaw := game.NameBits(game.Flags(rec.RemortVector), game.YamlClassNames()) //nolint:gosec // a small per-class bitmask
 	act, actRaw := game.NameBits(rec.PlayerFlags, game.YamlPlayerFlagNames())
 	aff, affRaw := game.NameBits(rec.AffectFlags, game.YamlAffectFlagNames())
@@ -94,6 +97,8 @@ func docFromRecord(rec *game.PlayerRecord) playerDoc {
 		InvisibilityLevel:   rec.InvisLevel,
 		FrozenByLevel:       rec.FreezeLevel,
 		BadPasswordAttempts: rec.BadPasswords,
+		SpecFlags:           uint64(uint32(rec.SpecFlags)), //nolint:gosec // reinterpretation, not truncation
+		OLCZone:             rec.OLCZone,
 		Skills:              skillsDocFrom(rec.Skills),
 		Affects:             affectsDocFrom(rec.Affects),
 		Aliases:             aliasesDocFrom(rec.Aliases),
@@ -123,7 +128,7 @@ func affectsDocFrom(affects []game.Affect) []affectDoc {
 	out := make([]affectDoc, 0, len(affects))
 	for _, a := range affects {
 		sets, setsRaw := game.NameBits(a.Bits, game.YamlAffectFlagNames())
-		location, _ := game.NameByValue(a.Location, game.YamlApplyTypeNames())
+		location := game.NameOrNumber(a.Location, game.YamlApplyTypeNames())
 		out = append(out, affectDoc{
 			Spell: game.SpellNameOrNumber(a.Type), Duration: a.Duration, Modifier: a.Modifier,
 			Location: location, Sets: sets, SetsRaw: uint64(setsRaw),
@@ -198,7 +203,7 @@ func ObjInstanceDocFrom(st player.StoredObject) ObjInstanceDoc {
 			// the vast majority of those slots are unused on any real item.
 			continue
 		}
-		location, _ := game.NameByValue(a.Location, game.YamlApplyTypeNames())
+		location := game.NameOrNumber(a.Location, game.YamlApplyTypeNames())
 		od.Affects = append(od.Affects, ObjAffectDoc{Location: location, Modifier: a.Modifier})
 	}
 	for _, inner := range st.Contains {

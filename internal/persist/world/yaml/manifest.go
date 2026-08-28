@@ -14,6 +14,8 @@ import (
 	"strings"
 
 	"github.com/goccy/go-yaml"
+
+	"github.com/gerrowadat/disgracelands/internal/persist/yamlenc"
 )
 
 // ManifestFile is zones.yaml's name within the world directory. §3: the
@@ -57,7 +59,7 @@ func (e ManifestEntry) MarshalYAML() ([]byte, error) {
 		return yaml.Marshal(e.Vnum)
 	}
 	type alias ManifestEntry
-	return yaml.MarshalWithOptions(alias(e), yaml.Indent(2))
+	return yaml.MarshalWithOptions(alias(e), yamlenc.Options()...)
 }
 
 type manifestDoc struct {
@@ -93,7 +95,7 @@ func writeManifest(dir string, doc manifestDoc) error {
 	copy(sorted, doc.Zones)
 	sort.Slice(sorted, func(i, j int) bool { return sorted[i].Vnum < sorted[j].Vnum })
 	doc.Zones = sorted
-	out, err := yaml.MarshalWithOptions(doc, yaml.Indent(2))
+	out, err := yaml.MarshalWithOptions(doc, yamlenc.Options()...)
 	if err != nil {
 		return err
 	}

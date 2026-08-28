@@ -23,6 +23,8 @@ import (
 
 	"github.com/goccy/go-yaml"
 
+	"github.com/gerrowadat/disgracelands/internal/persist/yamlenc"
+
 	"github.com/gerrowadat/disgracelands/internal/game"
 )
 
@@ -151,7 +153,7 @@ func loadYaml(dir string) ([]game.Social, error) {
 
 	list := make([]game.Social, 0, len(d.Socials))
 	for _, rd := range d.Socials {
-		pos, ok := game.ValueByName(rd.MinVictimPosition, game.YamlPositionNames())
+		pos, ok := game.ValueByNameOrNumber(rd.MinVictimPosition, game.YamlPositionNames())
 		if !ok {
 			return nil, fmt.Errorf("%s: %q: unknown min_victim_position %q", path, rd.Command, rd.MinVictimPosition)
 		}
@@ -190,7 +192,7 @@ func saveYaml(dir string, list []game.Social) error {
 		})
 	}
 
-	out, err := yaml.MarshalWithOptions(d, yaml.Indent(2))
+	out, err := yaml.MarshalWithOptions(d, yamlenc.Options()...)
 	if err != nil {
 		return fmt.Errorf("writing %s: %w", path, err)
 	}
@@ -209,17 +211,14 @@ func saveYaml(dir string, list []game.Social) error {
 }
 
 // positionName names a Position for the yaml format, falling back to
-// "unknown-N" for a value YamlPositionNames does not cover — the same
-// fallback internal/persist/world/yaml's own valueName uses, so an
-// out-of-range value (which the classic parser cannot actually produce;
-// Position is bounds-checked nowhere in ParseSocials, so this is a belt
-// on top of that braces) writes something legible rather than panicking.
+// game.NameOrNumber's "#N" for a value YamlPositionNames does not cover.
+//
+// It used to write "unknown-N", which produced a document that would not
+// load: the reader looks the name up in the same table and does not find
+// that either. ParseSocials bounds-checks nothing, so an out-of-range
+// position is something the classic parser really can hand over.
 func positionName(pos game.Position) string {
-	name, ok := game.NameByValue(int32(pos), game.YamlPositionNames())
-	if !ok {
-		return fmt.Sprintf("unknown-%d", pos)
-	}
-	return name
+	return game.NameOrNumber(int32(pos), game.YamlPositionNames())
 }
 
 func audienceToDoc(char, others string) *audienceDoc {

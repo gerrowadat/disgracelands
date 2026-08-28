@@ -130,6 +130,27 @@ func transcodePlayerStrings(rec *game.PlayerRecord, enc *charmap.Charmap) int {
 	}
 	fix(&rec.Title)
 	fix(&rec.Description)
+	// Host, the poof messages and the aliases too. None of these is prose
+	// in the sense the world importer's own split meant, and none of them
+	// *should* hold a byte outside ASCII — a hostname by definition does
+	// not, and an alias is a command word. But "should not" is not a
+	// property of archived data, and the alternative to decoding a stray
+	// byte is not leaving it alone: it is the YAML encoder substituting
+	// U+FFFD for it, silently and irreversibly. Found by
+	// FuzzBinaryRecordRoundTrip on a host field with a 0xff in it.
+	//
+	// Name is not here, and that is deliberate rather than an oversight:
+	// it is the filename every format stores the character under, the
+	// stores refuse anything outside [a-z] for exactly that reason, and a
+	// name that needs decoding is a record that needs a person to look at
+	// it rather than a converter to guess.
+	fix(&rec.Host)
+	fix(&rec.PoofIn)
+	fix(&rec.PoofOut)
+	for i := range rec.Aliases {
+		fix(&rec.Aliases[i].Name)
+		fix(&rec.Aliases[i].Replacement)
+	}
 	return n
 }
 

@@ -28,11 +28,11 @@ func recordFromDoc(doc *playerDoc) (*game.PlayerRecord, []string, error) {
 	var unknown []string
 	note := func(format string, args ...any) { unknown = append(unknown, fmt.Sprintf(format, args...)) }
 
-	sex, ok := game.ValueByName(doc.Identity.Sex, game.YamlSexNames())
+	sex, ok := game.ValueByNameOrNumber(doc.Identity.Sex, game.YamlSexNames())
 	if doc.Identity.Sex != "" && !ok {
 		note("identity.sex: unknown value %q", doc.Identity.Sex)
 	}
-	class, ok := game.ValueByName(doc.Identity.Class, game.YamlClassNames())
+	class, ok := game.ValueByNameOrNumber(doc.Identity.Class, game.YamlClassNames())
 	if doc.Identity.Class != "" && !ok {
 		note("identity.class: unknown value %q", doc.Identity.Class)
 	}
@@ -55,18 +55,27 @@ func recordFromDoc(doc *playerDoc) (*game.PlayerRecord, []string, error) {
 		note("times.played: %v", err)
 	}
 
+	// The three _raw fields are ORed back in the same way identity.remort
+	// and an affect's sets_raw already were. They had been written and
+	// never read — a write-only escape hatch, which is worse than not
+	// having one, because the file looks like it carries the bits and the
+	// reader silently drops them. A player flag above the last *named*
+	// bit survived the export and vanished on the way back in.
 	act, actUnknown := game.ParseBitNames(doc.Flags.Act, game.YamlPlayerFlagNames())
 	for _, name := range actUnknown {
 		note("flags.act: unknown name %q", name)
 	}
+	act = act.Set(game.Flags(doc.Flags.ActRaw))
 	aff, affUnknown := game.ParseBitNames(doc.Flags.Affected, game.YamlAffectFlagNames())
 	for _, name := range affUnknown {
 		note("flags.affected: unknown name %q", name)
 	}
+	aff = aff.Set(game.Flags(doc.Flags.AffRaw))
 	prefs, prefsUnknown := game.ParseBitNames(doc.Flags.Prefs, game.YamlPreferenceNames())
 	for _, name := range prefsUnknown {
 		note("flags.prefs: unknown name %q", name)
 	}
+	prefs = prefs.Set(game.Flags(doc.Flags.PrefsRaw))
 
 	skills, skillsUnknown := skillsFromDoc(doc.Skills)
 	for _, name := range skillsUnknown {
@@ -119,7 +128,9 @@ func recordFromDoc(doc *playerDoc) (*game.PlayerRecord, []string, error) {
 		LoadRoom:      game.RoomVnum(doc.Identity.LoadRoom),
 		BadPasswords:  doc.BadPasswordAttempts,
 		SpellsToLearn: doc.PracticeSessions,
-		RemortVector:  int32(remort), //nolint:gosec // a small per-class bitmask
+		RemortVector:  int32(remort),        //nolint:gosec // a small per-class bitmask
+		SpecFlags:     int32(doc.SpecFlags), //nolint:gosec // a local bitmask, 32 bits wide in the format it came from
+		OLCZone:       doc.OLCZone,
 	}
 	return rec, unknown, nil
 }
@@ -178,7 +189,7 @@ func affectsFromDoc(doc []affectDoc) ([]game.Affect, []string) {
 		if !ok {
 			unknown = append(unknown, fmt.Sprintf("affects: unknown spell/skill name %q", ad.Spell))
 		}
-		location, ok := game.ValueByName(ad.Location, game.YamlApplyTypeNames())
+		location, ok := game.ValueByNameOrNumber(ad.Location, game.YamlApplyTypeNames())
 		if ad.Location != "" && !ok {
 			unknown = append(unknown, fmt.Sprintf("affects: unknown location %q", ad.Location))
 		}
@@ -266,11 +277,25 @@ func StoredObjectFromDoc(od ObjInstanceDoc) (player.StoredObject, []string) {
 	copy(st.Values[:], od.Values)
 
 	for _, ad := range od.Affects {
-		location, ok := game.ValueByName(ad.Location, game.YamlApplyTypeNames())
+		location, ok := game.ValueByNameOrNumber(ad.Location, game.YamlApplyTypeNames())
 		if ad.Location != "" && !ok {
 			unknown = append(unknown, fmt.Sprintf("inventory: object #%d: unknown affect location %q", od.Vnum, ad.Location))
 		}
 		st.Affects = append(st.Affects, game.ObjAffect{Location: location, Modifier: ad.Modifier})
+	}
+	// Pad back to the fixed slot count. The writer drops empty slots
+	// because storing five zeroes per object to say nothing is not worth
+	// the bytes, but player.StoredObject.Affects is documented as holding
+	// exactly MaxObjAffects "including the empty ones", and binary's
+	// decoder always produces that many. Two drivers filling the same
+	// shared model differently is how a comparison between them (`dlctl
+	// verify --against`) reports a difference that is not one — and, worse,
+	// how a difference that *is* one hides among them.
+	//
+	// Padding rather than trimming, because the slot count is the C's:
+	// Obj_from_store copies affected[j] by index for all six.
+	for len(st.Affects) < game.MaxObjAffects {
+		st.Affects = append(st.Affects, game.ObjAffect{})
 	}
 	for _, inner := range od.Contains {
 		innerSt, innerUnknown := StoredObjectFromDoc(inner)

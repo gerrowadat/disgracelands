@@ -82,7 +82,7 @@ flags:
   - invis_start
   - cryo
   - not_dead_yet
-  act_raw: 18446744073709420544
+  act_raw: 4294836224
   affected:
   - blind
   - invisible
@@ -105,7 +105,7 @@ flags:
   - hide
   - silence
   - charm
-  affected_raw: 18446744073705422848
+  affected_raw: 4290838528
   prefs:
   - brief
   - compact
@@ -129,11 +129,13 @@ flags:
   - no_gossip
   - no_grats
   - room_flags
-  prefs_raw: 18446744073705357312
+  prefs_raw: 4290772992
 practice_sessions: 32000
 invisibility_level: 34
 frozen_by_level: 34
 bad_password_attempts: 255
+spec_flags: 2147483647
+olc_zone: 50
 skills:
   "#100": 1
   "#101": 2

@@ -5,7 +5,7 @@ entries:
   file: torture.txt
 - keywords:
   - CAFE
-  - CAFé
+  - CAFÃ©
   file: cafe-caf.txt
 - keywords:
   - SLUG

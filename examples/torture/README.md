@@ -23,12 +23,15 @@ importers sat inert until somebody went looking
 This is the primary compatibility corpus now. `stock` stays the realistic
 one and `mini` the fast one.
 
-## What it found immediately
+## What it found
 
-Three real bugs, in the first conversion that was ever run against it.
-They are listed here rather than only in a commit message because the
-*kind* of bug is the point: all three were silent, all three lost data,
-and none of them could be reproduced with any other fixture in the tree.
+Three bugs in the first conversion ever run against it, and eight more
+once `dlctl verify --against` and the fuzz targets went looking. They are
+listed here rather than only in commit messages because the *kind* of bug
+is the point: every one was silent, every one lost data or hung, and not
+one could be reproduced with any other fixture in the tree.
+
+The first three, from the import that produced `yaml/`:
 
 - **`perm_affect` had no `_raw` escape hatch.** `wear_raw` and `flags_raw`
   carry a bit with no name in the yaml vocabulary; `perm_affect` did not,
@@ -48,6 +51,48 @@ and none of them could be reproduced with any other fixture in the tree.
   `interpret_espec` ignores anything outside it — but a conversion that
   loses a line should say which line. Mobile `#5001` has one. Fixed by
   reporting them.
+
+And then, from `dlctl verify --against` comparing this directory to its
+own converted copy, and from the four fuzz targets seeded off it:
+
+- **The binary codec sign-extended every 32-bit flag field.** `varInt`
+  widens a four-byte field through `int32`, so a stored `0xFFFFFFFF` —
+  what a 32-bit `unsigned long` full of player flags looks like — became
+  `-1` and then all sixty-four bits of a `game.Flags`. Symmetric on write,
+  so the package's own byte-for-byte round-trip test could not see it.
+  `Torturer` sets every bit of all three fields.
+- **The yaml player format wrote `act_raw`/`affected_raw`/`prefs_raw` and
+  never read them back.** A write-only escape hatch, which is worse than
+  none: the file looks like it carries the bits.
+- **`spec_flags` and `olc_zone` were not in the yaml player format at
+  all.** Two Disgracelands-local fields living in what were `char_file_u`'s
+  spare slots. Every builder's permitted OLC zone would have been lost by
+  the migration.
+- **The converted ban list came out backwards.** `Add` prepends, matching
+  `ban.c`'s linked list, so replaying a newest-first list through it
+  rebuilds the reverse.
+- **A help entry's keywords were not transcoded either** — the same U+FFFD
+  mangling as the world keywords, in a different importer, and the
+  keywords are what the entry's own `.txt` filename is derived from.
+- **`dlctl fmt --type=pfile` deadlocked.** It called `Save` inside a
+  `List` range loop; `List` holds the store's read lock for the whole
+  iteration and `Save` wants the write lock. It hung on any directory with
+  a character in it — and until this fixture, no checked-in directory had
+  one.
+- **Four more string shapes could not survive a YAML round trip**, found by
+  `FuzzTextRoundTrip` within seconds of it first existing: a string that is
+  nothing but whitespace, a whitespace-only first line, a tab anywhere in a
+  single-line value, and a value of `---` or `...` (which crashed the
+  encoder outright).
+- **Every plain `string` field in every format silently ate tabs**, because
+  quoting was left to the library. That one came from
+  `FuzzBinaryRecordRoundTrip`, on a character whose *name* held a tab, and
+  is why `internal/persist/yamlenc` exists.
+- **An out-of-range enum was dropped or written unreadably.** An affect
+  location, a sector, a sex, a class or a social's position outside its
+  name table was written as nothing (and read back as zero) or as
+  `unknown-104` (which the reader cannot resolve either). Now `#104`, the
+  convention `SpellNameOrNumber` already used.
 
 ## What is in it, and why each thing is there
 

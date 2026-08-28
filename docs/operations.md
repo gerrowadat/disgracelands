@@ -616,6 +616,41 @@ Password hashes are never printed, by either command. They are real people's
 credentials, they are DES with a public salt, and a terminal scrollback or a
 CI log is not where they should end up.
 
+### Checking a conversion lost nothing
+
+```sh
+dlctl verify --dir=/srv/lib --against=/srv/data                 # every subsystem
+dlctl verify --dir=/srv/lib --against=/srv/data --type=pfile    # just the roster
+```
+
+With `--against`, `verify` loads **both** directories through their own
+drivers and compares the states they load to, subsystem by subsystem,
+reporting every difference rather than the first. `--dir`'s format
+defaults per subsystem the way `import`'s source does — `binary` for the
+roster, `classic` for everything else — and `--against-format` defaults to
+`yaml`.
+
+This is the check to run against your own archive, and it is worth
+knowing why it compares *loaded state* rather than bytes. The claim worth
+making is "a server running on the converted data behaves identically to
+one running on the original", and bytes are a lossy proxy for that in both
+directions: two `classic` files differing only in whitespace load
+identically, and two identical loads can be written back differently by
+any writer that does not reproduce 1990s formatting quirks exactly. See
+`docs/proposals/yaml-only.md` §4.1.
+
+`dlctl import` runs the same comparison itself, on what it has just
+written, and **fails the import if it does not hold**. That is the default;
+`--verify=false` turns it off. It is the default because after the
+yaml-only release `import` is the only path from an archived `lib/` to a
+running server, run once, by somebody with no way to tell a complete
+conversion from a nearly-complete one — and every conversion bug found so
+far has been silent.
+
+An import that fails verification leaves the output directory in place but
+does **not** stamp it with a release version, so a server will not boot on
+it.
+
 ### Setting a password from outside the game
 
 ```sh

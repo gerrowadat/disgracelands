@@ -109,19 +109,40 @@ func fmtPfile(dir string) error {
 	defer func() { _ = out.Flush() }()
 
 	ctx := context.Background()
-	n := 0
+
+	// Drain the listing before touching anything, rather than saving
+	// inside the range loop.
+	//
+	// player/yaml's List holds the store's read lock for the whole
+	// iteration, and Save takes the write lock — and a Go RWMutex is
+	// neither reentrant nor writer-starving, so a writer that arrives
+	// while a reader is still iterating blocks forever, and the reader
+	// never finishes because it is the same goroutine. `dlctl fmt
+	// --type=pfile` therefore hung, permanently, on any directory with a
+	// character in it.
+	//
+	// Nothing found it because until examples/torture there was no
+	// checked-in fixture in this repository with a roster in it at all
+	// (docs/proposals/yaml-only.md §5.1) — a hang needs a character to
+	// hang on, and every corpus had zero.
+	var names []string
 	for entry, err := range s.List(ctx) {
 		if err != nil {
 			_, _ = fmt.Fprintf(out, "listing: %v\n", err)
 			continue
 		}
-		rec, err := s.Load(ctx, entry.Name)
+		names = append(names, entry.Name)
+	}
+
+	n := 0
+	for _, name := range names {
+		rec, err := s.Load(ctx, name)
 		if err != nil {
-			_, _ = fmt.Fprintf(out, "%s: %v\n", entry.Name, err)
+			_, _ = fmt.Fprintf(out, "%s: %v\n", name, err)
 			continue
 		}
 		if err := s.Save(ctx, rec); err != nil {
-			_, _ = fmt.Fprintf(out, "%s: writing: %v\n", entry.Name, err)
+			_, _ = fmt.Fprintf(out, "%s: writing: %v\n", name, err)
 			continue
 		}
 		n++

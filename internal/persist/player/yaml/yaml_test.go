@@ -190,15 +190,32 @@ func nestedRentFile() *player.RentFile {
 		Gold: 100, Bank: 200,
 		Objects: []player.StoredObject{
 			{
-				Vnum: 3032, Weight: 5,
+				Vnum: 3032, Weight: 5, Affects: affectSlots(),
 				Contains: []player.StoredObject{
-					{Vnum: 3009, Weight: 1},
-					{Vnum: 3010, Weight: 2, ExtraFlags: game.ItemGlow, Affects: []game.ObjAffect{{Location: 1, Modifier: 3}}},
+					{Vnum: 3009, Weight: 1, Affects: affectSlots()},
+					{Vnum: 3010, Weight: 2, ExtraFlags: game.ItemGlow,
+						Affects: affectSlots(game.ObjAffect{Location: 1, Modifier: 3})},
 				},
 			},
-			{Vnum: 3022, Weight: 3},
+			{Vnum: 3022, Weight: 3, Affects: affectSlots()},
 		},
 	}
+}
+
+// affectSlots is player.StoredObject.Affects' documented shape: exactly
+// game.MaxObjAffects slots, "including the empty ones", which is what
+// struct obj_file_elem's fixed affected[MAX_OBJ_AFFECT] array is and what
+// binary's decoder always produces.
+//
+// This fixture used to leave the empty slots out, which read fine and made
+// this package's own round trip pass while quietly disagreeing with the
+// other driver about the shape of a shared model. `dlctl verify --against`
+// is what noticed, by comparing a binary rent file to the yaml it had just
+// been converted into and reporting "6 element(s) vs 2" on every object.
+func affectSlots(set ...game.ObjAffect) []game.ObjAffect {
+	out := make([]game.ObjAffect, game.MaxObjAffects)
+	copy(out, set)
+	return out
 }
 
 func TestObjectStoreRoundTripsNesting(t *testing.T) {
@@ -387,5 +404,59 @@ func TestSavedDescriptionHoldsNoCarriageReturns(t *testing.T) {
 	}
 	if bytes.ContainsRune(b, '\r') {
 		t.Fatalf("saved file holds a carriage return:\n%s", b)
+	}
+}
+
+// TestBareLineFeedComesBackAsCRLF pins the one text transform
+// docs/proposals/yaml-only.md §4.2 calls genuinely unavoidable and
+// genuinely not lossy, so that it cannot change without somebody
+// deciding to.
+//
+// YAML cannot represent CRLF distinctly from LF — the spec folds CR, CRLF
+// and LF alike on decode — so the yaml formats store LF and re-derive
+// CRLF on load (worldtext.ToStored/FromStored). For everything the game
+// itself wrote that is exact, because every such string is CRLF-joined in
+// memory and LF-joined on disk already, which is precisely the
+// relationship classic's own bytes have to their own in-memory form. A
+// string holding a *bare* LF is the exception: it comes back with a
+// carriage return in front of it.
+//
+// §4.2's own conclusion is that this should be "reclassified rather than
+// fixed", with a test pinning it and a line in docs/deviations.md saying
+// it is settled. This is that test. It is also why
+// cmd/dlctl's FuzzBinaryRecordRoundTrip skips an input whose free text
+// holds a bare LF: that target asserts an exact round trip, and this is
+// the one place the round trip is deliberately not exact.
+func TestBareLineFeedComesBackAsCRLF(t *testing.T) {
+	s, err := New(player.Config{Dir: t.TempDir()})
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	ctx := context.Background()
+
+	const bare = "one line\ntwo line\n"
+	if err := s.Save(ctx, &game.PlayerRecord{Name: "Bilbo", Description: bare}); err != nil {
+		t.Fatalf("Save: %v", err)
+	}
+	got, err := s.Load(ctx, "Bilbo")
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	const want = "one line\r\ntwo line\r\n"
+	if got.Description != want {
+		t.Errorf("a description of %q came back as %q, want %q", bare, got.Description, want)
+	}
+
+	// And the ordinary case, which is what every string the game writes
+	// actually looks like: CRLF in, CRLF out, unchanged.
+	if err := s.Save(ctx, &game.PlayerRecord{Name: "Frodo", Description: want}); err != nil {
+		t.Fatalf("Save (CRLF): %v", err)
+	}
+	back, err := s.Load(ctx, "Frodo")
+	if err != nil {
+		t.Fatalf("Load (CRLF): %v", err)
+	}
+	if back.Description != want {
+		t.Errorf("a CRLF description came back as %q, want it unchanged", back.Description)
 	}
 }

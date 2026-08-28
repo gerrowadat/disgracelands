@@ -32,6 +32,8 @@ import (
 
 	"github.com/goccy/go-yaml"
 
+	"github.com/gerrowadat/disgracelands/internal/persist/yamlenc"
+
 	"github.com/gerrowadat/disgracelands/internal/game"
 )
 
@@ -189,7 +191,7 @@ func saveYaml(dir string, entries []game.HelpEntry) error {
 		d.Entries = append(d.Entries, entryDoc{Keywords: e.Keywords, File: file})
 	}
 
-	out, err := yaml.MarshalWithOptions(d, yaml.Indent(2))
+	out, err := yaml.MarshalWithOptions(d, yamlenc.Options()...)
 	if err != nil {
 		return fmt.Errorf("writing %s: %w", filepath.Join(dir, YamlFile), err)
 	}

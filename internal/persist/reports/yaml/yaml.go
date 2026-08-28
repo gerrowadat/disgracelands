@@ -19,6 +19,8 @@ import (
 
 	"github.com/goccy/go-yaml"
 
+	"github.com/gerrowadat/disgracelands/internal/persist/yamlenc"
+
 	"github.com/gerrowadat/disgracelands/internal/persist/reports"
 )
 
@@ -166,7 +168,7 @@ func (s *Store) save() error {
 	}
 	s.mu.RUnlock()
 
-	out, err := yaml.MarshalWithOptions(d, yaml.Indent(2))
+	out, err := yaml.MarshalWithOptions(d, yamlenc.Options()...)
 	if err != nil {
 		return fmt.Errorf("writing %s: %w", s.path, err)
 	}
