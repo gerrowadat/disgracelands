@@ -86,7 +86,26 @@ func (s *Session) beginEditorSeeded(maxLength int, seed string, done func(text s
 // handleEditing collects one line of an edited text, porting string_add
 // (modify.c:117): the '@' terminator, then the improved-editor commands
 // editorCommand answers, then plain buffering.
+//
+// Every line that leaves the session still editing gets a `] ` back.
+// make_prompt's second branch is `else if (d->str) strcpy(prompt, "] ")`
+// (comm.c:1008) — before the CON_PLAYING test and after the pager's, so any
+// descriptor with a string being written to prompts that way whatever state
+// it is in. The C writes it once per pass of the game loop, which for a
+// player typing is once per line.
+//
+// Without it the editor is completely silent: a player types a line and gets
+// nothing back, with no sign the server took it. That is issue #192.
 func (s *Session) handleEditing(line string) error {
+	err := s.editLine(line)
+	if err == nil && s.state == StateEditing {
+		s.Send("%s", prompt(s))
+	}
+	return err
+}
+
+// editLine is string_add itself, without the prompt.
+func (s *Session) editLine(line string) error {
 	if strings.TrimSpace(line) == descriptionTerminator {
 		return s.finishEditing(true)
 	}

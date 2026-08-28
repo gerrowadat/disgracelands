@@ -60,6 +60,7 @@ func (s *Session) handleMenu(ctx context.Context, deps Deps, line string) error 
 		s.Send("Terminate with a '%s' on a new line.\r\n", descriptionTerminator)
 		s.editorBuf = editText{}
 		s.state = StateEnterDescription
+		s.Send("] ")
 		return nil
 
 	case '3':
@@ -178,6 +179,11 @@ func (s *Session) handleEnterDescription(ctx context.Context, deps Deps, line st
 		s.editorBuf.text += line + "\r\n"
 		s.editorBuf.present = true
 	}
+	// `] `, as every line typed into a string editor gets. CON_EXDESC sets
+	// `d->str` like any other (interpreter.c's CON_MENU case '2'), and
+	// make_prompt keys off that pointer rather than off the state
+	// (comm.c:1008). See handleEditing.
+	s.Send("] ")
 	return nil
 }
 

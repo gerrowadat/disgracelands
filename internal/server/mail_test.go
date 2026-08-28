@@ -88,6 +88,11 @@ func TestSendingAndReceivingMail(t *testing.T) {
 	first.expect("Write your message, use @ on a new line when done.")
 	first.send("Come back, all is forgiven.")
 	first.send("@")
+	// playing_string_cleanup's own confirmation (modify.c:232). It is the
+	// only signal a player gets that the letter went, and it was missing
+	// (#192) — which mattered more than it looked, because the C build used
+	// for parity testing is the one that says this and delivers nothing.
+	first.expect("Message sent!")
 	first.settle()
 
 	// The stamp is taken before the message is written.
