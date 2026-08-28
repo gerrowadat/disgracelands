@@ -1,10 +1,19 @@
 # Working on Disgracelands
 
 Notes for anyone — human or agent — picking this up cold. The authoritative
-documents are `docs/proposals/go-port-plan.md` (what we are doing and in what
-order), `docs/deviations.md` (every deliberate difference from the C) and
-`docs/weirdnumbers.md` (every surprising constant, with its C citation). This
-file is the working practice around them.
+documents are `docs/proposals/yaml-only.md` (what we are doing next),
+`docs/proposals/go-port-plan.md` (how the port got here, and the
+architecture it built), `docs/deviations.md` (every deliberate difference
+from the C) and `docs/weirdnumbers.md` (every surprising constant, with its
+C citation). This file is the working practice around them.
+
+`yaml-only.md` supersedes `go-port-plan.md` as the *forward* plan: the port
+reached a playable server across Phases 0–6, and the next thing this project
+does — retiring the legacy formats from the server, and the compatibility
+testing that has to be true first — is in the newer document. The port plan
+stays authoritative as the record of what landed and why, and as the
+reference for the architecture; its Phase 7 (cutover) is now downstream of
+the yaml-only work rather than the next thing up.
 
 ## What this project is
 
@@ -324,8 +333,11 @@ the day-to-day/release split being reversible piecemeal.**
 - A deliberate difference from the C → `docs/deviations.md`, with reasoning.
 - Something not yet ported, that a reader would expect to be →
   `docs/deviations.md` too, so the gap is visible.
-- Phase and slice status → `docs/proposals/go-port-plan.md`. Keep it current;
-  it is the map future work is planned from.
+- Status of work still to come → `docs/proposals/yaml-only.md`. Keep it
+  current; it is the map future work is planned from.
+- Phase and slice status for the port itself →
+  `docs/proposals/go-port-plan.md`. A historical record now, corrected when
+  it turns out to be wrong about what landed, not extended with new plans.
 
 **The Go server is canonical now, not the C.** Through Phase 5 a place
 where the Go server fell short of the C was an artifact to note and move
