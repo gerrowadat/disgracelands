@@ -695,15 +695,19 @@ func (c *Context) giveGold(victim *game.Character, amount int32) {
 	victim.Record.Points.Gold += amount
 }
 
-// findContainer locates a container by name the way generic_find does with
-// FIND_OBJ_INV|FIND_OBJ_ROOM: inventory first, then the floor. The second
-// return says which, because it decides whether taking from it counts as
-// taking from the ground.
+// findContainer locates a container by name, porting
+// generic_find(FIND_OBJ_INV | FIND_OBJ_ROOM) — `put`'s and `get X from Y`'s
+// own call (act.item.c:137, :369) and the doors'. The second return says
+// which list it came from, because that decides whether taking from it counts
+// as taking from the ground.
+//
+// It goes through genericFind rather than searching the two lists in turn
+// with a counter each, which is what it used to do: the count is shared, so
+// `get sword from 2.bag` with one bag carried and one on the floor means the
+// one on the floor. See genericFind.
 func (c *Context) findContainer(name string) (obj *game.Object, onGround bool) {
-	if obj := c.findObject(c.Character.Carrying, name); obj != nil {
-		return obj, false
-	}
-	return c.findObject(c.World.RoomObjects(c.Character.Room), name), true
+	_, obj, where := c.genericFind(name, findObjInv|findObjRoom)
+	return obj, where == foundInRoom
 }
 
 // matchingObjects returns up to howmany objects a word names, in list order.

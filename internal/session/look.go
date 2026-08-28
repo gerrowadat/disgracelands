@@ -25,48 +25,12 @@ import (
 // (test/parity, objects.session and combat.session): the C server is the
 // expectation, and the shapes below are what it actually printed.
 
-// findWhere says which of a character's three object lists something was
-// found in.
-//
-// It is generic_find's return value narrowed to the object bits, and
-// look_in_obj is what needs it: a container's contents are headed with the
-// container's own name and then "(carried)", "(here)" or "(used)" chosen by
-// exactly this (act.informative.c:517-527).
-type findWhere int
-
-const (
-	foundNowhere findWhere = iota
-	foundInEquipment
-	foundInInventory
-	foundInRoom
-)
-
-// findObject is generic_find restricted to FIND_OBJ_EQUIP | FIND_OBJ_INV |
-// FIND_OBJ_ROOM, which is what both look_in_obj and look_at_target ask for.
-//
-// Two things about it are the C's rather than this port's, and both are
-// player-visible:
-//
-//   - **The search order is fixed at equipment, inventory, room** and does
-//     not depend on the order the bits are named at the call site
-//     (handler.c:1331). `look sword` shows the one in your hand rather than
-//     the one on the ground because of this, not because look asked for it.
-//   - **The count is shared across all three lists.** One `Search` walks
-//     them in turn, so `2.sword` with one worn and one carried finds the
-//     carried one. Searching each list with its own counter — which is what
-//     this port did everywhere before — would have found the worn one twice.
+// findObjectAndWhere is generic_find restricted to FIND_OBJ_EQUIP |
+// FIND_OBJ_INV | FIND_OBJ_ROOM, which is what look_in_obj and look_at_target
+// ask for. See genericFind, which is the whole of it.
 func (c *Context) findObjectAndWhere(arg string) (*game.Object, findWhere) {
-	s := c.World.NewSearch(c.Character, arg)
-	if obj := s.EquippedObject(&c.Character.Equipment); obj != nil {
-		return obj, foundInEquipment
-	}
-	if obj := s.ObjectIn(c.Character.Carrying); obj != nil {
-		return obj, foundInInventory
-	}
-	if obj := s.ObjectIn(c.World.RoomObjects(c.Character.Room)); obj != nil {
-		return obj, foundInRoom
-	}
-	return nil, foundNowhere
+	_, obj, where := c.genericFind(arg, findObjEquip|findObjInv|findObjRoom)
+	return obj, where
 }
 
 // lookInObject is look_in_obj (act.informative.c:500): `look in <thing>`.

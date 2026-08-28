@@ -1052,21 +1052,55 @@ Listed here so they are not mistaken for deliberate differences.
   what the world-parity harness and the Phase 7 shadow run depend on. In
   this repo that directory is `examples/stock/binary/`, the shipped
   example and the Go server's default.
-- **`generic_find`'s combined forms are ported only where a command needed
-  them.** `CAN_SEE` and `N.thing` both reach the search functions, so an
+- ~~**`generic_find`'s combined forms are ported only where a command needed
+  them.**~~ `CAN_SEE` and `N.thing` both reach the search functions, so an
   invisible thief can neither be seen nor named and `2.sword` picks the
   second one. What the C keeps in `generic_find` is the *bitvector* — one
   call that searches inventory, equipment, the room and the world in a
   caller-chosen combination, and reports which of them it found the thing
-  in. `Context.findObjectAndWhere` (`internal/session/look.go`) is that
-  call for the three object bits, added because `look_in_obj` needs the
-  "which list" answer to head a container's contents with "(carried)" /
-  "(here)" / "(used)". **`look` is the only caller so far**; every other
-  command still searches the lists it cares about in the order it wants,
-  with a counter per list rather than one shared across them. That
-  difference is reachable: `2.sword` with one worn and one carried is the
-  carried one through `look` and the worn one through everything else.
-  **Tracked:** #194.
+  in.
+  **Fixed 2026-08-28** (#194). `Context.genericFind`
+  (`internal/session/genericfind.go`) is `generic_find` itself, bitvector
+  and all, and every one of the C's eight call sites goes through it:
+  `put`'s and `get X from Y`'s container, the doors, `look`, `look in`,
+  `examine`, and a wand or staff aimed at something.
+
+  The bug that made it worth doing was in `look`, of all places — the one
+  command the combined form had already been ported for. `look_at_target`
+  hands `generic_find` the argument **as typed** (act.informative.c:589)
+  and strips the count afterwards, because `generic_find` takes its own copy
+  of the string before calling `get_number` (handler.c:1377-1383); the C's
+  comment there, "Strip off 'number.' from 2.foo and friends", is about the
+  *second* strip. This port stripped it first and handed the bare word to
+  the search, so `look 2.sword` searched for "sword" and always found the
+  first one.
+
+  Two things about `generic_find` are the C's rather than a design choice,
+  and both are visible. **The search order is fixed** — characters in the
+  room, characters in the world, worn, carried, on the floor, anywhere at
+  all — regardless of the order the bits are named at the call site. And
+  **the count is shared across every list it walks**: `get sword from
+  2.bag` with one bag carried and one on the floor means the one on the
+  floor, where searching each list with a counter of its own found nothing,
+  because neither list held two.
+
+  `do_stat`'s no-keyword fallback came with it and is *not* `generic_find`,
+  which is the interesting part. It is a hand-rolled `else if` ladder
+  (act.wizard.c:871-889) in its own order — worn, carried, somebody in this
+  room, on the floor, somebody anywhere, an object anywhere, objects and
+  characters interleaved rather than all the characters first — and it
+  threads one `number` down the whole chain exactly as `generic_find` does.
+  This port had the room's characters first and a fresh count per step, so
+  `stat sword` with a sword in hand and a mobile answering to "sword" in
+  the room stated the mobile. Its equipment search is
+  `get_obj_in_equip_vis`, which checks `CAN_SEE_OBJ` — unlike
+  `generic_find`'s own inline equipment loop, which famously does not.
+
+  What is *not* `generic_find` and stays as it is: `get`, `drop`, `wear`,
+  `wield` and `remove` each search a single list with a fresh count in the
+  C too, and `do_cast`'s target block passes `NULL` for `number` at every
+  step (spell_parser.c:567-592), so each of its six lookups counts from one.
+  Those are separate searches in the C and remain separate here.
 - **Eight of the C's 318 commands are not implemented**, and the plan's
   §10 "What is not in it" lists every one with its `interpreter.c` line. In
   brief: the seven OasisOLC editors (Phase 6), plus `slowns`. `color` is

@@ -527,3 +527,72 @@ func TestCompactDropsTheBlankLine(t *testing.T) {
 		t.Error("the blank line before the prompt went missing")
 	}
 }
+
+// generic_find shares one count across every list it walks (issue #194).
+//
+// The C threads one `int *number` down the whole chain (handler.c:1387), so
+// `2.bag` in `get sword from 2.bag` means the second bag across the *search
+// order* — inventory, then the floor — and not the second bag in whichever
+// list happens to hold one. This port searched each list with a counter of
+// its own, so `2.bag` with one bag carried and one on the floor found
+// nothing at all: neither list had two.
+func TestNThingCountIsSharedAcrossTheListsGenericFindWalks(t *testing.T) {
+	srv, _ := newTestServer(t)
+	c := dialClient(t, listening(t, srv))
+	c.create("Zod", "swordfish", "m", "w")
+
+	inWorld(t, srv, func(w *game.Live) {
+		ch := w.Find("Zod")
+		// One bag carried, with the sword in it; one bag on the floor,
+		// empty. `2.bag` is the one on the floor.
+		carried := w.NewObject(testBagVnum)
+		w.ObjectToChar(carried, ch)
+		w.ObjectToObject(w.NewObject(testSwordVnum), carried)
+
+		w.ObjectToRoom(w.NewObject(testBagVnum), ch.Room)
+	})
+
+	// The floor's bag is the second one, and it is empty.
+	c.send("get sword from 2.bag")
+	c.expect("There doesn't seem to be a sword in a bag.")
+
+	// The carried one is the first, and has the sword.
+	c.send("get sword from 1.bag")
+	c.expect("You get a long sword from a bag.")
+}
+
+// The same count, across equipment and inventory, through `look`.
+//
+// generic_find's order is fixed at worn, carried, on the floor (handler.c:1400
+// onwards) regardless of which order the caller names the bits in, so with one
+// sword worn and one carried `1.sword` is the worn one and `2.sword` the
+// carried one.
+func TestNThingCountRunsFromEquipmentIntoInventory(t *testing.T) {
+	srv, _ := newTestServer(t)
+	c := dialClient(t, listening(t, srv))
+	c.create("Zod", "swordfish", "m", "w")
+
+	inWorld(t, srv, func(w *game.Live) {
+		ch := w.Find("Zod")
+		w.ObjectToChar(w.NewObject(testSwordVnum), ch)
+		w.ObjectToChar(w.NewObject(testSwordVnum), ch)
+	})
+	c.send("wield sword")
+	c.expect("You wield a long sword.")
+
+	// One worn, one carried. Dropping 2.sword can only reach the carried
+	// one — do_drop searches the inventory alone with a count of its own,
+	// which is the C's, so this is the *other* half of the same behaviour
+	// and it must not change.
+	c.send("drop 2.sword")
+	c.expect("You don't seem to have a sword.")
+
+	// Through look, which is a generic_find caller: 1 is the worn one and 2
+	// is the carried one, so both answer and 3 does not.
+	c.send("look 1.sword")
+	c.expectCount("You see nothing special..", 1)
+	c.send("look 2.sword")
+	c.expectCount("You see nothing special..", 2)
+	c.send("look 3.sword")
+	c.expect("You do not see that here.")
+}
