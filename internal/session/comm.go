@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/gerrowadat/disgracelands/internal/colour"
 	"github.com/gerrowadat/disgracelands/internal/game"
 )
 
@@ -196,7 +197,11 @@ func tellIsOKFor(w *game.Live, speaker, victim *game.Character) (bool, string) {
 // is where "The grocer tells you," gets its capital, a mobile's own name
 // being lower case.
 func deliverTell(w *game.Live, from, to *game.Character, message string) {
-	to.Tell("%s", w.Act("$n tells you, '"+message+"'", game.ActArgs{Actor: from}, to))
+	// Red, at C_NRM — the C brackets the act() with bare writes of
+	// CCRED/CCNRM (act.comm.c:109-112) rather than putting the escapes in
+	// the string, which comes to the same thing here.
+	to.TellAt(colour.Normal, "{{red}}%s{{/}}",
+		w.Act("$n tells you, '"+message+"'", game.ActArgs{Actor: from}, to))
 }
 
 // performTell delivers one, and remembers who to reply to.
@@ -206,7 +211,10 @@ func (c *Context) performTell(victim *game.Character, message string) {
 	if !c.Character.IsNPC() && c.prefers(game.PrefNoRepeat) {
 		c.Send("Okay.\r\n")
 	} else {
-		c.Send("You tell %s, '%s'\r\n", victim.Name, message)
+		// The teller's own echo is red too, but at C_CMP rather than C_NRM
+		// (act.comm.c:117 against :109) — so somebody on "normal" colour
+		// sees the tells they *receive* in red and their own in plain text.
+		c.SendAt(colour.Complete, "{{red}}You tell %s, '%s'{{/}}\r\n", victim.Name, message)
 	}
 
 	if !victim.IsNPC() && !c.Character.IsNPC() &&
@@ -270,31 +278,40 @@ type channel struct {
 	sameZone bool
 	// costsMovement is holler, and only holler.
 	costsMovement bool
+	// colour is com_msgs[subcmd][3] (act.comm.c:401), the fourth column of
+	// the channel table: the escape each channel is written in. The speaker
+	// sees it at C_CMP and everybody else at C_NRM, which is the one place
+	// in the game where the same message is coloured at two different
+	// thresholds depending on which end of it you are.
+	colour string
 }
 
 var channels = map[string]channel{
 	"holler": {
 		verb: "holler", noshout: "You cannot holler!!\r\n", off: "",
-		costsMovement: true,
+		costsMovement: true, colour: "bright-green",
 	},
 	"shout": {
 		verb: "shout", noshout: "You cannot shout!!\r\n",
 		off: "Turn off your noshout flag first!\r\n", mute: game.PrefDeaf,
-		sameZone: true,
+		sameZone: true, colour: "bright-red",
 	},
 	"gossip": {
 		verb: "gossip", noshout: "You cannot gossip!!\r\n",
 		off: "You aren't even on the channel!\r\n", mute: game.PrefNoGoss,
+		colour: "yellow",
 	},
 	"auction": {
 		verb: "auction", noshout: "You cannot auction!!\r\n",
 		off: "You aren't even on the channel!\r\n", mute: game.PrefNoAuct,
+		colour: "magenta",
 	},
 	"grats": {
 		// The verb is "congrat" and the command is "grats", which is the C's
 		// and reads oddly in every message the channel prints.
 		verb: "congrat", noshout: "You cannot congratulate!\r\n",
 		off: "You aren't even on the channel!\r\n", mute: game.PrefNoGratz,
+		colour: "green",
 	},
 }
 
@@ -355,7 +372,12 @@ func (c *Context) genComm(name string) error {
 	if c.prefers(game.PrefNoRepeat) {
 		c.Send("Okay.\r\n")
 	} else {
-		c.Send("You %s, '%s'\r\n", ch.verb, said)
+		// The speaker's own echo is at C_CMP (act.comm.c:472), and the
+		// listeners' at C_NRM (:488) — the same channel colour, two
+		// different thresholds, which is the C and reads as a quirk until
+		// you notice the speaker is the one who can turn theirs off without
+		// losing everybody else's.
+		c.SendAt(colour.Complete, "{{%s}}You %s, '%s'{{/}}\r\n", ch.colour, ch.verb, said)
 	}
 
 	for _, other := range c.World.Players() {
@@ -373,7 +395,8 @@ func (c *Context) genComm(name string) error {
 		if ch.sameZone && (!c.sameZone(other.Room) || !other.Position.Awake()) {
 			continue
 		}
-		other.Tell("%s %ss, '%s'\r\n", c.Character.Name, ch.verb, said)
+		other.TellAt(colour.Normal, "{{%s}}%s{{/}}", ch.colour,
+			c.World.Act("$n "+ch.verb+"s, '"+said+"'", game.ActArgs{Actor: c.Character}, other))
 	}
 	return nil
 }

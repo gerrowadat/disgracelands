@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gerrowadat/disgracelands/internal/colour"
 	"github.com/gerrowadat/disgracelands/internal/rng"
 )
 
@@ -281,6 +282,23 @@ type Client interface {
 	Send(format string, args ...any)
 }
 
+// LevelledClient is a Client that can be told how much colour a message is.
+//
+// The C's colour macros are a *threshold*: `CCYEL(ch, C_CMP)` expands to
+// nothing unless the reader has asked for "complete" colour, so the fight is
+// yellow for one player and plain for another reading the same message
+// (screen.h:37). Send's own level is C_NRM, which is what nearly everything
+// is; this exists for the handful that are not.
+//
+// Optional, because the recorders the tick tests use are Clients and have no
+// notion of colour. TellAt falls back to Send for those, which renders the
+// markup at the ordinary level — the same answer for every message that is
+// C_NRM anyway.
+type LevelledClient interface {
+	Client
+	SendAt(want colour.Level, format string, args ...any)
+}
+
 // IsNPC reports whether this is a mobile, porting IS_NPC.
 func (c *Character) IsNPC() bool { return c != nil && c.NPC }
 
@@ -289,6 +307,19 @@ func (c *Character) Tell(format string, args ...any) {
 	if c.Client != nil {
 		c.Client.Send(format, args...)
 	}
+}
+
+// TellAt is Tell for a message whose colour sits at a level other than the
+// ordinary one. See LevelledClient.
+func (c *Character) TellAt(want colour.Level, format string, args ...any) {
+	if c.Client == nil {
+		return
+	}
+	if levelled, ok := c.Client.(LevelledClient); ok {
+		levelled.SendAt(want, format, args...)
+		return
+	}
+	c.Client.Send(format, args...)
 }
 
 // Level is the character's level.

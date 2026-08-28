@@ -7,6 +7,7 @@
 package server
 
 import (
+	"github.com/gerrowadat/disgracelands/internal/colour"
 	"github.com/gerrowadat/disgracelands/internal/game"
 )
 
@@ -142,29 +143,37 @@ func (s *Server) sendSkillMessage(w *game.Live, attacker, victim *game.Character
 }
 
 // sendMsgSet sends a registered skill_message MsgSet to all three
-// audiences, porting its act() calls (fight.c:719-758) minus colour —
-// nothing in this port emits colour yet (docs/deviations.md). An empty
-// field is '#', no message for that audience: internal/game.Act's own
-// callers already treat an empty format as "send nothing"
+// audiences, porting its act() calls (fight.c:719-758). An empty field is
+// '#', no message for that audience: internal/game.Act's own callers already
+// treat an empty format as "send nothing"
 // (internal/session/social.go's act()), the same posture here.
+//
+// The colour is the C's, and so is who does *not* get any: the attacker's
+// line is wrapped in CCYEL and the victim's in CCRED (fight.c:679-712), both
+// at C_CMP, and the room's is wrapped in nothing at all. A bystander watching
+// a fight sees it in plain text on the real server.
 func (s *Server) sendMsgSet(w *game.Live, attacker, victim *game.Character, weapon *game.Object, set game.MsgSet) {
 	args := game.ActArgs{Actor: attacker, Victim: victim, Obj: weapon}
 	if set.Attacker != "" {
-		attacker.Tell("%s", w.Act(set.Attacker, args, attacker))
+		attacker.TellAt(colour.Complete, "{{yellow}}%s{{/}}", w.Act(set.Attacker, args, attacker))
 	}
 	if set.Victim != "" {
-		victim.Tell("%s", w.Act(set.Victim, args, victim))
+		victim.TellAt(colour.Complete, "{{red}}%s{{/}}", w.Act(set.Victim, args, victim))
 	}
 	if set.Room != "" {
 		s.actToRoomExcept(w, attacker, victim, args, set.Room)
 	}
 }
 
-// sendDamageMessage is dam_message (fight.c:591-620) minus colour.
+// sendDamageMessage is dam_message (fight.c:591-644), colour included: yellow
+// to whoever swung, red to whoever was hit, nothing to the room. See
+// sendMsgSet.
 func (s *Server) sendDamageMessage(w *game.Live, attacker, victim *game.Character, dam, attackType int32) {
 	args := game.ActArgs{Actor: attacker, Victim: victim}
-	attacker.Tell("%s", w.Act(game.DamageMessage(dam, attackType, game.AudienceChar), args, attacker))
-	victim.Tell("%s", w.Act(game.DamageMessage(dam, attackType, game.AudienceVictim), args, victim))
+	attacker.TellAt(colour.Complete, "{{yellow}}%s{{/}}",
+		w.Act(game.DamageMessage(dam, attackType, game.AudienceChar), args, attacker))
+	victim.TellAt(colour.Complete, "{{red}}%s{{/}}",
+		w.Act(game.DamageMessage(dam, attackType, game.AudienceVictim), args, victim))
 	s.actToRoomExcept(w, attacker, victim, args, game.DamageMessage(dam, attackType, game.AudienceRoom))
 }
 
@@ -367,7 +376,11 @@ func (s *Server) announcePosition(w *game.Live, victim *game.Character) {
 		s.toRoomExcept(w, victim, "%s is dead!  R.I.P.\r\n", victim.Name)
 	default:
 		if victim.Record != nil && victim.Record.Points.Hit < victim.Record.Points.MaxHit/4 {
-			victim.Tell("You wish that your wounds would stop BLEEDING so much!\r\n")
+			// Red, at C_SPR — the lowest threshold there is, so anybody
+			// with colour on at all sees this one (fight.c:851). It is
+			// the warning that you are about to die.
+			victim.TellAt(colour.Sparse,
+				"{{red}}You wish that your wounds would stop BLEEDING so much!{{/}}\r\n")
 		}
 	}
 }

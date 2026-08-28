@@ -119,6 +119,36 @@ func InitChar(rec *PlayerRecord, r *rng.Rand, first bool) {
 	SnapshotReal(rec)
 }
 
+// RemortCount is do_who's own count of how many times somebody has remorted
+// (act.informative.c:1116-1132).
+//
+// It walks the class masks from the top down, subtracting each one it can,
+// which counts the bits set — and then takes one off for the class they are
+// now, since that bit is in the vector too. The `if (prevclasses > 0)` guard
+// on the subtraction is the C's and matters: a character with an empty
+// vector stays at zero rather than going to -1, which is the value do_who
+// uses for an immortal.
+func RemortCount(rec *PlayerRecord) int {
+	if rec == nil {
+		return 0
+	}
+	remaining, n := rec.RemortVector, 0
+	for class := ClassPaladin; class >= 0; class-- {
+		mask, ok := classRemortMasks[class]
+		if !ok {
+			continue
+		}
+		if remaining >= mask {
+			n++
+			remaining -= mask
+		}
+	}
+	if n > 0 {
+		n--
+	}
+	return n
+}
+
 // classRemortMasks is pc_class_remort_masks (class.c:82): the bit each class
 // occupies in the remort vector.
 //

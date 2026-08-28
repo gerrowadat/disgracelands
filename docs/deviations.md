@@ -746,18 +746,55 @@ port is right and the thing it is compared against is wrong.
   Still not ported, and unchanged by this: the boat, tunnel and godroom
   checks that surround it in `do_simple_move`, and `AFF_SNEAK` suppressing
   the leave and arrive messages. The tunnel one has its own entry below.
-- **The C colours what it prints and the port does not.** New characters get
-  colour turned on for them in both (interpreter.c:1616, a `<DoC>` local
+- ~~**The C colours what it prints and the port does not.**~~ New characters
+  get colour turned on for them in both (interpreter.c:1616, a `<DoC>` local
   change the port has as `game.ApplyNewCharacterDefaults`), but the C wraps
   room names, exits and the fight in `CCCYN()`/`CCYEL()` at the call site
-  (screen.h:42) while the port renders only the `&`-codes embedded in text
+  (screen.h:42) while the port rendered only the codes embedded in text
   (`internal/colour`, `Session.SendAt`). Nothing else in the suite is
   compared with the ANSI left in; the `colour` scenario is where it is
   compared instead of stripped.
   *Ruling (2026-08-26):*
   **Blocker.** A flat screen reads as a different game. Mechanical to fix
   — call site by call site — but there are many call sites.
-  **Tracked:** #190.
+  **Fixed 2026-08-28** (#190). Room names, exits, the room's object and
+  character lists, `color`'s own line and the login-failure count had
+  already been done when the colour engine landed (#103); what was left is
+  now done too, which is every `CC*` macro in `moderncserver` outside the
+  OLC and DG-script trees:
+
+  - **the fight** — yellow to whoever swung, red to whoever was hit, and
+    **nothing to the room** (fight.c:687-698, :732-764);
+  - **tells** — red both ways (act.comm.c:156, :164);
+  - **the channels** — each carries its own colour in the fourth column of
+    `com_msgs` (act.comm.c:442-466): holler bright green, shout bright red,
+    gossip yellow, auction magenta, congrat green;
+  - **`who`** — a `<DoC>` addition that colours each line by how many times
+    that character has remorted (act.informative.c:1108-1161);
+  - **the two `<DoC>` room-flag lines**, blue for GOOD_REGEN and a
+    three-colour sentence for PKILL (act.informative.c:449-464);
+  - **`stat`**, all three of room, object and character, which is the
+    largest share of the call sites by count (act.wizard.c:512-954);
+  - **the wizline** (act.wizard.c:1962).
+
+  Two things about the C are worth keeping in mind, because both are
+  reachable and neither is obvious.
+
+  **The level is a threshold, and it is not the same everywhere.** The
+  fight is `C_CMP` and a tell you *receive* is `C_NRM`, so somebody on
+  "normal" colour watches their own fight in plain text and still sees
+  tells in red — and the echo of the tell they *sent* is `C_CMP`, so the
+  two halves of one conversation are coloured at different levels. That is
+  what `Character.TellAt` and `Session.SendAt` are for.
+
+  **`who`'s colour is not conditional at all.** The `<DoC>` code writes
+  raw escapes rather than going through the macros, so the who-list arrives
+  coloured whatever the reader has set `color` to. `colour.Off` is how that
+  is spelled here — a threshold nobody can be below. See
+  `docs/weirdnumbers.md`.
+
+  Still uncoloured, and deliberately: OasisOLC (`oasis.c`) and the DG
+  scripts (`dg_*.c`), neither of which is ported.
 - ~~**`who` prints the class abbreviation for immortals in the C**~~
   (`[Wa 34]` against `[ 34]`) ~~and counts in words~~: "One lonely
   character displayed." against "1 character playing.".

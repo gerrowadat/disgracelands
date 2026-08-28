@@ -1205,12 +1205,16 @@ func roomDescription(w *game.Live, room *game.RoomDef, viewer *game.Character, i
 		fmt.Fprintf(&b, "{{cyan}}[ Exits: %s]{{/}}\r\n", autoExits(room))
 	}
 
-	// The two local additions, both `<DoC>` (act.informative.c:444, :452).
+	// The two local additions, both `<DoC>` (act.informative.c:444, :452),
+	// and both coloured at C_NRM. The player-killer line changes colour
+	// three times in one sentence — yellow, red for the bracketed words,
+	// yellow again — because the C sends it as seven separate writes.
 	if room.Flags.Has(game.RoomGoodRegen) {
-		b.WriteString("You feel a soft, warm feeling in your bones.\r\n")
+		b.WriteString("{{blue}}You feel a soft, warm feeling in your bones.{{/}}\r\n")
 	}
 	if room.Flags.Has(game.RoomPKill) {
-		b.WriteString("You have entered a [Player Killer] room. Beware!\r\n")
+		b.WriteString("{{yellow}}You have entered a {{/}}{{red}}[Player Killer]{{/}}" +
+			"{{yellow}} room. Beware!{{/}}\r\n")
 	}
 
 	// Green for what is lying about and yellow for who is here, which is the
@@ -1628,7 +1632,15 @@ func doWho(c *Context) error {
 		// so every line read "[ 34]" where the real server said "[Wa 34]".
 		// The space before the title is unconditional in the C, so somebody
 		// with no title gets a trailing one.
-		c.Send("[%s %2d] %s %s\r\n", classAbbrev(p), p.Level(), p.Name, p.Title())
+		//
+		// The colour in front of it is a `<DoC>` local addition
+		// (act.informative.c:1108-1161) and is the one piece of colour in the
+		// game that is *not* conditional: it is written as raw escapes rather
+		// than through the CC macros, so it arrives whatever the reader has
+		// set `color` to. See docs/weirdnumbers.md. colour.Off is how that is
+		// spelled here — a threshold nobody can be below.
+		c.SendAt(colour.Off, "%s[%s %2d] %s %s{{/}}\r\n",
+			whoColour(p), classAbbrev(p), p.Level(), p.Name, p.Title())
 	}
 	// The C counts in words below two and in digits above it
 	// (act.informative.c:1212-1216).
@@ -1641,6 +1653,34 @@ func doWho(c *Context) error {
 		c.Send("\r\n%d characters displayed.\r\n", len(shown))
 	}
 	return nil
+}
+
+// whoColour is do_who's per-line colour (act.informative.c:1108-1161), a
+// `<DoC>` local addition: the who-list says how many times somebody has
+// remorted by what colour their line is.
+//
+// Immortals bright blue; nobody who has never remorted gets any colour at
+// all; then green, bright green, yellow and bright yellow as the count goes
+// up. Note the count itself: it adds a bit for every class in the remort
+// vector and then subtracts one, "Don't count current class, which will be
+// in the remort vector" — but only `if (prevclasses > 0)`, so somebody with
+// an empty vector stays at zero rather than going to -1 and colouring
+// themselves like a god.
+func whoColour(who *game.Character) string {
+	if who.Level() >= game.LevelImmortal {
+		return "{{bright-blue}}"
+	}
+	switch game.RemortCount(who.Record) {
+	case 1:
+		return "{{green}}"
+	case 2:
+		return "{{bright-green}}"
+	case 3:
+		return "{{yellow}}"
+	case 4:
+		return "{{bright-yellow}}"
+	}
+	return ""
 }
 
 // classAbbrev is the CLASS_ABBR macro (utils.h:488), which answers "--" for a

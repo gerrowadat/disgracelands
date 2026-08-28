@@ -1620,6 +1620,34 @@ never refused in practice, because they never spend anything.
 `game.MovementCost` (`internal/game/movement.go`), with the table re-parsed
 out of the C by `TestMovementLossMatchesTheCSource`.
 
+### The who-list's colour ignores the player's colour setting
+
+```c
+	  switch(prevclasses)
+	  {
+		case -1:
+			  	sprintf(buf,"%s",BBLU);
+				break;
+```
+
+Every other piece of colour in the game goes through `CCCYN(ch, C_NRM)` and
+friends, which expand to the escape *or to nothing* depending on what the
+reader has set `color` to (screen.h:37). `do_who`'s per-line colour — a
+`<DoC>` local addition that says how many times somebody has remorted by what
+colour their line is — writes `BBLU`, `KGRN`, `BGRN`, `KYEL`, `BYEL` and a
+trailing `KNRM` directly. There is no macro and no test. A player with
+`color off` gets the who-list in colour anyway.
+
+The count itself has a quirk of its own. It adds one for every class bit in
+the remort vector and then takes one off again, "Don't count current class,
+which will be in the remort vector" — but the subtraction is guarded on
+`if (prevclasses > 0)`, so a character with an empty vector stays at zero
+rather than going to -1, which is the value the switch uses for an immortal.
+Without that guard a brand new character would print in bright blue.
+
+*Source*: `act.informative.c:1108-1161`. *Reproduced* in `session.whoColour`
+and `game.RemortCount`.
+
 ## Time
 
 ### The clock's fallback epoch is a magic number with no explanation

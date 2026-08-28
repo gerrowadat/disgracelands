@@ -33,6 +33,15 @@ func TestStatRoom(t *testing.T) {
 		room.Flags = room.Flags.Set(game.RoomIndoors | game.RoomPeaceful)
 	})
 
+	// Colour off first: do_stat_room writes the room name in cyan
+	// (act.wizard.c:512), so with colour on there is an escape between the
+	// label and the name and this assertion would have to know about it.
+	// Every new character has colour turned on for them
+	// (ApplyNewCharacterDefaults), so this is the exception rather than the
+	// setup.
+	c.send("color off")
+	c.expect("is now Off.")
+
 	c.send("stat room")
 	c.expect("Room name: The Immortal Board Room")
 	c.expect("VNum: [ 1204]")
@@ -64,6 +73,12 @@ func TestStatObject(t *testing.T) {
 		}
 		w.ObjectToChar(sword, who)
 	})
+
+	// Colour off: do_stat_object writes the short description in yellow and
+	// the vnum in green (act.wizard.c:612, :620), so with colour on there is
+	// an escape between the label and the value.
+	c.send("color off")
+	c.expect("is now Off.")
 
 	c.send("stat sword")
 	c.expect("Name: 'a long sword'")
@@ -191,6 +206,11 @@ func TestVstat(t *testing.T) {
 	srv, _ := newTestServer(t)
 	c := dialClient(t, listening(t, srv))
 	c.create("Prototyper", "beforeitexists", "m", "w")
+
+	// Colour off, as in TestStatObject: vstat prints through
+	// do_stat_object, which colours the short description.
+	c.send("color off")
+	c.expect("is now Off.")
 
 	c.send("vstat")
 	c.expect("Usage: vstat { obj | mob } <number>")

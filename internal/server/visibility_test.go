@@ -596,3 +596,116 @@ func TestNThingCountRunsFromEquipmentIntoInventory(t *testing.T) {
 	c.send("look 3.sword")
 	c.expect("You do not see that here.")
 }
+
+// The fight is coloured at the C's own call sites (issue #190): yellow to
+// whoever swung, red to whoever was hit, and nothing at all to the room.
+//
+// Both are CCYEL/CCRED at **C_CMP** (fight.c:687-698, :732-764), the highest
+// threshold there is, so a player on "normal" colour watches their own fight
+// in plain text. That is the C's and it is why this test sets the level
+// explicitly rather than trusting the default.
+func TestTheFightIsColouredForTheTwoCombatantsOnly(t *testing.T) {
+	srv, _ := newTestServer(t)
+	addr := listening(t, srv)
+
+	attacker := dialClient(t, addr)
+	attacker.create("Zod", "swordfish", "m", "w")
+	victim := dialClient(t, addr)
+	victim.create("Welmar", "swordfish", "m", "w")
+	bystander := dialClient(t, addr)
+	bystander.create("Watcher", "swordfish", "m", "w")
+
+	for _, c := range []*client{attacker, victim, bystander} {
+		c.send("color complete")
+		c.expect("is now Complete.")
+	}
+	inWorld(t, srv, func(w *game.Live) {
+		for _, name := range []string{"Zod", "Welmar", "Watcher"} {
+			if who := w.Find(name); who != nil {
+				if err := w.Enter(who, MortalStartRoom); err != nil {
+					t.Errorf("moving %s: %v", name, err)
+				}
+			}
+		}
+	})
+
+	attackerMark, victimMark, bystanderMark := len(attacker.wire()), len(victim.wire()), len(bystander.wire())
+
+	// murder, not hit: player-killing is off in the test server and do_hit
+	// refuses one player swinging at another without it (act.offensive.c).
+	attacker.send("murder Welmar")
+	attacker.settle()
+	victim.settle()
+	bystander.settle()
+
+	if !strings.Contains(string(attacker.wire()[attackerMark:]), "\x1b[33m") {
+		t.Error("the attacker's damage message was not yellow")
+	}
+	if !strings.Contains(string(victim.wire()[victimMark:]), "\x1b[31m") {
+		t.Error("the victim's damage message was not red")
+	}
+	// TO_NOTVICT is wrapped in nothing: a bystander sees the fight in plain
+	// text however much colour they have asked for.
+	if strings.Contains(string(bystander.wire()[bystanderMark:]), "\x1b[3") {
+		t.Errorf("a bystander's view of the fight was coloured:\n%q",
+			string(bystander.wire()[bystanderMark:]))
+	}
+}
+
+// A tell is red to whoever hears it at C_NRM and red to whoever sends it at
+// C_CMP (act.comm.c:156, :164) — the same colour at two different
+// thresholds, so a player on "normal" sees the tells they receive in red and
+// their own echo in plain text.
+func TestATellIsRedAtTwoDifferentThresholds(t *testing.T) {
+	srv, _ := newTestServer(t)
+	addr := listening(t, srv)
+
+	teller := dialClient(t, addr)
+	teller.create("Zod", "swordfish", "m", "w")
+	hearer := dialClient(t, addr)
+	hearer.create("Welmar", "swordfish", "m", "w")
+
+	teller.send("color normal")
+	teller.expect("is now Normal.")
+
+	tellerMark, hearerMark := len(teller.wire()), len(hearer.wire())
+	teller.send("tell Welmar hello")
+	teller.settle()
+	hearer.settle()
+
+	if !strings.Contains(string(hearer.wire()[hearerMark:]), "\x1b[31m") {
+		t.Error("the tell was not red for the person who heard it")
+	}
+	if strings.Contains(string(teller.wire()[tellerMark:]), "\x1b[31m") {
+		t.Error("the teller's own echo was red at Normal; it is C_CMP")
+	}
+}
+
+// A channel carries its own colour from com_msgs' fourth column
+// (act.comm.c:442-466): holler bright green, shout bright red, gossip yellow,
+// auction magenta, congrat green.
+func TestEachChannelHasItsOwnColour(t *testing.T) {
+	srv, _ := newTestServer(t)
+	addr := listening(t, srv)
+
+	speaker := dialClient(t, addr)
+	speaker.create("Zod", "swordfish", "m", "w")
+	hearer := dialClient(t, addr)
+	hearer.create("Welmar", "swordfish", "m", "w")
+
+	for _, tc := range []struct{ command, escape string }{
+		{"gossip hello", "\x1b[33m"},
+		{"auction hello", "\x1b[35m"},
+		{"grats hello", "\x1b[32m"},
+		{"holler hello", "\x1b[1;32m"},
+	} {
+		mark := len(hearer.wire())
+		speaker.send(tc.command)
+		speaker.settle()
+		hearer.settle()
+		if !strings.Contains(string(hearer.wire()[mark:]), tc.escape) {
+			t.Errorf("%q did not arrive in %q:\n%q",
+				tc.command, tc.escape, string(hearer.wire()[mark:]))
+		}
+	}
+}
