@@ -255,6 +255,7 @@ set. That is preferable to starting a server nobody can reach.
 | `--tls-key` | *(empty)* | Private key file. |
 | `--tls-acme-domain` | *(empty)* | Obtain a certificate automatically via ACME (Let's Encrypt) for this domain. *(inert)* |
 | `--tls-acme-cache` | `examples/stock/binary/.acme` | Where ACME caches issued certificates. Must persist across restarts. *(inert)* |
+| `--tls-reload-interval` | `1m` | How often to check `--tls-cert`/`--tls-key` for a newer file and reload. `0` disables the check. |
 
 `--tls-cert`/`--tls-key` and `--tls-acme-domain` are mutually exclusive.
 Setting only one half of the cert/key pair is an error.
@@ -262,6 +263,15 @@ Setting only one half of the cert/key pair is an error.
 **ACME is not implemented.** Configuring it fails at startup, saying to use
 `--tls-cert` and `--tls-key`, rather than starting a server whose
 certificate never arrives.
+
+**The certificate reloads on its own.** Renewing `--tls-cert`/`--tls-key`
+in place — a `cert-manager`/`certbot` rotation, or an ops team's own cron —
+takes effect on the next handshake, no restart needed: the server polls
+both files' mtimes every `--tls-reload-interval` and, if either changed,
+reloads and swaps the certificate in. A connection already in progress is
+never touched, and a bad or unparsable file at reload time is logged and
+the certificate already serving connections is kept, so a mistake writing
+the new file can't take down a server that's already up (issue #147).
 
 ## Connections
 
