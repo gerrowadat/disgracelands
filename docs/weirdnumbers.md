@@ -1538,6 +1538,39 @@ loop goes round once more over the trailing `"\r\n"`, and appends two more.
 
 ---
 
+## Movement
+
+### A step's cost is the truncated average of two sectors, so half of them are free-ish
+
+```c
+/* move points needed is avg. move loss for src and destination sect type */
+need_movement = (movement_loss[SECT(IN_ROOM(ch))] +
+                 movement_loss[SECT(EXIT(ch, dir)->to_room)]) / 2;
+```
+
+`movement_loss[]` runs 1, 1, 2, 3, 4, 6, 4, 1, 1, 5 for Inside, City, Field,
+Forest, Hills, Mountains, Swimming, Unswimmable, Flying, Underwater
+(constants.c:768). The comment says "avg", the code says integer division,
+and what a player experiences is the difference between the two.
+
+Stepping off a city street into a field costs `(1 + 2) / 2` = **1**, exactly
+as much as walking down the street — the half is thrown away. Field to forest
+is `(2 + 3) / 2` = 2 and city to mountains is `(1 + 6) / 2` = 3. Because the
+average is symmetric, a loop costs the same whichever way round it is walked,
+which a rule charging for the destination alone would not do; and because the
+cheapest sector costs 1, no step is ever free, which is what makes the number
+on the prompt move at all.
+
+The two guards either side of it are also not the same guard. The refusal
+(`GET_MOVE(ch) < need_movement && !IS_NPC(ch)`, act.movement.c:130) does not
+exempt immortals — the *charge* does (`GET_LEVEL(ch) < LVL_IMMORT`,
+act.movement.c:161). An immortal is therefore refusable in principle and
+never refused in practice, because they never spend anything.
+
+*Source*: `act.movement.c:127`, `constants.c:768`. *Reproduced* as
+`game.MovementCost` (`internal/game/movement.go`), with the table re-parsed
+out of the C by `TestMovementLossMatchesTheCSource`.
+
 ## Time
 
 ### The clock's fallback epoch is a magic number with no explanation

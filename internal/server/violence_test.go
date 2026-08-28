@@ -36,7 +36,10 @@ func fighterRecord(name string, level, hit int32) *game.PlayerRecord {
 			Strength: 18, Intelligence: 18, Wisdom: 18,
 			Dexterity: 12, Constitution: 12, Charisma: 12,
 		},
-		Points: game.Points{Hit: hit, MaxHit: hit, Armor: 100},
+		// Movement points, because walking costs them now: a fixture with
+		// none is exhausted before it takes a step, and every test that
+		// walks one of these anywhere depends on it having some.
+		Points: game.Points{Hit: hit, MaxHit: hit, Armor: 100, Move: 82, MaxMove: 82},
 	}
 	game.SnapshotReal(rec)
 	return rec

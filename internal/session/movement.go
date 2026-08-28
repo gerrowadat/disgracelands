@@ -31,7 +31,7 @@ func doEnter(c *Context) error {
 		for dir := game.Direction(0); int(dir) < game.NumDirections; dir++ {
 			exit := c.World.Exit(c.Character.Room, dir)
 			if exit != nil && exit.Keywords != "" && strings.EqualFold(exit.Keywords, name) {
-				c.moveCharacter(c.Character, dir)
+				c.moveCharacterChecking(c.Character, dir, true)
 				return nil
 			}
 		}
@@ -49,7 +49,7 @@ func doEnter(c *Context) error {
 	// `enter` with two buildings next to you always picks the northerly one.
 	for dir := game.Direction(0); int(dir) < game.NumDirections; dir++ {
 		if dest := c.openExitTo(dir); dest != nil && dest.Flags.Has(game.RoomIndoors) {
-			c.moveCharacter(c.Character, dir)
+			c.moveCharacterChecking(c.Character, dir, true)
 			return nil
 		}
 	}
@@ -68,7 +68,7 @@ func doLeave(c *Context) error {
 
 	for dir := game.Direction(0); int(dir) < game.NumDirections; dir++ {
 		if dest := c.openExitTo(dir); dest != nil && !dest.Flags.Has(game.RoomIndoors) {
-			c.moveCharacter(c.Character, dir)
+			c.moveCharacterChecking(c.Character, dir, true)
 			return nil
 		}
 	}
