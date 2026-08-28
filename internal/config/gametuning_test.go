@@ -100,6 +100,7 @@ max_pc_corpse_time: 20
 level_can_shout: 5
 holler_move_cost: 30
 max_filesize: 100000
+max_bad_pws: 5
 `)
 
 	got, err := LoadGameTuning(path)
@@ -111,7 +112,7 @@ max_filesize: 100000
 		AutoSave: false, AutosaveTime: 15,
 		NPCCorpseTime: 3, PlayerCorpseTime: 20,
 		LevelCanShout: 5, HollerMoveCost: 30,
-		MaxFileSize: 100000,
+		MaxFileSize: 100000, MaxBadPws: 5,
 	}
 	if got != want {
 		t.Errorf("LoadGameTuning(%q) = %+v, want %+v", path, got, want)

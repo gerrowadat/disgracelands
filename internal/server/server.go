@@ -337,6 +337,35 @@ func (s *Server) Authenticate(ctx context.Context, name, password string) (*game
 	return &game.Character{Name: rec.Name, Record: rec}, nil
 }
 
+// RecordBadPassword implements session.LoginHandler: nanny's
+// `GET_BAD_PWS(d->character)++; save_char(d->character);`
+// (interpreter.c:1466-1467), the persistent tally the next successful login
+// reports as "N LOGIN FAILURES SINCE LAST SUCCESSFUL LOGIN".
+//
+// It reads the record back off disk and writes it straight out again with one
+// field bumped, rather than saving a character struct held in memory. That is
+// a deliberate difference from the C, which saves the copy `load_char` left
+// on the descriptor and so, when the character being guessed at is *already
+// logged in*, writes a login-time snapshot over half an hour of play. Nothing
+// about the tally needs the live character, so nothing here touches it — see
+// docs/deviations.md.
+//
+// Best-effort: a login is not refused because the counter could not be
+// written, which is also what the C does with save_char's ignored return.
+func (s *Server) RecordBadPassword(ctx context.Context, name string) {
+	rec, err := s.players.Load(ctx, name)
+	if err != nil {
+		if !errors.Is(err, player.ErrNotFound) {
+			s.logger.Error("loading a record to count a bad password", "character", name, "error", err)
+		}
+		return
+	}
+	rec.BadPasswords++
+	if err := s.players.Save(ctx, rec); err != nil {
+		s.logger.Error("saving a bad-password count", "character", name, "error", err)
+	}
+}
+
 // Create implements session.LoginHandler.
 func (s *Server) Create(ctx context.Context, req session.CreateRequest) (*game.Character, error) {
 	// `-r` on the command line, and `wizlock 1` or higher at runtime: both

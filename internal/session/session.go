@@ -184,6 +184,13 @@ type Session struct {
 	pendingPassword string
 	pendingSex      int32
 
+	// badPasswords is the C's `d->bad_pws` (structs.h:1019): wrong passwords
+	// typed on *this connection*, which is what GameTuning.MaxBadPws is
+	// measured against. It is deliberately not the character's own tally —
+	// that one lives on the record, survives the disconnect, and is only
+	// read to say "N LOGIN FAILURES SINCE LAST SUCCESSFUL LOGIN".
+	badPasswords int32
+
 	// editorBuf holds a multi-line entry — a description, or anything the
 	// improved editor is open on — until its terminator arrives. It is
 	// flat rather than a list of lines because the C's `*d->str` is, and
@@ -362,6 +369,17 @@ type LoginHandler interface {
 	// Authenticate checks a password and returns the character on success.
 	// A nil character with a nil error means the password was wrong.
 	Authenticate(ctx context.Context, name, password string) (*game.Character, error)
+	// RecordBadPassword is nanny's `GET_BAD_PWS(d->character)++;
+	// save_char(d->character);` (interpreter.c:1466-1467): the *persistent*
+	// tally of consecutive failed logins, which the next successful login
+	// reports and then clears. Separate from Session.badPasswords, which is
+	// the C's per-connection `d->bad_pws` and is what max_bad_pws is
+	// measured against.
+	//
+	// Best-effort by design: a failure to write it is logged by the
+	// implementation and must not stop the login sequence, exactly as the C
+	// ignores save_char's return.
+	RecordBadPassword(ctx context.Context, name string)
 	// Create makes a new character. The request carries everything the C's
 	// creation sequence gathers before a character exists.
 	Create(ctx context.Context, req CreateRequest) (*game.Character, error)

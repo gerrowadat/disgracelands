@@ -9,6 +9,8 @@
 package play
 
 import (
+	"errors"
+	"io"
 	"net"
 	"regexp"
 	"strings"
@@ -162,6 +164,26 @@ func (c *client) send(line string) {
 func (c *client) transcript() string { return c.text.String() }
 
 func (c *client) close() { _ = c.conn.Close() }
+
+// expectEOF reads until the server hangs up, and fails if it does not.
+//
+// The assertion for anything that ends in a disconnect: the message on its
+// own proves nothing, because saying it and closing the socket are two
+// separate things.
+func (c *client) expectEOF() string {
+	c.t.Helper()
+
+	for {
+		err := c.read()
+		if errors.Is(err, io.EOF) {
+			return c.text.String()
+		}
+		if err != nil {
+			c.t.Fatalf("waiting for the server to hang up, the transcript was:\n%s\n(%v)",
+				c.text.String(), err)
+		}
+	}
+}
 
 // create walks the whole creation sequence and enters the game, leaving the
 // character standing in the mortal start room.

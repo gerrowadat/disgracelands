@@ -11,6 +11,7 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/gerrowadat/disgracelands/internal/colour"
 	"github.com/gerrowadat/disgracelands/internal/game"
 )
 
@@ -165,6 +166,16 @@ func (s *Session) handlePassword(ctx context.Context, deps Deps, line string) er
 	s.EchoOn()
 	s.Send("\r\n")
 
+	// An empty line hangs up, silently and without counting as a strike
+	// (`if (!*arg) STATE(d) = CON_CLOSE;`, interpreter.c:1459-1460). It is
+	// checked before the password is, so somebody who just presses return is
+	// gone rather than being told anything — and, more to the point here,
+	// cannot use empty lines to keep a connection at the prompt for ever.
+	if password == "" {
+		s.Close()
+		return nil
+	}
+
 	character, err := deps.Login.Authenticate(ctx, s.pendingName, password)
 	if err != nil {
 		s.logger.Error("authenticating", "name", s.pendingName, "error", err)
@@ -177,11 +188,36 @@ func (s *Session) handlePassword(ctx context.Context, deps Deps, line string) er
 		// wrong, and logged with the host, matching the C server's "Bad PW"
 		// line. Telling an anonymous connection which half it got right is
 		// how a roster becomes a list of accounts to attack.
-		s.logger.Info("failed login", "name", s.pendingName)
+		s.logger.Info("failed login", "name", s.pendingName, "host", s.Host())
+
+		// Two counters, and they are not the same counter — this is the
+		// thing the C is easy to misread on. The character's own tally is
+		// persistent, survives the disconnect, and exists only so the next
+		// successful login can say how many attempts there were. `d->bad_pws`
+		// belongs to the socket, starts at zero on every fresh connection,
+		// and is the one max_bad_pws is compared against — so three wrong
+		// passwords disconnect you, and dialling back in gives you three
+		// more (interpreter.c:1466-1474).
+		deps.Login.RecordBadPassword(ctx, s.pendingName)
+
+		s.badPasswords++
+		if s.badPasswords >= game.Tuning().MaxBadPws {
+			s.Send("Wrong password... disconnecting.\r\n")
+			s.Close()
+			return nil
+		}
+		// Still at the password prompt, so echo goes back off: the EchoOn
+		// above was for the line just typed, not for the next one.
 		s.Send("Wrong password.\r\n")
-		s.Close()
+		s.EchoOff()
+		s.Send("Password: ")
 		return nil
 	}
+
+	// Password was correct, so the socket's own strike count goes back to
+	// zero (interpreter.c:1480). The character's persistent tally is left
+	// alone until reportLoginFailures has had a chance to say what it was.
+	s.badPasswords = 0
 
 	// The SELECT ban (interpreter.c:1482-1490): once the password is right,
 	// a site-banned connection is still refused unless this particular
@@ -226,8 +262,36 @@ func (s *Session) handlePassword(ctx context.Context, deps Deps, line string) er
 
 	s.character = character
 	s.state = StateReadMOTD
-	s.Send("%s\r\n*** PRESS RETURN: ", motdFor(deps, character))
+	s.Send("%s\r\n", motdFor(deps, character))
+	s.reportLoginFailures()
+	s.Send("*** PRESS RETURN: ")
 	return nil
+}
+
+// reportLoginFailures is interpreter.c:1511-1518, the notice that follows the
+// MOTD when somebody has been guessing at your password.
+//
+// The count is the character's own persistent tally, cleared here — the C
+// reads it into `load_result` at :1478 and zeroes it there too, then zeroes
+// it a second time inside this block. The reset is not saved on its own; the
+// record is written on the way into the world and on every save after, which
+// is what makes the tally "since last successful login" rather than
+// "for ever".
+//
+// C_SPR, so the red is there for anybody who asked for any colour at all,
+// and three bells, which the C really does mean.
+func (s *Session) reportLoginFailures() {
+	rec := s.character.Record
+	if rec == nil || rec.BadPasswords <= 0 {
+		return
+	}
+	plural := ""
+	if rec.BadPasswords > 1 {
+		plural = "S"
+	}
+	s.SendAt(colour.Sparse, "\r\n\r\n\007\007\007{{red}}%d LOGIN FAILURE%s SINCE LAST SUCCESSFUL LOGIN.{{/}}\r\n",
+		rec.BadPasswords, plural)
+	rec.BadPasswords = 0
 }
 
 // siteOK is PLR_FLAGGED(d->character, PLR_SITEOK), guarding against a

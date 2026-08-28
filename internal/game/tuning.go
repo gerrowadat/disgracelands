@@ -56,6 +56,14 @@ type GameTuning struct {
 	// typo reports) refuses to append once a report file reaches this many
 	// bytes.
 	MaxFileSize int64 `yaml:"max_filesize"`
+
+	// MaxBadPws is max_bad_pws (config.c:236): how many wrong passwords one
+	// connection may type at the login prompt before it is disconnected.
+	// The count is per *connection* (the C's `d->bad_pws`), not per
+	// character, so reconnecting starts again from zero — the separate
+	// per-character tally is what the "N LOGIN FAILURES SINCE LAST
+	// SUCCESSFUL LOGIN" notice reports (interpreter.c:1466-1474).
+	MaxBadPws int32 `yaml:"max_bad_pws"`
 }
 
 // DefaultGameTuning returns config.c's own values — the archive's settings,
@@ -72,6 +80,7 @@ func DefaultGameTuning() GameTuning {
 		LevelCanShout:    1,
 		HollerMoveCost:   20,
 		MaxFileSize:      50000,
+		MaxBadPws:        3,
 	}
 }
 
@@ -96,6 +105,12 @@ func (t GameTuning) Validate() error {
 		return fmt.Errorf("holler_move_cost: must not be negative, got %d", t.HollerMoveCost)
 	case t.MaxFileSize < 0:
 		return fmt.Errorf("max_filesize: must not be negative, got %d", t.MaxFileSize)
+	case t.MaxBadPws < 1:
+		// Zero would disconnect on the *first* keystroke at the password
+		// prompt, before anything had been checked: the C's test is
+		// `++(d->bad_pws) >= max_bad_pws`, so one is the smallest setting
+		// that still lets a password be typed at all.
+		return fmt.Errorf("max_bad_pws: must be at least 1, got %d", t.MaxBadPws)
 	}
 	return nil
 }
