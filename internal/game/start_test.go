@@ -32,12 +32,16 @@ func TestStartGivesEveryClassSomethingToLiveOn(t *testing.T) {
 		if rec.Points.Move <= 0 || rec.Points.Move != rec.Points.MaxMove {
 			t.Errorf("class %d: move %d/%d", class, rec.Points.Move, rec.Points.MaxMove)
 		}
-		// Mana is not gained at level one — advance_level guards it on
-		// level > 1 — so every new character has none, whatever their class.
-		// This is why the C's prompt reads 0M for a brand new mage.
-		if rec.Points.MaxMana != 0 || rec.Points.Mana != 0 {
-			t.Errorf("class %d: mana %d/%d, want 0/0 at level one",
-				class, rec.Points.Mana, rec.Points.MaxMana)
+		// Mana is not *gained* at level one — advance_level guards the gain
+		// on level > 1 — but do_start hands out a flat 100 before calling it
+		// (class.c:1898), which is why every character in the game prompts
+		// with 100M whatever their class. The oracle
+		// (TestCharacterCreationMatchesTheCOracle) is what settled that: this
+		// test used to assert 0/0, which held only because Start did not set
+		// the base at all and init_char was quietly doing it instead.
+		if rec.Points.MaxMana != baseMaxMana || rec.Points.Mana != baseMaxMana {
+			t.Errorf("class %d: mana %d/%d, want %d/%d at level one",
+				class, rec.Points.Mana, rec.Points.MaxMana, baseMaxMana, baseMaxMana)
 		}
 		if rec.Conditions != StartingConditions {
 			t.Errorf("class %d: conditions %v, want %v", class, rec.Conditions, StartingConditions)
@@ -81,9 +85,9 @@ func TestFirstLevelGainsMatchTheCsRanges(t *testing.T) {
 			sawLowHit = sawLowHit || hit == low
 			sawHighHit = sawHighHit || hit == high
 
-			move := rec.Points.MaxMove
+			move := rec.Points.MaxMove - baseMaxMove
 			if move < max(1, tc.lowMove) || move > tc.highMov {
-				t.Fatalf("%s: %d movement points, want %d..%d",
+				t.Fatalf("%s: gained %d movement points, want %d..%d",
 					tc.name, move, max(1, tc.lowMove), tc.highMov)
 			}
 			sawMoveFloor = sawMoveFloor || move == 1
