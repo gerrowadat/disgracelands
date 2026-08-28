@@ -777,6 +777,67 @@ func (s *Server) Leave(ctx context.Context, sess *session.Session, c *game.Chara
 	})
 }
 
+// ExtractCharacter is extract_char_final's player half (handler.c:878),
+// implementing session.Context's Extract seam for `quit`.
+//
+// It runs *on* the world goroutine, called from inside the command: the C's
+// extract_char is deferred to the end of the pulse, but everything this port
+// needs from it — leaving the room, ending the fights, dropping the following
+// links — is world state the command is already holding, and doing it inline
+// is what lets `quit` put the menu on the screen in the same breath.
+//
+// The disk half goes to background(), the way every other save in this server
+// does: a slow disk must not stall the game, and `background`'s counter is
+// what stops a shutdown losing a save that is in flight.
+//
+// Note what does *not* happen, and did before #187: the connection is not
+// closed, and the session's Leave path never runs for this character. It is
+// already saved, already crash-saved and already out of the world, and the C
+// agrees — close_socket takes the non-playing branch from CON_MENU and does
+// none of it a second time (comm.c:1956).
+func (s *Server) ExtractCharacter(w *game.Live, c *game.Character) {
+	if c == nil {
+		return
+	}
+	// Both snapshots are taken here, inline, and not left to the background
+	// goroutine to fetch. That is the difference between quitting and every
+	// other save in this server: the connection stays open, so the player can
+	// choose 1 at the menu and be back in the world — writing to the same
+	// record — before a background read of it had run. Copying now closes
+	// that window, and `-race` finds it if it is left open.
+	name, record := c.Name, *c.Record
+	var crash *player.RentFile
+	if s.objects != nil && !c.IsNPC() {
+		crash = crashFileFor(c)
+	}
+
+	// act("$n has left the game.") is do_quit's own and has already been
+	// said, so this only does the removal: die_follower, the fights both ways
+	// round, and char_from_room. c.Room is left pointing at where they were,
+	// which is what the house save below wants.
+	w.Remove(c)
+
+	s.background(func() {
+		ctx := context.Background()
+		if !c.IsNPC() {
+			if err := s.players.Save(ctx, &record); err != nil {
+				s.logger.Error("saving on quit", "character", name, "error", err)
+			}
+		}
+		// Crash_crashsave, as do_quit does (act.other.c:201). Free, and it
+		// brings them back in the temple — renting at an inn is what buys
+		// anything else.
+		if err := s.writeCrashFile(ctx, name, crash); err != nil {
+			s.logger.Error("crash-saving on quit", "character", name, "error", err)
+		}
+		// House_crashsave for the room they left from (act.other.c:203):
+		// anything dropped in a house before quitting is theirs to find
+		// again.
+		s.SaveChangedHouses(ctx)
+		s.logger.Info("has quit", "character", name)
+	})
+}
+
 // Save writes a character's record back.
 //
 // It runs off the world goroutine deliberately: the record is read on that

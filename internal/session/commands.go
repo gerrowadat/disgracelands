@@ -87,6 +87,15 @@ type Context struct {
 	// Rent stores a character's belongings and takes them out of the world,
 	// for the receptionist.
 	Rent RentSaver
+	// Extract is extract_char (handler.c:1007) for a character whose
+	// connection stays open: it takes them out of the world and writes them
+	// to disk, and the session goes back to the menu rather than closing.
+	// `quit` is the only caller.
+	//
+	// A seam for the same reason Save and Rent are: the player store belongs
+	// to the server. The world half runs inline, on the world goroutine the
+	// command is already on; the disk half is pushed off it.
+	Extract func(w *game.Live, c *game.Character)
 	// SaveBoard writes a bulletin board back to disk.
 	SaveBoard BoardSaver
 	// Mail is the mud mail system, for the postmaster.
@@ -737,6 +746,9 @@ type Dispatcher struct {
 	SaveAliases func(*game.Character)
 	// Rent stores a character's belongings, for the receptionist.
 	Rent RentSaver
+	// Extract takes a character out of the world without closing the
+	// connection, for `quit`.
+	Extract func(w *game.Live, c *game.Character)
 	// SaveBoard writes a bulletin board back to disk.
 	SaveBoard BoardSaver
 	// Mail is the mud mail system, for the postmaster.
@@ -827,7 +839,7 @@ func (d *Dispatcher) Do(ctx context.Context, s *Session, line string) error {
 		c := &Context{
 			Ctx: ctx, Session: s, Character: s.Character(),
 			World: w, Text: d.Text, RNG: d.RNG, Violence: d.Violence, Arg: arg,
-			Social: cmd.Social, Save: d.Save, SaveAliases: d.SaveAliases, Rent: d.Rent, SaveBoard: d.SaveBoard, Mail: d.Mail, Houses: d.Houses, Operator: d.Operator, Bans: d.Bans, Reports: d.Reports, SetPassword: d.SetPassword, TextEdit: d.TextEdit, MobReload: d.MobReload, ZoneReload: d.ZoneReload, ObjectReload: d.ObjectReload, ShopReload: d.ShopReload, RoundLength: d.RoundLength,
+			Social: cmd.Social, Save: d.Save, SaveAliases: d.SaveAliases, Rent: d.Rent, Extract: d.Extract, SaveBoard: d.SaveBoard, Mail: d.Mail, Houses: d.Houses, Operator: d.Operator, Bans: d.Bans, Reports: d.Reports, SetPassword: d.SetPassword, TextEdit: d.TextEdit, MobReload: d.MobReload, ZoneReload: d.ZoneReload, ObjectReload: d.ObjectReload, ShopReload: d.ShopReload, RoundLength: d.RoundLength,
 		}
 
 		// A command that panics must not leave the player staring at a dead
@@ -1018,6 +1030,15 @@ func prompt(s *Session) string {
 	}
 	if s.state == StateEditing {
 		return "] "
+	}
+	// make_prompt's last two branches are both `STATE(d) == CON_PLAYING`
+	// (comm.c:1010, :1048) and its else writes an empty prompt — so a
+	// descriptor at the menu, or anywhere else in nanny, gets no prompt at
+	// all. That only became reachable when `quit` started returning to the
+	// menu instead of disconnecting (#187): before, the command's own tail
+	// never ran for a session that was still open in a non-playing state.
+	if s.state != StatePlaying {
+		return ""
 	}
 	c := s.Character()
 	if c == nil || c.Record == nil {
@@ -1742,8 +1763,17 @@ func doQuit(c *Context, full bool) error {
 			!ch.Record.PlayerFlags.Has(game.PlayerLoadRoom) && room.Flags.Has(game.RoomHouse) {
 			ch.Record.LoadRoom = ch.Room
 		}
+		// extract_char (act.other.c:180), not a disconnect. The C's do_quit
+		// ends there and extract_char_final puts the descriptor into
+		// CON_MENU and writes the menu to it (handler.c:931) — a player who
+		// quits on the real server is back at "Make your choice:" and can
+		// enter the game again without dialling in. This port closed the
+		// connection instead, which is issue #187.
 		c.Session.MarkQuit()
-		c.Session.Close()
+		if c.Extract != nil {
+			c.Extract(c.World, ch)
+		}
+		c.Session.ReturnToMenu(c.Text.Menu())
 	}
 	return nil
 }

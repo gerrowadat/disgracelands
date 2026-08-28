@@ -226,6 +226,10 @@ type Session struct {
 	closed atomic.Bool
 	quit   atomic.Bool
 	rented atomic.Bool
+	// extracted is set once the character has been taken out of the world by
+	// extract_char while the connection stayed open — which is what `quit`
+	// does. See MarkExtracted.
+	extracted atomic.Bool
 	// displaced is set when perform_dupe_check has taken this connection's
 	// character away from it — see MarkDisplaced.
 	displaced atomic.Bool
@@ -259,6 +263,40 @@ func (s *Session) MarkRented() { s.rented.Store(true) }
 
 // Rented reports whether the session ended at an inn.
 func (s *Session) Rented() bool { return s.rented.Load() }
+
+// MarkExtracted records that extract_char has already run for this
+// connection's character: it is out of the world, saved and crash-saved, and
+// the connection is sitting at the menu.
+//
+// This is the difference between the C's CON_MENU and CON_PLAYING in
+// close_socket (comm.c:1956). A descriptor closed while playing gets "$n has
+// lost $s link.", a save and a body left standing; a descriptor closed from
+// the menu gets none of that, because there is nothing left to do — which is
+// exactly the state `quit` leaves it in.
+//
+// Cleared again by entering the world, so a player who quits to the menu and
+// then plays on is an ordinary session again.
+func (s *Session) MarkExtracted()  { s.extracted.Store(true) }
+func (s *Session) clearExtracted() { s.extracted.Store(false) }
+
+// Extracted reports whether the character is already out of the world.
+func (s *Session) Extracted() bool { return s.extracted.Load() }
+
+// ReturnToMenu is extract_char_final's `STATE(ch->desc) = CON_MENU;
+// write_to_output(ch->desc, "%s", MENU);` (handler.c:931).
+//
+// It is the whole difference between `quit` on the C server and `quit` here
+// before #187: the connection stays open and the player is back at "Make your
+// choice:", free to enter the game again without dialling in.
+//
+// The character stays attached — the C only frees it when there is no
+// descriptor (handler.c:988) — so choosing 1 puts the same record back into
+// the world.
+func (s *Session) ReturnToMenu(menu string) {
+	s.MarkExtracted()
+	s.state = StateMenu
+	s.Send("%s", menu)
+}
 
 // Quit reports whether the player left deliberately.
 func (s *Session) Quit() bool { return s.quit.Load() }
@@ -720,7 +758,12 @@ func (s *Session) Serve(ctx context.Context, deps Deps) {
 	// those is the crash-save — a duplicate sitting at the menu carries
 	// nothing, so it would write an empty rent file over the real one and
 	// cost the player everything they owned.
-	if s.character != nil && !s.Displaced() {
+	// Nor for one whose character `quit` has already extracted: it is out of
+	// the world, saved and crash-saved, and the connection has been sitting
+	// at the menu ever since. close_socket takes the same branch —
+	// IS_PLAYING(d) is false at CON_MENU, so the C neither announces a lost
+	// link nor saves again (comm.c:1956).
+	if s.character != nil && !s.Displaced() && !s.Extracted() {
 		if err := deps.Login.Leave(context.WithoutCancel(ctx), s, s.character); err != nil {
 			s.logger.Error("removing the character from the world", "error", err)
 		}

@@ -598,15 +598,58 @@ port is right and the thing it is compared against is wrong.
 
 ### The two that are in every transcript
 
-- **`quit` returns to the main menu in the C and disconnects here.**
+- ~~**`quit` returns to the main menu in the C and disconnects here.**~~
   `do_quit` (act.other.c:180) ends in `extract_char`, which puts a playing
   descriptor back into `CON_MENU`; the port's `doQuit`
-  (`internal/session/commands.go`) calls `Session.Close`. A player who quits
+  (`internal/session/commands.go`) called `Session.Close`. A player who quits
   on the C server can enter the game again without dialling back in.
   *Ruling (2026-08-26):*
   **Blocker.** `quit` is among the most-typed commands in the game and the
   menu is where a returning player expects to land.
-  **Tracked:** #187.
+  **Fixed 2026-08-28** (#187). `doQuit` now extracts the character and calls
+  `Session.ReturnToMenu`, which is `extract_char_final`'s
+  `STATE(ch->desc) = CON_MENU; write_to_output(ch->desc, MENU)`
+  (handler.c:931). The character stays attached to the connection, because
+  the C only frees it when there is no descriptor (handler.c:988) — so
+  choosing 1 puts the same record straight back into the world.
+
+  Four things came with it, none of them obvious from the one line that
+  changed.
+
+  **The save moved.** The disconnect teardown (`Server.Leave`) used to do
+  the save, the crash-save and the removal; a quitting session no longer
+  reaches it at all. `Server.ExtractCharacter` does that work instead, and
+  `Session.Extracted` is what tells the teardown to stand down —
+  `close_socket` takes exactly the same branch, since `IS_PLAYING(d)` is
+  false at `CON_MENU` and the C neither announces a lost link nor saves
+  again (comm.c:1956). The flag is cleared on entering the world, so a
+  player who quits to the menu and then plays on is an ordinary session.
+
+  **Both snapshots are now taken inline**, on the world goroutine, rather
+  than by the background write fetching them later. That is the difference
+  quitting has from every other save here: the connection stays open, so the
+  player can be back in the world writing to the same record before a
+  deferred read of it ran. `-race` found it as soon as a test quit and
+  re-entered on one connection. `crashSave` is split into `crashFileFor`
+  (world goroutine) and `writeCrashFile` (anywhere) for it.
+
+  **No prompt at the menu.** `make_prompt`'s last two branches are both
+  `STATE(d) == CON_PLAYING` and its else writes an empty prompt
+  (comm.c:1010, :1048, :1051). Nothing here had ever reached that, because
+  a command's tail only ran for a playing session; now `session.prompt`
+  answers "" for any non-playing state, as the C does.
+
+  **`Live.Remove` ends the fights**, both ways round (handler.c:953-960).
+  Its own `stop_fighting` is the easy half; the loop over `combat_list` is
+  the one that matters, because a mobile left with `FIGHTING()` pointing at
+  somebody no longer in the world swings at them every round forever.
+  `do_quit` refuses while `POS_FIGHTING`, so what reaches it is renting and
+  being extracted by a god — both of which went through `Remove` already.
+
+  Not ported with it: `extract_char_final`'s loop closing any *other*
+  descriptor logged in as the same character (handler.c:925-930).
+  `perform_dupe_check` runs at login and already leaves only one, so
+  nothing in this tree can reach it.
 - **The C prepends a CRLF to any output that interrupts a prompt.**
   `process_output` sends its buffer from `i` rather than `i + 2` when
   `has_prompt` is set (comm.c:1459), and a descriptor is born with

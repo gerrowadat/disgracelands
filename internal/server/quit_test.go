@@ -8,6 +8,7 @@ package server
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/gerrowadat/disgracelands/internal/game"
@@ -145,4 +146,77 @@ func TestShutdowIsNotEnough(t *testing.T) {
 
 	c.send("shutdow")
 	c.expect("If you want to shut something down, say so!")
+}
+
+// `quit` returns to the main menu instead of disconnecting (issue #187).
+//
+// do_quit ends in extract_char (act.other.c:180) and extract_char_final puts
+// the descriptor into CON_MENU and writes the menu to it (handler.c:931). A
+// player who quits on the real server is back at "Make your choice:" and can
+// enter the game again without dialling in; this port closed the connection.
+func TestQuittingReturnsToTheMenu(t *testing.T) {
+	srv, _ := newTestServer(t)
+	c := mortalClient(t, srv, listening(t, srv))
+
+	c.send("quit")
+	c.expect("Goodbye, friend.. Come back soon!")
+	c.expectCount("Make your choice:", 2)
+
+	// Out of the world, though: `quit` is a real departure, not a step back
+	// into the lobby with the body left standing.
+	var gone bool
+	inWorld(t, srv, func(w *game.Live) { gone = w.Find("Mortal") == nil })
+	if !gone {
+		t.Error("the character is still in the world after quitting")
+	}
+
+	// And the connection is still open, which is the whole point.
+	if c.seen("Goodbye.\r\n") {
+		t.Error("quitting closed the connection")
+	}
+}
+
+// And the same connection can go straight back in, which is what the menu is
+// for. The C only frees the character when there is no descriptor
+// (handler.c:988), so the record stays attached across the round trip.
+func TestQuittingAndEnteringAgainOnTheSameConnection(t *testing.T) {
+	srv, _ := newTestServer(t)
+	c := mortalClient(t, srv, listening(t, srv))
+
+	c.send("quit")
+	c.expectCount("Make your choice:", 2)
+
+	c.send("1")
+	c.expectCount("The Temple Of Midgaard", 2)
+
+	var back bool
+	inWorld(t, srv, func(w *game.Live) { back = w.Find("Mortal") != nil })
+	if !back {
+		t.Error("the character did not come back into the world")
+	}
+
+	c.send("look")
+	c.expectCount("The Temple Of Midgaard", 3)
+}
+
+// The menu prints no H/M/V prompt after it. make_prompt's last two branches
+// are both `STATE(d) == CON_PLAYING` and its else writes an empty prompt
+// (comm.c:1010, :1048, :1051) — which only became reachable when quit stopped
+// disconnecting.
+func TestNoPlayingPromptAfterQuittingToTheMenu(t *testing.T) {
+	srv, _ := newTestServer(t)
+	c := mortalClient(t, srv, listening(t, srv))
+
+	c.send("quit")
+	c.expectCount("Make your choice:", 2)
+	// No settle() here: `time` is not a menu choice, and the menu's answer to
+	// one it does not know is to print itself again. Pressing Return is,
+	// which redraws the menu and is a barrier for everything before it.
+	c.send("")
+	c.expectCount("Make your choice:", 3)
+
+	tail := c.transcript()[strings.Index(c.transcript(), "Goodbye, friend"):]
+	if strings.Contains(tail, "V > ") {
+		t.Errorf("the playing prompt was printed at the menu:\n%s", tail)
+	}
 }
