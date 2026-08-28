@@ -75,8 +75,14 @@ func doExamine(c *Context) error {
 		return err
 	}
 
-	// A container is opened up as well as described.
-	if obj := c.findVisibleObject(c.Arg); obj != nil {
+	// A container is opened up as well as described. do_examine's own
+	// generic_find(FIND_OBJ_INV | FIND_OBJ_ROOM | FIND_CHAR_ROOM |
+	// FIND_OBJ_EQUIP) (act.informative.c:711) — a *second* search after
+	// look_at_target's, on the same argument, which is why the C's comment
+	// there says "look_at_target() eats the number" and it is handed an
+	// untouched copy.
+	if _, obj, _ := c.genericFind(c.Arg,
+		findObjInv|findObjRoom|findCharRoom|findObjEquip); obj != nil {
 		if obj.Type == game.ItemContainer {
 			c.Send("When you look inside, you see:\r\n")
 			c.showContents(obj)
@@ -97,26 +103,37 @@ func (c *Context) lookAtTarget(arg string) error {
 		return nil
 	}
 
-	// generic_find gives up on a zero count *before it searches anything at
-	// all* — `if (!(number = get_number(&name))) return (0);`
-	// (handler.c:1345) — and look_at_target then reads the count itself and
-	// says "Look at what?" (act.informative.c:605). The order matters for one
-	// case: `0.me` is not you, because get_char_room_vis's own "self" branch
-	// is never reached. `2.me` is, since that branch ignores the count it
-	// sits behind. Both checked against the C, not reasoned about.
+	// generic_find comes first, on the argument **as typed**
+	// (act.informative.c:589). It takes its own copy of the string before
+	// calling get_number (handler.c:1377-1383), so the count is still on the
+	// caller's argument afterwards — which is why look_at_target can strip it
+	// again below for the extra-description walk, and why the C's comment
+	// there reads "Strip off 'number.' from 2.foo and friends."
+	//
+	// This port stripped the count *first* and handed the bare word to the
+	// search, so `2.sword` was searched for as "sword" and always found the
+	// first one (#194). One shared count across all four lists is the other
+	// half of the same call: with one sword worn and one carried, `1.sword`
+	// is the worn one and `2.sword` the carried one.
+	victim, obj, _ := c.genericFind(name,
+		findObjInv|findObjRoom|findObjEquip|findCharRoom)
+	if victim != nil {
+		return c.lookAtCharacter(victim)
+	}
+
+	// Then the count, for the extra descriptions. generic_find gives up on a
+	// zero count *before it searches anything at all* —
+	// `if (!(number = get_number(&name))) return (0);` (handler.c:1387) — and
+	// look_at_target then reads it itself and says "Look at what?"
+	// (act.informative.c:603). The order matters for one case: `0.me` is not
+	// you, because get_char_room_vis's own "self" branch is never reached.
+	// `2.me` is, since that branch ignores the count it sits behind. Both
+	// checked against the C, not reasoned about.
 	fnum, name := game.GetNumber(name)
 	if fnum == 0 {
 		c.Send("Look at what?\r\n")
 		return nil
 	}
-
-	if victim := c.findInRoom(name); victim != nil {
-		return c.lookAtCharacter(victim)
-	}
-
-	// An object, and *where* it was found — generic_find is asked for all
-	// three object lists at once, with one shared count.
-	obj, _ := c.findObjectAndWhere(name)
 
 	// The extra descriptions, in the C's own order: the room, then worn
 	// equipment, then the inventory, then what is lying on the floor
@@ -262,20 +279,6 @@ func (c *Context) lookAtCharacter(victim *game.Character) error {
 		c.Send("%s%s\r\n", pos, obj.Name())
 	}
 	return nil
-}
-
-// findVisibleObject looks for an object the way the C does: equipment first,
-// then inventory, then the floor.
-func (c *Context) findVisibleObject(name string) *game.Object {
-	for _, obj := range c.Character.Equipment {
-		if obj != nil && obj.Matches(name) {
-			return obj
-		}
-	}
-	if obj := c.findObject(c.Character.Carrying, name); obj != nil {
-		return obj
-	}
-	return c.findObject(c.World.RoomObjects(c.Character.Room), name)
 }
 
 // showContents lists what is inside a container.

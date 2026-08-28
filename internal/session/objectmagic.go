@@ -78,15 +78,14 @@ func (c *Context) useItem(verb string) error {
 
 // objectMagic runs the item, porting mag_objectmagic.
 func (c *Context) objectMagic(obj *game.Object, arg string) {
-	// The target, found the way generic_find does for all four types at
-	// once: somebody in the room, or an object carried, worn or lying here.
+	// generic_find(arg, FIND_CHAR_ROOM | FIND_OBJ_INV | FIND_OBJ_ROOM |
+	// FIND_OBJ_EQUIP) (spell_parser.c:320): somebody in the room, or an
+	// object carried, worn or lying here — in one call, sharing one count.
 	var victim *game.Character
 	var target *game.Object
 	if arg != "" {
-		victim = c.findInRoom(arg)
-		if victim == nil {
-			target = c.findVisibleObject(arg)
-		}
+		victim, target, _ = c.genericFind(arg,
+			findCharRoom|findObjInv|findObjRoom|findObjEquip)
 	}
 
 	switch obj.Type {

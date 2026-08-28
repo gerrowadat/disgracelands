@@ -56,23 +56,42 @@ func doStat(c *Context) error {
 		return nil
 	}
 
-	// No keyword: whatever answers to the word, looked for in the order the C
-	// looks — equipment, inventory, somebody here, the floor, then the whole
-	// world.
+	// No keyword: whatever answers to the word (act.wizard.c:871-889).
+	//
+	// This is not generic_find, and the difference is the point. It is a
+	// hand-rolled `else if` ladder in its own order — **worn, carried,
+	// somebody in this room, on the floor, somebody anywhere, an object
+	// anywhere** — with objects and characters interleaved rather than all
+	// the characters first. And it threads one `number` down the whole chain,
+	// exactly as generic_find does, so `2.sword` is the second match across
+	// that order.
+	//
+	// This port had the room's characters first and a fresh count for every
+	// step, so `stat sword` with a sword in hand and a mobile answering to
+	// "sword" in the room stated the mobile (#194).
 	target := strings.TrimSpace(c.Arg)
-	if victim := c.findInRoom(target); victim != nil {
-		c.statCharacter(victim)
-		return nil
-	}
-	if obj := c.findVisibleObject(target); obj != nil {
+	s := c.World.NewSearch(c.Character, target)
+	if obj := s.VisibleEquippedObject(&c.Character.Equipment); obj != nil {
 		c.statObject(obj)
 		return nil
 	}
-	if victim := c.findAnywhere(target); victim != nil {
+	if obj := s.ObjectIn(c.Character.Carrying); obj != nil {
+		c.statObject(obj)
+		return nil
+	}
+	if victim := c.World.SearchInRoom(s, c.Character, c.Character.Room); victim != nil {
 		c.statCharacter(victim)
 		return nil
 	}
-	if obj := c.findObjectAnywhere(target); obj != nil {
+	if obj := s.ObjectIn(c.World.RoomObjects(c.Character.Room)); obj != nil {
+		c.statObject(obj)
+		return nil
+	}
+	if victim := c.World.SearchAnywhere(s, c.Character); victim != nil {
+		c.statCharacter(victim)
+		return nil
+	}
+	if obj := s.ObjectIn(c.World.Objects()); obj != nil {
 		c.statObject(obj)
 		return nil
 	}

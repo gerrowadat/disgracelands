@@ -476,7 +476,17 @@ func (l *Live) Occupants(room RoomVnum) []*Character { return l.occupants[room] 
 // It takes the viewer because the C filters on CAN_SEE here as well as on the
 // name, and honours the `2.` prefix, which is what `number` is for.
 func (l *Live) FindInRoom(viewer *Character, room RoomVnum, word string) *Character {
-	s := l.NewSearch(viewer, word)
+	return l.SearchInRoom(l.NewSearch(viewer, word), viewer, room)
+}
+
+// SearchInRoom is FindInRoom with the Search supplied, so that a caller
+// running several searches in a row can share one count between them.
+//
+// That is what generic_find does: it threads one `int *number` down the whole
+// chain of lookups (handler.c:1387), so `2.sword` means the second match
+// across the *search order* rather than the second in whichever list happens
+// to hold it. See Context.genericFind.
+func (l *Live) SearchInRoom(s *Search, viewer *Character, room RoomVnum) *Character {
 	if s.IsSelf() {
 		return viewer
 	}
@@ -625,6 +635,27 @@ func (s *Search) EquippedObject(eq *[NumWears]*Object) *Object {
 	return nil
 }
 
+// VisibleEquippedObject is get_obj_in_equip_vis (handler.c:1163), which is
+// *not* generic_find's equipment loop: it checks CAN_SEE_OBJ, and that loop
+// does not. do_stat's fallback ladder is the caller (act.wizard.c:875), and
+// it shares its count down the chain the same way generic_find does.
+func (s *Search) VisibleEquippedObject(eq *[NumWears]*Object) *Object {
+	if s.Word == "" || s.n == 0 {
+		return nil
+	}
+	for pos := WearPosition(0); pos < NumWears; pos++ {
+		o := eq[pos]
+		if o == nil || !s.seesObject(o) || !o.Matches(s.Word) {
+			continue
+		}
+		s.n--
+		if s.n == 0 {
+			return o
+		}
+	}
+	return nil
+}
+
 // ObjectIn returns the next matching object in a list the viewer can see.
 //
 // Unlike CharIn, a count of zero finds nothing at all: every object search in
@@ -694,7 +725,11 @@ func (l *Live) FindPlayer(viewer *Character, name string) *Character {
 // is equally arbitrary about it. Only the spells flagged TAR_CHAR_WORLD reach
 // this: summon, and the two dispels.
 func (l *Live) FindAnywhere(viewer *Character, word string) *Character {
-	s := l.NewSearch(viewer, word)
+	return l.SearchAnywhere(l.NewSearch(viewer, word), viewer)
+}
+
+// SearchAnywhere is FindAnywhere with the Search supplied. See SearchInRoom.
+func (l *Live) SearchAnywhere(s *Search, viewer *Character) *Character {
 	if s.Word == "" {
 		return nil
 	}
