@@ -21,7 +21,7 @@ classic CircleMUD file shapes, hand-written directly against
 | The Door Room | `open`/`close` on an unlocked door. |
 | The Locked Vault | `unlock ... with <key>`, then `open` — two different states. |
 | The Armory | `get`, `wear`, `wield`, `inventory`, `equipment`, `remove`, `drop`. |
-| The Cluttered Closet | `put`/`get ... from` a container; `examine` to see what is inside one (plain `look` only describes a container, it does not open it — a real gap between what the room used to say and what `do_look` actually does, found by testing rather than assumed; see below). |
+| The Cluttered Closet | `put`/`get ... from` a container; `examine` or `look in` to see what is inside one (plain `look <container>` does neither — a real gap between what the room used to say and what `do_look` actually does, found by testing rather than assumed, and then moved again once `look in` was ported; see below). |
 | The Dining Hall | `get` then `eat`, `fill ... from`, `drink`. |
 | The Sparring Ring | `kill`, a corpse, `get all corpse`, `recite`/`quaff`/`use` a scroll/potion/wand/staff. |
 | The Resting Room | `rest`, `sleep`, `wake`, `stand`. |
@@ -33,21 +33,30 @@ classic CircleMUD file shapes, hand-written directly against
 | The Notice Board | `look board`/`read board`/`write board`/`remove board <n>`. |
 | Graduation Hall | The end, and a note that socials, `say`/`tell`, and `group`/`follow` were never given a room because they do not need one. |
 
-## Four things this was wrong about before being tested
+## Five things this was wrong about before being tested
 
-All four are recorded here rather than silently fixed, because CLAUDE.md's
+All five are recorded here rather than silently fixed, because CLAUDE.md's
 own rule — test rather than read — is exactly what caught them, and losing
 the story would be losing the reason the rule is there. Two were found the
 first time this zone was played by hand; two more only turned up when
-`test/play` started typing every command in the table above on every run.
+`test/play` started typing every command in the table above on every run;
+and the fifth was not wrong when it was written at all — the ground moved
+under it, which is what makes it the most useful of the five.
 
-**`look in <container>` does not list what is inside it.** The room text
+**`look in <container>` did not list what is inside it.** The room text
 used to say it did. Reading `internal/session/informative.go` first would
-have caught this (`lookAtTarget`'s own comment says `look in` and `look at`
+have caught this (`lookAtTarget`'s own comment said `look in` and `look at`
 "both mean 'describe that'"), but it was the live playtest — `look in
 chest` printing the chest's description instead of the ring inside it —
-that actually found it. `examine` is the real command (`do_examine`,
-`act.informative.c`), and the room text says so now.
+that actually found it, and `examine` (`do_examine`, `act.informative.c`)
+was the command the room text was changed to recommend instead.
+
+The port was the thing at fault, though, not the room: `do_look` in the C
+is a *dispatcher*, and `look in` is its own branch into `look_in_obj`
+(`act.informative.c:679-690`). #177 ported that branch, so `look in chest`
+lists the ring now, exactly as the room text originally claimed. The room
+text names both commands today — which is the fifth entry below, and the
+reason this one is worth keeping rather than deleting as fixed.
 
 **The banker is not a mobile.** `spec_assign.c`'s own table (transcribed in
 `internal/game/specassign.go`) attaches `"bank"` to two *object* vnums —
@@ -71,6 +80,31 @@ Both were found the third time round, by `test/play` typing every quoted
 command in this table against a real server (`tourCommands` in
 `test/play/tour_test.go` is that list, and is what stops it happening a
 fourth time).
+
+**And the fifth was right when it was written, and stopped being right.**
+The room text used to end "plain `look` only describes a container, it does
+not open it", and `test/play`'s `TestContainers` asserted exactly that: that
+`look chest` printed the chest's long description. Both were correct at the
+time and both were checked. #177 then compared this port's `do_look` against
+the real C server with `scripts/session-parity.sh` and found two things it
+had never had — `look in` as its own branch, and `show_obj_to_char`'s
+`SHOW_OBJ_ACTION` default, which answers "You see nothing special.." with
+two full stops and does not name the object (`act.informative.c:131`).
+Printing the long description is what `look` at the *room* does, not what
+looking at the object does.
+
+`test/play` is release-only (CLAUDE.md, the `go.yml`/`release.yml` split),
+so #177 merged green with the old expectation still in the file, and the
+next `make play` — run for an entirely unrelated reason — is what found it.
+That is the split working as designed rather than a hole in it, but it does
+mean a play-suite expectation, or a line of room text, can go stale silently
+for as long as nobody cuts a release. It was not even alone: the same run
+turned up three `who` expectations left behind by #179, which had put the
+count line and the class abbreviation right in the same way. It was filed
+as issue #198 and written
+up here rather than quietly edited, because "it was tested, it was right,
+and the ground moved" is a different story from the four above, and a more
+likely one to repeat.
 
 All of these were found by connecting a real client and typing every
 command this README claims works, not by reading the world files and

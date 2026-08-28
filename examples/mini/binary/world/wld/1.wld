@@ -104,8 +104,8 @@ The Cluttered Closet~
 'put ring in bag' and 'get ring from bag' move things into and out of a
 container you are carrying; the chest works the same way once you 'open
 chest' first. 'examine bag' or 'examine chest' shows what is inside
-either one - plain 'look' only describes a container, it does not open
-it.
+either one, and so does 'look in bag' - but plain 'look chest' does not,
+it only says whether there is anything special about the chest itself.
 ~
 1 8 0
 D0
