@@ -326,3 +326,26 @@ the day-to-day/release split being reversible piecemeal.**
   `docs/deviations.md` too, so the gap is visible.
 - Phase and slice status → `docs/proposals/go-port-plan.md`. Keep it current;
   it is the map future work is planned from.
+
+**The Go server is canonical now, not the C.** Through Phase 5 a place
+where the Go server fell short of the C was an artifact to note and move
+past — the C was the target and the gap was expected, on the way to
+closing it. That framing is gone. **A bug or a missing piece of
+functionality in the Go server is filed as a GitHub issue
+(`gh issue create`, labelled `bug` or `enhancement` to match the labels
+already in use), not merely written down.** A doc entry records *why* a
+difference exists; it does not get anything fixed, and stops being enough
+once the C stops being the thing everyone actually plays. This does not
+retire `deviations.md` or `weirdnumbers.md` — a *deliberate, reasoned*
+difference from the C, or a surprising constant kept on purpose, still
+belongs there exactly as before. It means a difference that is really a
+bug or a gap gets both: the doc entry for the reasoning, if any, and an
+issue for the fact that it needs fixing. `docs/deviations.md`'s own
+"What the session-parity suite found" and "Not deviations — gaps still to
+fill" sections are exactly where these have been hiding in plain sight —
+several of their un-struck-through entries (a `quit` that disconnects
+instead of returning to the menu, hit points rolled wrong at creation,
+free movement, colour not reaching the C's own call sites, and so on)
+were real bugs recorded as prose for months before finally becoming
+issues #187-194 (2026-08-28). Read a "Blocker" or an un-fixed bullet
+there as a todo list, not an archive.
