@@ -8,6 +8,7 @@ package server
 
 import (
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -227,6 +228,13 @@ func TestWhatYouLeaveInYourHouseStaysThere(t *testing.T) {
 	c.expect("House built.")
 
 	moveTo(t, srv, "Hoarder", HouseRoom)
+	// `hcontrol build` crash-saves the new house — empty — from a background
+	// write, and this test writes the same file synchronously further down.
+	// Without waiting for that one first, the empty snapshot can land last
+	// and the file that gets read back is the one with nothing in it. The
+	// moveTo above is the synchronization the counter needs before Wait: it
+	// is a DoSync, so the world goroutine's Add(1) has already happened.
+	srv.WaitForWrites()
 	inWorld(t, srv, func(w *game.Live) {
 		who := w.Find("Hoarder")
 		sword := w.NewObject(testSwordVnum)
@@ -296,6 +304,13 @@ func TestWhatYouLeaveInYourHouseStaysThereUnderYaml(t *testing.T) {
 	c.expect("House built.")
 
 	moveTo(t, srv, "Hoarder", HouseRoom)
+	// `hcontrol build` crash-saves the new house — empty — from a background
+	// write, and this test writes the same file synchronously further down.
+	// Without waiting for that one first, the empty snapshot can land last
+	// and the file that gets read back is the one with nothing in it. The
+	// moveTo above is the synchronization the counter needs before Wait: it
+	// is a DoSync, so the world goroutine's Add(1) has already happened.
+	srv.WaitForWrites()
 	inWorld(t, srv, func(w *game.Live) {
 		who := w.Find("Hoarder")
 		sword := w.NewObject(testSwordVnum)
@@ -369,5 +384,112 @@ func housesRecord(vnum, atrium, exit int32, owner int64) houses.House {
 		Vnum: vnum, Atrium: atrium, ExitNum: exit,
 		BuiltOn: time.Unix(1_000_000_000, 0).UTC(),
 		Mode:    houses.ModePrivate, Owner: owner,
+	}
+}
+
+// `show houses` is the same listing as `hcontrol show`: the C's do_show has
+// no code of its own for it and calls hcontrol_list_houses (act.wizard.c:2321).
+// The two differ only in who may type them — `show` is LVL_IMMORT with a
+// LVL_GOD field, `hcontrol` is LVL_GRGOD (interpreter.c:330) — so this is the
+// listing a god can read without having the command that builds houses.
+func TestShowHouses(t *testing.T) {
+	srv, _ := newTestServer(t)
+	addr := listening(t, srv)
+
+	c := dialClient(t, addr)
+	c.create("Assessor", "whoownswhat", "m", "m")
+
+	c.send("show houses")
+	c.expect("No houses have been defined.")
+
+	c.send("hcontrol build 3020 north Assessor")
+	c.expect("House built.")
+
+	c.send("show houses")
+	c.expect("Address  Atrium  Build Date  Guests  Owner        Last Paymt")
+	c.expect("   3020    3021")
+	// Nobody has ever paid for a house — hcontrol pay is the only thing that
+	// writes the field — so a fresh one reads "None" (house.c:334) while its
+	// build date is today's.
+	c.expect("Assessor     None")
+
+	// A guest is listed under its house, not after the table: the C prints
+	// the line and then House_list_guests, inside the same loop (house.c:344).
+	lodger := dialClient(t, addr)
+	lodger.create("Lodger", "spareroomplease", "m", "m")
+	moveTo(t, srv, "Assessor", HouseRoom)
+	c.send("house Lodger")
+	c.expect("Guest added.")
+
+	// A second house, so the interleaving is visible: the guest line belongs
+	// to the house above it, not to the end of the table.
+	inWorld(t, srv, func(w *game.Live) {
+		guest := w.Find("Lodger")
+		if guest == nil || guest.Record == nil {
+			t.Error("Lodger is not in the world")
+			return
+		}
+		w.AddHouse(&game.House{
+			Vnum: AtriumRoom, Atrium: HouseRoom, ExitNum: game.South,
+			BuiltOn: time.Now(), Mode: game.HouseModePrivate,
+			Owner: guest.Record.IDNum,
+		})
+	})
+
+	c.send("show houses")
+	c.expectCount("   3020    3021", 2)
+	seen := c.expect("   3021    3020")
+	guests := strings.Index(seen, "  Guests: Lodger")
+	if guests < 0 || guests > strings.Index(seen, "   3021    3020") {
+		t.Errorf("the guest list did not follow its own house:\n%s", seen)
+	}
+
+	// And once it has been paid for, the column carries the same
+	// weekday-and-day truncation the build date does.
+	c.send("hcontrol pay 3020")
+	c.expect("Payment recorded.")
+	c.send("show houses")
+	c.expect("Assessor     " + time.Now().Format("Mon Jan _2"))
+}
+
+// "Avoid seeing <UNDEF> entries from self-deleted people. -gg 6/21/98"
+// (house.c:318): an owner id that no longer names anybody takes the whole
+// house off the listing. A *guest* id that no longer names anybody is skipped
+// too (house.c:616) — but the count beside the owner's name is the raw
+// length of the guest array, so the two disagree on purpose.
+func TestTheHouseListingSkipsDeletedPeople(t *testing.T) {
+	srv, _ := newTestServer(t)
+	c := dialClient(t, listening(t, srv))
+	c.create("Registry", "whoisleft", "m", "m")
+
+	c.send("hcontrol build 3020 north Registry")
+	c.expect("House built.")
+
+	inWorld(t, srv, func(w *game.Live) {
+		h := w.FindHouse(HouseRoom)
+		if h == nil {
+			t.Error("the house is not in the world")
+			return
+		}
+		// A guest who has since deleted their character.
+		h.Guests = append(h.Guests, 4242)
+		// And a second house, owned by one.
+		w.AddHouse(&game.House{
+			Vnum: 3021, Atrium: 3020, ExitNum: game.South,
+			BuiltOn: time.Now(), Mode: game.HouseModePrivate, Owner: 4243,
+		})
+	})
+
+	c.send("hcontrol show")
+	// One guest counted, none named.
+	c.expect("   3020    3021")
+	c.expect("     1    Registry")
+	c.expect("  Guests: \r\n")
+	// The ownerless house is not there at all — and `show houses` is the
+	// same listing, so it is not there either.
+	c.send("show houses")
+	c.expectCount("Address  Atrium", 2)
+	if c.seen("   3021    3020") {
+		t.Error("a house whose owner is gone was listed")
 	}
 }

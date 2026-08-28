@@ -61,11 +61,8 @@ func doBan(c *Context) error {
 		rule := strings.Repeat("-", 33)
 		fmt.Fprintf(&b, banListFormat, rule, rule, rule, rule)
 		for _, ban := range list {
-			when := "Unknown"
-			if !ban.When.IsZero() {
-				when = houseDate(ban.When)
-			}
-			fmt.Fprintf(&b, banListFormat, ban.Site, ban.Type, when, ban.By)
+			fmt.Fprintf(&b, banListFormat, ban.Site, ban.Type,
+				houseDate(ban.When, "Unknown"), ban.By)
 		}
 		c.Send("%s", b.String())
 		return nil
@@ -213,8 +210,15 @@ func doShow(c *Context) error {
 	case "shops":
 		c.showShops(value, self)
 	case "houses":
-		// hcontrol_list_houses is already a command of its own.
-		c.Send("Sorry, I don't understand that.\r\n")
+		// hcontrol_list_houses, which `hcontrol show` also reaches
+		// (act.wizard.c:2321). `show` is LVL_GOD and `hcontrol` is LVL_GRGOD
+		// (interpreter.c:330), so this is the listing a god can see without
+		// having the command that prints it.
+		if c.Houses == nil {
+			c.Send("Houses are not enabled on this server.\r\n")
+			return nil
+		}
+		hcontrolShow(c)
 	}
 	return nil
 }

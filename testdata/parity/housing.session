@@ -26,8 +26,12 @@ swordfish
 1
 hcontrol
 hcontrol show
+# do_show's case 9 is a call to hcontrol_list_houses, so these two have to
+# print the same thing as each other at both servers.
+show houses
 hcontrol build 3000 east Paritytwo
 hcontrol show
+show houses
 goto 3000
 look
 hcontrol destroy 3000
