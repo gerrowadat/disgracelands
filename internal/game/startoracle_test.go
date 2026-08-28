@@ -23,14 +23,23 @@ import (
 // drawing from the generator in an order no one function makes obvious: the
 // ability rolls are twenty-four draws whose order the sort throws away, a
 // warrior who rolls 18 strength takes a twenty-fifth, and advance_level draws
-// hit points, then movement, and draws mana **only for a magic-user or a
-// cleric** (class.c:1948, :1957 against :1965, :1971).
+// hit points, then **mana**, then movement, for every class — including the
+// two that then throw the mana away, because the `GET_LEVEL(ch) > 1` guard is
+// on the addition and not on the roll (class.c:1868-1909).
 //
-// That last one is why this test runs a *sequence* of characters from one
-// seeded stream and prints a following draw, rather than checking one
-// character: a port that draws mana for a thief agrees about the thief and is
-// one draw behind for everything afterwards. Same argument as randoracle's
-// alternating mode.
+// The oracle is of **reference/moderncserver** and not of WipeMud-src, and
+// the two disagree here: WipeMud's advance_level takes no mana draw for a
+// thief or a warrior and has no paladin case at all, and its do_start sets
+// max_mana and max_move as well as max_hit. moderncserver is the server that
+// was played (reference/README.md) and is the one this is a test of. Reading
+// the wrong tree is how the mana draw came to be deleted for two classes on
+// 2026-08-28; this comment is here so the next reader does not repeat it.
+//
+// The test runs a *sequence* of characters from one seeded stream and prints
+// a following draw rather than checking one character, because that is the
+// only way a missing or extra draw is visible at all — a port one draw out
+// agrees perfectly about the character it went wrong on. Same argument as
+// randoracle's alternating mode.
 
 type startedCharacter struct {
 	str, strAdd, intel, wis, dex, con, cha int32
@@ -49,6 +58,10 @@ func TestCharacterCreationMatchesTheCOracle(t *testing.T) {
 		{"cleric", ClassCleric},
 		{"thief", ClassThief},
 		{"warrior", ClassWarrior},
+		// Unreachable at creation — Paladin is remort-only
+		// (docs/deviations.md) — but do_start is what remorting runs, so
+		// its draws matter and the C has a case for it.
+		{"paladin", ClassPaladin},
 	}
 	// Six seeds, the same set randoracle uses, and enough characters each
 	// that a one-draw slip has nowhere to hide.

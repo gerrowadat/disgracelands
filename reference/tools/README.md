@@ -51,15 +51,16 @@ wrong. Every oracle written so far has caught at least one real mistake.
   -mfpmath=387` for that reason.
 - **`startoracle.c`** — `roll_real_abils`, `do_start` and `advance_level`
   from `class.c`: everything a level 1 character is. Not arithmetic so much
-  as **draw order**, which is per class and not the same for every class — a
-  magic-user rolls hit points, mana, movement; a thief rolls hit points and
-  movement and takes no mana draw at all. It prints a `number(0, 999999)`
-  after each character for the same reason `randoracle` has an alternating
-  mode: without a following draw, a port that takes one too many agrees
-  perfectly about the character it took it on and is wrong about every
-  character after. Checked over four classes, six seeds and 200 characters
-  each; it found a swapped mana/movement assignment and an extra draw for
-  the two non-casting classes (#188).
+  as **draw order** — hit points, then mana, then movement, for every class,
+  including the two whose mana is thrown away again four lines later. It
+  prints a `number(0, 999999)` after each character for the same reason
+  `randoracle` has an alternating mode: without a following draw, a port
+  that takes one too many agrees perfectly about the character it took it on
+  and is wrong about every character after. Checked over five classes, six
+  seeds and 200 characters each; it found a swapped mana/movement assignment
+  (#188), and then caught a "fix" written from `../WipeMud-src/`, whose
+  `advance_level` differs — no mana draw for a thief or a warrior, no
+  paladin case. **Lift from `../moderncserver/`.**
 - **`editoracle.c`** — `improved_editor_execute`, `parse_action`,
   `format_text` and `replace_str` from `improved-edit.c`: the whole of the
   improved line editor's eleven commands. Line-range and whole-buffer string

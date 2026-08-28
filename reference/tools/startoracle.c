@@ -11,19 +11,23 @@
  * generator in an order that is not obvious from any one of them: the ability
  * rolls are twenty-four draws whose *order* the sort throws away, a warrior
  * who rolls 18 strength takes a twenty-fifth, and advance_level draws hit
- * points, then movement, and draws mana **only for a magic-user or a
- * cleric**. A port that draws mana for everybody agrees about level 1 and is
- * one draw behind from then on.
+ * points, then **mana**, then movement, for every class -- including the two
+ * that then throw the mana away, because a level 1 character gains none.
  *
- * The bodies below are class.c's, lifted with the char_data dereferences
- * replaced by the plain values they would have returned and nothing else
- * changed.
+ * The bodies below are reference/moderncserver/src/class.c's, lifted with the
+ * char_data dereferences replaced by the plain values they would have
+ * returned and nothing else changed. **moderncserver and not WipeMud-src**:
+ * the two trees disagree here, WipeMud's advance_level having no mana draw
+ * for a thief or a warrior and its do_start setting max_mana and max_move as
+ * well as max_hit. moderncserver is the server that was played
+ * (reference/README.md) and is the one this oracle is of.
  *
  *   startoracle <seed> <class> <count>
  *
- * class is 0..3 for magic-user, cleric, thief, warrior. Prints one line per
- * character, all from the one seeded stream, so a missing or extra draw shows
- * up as everything after it being wrong rather than as a single bad value:
+ * class is 0..4 for magic-user, cleric, thief, warrior, paladin. Prints one
+ * line per character, all from the one seeded stream, so a missing or extra
+ * draw shows up as everything after it being wrong rather than as a single
+ * bad value:
  *
  *   str stradd int wis dex con cha maxhit maxmana maxmove practices nextdraw
  *
@@ -43,6 +47,7 @@
 #define CLASS_CLERIC     1
 #define CLASS_THIEF      2
 #define CLASS_WARRIOR    3
+#define CLASS_PALADIN    4
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
@@ -187,6 +192,14 @@ void roll_real_abils(struct pc *ch)
     if (ch->str == 18)
       ch->str_add = rand_number(0, 100);
     break;
+  case CLASS_PALADIN:
+    ch->cha = table[0];
+    ch->wis = table[1];
+    ch->str = table[2];
+    ch->con = table[3];
+    ch->dex = table[4];
+    ch->intel = table[5];
+    break;
   }
 }
 
@@ -216,13 +229,22 @@ void advance_level(struct pc *ch)
 
   case CLASS_THIEF:
     add_hp += rand_number(7, 13);
-    add_mana = 0;
+    add_mana = rand_number(ch->level, (int)(1.5 * ch->level));
+    add_mana = MIN(add_mana, 10);
     add_move = rand_number(1, 3);
     break;
 
   case CLASS_WARRIOR:
     add_hp += rand_number(10, 15);
-    add_mana = 0;
+    add_mana = rand_number(ch->level, (int)(1.5 * ch->level));
+    add_mana = MIN(add_mana, 10);
+    add_move = rand_number(1, 3);
+    break;
+
+  case CLASS_PALADIN:
+    add_hp += rand_number(10, 14);
+    add_mana = rand_number(ch->level, (int)(1.5 * ch->level));
+    add_mana = MIN(add_mana, 10);
     add_move = rand_number(1, 3);
     break;
   }
@@ -249,9 +271,10 @@ void do_start(struct pc *ch)
   /* set_title(ch, NULL) -- no draw. */
   roll_real_abils(ch);
 
-  ch->max_hit  = 10;
-  ch->max_mana = 100;
-  ch->max_move = 82;
+  /* max_hit alone. do_start does *not* touch max_mana or max_move --
+   * init_char set those, and it is WipeMud-src's do_start, not this one,
+   * that resets all three. */
+  ch->max_hit = 10;
 
   /* The class switch sets a thief's skills and draws nothing. */
 
@@ -275,7 +298,7 @@ int main(int argc, char **argv)
     int chclass;
 
     if (argc != 4) {
-        fprintf(stderr, "usage: %s <seed> <class 0..3> <count>\n", argv[0]);
+        fprintf(stderr, "usage: %s <seed> <class 0..4> <count>\n", argv[0]);
         return 2;
     }
 
