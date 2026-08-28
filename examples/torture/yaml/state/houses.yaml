@@ -1,0 +1,52 @@
+schema: dl/houses@1
+houses:
+- vnum: 5007
+  atrium: 5006
+  exit: south
+  mode: 1
+  owner: 4
+  built: "2001-09-09T01:46:40Z"
+- vnum: 5008
+  atrium: 5007
+  exit: south
+  owner: 1
+  built: "2001-09-09T01:46:40Z"
+  last_payment: "2038-01-19T03:14:07Z"
+  guests:
+  - 100
+  - 101
+  - 102
+  - 103
+  - 104
+  - 105
+  - 106
+  - 107
+  - 108
+  - 109
+  contents:
+  - vnum: 5004
+    values:
+    - 0
+    - 0
+    - 0
+    - 0
+    weight: 5
+  - vnum: 5003
+    values:
+    - 0
+    - 0
+    - 0
+    - 0
+    weight: 1
+  - vnum: 5000
+    values:
+    - 1
+    - 2
+    - 3
+    - 4
+    weight: 2147483647
+- vnum: 9999
+  atrium: 9998
+  exit: north
+  owner: 1
+  built: "2001-09-09T01:46:40Z"

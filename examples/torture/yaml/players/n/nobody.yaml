@@ -1,0 +1,25 @@
+schema: dl/player@1
+id: 4
+name: Nobody
+identity:
+  sex: neutral
+  class: magic_user
+times:
+  played: 0s
+body: {}
+pools:
+  hit: {}
+  mana: {}
+  move: {}
+combat:
+  saves: {}
+wealth: {}
+conditions:
+  hunger: 0
+  thirst: 0
+  drunk: 0
+flags: {}
+rent:
+  code: crash
+  written: "2038-01-19T03:14:07Z"
+  cost_per_day: 32000

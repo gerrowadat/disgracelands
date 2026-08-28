@@ -1,0 +1,6 @@
+LONG
+
+An entry with a body long enough to be worth wrapping, a line that is
+deliberately blank in the middle of it:
+
+and a line that ends in trailing whitespace:   

@@ -1,0 +1,611 @@
+schema: dl/player@1
+id: 1
+name: Torturer
+credential: To1kLxE8.p
+identity:
+  title: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+  sex: female
+  class: warrior
+  level: 34
+  remort:
+  - magic_user
+  - cleric
+  - thief
+  - warrior
+  - paladin
+  remort_raw: 2147483616
+  home: 5000
+  load_room: 5000
+  description: |
+          A character built to fill every field the format has.
+times:
+  created: "2001-09-09T01:46:40Z"
+  last_login: "2038-01-19T03:14:07Z"
+  played: 35996400s
+  last_host: hosts.at.the.limit.example.org
+body:
+  height: 255
+  weight: 255
+  str: 18
+  str_add: 100
+  int: 18
+  wis: 18
+  dex: 18
+  con: 18
+  cha: 18
+pools:
+  hit:
+    current: 32000
+    max: 32000
+  mana:
+    current: 32000
+    max: 32000
+  move:
+    current: 32000
+    max: 32000
+combat:
+  ac: -100
+  hitroll: 127
+  damroll: 127
+  alignment: -1000
+  saves:
+    paralyze: -100
+    rod: -101
+    petrify: -102
+    breath: -103
+    spell: -104
+  wimpy: 32000
+wealth:
+  gold: 2000000000
+  bank: 2000000000
+  exp: 2000000000
+conditions:
+  hunger: 24
+  thirst: 24
+  drunk: 24
+flags:
+  act:
+  - killer
+  - thief
+  - frozen
+  - dont_set
+  - writing
+  - mailing
+  - crash_save
+  - siteok
+  - no_shout
+  - no_title
+  - deleted
+  - load_room
+  - no_wizlist
+  - no_delete
+  - invis_start
+  - cryo
+  - not_dead_yet
+  act_raw: 18446744073709420544
+  affected:
+  - blind
+  - invisible
+  - detect_align
+  - detect_invis
+  - detect_magic
+  - sense_life
+  - waterwalk
+  - sanctuary
+  - group
+  - curse
+  - infravision
+  - poison
+  - protect_evil
+  - protect_good
+  - sleep
+  - no_track
+  - holy_shield
+  - sneak
+  - hide
+  - silence
+  - charm
+  affected_raw: 18446744073705422848
+  prefs:
+  - brief
+  - compact
+  - deaf
+  - no_tell
+  - display_hp
+  - display_mana
+  - display_move
+  - autoexit
+  - no_hassle
+  - quest
+  - summonable
+  - no_repeat
+  - holylight
+  - color_1
+  - color_2
+  - no_wiz
+  - log_1
+  - log_2
+  - no_auction
+  - no_gossip
+  - no_grats
+  - room_flags
+  prefs_raw: 18446744073705357312
+practice_sessions: 32000
+invisibility_level: 34
+frozen_by_level: 34
+bad_password_attempts: 255
+skills:
+  "#100": 1
+  "#101": 2
+  "#102": 3
+  "#103": 4
+  "#104": 5
+  "#105": 6
+  "#106": 7
+  "#107": 8
+  "#108": 9
+  "#109": 10
+  "#110": 11
+  "#111": 12
+  "#112": 13
+  "#113": 14
+  "#114": 15
+  "#115": 16
+  "#116": 17
+  "#117": 18
+  "#118": 19
+  "#119": 20
+  "#120": 21
+  "#121": 22
+  "#122": 23
+  "#123": 24
+  "#124": 25
+  "#125": 26
+  "#126": 27
+  "#127": 28
+  "#128": 29
+  "#129": 30
+  "#130": 31
+  "#136": 37
+  "#141": 42
+  "#142": 43
+  "#143": 44
+  "#144": 45
+  "#145": 46
+  "#146": 47
+  "#147": 48
+  "#148": 49
+  "#149": 50
+  "#150": 51
+  "#151": 52
+  "#152": 53
+  "#153": 54
+  "#154": 55
+  "#155": 56
+  "#156": 57
+  "#157": 58
+  "#158": 59
+  "#159": 60
+  "#160": 61
+  "#161": 62
+  "#162": 63
+  "#163": 64
+  "#164": 65
+  "#165": 66
+  "#166": 67
+  "#167": 68
+  "#168": 69
+  "#169": 70
+  "#170": 71
+  "#171": 72
+  "#172": 73
+  "#173": 74
+  "#174": 75
+  "#175": 76
+  "#176": 77
+  "#177": 78
+  "#178": 79
+  "#179": 80
+  "#180": 81
+  "#181": 82
+  "#182": 83
+  "#183": 84
+  "#184": 85
+  "#185": 86
+  "#186": 87
+  "#187": 88
+  "#188": 89
+  "#189": 90
+  "#190": 91
+  "#191": 92
+  "#192": 93
+  "#193": 94
+  "#194": 95
+  "#195": 96
+  "#196": 97
+  "#197": 98
+  "#198": 99
+  "#199": 100
+  "#200": 1
+  "#41": 42
+  "#49": 50
+  "#59": 60
+  "#60": 61
+  "#61": 62
+  "#62": 63
+  "#63": 64
+  "#64": 65
+  "#65": 66
+  "#66": 67
+  "#67": 68
+  "#68": 69
+  "#69": 70
+  "#70": 71
+  "#71": 72
+  "#72": 73
+  "#73": 74
+  "#74": 75
+  "#75": 76
+  "#76": 77
+  "#77": 78
+  "#78": 79
+  "#79": 80
+  "#80": 81
+  "#81": 82
+  "#82": 83
+  "#83": 84
+  "#84": 85
+  "#85": 86
+  "#86": 87
+  "#87": 88
+  "#88": 89
+  "#89": 90
+  "#90": 91
+  "#91": 92
+  "#92": 93
+  "#93": 94
+  "#94": 95
+  "#95": 96
+  "#96": 97
+  "#97": 98
+  "#98": 99
+  "#99": 100
+  animate dead: 46
+  armor: 2
+  backstab: 32
+  bash: 33
+  bless: 4
+  blindness: 5
+  burning hands: 6
+  call lightning: 7
+  charm person: 8
+  chill touch: 9
+  clone: 10
+  color spray: 11
+  control weather: 12
+  create food: 13
+  create water: 14
+  cure blind: 15
+  cure critic: 16
+  cure light: 17
+  curse: 18
+  detect alignment: 19
+  detect invisibility: 20
+  detect magic: 21
+  detect poison: 22
+  dispel evil: 23
+  dispel good: 47
+  dispel magic: 55
+  earthquake: 24
+  enchant weapon: 25
+  energy drain: 26
+  fireball: 27
+  full heal: 57
+  group armor: 48
+  group heal: 49
+  harm: 28
+  heal: 29
+  hide: 34
+  holy shield: 54
+  holy smite: 53
+  immolate: 59
+  infravision: 51
+  invisibility: 30
+  kick: 35
+  lightning bolt: 31
+  locate object: 32
+  magic missile: 33
+  ouchie: 56
+  pick lock: 36
+  poison: 34
+  protection from evil: 35
+  remove curse: 36
+  remove poison: 44
+  rescue: 38
+  sanctuary: 37
+  sense life: 45
+  shocking grasp: 38
+  silence: 58
+  sleep: 39
+  sneak: 39
+  steal: 40
+  strength: 40
+  summon: 41
+  teleport: 3
+  track: 41
+  waterwalk: 52
+  word of recall: 43
+affects:
+- spell: armor
+  duration: 100
+  modifier: -16
+  location: none
+  sets:
+  - blind
+- spell: teleport
+  duration: 101
+  modifier: -15
+  location: str
+  sets:
+  - invisible
+- spell: bless
+  duration: 102
+  modifier: -14
+  location: dex
+  sets:
+  - detect_align
+- spell: blindness
+  duration: 103
+  modifier: -13
+  location: int
+  sets:
+  - detect_invis
+- spell: burning hands
+  duration: 104
+  modifier: -12
+  location: wis
+  sets:
+  - detect_magic
+- spell: call lightning
+  duration: 105
+  modifier: -11
+  location: con
+  sets:
+  - sense_life
+- spell: charm person
+  duration: 106
+  modifier: -10
+  location: cha
+  sets:
+  - waterwalk
+- spell: chill touch
+  duration: 107
+  modifier: -9
+  location: class
+  sets:
+  - sanctuary
+- spell: clone
+  duration: 108
+  modifier: -8
+  location: level
+  sets:
+  - group
+- spell: color spray
+  duration: 109
+  modifier: -7
+  location: age
+  sets:
+  - curse
+- spell: control weather
+  duration: 110
+  modifier: -6
+  location: char_weight
+  sets:
+  - infravision
+- spell: create food
+  duration: 111
+  modifier: -5
+  location: char_height
+  sets:
+  - poison
+- spell: create water
+  duration: 112
+  modifier: -4
+  location: max_mana
+  sets:
+  - protect_evil
+- spell: cure blind
+  duration: 113
+  modifier: -3
+  location: max_hit
+  sets:
+  - protect_good
+- spell: cure critic
+  duration: 114
+  modifier: -2
+  location: max_move
+  sets:
+  - sleep
+- spell: cure light
+  duration: 115
+  modifier: -1
+  location: gold
+  sets:
+  - no_track
+- spell: curse
+  duration: 116
+  location: exp
+  sets_raw: 65536
+- spell: detect alignment
+  duration: 117
+  modifier: 1
+  location: armor
+  sets:
+  - holy_shield
+- spell: detect invisibility
+  duration: 118
+  modifier: 2
+  location: hitroll
+  sets:
+  - sneak
+- spell: detect magic
+  duration: 119
+  modifier: 3
+  location: damroll
+  sets:
+  - hide
+- spell: detect poison
+  duration: 120
+  modifier: 4
+  location: saving_para
+  sets:
+  - silence
+- spell: dispel evil
+  duration: 121
+  modifier: 5
+  location: saving_rod
+  sets:
+  - charm
+- spell: earthquake
+  duration: 122
+  modifier: 6
+  location: saving_petri
+  sets_raw: 4194304
+- spell: enchant weapon
+  duration: 123
+  modifier: 7
+  location: saving_breath
+  sets_raw: 8388608
+- spell: energy drain
+  duration: 124
+  modifier: 8
+  location: saving_spell
+  sets_raw: 16777216
+- spell: fireball
+  duration: 125
+  modifier: 9
+  location: none
+  sets_raw: 33554432
+- spell: harm
+  duration: 126
+  modifier: 10
+  location: str
+  sets_raw: 67108864
+- spell: heal
+  duration: 127
+  modifier: 11
+  location: dex
+  sets_raw: 134217728
+- spell: invisibility
+  duration: 128
+  modifier: 12
+  location: int
+  sets_raw: 268435456
+- spell: lightning bolt
+  duration: 129
+  modifier: 13
+  location: wis
+  sets_raw: 536870912
+- spell: locate object
+  duration: 130
+  modifier: 14
+  location: con
+  sets_raw: 1073741824
+- spell: magic missile
+  duration: 131
+  modifier: 15
+  location: cha
+  sets_raw: 2147483648
+aliases:
+- name: gc
+  replacement: " et all corpse"
+- name: bs
+  replacement: " ackstab $1; flee"
+- name: everything
+  replacement: " ay $*"
+- name: gc
+  replacement: " n earlier, shadowed definition of the same name"
+rent:
+  code: rented
+  written: "2038-01-19T03:14:07Z"
+  cost_per_day: 2147483647
+  gold: 2000000000
+  bank: 2000000000
+inventory:
+- vnum: 5003
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 1
+- vnum: 5004
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 5
+- vnum: 5004
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 5
+- vnum: 5000
+  values:
+  - 2147483647
+  - -2147483648
+  - 2147483647
+  - -2147483648
+  flags:
+  - glow
+  - hum
+  - no_rent
+  - no_donate
+  - no_invis
+  - invisible
+  - magic
+  - no_drop
+  - bless
+  - anti_good
+  - anti_evil
+  - anti_neutral
+  - anti_mage
+  - anti_cleric
+  - anti_thief
+  - anti_warrior
+  - no_sell
+  - no_locate
+  flags_raw: 18446744073709289472
+  weight: 2147483647
+  timer: -2147483648
+  perm_affect:
+  - blind
+  - invisible
+  - detect_align
+  - detect_invis
+  - detect_magic
+  - sense_life
+  - waterwalk
+  - sanctuary
+  - group
+  - curse
+  - infravision
+  - poison
+  - protect_evil
+  - protect_good
+  - sleep
+  - no_track
+  - holy_shield
+  - sneak
+  - hide
+  - silence
+  - charm
+  perm_affect_raw: 18446744073705422848
+  affects:
+  - location: str
+    modifier: 127
+  - location: hitroll
+    modifier: -128

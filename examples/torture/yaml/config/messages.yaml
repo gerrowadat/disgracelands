@@ -1,0 +1,28 @@
+schema: dl/messages@1
+messages:
+- attack_type: burning hands
+  die:
+    attacker: Your magic missile finishes $N off — messily.
+    victim: $n's magic missile finishes you off.
+    room: $n's magic missile finishes $N off.
+  miss:
+    attacker: Your magic missile misses $N.
+    victim: $n's magic missile misses you.
+    room: $n's magic missile misses $N.
+  hit:
+    attacker: Your magic missile hits $N.
+    victim: $n's magic missile hits you.
+    room: $n's magic missile hits $N.
+- attack_type: bash
+  die:
+    attacker: You batter $N into a café-coloured smear.
+    victim: $n batters you into a smear.
+    room: $n batters $N into a smear.
+  hit:
+    attacker: You hit $N.
+    victim: $n hits you.
+    room: $n hits $N.
+  god:
+    attacker: Your godly blow annihilates $N.
+    victim: $n's godly blow annihilates you.
+    room: $n's godly blow annihilates $N.

@@ -1,0 +1,6 @@
+schema: dl/names@1
+disallowed:
+- torture
+- café
+- übermensch
+- averyverylongdisallowedsubstringindeed

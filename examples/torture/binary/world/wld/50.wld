@@ -1,0 +1,192 @@
+#5000
+The Antechamber of Every Flag~
+   Every room flag a CircleMUD bitvector_t can hold is set on this room
+at once. The field below is 'abcdefghijklmnopqrstuvwxyzABCDEF' - bits 0
+through 31, which is as wide as an i386 `long` ever was. Anything from
+'G' on would be `1 << 32` in an `int`, which is undefined behaviour in
+the C loader rather than a bigger number, so this is the widest field
+that is hostile instead of simply broken.
+   Bits nothing has a name for come back through `flags_raw`, which is
+the escape hatch the yaml format has for exactly this.
+~
+50 abcdefghijklmnopqrstuvwxyzABCDEF 0
+D0
+North, to the room whose description is not ASCII.
+~
+~
+0 -1 5001
+S
+#5001
+Caf’ de l’Encodage…~
+   This description is CP1252, not UTF-8, and every byte in it that is
+not ASCII is one an archived world file really contains: ’ is the
+curly apostrophe in data/world/wld/90.wld, “ and ” the curly
+quotes, – and — the en and em dashes, … an ellipsis, and é
+è ü ñ the accented letters a builder typed on a machine that
+was not this one.
+   © 2001. ½ a loaf. 30° to starboard.
+~
+50 0 1
+E
+caf’ sign~
+   The sign says “Café”, in the encoding it was painted in.
+~
+D0
+North, past the café, to the room that ends in silence.
+~
+~
+0 -1 5002
+D2
+Back to the Antechamber.
+~
+~
+0 -1 5000
+S
+#5002
+The Room That Ends In Silence~
+   This description ends with a deliberately blank line before its
+closing tilde. fread_string appends CRLF for every line that does not
+contain a tilde, so the loaded string ends with two of them, and a
+YAML
+literal block cannot carry that back: goccy's re-print right-trims
+every trailing newline off the node regardless of the chomping
+indicator. The yaml writer quotes and escapes it instead.
+
+~
+50 0 2
+D0
+North, to the room with a carriage return in it.
+~
+~
+0 -1 5003
+D2
+Back to the café.
+~
+~
+0 -1 5001
+S
+#5003
+The Room With A Bare Carriage Return~
+   The line after this one ends with a literal CR before its newline.
+rawLine strips only the '\n', so the CR survives into the string and
+fread_string then appends its own CRLF after it:
+   That is a bare carriage return once CRLF pairs are folded to LF, and
+a bare CR is unrepresentable in a YAML block scalar at all - the spec
+folds CR, CRLF and LF alike on decode. obj/0.obj's bug object in the
+real archive has fifteen of them in a row.
+~
+50 0 0
+D0
+North, to the room with trailing spaces.
+~
+~
+0 -1 5004
+D2
+Back to the room that ends in silence.
+~
+~
+0 -1 5002
+S
+#5004
+The Room With Trailing Spaces~
+   The final line of this description carries its own tilde, so
+fread_string returns without appending CRLF, and it carries trailing
+spaces before that tilde. A literal block drops them; the writer
+quotes the string instead.   ~
+50 0 0
+D0
+North, to the room with a hash in it.
+~
+~
+0 -1 5005
+D2
+Back to the room with a carriage return in it.
+~
+~
+0 -1 5003
+S
+#5005
+The Room With A Hash In It~
+   The next line begins with a '#'. count_hash_records counts those to
+size its arrays, and it counts this one, so the loader allocates room
+for a record that is not there:
+#5005 is prose, not a record header, whatever the record counter says.
+   A lone dollar sign is content too, and so is a hash that is not in
+the first column: only a tilde ends a string, and only a hash in
+column one starts a record. $
+~
+50 0 0
+D0
+North, to the gallery.
+~
+~
+0 -1 5006
+D2
+Back to the room with trailing spaces.
+~
+~
+0 -1 5004
+S
+#5006
+The Gallery of Indented Art~
+   Two hand-drawn signs hang here. One is an extra description on the
+room; the other is the description of the exit north. Both begin with
+more leading whitespace than a later line carries, which is the shape
+that makes a YAML literal block decode back to a different string than
+it encoded unless an indentation indicator is emitted - and NestedText
+cannot reliably emit one at this depth, so it quotes instead.
+~
+50 0 0
+E
+sign painted~
+        +----------------+
+        |  THIS WAY UP   |
+        +----------------+
+   and underneath, in a smaller hand, someone has added: 'or not'.
+~
+D0
+        /\
+       /  \    a gable, drawn in an exit description, six columns deep
+      /____\   in the yaml document that comes out the other side
+~
+gate grille~
+1 5003 5007
+D2
+Back to the room with a hash in it.
+~
+~
+0 -1 5005
+S
+#5007
+The Room That Looks Like Syntax~
+   get_line skips a line whose first byte is '*'; fread_string does
+not. So the next line is content, and a loader that used the wrong
+primitive would silently lose it:
+* this line begins with an asterisk and is part of the description.
+   The line after this one opens with the colour markup's own
+delimiter, which YAML would otherwise read as a flow mapping:
+{{red}}not colour, just two braces{{/}}
+~
+50 0 0
+D0
+North, to the last room.
+~
+~
+0 -1 5008
+D2
+Back to the gallery.
+~
+~
+0 -1 5006
+S
+#5008
+The Empty Room~
+~
+50 0 0
+D2
+Back to the room that looks like syntax.
+~
+~
+0 -1 5007
+S
+$

@@ -1,0 +1,23 @@
+schema: dl/help@1
+entries:
+- keywords:
+  - TORTURE
+  file: torture.txt
+- keywords:
+  - CAFE
+  - CAFé
+  file: cafe-caf.txt
+- keywords:
+  - SLUG
+  - COLLISION
+  file: slug-collision.txt
+- keywords:
+  - SLUG-COLLISION
+  file: slug-collision-2.txt
+- keywords:
+  - "!"
+  - ^
+  file: entry-5.txt
+- keywords:
+  - LONG
+  file: long.txt

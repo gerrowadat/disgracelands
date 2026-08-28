@@ -43,8 +43,27 @@ func transcodeString(s *string, enc *charmap.Charmap) bool {
 }
 
 // transcodeWorldStrings converts every text field in w from enc to UTF-8,
-// in place, and returns how many fields actually needed it, only where the
-// C loader treats the field as free text rather than a keyword or symbol.
+// in place, and returns how many fields actually needed it.
+//
+// Every string field, including the keyword lists. That is a change: this
+// used to skip them deliberately, "only where the C loader treats the
+// field as free text rather than a keyword or symbol", on the reasoning
+// that a keyword is matched byte-for-byte by isname rather than shown to
+// anybody.
+//
+// The reasoning was sound and the outcome was not. A keyword left in
+// CP1252 is not valid UTF-8, and the yaml writer has to put it in a
+// document that says it is — so the encoder substitutes U+FFFD for each
+// offending byte, and `caf<0x92> sign` becomes `caf<REPLACEMENT> sign`.
+// That matches nothing a player can type, in either encoding, and it
+// cannot be undone. Decoding it as CP1252 at least produces the keyword
+// the builder meant, in the encoding the server actually speaks.
+//
+// Found by examples/torture, which is the first fixture in this
+// repository with a non-ASCII keyword in it. docs/design/data-format.md
+// §11.1 records the same shape of gap in five of the seven importers, and
+// the same reason it sat inert: stock CircleMUD's text is pure ASCII, so
+// nothing here ever had a byte to get wrong.
 func transcodeWorldStrings(w *game.World, enc *charmap.Charmap) int {
 	n := 0
 	fix := func(s *string) {
@@ -62,22 +81,27 @@ func transcodeWorldStrings(w *game.World, enc *charmap.Charmap) int {
 		for _, e := range r.Exits {
 			if e != nil {
 				fix(&e.Description)
+				fix(&e.Keywords)
 			}
 		}
 		for i := range r.ExtraDescs {
+			fix(&r.ExtraDescs[i].Keywords)
 			fix(&r.ExtraDescs[i].Description)
 		}
 	}
 	for _, m := range w.Mobiles {
+		fix(&m.Keywords)
 		fix(&m.ShortDesc)
 		fix(&m.LongDesc)
 		fix(&m.Description)
 	}
 	for _, o := range w.Objects {
+		fix(&o.Keywords)
 		fix(&o.ShortDesc)
 		fix(&o.Description)
 		fix(&o.ActionDesc)
 		for i := range o.ExtraDescs {
+			fix(&o.ExtraDescs[i].Keywords)
 			fix(&o.ExtraDescs[i].Description)
 		}
 	}

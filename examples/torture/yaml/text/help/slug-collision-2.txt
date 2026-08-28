@@ -1,0 +1,4 @@
+SLUG-COLLISION
+
+The second half of the collision above. One of us gets a numeric
+suffix on our file name; which one is decided by file order.

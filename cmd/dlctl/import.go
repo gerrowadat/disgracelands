@@ -18,6 +18,7 @@ import (
 	"strings"
 
 	"github.com/gerrowadat/disgracelands/internal/buildinfo"
+	"github.com/gerrowadat/disgracelands/internal/game"
 	"github.com/gerrowadat/disgracelands/internal/persist/convert"
 	"github.com/gerrowadat/disgracelands/internal/persist/dataversion"
 	"github.com/gerrowadat/disgracelands/internal/persist/help"
@@ -407,7 +408,44 @@ func importWorld(o importOptions) error {
 	if transcoded > 0 {
 		_, _ = fmt.Fprintf(out, "transcoded %d string(s) from %s to UTF-8\n", transcoded, o.encName)
 	}
+	reportDroppedEspecs(out, w)
 	return out.Flush()
+}
+
+// reportDroppedEspecs names every enhanced-mobile espec the yaml format
+// has nowhere to put, because the conversion drops it.
+//
+// The dropping itself is correct and deliberate: §4.7 of
+// docs/design/data-format.md makes `abilities` a closed, typed mapping
+// over the eight keys the stock world and a snapshot of the original one
+// contain between them, precisely because interpret_espec ignores
+// anything else — "a typo in it currently does nothing at all", so an
+// unrecognised key has never had a gameplay effect to lose. What was
+// wrong was doing it in silence. This is the conversion boundary where a
+// value stops existing, and docs/proposals/yaml-only.md §6 rule 2 says an
+// importer names what it could not carry across.
+//
+// import is the only place this can arise: `fmt` reads a directory that
+// is already yaml, and the yaml reader treats an unknown key inside
+// `abilities` as a load error rather than a thing to preserve.
+func reportDroppedEspecs(out *bufio.Writer, w *game.World) {
+	var dropped []string
+	for _, m := range w.Mobiles {
+		if !m.Enhanced {
+			continue
+		}
+		if _, unknown := worldyaml.AbilitiesFromEspecs(m.Especs); len(unknown) > 0 {
+			dropped = append(dropped, fmt.Sprintf("mobile #%d: %s", m.Vnum, strings.Join(unknown, ", ")))
+		}
+	}
+	if len(dropped) == 0 {
+		return
+	}
+	_, _ = fmt.Fprintf(out, "dropped %d enhanced-mobile espec key(s) the yaml format has no field for "+
+		"(the C ignores them too, see data-format.md §4.7):\n", len(dropped))
+	for _, d := range dropped {
+		_, _ = fmt.Fprintf(out, "  %s\n", d)
+	}
 }
 
 // importPfile converts a roster into yaml, per step 5's "getting there" —

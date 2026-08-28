@@ -1,0 +1,35 @@
+TORTURE
+
+This help database exists to break the slug writer.
+
+See also: CAFE
+#
+CAFE CAFé
+
+An entry whose keywords are not ASCII. © 2001.
+#
+SLUG COLLISION
+
+HelpSlug joins an entry's keywords with a space, lowercases them and
+collapses every non-alphanumeric run to one dash. So this entry and
+the next one both slug to "slug-collision", from two different
+keyword lines, and the writer has to disambiguate them.
+#
+SLUG-COLLISION
+
+The second half of the collision above. One of us gets a numeric
+suffix on our file name; which one is decided by file order.
+#
+! ^
+
+A keyword line of pure punctuation, which slugs to the empty string.
+The writer falls back to a positional name for this one.
+#
+LONG
+
+An entry with a body long enough to be worth wrapping, a line that is
+deliberately blank in the middle of it:
+
+and a line that ends in trailing whitespace:   
+#
+$

@@ -1,0 +1,21 @@
+#50
+The Torture Chamber~
+5000 5099 30 2
+* The mobile with every flag, and everything it is carrying.
+M 0 5000 1 5000
+G 1 5000 1
+E 1 5002 1 16
+* A container inside a container inside a container, on the floor.
+O 0 5004 3 5006
+P 1 5004 3 5004
+P 1 5004 3 5004
+P 1 5003 1 5004
+* The enhanced mobile, and the shopkeeper with its stock.
+M 0 5001 1 5001
+M 0 5002 1 5002
+G 1 5000 5
+G 1 5002 5
+* Doors: the north exit out of the gallery is closed and locked.
+D 0 5006 0 2
+S
+$

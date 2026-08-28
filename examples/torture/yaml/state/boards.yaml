@@ -1,0 +1,252 @@
+schema: dl/boards@1
+boards:
+  board.immort:
+  - heading: "Aug 01 2003 (Torturer)  :: a body of exactly 4096 bytes"
+    level: 34
+    body: |
+            xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+  - heading: "Aug 02 2003 (Torturer)  :: an empty body"
+    level: 34
+  board.mort:
+  - heading: "Aug 01 2003 (Torturer)  :: message 1 of 60"
+    body: |
+            Body of message 1.
+  - heading: "Aug 02 2003 (Torturer)  :: message 2 of 60"
+    level: 1
+    body: |
+            Body of message 2.
+  - heading: "Aug 03 2003 (Torturer)  :: message 3 of 60"
+    level: 2
+    body: |
+            Body of message 3.
+  - heading: "Aug 04 2003 (Torturer)  :: message 4 of 60"
+    level: 3
+    body: |
+            Body of message 4.
+  - heading: "Aug 05 2003 (Torturer)  :: message 5 of 60"
+    level: 4
+    body: |
+            Body of message 5.
+  - heading: "Aug 06 2003 (Torturer)  :: message 6 of 60"
+    level: 5
+    body: |
+            Body of message 6.
+  - heading: "Aug 07 2003 (Torturer)  :: message 7 of 60"
+    level: 6
+    body: |
+            Body of message 7.
+  - heading: "Aug 08 2003 (Torturer)  :: message 8 of 60"
+    level: 7
+    body: |
+            Body of message 8.
+  - heading: "Aug 09 2003 (Torturer)  :: message 9 of 60"
+    level: 8
+    body: |
+            Body of message 9.
+  - heading: "Aug 10 2003 (Torturer)  :: message 10 of 60"
+    level: 9
+    body: |
+            Body of message 10.
+  - heading: "Aug 11 2003 (Torturer)  :: message 11 of 60"
+    level: 10
+    body: |
+            Body of message 11.
+  - heading: "Aug 12 2003 (Torturer)  :: message 12 of 60"
+    level: 11
+    body: |
+            Body of message 12.
+  - heading: "Aug 13 2003 (Torturer)  :: message 13 of 60"
+    level: 12
+    body: |
+            Body of message 13.
+  - heading: "Aug 14 2003 (Torturer)  :: message 14 of 60"
+    level: 13
+    body: |
+            Body of message 14.
+  - heading: "Aug 15 2003 (Torturer)  :: message 15 of 60"
+    level: 14
+    body: |
+            Body of message 15.
+  - heading: "Aug 16 2003 (Torturer)  :: message 16 of 60"
+    level: 15
+    body: |
+            Body of message 16.
+  - heading: "Aug 17 2003 (Torturer)  :: message 17 of 60"
+    level: 16
+    body: |
+            Body of message 17.
+  - heading: "Aug 18 2003 (Torturer)  :: message 18 of 60"
+    level: 17
+    body: |
+            Body of message 18.
+  - heading: "Aug 19 2003 (Torturer)  :: message 19 of 60"
+    level: 18
+    body: |
+            Body of message 19.
+  - heading: "Aug 20 2003 (Torturer)  :: message 20 of 60"
+    level: 19
+    body: |
+            Body of message 20.
+  - heading: "Aug 21 2003 (Torturer)  :: message 21 of 60"
+    level: 20
+    body: |
+            Body of message 21.
+  - heading: "Aug 22 2003 (Torturer)  :: message 22 of 60"
+    level: 21
+    body: |
+            Body of message 22.
+  - heading: "Aug 23 2003 (Torturer)  :: message 23 of 60"
+    level: 22
+    body: |
+            Body of message 23.
+  - heading: "Aug 24 2003 (Torturer)  :: message 24 of 60"
+    level: 23
+    body: |
+            Body of message 24.
+  - heading: "Aug 25 2003 (Torturer)  :: message 25 of 60"
+    level: 24
+    body: |
+            Body of message 25.
+  - heading: "Aug 26 2003 (Torturer)  :: message 26 of 60"
+    level: 25
+    body: |
+            Body of message 26.
+  - heading: "Aug 27 2003 (Torturer)  :: message 27 of 60"
+    level: 26
+    body: |
+            Body of message 27.
+  - heading: "Aug 28 2003 (Torturer)  :: message 28 of 60"
+    level: 27
+    body: |
+            Body of message 28.
+  - heading: "Aug 01 2003 (Torturer)  :: message 29 of 60"
+    level: 28
+    body: |
+            Body of message 29.
+  - heading: "Aug 02 2003 (Torturer)  :: message 30 of 60"
+    level: 29
+    body: |
+            Body of message 30.
+  - heading: "Aug 03 2003 (Torturer)  :: message 31 of 60"
+    level: 30
+    body: |
+            Body of message 31.
+  - heading: "Aug 04 2003 (Torturer)  :: message 32 of 60"
+    level: 31
+    body: |
+            Body of message 32.
+  - heading: "Aug 05 2003 (Torturer)  :: message 33 of 60"
+    level: 32
+    body: |
+            Body of message 33.
+  - heading: "Aug 06 2003 (Torturer)  :: message 34 of 60"
+    level: 33
+    body: |
+            Body of message 34.
+  - heading: "Aug 07 2003 (Torturer)  :: message 35 of 60"
+    level: 34
+    body: |
+            Body of message 35.
+  - heading: "Aug 08 2003 (Torturer)  :: message 36 of 60"
+    body: |
+            Body of message 36.
+  - heading: "Aug 09 2003 (Torturer)  :: message 37 of 60"
+    level: 1
+    body: |
+            Body of message 37.
+  - heading: "Aug 10 2003 (Torturer)  :: message 38 of 60"
+    level: 2
+    body: |
+            Body of message 38.
+  - heading: "Aug 11 2003 (Torturer)  :: message 39 of 60"
+    level: 3
+    body: |
+            Body of message 39.
+  - heading: "Aug 12 2003 (Torturer)  :: message 40 of 60"
+    level: 4
+    body: |
+            Body of message 40.
+  - heading: "Aug 13 2003 (Torturer)  :: message 41 of 60"
+    level: 5
+    body: |
+            Body of message 41.
+  - heading: "Aug 14 2003 (Torturer)  :: message 42 of 60"
+    level: 6
+    body: |
+            Body of message 42.
+  - heading: "Aug 15 2003 (Torturer)  :: message 43 of 60"
+    level: 7
+    body: |
+            Body of message 43.
+  - heading: "Aug 16 2003 (Torturer)  :: message 44 of 60"
+    level: 8
+    body: |
+            Body of message 44.
+  - heading: "Aug 17 2003 (Torturer)  :: message 45 of 60"
+    level: 9
+    body: |
+            Body of message 45.
+  - heading: "Aug 18 2003 (Torturer)  :: message 46 of 60"
+    level: 10
+    body: |
+            Body of message 46.
+  - heading: "Aug 19 2003 (Torturer)  :: message 47 of 60"
+    level: 11
+    body: |
+            Body of message 47.
+  - heading: "Aug 20 2003 (Torturer)  :: message 48 of 60"
+    level: 12
+    body: |
+            Body of message 48.
+  - heading: "Aug 21 2003 (Torturer)  :: message 49 of 60"
+    level: 13
+    body: |
+            Body of message 49.
+  - heading: "Aug 22 2003 (Torturer)  :: message 50 of 60"
+    level: 14
+    body: |
+            Body of message 50.
+  - heading: "Aug 23 2003 (Torturer)  :: message 51 of 60"
+    level: 15
+    body: |
+            Body of message 51.
+  - heading: "Aug 24 2003 (Torturer)  :: message 52 of 60"
+    level: 16
+    body: |
+            Body of message 52.
+  - heading: "Aug 25 2003 (Torturer)  :: message 53 of 60"
+    level: 17
+    body: |
+            Body of message 53.
+  - heading: "Aug 26 2003 (Torturer)  :: message 54 of 60"
+    level: 18
+    body: |
+            Body of message 54.
+  - heading: "Aug 27 2003 (Torturer)  :: message 55 of 60"
+    level: 19
+    body: |
+            Body of message 55.
+  - heading: "Aug 28 2003 (Torturer)  :: message 56 of 60"
+    level: 20
+    body: |
+            Body of message 56.
+  - heading: "Aug 01 2003 (Torturer)  :: message 57 of 60"
+    level: 21
+    body: |
+            Body of message 57.
+  - heading: "Aug 02 2003 (Torturer)  :: message 58 of 60"
+    level: 22
+    body: |
+            Body of message 58.
+  - heading: "Aug 03 2003 (Torturer)  :: message 59 of 60"
+    level: 23
+    body: |
+            Body of message 59.
+  - heading: "Aug 04 2003 (Torturer)  :: message 60 of 60"
+    level: 24
+    body: |
+            Body of message 60.
+  board.social:
+  - heading: "Aug 03 2003 (Torturer)  :: caf’ opening hours"
+    body: |
+            The café opens at 9. Bring £5 – or don’t.

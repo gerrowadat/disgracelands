@@ -1,0 +1,18 @@
+schema: dl/reports@1
+reports:
+- kind: bug
+  reporter: Torturer
+  room: 5000
+  body: The room with every flag is unpleasant.
+- kind: bug
+  reporter: Torturer
+  room: 5006
+  body: ""
+- kind: idea
+  reporter: Nobody
+  room: 5008
+  body: A café would be nice. Or a crêpe stand.
+- kind: typo
+  reporter: Torturer
+  room: 5005
+  body: “Antechamber” is spelled oddly.

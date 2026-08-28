@@ -1,0 +1,66 @@
+#5000
+extremes object every flag~
+the object of every extreme~
+An object whose every value is at an extreme lies here.~
+   Read me. I am an action description, which most objects do not have.
+~
+5 abcdefghijklmnopqrstuvwxyzABCDEF abcdefghijklmnopqrstuvwxyzABCDEF 2147483647
+2147483647 -2147483648 2147483647 -2147483648
+2147483647 2147483647 2147483647 34
+A
+1 -100
+A
+18 100
+#5001
+flask heavy liquid~
+a suspiciously light flask~
+A flask that weighs less than what is in it sits here.~
+~
+17 0 1 0
+100 96 0 0
+1 10 1 0
+#5002
+described thing many~
+a much-described thing~
+A thing with more descriptions than sense is here.~
+~
+9 0 3 0
+0 0 0 0
+1 1 1 0
+E
+first~
+   The first extra description in the file, which the C loader prepends
+and therefore sees last.
+~
+E
+second~
+        ___
+       /   \   art on an object's extra description, indented deeper on
+       \___/   its first line than on its last
+~
+E
+third~
+   The last extra description in the file, which the C loader sees
+first. reverseExtras is what keeps that observable.
+~
+A
+1 1
+A
+2 2
+#5003
+key minimal~
+a minimal key~
+A minimal key lies here.~
+~
+18 0 0
+0 0 0 0
+0 0 0
+#5004
+box nesting~
+a nesting box~
+A box that holds another box is here.~
+~
+15 0 1 0
+100 0 -1 0
+5 10 1 0
+$

@@ -1,0 +1,47 @@
+schema: dl/player@1
+id: 2
+name: Abbbbbbbbbbbbbbbbbb
+credential: Abd.4r7/OF
+identity:
+  title: the Character Whose Name Is 19 Letters Long
+  sex: male
+  class: cleric
+  level: 30
+  home: 5000
+  load_room: -1
+times:
+  created: "2002-01-02T19:33:20Z"
+  last_login: "2004-11-09T11:33:20Z"
+  played: 360000s
+  last_host: example.org
+body:
+  height: 170
+  weight: 150
+  str: 12
+  int: 13
+  wis: 14
+  dex: 15
+  con: 16
+  cha: 17
+pools:
+  hit:
+    current: 100
+    max: 100
+  mana:
+    current: 100
+    max: 100
+  move:
+    current: 100
+    max: 100
+combat:
+  saves: {}
+wealth:
+  gold: 1000
+conditions:
+  hunger: -1
+  thirst: -1
+  drunk: -1
+flags: {}
+skills:
+  "#200": 99
+  armor: 50

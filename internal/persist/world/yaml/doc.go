@@ -101,30 +101,37 @@ type mobDoc struct {
 }
 
 type objDoc struct {
-	Vnum       int32            `yaml:"vnum"`
-	Keywords   []string         `yaml:"keywords"`
-	Short      Text             `yaml:"short"`
-	Desc       Text             `yaml:"desc"`
-	ActionDesc Text             `yaml:"action_desc,omitempty"`
-	Type       string           `yaml:"type"`
-	Wear       []string         `yaml:"wear,omitempty"`
-	WearRaw    uint64           `yaml:"wear_raw,omitempty"`
-	Flags      []string         `yaml:"flags,omitempty"`
-	FlagsRaw   uint64           `yaml:"flags_raw,omitempty"`
-	PermAffect []string         `yaml:"perm_affect,omitempty"`
-	Weapon     *WeaponValues    `yaml:"weapon,omitempty"`
-	Armor      *ArmorValues     `yaml:"armor,omitempty"`
-	Container  *ContainerValues `yaml:"container,omitempty"`
-	Drink      *DrinkValues     `yaml:"drink,omitempty"`
-	Light      *LightValues     `yaml:"light,omitempty"`
-	Charges    *ChargesValues   `yaml:"charges,omitempty"`
-	Values     *[4]int32        `yaml:"values,omitempty"`
-	Weight     int32            `yaml:"weight"`
-	Cost       int32            `yaml:"cost"`
-	Rent       int32            `yaml:"rent"`
-	MinLevel   int32            `yaml:"min_level,omitempty"`
-	Affects    []objAffectDoc   `yaml:"affects,omitempty"`
-	ExtraDescs []extraDescDoc   `yaml:"extra_descs,omitempty"`
+	Vnum       int32    `yaml:"vnum"`
+	Keywords   []string `yaml:"keywords"`
+	Short      Text     `yaml:"short"`
+	Desc       Text     `yaml:"desc"`
+	ActionDesc Text     `yaml:"action_desc,omitempty"`
+	Type       string   `yaml:"type"`
+	Wear       []string `yaml:"wear,omitempty"`
+	WearRaw    uint64   `yaml:"wear_raw,omitempty"`
+	Flags      []string `yaml:"flags,omitempty"`
+	FlagsRaw   uint64   `yaml:"flags_raw,omitempty"`
+	PermAffect []string `yaml:"perm_affect,omitempty"`
+	// PermAffectRaw is perm_affect's escape hatch, the same one wear_raw
+	// and flags_raw are for their own fields: an AFF_* bit with no name in
+	// game.YamlAffectFlagNames survives here rather than being dropped.
+	// It was missing until examples/torture went looking, and its absence
+	// was silent — an object with an unnamed permanent-affect bit came out
+	// of a conversion without it and nothing said so.
+	PermAffectRaw uint64           `yaml:"perm_affect_raw,omitempty"`
+	Weapon        *WeaponValues    `yaml:"weapon,omitempty"`
+	Armor         *ArmorValues     `yaml:"armor,omitempty"`
+	Container     *ContainerValues `yaml:"container,omitempty"`
+	Drink         *DrinkValues     `yaml:"drink,omitempty"`
+	Light         *LightValues     `yaml:"light,omitempty"`
+	Charges       *ChargesValues   `yaml:"charges,omitempty"`
+	Values        *[4]int32        `yaml:"values,omitempty"`
+	Weight        int32            `yaml:"weight"`
+	Cost          int32            `yaml:"cost"`
+	Rent          int32            `yaml:"rent"`
+	MinLevel      int32            `yaml:"min_level,omitempty"`
+	Affects       []objAffectDoc   `yaml:"affects,omitempty"`
+	ExtraDescs    []extraDescDoc   `yaml:"extra_descs,omitempty"`
 }
 
 type objAffectDoc struct {
