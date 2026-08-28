@@ -153,7 +153,9 @@ func TestKillingAPlayerIsWorthNothing(t *testing.T) {
 	victim, _ := place(t, srv, fighterRecord("Welmar", 25, 10), MortalStartRoom)
 	victim.Record.Points.Exp = 5_000_000
 
-	srv.award(killer, victim)
+	// On the world goroutine: award reaches AnnounceLevelGain, which walks
+	// the player list to broadcast a level (#212).
+	inWorld(t, srv, func(w *game.Live) { srv.award(w, killer, victim) })
 
 	if killer.Record.Points.Exp != before {
 		t.Errorf("killing a player awarded %d experience",
@@ -176,7 +178,9 @@ func TestKillingAMobileIsWorthSomething(t *testing.T) {
 	victim.NPC = true
 	victim.Record.Points.Exp = 300000
 
-	srv.award(killer, victim)
+	// On the world goroutine: award reaches AnnounceLevelGain, which walks
+	// the player list to broadcast a level (#212).
+	inWorld(t, srv, func(w *game.Live) { srv.award(w, killer, victim) })
 
 	if killer.Record.Points.Exp <= before {
 		t.Error("killing a mobile awarded nothing")

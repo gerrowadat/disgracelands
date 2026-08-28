@@ -308,7 +308,8 @@ func doAdvance(c *Context) error {
 	// The level is set by the experience, not the other way round: the C
 	// hands gain_exp_regardless the *difference* between this level's
 	// threshold and what they have, and lets the levelling code do the rest.
-	if levels := game.GainExperienceRegardless(rec, game.LevelExperience(rec.Class, newLevel)-rec.Points.Exp, c.RNG); levels > 0 {
+	levels := game.GainExperienceRegardless(rec, game.LevelExperience(rec.Class, newLevel)-rec.Points.Exp, c.RNG)
+	if levels > 0 {
 		// gain_exp_regardless' copy of the same line (limits.c:351-357).
 		// `advance` demoting somebody sets the level itself and gains no
 		// levels here, so this fires on the way up only — which is the C's
@@ -317,6 +318,11 @@ func doAdvance(c *Context) error {
 			"%s advanced %d level%s to level %d.", victim.Name,
 			levels, plural(int(levels)), rec.Level)
 	}
+	// The rest of that block: "You rise N levels!" to the victim and the
+	// `<DoC>` whisper to everybody. The *Regardless* form, because that is
+	// the copy `advance` stands in — and its whisper has no trailing newline,
+	// which is the C's own difference between the two and not a slip here.
+	c.World.AnnounceLevelGainRegardless(victim, levels)
 	if c.Save != nil {
 		c.Save(victim)
 	}

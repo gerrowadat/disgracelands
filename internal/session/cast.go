@@ -178,25 +178,21 @@ func (c *Context) findSpellTarget(info game.SpellInfo, name string) (*game.Chara
 	return nil, nil, false
 }
 
-// broadcast tells the whole game, which is what send_to_all_color does.
+// broadcast tells the whole game, which is what send_to_all (comm.c:2245)
+// does: no colour, and — unlike its coloured sibling — no exclusions either.
 func (c *Context) broadcast(format string, args ...any) {
 	for _, other := range c.World.Players() {
 		other.Tell(format, args...)
 	}
 }
 
-// broadcastAt is broadcast for the colour send_to_all_color actually applies
-// (comm.c:2256): the message is wrapped in the colour it was called with, but
-// only for a reader whose own COLOR_LEV is at least C_NRM, which is what
-// TellAt's threshold argument means.
-//
-// Not folded into broadcast, because the two are not the same call: the C has
-// send_to_all as well as send_to_all_color, and a caller that passes no
-// colour is not passing KNRM.
+// broadcastAt is send_to_all_color (comm.c:2256), which is a different
+// function in the C and not merely broadcast with an escape in front: it
+// applies the reader's own COLOR_LEV threshold, and it skips anybody carrying
+// PLR_WRITING. game.Live.Announce is both, so that the four `<DoC>` callers
+// share one implementation rather than four loops.
 func (c *Context) broadcastAt(want colour.Level, format string, args ...any) {
-	for _, other := range c.World.Players() {
-		other.TellAt(want, format, args...)
-	}
+	c.World.Announce(want, format, args...)
 }
 
 // castSpell runs the spell's routines, porting call_magic.

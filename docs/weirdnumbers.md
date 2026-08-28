@@ -1898,7 +1898,40 @@ syslog, which is noise rather than behaviour, and no player-visible or
 on-disk thing depends on it. [`deviations.md`](deviations.md) records it.
 
 *Source*: `interpreter.c:1606-1629`. Ported in
-`Session.handleQueryClass` (`internal/session/login.go`).
+`Session.handleQueryClass` (`internal/session/login.go`); the broadcast
+itself is `Live.AnnounceNewPlayer` (`internal/game/announce.go`), sent from
+`Server.Create` where the C sends it.
+
+---
+
+## `gain_exp` and `gain_exp_regardless` are copies that drifted
+
+The two are the same forty lines twice over — the same levelling loop, the
+same `is_altered`, the same `mudlog`, the same "You rise a level!" — and
+the `<DoC>` broadcast inserted into both did not come out the same:
+
+```c
+/* gain_exp, limits.c:311 */
+snprintf(buf,sizeof(buf),"A voice whispers in your ear, '%s has gained a level!'\r\n", GET_NAME(ch));
+/* gain_exp_regardless, limits.c:368 */
+snprintf(buf,sizeof(buf),"A voice whispers in your ear, '%s has gained a level!'", GET_NAME(ch));
+```
+
+**One ends in `\r\n` and the other does not**, and the same is true of the
+plural pair at `:318` against `:375`. So on the real server a level earned
+by killing something printed on a line of its own, and a level handed out
+by `advance` — the only caller of `gain_exp_regardless` — ran straight into
+whatever the reader saw next.
+
+Nothing about either function suggests the difference; it is two hands
+editing two copies. It is reproduced, under the fidelity rule, as two
+methods rather than a boolean: `Live.AnnounceLevelGain` and
+`Live.AnnounceLevelGainRegardless`, so a call site says which of the C's
+two functions it is standing in. `internal/server/announce_test.go` asserts
+both ends.
+
+*Source*: `limits.c:306-318` against `:361-375`. Ported in
+`internal/game/announce.go`.
 
 ---
 
