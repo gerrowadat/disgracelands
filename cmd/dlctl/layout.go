@@ -9,6 +9,7 @@ package main
 import (
 	"fmt"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/gerrowadat/disgracelands/internal/config"
@@ -57,8 +58,8 @@ func parseType(raw string, allowed []dirType) (dirType, error) {
 	return "", fmt.Errorf("--type: unsupported value %q (have: %s)", raw, joinTypes(allowed))
 }
 
-// subsystem maps a --type onto the internal/config.Subsystem its single
-// (non-state) or "primary" (state's yaml side) directory resolves through.
+// subsystem maps a --type onto the internal/config.Subsystem its yaml-side
+// directory resolves through.
 func subsystem(t dirType) (config.Subsystem, error) {
 	switch t {
 	case typeWorld:
@@ -80,6 +81,38 @@ func subsystem(t dirType) (config.Subsystem, error) {
 	}
 }
 
+// classicDirs is where each subsystem lives in a *legacy* lib directory.
+//
+// internal/config.Dir used to carry both layouts and pick between them from
+// a format name. It carries one now — the server reads one format
+// (docs/proposals/yaml-only.md §1) — and this is the other half, moved to
+// the one command that still has to find it. Reading the old layout is
+// `dlctl`'s whole job; it is no longer anybody else's.
+//
+// Note state's three separate homes: the C spreads the clock, boards, mail,
+// bans and the house control file under etc/, house objects under house/,
+// and the bug/idea/typo reports under misc/, where yaml collects all three
+// into state/. classicStateDirs is what resolves that three-way split.
+var classicDirs = map[dirType]string{
+	typeWorld:    "world",
+	typeState:    "etc",
+	typeNames:    "misc",
+	typeMessages: "misc",
+	typeSocials:  "misc",
+	// Both formats keep the help database in text/help/ and are told
+	// apart by which files are in it, not by which directory it is.
+	typeHelp: filepath.Join("text", "help"),
+}
+
+// classicPlayerDirs is the roster's own two legacy homes, which is the one
+// subsystem where the pre-yaml answer is itself two answers: binary is the
+// C's own `etc/players`, and ascii is this port's own addition and never
+// shared etc/ with anything else.
+var classicPlayerDirs = map[string]string{
+	"binary": "etc",
+	"ascii":  "pfiles",
+}
+
 // classicFilenames names the file inside the classic-side directory a type
 // resolves to, for the three types whose classic source is one file rather
 // than a directory (misc/xnames, misc/messages, misc/socials).
@@ -96,17 +129,41 @@ var classicFilenames = map[dirType]string{
 // type actually lives in, the same way internal/config.Dir already does
 // for cmd/dlmud's --lib-dir.
 func resolveDir(t dirType, base, format string) (string, error) {
-	s, err := subsystem(t)
-	if err != nil {
-		return "", err
-	}
-	dir := config.Dir(base, s, format)
-	if format != "yaml" {
-		if name, ok := classicFilenames[t]; ok {
-			return filepath.Join(dir, name), nil
+	if format == "yaml" {
+		s, err := subsystem(t)
+		if err != nil {
+			return "", err
 		}
+		return config.Dir(base, s), nil
+	}
+
+	if t == typePfile {
+		sub, ok := classicPlayerDirs[format]
+		if !ok {
+			return "", fmt.Errorf("unknown roster format %q (have: %s, yaml)",
+				format, strings.Join(sortedKeysOf(classicPlayerDirs), ", "))
+		}
+		return filepath.Join(base, sub), nil
+	}
+
+	sub, ok := classicDirs[t]
+	if !ok {
+		return "", fmt.Errorf("unknown --type %q", t)
+	}
+	dir := filepath.Join(base, sub)
+	if name, ok := classicFilenames[t]; ok {
+		return filepath.Join(dir, name), nil
 	}
 	return dir, nil
+}
+
+func sortedKeysOf(m map[string]string) []string {
+	out := make([]string, 0, len(m))
+	for k := range m {
+		out = append(out, k)
+	}
+	sort.Strings(out)
+	return out
 }
 
 // stateClassicDirs resolves state's three separate classic-side source
@@ -116,7 +173,5 @@ func resolveDir(t dirType, base, format string) (string, error) {
 // --from-misc-dir (cmdImportState) override these for a rearranged
 // archive; this is only their default.
 func stateClassicDirs(base string) (etcDir, houseDir, miscDir string) {
-	return config.Dir(base, config.SubsystemState, "classic"),
-		config.Dir(base, config.SubsystemHouseObjects, "classic"),
-		config.Dir(base, config.SubsystemReports, "classic")
+	return filepath.Join(base, "etc"), filepath.Join(base, "house"), filepath.Join(base, "misc")
 }

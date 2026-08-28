@@ -9,7 +9,8 @@ Its Phase 7 (cutover) is not cancelled — it becomes downstream of this
 change, and §8 below rewrites the one paragraph of it this invalidates.
 
 It is also the detailed version of `docs/design/data-format.md` §11's steps
-4 and 7, which have said "not attempted" since the format landed.
+4 and 7, which said "not attempted" from the day the format landed until
+this work closed them.
 
 This is a **breaking change** and is proposed as **v1.0.0**. After it, the
 only path from a CircleMUD `lib/` directory to a running Disgracelands
@@ -535,14 +536,19 @@ Each row is its own branch and PR. Rows 1–2 are prerequisites and are
 independently shippable before the breaking change; rows 3–6 are the break;
 row 7 is the release.
 
+**Status: rows 1–6 have landed.** Row 7 — cutting the release — has not,
+and is a decision rather than a task. Each row below carries what
+actually happened, since several of them turned out to be about something
+other than what they were written to be about.
+
 | # | What lands | Done when |
 |---|---|---|
-| **1** | `examples/torture/` (§5.1) — `binary/` and its imported `yaml/`, with a `README` explaining each hostile case. | `dlctl import` on it succeeds, `dlctl lint --type=world` reports zero findings, and the checked-in `yaml/` matches a fresh import byte for byte. |
-| **2** | `dlctl verify --against` across `allTypes` (§3.4); the differential, idempotence and stability tests over all three corpora (§5.2); the three fuzz targets and their seed corpora (§5.3). | `verify --against` is green on `stock`, `mini` and `torture`; the fuzz targets run clean for the agreed budget; all of it is Go tests running under the existing `go test -race ./...`. |
-| **3** | Move both live suites onto yaml (§5.4): `newTestServer`, `newTestServerWith`, `bothFormats`, `session-parity.sh`. | `newTestServer` builds a yaml server; `test/play` runs `miniYAML` only; the full suite is green under `-race`; the deliberate `classic` differential tests are untouched. |
-| **4** | Delete the seven `--*-format` flags and their env vars; reject a removed `DLMUD_*` variable by name (§3.1); strip `config.Dir`'s format parameter; delete the `ObjectStore` fallback and `cmd/dlmud`'s legacy blank imports (§3.2); move `LegacySpares` out of `internal/game` into `persist/player/binary` (§1); retire `dlctl convert`'s no-`--type` mode (§3.4). | `dlmud --help` mentions no format; a test asserts the legacy decoder packages are not reachable from `cmd/dlmud`; `DLMUD_WORLD_FORMAT=classic` fails loudly with the migration command; `Config`'s default `LibDir` moves from `examples/stock/binary` to `examples/stock/yaml`. |
-| **5** | Legacy-layout detection and refusal at boot (§3.3). | Pointing `dlmud` at `examples/stock/binary` exits non-zero printing the exact working `dlctl import` line for it — asserted by running that line and booting the result. |
-| **6** | The defaults rule, its per-subsystem tables and minimal-document tests (§6); the `docs/deviations.md` entry this change owes under "Fidelity, phase two" (header above), plus the settled CRLF transform and the removed rent-containment format gate; `data-format.md` §11 rows 4 and 7 marked done; `docs/operations.md`'s getting-started rewritten around the mandatory import; `docs/configuration.md` for the removed flags; `go-port-plan.md`'s Phase 7 rollback paragraph (§8). | The docs describe the shipped server. `make check` green. |
+| **1 ✅** | `examples/torture/` (§5.1) — `binary/` and its imported `yaml/`, with a `README` explaining each hostile case. | `dlctl import` on it succeeds, `dlctl lint --type=world` reports zero findings, and the checked-in `yaml/` matches a fresh import byte for byte. |
+| **2 ✅** | `dlctl verify --against` across `allTypes` (§3.4); the differential, idempotence and stability tests over all three corpora (§5.2); the three fuzz targets and their seed corpora (§5.3). | `verify --against` is green on `stock`, `mini` and `torture`; the fuzz targets run clean for the agreed budget; all of it is Go tests running under the existing `go test -race ./...`. |
+| **3 ✅** | Move both live suites onto yaml (§5.4): `newTestServer`, `newTestServerWith`, `bothFormats`, `session-parity.sh`. | `newTestServer` builds a yaml server; `test/play` runs `miniYAML` only; the full suite is green under `-race`; the deliberate `classic` differential tests are untouched. |
+| **4 ✅** | Delete the seven `--*-format` flags and their env vars; reject a removed `DLMUD_*` variable by name (§3.1); strip `config.Dir`'s format parameter; delete the `ObjectStore` fallback and `cmd/dlmud`'s legacy blank imports (§3.2); move `LegacySpares` out of `internal/game` into `persist/player/binary` (§1); retire `dlctl convert`'s no-`--type` mode (§3.4). | `dlmud --help` mentions no format; a test asserts the legacy decoder packages are not reachable from `cmd/dlmud`; `DLMUD_WORLD_FORMAT=classic` fails loudly with the migration command; `Config`'s default `LibDir` moves from `examples/stock/binary` to `examples/stock/yaml`. |
+| **5 ✅** | Legacy-layout detection and refusal at boot (§3.3). | Pointing `dlmud` at `examples/stock/binary` exits non-zero printing the exact working `dlctl import` line for it — asserted by running that line and booting the result. |
+| **6 ✅** | The defaults rule, its per-subsystem tables and minimal-document tests (§6); the `docs/deviations.md` entry this change owes under "Fidelity, phase two" (header above), plus the settled CRLF transform and the removed rent-containment format gate; `data-format.md` §11 rows 4 and 7 marked done; `docs/operations.md`'s getting-started rewritten around the mandatory import; `docs/configuration.md` for the removed flags; `go-port-plan.md`'s Phase 7 rollback paragraph (§8). | The docs describe the shipped server. `make check` green. |
 | **7** | `make release BUMP=v1.0.0`, with an upgrade note. | `release.yml` green, including the ILP32 checks, world parity, the licence check and the example-regeneration checks. |
 
 Rows 1–2 are worth landing even if the rest slips: they make the current

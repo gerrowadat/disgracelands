@@ -47,10 +47,10 @@ services:
       # image ships no world of its own, so without a mount here the server
       # has nothing to load at all.
       #
-      # The player data written back into it (pfiles/, plrobjs/, house/,
-      # etc/players) is gitignored, the same as when the server is run
-      # directly against this directory.
-      - ../examples/stock/binary:/data
+      # The player data written back into it (players/, state/) is
+      # gitignored, the same as when the server is run directly against
+      # this directory.
+      - ../examples/stock/yaml:/data
     # docker stop sends SIGTERM, which the server handles by saving and
     # shutting down cleanly. Give it room to finish.
     stop_grace_period: 45s

@@ -12,10 +12,8 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/gerrowadat/disgracelands/internal/game"
-	"github.com/gerrowadat/disgracelands/internal/persist/convert"
 	"github.com/gerrowadat/disgracelands/internal/persist/player"
 	"github.com/gerrowadat/disgracelands/internal/persist/player/ascii"
 	"github.com/gerrowadat/disgracelands/internal/persist/player/binary"
@@ -26,14 +24,20 @@ import (
 // (binary and ascii) to reformat between.
 var convertTypes = []dirType{typePfile}
 
-// cmdConvert has two shapes, chosen by whether --type is given.
+// cmdConvert copies a roster from one legacy format to another.
 //
-// With no --type, it turns a whole original CircleMUD data directory into
-// one the server can run on: player database reformatted, text converted
-// to UTF-8, and anything it does not understand left alone and reported —
-// this is unchanged from the original `dlctl convert`.
+// It used to have a second shape: with no --type it modernised a whole
+// legacy lib directory in place — text re-encoded to UTF-8, roster
+// reformatted, formats otherwise left as classic and ascii. That output
+// is not runnable by anything now (docs/proposals/yaml-only.md §1), so it
+// is retired rather than left to produce a directory the server refuses.
+// `dlctl import` is what turns a legacy directory into one that runs; it
+// does the transcoding too.
 //
-// With --type=pfile, it copies a roster from one format to another,
+// What is left is the --type=pfile half, and it is still a real thing to
+// want: reformatting a roster between binary and ascii without going near
+// yaml is how you compare a converted roster against the C server. It
+// copies a roster from one format to another,
 // without going anywhere near yaml — this is what used to be the separate
 // `dlctl convert --type=pfile` command. It is what makes the binary format an
 // input rather than something the server has to live with: convert an old
@@ -44,18 +48,13 @@ var convertTypes = []dirType{typePfile}
 // property of the binary doing the decoding.
 func cmdConvert(args []string) error {
 	fs := flag.NewFlagSet("convert", flag.ContinueOnError)
-	typeRaw := fs.String("type", "", "Subsystem to reformat: "+joinTypes(convertTypes)+
-		" (omit to modernise a whole legacy lib directory in place, same formats, text re-encoded to UTF-8)")
+	typeRaw := fs.String("type", "", "Subsystem to reformat: "+joinTypes(convertTypes)+" (required)")
 	fromDir := fs.String("from-dir", "", "Source directory")
 	toDir := fs.String("to-dir", "", "Destination directory")
 	fromFormat := fs.String("from-format", binary.FormatName, "Source format (--type=pfile only)")
 	toFormat := fs.String("to-format", ascii.FormatName, "Destination format (--type=pfile only)")
-	encoding := fs.String("encoding", convert.DefaultEncoding,
-		"Text encoding of the source (no --type only): "+strings.Join(encodingNames(), ", "))
 	dryRun := fs.Bool("dry-run", false, "Report what would happen without writing anything")
-	force := fs.Bool("force", false, "Overwrite an existing destination (no --type: a non-empty directory; "+
-		"--type=pfile: characters that already exist there)")
-	verbose := fs.Bool("verbose", false, "List every file, not just the ones that changed (no --type only)")
+	force := fs.Bool("force", false, "Overwrite characters that already exist in the destination")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
@@ -65,80 +64,17 @@ func cmdConvert(args []string) error {
 	}
 
 	if *typeRaw == "" {
-		return cmdConvertLib(*fromDir, *toDir, *encoding, *dryRun, *force, *verbose)
+		return fmt.Errorf("--type is required (have: %s).\n"+
+			"`convert` with no --type used to modernise a whole legacy lib directory in place, leaving the\n"+
+			"formats as they were. Nothing runs on that any more — use `dlctl import` instead, which converts\n"+
+			"every subsystem into the one format the server reads and re-encodes the text on the way:\n"+
+			"    dlctl import --from-dir=%s --to-dir=%s", joinTypes(convertTypes), *fromDir, *toDir)
 	}
 	t, err := parseType(*typeRaw, convertTypes)
 	if err != nil {
 		return err
 	}
 	return cmdConvertPfile(t, *fromDir, *fromFormat, *toDir, *toFormat, *dryRun, *force)
-}
-
-// cmdConvertLib turns an original CircleMUD data directory into one the
-// server can run on: player database reformatted, text converted to
-// UTF-8, and anything it does not understand left alone and reported.
-func cmdConvertLib(from, to, encoding string, dryRun, force, verbose bool) error {
-	enc, ok := convert.Encodings[encoding]
-	if !ok {
-		return fmt.Errorf("--encoding: unknown encoding %q (have: %s)",
-			encoding, strings.Join(encodingNames(), ", "))
-	}
-
-	report, err := convert.Run(context.Background(), convert.Options{
-		From: from, To: to, Encoding: enc,
-		DryRun: dryRun, Force: force,
-	})
-	if err != nil {
-		return err
-	}
-
-	out := bufio.NewWriter(os.Stdout)
-	defer func() { _ = out.Flush() }()
-
-	for _, e := range report.Entries {
-		if e.Action == convert.Copied && !verbose {
-			continue
-		}
-		if e.Note != "" {
-			_, _ = fmt.Fprintf(out, "%-12s %s\n             %s\n", e.Action, e.Path, e.Note)
-			continue
-		}
-		_, _ = fmt.Fprintf(out, "%-12s %s\n", e.Action, e.Path)
-	}
-
-	verb := "Converted"
-	if dryRun {
-		verb = "Would convert"
-	}
-	_, _ = fmt.Fprintf(out, "\n%s %s -> %s\n", verb, from, to)
-	_, _ = fmt.Fprintf(out, "  %d file(s) copied unchanged\n", report.Count(convert.Copied))
-	_, _ = fmt.Fprintf(out, "  %d transcoded to UTF-8\n", report.Count(convert.Transcoded))
-	_, _ = fmt.Fprintf(out, "  %d reformatted\n", report.Count(convert.Reformatted))
-
-	if n := report.Count(convert.Unsupported); n > 0 {
-		_, _ = fmt.Fprintf(out, "  %d left untouched (see below)\n", n)
-		_, _ = fmt.Fprintf(out, "\n%d file(s) are binary formats this cannot convert yet. They have been\n"+
-			"copied exactly as they are, because a byte-level conversion would corrupt\n"+
-			"them — they hold struct fields and length-prefixed text, not characters.\n"+
-			"Each is converted by the phase that implements the subsystem reading it:\n\n", n)
-		for _, e := range report.Entries {
-			if e.Action == convert.Unsupported {
-				_, _ = fmt.Fprintf(out, "  %s\n    %s\n", e.Path, e.Note)
-			}
-		}
-	}
-
-	for _, p := range report.Problems {
-		_, _ = fmt.Fprintf(out, "\nproblem: %s\n", p)
-	}
-
-	if err := out.Flush(); err != nil {
-		return err
-	}
-	if len(report.Problems) > 0 {
-		return errQuiet
-	}
-	return nil
 }
 
 // cmdConvertPfile copies a roster from one format to another under the

@@ -28,7 +28,7 @@ Phases 0–6 and as the reference for the architecture they built, and §5,
 §6 and §11 are exactly what the newer plan collects on. Two specific
 interactions worth knowing about before reading on: **Phase 7 (cutover) is
 now downstream of the yaml-only work** rather than the next thing up, and
-**its rollback paragraph is invalidated by it** — see the note at that
+**its rollback paragraph was rewritten by it** — see the note at that
 paragraph, and `yaml-only.md` §8.
 
 ---
@@ -2228,19 +2228,31 @@ The cutover itself, once the preconditions hold:
    always were, historical operational scripts for a tree this port
    is not the one running anymore.
 
-Rollback, if cutover needs to be undone: the C server tree is still
-buildable and `--lib-dir` is the same directory either format reads
-(§13's "the on-disk contract" note) — falling back is starting the C
-binary against the same data, not a migration in either direction.
+**Rollback, if cutover needs to be undone: the two servers no longer share
+a `--lib-dir`, and this is the paragraph [`yaml-only.md`](yaml-only.md)
+rewrote.**
 
-**This paragraph stops being true when
-[`yaml-only.md`](yaml-only.md) lands**, and is left standing rather than
-pre-emptively rewritten because it is accurate today. Once the server
-reads only `yaml`, the two servers no longer share a `--lib-dir`, and
-rolling back means running the C server against the pre-migration archive
-— intact, because `dlctl import` never writes to its source, but stale by
-however long the Go server ran. That plan's §8 sets out the cost and why
-it was accepted; its row 6 is what rewrites this paragraph for real.
+It used to say that the C server tree is still buildable and `--lib-dir`
+is the same directory either format reads (§13's "the on-disk contract"
+note), so falling back was starting the C binary against the same data,
+not a migration in either direction. That was accurate right up until the
+server stopped reading the legacy formats, which is what
+`yaml-only.md` did.
+
+What rollback means now: **running the C server against the
+pre-migration archive.** That archive is intact — `dlctl import` never
+writes to its source, which is the reason the conversion was built to
+require an explicit destination rather than working in place — but it is
+stale by however long the Go server ran, and everything since the
+migration is lost. There is no exporter, and `yaml-only.md` §0.3 declines
+to build one: it would be roughly 3,000 lines of `classic`/`ascii`/
+`binary` *writers* whose only consumer is a rollback nobody has needed.
+
+That is a real cost, accepted deliberately (`yaml-only.md` §8). For a game
+with no live players it is adequate. It would not be for a running
+service, and if precondition 4 above (revive the archived roster, or start
+clean?) ever resolves toward a real revival, the exporter question reopens
+with it.
 
 Not part of this phase, and worth saying so rather than leaving it
 implicit: this plan does not decide *whether* Disgracelands gets revived

@@ -98,32 +98,20 @@ which should not be getting copied around the filesystem.
 make run LIB=/srv/disgracelands/lib
 ```
 
-An *original* CircleMUD directory — an archive of the old server, say — needs
-converting first: its player database is the 32-bit binary format the server
-will not run on, and its text is not UTF-8.
+An *original* CircleMUD directory — an archive of the old server, say —
+has to be converted first, and pointing `--lib-dir` at one is refused at
+boot with the command to run. One command converts the lot, and never
+writes to the source:
 
 ```sh
-make convert FROM=/path/to/old/lib TO=out/converted
-make run LIB=out/converted
+make lib-import FROM=/path/to/old/lib TO=out/data
+make run LIB=out/data
 ```
 
-`dlctl convert` reports what it changed and leaves anything it does not
-understand alone; `--dry-run` shows you the report without writing. There is
-more on it in `docs/operations.md`.
-
-For the `yaml` format instead — one file per zone and per character,
-rather than the original CircleMUD file shapes `convert` above keeps —
-point `make lib-import` at the *original* archive directly, not at
-`out/converted`:
-
-```sh
-make lib-import FROM=/path/to/old/lib TO=out/yaml
-make run LIB=out/yaml FLAGS="--world-format=yaml --state-format=yaml --names-format=yaml --messages-format=yaml --socials-format=yaml --help-format=yaml"
-```
-
-`docs/operations.md`'s own "Converting into the yaml format" section has
-the full walkthrough, including a real, current gap worth knowing about
-before trusting the result on an archive with actual accented text in it.
+`dlctl import` verifies its own output by default: it loads both
+directories afterwards and compares them subsystem by subsystem, and
+fails the import if they do not agree. `docs/operations.md`'s own
+"Converting into the yaml format" section has the full walkthrough.
 
 ### TLS
 

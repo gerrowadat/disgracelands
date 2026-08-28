@@ -134,19 +134,14 @@ func maximumCharacter() *game.PlayerRecord {
 		})
 	}
 
-	// Every spare slot non-zero and distinct. These are char_file_u's
-	// reserved padding, which the C server's own documentation tells
-	// people to use when adding a field — so a value in one is not
-	// necessarily junk, and a reader that zeroes them is losing data.
-	for i := range r.Spares.Bytes {
-		r.Spares.Bytes[i] = int32(11 + i)
-	}
-	for i := range r.Spares.Ints {
-		r.Spares.Ints[i] = int32(2001 + i)
-	}
-	for i := range r.Spares.Longs {
-		r.Spares.Longs[i] = int64(300001 + i)
-	}
+	// char_file_u's reserved padding is not set here, and cannot be: the
+	// slots stopped being a field on game.PlayerRecord when they moved
+	// into internal/persist/player/binary, where they belong
+	// (docs/proposals/yaml-only.md §1). They are a property of the stored
+	// record rather than of a character — nothing in the game reads or
+	// sets one — and binary's Store.Save carries them across from the
+	// record it is replacing, which is the behaviour worth having and the
+	// one its own tests pin.
 	return r
 }
 

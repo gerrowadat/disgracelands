@@ -86,24 +86,22 @@ type Server struct {
 	// specially) means nothing is disallowed, matching Valid_Name's own
 	// posture when num_invalid is 0 (ban.c:263-264).
 	names []string
-	// clockFormat/clockPath locate the persisted mud-clock epoch
+	// clockPath is where the persisted mud-clock epoch is saved back to
 	// (internal/persist/clock). An empty clockPath disables persistence —
 	// the clock still runs, it just always starts from time.Now() the way
 	// it always used to, which is what a test world gets by default.
-	clockFormat string
-	clockPath   string
-	// worldFormat/worldDir/worldMini locate the world data on disk, kept
+	clockPath string
+	// worldDir/worldMini locate the world data on disk, kept
 	// around after boot (the Source itself is closed once Live exists)
 	// so `reloadmob` can re-open the same source and read a definition
 	// back afresh. An empty worldDir disables it — the same posture
 	// clockPath's absence already takes for clock persistence, and what
 	// a test world gets by default.
-	worldFormat string
-	worldDir    string
-	worldMini   bool
-	auth        auth.Verifier
-	text        *Text
-	logger      *slog.Logger
+	worldDir  string
+	worldMini bool
+	auth      auth.Verifier
+	text      *Text
+	logger    *slog.Logger
 
 	// wizlock is the C's `circle_restrict` (db.c:60): the minimum level
 	// allowed in, set at runtime by the `wizlock` command and at boot by
@@ -151,6 +149,17 @@ type Server struct {
 	zoneTicks int32
 }
 
+// DataFormat is the one on-disk format the server reads and writes.
+//
+// It is a constant rather than a configured string because there is
+// nothing to configure: docs/proposals/yaml-only.md §0 settles that the
+// server understands exactly one format, and every `--*-format` flag is
+// gone. The registries in internal/persist stay — `dlctl` opens `classic`,
+// `binary` and `ascii` by name and always will, and a Source backed by a
+// tarball or an embedded FS is still something someone might want — so
+// what is named here is which one *this* program registers and asks for.
+const DataFormat = "yaml"
+
 // Options configure a Server.
 type Options struct {
 	Engine  *engine.Engine
@@ -164,24 +173,20 @@ type Options struct {
 	Reports reports.Store
 	// Names is the xnames disallowed-substring list (see Server.names).
 	Names []string
-	// ClockFormat/ClockPath locate the persisted mud-clock epoch (see
-	// Server.clockFormat/clockPath). Loading the epoch itself happens
-	// before a Server exists (it has to be applied to the *game.Live
-	// before anyone can see the clock) — these are only where a save
-	// later goes back to.
-	ClockFormat string
-	ClockPath   string
-	// WorldFormat/WorldDir/WorldMini locate the world data on disk (see
-	// Server.worldFormat/worldDir/worldMini) — for `reloadmob` to
-	// re-open the same world.Source cmd/dlmud/main.go's own boot path
+	// ClockPath is where the persisted mud-clock epoch is saved back to.
+	// Loading it happens before a Server exists (it has to be applied to
+	// the *game.Live before anyone can see the clock); this is only the
+	// destination.
+	ClockPath string
+	// WorldDir/WorldMini locate the world data on disk — for `reloadmob`
+	// to re-open the same world.Source cmd/dlmud/main.go's own boot path
 	// used, and read one definition back afresh.
-	WorldFormat string
-	WorldDir    string
-	WorldMini   bool
-	Auth        auth.Verifier
-	Text        *Text
-	Logger      *slog.Logger
-	Restrict    bool
+	WorldDir  string
+	WorldMini bool
+	Auth      auth.Verifier
+	Text      *Text
+	Logger    *slog.Logger
+	Restrict  bool
 	// NoSpecials suppresses special procedures (C: -s).
 	NoSpecials bool
 	// FreezeMobiles stops the mobile-activity pulse running at all, which
@@ -215,9 +220,7 @@ func New(opts Options) *Server {
 		bans:          opts.Bans,
 		reports:       opts.Reports,
 		names:         opts.Names,
-		clockFormat:   opts.ClockFormat,
 		clockPath:     opts.ClockPath,
-		worldFormat:   opts.WorldFormat,
 		worldDir:      opts.WorldDir,
 		worldMini:     opts.WorldMini,
 		auth:          opts.Auth,

@@ -42,20 +42,6 @@ type Text struct {
 	// dir is the data directory these were read from, so `reload` can read
 	// them again. Set by LoadText and never changed.
 	dir string
-	// messagesFormat is misc/messages'/config/messages.yaml's format —
-	// stored alongside dir for the same reason, so Reload (which does not
-	// currently reload messages at all; see its own doc comment) still
-	// passes LoadText the format it was originally configured with.
-	messagesFormat string
-	// socialsFormat is misc/socials'/config/socials.yaml's format, the
-	// same reasoning and the same non-involvement in Reload's swap map.
-	socialsFormat string
-	// helpFormat is text/help's format — classic (index + .hlp files) or
-	// yaml (help.yaml + one .txt per entry), both under the same
-	// directory (internal/persist/help's own package doc explains why).
-	// Unlike messages/socials, help *is* in Reload's swap map (`xhelp`),
-	// so this is read by Reload as well as stored for it.
-	helpFormat string
 
 	greeting   string
 	motd       string
@@ -117,10 +103,10 @@ const (
 	handbookFile   = "text/handbook"
 	wizlistFile    = "text/wizlist"
 	immlistFile    = "text/immlist"
-	// socialsFile is not text/ — the C's SOCMESS_FILE is lib/misc/socials.
-	socialsFile = "misc/socials"
-	// socialsConfigDir is where config/socials.yaml lives under yaml —
-	// the same config/ directory names.yaml/messages.yaml already share.
+	// socialsConfigDir is where config/socials.yaml lives — the same
+	// config/ directory names.yaml and messages.yaml share. (The C's own
+	// SOCMESS_FILE was lib/misc/socials; `dlctl` still knows that and
+	// nothing else does.)
 	socialsConfigDir = "config"
 
 	// helpDir and helpScreenFile are text/help/ (both formats' directory,
@@ -129,10 +115,8 @@ const (
 	helpDir        = "text/help"
 	helpScreenFile = "text/help/screen"
 
-	// messagesFile is MESS_FILE (db.h:89): lib/misc/messages.
-	messagesFile = "misc/messages"
-	// messagesConfigDir is where config/messages.yaml lives under yaml
-	// — the same config/ directory names.yaml already shares.
+	// messagesConfigDir is where config/messages.yaml lives. (MESS_FILE,
+	// db.h:89, was lib/misc/messages.)
 	messagesConfigDir = "config"
 )
 
@@ -165,8 +149,8 @@ const (
 )
 
 // LoadText reads the canned files from a data directory.
-func LoadText(dir, messagesFormat, socialsFormat, helpFormat string) (*Text, error) {
-	t := &Text{dir: dir, messagesFormat: messagesFormat, socialsFormat: socialsFormat, helpFormat: helpFormat}
+func LoadText(dir string) (*Text, error) {
+	t := &Text{dir: dir}
 
 	// Required. The licence names both of these.
 	for _, f := range []struct {
@@ -215,11 +199,8 @@ func LoadText(dir, messagesFormat, socialsFormat, helpFormat string) (*Text, err
 	// this port takes to anything that is not a licence obligation. classic
 	// is a file, yaml a directory — the same asymmetry messages already
 	// has, just below.
-	socialsPath := filepath.Join(dir, socialsFile)
-	if socialsFormat == "yaml" {
-		socialsPath = filepath.Join(dir, socialsConfigDir)
-	}
-	socialsList, err := socials.Load(socialsFormat, socialsPath)
+	socialsPath := filepath.Join(dir, socialsConfigDir)
+	socialsList, err := socials.Load(DataFormat, socialsPath)
 	if err != nil {
 		return nil, fmt.Errorf("reading %s: %w", socialsPath, err)
 	}
@@ -232,7 +213,7 @@ func LoadText(dir, messagesFormat, socialsFormat, helpFormat string) (*Text, err
 	// yaml share the same directory (internal/persist/help's own doc
 	// comment explains why), unlike messages/socials' file-vs-directory
 	// split.
-	helpEntries, err := help.Load(helpFormat, filepath.Join(dir, helpDir))
+	helpEntries, err := help.Load(DataFormat, filepath.Join(dir, helpDir))
 	if err != nil {
 		return nil, fmt.Errorf("reading %s: %w", filepath.Join(dir, helpDir), err)
 	}
@@ -242,11 +223,8 @@ func LoadText(dir, messagesFormat, socialsFormat, helpFormat string) (*Text, err
 	// porting load_messages (fight.c:145-193). classic is a file, yaml
 	// a directory — the same asymmetry every other pluggable format in
 	// this tree already has.
-	messagesPath := filepath.Join(dir, messagesFile)
-	if messagesFormat == "yaml" {
-		messagesPath = filepath.Join(dir, messagesConfigDir)
-	}
-	records, err := messages.Load(messagesFormat, messagesPath)
+	messagesPath := filepath.Join(dir, messagesConfigDir)
+	records, err := messages.Load(DataFormat, messagesPath)
 	if err != nil {
 		return nil, fmt.Errorf("reading %s: %w", messagesPath, err)
 	}
@@ -452,7 +430,7 @@ func (t *Text) Reload(what string) error {
 	// the old text in place rather than blanking it, which is not the C's
 	// behaviour — file_to_string_alloc leaves the pointer alone on failure
 	// too, so the effect is the same and the reasoning is explicit.
-	fresh, err := LoadText(t.dir, t.messagesFormat, t.socialsFormat, t.helpFormat)
+	fresh, err := LoadText(t.dir)
 	if err != nil {
 		return err
 	}

@@ -28,7 +28,7 @@ func (s *Server) ReloadShop(w *game.Live, vnum game.ShopVnum) error {
 		return ErrWorldReloadNotConfigured
 	}
 
-	src, err := world.Open(s.worldFormat, world.Config{Dir: s.worldDir, Mini: s.worldMini})
+	src, err := world.Open(DataFormat, world.Config{Dir: s.worldDir, Mini: s.worldMini})
 	if err != nil {
 		return err
 	}

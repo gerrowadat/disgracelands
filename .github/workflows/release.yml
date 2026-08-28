@@ -326,7 +326,7 @@ jobs:
         run: go test -tags=play -race -count=1 -timeout 30m ./test/play/...
 
       - name: Lint the world files
-        run: go run ./cmd/dlctl lint --type=world --dir=examples/stock/binary
+        run: go run ./cmd/dlctl lint --type=world --dir=examples/stock/yaml --format=yaml
 
       - name: docs/configuration.md covers every flag
         run: |

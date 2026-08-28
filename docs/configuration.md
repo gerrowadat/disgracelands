@@ -34,162 +34,108 @@ every flag appears here, but it cannot check that the prose is accurate.
 
 | Flag | Default | Meaning |
 |---|---|---|
-| `--lib-dir` | `examples/stock/binary` | Runtime data directory: world files, help text, boards, player data. The same directory the C server takes with `-d`. |
-| `--player-dir` | *(empty)* | Player-data directory. Empty means `<lib-dir>/pfiles` (`ascii`/`binary`) or `<lib-dir>/players` (`yaml`), following `--player-format`. |
+| `--lib-dir` | `examples/stock/yaml` | Runtime data directory: world files, help text, boards, player data. The same directory the C server takes with `-d`, in this server's own format. |
+| `--player-dir` | *(empty)* | Player-data directory. Empty means `<lib-dir>/players`. |
 | `--world-dir` | *(empty)* | World-data directory. Empty means `<lib-dir>/world`. |
 | `--config` | *(empty)* | Overrides where the game-tuning file is read from (see "A config file: `<lib-dir>/config/game.yaml`" below). Empty means `<lib-dir>/config/game.yaml`, and no file there means `config.c`'s own defaults. |
 
 The default points at `examples/stock/README.md`'s checked-in stock world
 so a fresh clone boots something playable with no setup — point
-`--lib-dir` at your own directory (converted from the real archive, or
-anything else) for anything beyond trying the server out.
+`--lib-dir` at your own directory for anything beyond trying the server
+out. **That directory has to be one `dlctl import` produced**: pointing
+`--lib-dir` at a CircleMUD `lib/` is refused at boot, with the exact
+command to convert it. See "The data format" below.
 
 Whatever `--lib-dir` points at is **mutable state** — players, houses,
 boards, mail, and any world files edited in-game. Back it up; mount it as
 a volume in a container.
 
-## Formats
+## The data format
 
-| Flag | Default | Values |
-|---|---|---|
-| `--player-format` | `ascii` | `ascii`, `yaml` |
-| `--world-format` | `classic` | `classic`, `yaml` |
-| `--state-format` | `classic` | `classic`, `yaml` |
-| `--names-format` | `classic` | `classic`, `yaml` |
-| `--messages-format` | `classic` | `classic`, `yaml` |
-| `--socials-format` | `classic` | `classic`, `yaml` |
-| `--help-format` | `classic` | `classic`, `yaml` |
+There is one, and there is nothing to select. The seven `--*-format`
+flags this server used to have — `--player-format`, `--world-format`,
+`--state-format`, `--names-format`, `--messages-format`,
+`--socials-format`, `--help-format` — are **gone**, along with their
+`DL_*_FORMAT` environment variables. A flag whose only valid value is its
+default is noise, and leaving one invites a future reader to think the
+seam is still live.
 
-`ascii` is the ascii_pfiles 2.1 one-text-file-per-player format. `classic`
-is the original CircleMUD `.wld`/`.mob`/`.obj`/`.zon`/`.shp` flat-file world.
-Both are what `examples/stock/binary/` (the default `--lib-dir`) is kept
-in, and both remain the overall default so pointing the server at a real
-converted archive needs no conversion step either.
+The format is the YAML-over-JSON one `docs/design/data-format.md`
+describes: one file per zone for the world, one file per character
+(folding in the roster entry and the rent/crash file both, §8), one
+`state/` directory for the clock, boards, mail, bans, houses and reports,
+`config/` for the disallowed-name list, the damage messages and the
+socials, and `text/help/` for the help database.
 
-`yaml` is the YAML-over-JSON format `docs/design/data-format.md`
-describes — for the world, one file per zone; for players, one file per
-character, folding in the roster entry and the rent/crash file both (§8) —
-read and written directly by the server, no conversion step needed to run
-on it once converted. `--player-format=yaml` is also what turns on real
-container nesting (an item saved inside a bag comes back inside it): every
-other player format's on-disk shape has nowhere to record that, a
-deliberate, documented deviation — see `docs/deviations.md`, "Renting
-empties your bags and strips your body".
+If you set one of the removed environment variables, the server **fails
+to start and names it**, rather than ignoring it — a container that has
+had `DL_WORLD_FORMAT=classic` in its unit file for years quietly booting
+on data it was not pointed at is the most likely way this release goes
+wrong for somebody.
 
-Throughout the examples below, `data` stands for whatever lib-dir you are
-converting — it is `dlctl`'s own default for these flags, not a directory
-this repository has. The one that ships is `examples/stock/binary`, which
-is also `dlmud`'s default `--lib-dir`.
+### Converting a CircleMUD lib/
 
-Convert a whole `lib/`-shaped directory — world, roster, bans, boards,
-mail, houses, reports, the clock, xnames, damage messages, socials and
-the help database — into one fresh `yaml` directory in a single command:
+`dlctl import` is the only path from an archived `lib/` to a directory
+this server runs on, and it is one command:
 
 ```sh
-dlctl import --from-dir=data --to-dir=data-yaml
+dlctl import --from-dir=/srv/lib --to-dir=/srv/data
 ```
 
-This is the seven `--type` conversions below run in order against
-`--from-dir` — a base directory `dlctl` resolves each `--type`'s own
-subpath under, the same way `--lib-dir` does for `dlmud` itself (`world/`
-either way; `etc/`/`pfiles/` vs `players/` for `pfile`, depending on
-format; `etc/`/`house/`/`misc/` vs one `state/` for `state`; `misc/` vs
-`config/` for `names`/`messages`/`socials`; `text/help/` either way) —
-plus `text/`'s plain-text files copied across unchanged and, once
-everything else has succeeded, a `.dlversion` stamp naming this build's
-own release written into `--to-dir` (see "The yaml format's own version"
-below). Each of the seven also runs on its own, with `--type`:
+The source is never written to. Everything comes across in one pass —
+world, roster (including rent and crash files and aliases), bans, boards,
+mail, houses, reports, the clock, the disallowed names, the damage
+messages, the socials and the help database — plus `text/`'s plain prose
+copied unchanged and `config/game.yaml` carried over, and finally a
+`.dlversion` stamp naming the release that wrote it.
 
-Convert an existing world directory once:
+It then **verifies its own output** by loading both directories and
+comparing them subsystem by subsystem, and fails the import if they do
+not agree (`--verify=false` turns that off). See `docs/operations.md`,
+"Checking a conversion lost nothing".
+
+Point `--lib-dir` at `/srv/data` and you are done. Pointing it at
+`/srv/lib` instead gets you this, before anything is opened:
+
+```
+/srv/lib is a CircleMUD lib/ directory, not a Disgracelands data directory:
+it has world/zone.lst (the C server's zone list), misc/socials (a classic
+socials table). This server reads one on-disk format; convert it once (the
+source is not written to) and point --lib-dir at the result — see
+docs/operations.md:
+    dlctl import --from-dir=/srv/lib --to-dir=<somewhere>
+```
+
+Each subsystem also converts on its own, with `--type=world`, `pfile`,
+`state`, `names`, `messages`, `socials` or `help`, for a directory laid
+out unusually or a conversion done in stages. `dlctl` keeps its own
+`--from-format` for saying which legacy format a source is in: `classic`
+for the world and the four text tables, `binary` or `ascii` for a roster.
+
+**None of the legacy decoders are in the server binary at all.** They are
+not deleted from the tree and never will be — `classic` is the world
+parity oracle for as long as the C server is authoritative, and `binary`
+is the only thing that can read an archived roster — but they belong to
+`dlctl` now. A legacy format is *absent* from `dlmud`, not merely refused
+by it.
+
+### Reformatting a roster between the two legacy formats
+
+`dlctl convert --type=pfile` still copies a roster between `binary` and
+`ascii` without going near yaml, which is a real thing to want when
+comparing a converted roster against the C server:
 
 ```sh
-dlctl import --type=world --from-dir=data --to-dir=data
+dlctl convert --type=pfile --from-format=binary --from-dir=/srv/lib \
+                           --to-format=ascii    --to-dir=/srv/scratch
 ```
 
-Convert an existing roster once, into `ascii`:
-
-```sh
-dlctl convert --type=pfile --from-format=binary --from-dir=data \
-                            --to-format=ascii    --to-dir=data
-```
-
-— or into `yaml`, which also carries over any rent/crash file (read via
-`binary`, since rent files are not pluggable the way the roster is — one
-format for them regardless of `--player-format`, matching the C):
-
-```sh
-dlctl import --type=pfile --from-dir=data --to-dir=data
-```
-
-`--state-format` covers bans, boards, mail, player housing, the mud
-clock and the bug/idea/typo reports together — one flag, since they end
-up in one directory (`data/state/` under `yaml`) and there is no
-reason to convert boards without mail. Convert an existing set once
-(`--from-house-dir`/`--from-misc-dir` override the `house/`/`misc/`
-`dlctl` would otherwise derive from `--from-dir`, for an archive that
-keeps them somewhere else):
-
-```sh
-dlctl import --type=state --from-dir=data --to-dir=data
-```
-
-`--names-format` covers the disallowed-name list on its own
-(`misc/xnames` under `classic`, `data/config/names.yaml` under `yaml`)
-— its own flag because `config/` is a different directory than `state/`
-is, not one that happens to move with the five stores above. Convert an
-existing list once:
-
-```sh
-dlctl import --type=names --from-dir=data --to-dir=data
-```
-
-`--messages-format` covers the `skill_message`/`dam_message` table on its
-own (`misc/messages` under `classic`, `data/config/messages.yaml` under
-`yaml`) — its own flag for the same reason `--names-format` is: it
-shares `config/` with the disallowed-name list, but the two are otherwise
-unrelated administrative concerns and do not need to move together.
-Convert an existing table once:
-
-```sh
-dlctl import --type=messages --from-dir=data --to-dir=data
-```
-
-`--socials-format` covers the `do_action` table on its own (`misc/socials`
-under `classic`, `data/config/socials.yaml` under `yaml`) — its own
-flag for the same reason `--messages-format` is: it shares `config/`
-with the disallowed-name list and the damage-message table, but the
-three are otherwise unrelated administrative concerns and do not need to
-move together. Convert an existing table once:
-
-```sh
-dlctl import --type=socials --from-dir=data --to-dir=data
-```
-
-`--help-format` covers the help database — `text/help/index` plus the
-`.hlp` files it lists under `classic`, `text/help/help.yaml` plus one
-`.txt` file per entry under `yaml`. Unlike the three flags above, both
-formats live in the *same* directory (`text/help/`) rather than `misc/`
-versus `config/`: they simply never read each other's files, so a
-converted tree can sit right beside the classic one it came from.
-Convert an existing archive once (`--to-dir` defaults to the same base
-as `--from-dir`, so this runs in place unless told otherwise):
-
-```sh
-dlctl import --type=help --from-dir=data --to-dir=data
-```
-
-**The server will not start on `--player-format=binary`**, and says so with
-the conversion command in the error. The binary format is the original
-`struct char_file_u` flat file the C server writes, and its password field
-is eleven bytes — it cannot hold a modern hash at all, and every other field
-in it is fixed-width. It remains fully readable and writable by `dlctl`,
-because conversion needs both directions; it is simply not something a live
-server should be stuck behind. See
-`docs/proposals/go-port-plan.md` §5.2.
+`dlctl convert` with no `--type` is retired. It used to modernise a whole
+legacy directory in place, leaving the formats as they were; nothing runs
+on that output now, so it points at `import` instead.
 
 See `docs/investigations/ascii-pfile-format.md` for what the ascii format
-contains, and `docs/proposals/go-port-plan.md` §5 for why formats are
-pluggable at all.
+contains, and `docs/proposals/yaml-only.md` for why there is one format.
 
 ### The yaml format's own version
 

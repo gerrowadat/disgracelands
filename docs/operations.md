@@ -419,7 +419,7 @@ obscurely.
 ### Checking the world files
 
 ```sh
-dlctl lint --type=world --dir=lib
+dlctl lint --type=world --dir=/srv/data --format=yaml
 ```
 
 Replaces `reference/moderncserver/src/util/scheck` and the C server's `-c`
@@ -438,12 +438,16 @@ Findings come in three severities:
 errors. Exit status is non-zero if anything at the failing severity was
 found, so it works directly as a CI step.
 
-`lint --type=world` also reports world text that is not valid UTF-8, which
-is how you find out a directory still needs converting. The server works
-in UTF-8; see `dlctl convert` above.
+`lint --type=world` also reports world text that is not valid UTF-8,
+which is how you find out a directory has not been through `dlctl import`
+with the right `--encoding`. The server works in UTF-8; see "Converting an
+old data directory" below.
 
-The shipped world currently reports **0 errors, 11 warnings, 12 notes**. The
-warnings are worth knowing about:
+The shipped world (`examples/stock/yaml`, the default `--lib-dir`) lints
+clean. The *unconverted* source beside it,
+`examples/stock/binary`, reports 0 errors, 11 warnings and 12 notes, and
+the warnings are worth knowing about because they are facts about stock
+CircleMUD rather than about the conversion:
 
 - Four complete zones (23, 90, 92, 147) and two further `.zon` files exist
   in `examples/stock/binary/world/` but appear in no index, so nothing ever loads them. This
@@ -461,101 +465,58 @@ weight when it is lighter than the liquid it holds.
 
 ### Converting an old data directory
 
-If you have an original CircleMUD `lib/`, convert the whole thing once:
+**This is the only path from a CircleMUD `lib/` to a directory this
+server runs on.** There is no in-place compatibility, no fallback flag
+and no auto-conversion: `dlmud` reads one on-disk format, and pointing
+`--lib-dir` at an archive is refused at boot with this command in the
+message.
 
 ```sh
-dlctl convert --from-dir=/path/to/old/lib --to-dir=data --dry-run   # look first
-dlctl convert --from-dir=/path/to/old/lib --to-dir=data
+dlctl import --from-dir=/path/to/old/lib --to-dir=/srv/data
 ```
 
-That does three things: reformats the binary player database as ascii
-pfiles, converts text from CP1252 to UTF-8, and copies everything else
-across. `--encoding=latin1` if the source really is Latin-1 rather than
-CP1252 — they differ only at bytes 0x80–0x9F, which is exactly where the
-curly quotes a word processor inserts live, so the default is usually right.
+The source is never written to, and the destination is somewhere you
+chose. One pass converts the lot:
 
-**It refuses to guess.** Several files in a CircleMUD data directory are
-struct dumps rather than text — the message boards, player mail, house
-contents, rent files. Running a byte-level transcode over one of those
-corrupts it twice: once by rewriting bytes that were never characters, and
-again by changing the length of text whose length is stored separately in
-the file. Those are copied byte for byte and listed at the end of the run:
+- the **world** — one file per zone, CP1252 decoded to UTF-8, escape
+  codes demoted to named colour markup;
+- the **roster**, including every character's rent and crash file and
+  their aliases, folded into one file per character;
+- the **state** — bans, boards, mail, houses, the bug/idea/typo reports
+  and the mud clock — into one `state/` directory;
+- the **disallowed names**, the **damage messages** and the **socials**
+  into `config/`, and the **help database** into `text/help/`;
+- `text/`'s plain prose and `config/game.yaml` copied across unchanged, so
+  a tuned directory keeps its tuning;
+- and, once everything else has succeeded, a `.dlversion` stamp naming
+  the release that wrote it (`docs/design/data-format-versioning.md`).
+  Use a *released* `dlctl` for a directory you intend to run: an
+  unreleased build has no version to write and stamps nothing.
 
-```
-5 file(s) are binary formats this cannot convert yet. They have been
-copied exactly as they are, because a byte-level conversion would corrupt
-them — they hold struct fields and length-prefixed text, not characters.
+`--encoding=latin1` if the source really is Latin-1 rather than CP1252 —
+they differ only at bytes 0x80–0x9F, which is exactly where the curly
+quotes a word processor inserts live, so the default is usually right.
 
-  etc/board.mort
-    message board: a struct dump with length-prefixed text; read as-is, but its text is not transcoded
-```
+Unlike the directory-level converter this replaced, **the struct-dump
+formats are decoded rather than copied**. The boards, the mail, the house
+contents, the rent files and the house control file all come across as
+records, with the text inside them transcoded — which the old converter
+could not do, and said so.
 
-**The server reads all five of those formats as they are**, so a converted
-directory is fully usable — the copy is not a placeholder. What is still
-outstanding is narrower than it sounds: three of the five (the rent files,
-the house contents and the house control file) hold no text at all, and for
-the other two — the boards and the mail — the CP1252 text *inside* the
-records is left as it was. Transcoding that means decoding each record,
-converting its strings and rewriting the lengths stored beside them, which
-is a per-format job rather than something a directory-level converter can do.
+Each subsystem also runs on its own with `--type=world`, `pfile`,
+`state`, `names`, `messages`, `socials` or `help`, for an archive laid
+out unusually or a conversion done in stages. `--from-house-dir`/
+`--from-misc-dir`/`--from-objs-dir`/`--from-alias-dir` override the
+subdirectories `dlctl` would otherwise derive.
 
-Converting into a directory that already has something in it needs
-`--force`, and converting a directory into itself is refused outright — a
-conversion that failed part way would otherwise leave it half done.
+### Checking a conversion lost nothing
 
-### Converting into the yaml format
-
-`dlctl convert` (above) modernises a `lib/` in place — CP1252 to UTF-8,
-the player database reformatted as `ascii` pfiles — but keeps everything
-in the original CircleMUD file shapes: `classic` world files, one board
-per file, a struct-dump mail file. `dlctl import` (no `--type`) goes
-further and produces a single `yaml` directory instead — one file per
-zone and per character, `config/`/`state/`/`text/help/help.yaml` for the
-rest — read and written directly by the server with no further
-conversion step. See `docs/design/data-format.md`.
-
-Point it straight at the original archive, not at `dlctl convert`'s own
-output — the two do not chain, since `dlctl convert` relocates the
-roster to `pfiles/` and `import` expects it where the archive itself
-keeps it:
-
-```sh
-dlctl import --from-dir=/path/to/old/lib --to-dir=data-yaml
-```
-
-That is the seven `import --type=world`/`pfile`/`state`/`names`/
-`messages`/`socials`/`help` conversions, run in order against
-`--from-dir`'s own `world/`/`etc/`/`misc/`/`house/`/`text/`
-subdirectories (`dlctl` works out which of those a given `--type` needs —
-see "Pointing dlctl at a directory" below), plus the plain-text files
-under `text/` and the game tuning at `config/game.yaml` copied across
-unchanged — a tuned directory keeps its tuning through the conversion —
-and, once everything else has succeeded, `--to-dir` stamped with this
-build's own release version (`docs/design/data-format-versioning.md`) —
-which is what a later `dlmud` compares against its own before it will boot
-on the result. Use a released `dlctl` for a directory you intend to run: an
-unreleased build has no version to stamp with, and says so instead of
-writing one.
-
-**Check the result for text that did not get transcoded.** Only two of
-the seven — `world` and `pfile` — have their own `--encoding` flag and
-decode CP1252 the way `dlctl convert` does; the other five assume the
-source is already UTF-8. A real archive with a curly quote in a social or
-an accented name on the disallowed-name list will carry that byte
-straight through into a `.yaml` file that is not actually valid UTF-8.
-This is real and current, not a hypothetical — see
-`docs/design/data-format.md` §11.1 and `TODO.md` for the exact gap and
-which importers still need it. Check with:
-
-```sh
-find data-yaml/config data-yaml/state data-yaml/text/help -type f \
-  -exec sh -c 'iconv -f UTF-8 -t UTF-8 "$1" >/dev/null || echo "not valid UTF-8: $1"' _ {} \;
-```
-
-Nothing printed means nothing slipped through. `world` and `pfile`'s own
-output needs no such check — `dlctl lint --type=world` already reports
-invalid UTF-8 in world text, and covers `data-yaml` the same way it
-covers any other `--dir`.
+`import` does this itself, by default: once it has written the
+destination it loads **both** directories and compares them, and fails
+the import — leaving the output unstamped, so a server will not boot on
+it — if they do not agree. `--verify=false` skips it. The same comparison
+is `dlctl verify --against`, a command in its own right; see "Checking a
+conversion lost nothing" under "Inspecting player data" below.
 
 ### Pointing dlctl at a directory
 
@@ -563,13 +524,21 @@ Every `dlctl` command above takes a base directory (`--dir`, or
 `--from-dir`/`--to-dir` for the two that move data between two of them) —
 never a leaf subdirectory. Point it at the archive root (or your `data/`),
 and `dlctl` works out where a given `--type` actually lives under it, the
-same way `dlmud --lib-dir` does: `world/` either way, `etc/`/`pfiles/` vs
-`players/` for pfile depending on format, `etc/`/`house/`/`misc/` vs one
-`state/` for state, `misc/` vs `config/` for names/messages/socials,
-`text/help/` either way. Pointing `--dir` straight at, say, a `pfiles/`
-directory does not work — classic and yaml no longer agree closely enough
-on shape for that to be reliable, which is why this indirection exists at
-all.
+same way `dlmud --lib-dir` does. `dlctl` is the one program that still
+knows *both* layouts, and which one it uses is what `--format` (or
+`--from-format`) selects:
+
+| `--type` | legacy | converted |
+|---|---|---|
+| `world` | `world/` | `world/` |
+| `pfile` | `etc/` (`binary`) or `pfiles/` (`ascii`) | `players/` |
+| `state` | `etc/`, `house/`, `misc/` | `state/` |
+| `names`, `messages`, `socials` | `misc/` | `config/` |
+| `help` | `text/help/` | `text/help/` |
+
+Pointing `--dir` straight at, say, a `pfiles/` directory does not work —
+the two layouts do not agree closely enough on shape for that to be
+reliable, which is why this indirection exists at all.
 
 **A lib dir imported before 2026-08-24 has truncated mail; import it
 again.** Until then the classic mail codec read a block chain's links as
@@ -594,11 +563,11 @@ diff /tmp/mail-recheck/state/mail.yaml data-yaml/state/mail.yaml
 No output means the old import was already correct. Otherwise take the new
 file: every difference will be a message the old one cut short.
 
-### Converting only the player roster
+### Reformatting a roster between the two legacy formats
 
-The server runs on the ascii format and refuses to start on the original
-binary one — see `docs/configuration.md`. An existing data directory is
-converted once:
+Neither is a format the server runs on any more — `dlctl import` is what
+produces a directory it runs on. This is for comparing a converted roster
+against the C server, which reads `binary` and nothing else:
 
 ```sh
 dlctl convert --type=pfile --from-format=binary --from-dir=data \
@@ -614,8 +583,11 @@ character.
 Passwords are carried across as-is. They are still legacy `crypt(3)` hashes
 and upgrade individually on each character's next successful login.
 
-Conversion runs in both directions, which is how you compare a converted
-roster against the C server, or undo a migration.
+Conversion runs in both directions.
+
+`dlctl convert` with no `--type` is retired. It used to modernise a whole
+legacy directory in place, leaving the formats as they were; nothing runs
+on that output now, and the command says so and points at `import`.
 
 ### Inspecting player data
 

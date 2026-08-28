@@ -149,21 +149,19 @@ func repoRoot() string {
 	}
 }
 
-// lib describes one of the checked-in example data directories, and the
-// flags the server needs to read it.
+// lib describes one of the checked-in example data directories.
 //
-// There is one of them now (see mini below). The type stays a type rather
-// than collapsing into two constants because what it carries — a source
-// directory and the flags to read it — is still the pair every start()
-// needs, and because a second entry is exactly what a future format would
-// add.
+// There is one of them now (see mini below), and it needs no flags: the
+// seven --*-format flags are gone and the server reads one format
+// (docs/proposals/yaml-only.md §3.1). The type stays a type because a
+// source directory is still what every start() needs to be told, and
+// because a second entry — a bigger world, a different fixture — is a
+// thing somebody will want.
 type lib struct {
 	// name is the subtest name.
 	name string
 	// dir is the source directory, relative to the repository root.
 	dir string
-	// flags are the format flags the directory needs.
-	flags []string
 }
 
 // mini is the tutorial world, in the format the server ships on.
@@ -181,15 +179,7 @@ type lib struct {
 // is cheap and *total* instead of expensive and sampled: it compares every
 // field of every record of every subsystem, on every push, rather than
 // booting two servers and typing at them.
-var mini = lib{
-	name: "yaml",
-	dir:  "examples/mini/yaml",
-	flags: []string{
-		"--world-format=yaml", "--state-format=yaml", "--names-format=yaml",
-		"--messages-format=yaml", "--socials-format=yaml", "--help-format=yaml",
-		"--player-format=yaml",
-	},
-}
+var mini = lib{name: "yaml", dir: "examples/mini/yaml"}
 
 // mud is a running server and the temporary data directory it runs on.
 type mud struct {
@@ -275,7 +265,6 @@ func startAt(t *testing.T, l lib, dir string, opt startOptions) *mud {
 		"--rng=circle",
 		"--rng-seed=20010101",
 	}
-	args = append(args, l.flags...)
 	args = append(args, opt.extraFlags...)
 
 	m.cmd = exec.Command(serverBinary, args...) //nolint:gosec // the binary this suite built

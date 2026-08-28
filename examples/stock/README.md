@@ -1,9 +1,9 @@
-# One world, two formats
+# One world, twice: the source and what the server runs on
 
 The same stock CircleMUD 3.0 bpl20 world — 30 zones, 1878 rooms, 569
-mobiles, 679 objects, 46 shops — checked in twice, so there is a worked
-example of both formats this server supports rather than just a spec for
-them.
+mobiles, 679 objects, 46 shops — checked in twice: the original CircleMUD
+`lib/` it came from, and the directory `dlctl import` turns that into,
+which is the only shape the server runs on.
 
 - **`binary/`** is CircleMUD's own `lib/` directory, exactly as it ships:
   the "classic" format `internal/persist/world/classic` and its siblings
@@ -13,19 +13,20 @@ them.
   was. It is fetched unmodified from
   `https://www.circlemud.org/pub/CircleMUD/3.x/Old-Betas/circle30bpl20.tar.gz`
   (sha256 `1cd2cf0268c27dd6e6ae4d996a620bbd56da2552beb434bf372b4c01cd8bb415`),
-  and it is `dlmud`'s default `--lib-dir` — see PR #29 for why what ships
-  here is stock rather than the archive's own world. (It used to live at
-  `data/` in the repository root, which several older documents still call
-  it; there is no `data/` directory now.) With one addition CircleMUD never
-  had: `config/game.yaml`, the game tuning (`docs/configuration.md`), which
-  lives in the data directory it configures and so is shipped in each of
-  these four directories. Every value in it is commented out at its
-  `config.c` default, so it changes nothing until something is uncommented —
-  and this being the default `--lib-dir` is the point: a fresh clone has the
-  template sitting where it would be edited.
+  — see PR #29 for why what ships here is stock rather than the archive's
+  own world. It used to be `dlmud`'s default `--lib-dir`; it cannot be one
+  now, since the server reads one format (`docs/proposals/yaml-only.md`).
+  (It used to live at `data/` in the repository root, which several older
+  documents still call it; there is no `data/` directory now.) With one
+  addition CircleMUD never had: `config/game.yaml`, the game tuning
+  (`docs/configuration.md`), which lives in the data directory it
+  configures and so is shipped in both of these directories.
 - **`yaml/`** is the same world, converted through this project's own
-  yaml format (`docs/design/data-format.md`), one file per zone
-  plus `config/`, `state/` and `text/help/help.yaml`.
+  format (`docs/design/data-format.md`), one file per zone plus `config/`,
+  `state/` and `text/help/help.yaml`. **This is the one the server runs
+  on**, and `dlmud`'s default `--lib-dir` — a fresh clone boots against it
+  with no flags at all, and `config/game.yaml`'s every value is commented
+  out at its `config.c` default, sitting where it would be edited.
 
 ## How `yaml/` was produced
 
@@ -42,8 +43,8 @@ subdirectories of `--from-dir` (`dlctl` resolves each `--type`'s own
 subpath, the same way `--lib-dir` does for a running server), plus three
 things none of those seven do on their own: `text/`'s eleven plain-text
 files (`motd`, `credits`, `greetings`, ...) — not a pluggable format, since
-both classic and yaml read them from the same `text/<name>` path regardless
-of `--*-format` (`internal/server/text.go`) — are copied across unchanged
+both layouts keep them at the same `text/<name>` path
+(`internal/server/text.go`) — are copied across unchanged
 rather than converted; `config/game.yaml`, the game tuning, is copied for
 the same reason (it is this project's own yaml either way) and because a
 directory that has been tuned must not come out of a conversion back on the
@@ -66,16 +67,14 @@ dispatches anything, and `release.yml` then re-runs `import` into a
 temporary directory and diffs it against what is checked in, for
 `examples/mini` as well as this one. A mismatch there stops the release.
 
-**Delete `binary/etc/time` before regenerating.** `binary/` is also the
-server's default `--lib-dir`, so running `dlmud` with no flags at all — or
-`make run`, or the compose stack — writes the mud clock's epoch there on
-shutdown. `import` reads it, and the regenerated `state/clock.yaml`
-then carries whenever *you* last stopped a server rather than the epoch
-this example is supposed to ship. It is deliberately not gitignored, so it
-shows up in `git status` as the untracked file it is; delete it and
-regenerate. Nothing else the server writes into `binary/` reaches
-`import`'s output, because the rest is player data and there is none
-here to import.
+**Delete `binary/etc/time` before regenerating, if there is one.** It is
+the mud clock's epoch, and `import` reads it — a regenerated
+`state/clock.yaml` carrying whenever *you* last stopped a server, rather
+than the epoch this example is supposed to ship, is the failure mode. The
+server can no longer write one there (it will not run on `binary/` at
+all), but the C server in `reference/` still can, through its own `lib`
+symlink. It is deliberately not gitignored, so it shows up in `git status`
+as the untracked file it is; delete it and regenerate.
 
 The seven `--type`s `import` wraps still run on their own, with
 `--type=world`/`pfile`/`state`/`names`/`messages`/`socials`/`help`, for
@@ -92,28 +91,32 @@ go run ./cmd/dlctl dump --type=world --dir=examples/stock/yaml   --format=yaml  
 diff /tmp/binary.json /tmp/yaml.json
 ```
 
-Both lint clean at 0 errors, and the dumps are identical except for one
-already-documented, lossy library limitation: a description with a blank
-line before its closing `~` (a sign or note with a trailing blank line —
-45 lines out of the world's ~130,000-line dump here) loses that one blank
-line on the way through `goccy/go-yaml`'s literal-block re-print, which
-cannot be made to honour a `|+` "keep" chomping indicator. See
-`docs/design/data-format.md` §12, "A second, genuinely lossy transform"
-for the mechanism — this is the same finding at a larger sample size (the
-real corpus that section cites has 3 such strings out of 12,372; stock's
-own sign/note-heavy zones have more).
+Both lint clean at 0 errors, and the dumps are **identical**.
 
-## Running the server against either
+That last part used to carry an exception — a description with a blank
+line before its closing `~` lost that blank line on the way through
+`goccy/go-yaml`'s literal-block re-print, 45 lines out of the world's
+~130,000-line dump here. It does not any more: `internal/persist/world/
+yaml/text.go`'s `needsQuoting` writes such a string as a quoted, escaped
+scalar instead, which the library carries back unchanged. Quoting costs
+prettiness; a trailing blank line is a blank line on a player's screen.
+
+There is a stronger check than diffing two dumps now, and it covers every
+subsystem rather than just the world:
 
 ```sh
-go run ./cmd/dlmud --lib-dir=examples/stock/binary --listen-telnet=:4000
-go run ./cmd/dlmud --lib-dir=examples/stock/yaml --listen-telnet=:4000 \
-  --world-format=yaml --state-format=yaml \
-  --names-format=yaml --messages-format=yaml \
-  --socials-format=yaml --help-format=yaml
+go run ./cmd/dlctl verify --dir=examples/stock/binary --against=examples/stock/yaml
 ```
 
-`--player-format` is left at its default (`ascii`) in both: there is no
-roster to speak of either way, and the first character created promotes
-itself to Implementor the same way it always has (`db.c`'s "if this is our
-first player --- he be God", `TODO.md`).
+## Running the server
+
+```sh
+go run ./cmd/dlmud --lib-dir=examples/stock/yaml --listen-telnet=:4000
+```
+
+`yaml/` is `dlmud`'s default `--lib-dir`, so `go run ./cmd/dlmud` with no
+`--lib-dir` at all finds it. `binary/` is **not** something the server can
+run on — it is a conversion source, and pointing `--lib-dir` at it is
+refused at boot with the `dlctl import` line for it. There is no roster in
+either, so the first character created promotes itself to Implementor the
+way it always has (`db.c`'s "if this is our first player --- he be God").

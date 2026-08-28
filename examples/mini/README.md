@@ -1,4 +1,4 @@
-# A tutorial world, in both formats
+# A tutorial world, twice: the source and what the server runs on
 
 A small, invented zone — nothing to do with the archive or with stock
 CircleMUD's own Midgaard — built to exercise one feature of the game per
@@ -9,7 +9,8 @@ always the way back.
 Checked in twice, the same way `examples/stock/` is: `binary/` is the
 classic CircleMUD file shapes, hand-written directly against
 `internal/persist/world/classic`'s own reader rather than generated, and
-`yaml/` is `binary/` converted with `dlctl import`. See
+`yaml/` is `binary/` converted with `dlctl import` — which is the one the
+server runs on, and the one `test/play` boots. See
 `docs/design/data-format.md`.
 
 ## The tour
@@ -159,24 +160,26 @@ silently fallen outside it.
 dlctl import --from-dir=examples/mini/binary --to-dir=examples/mini/yaml
 ```
 
-`classic → yaml` world dumps are identical — `dlctl dump --type=world` on each
-and `diff` the two — the same check `examples/stock/README.md` runs, and
-for the same reason.
+The two load to the same state, subsystem by subsystem, which is what
+`dlctl verify --against` checks and what `cmd/dlctl`'s own tests assert on
+every push:
+
+```sh
+dlctl verify --dir=examples/mini/binary --against=examples/mini/yaml
+```
 
 ## Running it
 
 ```sh
-dlmud --lib-dir=examples/mini/binary --listen-telnet=:4000
-
-dlmud --lib-dir=examples/mini/yaml --listen-telnet=:4000 \
-  --world-format=yaml --state-format=yaml --names-format=yaml \
-  --messages-format=yaml --socials-format=yaml --help-format=yaml
+dlmud --lib-dir=examples/mini/yaml --listen-telnet=:4000
 ```
 
-`--player-format` is left at its default (`ascii`): there is no roster
-here either, and the first character created is promoted to Implementor
-the same way `examples/stock/`'s is (`db.c`'s "if this is our first
-player --- he be God").
+`binary/` is a conversion source, not something the server runs on:
+pointing `--lib-dir` at it is refused at boot with the `dlctl import`
+line for it (`docs/proposals/yaml-only.md`). There is no roster in either,
+so the first character created is promoted to Implementor the same way
+`examples/stock/`'s is (`db.c`'s "if this is our first player --- he be
+God").
 
 `config/game.yaml` is the shipped, fully-commented example of the game
 tuning (`docs/configuration.md`) — the same file `examples/stock/` ships,

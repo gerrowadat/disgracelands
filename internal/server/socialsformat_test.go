@@ -14,7 +14,7 @@ import (
 	"github.com/gerrowadat/disgracelands/internal/persist/socials"
 )
 
-// End to end: LoadText(dir, ..., "yaml") reads config/socials.yaml, not
+// End to end: LoadText(dir) reads config/socials.yaml, not
 // misc/socials, and the real archive's "smile" entry comes back with its
 // real message — proving the wiring (internal/server/text.go's own
 // socials.Load call, the --socials-format flag it is fed from in
@@ -42,7 +42,7 @@ func TestYamlSocialsFormatEndToEnd(t *testing.T) {
 		t.Fatalf("Save(yaml): %v", err)
 	}
 
-	text, err := LoadText(dir, "classic", "yaml", "classic")
+	text, err := LoadText(dir)
 	if err != nil {
 		t.Fatalf("LoadText: %v", err)
 	}
@@ -58,6 +58,6 @@ func TestYamlSocialsFormatEndToEnd(t *testing.T) {
 		}
 	}
 	if !found {
-		t.Error(`LoadText(dir, ..., "yaml") found no "smile" social, want the real archive's`)
+		t.Error(`LoadText(dir) found no "smile" social, want the real archive's`)
 	}
 }

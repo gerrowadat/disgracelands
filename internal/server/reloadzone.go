@@ -29,7 +29,7 @@ func (s *Server) ReloadZone(w *game.Live, vnum game.ZoneVnum) (game.ReloadZoneRe
 		return game.ReloadZoneResult{}, ErrWorldReloadNotConfigured
 	}
 
-	src, err := world.Open(s.worldFormat, world.Config{Dir: s.worldDir, Mini: s.worldMini})
+	src, err := world.Open(DataFormat, world.Config{Dir: s.worldDir, Mini: s.worldMini})
 	if err != nil {
 		return game.ReloadZoneResult{}, err
 	}

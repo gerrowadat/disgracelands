@@ -579,11 +579,89 @@ the same character differ in bytes that were never assigned. The acceptance
 criterion is identity across every *significant* byte, not every byte.
 (`internal/persist/player/binary`.)
 
+### The server reads exactly one on-disk format, and refuses a legacy `lib/`
+
+**This is a compatibility change, and the biggest one in the tree.**
+`go-port-plan.md` §0's "Fidelity, phase two" frees new work to modernise
+the implementation without recording a reason, but names two things that
+stay fixed, and one of them is compatibility: "the on-disk formats,
+`--lib-dir` contents and archived credentials this repo already reads and
+writes". This changes what `--lib-dir` may contain, so it is a deviation
+and it is written down here.
+
+What changed: `dlmud` used to select each subsystem's on-disk format with
+a flag — seven of them, `--player-format` through `--help-format`, with
+`ascii` and `classic` as the defaults. All seven are gone, along with
+their `DL_*_FORMAT` environment variables (which are refused *by name* if
+still set, rather than ignored). The server reads the yaml format
+described in `docs/design/data-format.md` and nothing else, and pointing
+`--lib-dir` at a CircleMUD `lib/` is refused at boot with the exact
+`dlctl import` command for that directory. There is no in-place
+compatibility, no fallback flag and no auto-conversion; the operator's
+archive is never written to and the converted directory is somewhere they
+chose.
+
+The nuance that makes this defensible rather than a straight breach is
+worth stating precisely: **the repo goes on reading every archived format
+it reads today.** Not one decoder is deleted, and none ever will be —
+`classic` is the world-format parity oracle for as long as the C server is
+authoritative and is how the 1,184 dated nightly world backups get read,
+and `binary` is the only thing that can read the archived roster at all.
+Roughly 10,700 lines of format code and tests keeps running on every push.
+What changed is that `dlctl` is the only thing that reads them, and the
+server reads one format. A legacy decoder is not merely refused by the
+server; it is not linked into it (there is a test).
+
+Why, in one sentence each, from `docs/proposals/yaml-only.md` §1: the
+whole directory layout was a function of a format name; the canonical,
+format-neutral player model carried `char_file_u`'s reserved padding; the
+rent files were not pluggable and the server knew it, which is why real
+container nesting had to be format-gated as a deviation rather than simply
+implemented; `LoadText` took three format names; and the letter encodings
+capped a flag field at what a `long` held in 2002, which made adding a
+33rd room flag a compatibility question rather than a one-line addition.
+
+The migration is one command, and it verifies itself:
+
+```sh
+dlctl import --from-dir=/srv/lib --to-dir=/srv/data
+```
+
+See `docs/operations.md` and `docs/configuration.md`. (Proposed and
+argued in full in `docs/proposals/yaml-only.md`.)
+
 ### The server runs only on the ascii format or better
 
-The binary format can still be read and written, because `dlctl` needs both
-directions to convert between them. But a live server refuses to run on it.
+Superseded by the entry above, and kept because the reasoning still
+holds for `binary` specifically: its password field is eleven bytes, so a
+modern credential cannot be stored in it at all. It can still be read and
+written, because `dlctl` needs both directions to convert between them.
 (Plan §5.2.)
+
+### A bare line feed in stored text comes back as CRLF
+
+YAML cannot represent CRLF distinctly from LF — the spec folds CR, CRLF
+and LF alike on decode — so the yaml formats store LF and re-derive CRLF
+on load. For everything the game itself wrote that is exact, because
+every such string is CRLF-joined in memory and LF-joined on disk already:
+that is precisely the relationship `classic`'s own bytes have to their own
+in-memory form, since `fread_string` appends CRLF to every line it reads.
+The loaded states are identical; only the stored bytes differ, and they
+were always going to.
+
+A string holding a *bare* LF is the exception, and comes back with a
+carriage return in front of it. Nothing the game writes produces one —
+the string editor writes CRLF — so this is reachable only from a
+hand-edited file or a corrupt record.
+
+This is recorded as **settled rather than outstanding**
+(`docs/proposals/yaml-only.md` §4.2 argues why at length), and it is
+pinned by a test rather than left to be rediscovered:
+`TestBareLineFeedComesBackAsCRLF` in `internal/persist/player/yaml`.
+`cmd/dlctl`'s `FuzzBinaryRecordRoundTrip` skips an input whose free text
+holds one — skipped rather than tolerated in the comparison, because
+"differences that are only `\n` versus `\r\n` are fine" would also
+excuse a real one.
 
 ### The yaml format re-spaces a keyword list
 
@@ -1825,11 +1903,20 @@ Listed here so they are not mistaken for deliberate differences.
   `binary`/`ascii` still always leave empty (their on-disk shape genuinely
   cannot hold it, so those two are unchanged, byte for byte, and the test
   above proves it), but that `yaml`'s codec, and `rent.go`'s
-  `storedTreeFrom`/`restoreOneObject`, populate and honour for real. Running
-  `--player-format=yaml` is what turns this on —
+  `storedTreeFrom`/`restoreOneObject`, populate and honour for real.
+
+  **This is no longer format-gated in practice, because there is no
+  longer a format to choose.** The server reads `yaml` and only `yaml`
+  (see "The server reads exactly one on-disk format" above), so
+  containment is simply how renting works now; the gate remains in the
+  code because `binary`/`ascii` are still read by `dlctl`, and their
+  on-disk shape still cannot hold it. It was —
   `TestRentingUnderYamlKeepsTheRingInTheBag` is the same fixture as the
   `ascii`/`binary` test above, quit and logged back in under `yaml`,
-  asserting the opposite outcome. Stock auto-equip (putting worn items back
+  asserting the opposite outcome. That `ascii`/`binary` test now uses
+  `newLegacyTestServer` explicitly, because the rest of
+  `internal/server`'s suite runs on `yaml` and it would otherwise pass
+  vacuously. Stock auto-equip (putting worn items back
   *on the body*, the other half of what `USE_AUTOEQ` would have covered) is
   **not** part of this fix — that's a separate deviation nobody has signed
   off on, so worn items still come back loose in inventory under every

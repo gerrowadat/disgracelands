@@ -174,11 +174,6 @@ type PlayerRecord struct {
 	// slots; OLCZone is the zone a builder is permitted to edit.
 	SpecFlags int32
 	OLCZone   int32
-
-	// Spares carries the unused slots the legacy format reserves, so a
-	// record can round-trip through this type without losing whatever a
-	// future version of the C server might have put in them.
-	Spares LegacySpares
 }
 
 // Abilities are the six rolled statistics, plus the exceptional-strength
@@ -238,16 +233,6 @@ type Alias struct {
 	// '$1'-'$9'/'$*' for positional/whole-line substitution for a complex
 	// one. See internal/session's alias expansion.
 	Replacement string
-}
-
-// LegacySpares holds the reserved slots in the binary format. They exist so
-// that reading and rewriting a record cannot quietly discard something, which
-// matters because the C server's own documentation tells people to use these
-// slots when adding fields — so a value in one is not necessarily junk.
-type LegacySpares struct {
-	Bytes [6]int32
-	Ints  [7]int32
-	Longs [5]int64
 }
 
 // Credential is how a character proves who they are.

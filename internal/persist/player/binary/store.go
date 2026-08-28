@@ -250,6 +250,20 @@ func (s *Store) Save(ctx context.Context, rec *game.PlayerRecord) error {
 	}
 
 	if slot >= 0 {
+		// Carry the reserved slots across from the record being replaced.
+		//
+		// They are padding — the C server's own documentation tells people
+		// to use them when adding a field, and Disgracelands used three,
+		// which are named fields on game.PlayerRecord — so nothing in the
+		// game reads or sets what is left. They are a property of the
+		// stored record rather than of the character, which is why they
+		// live in this package and not on the model
+		// (docs/proposals/yaml-only.md §1). Rewriting a record must not
+		// quietly discard whatever a future version of the C server put in
+		// them, and this is what stops it.
+		//
+		// A *new* record gets zeroes, which is what the C writes too.
+		s.codec.encodeSpares(encoded, s.codec.decodeSpares(data[slot*size:(slot+1)*size]))
 		copy(data[slot*size:(slot+1)*size], encoded)
 	} else {
 		data = append(data, encoded...)

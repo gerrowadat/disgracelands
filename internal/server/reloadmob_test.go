@@ -60,7 +60,7 @@ func TestReloadMobCommandEndToEnd(t *testing.T) {
 		HitDice:  game.Dice{Number: 1, Size: 1, Bonus: 200},
 		Position: int32(game.PosStanding), DefaultPosition: int32(game.PosStanding),
 	})
-	srv.worldFormat, srv.worldDir = "yaml", dir
+	srv.worldDir = dir
 
 	addr := listening(t, srv)
 	god := dialClient(t, addr)
@@ -106,7 +106,7 @@ func TestReloadMobCommandRefusesWhileFighting(t *testing.T) {
 		HitDice:  game.Dice{Number: 1, Size: 1, Bonus: 200},
 		Position: int32(game.PosStanding), DefaultPosition: int32(game.PosStanding),
 	})
-	srv.worldFormat, srv.worldDir = "yaml", dir
+	srv.worldDir = dir
 
 	addr := listening(t, srv)
 	god := dialClient(t, addr)
