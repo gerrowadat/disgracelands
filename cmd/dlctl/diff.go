@@ -118,6 +118,9 @@ func (d *differ) walk(path string, a, b reflect.Value) {
 			// identical contents up to it is a different (and much less
 			// alarming) finding than one where everything also moved.
 		}
+		if d.walkByVnum(path, a, b) {
+			return
+		}
 		n := min(a.Len(), b.Len())
 		for i := 0; i < n; i++ {
 			d.walk(fmt.Sprintf("%s[%d]", path, i), a.Index(i), b.Index(i))
@@ -142,6 +145,117 @@ func (d *differ) walk(path string, a, b reflect.Value) {
 			d.reportf(path, "%s vs %s", format(a), format(b))
 		}
 	}
+}
+
+// walkByVnum handles the one difference an element-by-element walk
+// describes worst: two lists holding the same vnum-keyed records in a
+// different order.
+//
+// Comparing those by position pairs every record with somebody else's, so
+// every field of every record disagrees, and the report is hundreds of
+// lines that look like total corruption rather than the one-line fact that
+// two lists are out of step. That is not hypothetical: importing the
+// archived Disgracelands lib/ produced exactly that, 200 lines of
+// Shops[5].Messages[3] and Shops[6].Keeper, for a shop list that had every
+// shop in it and had simply written five of them into the wrong zone file
+// (internal/persist/world/yaml's shopHomeVnum).
+//
+// So when both sides are the same set of vnums, say so once and then
+// compare each record against *its own* counterpart — which is what makes
+// this safe to do rather than merely quieter, since a record that has both
+// moved and changed still reports the change, under a path naming its vnum
+// instead of an index that means nothing.
+//
+// Anything less tidy than that — a differing set of vnums, a repeated vnum,
+// elements with no vnum at all — falls back to the positional walk, which
+// is the right answer when the lists are genuinely not the same records.
+func (d *differ) walkByVnum(path string, a, b reflect.Value) bool {
+	if a.Len() != b.Len() || a.Len() < 2 {
+		return false
+	}
+	ai, ok := vnumIndex(a)
+	if !ok {
+		return false
+	}
+	bi, ok := vnumIndex(b)
+	if !ok {
+		return false
+	}
+
+	moved, firstVnum, firstAt, firstWant := 0, int64(0), 0, 0
+	for vnum, i := range ai {
+		j, ok := bi[vnum]
+		if !ok {
+			return false // not the same records; positions are all there is
+		}
+		if i == j {
+			continue
+		}
+		if moved == 0 || i < firstAt {
+			firstVnum, firstAt, firstWant = vnum, i, j
+		}
+		moved++
+	}
+	if moved == 0 {
+		return false // same order, so the ordinary walk says everything
+	}
+
+	d.reportf(path, "the same %d record(s) in a different order: %d of them moved "+
+		"(#%d is %s on the left and %s on the right). Compared by vnum below, not by position",
+		a.Len(), moved, firstVnum, ordinal(firstAt+1), ordinal(firstWant+1))
+
+	vnums := make([]int64, 0, len(ai))
+	for vnum := range ai {
+		vnums = append(vnums, vnum)
+	}
+	slices.Sort(vnums)
+	for _, vnum := range vnums {
+		d.walk(fmt.Sprintf("%s[#%d]", path, vnum), a.Index(ai[vnum]), b.Index(bi[vnum]))
+	}
+	return true
+}
+
+// vnumIndex maps each element's Vnum to its position, or reports false if
+// the elements have no integer Vnum field or two of them share one.
+func vnumIndex(v reflect.Value) (map[int64]int, bool) {
+	index := make(map[int64]int, v.Len())
+	for i := 0; i < v.Len(); i++ {
+		e := v.Index(i)
+		for e.Kind() == reflect.Pointer || e.Kind() == reflect.Interface {
+			if e.IsNil() {
+				return nil, false
+			}
+			e = e.Elem()
+		}
+		if e.Kind() != reflect.Struct {
+			return nil, false
+		}
+		f := e.FieldByName("Vnum")
+		if !f.IsValid() || !f.CanInt() {
+			return nil, false
+		}
+		if _, dup := index[f.Int()]; dup {
+			return nil, false
+		}
+		index[f.Int()] = i
+	}
+	return index, true
+}
+
+// ordinal renders a 1-based position the way the sentence above reads it.
+func ordinal(n int) string {
+	suffix := "th"
+	if n%100 < 11 || n%100 > 13 {
+		switch n % 10 {
+		case 1:
+			suffix = "st"
+		case 2:
+			suffix = "nd"
+		case 3:
+			suffix = "rd"
+		}
+	}
+	return fmt.Sprintf("%d%s", n, suffix)
 }
 
 // isKeywordField reports whether f holds a space-separated keyword list —
