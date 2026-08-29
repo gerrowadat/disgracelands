@@ -314,21 +314,102 @@ func MatchesAnyKeyword(keywords, word string) bool { return matchesKeywords(keyw
 // `reference/tools/nameoracle.c` is what settled it — the loop reads like a
 // prefix match and is not one. See docs/weirdnumbers.md.
 //
-// Case-insensitive, and an empty word matches nothing here. (The C's isname
-// would match an empty string against anything, since `!*curstr` is true
-// immediately; every caller checks for an empty argument first, so the
-// difference is unreachable and refusing is the safer shape.)
+// **A keyword ends at any non-alphabetic byte, not at whitespace**, which is
+// what that `!isalpha(*curname)` says and what the second version of this
+// function still got wrong. It was `strings.Fields` plus equality, which is
+// the same answer for every namelist made only of letters and spaces — and
+// every namelist in the oracle's own sweep was exactly that, so 168 pairings
+// agreed with a C they were not really testing. A digit is not a letter, so
+// the C matches "6" and "60" against a keyword of "606", and "a" against
+// "a1b"; the archived world has "staircase stair 606 rs" and numbered
+// keywords are an ordinary builder habit. Issue #277. The sweep now includes
+// digits, punctuation, doubled and trailing spaces and a namelist wrapped
+// across lines by fread_string, which is 1,482 pairings rather than 168.
+//
+// The body below is the C's own two loops rather than a rule derived from
+// them, deliberately. The two loops disagree about what separates keywords —
+// the inner one breaks on a literal space, the outer one skips over a run of
+// *alphabetic* bytes and then steps one byte past it — so where a match may
+// begin depends on where the previous attempt gave up. That is not something
+// to restate in a sentence and hope; it is CLAUDE.md's "if you would have to
+// simulate a function in your head to be sure of it" exactly. Transliterating
+// it is safe here only because the oracle then checks every pairing.
+//
+// Byte-oriented, and ASCII-only in both `isalpha` and `LOWER`, because the C
+// is: LOWER() (utils.h) tests 'A'..'Z' and nothing else, and the C locale's
+// isalpha() is false for every byte above 127 — so a UTF-8 continuation byte
+// ends a keyword there and must here too.
+//
+// The one deliberate difference: an empty word matches nothing here, where
+// the C's isname matches it against anything (`!*curstr` is true on the first
+// pass). Every caller checks for an empty argument first, so the difference is
+// unreachable, and refusing is the safer shape.
 func matchesKeywords(keywords, word string) bool {
-	word = strings.ToLower(strings.TrimSpace(word))
-	if word == "" {
+	if strings.TrimSpace(word) == "" {
 		return false
 	}
-	for _, keyword := range strings.Fields(strings.ToLower(keywords)) {
-		if keyword == word {
-			return true
+	word = strings.TrimSpace(word)
+
+	// curname and curstr are the C's two cursors, as indices.
+	curname := 0
+	for {
+		curstr := 0
+		for {
+			// if (!*curstr && !isalpha(*curname)) return (1);
+			if curstr == len(word) && !asciiAlpha(byteAt(keywords, curname)) {
+				return true
+			}
+			// if (!*curname) return (0);
+			if curname == len(keywords) {
+				return false
+			}
+			// if (!*curstr || *curname == ' ') break;
+			if curstr == len(word) || keywords[curname] == ' ' {
+				break
+			}
+			// if (LOWER(*curstr) != LOWER(*curname)) break;
+			if asciiLower(word[curstr]) != asciiLower(keywords[curname]) {
+				break
+			}
+			curstr++
+			curname++
 		}
+
+		// for (; isalpha(*curname); curname++);
+		for curname < len(keywords) && asciiAlpha(keywords[curname]) {
+			curname++
+		}
+		// if (!*curname) return (0);
+		if curname == len(keywords) {
+			return false
+		}
+		curname++ // first char of new name
 	}
-	return false
+}
+
+// byteAt is the C's `*p` where p may be at the terminating NUL: reading one
+// past the last byte of a Go string is a panic, and in C it is the '\0' that
+// every one of these tests is really asking about.
+func byteAt(s string, i int) byte {
+	if i >= len(s) {
+		return 0
+	}
+	return s[i]
+}
+
+// asciiAlpha is the C locale's isalpha(): letters, and nothing else. Not
+// unicode.IsLetter — a byte above 127 is not alphabetic to the C server, and
+// treating one as a letter would run two keywords together.
+func asciiAlpha(c byte) bool {
+	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
+}
+
+// asciiLower is utils.h's LOWER(), which is 'A'..'Z' and nothing else.
+func asciiLower(c byte) byte {
+	if c >= 'A' && c <= 'Z' {
+		return c + ('a' - 'A')
+	}
+	return c
 }
 
 // GetNumber splits a leading `2.` off a typed argument, porting get_number

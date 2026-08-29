@@ -61,18 +61,69 @@ func nameOracleLines(t *testing.T, bin string) [][]string {
 
 	var rows [][]string
 	for _, line := range strings.Split(strings.TrimRight(string(out), "\n"), "\n") {
-		rows = append(rows, strings.Split(line, "\t"))
+		fields := strings.Split(line, "\t")
+		for i := range fields {
+			fields[i] = unescape(fields[i])
+		}
+		rows = append(rows, fields)
 	}
 	return rows
 }
 
-// TestMatchesKeywordsAgainstTheC compares every pairing the oracle emits —
-// seven keyword lists against twenty-five words, including the abbreviations
-// that look like they should work.
+// unescape reverses the oracle's putesc(). The escaping exists so that a
+// namelist may contain a tab or a newline without breaking a tab-separated,
+// line-per-row format — and it exists at all because a keyword list wrapped
+// across lines by fread_string is one of the shapes the original sweep could
+// not express, and one of the shapes that was wrong.
+func unescape(s string) string {
+	if !strings.Contains(s, `\`) {
+		return s
+	}
+	var b strings.Builder
+	for i := 0; i < len(s); i++ {
+		if s[i] != '\\' || i+1 >= len(s) {
+			b.WriteByte(s[i])
+			continue
+		}
+		i++
+		switch s[i] {
+		case 'n':
+			b.WriteByte('\n')
+		case 'r':
+			b.WriteByte('\r')
+		case 't':
+			b.WriteByte('\t')
+		case '\\':
+			b.WriteByte('\\')
+		default:
+			b.WriteByte('\\')
+			b.WriteByte(s[i])
+		}
+	}
+	return b.String()
+}
+
+// TestMatchesKeywordsAgainstTheC compares every pairing the oracle emits.
+//
+// It used to be seven keyword lists against twenty-five words, and every one
+// of those lists was made only of letters and spaces. That is why 168
+// pairings could pass while the port had isname's keyword terminator as
+// "whitespace" instead of the C's "not a letter": over an alphabetic
+// namelist the two rules never disagree. Issue #277, and the same lesson as
+// docs/proposals/yaml-only.md §5.1 one level up — the corpus did not contain
+// the hard case, so the oracle could not either.
+//
+// The sweep now includes digits, punctuation, an apostrophe, a hyphen,
+// doubled and trailing spaces and a namelist wrapped across lines, which is
+// what a real world file holds.
 func TestMatchesKeywordsAgainstTheC(t *testing.T) {
 	bin := buildNameOracle(t)
 
 	checked := 0
+	// Guards against the sweep quietly narrowing back to the shape that hid
+	// #277: a namelist with a digit in it, and one with a byte that is
+	// neither a letter, a digit nor a space.
+	var sawDigit, sawOtherNonAlpha bool
 	for _, row := range nameOracleLines(t, bin) {
 		if row[0] != "isname" {
 			continue
@@ -91,10 +142,26 @@ func TestMatchesKeywordsAgainstTheC(t *testing.T) {
 			t.Errorf("matchesKeywords(%q, %q) = %v, the C says %v", keywords, word, got, want)
 		}
 		checked++
+
+		for i := 0; i < len(keywords); i++ {
+			switch c := keywords[i]; {
+			case c >= '0' && c <= '9':
+				sawDigit = true
+			case c == ' ' || (c|0x20 >= 'a' && c|0x20 <= 'z'):
+			default:
+				sawOtherNonAlpha = true
+			}
+		}
 	}
 
 	if checked == 0 {
 		t.Fatal("the oracle produced no isname rows")
+	}
+	if !sawDigit {
+		t.Error("no namelist in the sweep contains a digit; that is the gap #277 hid in")
+	}
+	if !sawOtherNonAlpha {
+		t.Error("no namelist in the sweep contains punctuation or a line break; isname ends a keyword at any non-letter, so the sweep has to contain some")
 	}
 	t.Logf("checked %d isname pairings against the C", checked)
 }
@@ -175,5 +242,53 @@ func TestGetNumberQuirks(t *testing.T) {
 			t.Errorf("GetNumber(%q) = (%d, %q), want (%d, %q) — %s",
 				tc.arg, n, rest, tc.n, tc.rest, tc.why)
 		}
+	}
+}
+
+// TestRespacingAKeywordListChangesNoAnswer pins the claim docs/deviations.md
+// makes in "The yaml format re-spaces a keyword list": converting a namelist
+// to yaml splits it on whitespace and converting back joins it with one
+// space, and "nothing can observe the difference".
+//
+// That is a claim about isname, so it belongs next to isname, and it needs
+// re-checking whenever isname changes — which it just did (#277). The
+// property is not "the oracle agrees" (the sweep covers that); it is that
+// the two *spellings* of one namelist give the same answer for every word.
+//
+// The CRLF case is the one that matters in practice: a keyword list wrapped
+// across lines by fread_string is legal in a .wld file, and comparing the
+// two spellings byte for byte is what made `dlctl import --verify` refuse a
+// conversion that had lost nothing.
+func TestRespacingAKeywordListChangesNoAnswer(t *testing.T) {
+	pairs := []struct {
+		name       string
+		stored     string // as the classic file holds it
+		normalised string // as a yaml round trip gives it back
+	}{
+		{"a trailing space", "cape wool woolen ", "cape wool woolen"},
+		{"a leading space", " cape wool", "cape wool"},
+		{"a doubled space", "cape  wool", "cape wool"},
+		{"a wrapped line", "staircase stair 606\r\nrs", "staircase stair 606 rs"},
+		{"a bare newline", "cape\nwool", "cape wool"},
+		{"a tab", "cape\twool", "cape wool"},
+		{"every kind at once", " cape \r\n wool\twoolen  ", "cape wool woolen"},
+	}
+	// Every word in either spelling, plus the ones most likely to expose a
+	// difference: prefixes, and the digits that started all this.
+	words := []string{
+		"cape", "wool", "woolen", "staircase", "stair", "rs", "r", "s",
+		"606", "6", "60", "0", "woo", "capes", "wo", "olen", "n",
+	}
+	for _, p := range pairs {
+		t.Run(p.name, func(t *testing.T) {
+			for _, w := range words {
+				stored := matchesKeywords(p.stored, w)
+				normalised := matchesKeywords(p.normalised, w)
+				if stored != normalised {
+					t.Errorf("%q matches %q = %v but %q = %v; the re-spacing is observable after all, and docs/deviations.md says it is not",
+						w, p.stored, stored, p.normalised, normalised)
+				}
+			}
+		})
 	}
 }

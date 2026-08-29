@@ -69,7 +69,7 @@ against the Go. Existing ones cover the RNG (30,000 draws over 6 seeds),
 to-hit (1,512,000 values), regeneration (36,288), saving throws (1,125), DES
 crypt (9,680 pairs), shop prices (which need `-m32 -mfpmath=387`, because the
 answer depends on the width the multiplication happens at), `isname`/
-`get_number` (168 pairings) and the improved line editor's eleven commands
+`get_number` (1,456 pairings) and the improved line editor's eleven commands
 (805 command-against-buffer cases, and built `-O0` on purpose: one of the C's
 `sprintf`s has its destination as its own `%s` argument, and modern gcc
 resolves that undefined behaviour differently from the compiler the archived
@@ -80,6 +80,16 @@ for four phases — its loop has the shape of a prefix match and the semantics o
 a whole-word one, so `get swo` picked up a sword here and never did on the real
 server. If you would have to simulate a function in your head to be sure of it,
 that is the trigger.
+
+**An oracle is only as good as what it is swept over.** `isname` was then
+wrong a *second* time, for a year, with its oracle passing: a keyword ends at
+any non-letter, so the C matches `6` against a keyword of `606`, and every
+namelist in the sweep was made of letters and spaces, over which the wrong
+rule and the right one cannot disagree (#277). 168 pairings agreed with a C
+they were not testing. When you add an oracle, spend the effort on the
+inputs — a corpus assembled from what the function obviously does is a
+corpus with the hard case designed out of it, which is the same failure as
+`examples/stock` being pure ASCII (`data-format.md` §11.1) one level up.
 
 **Table re-parsing.** Where the C holds data in a table, the test re-parses
 the C source and compares entry by entry: `class.c`, `constants.c`,
