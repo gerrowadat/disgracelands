@@ -41,7 +41,7 @@ func generateFixture(t *testing.T, m dataModel, count int) string {
 	src := filepath.Join(root, "reference", "tools", "pfilegen.c")
 	inc := filepath.Join(root, "reference", "moderncserver", "src")
 	if _, err := os.Stat(filepath.Join(inc, "conf.h")); err != nil {
-		t.Skip("reference/moderncserver/src/conf.h not present; run its configure first")
+		t.Skip("reference/moderncserver/src/conf.h not present; run `make c-conf` (#244)")
 	}
 
 	dir := t.TempDir()
