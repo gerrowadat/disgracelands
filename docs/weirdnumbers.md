@@ -1971,11 +1971,14 @@ fires for a letter. Two sites, opposite orders, each with a dead branch;
 neither reads as wrong on its own, which is why this needs both of them
 side by side to see.
 
-*Reproduced*: `writingSuffix` (`internal/session/wizcomm.go`) is the same
-if/else-if in the same order, so it prints what the real server printed.
-`do_who`'s annotation block is not ported at all — this port's who-list
-carries no `(invis)`/`(mailing)`/`(deaf)`/`(notell)` markers — which
-[`deviations.md`](deviations.md) records.
+*Reproduced*: twice, in opposite orders, on purpose. `writingSuffix`
+(`internal/session/wizcomm.go`) is `wiznet @`'s if/else-if, and
+`whoAnnotations` (`internal/session/commands.go`) is `do_who`'s — each in
+its own site's order, each therefore keeping its own dead arm. The
+temptation on porting the second one was to make the two agree; that would
+have changed what a player sees on the who-list while they wrote a letter,
+so the disagreement stands. `TestWhoSaysMailingRatherThanWriting`
+(`internal/server/whoannotations_test.go`) pins it.
 
 *Source*: `act.wizard.c:1907-1911`, `act.informative.c:1174-1176`,
 `mail.c:567`, `modify.c:100-101,218-219`.
