@@ -294,7 +294,8 @@ func TestWhatYouWereCarryingSurvivesAQuit(t *testing.T) {
 	c.do("get all")
 	c.do("wear tunic")
 	c.do("wield sword")
-	contains(t, "before quitting", c.do("inventory"), "a small brass lantern")
+	before := c.do("inventory")
+	contains(t, "before quitting", before, "a small brass lantern")
 
 	c.quit()
 	c.close()
@@ -311,6 +312,25 @@ func TestWhatYouWereCarryingSurvivesAQuit(t *testing.T) {
 	contains(t, "what came back", back.do("inventory"),
 		"a rusty key", "a small brass lantern", "a leather tunic", "a training sword")
 	contains(t, "nothing came back worn", back.do("equipment"), "Nothing.")
+
+	// And in the order they were in. That is a property of the *pair* of
+	// walks rather than of either: Crash_save recurses on next_content
+	// before writing (objsave.c:520-521), so the file holds the inventory
+	// back to front, and Crash_load reads it forwards into a list
+	// obj_to_char grows at the head (objsave.c:214-224). #193 corrected the
+	// insertion end, and the loader's own compensating reversal had to go
+	// with it — nothing below the socket can tell that a rent file came back
+	// inside out.
+	//
+	// Asserted as "the same relative order" rather than a written-out list,
+	// on the two items that are loose in the inventory on both sides of the
+	// quit: what absolute order `get all` produces is the previous
+	// assertion's business, and pinning it here would make this case fail
+	// for a reason that has nothing to do with the round trip.
+	if inventoryOrderChanged(before, back.do("inventory"), "a rusty key", "a small brass lantern") {
+		t.Errorf("the rent round trip reordered the inventory:\nbefore:\n%s\nafter:\n%s",
+			before, back.do("inventory"))
+	}
 
 	m.noServerErrors()
 }

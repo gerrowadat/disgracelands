@@ -125,10 +125,14 @@ func (s *Server) loadHouseObjects(w *game.Live, vnum game.RoomVnum) int {
 	}
 
 	count := 0
-	// Backwards, for the same reason as the rent files: the C's obj_to_room
-	// prepends and this port's appends.
-	for i := len(stored) - 1; i >= 0; i-- {
-		st := stored[i]
+	// Forwards, which is House_load's own direction (house.c:73-81), and
+	// correct for the same reason the rent files' is: House_save recurses
+	// before writing (house.c:94-96), so the file holds the room's contents
+	// back to front, and reading it forwards into a list that grows at the
+	// head puts them back where they were. This walked backwards until #193,
+	// when it stopped being a compensation for an ObjectToRoom that appended
+	// and became a reversal of its own.
+	for _, st := range stored {
 		obj := w.NewObject(st.Vnum)
 		if obj == nil {
 			continue

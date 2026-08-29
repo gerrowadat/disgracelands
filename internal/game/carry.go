@@ -65,6 +65,34 @@ func (l *Live) detach(o *Object) {
 	o.WornAt = -1
 }
 
+// prependObject puts an object at the head of a list, which is what every one
+// of the C's obj_to_* functions does:
+//
+//	object->next_content = ch->carrying;
+//	ch->carrying = object;
+//
+// (handler.c:418-419, and the same two lines in obj_to_room at :685-686 and
+// obj_to_obj at :737-738.) They are singly-linked lists with no tail pointer,
+// so the head is the only place an insert can go cheaply — but the *order it
+// produces* is not an implementation detail, because every reader walks from
+// the head. What you dropped last is listed first, `get all` runs
+// newest-first, and `2.sword` counts down a list in that order, so this
+// decides which sword you get as well as how they are printed.
+//
+// This port appended for five phases, which reversed all of it. See
+// docs/deviations.md and #193.
+//
+// The copy is deliberate rather than an in-place shift: `Occupants` aside,
+// these slices are handed out by RoomObjects and read directly as
+// `c.Carrying`, and a caller iterating one while a specproc drops something
+// into it would otherwise see an element twice. The lists are a handful of
+// items long and this runs when somebody picks something up.
+func prependObject(list []*Object, o *Object) []*Object {
+	out := make([]*Object, 0, len(list)+1)
+	out = append(out, o)
+	return append(out, list...)
+}
+
 // ObjectToRoom puts an object on the floor, porting obj_to_room.
 func (l *Live) ObjectToRoom(o *Object, room RoomVnum) {
 	if o == nil {
@@ -77,7 +105,7 @@ func (l *Live) ObjectToRoom(o *Object, room RoomVnum) {
 	if l.roomObjects == nil {
 		l.roomObjects = map[RoomVnum][]*Object{}
 	}
-	l.roomObjects[room] = append(l.roomObjects[room], o)
+	l.roomObjects[room] = prependObject(l.roomObjects[room], o)
 	l.track(o)
 
 	// obj_to_room sets ROOM_HOUSE_CRASH on a house (handler.c:692), and
@@ -97,7 +125,7 @@ func (l *Live) ObjectToChar(o *Object, c *Character) {
 
 	o.Location = CarriedBy
 	o.Holder = c
-	c.Carrying = append(c.Carrying, o)
+	c.Carrying = prependObject(c.Carrying, o)
 	l.track(o)
 }
 
@@ -119,7 +147,7 @@ func (l *Live) ObjectToObject(o, container *Object) bool {
 	l.detach(o)
 	o.Location = InObject
 	o.Container = container
-	container.Contents = append(container.Contents, o)
+	container.Contents = prependObject(container.Contents, o)
 	l.track(o)
 	return true
 }

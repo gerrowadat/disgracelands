@@ -166,19 +166,32 @@ func (s *Server) loadObjects(ctx context.Context, c *game.Character) (lost bool,
 // what turns real containment on: an item whose record has Contains restores
 // *inside* the container rebuilt for it, rather than loose.
 //
-// The file is walked backwards at the top level because the C's obj_to_char
-// prepends and this port's appends. Same order out either way, and the file
-// stays readable by the C server.
+// The file is walked **forwards**, which is Crash_load's own direction
+// (objsave.c:214-224), and it is only correct because obj_to_char prepends.
+// The two halves have to be read together: Crash_save recurses on
+// next_content *before* writing the object it was handed (objsave.c:520-521),
+// so the file holds the inventory back to front, and reading it forwards into
+// a list that grows at the head puts it back the way it was. Neither half
+// preserves order alone; together they do.
+//
+// This walked backwards until #193, to cancel out an ObjectToChar that
+// appended. Two reversals that cancel are a fine way to get the right answer
+// and a bad way to keep it: the moment the insertion end was corrected, the
+// compensation here became the bug. The writer's own reversal (crashFileFor
+// and rentFileFor below) is *not* compensation of that kind — it is
+// Crash_save's recursion order, which the C server's own reader depends on,
+// so it stays.
 func restoreObjects(w *game.Live, c *game.Character, stored []player.StoredObject) {
-	for i := len(stored) - 1; i >= 0; i-- {
-		restoreOneObject(w, c, nil, stored[i])
+	for _, st := range stored {
+		restoreOneObject(w, c, nil, st)
 	}
 }
 
 // restoreOneObject creates one object from its stored record and places it
 // either inside container (when non-nil) or loose in c's inventory, then
 // recurses into whatever was recorded as being inside it, in the same
-// backwards order the top level uses.
+// forwards order the top level uses, and for the same reason: obj_to_obj
+// prepends exactly as obj_to_char does (handler.c:737-738).
 //
 // A vanished prototype (read_object returning NULL, objsave.c) drops the
 // item itself, matching the C — but not whatever was stored inside it:
@@ -206,8 +219,8 @@ func restoreOneObject(w *game.Live, c *game.Character, container *game.Object, s
 			w.ObjectToChar(obj, c)
 		}
 	}
-	for i := len(st.Contains) - 1; i >= 0; i-- {
-		restoreOneObject(w, c, obj, st.Contains[i])
+	for _, inside := range st.Contains {
+		restoreOneObject(w, c, obj, inside)
 	}
 }
 
