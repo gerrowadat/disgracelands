@@ -357,13 +357,9 @@ saying it is settled rather than outstanding.
 
 ### 4.3 What exactness cannot cover
 
-Two gaps testing will not close, listed so nobody believes the claim is
+One gap testing will not close, listed so nobody believes the claim is
 broader than it is.
 
-- **`binary` does not persist aliases.** `alias.c`'s `plralias/` format has
-  zero archived instances anywhere to build a codec against, so a character
-  imported from `binary` starts with none. Permanent, already documented; a
-  gap in the *source*, not in the conversion.
 - **`ascii`'s and `yaml`'s field sets are this port's own**, not the C's, so
   `ascii → yaml` has no C oracle behind it the way `binary → yaml` does. The
   best available check is a Go-side round-trip plus the fact that both
@@ -570,8 +566,8 @@ formats are retired this year.
 
 **Anyone running the Go server on a CircleMUD `lib/`.** They run
 `dlctl import` once, point `--lib-dir` at the result, and their old
-directory is untouched. Rent files, boards, mail, houses and the roster all
-come across; aliases do not, if the source was `binary` (§4.3).
+directory is untouched. Rent files, boards, mail, houses, aliases and the
+roster all come across.
 
 **Anyone running on `ascii`.** Same command, `--from-format=ascii`. This is
 the group with the least warning, since `ascii` is today's default, and the
