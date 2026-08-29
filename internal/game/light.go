@@ -8,11 +8,13 @@ package game
 
 // Light, and whether a room is dark enough to stop you seeing.
 
-// Sector types, from structs.h:106. Only the two that room_is_dark asks about
-// are named here; the rest are indices into sectorNames and stay numbers.
+// Sector types, from structs.h:106. Only the ones the rules ask about by name
+// are here — the two room_is_dark tests, and the one do_simple_move demands a
+// boat for; the rest are indices into sectorNames and stay numbers.
 const (
-	SectorInside int32 = 0
-	SectorCity   int32 = 1
+	SectorInside      int32 = 0
+	SectorCity        int32 = 1
+	SectorWaterNoSwim int32 = 7
 )
 
 // LitLight reports whether an object is a light source that is currently

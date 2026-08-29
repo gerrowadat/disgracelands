@@ -131,6 +131,56 @@ func TestSneakingDoesNotHideYouStandingStill(t *testing.T) {
 	mortal.expect("Zod ")
 }
 
+// TestSneakingSuppressesTheMovementMessages is the half of AFF_SNEAK that was
+// missing until #267: the skill was granted, the flag was set, and nothing
+// anywhere read it for the thing the skill exists to do.
+//
+// do_simple_move wraps both messages in `!AFF_FLAGGED(ch, AFF_SNEAK)`
+// (act.movement.c:163-170). The test is on the *mover's* flag alone — there
+// is no per-observer roll, because `act(..., TO_ROOM)` is simply not called —
+// so sneaking past a watchful god works exactly as well as sneaking past a
+// sleeping rat, and the message is suppressed for everyone in the room or for
+// nobody.
+func TestSneakingSuppressesTheMovementMessages(t *testing.T) {
+	srv, _ := newTestServer(t)
+	addr := listening(t, srv)
+	god, mortal := twoInARoom(t, srv, addr)
+
+	// Walking openly, first, so the test knows the messages are there to be
+	// suppressed.
+	god.send("north")
+	god.expect("The Immortal Board Room")
+	mortal.settle()
+	if !mortal.seen("Zod leaves north.") {
+		t.Errorf("an ordinary departure was not announced; got:\n%s", afterLastLook(mortal))
+	}
+
+	god.send("south")
+	god.expect("The Temple Of Midgaard")
+	mortal.settle()
+	if !mortal.seen("Zod has arrived.") {
+		t.Errorf("an ordinary arrival was not announced; got:\n%s", afterLastLook(mortal))
+	}
+
+	affect(t, srv, "Zod", game.AffectSneak)
+	before := strings.Count(mortal.transcript(), "Zod leaves north.")
+	arrivals := strings.Count(mortal.transcript(), "Zod has arrived.")
+
+	god.send("north")
+	god.expect("The Immortal Board Room")
+	mortal.settle()
+	if got := strings.Count(mortal.transcript(), "Zod leaves north."); got != before {
+		t.Errorf("a sneaking departure was announced %d times, want the earlier %d", got, before)
+	}
+
+	god.send("south")
+	god.expect("The Temple Of Midgaard")
+	mortal.settle()
+	if got := strings.Count(mortal.transcript(), "Zod has arrived."); got != arrivals {
+		t.Errorf("a sneaking arrival was announced %d times, want the earlier %d", got, arrivals)
+	}
+}
+
 // TestAnInvisibleCharacterIsSomeoneInAct. PERS resolves per audience, so the
 // same social produces a name for one bystander and "someone" for another.
 func TestAnInvisibleCharacterIsSomeoneInAct(t *testing.T) {

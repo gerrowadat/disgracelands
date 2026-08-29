@@ -1627,6 +1627,69 @@ never refused in practice, because they never spend anything.
 `game.MovementCost` (`internal/game/movement.go`), with the table re-parsed
 out of the C by `TestMovementLossMatchesTheCSource`.
 
+### `has_boat` exempts gods one level higher than everything around it does
+
+```c
+  if (GET_LEVEL(ch) > LVL_IMMORT)
+    return (1);
+```
+
+Every other level gate in `do_simple_move` reads `< LVL_IMMORT` — the
+movement charge (act.movement.c:161), the death trap (act.movement.c:171).
+`has_boat`'s is `> LVL_IMMORT`, **strictly greater**, so a newly-made
+level-31 immortal is refused deep water and has to find a boat like a
+mortal, while a level-32 god crosses it. Nothing marks the difference; the
+two comparisons sit forty lines apart and read identically at a glance.
+
+The inventory loop below it has the second surprise:
+
+```c
+  /* non-wearable boats in inventory will do it */
+  for (obj = ch->carrying; obj; obj = obj->next_content)
+    if (GET_OBJ_TYPE(obj) == ITEM_BOAT && (find_eq_pos(ch, obj, NULL) < 0))
+      return (1);
+```
+
+`find_eq_pos(ch, obj, NULL)` answers the slot an unqualified `wear` would
+use, or -1 for something that cannot be worn at all (act.item.c). So a boat
+with *any* wear flag in the `find_eq_pos` list is skipped while it is merely
+carried — the separate loop over the equipment is what picks it up again once
+it is worn. A wearable boat in your backpack leaves you at the water's edge
+holding the thing that would float you. Note also that neither loop is
+guarded on `IS_NPC`, so a wandering mobile needs a boat too, and that
+`AFF_WATERWALK` is checked before either.
+
+*Source*: `act.movement.c:52-79`, `act.item.c` (`find_eq_pos`).
+*Reproduced* as `session.hasBoat` (`internal/session/movement.go`), pinned by
+`TestAPlainImmortalStillNeedsABoat` and `TestAWearableBoatHasToBeWorn`
+(`internal/server/boat_test.go`).
+
+### The same room flag is refused in two different wordings
+
+```c
+    send_to_char("You aren't godly enough to use that room!\r\n", ch);   /* act.movement.c:150 */
+```
+
+```c
+      send_to_char("You are not godly enough to use that room!\r\n", ch); /* do_goto, do_teleport */
+```
+
+Three call sites read `ROOM_GODROOM` and there are two strings between them:
+walking into one gets the contraction, being sent into one by `goto` or
+`teleport` does not. There is no `#define`, so this is a typo that outlived
+everybody who might have noticed it — and it is player-visible, which makes
+it worth keeping rather than tidying.
+
+The level is the other half of it: `GET_LEVEL(ch) < LVL_GRGOD`, not
+`LVL_IMMORT`. A plain immortal is refused a god room exactly as flatly as a
+mortal is, which is not what "godroom" suggests and not what the
+neighbouring gates do.
+
+*Source*: `act.movement.c:147-151`, `act.wizard.c` (`do_goto`,
+`do_teleport`). *Reproduced* in `Context.moveCharacterChecking`, pinned by
+`TestTheMovementGodRoomRefusalKeepsItsContraction`
+(`internal/server/godroom_test.go`).
+
 ### The who-list's colour ignores the player's colour setting
 
 ```c
