@@ -239,6 +239,59 @@ func TestAnOrphanedHouseContentsFileIsNamedAndNoted(t *testing.T) {
 	}
 }
 
+// TestADuplicateHouseRecordIsCollapsedAndCounted is #240: two control
+// records for the same room used to collapse in silence, and the summary
+// line reported the number of records *read* rather than the number
+// stored, so the output actively said the wrong thing — "imported 4
+// house(s)" for three that arrived.
+//
+// The duplicate is built here rather than committed to
+// examples/torture/binary, because a corpus with one could not also be the
+// corpus every other test round-trips: the collapse is exactly the case
+// where a conversion is not reversible.
+func TestADuplicateHouseRecordIsCollapsedAndCounted(t *testing.T) {
+	const torture = "../../examples/torture"
+	from := t.TempDir()
+	copyTree(t, torture+"/binary", from)
+
+	// One hcontrol record is 100 bytes in the ILP32 layout the archive
+	// uses; appending a copy of the first is a duplicate of whatever room
+	// it names.
+	etcDir, houseDir, _ := stateClassicDirs(from)
+	control := filepath.Join(etcDir, "hcontrol")
+	body, err := os.ReadFile(control) //nolint:gosec // a path this test just created
+	if err != nil {
+		t.Fatalf("reading the control file: %v", err)
+	}
+	const recordSize = 100
+	if len(body) < recordSize {
+		t.Fatalf("the corpus's control file is %d bytes, too short to duplicate a record from", len(body))
+	}
+	if err := os.WriteFile(control, append(body, body[:recordSize]...), 0o600); err != nil {
+		t.Fatalf("writing the duplicated control file: %v", err)
+	}
+
+	var report bytes.Buffer
+	out := bufio.NewWriter(&report)
+	if err := importHouses(etcDir, houseDir, t.TempDir(), out); err != nil {
+		t.Fatalf("importing houses: %v", err)
+	}
+	if err := out.Flush(); err != nil {
+		t.Fatal(err)
+	}
+
+	got := report.String()
+	// Three records went in as four. The count has to be the three that
+	// arrived, and the object count must not double either — the
+	// duplicate's contents are the same file read twice.
+	if !strings.Contains(got, "houses: imported 3 house(s), 3 object(s)") {
+		t.Errorf("the summary reports the records read rather than the houses stored:\n%s", got)
+	}
+	if !strings.Contains(got, "collapsed 1 duplicate control record(s)") {
+		t.Errorf("the collapse was not named:\n%s", got)
+	}
+}
+
 // copyTree copies a directory tree, so a test can run `fmt` in place
 // without editing the checked-in corpus.
 func copyTree(t *testing.T, from, to string) {

@@ -1302,10 +1302,22 @@ containment was step 5's own explicitly-scoped deviation for player rent
 files, not extended here. The `MAX_HOUSES` of 100 and `MAX_GUESTS` of 10
 go the same way as the board limits.
 
-Nesting the contents inside the control entry has one consequence worth
-stating outright, because it is a value that stops existing at the
-conversion boundary: **a `<vnum>.house` file belonging to no control
-record has nowhere to go, and is dropped.** The C accumulates these —
+Keying by room vnum has one consequence and nesting the contents has
+another, and both are values that stop existing at the conversion
+boundary, so both are stated outright.
+
+**Two control records for the same room collapse to one, and the one
+that survives is the first.** That is `House_boot`'s own rule — its third
+sanity check is `if (find_house(temp_house.vnum) != NOWHERE) continue;`
+(`house.c:265`) and `find_house` scans from the start — so the house yaml
+keeps is the house the C would have booted. `hcontrol` is a flat array
+and prevents nothing; `dlctl import` names each collapsed vnum. Until
+#240 the last record won instead, which meant a duplicate converted to a
+different owner, atrium and guest list from the one the game would have
+used.
+
+**A `<vnum>.house` file belonging to no control record has nowhere to go,
+and is dropped.** The C accumulates these —
 `House_save_control` writes the control array and nothing else, so a
 house destroyed by `hcontrol destroy`, or dropped by the boot checks in
 `internal/server/houses.go`, leaves its contents file behind forever — so
