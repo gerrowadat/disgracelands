@@ -1,12 +1,27 @@
 # yaml only: retiring the legacy formats from the server
 
-**This is the plan work is planned from.** It supersedes
+> **Status, 2026-08-29: built, except for the release.** Rows 1–6 of §7
+> have landed; row 7 — cutting v1.0.0 — has not, and is a decision rather
+> than a task. **Work is no longer planned from this document.** With the
+> build done, the forward plan is `go-port-plan.md` §10's Phase 7
+> (cutover) again, which this change was standing in front of; the
+> day-to-day work in front of *that* is `docs/deviations.md`'s "Not
+> deviations — gaps still to fill" and whatever `test/parity` finds,
+> filed as issues.
+>
+> What this document is for now: the reasoning behind a shipped shape, in
+> the same way `docs/design/` documents are, plus the compatibility
+> contract in §5 and §6 that new format work is held to. §10's last open
+> question — what becomes of this file — is answered by that, and by
+> nobody having moved it yet.
+
+**This was the plan work was planned from.** It superseded
 `docs/proposals/go-port-plan.md` as the forward-looking document: that plan
 took the port from nothing to a playable server across Phases 0–6 and stays
 authoritative as the record of how, and as the design reference for the
-architecture it describes, but the next thing this project does is in here.
-Its Phase 7 (cutover) is not cancelled — it becomes downstream of this
-change, and §8 below rewrites the one paragraph of it this invalidates.
+architecture it describes. Its Phase 7 (cutover) was not cancelled — it
+became downstream of this change, and §8 below rewrites the one paragraph
+of it this invalidates.
 
 It is also the detailed version of `docs/design/data-format.md` §11's steps
 4 and 7, which said "not attempted" from the day the format landed until
@@ -192,11 +207,12 @@ substance of this proposal.
 - Each removed flag's environment variable goes with it. Because
   `internal/config` derives env names from flag names rather than declaring
   them separately (`go-port-plan.md` §10, Phase 0), that is automatic — but
-  it means a deployment setting `DLMUD_WORLD_FORMAT=classic` gets silence.
-  **Config must reject an unknown `DLMUD_*` variable that matches a removed
+  it means a deployment setting `DL_WORLD_FORMAT=classic` gets silence.
+  **Config must reject an unknown `DL_*` variable that matches a removed
   flag's name, by name, with the migration command**, because otherwise the
   most likely failure of this release is a container quietly ignoring its
-  own configuration.
+  own configuration. (Earlier drafts of this document wrote that prefix
+  `DLMUD_`; it is `DL_` — `internal/config.EnvPrefix`.)
 - **`config.Dir` loses its `format` parameter** and most of its body
   (`internal/config/subsystem.go:65`). One layout: `world/`, `players/`,
   `state/`, `config/`, `text/`.
@@ -541,24 +557,35 @@ Each row is its own branch and PR. Rows 1–2 are prerequisites and are
 independently shippable before the breaking change; rows 3–6 are the break;
 row 7 is the release.
 
-**Status: rows 1–6 have landed.** Row 7 — cutting the release — has not,
-and is a decision rather than a task. Each row below carries what
-actually happened, since several of them turned out to be about something
-other than what they were written to be about.
+**Status: rows 1–6 have landed; row 7 has not.** Each row below carries
+what actually happened, since several of them turned out to be about
+something other than what they were written to be about.
 
 | # | What lands | Done when |
 |---|---|---|
 | **1 ✅** | `examples/torture/` (§5.1) — `binary/` and its imported `yaml/`, with a `README` explaining each hostile case. | `dlctl import` on it succeeds, `dlctl lint --type=world` reports zero findings, and the checked-in `yaml/` matches a fresh import byte for byte. |
 | **2 ✅** | `dlctl verify --against` across `allTypes` (§3.4); the differential, idempotence and stability tests over all three corpora (§5.2); the three fuzz targets and their seed corpora (§5.3). | `verify --against` is green on `stock`, `mini` and `torture`; the fuzz targets run clean for the agreed budget; all of it is Go tests running under the existing `go test -race ./...`. |
 | **3 ✅** | Move both live suites onto yaml (§5.4): `newTestServer`, `newTestServerWith`, `bothFormats`, `session-parity.sh`. | `newTestServer` builds a yaml server; `test/play` runs `miniYAML` only; the full suite is green under `-race`; the deliberate `classic` differential tests are untouched. |
-| **4 ✅** | Delete the seven `--*-format` flags and their env vars; reject a removed `DLMUD_*` variable by name (§3.1); strip `config.Dir`'s format parameter; delete the `ObjectStore` fallback and `cmd/dlmud`'s legacy blank imports (§3.2); move `LegacySpares` out of `internal/game` into `persist/player/binary` (§1); retire `dlctl convert`'s no-`--type` mode (§3.4). | `dlmud --help` mentions no format; a test asserts the legacy decoder packages are not reachable from `cmd/dlmud`; `DLMUD_WORLD_FORMAT=classic` fails loudly with the migration command; `Config`'s default `LibDir` moves from `examples/stock/binary` to `examples/stock/yaml`. |
+| **4 ✅** | Delete the seven `--*-format` flags and their env vars; reject a removed `DLMUD_*` variable by name (§3.1); strip `config.Dir`'s format parameter; delete the `ObjectStore` fallback and `cmd/dlmud`'s legacy blank imports (§3.2); move `LegacySpares` out of `internal/game` into `persist/player/binary` (§1); retire `dlctl convert`'s no-`--type` mode (§3.4). | `dlmud --help` mentions no format; a test asserts the legacy decoder packages are not reachable from `cmd/dlmud`; `DL_WORLD_FORMAT=classic` fails loudly with the migration command; `Config`'s default `LibDir` moves from `examples/stock/binary` to `examples/stock/yaml`. |
 | **5 ✅** | Legacy-layout detection and refusal at boot (§3.3). | Pointing `dlmud` at `examples/stock/binary` exits non-zero printing the exact working `dlctl import` line for it — asserted by running that line and booting the result. |
 | **6 ✅** | The defaults rule, its per-subsystem tables and minimal-document tests (§6); the `docs/deviations.md` entry this change owes under "Fidelity, phase two" (header above), plus the settled CRLF transform and the removed rent-containment format gate; `data-format.md` §11 rows 4 and 7 marked done; `docs/operations.md`'s getting-started rewritten around the mandatory import; `docs/configuration.md` for the removed flags; `go-port-plan.md`'s Phase 7 rollback paragraph (§8). | The docs describe the shipped server. `make check` green. |
-| **7** | `make release BUMP=v1.0.0`, with an upgrade note. | `release.yml` green, including the ILP32 checks, world parity, the licence check and the example-regeneration checks. |
+| **7 — the only one left** | `make release BUMP=v1.0.0`, with an upgrade note. | `release.yml` green, including the ILP32 checks, world parity, the session-parity suite, the licence check and the example-regeneration checks. |
 
-Rows 1–2 are worth landing even if the rest slips: they make the current
+Rows 1–2 were worth landing even if the rest slipped: they make the
 conversion demonstrably exact, which is valuable whether or not the legacy
-formats are retired this year.
+formats are retired.
+
+**What row 7 actually asks of somebody.** Nothing technical is waiting on
+it: `main` is the shipped shape, `release.yml` runs the full suite, and
+`scripts/release.sh` does the sequencing (it does not tag — `release.yml`'s
+`publish` job does, gated on that suite, so a failed release leaves no tag
+behind and the version number stays free). What is waiting is the decision
+that this on-disk contract is the one to call 1.0, since
+`dataversion.Current()` derives the data-format stamp from the release
+version and cutting v1.0.0 is therefore also what makes a `.dlversion` of
+`1.0.0` exist. The upgrade note is the other half, and §8 is its content:
+lead with `ascii`, because that was the default and its users get the least
+warning.
 
 ---
 
@@ -615,6 +642,8 @@ been in this repo and is not touched by any of this.
 
 ## 10. Open questions
 
+Three of these are still open; two were settled by the work and say so.
+
 **Should `dlctl verify --against` be able to compare against the C server?**
 It compares two Go loaders. For the world there is already a C oracle
 (`world-parity.sh`); for the roster there is `pfiledump.c`. Wiring `verify`
@@ -623,10 +652,18 @@ operator-facing tool as strong as the release-time check. Deferred because
 it puts a C dependency inside a command an operator runs, which is exactly
 what §5.2 keeps out of day-to-day CI.
 
-**How long does the fuzz budget run, and where?** A short budget in
-`go test` is nearly worthless; a long one belongs in `release.yml` or
-nowhere. Proposal: seed-corpus-only (deterministic, fast) on every push, a
-real budget at release. Decide in row 2.
+**How long does the fuzz budget run, and where? — half-answered, and the
+open half is still open.** The proposal was seed-corpus-only on every push
+and a real budget at release. The first half happened by default: the four
+targets (`FuzzTextRoundTrip`, `FuzzNestedTextRoundTrip`,
+`FuzzClassicRecordRoundTrip`, `FuzzBinaryRecordRoundTrip`) are ordinary Go
+tests, so `go test -race ./...` replays their seed corpora on every push
+without anything being wired up. **The second half was never built**: there
+is no `make fuzz` target and no fuzzing step in `release.yml`, so no budget
+beyond the seeds has ever run in CI. The twelve corpus entries currently
+checked in are seeds and crashers from writing the targets, not from a
+campaign. Worth knowing before treating the fuzz layer as coverage rather
+than as regression tests for what has already gone wrong.
 
 **Does `examples/torture/` belong in the repo or get generated on demand?**
 Checked in, per §5.1, on the grounds that a fixture you regenerate is a
@@ -640,22 +677,30 @@ simplify `cmd/dlmud` further — but it would bake "one player, one file" into
 the interface, which is a format decision an interface should not be making.
 Left alone deliberately; noted because a reader will ask.
 
-**What happens to `docs/proposals/` when this lands?** By this repo's own
-convention a design document moves to `docs/design/` once the thing it
-describes is built. This one describes a removal, so what it leaves behind
-is mostly the test architecture in §5. Likely outcome: §5 and §6 move into
-`data-format.md` as the format's own compatibility contract, and this file
-stays in `proposals/` as the record of the decision.
+**What happens to `docs/proposals/` when this lands? — decided by
+default, and worth confirming.** By this repo's own convention a design
+document moves to `docs/design/` once the thing it describes is built.
+This one describes a removal, so what it leaves behind is mostly the test
+architecture in §5 and the field-addition rules in §6. The likely outcome
+was that those move into `data-format.md` as the format's own
+compatibility contract and this file stays in `proposals/` as the record
+of the decision; what has actually happened, as of 2026-08-29, is that
+nothing moved and this file is still the place both live. That is fine
+while it is the only reference for them, and stops being fine the moment
+someone looks for the format's contract in the design document and does
+not find it.
 
 ---
 
 ## Related documents
 
-- `docs/proposals/go-port-plan.md` — the port itself, Phases 0–6, superseded
-  by this document as the forward plan and still authoritative as the record
-  and the architecture reference. §5 and §6 (the pluggable seams) are what
-  this change collects on; §10 Phase 7's rollback paragraph is what it
-  invalidates.
+- `docs/proposals/go-port-plan.md` — the port itself, Phases 0–6. This
+  document superseded it as the forward plan and, now that its build is
+  done, hands that role back: **Phase 7 (cutover) is the forward plan
+  again**, and its preconditions are the map of what is left. That plan
+  stays authoritative as the record and the architecture reference; §5 and
+  §6 (the pluggable seams) are what this change collected on, and §10
+  Phase 7's rollback paragraph is what it invalidated and rewrote.
 - `docs/design/data-format.md` — the yaml format. This proposal is its §11
   steps 4 and 7; its §12 is where the text-transform findings in §4.2 live.
 - `docs/design/data-format-versioning.md` — `.dlversion` and what a

@@ -7,7 +7,9 @@ service (flags, env vars, structured logs, containers) rather than a
 
 This is a design/sequencing document. **Phases 0–5 (§10) are built** — every
 slice of Phase 5 included — with a tail of small commands outside the slices
-listed under it. Phases 6 and 7 are still a plan.
+listed under it. **Phase 6 was decided against** and §10 says what got built
+in its place; **Phase 7 (cutover) has not started**, and is the one part of
+this document that is still a plan rather than a record.
 Each built phase carries a retrospective in §10 saying what actually landed
 and where it diverged from what was planned. See `BUILDING.md` for how to
 build and run what exists.
@@ -19,17 +21,21 @@ port — the phase write-ups in §10 are a historical record of how fidelity
 was reached and stay accurate as history; they are not a live constraint on
 work that starts from here.
 
-**Superseded as the forward plan by
-[`yaml-only.md`](yaml-only.md).** That document is what work is now planned
-from: retiring `classic`/`ascii`/`binary` from the server so it understands
-only `yaml`, and the compatibility testing that has to be true before it
-can. This document is not retired — it stays authoritative as the record of
-Phases 0–6 and as the reference for the architecture they built, and §5,
-§6 and §11 are exactly what the newer plan collects on. Two specific
-interactions worth knowing about before reading on: **Phase 7 (cutover) is
-now downstream of the yaml-only work** rather than the next thing up, and
-**its rollback paragraph was rewritten by it** — see the note at that
-paragraph, and `yaml-only.md` §8.
+**[`yaml-only.md`](yaml-only.md) superseded this as the forward plan, and
+has now itself been built out.** That document retired
+`classic`/`ascii`/`binary` from the server so it understands only `yaml`,
+along with the compatibility testing that had to be true first; rows 1–6 of
+its §7 have landed and the only one left is cutting the v1.0.0 release,
+which is a decision rather than a task. **So Phase 7 (cutover) is the
+forward plan again** — it was downstream of the yaml-only work and no
+longer is. Read §10's Phase 7 preconditions as the map of what is left.
+
+This document is not retired and is not extended with new plans: it stays
+authoritative as the record of Phases 0–6 and as the reference for the
+architecture they built, and §5, §6 and §11 are exactly what the newer plan
+collected on. One specific interaction worth knowing about before reading
+on: **Phase 7's rollback paragraph was rewritten by yaml-only** — see the
+note at that paragraph, and `yaml-only.md` §8.
 
 ---
 
@@ -2164,17 +2170,24 @@ sense to start:
    evidence — the one place the harness is knowingly blind, bounded and
    written down.
 
-   Sixteen blockers is a larger number than "the port is playable"
-   suggests, and a smaller job than it sounds: most are one command
-   each. The ones that are not are the three this paragraph used to
-   single out — `quit` returning to the menu, movement points never
-   being charged, and call-site colour, which is mechanical but has a
-   great many call sites — plus two that are bugs rather than gaps and
-   should be read as such: a level 1 mortal's hit points are rolled
-   from a formula that has been read wrong (the generators are in step,
-   so it is arithmetic, and CLAUDE.md says what that wants — an oracle,
-   not another reading), and `game.Act` sends the killer's own death
-   line twice while sending no `death_cry` at all.
+   Sixteen blockers was a larger number than "the port is playable"
+   suggested, and a smaller job than it sounded: most were one command
+   each. **All sixteen are fixed, as of 2026-08-29**, along with the one
+   "later" (the order objects are listed in, #193); the "accepted" one
+   stands, and is the only one of the eighteen this precondition leaves
+   as a live difference. `docs/deviations.md`'s own list carries each
+   ruling and its fix side by side, struck through rather than deleted,
+   because the ruling is the record of why the work was done.
+
+   Two things worth reading out of that rather than out of the count.
+   The fixes were not uniformly small — call-site colour was mechanical
+   but had a great many call sites, and a level 1 mortal's hit points
+   were rolled from a formula that had been read wrong, which is exactly
+   the case CLAUDE.md says wants an oracle rather than another reading.
+   And the list is a floor, not a proof: it is what one afternoon of
+   scripted sessions found. A difference found later gets triaged the
+   same way, and its `known` entry deleted with the fix — a fix that
+   leaves the entry behind fails the suite by design.
 3. **The real archive's non-ASCII text survives conversion.** The
    importer gap this precondition was first written about is closed —
    all seven of `dlctl import`'s sub-importers take `--encoding` and
@@ -2205,10 +2218,17 @@ sense to start:
    for whatever `--lib-dir` the deployment uses — `docs/operations.md`'s
    own "Backups" section says what that means, `cron` and off-host
    storage are not built here.
-6. **At least one tagged release exists.** `make release` (`docs/
-   proposals/go-port-plan.md` §9.1's config work, `scripts/release.sh`)
-   is what makes "deploy the Go server" mean something concrete rather
-   than "deploy whatever `main` happens to be."
+6. **At least one tagged release exists.** *Met, and superseded by a
+   bigger one that is not.* `make release` (§9.1's config work,
+   `scripts/release.sh`) is what makes "deploy the Go server" mean
+   something concrete rather than "deploy whatever `main` happens to
+   be", and v0.1.3 is the most recent. What is outstanding is
+   **v1.0.0**, which `yaml-only.md` §7 row 7 proposes and which is the
+   one row of that plan not yet done: one data format, a stable on-disk
+   contract, and — because `dataversion.Current()` derives the
+   data-format stamp from the build's own release version — the event
+   that makes a `.dlversion` of `1.0.0` exist at all. It is a decision
+   rather than a task; nothing technical is waiting on it.
 
 The cutover itself, once the preconditions hold:
 
@@ -2275,8 +2295,11 @@ have to be true first, if and when that decision is made.
 
 **Later (explicitly not v1):** a scripting *interpreter* behind the §8 seam —
 the seam itself is Phase 5a and the built-in specials are its first
-consumers — copyover/hot-reboot, the web client, additional persistence
-backends, the WipeMud race system (`TODO.md` §2).
+consumers — copyover/hot-reboot, additional persistence
+backends, the WipeMud race system (`TODO.md` §2). The web client was on
+this list and came off it: `--listen-ws` serves a browser terminal at
+`/play` today (§7's own write-up), in a narrower shape than the GMCP-aware
+client that section was imagining.
 
 ---
 

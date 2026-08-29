@@ -5,9 +5,17 @@ mostly "the next phase", and that lives in
 `docs/proposals/go-port-plan.md` §10 — Phases 0–4 are done and **every slice of
 Phase 5 is built**. Phase 6 (OasisOLC) was decided against, in favour of
 `reloadmob`/`reloadzone`/`reloadobj`/`reloadshop`; Phase 7 (cutover) has not
-started. Its §10 also lists, command by command, the 8 of the C's 318
+started, and is the forward plan again now that
+`docs/proposals/yaml-only.md` has landed everything but its release. Its
+§10 also lists, command by command, the 8 of the C's 318
 commands that nothing answers to yet — seven OasisOLC editors and
 `slowns`, both declined rather than pending; see `docs/deviations.md`.
+
+Two other places carry work this file does not: **open GitHub issues** are
+where a bug or a gap in the Go server lives now (the C server stopped
+being the thing anyone plays, so a doc entry alone stopped being enough),
+and `docs/deviations.md`'s "Not deviations — gaps still to fill" is the
+standing list those get filed from.
 
 This file is for the things that are not phases: work on the C server in
 `reference/moderncserver/`, and decisions that are still open.
@@ -21,22 +29,29 @@ this repo: `../welmar/CircleMUD3/lib/etc/players`, in the original binary
 format. To convert it locally:
 
 ```sh
-go run ./cmd/dlctl convert --type=pfile \
-  --from-format=binary --from-dir=../welmar/CircleMUD3/lib \
-  --to-format=ascii    --to-dir=examples/stock/binary
+go run ./cmd/dlctl import \
+  --from-dir=../welmar/CircleMUD3/lib --to-dir=out/archive-yaml
+go run ./cmd/dlmud --lib-dir=out/archive-yaml
 ```
 
-That is Phase 2's replacement for the old `-m32` `bin2ascii` route, and it
-needs no 32-bit toolchain; the C tool is still in `reference/tools/` and
-`docs/investigations/pfile-conversion.md` explains why it needed one.
-`dlctl convert` does the whole data directory, roster included, if that is
-what you have.
+`import` takes the whole directory — world, roster, rent and crash files,
+aliases, boards, mail, houses — and it is the only route to something the
+server runs on: it reads `yaml` and nothing else, and refuses to boot on
+the archive itself. It never writes to the source, and it verifies its own
+output before stamping it.
 
-The output (`examples/stock/binary/pfiles/`) is gitignored and stays local. No player data
+To compare a converted roster against the C server instead, `dlctl convert
+--type=pfile --from-format=binary --to-format=ascii` reformats between the
+two legacy formats without going near yaml. That is Phase 2's replacement
+for the old `-m32` `bin2ascii` route, and it needs no 32-bit toolchain; the
+C tool is still in `reference/tools/` and
+`docs/investigations/pfile-conversion.md` explains why it needed one.
+
+The output stays local and gitignored, wherever it is put. No player data
 has ever been committed here, deliberately: it is real people's password
 hashes, private in-game mail and connection hosts.
 
-A checkout with no `etc/players` in its lib-dir is the *normal* fresh-install state,
+A checkout with no roster in its lib-dir is the *normal* fresh-install state,
 not a broken one. `db.c`'s "if this is our first player --- he be God"
 (~line 2705) promotes whoever registers first to Implementor, which is how
 you bootstrap.
@@ -101,8 +116,9 @@ Kept here so it is clear these were decided rather than forgotten.
 
 - **Wiring ascii pfiles into the C server's live login/save path.** This was
   the biggest remaining item and the Go port took it over: Phase 2 built
-  both formats behind one interface, and the Go server runs on ascii and
-  refuses to start on binary, converting with `dlctl convert --type=pfile` instead.
+  both formats behind one interface, the Go server ran on `ascii` and
+  refused to start on `binary`, and since yaml-only it runs on neither —
+  `dlctl import` converts an archive once and the server reads `yaml`.
   Doing it in C as well would have been the same security-adjacent work
   twice.
 - **Deciding how to run it across restarts.** `autorun` and friends are

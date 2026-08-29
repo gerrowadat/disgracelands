@@ -22,9 +22,10 @@
 // the expectation, and where the two disagree the Go server is what is wrong
 // (plan §0's fidelity rule, which still governs everything a player reads).
 //
-// Both servers boot on their own throwaway copy of examples/stock/binary,
-// with the same fixed RNG seed and their mobiles held still, and every
-// scenario is played at both. It is release-only, like test/play, and for
+// Both servers boot on their own throwaway copy of examples/stock/binary —
+// the Go one on a `dlctl import` of its copy, since it reads yaml and
+// nothing else (see startPair) — with the same fixed RNG seed and their
+// mobiles held still, and every scenario is played at both. It is release-only, like test/play, and for
 // stronger reasons: it needs a C toolchain, it starts two servers, and
 // framing a command's output by silence makes it slow. `make session-parity`
 // runs it. See docs/developer.md.

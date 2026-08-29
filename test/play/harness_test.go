@@ -166,7 +166,7 @@ type lib struct {
 
 // mini is the tutorial world, in the format the server ships on.
 //
-// There used to be two — mini and mini — and a bothFormats
+// There used to be two — miniClassic and miniYAML — and a bothFormats
 // slice that a handful of tests ranged over to prove a scenario behaved
 // the same on either. That was exactly right while the server ran on
 // both, and became half-wasted work the moment it did not: those runs

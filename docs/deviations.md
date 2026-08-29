@@ -857,9 +857,11 @@ deleting it would lose why the work was done:
   CRLF the C prepends to output that interrupts a prompt.
 
 So every one of the eighteen is now either fixed or accepted, and
-precondition 2 is met. That is not the same as the suite passing: five
-of its `known` entries have gone stale from these very fixes and now
-match nothing, which the suite treats as a failure by design. See #268.
+precondition 2 is met. That is not the same as the suite passing —
+each fix leaves its `known` entry matching nothing, which the suite
+treats as a failure by design, so a fix is not finished until the entry
+goes with it. Five had accumulated by 2026-08-29; #268 pruned them and
+put the suite in `release.yml` so the next one cannot accumulate unread.
 
 **Nothing here should be read as "the two servers now agree about
 everything."** This list is what one afternoon of scripted sessions
@@ -1455,10 +1457,28 @@ Listed here so they are not mistaken for deliberate differences.
   of the room (`handler.c:906-914`) and the descriptor at `CON_MENU`
   (`:931`), which is the same ending `quit` has.
 - **Whatever `--lib-dir` points at is the on-disk contract**, decided
-  rather than deviated: both servers read the same directory, which is
-  what the world-parity harness and the Phase 7 shadow run depend on. In
-  this repo that directory is `examples/stock/binary/`, the shipped
-  example and the Go server's default.
+  rather than deviated — but the two servers no longer share the
+  directory. That was the arrangement until yaml-only: one `lib/`, read by
+  both, which is what made the parity harnesses and the Phase 7 rollback
+  story cheap. Now the C server reads `examples/stock/binary/` and the Go
+  server reads `examples/stock/yaml/`, its own default, and
+  `scripts/session-parity.sh` runs `dlctl import` over a staged copy to
+  produce the second one (`test/parity/harness_test.go`'s `startPair`).
+  The contract is the same idea one conversion further along; what it
+  cost is written up in `go-port-plan.md`'s rollback paragraph.
+
+- **`--mini-mud` does nothing.** Issue #274. It is accepted, validated and
+  passed to `world.Config.Mini`, which only the `classic` source reads —
+  and `cmd/dlmud` stopped linking `classic` when yaml-only landed. The
+  `yaml` world format has no reduced index: `docs/design/data-format.md`
+  §4 specifies `world/sets.yaml` for exactly this and it was never built,
+  so the reader knows the filename only well enough to skip it. `dlmud
+  --mini-mud` boots all 30 zones and 1,878 rooms, identically to `dlmud`
+  without it, and `make run-mini` is `make run` with a no-op flag. Listed
+  here rather than as a deviation because nobody decided it: the flag went
+  inert when the format underneath it changed, with no test failing and
+  nothing printed. `--lib-dir=examples/mini/yaml` is the small world in
+  the meantime.
 - ~~**`generic_find`'s combined forms are ported only where a command needed
   them.**~~ `CAN_SEE` and `N.thing` both reach the search functions, so an
   invisible thief can neither be seen nor named and `2.sword` picks the
@@ -1972,11 +1992,12 @@ Listed here so they are not mistaken for deliberate differences.
   the C's order depends on whether the server has been restarted since the
   message was sent.
 
-- **Eleven of `config.c`'s constants are runtime settings now, named by
+- **Twelve of `config.c`'s constants are runtime settings now, named by
   name.** `free_rent`, `min_rent_cost`, `max_obj_save`, `auto_save`,
   `autosave_time`, the two corpse timers, `level_can_shout`,
-  `holler_move_cost`, `max_filesize` and `max_bad_pws` (the last added
-  2026-08-28, with the behaviour it governs — see below) moved from a
+  `holler_move_cost`, `max_filesize`, `max_bad_pws` (added 2026-08-28) and
+  `tunnel_size` (added 2026-08-29, with the behaviour each governs — see
+  below) moved from a
   compiled-in value to `game.GameTuning` (`internal/game/tuning.go`),
   overridable by the data directory's own `config/game.yaml` and
   hot-reloadable on `SIGHUP`. This is a deliberate, field-by-field reversal
@@ -2120,7 +2141,8 @@ Listed here so they are not mistaken for deliberate differences.
   (see "The server reads exactly one on-disk format" above), so
   containment is simply how renting works now; the gate remains in the
   code because `binary`/`ascii` are still read by `dlctl`, and their
-  on-disk shape still cannot hold it. It was —
+  on-disk shape still cannot hold it. It was a deviation when it landed,
+  and the test that proved it is still the proof:
   `TestRentingUnderYamlKeepsTheRingInTheBag` is the same fixture as the
   `ascii`/`binary` test above, quit and logged back in under `yaml`,
   asserting the opposite outcome. That `ascii`/`binary` test now uses

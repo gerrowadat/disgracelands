@@ -26,9 +26,13 @@ every flag appears here, but it cannot check that the prose is accurate.
 > *(inert)* are accepted and
 > validated but do not yet affect anything, for reasons of their own —
 > `--tls-acme-*` needs an ACME client, `--trust-proxy-headers` needs an
-> actual proxy in front — not because a phase is unfinished. They are here because the
+> actual proxy in front, `--mini-mud` needs the `yaml` world format to
+> grow the subset file `classic`'s `index.mini` gave it — not because a
+> phase is unfinished. Most are here because the
 > configuration surface was built first, deliberately — see
-> `docs/proposals/go-port-plan.md` §10.
+> `docs/proposals/go-port-plan.md` §10; `--mini-mud` is the exception, and
+> it went inert rather than starting that way, when the server stopped
+> reading `classic`.
 
 ## Data locations
 
@@ -338,15 +342,27 @@ These correspond one-to-one with the C server's single-letter options.
 
 | Flag | C equivalent | Meaning |
 |---|---|---|
-| `--mini-mud` | `-m` | Load a minimal world, for testing. |
+| `--mini-mud` *(inert)* | `-m` | Load a minimal world, for testing. Accepted and validated; does nothing. |
 | `--skip-rent-check` | `-q` | Skip the rent scan on boot (faster startup). |
 | `--restrict` | `-r` | Allow no new player registrations. Sets the wizlock to 1, which is all `-r` is in the C (`comm.c:329`), so `wizlock 0` in-game reopens it. |
 | `--no-specials` | `-s` | Suppress special procedure assignment. |
 
-`--mini-mud` loads each world subdirectory's `index.mini` instead of
-`index`, `--restrict` turns new characters away at the login prompt, and
+`--restrict` turns new characters away at the login prompt, and
 `--no-specials` skips the assignment table entirely, so guildmasters,
 shopkeepers, bankers and the rest are ordinary mobiles.
+
+**`--mini-mud` currently does nothing, and the reason is the format
+change.** In the C server and in this port's `classic` reader it selects
+each world subdirectory's `index.mini` instead of `index`. The `yaml`
+world format has no such second index — it was designed with a
+`world/sets.yaml` naming subsets of zones for exactly this
+(`docs/design/data-format.md` §4), and that file was never built. The flag
+is plumbed all the way to `world.Config.Mini`, which the `yaml` source
+ignores, so since the server stopped reading `classic` it has been silently
+inert: `dlmud --mini-mud --lib-dir=examples/stock/yaml` loads all 30 zones
+and 1,878 rooms, exactly as without it. `make run-mini` is affected the
+same way. Tracked as a gap in `docs/deviations.md`; use
+`--lib-dir=examples/mini/yaml` for a small world in the meantime.
 
 `--skip-rent-check` skips `Server.SweepRentFiles`
 (`internal/server/rentsweep.go`), the boot-time deletion of rent files

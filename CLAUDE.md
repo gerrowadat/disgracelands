@@ -1,19 +1,24 @@
 # Working on Disgracelands
 
 Notes for anyone — human or agent — picking this up cold. The authoritative
-documents are `docs/proposals/yaml-only.md` (what we are doing next),
-`docs/proposals/go-port-plan.md` (how the port got here, and the
-architecture it built), `docs/deviations.md` (every deliberate difference
-from the C) and `docs/weirdnumbers.md` (every surprising constant, with its
-C citation). This file is the working practice around them.
+documents are `docs/proposals/go-port-plan.md` (how the port got here, the
+architecture it built, and — in its §10 Phase 7 — what is left),
+`docs/proposals/yaml-only.md` (why the server reads one on-disk format, and
+the compatibility contract that came with it), `docs/deviations.md` (every
+deliberate difference from the C) and `docs/weirdnumbers.md` (every
+surprising constant, with its C citation). This file is the working
+practice around them.
 
-`yaml-only.md` supersedes `go-port-plan.md` as the *forward* plan: the port
-reached a playable server across Phases 0–6, and the next thing this project
-does — retiring the legacy formats from the server, and the compatibility
-testing that has to be true first — is in the newer document. The port plan
-stays authoritative as the record of what landed and why, and as the
-reference for the architecture; its Phase 7 (cutover) is now downstream of
-the yaml-only work rather than the next thing up.
+**Where the next thing starts, as of 2026-08-29.** `yaml-only.md` was the
+forward plan and its build is finished: rows 1–6 of its §7 have landed, and
+the row left is cutting the v1.0.0 release, which is a decision rather than
+a task. So the forward plan is `go-port-plan.md` §10's **Phase 7
+(cutover)** again — it was downstream of the yaml-only work and no longer
+is — and its preconditions are the map. The day-to-day work in front of
+that is not in either document: it is the **open GitHub issues**, and
+`docs/deviations.md`'s "Not deviations — gaps still to fill" and "What the
+session-parity suite found", which is where issues get filed from. Read
+those as the todo list and the proposals for what the work is for.
 
 ## What this project is
 
@@ -105,7 +110,8 @@ are not doing one of these three things, expect to be wrong.
 | `internal/persist/world` | Zone/mob/obj/shop file readers. |
 | `internal/persist/player` | The roster and the rent files, behind interfaces. |
 | `reference/` | The original C, the modernised C build, and the oracle tools. |
-| `examples/stock/` | Stock CircleMUD's own world, checked in as both classic and yaml — the server's default `--lib-dir`. The real game data, as it was, never ships here; see `docs/investigations/`. |
+| `examples/stock/` | Stock CircleMUD's own world, checked in as both classic and yaml. The `yaml/` one is the server's default `--lib-dir`; the `binary/` one is what the C server reads and what the parity harnesses stage from. The real game data, as it was, never ships here; see `docs/investigations/`. |
+| `examples/torture/` | A deliberately hostile legacy `lib/` and its import: the compatibility corpus, per `yaml-only.md` §5.1. Add to it when a conversion bug is found. |
 
 ### The seams that matter
 
@@ -336,11 +342,17 @@ the day-to-day/release split being reversible piecemeal.**
 - A deliberate difference from the C → `docs/deviations.md`, with reasoning.
 - Something not yet ported, that a reader would expect to be →
   `docs/deviations.md` too, so the gap is visible.
-- Status of work still to come → `docs/proposals/yaml-only.md`. Keep it
-  current; it is the map future work is planned from.
-- Phase and slice status for the port itself →
-  `docs/proposals/go-port-plan.md`. A historical record now, corrected when
-  it turns out to be wrong about what landed, not extended with new plans.
+- A bug or a gap in the Go server → a GitHub issue, plus a doc entry for
+  the reasoning if there is any. See "The Go server is canonical now"
+  below; the issues are the todo list.
+- Status of work still to come → `docs/proposals/go-port-plan.md` §10's
+  Phase 7 preconditions, which is the forward plan again now that
+  `yaml-only.md`'s build is done. Correct both when they turn out to be
+  wrong about what landed; neither is extended with new plans.
+- The on-disk format's own compatibility contract — what a new yaml field
+  owes, what "the conversion is exactly dead on" means and how it is
+  proved → `docs/proposals/yaml-only.md` §5 and §6, until somebody moves
+  them into `data-format.md` where they belong.
 
 **The Go server is canonical now, not the C.** Through Phase 5 a place
 where the Go server fell short of the C was an artifact to note and move

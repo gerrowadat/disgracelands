@@ -27,14 +27,15 @@ on `yaml` as well as `classic` (§11 step 6c-iii,
 `config/messages.yaml`, `--messages-format`). Socials (§11 step 6c-iv)
 are on `yaml` too, the same way (`config/socials.yaml`,
 `--socials-format`) — the feature (`do_action`) was already real from
-Phase 5c. Game config (§6) is the one piece left, and deliberately so —
-making `config.c`'s tuning configurable at all is a reversal of the
-"archive wins" fidelity principle (`docs/deviations.md`'s existing "rent
-settings are constants, not options" entry), not a format pass, and
-needs its own decision rather than being folded in here; see §11 for
-what landed and what is still a plan, and why those are staged
-separately rather than
-bundled in.
+Phase 5c. Game config (§6) was the one piece left when this was written
+and is built now — twelve of `config.c`'s constants at
+`<lib-dir>/config/game.yaml`, hot-reloadable on `SIGHUP`. It took its own
+decision rather than being folded in here, and that was the point: making
+`config.c`'s tuning configurable at all is a field-by-field reversal of
+the "archive wins" fidelity principle, not a format pass
+(`docs/deviations.md`, "Twelve of `config.c`'s constants are runtime
+settings now"). See §11 for what landed and what is still a plan, and why
+those were staged separately rather than bundled in.
 
 ---
 
@@ -52,8 +53,11 @@ assumes them.
 | **Prose** | **Stays prose.** Help entries, the MOTD, credits, news, policies and the greeting screens are plain UTF-8 text files, indexed from the data format rather than embedded in it. |
 | **Colour** | **Named `{{red}}` codes in the data, ANSI rendered at the socket.** Symbolic markup is forced rather than chosen: a raw ESC byte is not a legal character anywhere in a YAML stream. The *spelling* is free, because the original data contains no colour codes to stay compatible with — so it is chosen for readability and for occurring zero times in the existing corpus, rather than borrowing the `&r` convention and its escaping burden. Export to `classic` renders codes back to the raw escapes `screen.h` defines, which is what the C server expects. See §5. |
 
-Naming: the format registers as **`yaml`**. `--world-format=yaml`,
-`--player-format=yaml`.
+Naming: the format registers as **`yaml`**, and it is the only format the
+server registers at all — the `--*-format` flags that used to select it
+are gone (`docs/proposals/yaml-only.md` §3.1). The name survives where
+`dlctl` still needs one: `--to-format`, `--against-format` and the
+registry `classic`/`ascii`/`binary` share with it.
 
 ---
 
@@ -230,6 +234,9 @@ data/
     ...
     zones.yaml               Which zones load, and which exist but do not.
     sets.yaml                Named subsets of zones (`mini`, for --mini-mud).
+                             NOT BUILT: the yaml reader skips this filename
+                             and nothing writes it, so --mini-mud is inert
+                             (docs/deviations.md, docs/configuration.md).
 
   config/
     game.yaml                Rules tuning: config.c, made data.
@@ -987,10 +994,14 @@ wizlist:
   autowiz: false
 ```
 
-**Built 2026-08-23, and living here since 2026-08-28.** Ten of the fields
-sketched above shipped — `docs/deviations.md` has which, and why the rest
-of `config.c` stayed a constant — as flat keys rather than the sections
-above, there being ten of them and no `schema:` stamp yet. The *location*
+**Built 2026-08-23, and living here since 2026-08-28.** Twelve of the
+fields sketched above have shipped — `docs/deviations.md` has which, and
+why the rest of `config.c` stayed a constant — as flat keys rather than
+the sections above, there being few enough of them and no `schema:` stamp
+yet. The count grows a field at a time as the behaviour each one governs
+gets built (`max_bad_pws` 2026-08-28, `tunnel_size` 2026-08-29), so treat
+the block above as the sketch it is and `internal/game/tuning.go` as the
+list. The *location*
 is this section's, unchanged: `<lib-dir>/config/game.yaml`, read at boot
 and re-read on `SIGHUP`, optional (no file is `config.c`'s own behaviour
 exactly), and carried across unconverted by `dlctl import`. It shipped
@@ -1231,9 +1242,10 @@ one format where an item saved inside a bag comes back inside it —
 runtime, only the round trip through `binary`/`ascii`'s flat rent file did.
 Landed as a deliberate, explicitly scoped deviation (`docs/deviations.md`,
 "Renting empties your bags and strips your body") rather than something
-this section originally anticipated in that much detail — running
-`--player-format=yaml` is what turns it on; `binary`/`ascii` are
-byte-for-byte unchanged. Stock auto-equip (putting worn items back *on the
+this section originally anticipated in that much detail. It was gated on
+`--player-format=yaml` when there was still a format to choose; since
+yaml-only there is not, so it is simply how renting works, and
+`binary`/`ascii` stay byte-for-byte unchanged for `dlctl`. Stock auto-equip (putting worn items back *on the
 body*) is a separate deviation nobody has approved, so there is no
 `equipment:` section either — see `internal/persist/player/yaml/doc.go`.
 
@@ -1270,8 +1282,10 @@ together" is the entire point.
 Four of these are now built — step 6a, `internal/persist/{bans,boards,
 mail,houses}`, each retrofitted to the `Store` interface/registry shape
 `world` and `player` already had, `classic` moved to its own subpackage
-unchanged, `yaml` added beside it, `--state-format` selecting between
-them, `dlctl import --type=state`/`fmt` converting and canonicalising. All three
+unchanged, `yaml` added beside it (`--state-format` chose between them
+until yaml-only removed the flag; the server opens `yaml` and `dlctl`
+opens either), `dlctl import --type=state`/`fmt` converting and
+canonicalising. All three
 struct-dump ones were already ported and working before this — boards,
 mail, houses — which is the right order: the C formats had to be readable
 before there was anything to convert *from*, and those ports' test
@@ -1467,14 +1481,28 @@ reader does not care about:
 ### 10.4 Tooling
 
 ```
-dlctl import --from-dir=data-old --to-dir=data                     # every subsystem, one lib/ to one fresh yaml directory
+dlctl import --from-dir=data-old --to-dir=data                     # every subsystem, one lib/ to one fresh yaml directory; verifies itself
 dlctl import --type=world --from-dir=data-old --from-format=classic --to-dir=data
-dlctl export --type=world --to-dir=data-classic --to-format=classic  # refuses on data loss (not built — §11 step 3)
+dlctl verify --dir=data-old --against=data                         # do the two directories load to the same state, subsystem by subsystem
+dlctl verify --type=pfile --dir=data --format=binary               # does this roster decode, and how
 dlctl lint --type=world --dir=data                                 # replaces scheck
 dlctl fmt --type=world --dir=data                                  # canonicalise in place
-dlctl data verify                                                  # every file, every schema (not built)
 dlctl data version --dir=data                                      # which release wrote the directory, and whether this one will load it; docs/design/data-format-versioning.md
+dlctl passwd --type=pfile --dir=data --name=zod                    # the game itself has no way to
+dlctl convert --type=pfile --from-format=binary --to-format=ascii  # between the two legacy rosters, for comparing against the C
+dlctl parity session|stage                                         # drive both servers, or stage a lib/ for one
+
+dlctl export --type=world --to-dir=data-classic --to-format=classic  # NOT BUILT — refuses on data loss; §11 step 3
+dlctl data verify                                                    # NOT BUILT — every file against its schema
 ```
+
+`dlctl --help` is the list that is true; this block is what the shape was
+designed to be, with the two that never got built marked. `verify
+--against` is the one that arrived differently from the sketch: it answers
+"did the conversion lose anything" by comparing *loaded state* between two
+directories, which is a stronger question than validating one directory
+against a schema, and it is why `data verify` has not been missed
+(`docs/proposals/yaml-only.md` §4.1).
 
 `export` is not a nicety. It is what makes this format safe to adopt: as
 long as the C server is the parity oracle, being able to go back is how a

@@ -147,9 +147,8 @@ Notes that matter:
   players, houses, boards, mail, and any world file edited in-game. An
   image rebuild must not lose it.
 - The container runs as **non-root**. The lib-dir must be writable by uid
-  65532 (`nonroot`) — the server writes `pfiles/`, `plrobjs/`, `house/` and
-  `etc/players` into it, and character creation is the first thing that
-  fails if it cannot. `build/docker-compose.yml` overrides the user instead,
+  65532 (`nonroot`) — the server writes `players/` and `state/` into it,
+  and character creation is the first thing that fails if it cannot. `build/docker-compose.yml` overrides the user instead,
   because it bind-mounts a directory from your checkout that uid 65532 does
   not own.
 - Health checks cannot use `curl`, for the same no-shell reason. Point an
@@ -209,8 +208,8 @@ the copies already walking around, and it can *refuse* — a mobile in combat
 is not replaced underneath the fight. That needs a vnum to act on and
 somebody to give the answer to, and a signal has neither.
 
-Everything else — the flags, the listeners, `--lib-dir`, the data formats —
-needs a restart.
+Everything else — the flags, the listeners, `--lib-dir` itself — needs a
+restart.
 
 **A reload that fails changes nothing.** A tuning file that will not
 parse, or parses and will not validate (`autosave_time: 0`, a negative
@@ -391,15 +390,16 @@ many call sites are still would-be producers.
 
 ## Backups
 
-Back up your `--lib-dir` (`examples/stock/binary/` if you are running on
+Back up your `--lib-dir` (`examples/stock/yaml/` if you are running on
 the shipped default). That is all the state there is.
 
 Of particular note, and none of it in git for good reason:
 
-- `etc/players` (or `pfiles/`) — the roster, including password hashes.
-- `plrobjs/`, `plralias/` — player inventories and aliases.
-- `house/`, `etc/hcontrol` — player housing and its contents.
-- `etc/plrmail` — in-game mail.
+- `players/` — one file per character, holding the roster entry, the
+  password hash, the inventory and rent, the aliases and the crash file
+  all together (`docs/design/data-format.md` §8).
+- `state/` — boards, mud mail, the ban list, housing and its contents, the
+  bug/idea/typo reports and the mud clock.
 - `world/` — the world itself, which changes if anyone builds in-game.
 - `config/game.yaml` — the game tuning, if this server has been tuned. It
   lives in the data directory precisely so it lands in this backup with the
@@ -509,14 +509,14 @@ out unusually or a conversion done in stages. `--from-house-dir`/
 `--from-misc-dir`/`--from-objs-dir`/`--from-alias-dir` override the
 subdirectories `dlctl` would otherwise derive.
 
-### Checking a conversion lost nothing
+### Does the import check itself?
 
-`import` does this itself, by default: once it has written the
-destination it loads **both** directories and compares them, and fails
-the import — leaving the output unstamped, so a server will not boot on
-it — if they do not agree. `--verify=false` skips it. The same comparison
-is `dlctl verify --against`, a command in its own right; see "Checking a
-conversion lost nothing" under "Inspecting player data" below.
+Yes, by default: once it has written the destination it loads **both**
+directories and compares them, and fails the import — leaving the output
+unstamped, so a server will not boot on it — if they do not agree.
+`--verify=false` skips it. The same comparison is `dlctl verify
+--against`, a command in its own right; see "Checking a conversion lost
+nothing" below.
 
 ### Pointing dlctl at a directory
 
