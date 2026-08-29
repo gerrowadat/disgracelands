@@ -45,8 +45,7 @@ func twoInARoom(t *testing.T, srv *Server, addr string) (god, mortal *client) {
 	// The god walks down to the temple rather than being teleported, so that
 	// both clients have drained the arrival messages before a test starts
 	// counting lines.
-	god.send("south")
-	god.expect("The Temple Of Midgaard")
+	god.sendExpectNew("south", "The Temple Of Midgaard")
 	mortal.settle()
 	return god, mortal
 }
@@ -148,15 +147,13 @@ func TestSneakingSuppressesTheMovementMessages(t *testing.T) {
 
 	// Walking openly, first, so the test knows the messages are there to be
 	// suppressed.
-	god.send("north")
-	god.expect("The Immortal Board Room")
+	god.sendExpectNew("north", "The Immortal Board Room")
 	mortal.settle()
 	if !mortal.seen("Zod leaves north.") {
 		t.Errorf("an ordinary departure was not announced; got:\n%s", afterLastLook(mortal))
 	}
 
-	god.send("south")
-	god.expect("The Temple Of Midgaard")
+	god.sendExpectNew("south", "The Temple Of Midgaard")
 	mortal.settle()
 	if !mortal.seen("Zod has arrived.") {
 		t.Errorf("an ordinary arrival was not announced; got:\n%s", afterLastLook(mortal))
@@ -166,15 +163,13 @@ func TestSneakingSuppressesTheMovementMessages(t *testing.T) {
 	before := strings.Count(mortal.transcript(), "Zod leaves north.")
 	arrivals := strings.Count(mortal.transcript(), "Zod has arrived.")
 
-	god.send("north")
-	god.expect("The Immortal Board Room")
+	god.sendExpectNew("north", "The Immortal Board Room")
 	mortal.settle()
 	if got := strings.Count(mortal.transcript(), "Zod leaves north."); got != before {
 		t.Errorf("a sneaking departure was announced %d times, want the earlier %d", got, before)
 	}
 
-	god.send("south")
-	god.expect("The Temple Of Midgaard")
+	god.sendExpectNew("south", "The Temple Of Midgaard")
 	mortal.settle()
 	if got := strings.Count(mortal.transcript(), "Zod has arrived."); got != arrivals {
 		t.Errorf("a sneaking arrival was announced %d times, want the earlier %d", got, arrivals)

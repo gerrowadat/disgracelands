@@ -58,8 +58,7 @@ func TestGotoAndBack(t *testing.T) {
 	c := dialClient(t, listening(t, srv))
 	c.create("Wanderer", "everywhere", "m", "w")
 
-	c.send("goto 3001")
-	c.expect("The Temple Of Midgaard")
+	c.sendExpectNew("goto 3001", "The Temple Of Midgaard")
 	if got := roomOf(t, srv, "Wanderer"); got != MortalStartRoom {
 		t.Errorf("goto put them in %d, want %d", got, MortalStartRoom)
 	}
@@ -104,8 +103,7 @@ func TestPoofing(t *testing.T) {
 
 	_, watcher := place(t, srv, fighterRecord("Watcher", 10, 100), ImmortStartRoom)
 
-	god.send("goto 3001")
-	god.expect("The Temple Of Midgaard")
+	god.sendExpectNew("goto 3001", "The Temple Of Midgaard")
 	god.settle()
 	if !watcher.said("Poofer disappears in a puff of smoke.") {
 		t.Error("the room did not see the default poofout")
@@ -117,8 +115,7 @@ func TestPoofing(t *testing.T) {
 	god.expect("Okay.")
 
 	// Back to the watcher, then away again so both messages are seen.
-	god.send("goto 1204")
-	god.expect("The Immortal Board Room")
+	god.sendExpectNew("goto 1204", "The Immortal Board Room")
 	god.settle()
 	if !watcher.said("Poofer materialises out of nowhere.") {
 		t.Error("the room did not see the poofin")
