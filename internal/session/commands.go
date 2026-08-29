@@ -1583,6 +1583,22 @@ func (c *Context) moveCharacterChecking(who *game.Character, dir game.Direction,
 		return false
 	}
 
+	// The boat check (act.movement.c:112-119), which sits *before* the
+	// movement cost is even computed — so being turned back at the water's
+	// edge is free, and a character with no movement points left is told they
+	// need a boat rather than that they are exhausted.
+	//
+	// The test is on *either* room being SECT_WATER_NOSWIM, not just the one
+	// being entered: getting out of the water needs the boat you needed to
+	// get in, which is what stops a boat being stolen from under someone
+	// mid-crossing leaving them wading ashore.
+	if deepWater(c.World.Room(who.Room)) || deepWater(c.World.Room(exit.ToRoom)) {
+		if !hasBoat(who) {
+			who.Tell("You need a boat to go there.\r\n")
+			return false
+		}
+	}
+
 	// need_movement (act.movement.c:127): the truncated average of the two
 	// rooms' movement loss. Checked here, *before* the atrium check, because
 	// that is the C's order — a player with no movement left standing in an
@@ -1646,6 +1662,23 @@ func (c *Context) moveCharacterChecking(who *game.Character, dir game.Direction,
 		}
 	}
 
+	// The godroom check (act.movement.c:147-151), the last gate before the
+	// step is paid for.
+	//
+	// The level is `LVL_GRGOD`, not `LVL_IMMORT`, so a plain immortal is
+	// refused as flatly as a mortal is — the flag is for the two top ranks.
+	// And the wording is not the wording `goto` and `teleport` use for the
+	// same flag: the C's movement message has the contraction
+	// ("You aren't godly enough"), the two teleport sites spell it out
+	// ("You are not godly enough"). Three call sites, two strings; the
+	// difference is the C's, so the string here is deliberately not shared
+	// with them.
+	if to := c.World.Room(exit.ToRoom); to != nil &&
+		to.Flags.Has(game.RoomGodRoom) && who.Level() < game.LevelGreaterGod {
+		who.Tell("You aren't godly enough to use that room!\r\n")
+		return false
+	}
+
 	// "Now we know we're allowed to go into the room." Mobiles and immortals
 	// walk for nothing.
 	if !who.IsNPC() && who.Record != nil && who.Level() < game.LevelImmortal {
@@ -1657,8 +1690,19 @@ func (c *Context) moveCharacterChecking(who *game.Character, dir game.Direction,
 		who.Tell("The way is blocked by something you cannot describe.\r\n")
 		return false
 	}
-	announce(c.World, leaving, who, "%s leaves %s.\r\n", who.Name, dir)
-	announce(c.World, exit.ToRoom, who, "%s has arrived.\r\n", who.Name)
+	// AFF_SNEAK suppresses both messages (act.movement.c:163-170). The C
+	// tests the *mover's* flag and nothing else — there is no per-observer
+	// roll, so `act()` is simply not called and the message is suppressed for
+	// everyone in the room or for nobody. Sneaking past a watchful god works
+	// exactly as well as sneaking past a sleeping rat.
+	//
+	// It conceals the movement, not the person: AFF_SNEAK is deliberately not
+	// in INVIS_OK, so a sneaking character is still seen standing there by
+	// anyone who looks.
+	if !who.HasAffect(game.AffectSneak) {
+		announce(c.World, leaving, who, "%s leaves %s.\r\n", who.Name, dir)
+		announce(c.World, exit.ToRoom, who, "%s has arrived.\r\n", who.Name)
+	}
 
 	if room := c.World.Room(exit.ToRoom); room != nil {
 		if who == c.Character {

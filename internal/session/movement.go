@@ -175,3 +175,53 @@ func (c *Context) runOrder(victim *game.Character, line string) {
 		victim.Tell("Huh?!?\r\n")
 	}
 }
+
+// hasBoat is has_boat (act.movement.c:52): whether a character may cross
+// SECT_WATER_NOSWIM.
+//
+// Four ways to qualify, and two of them are easy to read wrongly.
+//
+// The level test is `GET_LEVEL(ch) > LVL_IMMORT` — **strictly greater**, so a
+// plain level-31 immortal is *not* exempt and has to find a boat like anybody
+// else, while a level-32 god walks on. Every other level gate in
+// do_simple_move that lets gods past is `< LVL_IMMORT`, so this one is off by
+// exactly one from its neighbours; see docs/weirdnumbers.md.
+//
+// The inventory test is `find_eq_pos(ch, obj, NULL) < 0`, which the C
+// comments as "non-wearable boats in inventory". A boat that *can* be worn
+// somewhere counts only when it is actually being worn: carrying it does
+// nothing, and the following loop over the equipment is what picks it up
+// again once it is on. So a wearable boat in a backpack leaves you standing
+// at the water's edge holding the thing that would float you.
+//
+// Nothing here is guarded on IS_NPC, so a mobile needs a boat too — which is
+// what keeps a wandering shopkeeper out of the sea.
+func hasBoat(who *game.Character) bool {
+	if who == nil {
+		return false
+	}
+	if who.Level() > game.LevelImmortal {
+		return true
+	}
+	if who.HasAffect(game.AffectWaterwalk) {
+		return true
+	}
+	for _, obj := range who.Carrying {
+		if obj != nil && obj.Type == game.ItemBoat && findWearPosition(obj) < 0 {
+			return true
+		}
+	}
+	for _, obj := range who.Equipment {
+		if obj != nil && obj.Type == game.ItemBoat {
+			return true
+		}
+	}
+	return false
+}
+
+// deepWater is `SECT(room) == SECT_WATER_NOSWIM`, with the nil check the C
+// does not need. A room this port could not find is not water: a broken exit
+// is already refused a few lines earlier with its own message.
+func deepWater(room *game.RoomDef) bool {
+	return room != nil && room.SectorType == game.SectorWaterNoSwim
+}

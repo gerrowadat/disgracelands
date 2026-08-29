@@ -993,10 +993,38 @@ port is right and the thing it is compared against is wrong.
   exhausted to follow" — and only if they have a master at all. That is
   `Context.moveCharacterChecking`.
 
-  Still not ported, and unchanged by this: the boat and godroom checks
+  ~~Still not ported, and unchanged by this: the boat and godroom checks
   that surround it in `do_simple_move`, and `AFF_SNEAK` suppressing the
-  leave and arrive messages. Those are issues #265, #266 and #267. The
-  tunnel check *is* ported now (#136) — it has its own entry below.
+  leave and arrive messages.~~ Those were issues #265, #266 and #267, and
+  all three are ported now — `do_simple_move`'s run of gates is complete.
+  The tunnel check was ported earlier (#136) and has its own entry below.
+
+  The **boat** check (`act.movement.c:112-119`) sits before the movement
+  cost is computed, so being turned back at the water's edge is free, and
+  it tests *either* room for `SECT_WATER_NOSWIM` — getting out needs the
+  boat you needed to get in. `has_boat` (`act.movement.c:52`) has two
+  readings worth having in front of you: its level test is
+  `GET_LEVEL(ch) > LVL_IMMORT`, **strictly greater**, so a plain level-31
+  immortal is refused while a level-32 god walks on — every neighbouring
+  gate in `do_simple_move` is `< LVL_IMMORT`, so this one is off by one
+  from all of them; and the inventory loop is guarded on
+  `find_eq_pos(ch, obj, NULL) < 0`, so a boat that *can* be worn counts
+  only once it is actually worn. Both are in `docs/weirdnumbers.md`.
+
+  The **godroom** check (`act.movement.c:147-151`) turns on `LVL_GRGOD`
+  rather than `LVL_IMMORT`, so it shuts out a plain immortal as flatly as
+  a mortal, and its wording differs by a contraction from the two ported
+  teleport sites — the C's movement message is "You aren't godly enough to
+  use that room!" against `do_goto`/`do_teleport`'s "You are not". Three
+  call sites, two strings; the string is deliberately not shared.
+
+  **`AFF_SNEAK`** now suppresses both messages. The C's test is on the
+  *mover's* flag alone, with no per-observer roll — `act(..., TO_ROOM)` is
+  simply not called — so sneaking past a watchful god works exactly as
+  well as sneaking past a sleeping rat. It conceals the movement and not
+  the person: `AFF_SNEAK` is deliberately not in `INVIS_OK`, which
+  `TestSneakingDoesNotHideYouStandingStill` has pinned since long before
+  the other half existed.
 - ~~**The C colours what it prints and the port does not.**~~ New characters
   get colour turned on for them in both (interpreter.c:1616, a `<DoC>` local
   change the port has as `game.ApplyNewCharacterDefaults`), but the C wraps

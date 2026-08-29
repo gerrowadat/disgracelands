@@ -188,6 +188,8 @@ const (
 	testWandVnum     game.ObjVnum = 109
 	testPotionVnum   game.ObjVnum = 110
 	testStaffVnum    game.ObjVnum = 111
+	testBoatVnum     game.ObjVnum = 112
+	testBootsVnum    game.ObjVnum = 113
 )
 
 // testFillerVnumBase starts a run of otherwise-uninteresting, mutually
@@ -382,6 +384,25 @@ func testWorld() *game.Live {
 			WearFlags:   game.ItemWearTake | game.ItemWearHold,
 			Weight:      5,
 			Values:      [game.NumObjValues]int32{20, 5, 5, game.SpellMagicMissile},
+		},
+		{
+			// A boat you cannot wear anywhere, which is the only kind
+			// has_boat counts in an inventory: its test is
+			// `find_eq_pos(ch, obj, NULL) < 0` (act.movement.c:70).
+			Vnum: testBoatVnum, Keywords: "boat canoe", ShortDesc: "a small canoe",
+			Description: "A small canoe is beached here.",
+			Type:        game.ItemBoat,
+			WearFlags:   game.ItemWearTake,
+			Weight:      50,
+		},
+		{
+			// A boat that *is* wearable, so the same test can be shown from
+			// the other side: carried, it does nothing; worn, it floats you.
+			Vnum: testBootsVnum, Keywords: "waders boots", ShortDesc: "a pair of waders",
+			Description: "A pair of waders is lying here.",
+			Type:        game.ItemBoat,
+			WearFlags:   game.ItemWearTake | game.ItemWearFeet,
+			Weight:      5,
 		},
 		{
 			Vnum: testFountainVnum, Keywords: "fountain", ShortDesc: "a fountain",
