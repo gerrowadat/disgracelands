@@ -11,9 +11,10 @@ does, how to configure it, how to run it.
   variable, what it does, and what the defaults are.
 - **[operations.md](operations.md)** — starting it, containers, graceful
   shutdown, health and readiness, metrics, logs, backups, exposure, and
-  getting started from an original CircleMUD directory: `dlctl convert`
-  into the classic/ascii shapes the server already runs on by default, or
-  `dlctl import` straight into `yaml`.
+  getting started from an original CircleMUD directory: `dlctl import`,
+  which is the only path from an archived `lib/` to a directory this
+  server runs on, and `dlctl verify --against` for checking the
+  conversion lost nothing.
 - **[developer.md](developer.md)** — working on the port: the `Makefile`'s
   dev targets, getting a server running locally against a tiny world or a
   throwaway data directory, poking at it by hand, and what to run before
@@ -47,22 +48,23 @@ both the C tree and the Go tree.
 ## `docs/proposals/` — the plan, still moving
 
 What is going to happen, and the record of how the port got to where it is.
-Two documents, and which is which matters: `go-port-plan.md` is the port
-that got us here — still authoritative for the architecture and for what
-each phase did and did not contain, but no longer extended with new plans
-— and `yaml-only.md` is the change that has just landed on top of it.
 
-- **[yaml-only.md](proposals/yaml-only.md)** — retiring `classic`, `ascii`
-  and `binary` from the server, so it understands only `yaml`: what leaks
-  today, what "the conversion is exactly dead on" has to mean and how it
-  gets proved, the compatibility corpus and fuzz targets that do not exist
-  yet, and the rule for yaml fields the legacy formats cannot source.
-  Proposed as v1.0.0 and breaking: the only route from a CircleMUD `lib/`
-  to a running server is `dlctl import`. **Rows 1–6 have landed**; row 7,
-  cutting the release, has not, and is a decision rather than a task. Read
-  its §7 table for what each row turned out to be about — several were
-  about something other than what they were written to be about, and the
-  bugs they found are listed there.
+**Where the next thing starts, as of 2026-08-29.** `yaml-only.md` was the
+forward plan and its build is finished: rows 1–6 have all landed, and the
+one row left is cutting the v1.0.0 release, which is a decision rather
+than a task. So **the forward plan is `go-port-plan.md` §10's Phase 7
+(cutover) again** — not because anything reverted, but because yaml-only
+was the thing standing in front of it and no longer is. Phase 7's
+preconditions are the actual map of what is left, and the two of them
+still open are the release (its precondition 6, now partly met: tagged
+releases exist, a *1.0* one does not) and a decision nobody has made about
+whether the archived roster comes back (precondition 4).
+
+The day-to-day work in front of that is not in either proposal: it is
+`deviations.md`'s "Not deviations — gaps still to fill" list and whatever
+`test/parity` finds, filed as GitHub issues. Read those two as the todo
+list; read the proposals for what the work is *for*.
+
 - **[go-port-plan.md](proposals/go-port-plan.md)** — the design and phasing
   for reimplementing the engine in Go: 64-bit safety, pluggable player- and
   world-file formats, the concurrency model, licensing constraints, and the
@@ -70,10 +72,21 @@ each phase did and did not contain, but no longer extended with new plans
   each one did and did not contain, Phase 5's own slices and gaps listed
   command by command; Phase 6 (OasisOLC) was decided against, in favour of
   reloading edited world data into a running server without a restart —
-  its own write-up covers what that became instead; Phase 7 (cutover) has
-  not started, and is now downstream of `yaml-only.md` rather than the next
-  thing up — including one paragraph of it, on rollback, that plan
-  rewrote.
+  its own write-up covers what that became instead. **Phase 7 (cutover) has
+  not started and is the forward plan again**, now that yaml-only has
+  landed — including one paragraph of it, on rollback, that yaml-only
+  rewrote. It is still authoritative for the architecture and for what each
+  phase did and did not contain, and is not extended with new plans.
+- **[yaml-only.md](proposals/yaml-only.md)** — retiring `classic`, `ascii`
+  and `binary` from the server, so it understands only `yaml`: what leaked,
+  what "the conversion is exactly dead on" has to mean and how it got
+  proved, the compatibility corpus and fuzz targets it built, and the rule
+  for yaml fields the legacy formats cannot source. Breaking, and proposed
+  as v1.0.0: the only route from a CircleMUD `lib/` to a running server is
+  `dlctl import`. **Rows 1–6 have landed**; row 7, cutting the release, has
+  not. Read its §7 table for what each row turned out to be about — several
+  were about something other than what they were written to be about, and
+  the bugs they found are listed there.
 
 ## `docs/design/` — decisions that landed
 
@@ -85,12 +98,14 @@ piece finds something the original document got wrong; not rewritten to
 hide that it started as a proposal.
 
 - **[data-format.md](design/data-format.md)** — a single yaml format for
-  everything a lib-dir holds: the world, players, boards, mail, houses and the
-  game tuning still compiled into `config.c`. Replaces the eight unrelated
-  formats a CircleMUD `lib/` carries, and is a superset of all of them. YAML
+  everything a lib-dir holds: the world, players, boards, mail, houses and
+  the game tuning that used to be compiled into `config.c`. Replaces the
+  eight unrelated formats a CircleMUD `lib/` carries, and is a superset of all of them. YAML
   over a JSON data model, one file per zone, one file per player, vnums
-  unchanged. Everything but game configuration and the `classic` export
-  writer is built; §11 tracks the rest.
+  unchanged. It is the *only* format the server reads now (§11 step 7).
+  Two pieces of the document are not built: the `classic` export writer,
+  declined rather than pending (`yaml-only.md` §0.3), and `world/sets.yaml`
+  — which is why `--mini-mud` does nothing here. §11 tracks the rest.
 - **[data-format-versioning.md](design/data-format-versioning.md)** — the
   `.dlversion` stamp a data directory carries: the `major.minor.patch`
   release of the `dlctl` that wrote it. A *differing* major refuses to

@@ -22,7 +22,7 @@ Common variables, settable on any target:
 
 | Variable | Default | What it does |
 |---|---|---|
-| `LIB` | `examples/stock/binary` | The data directory the server runs against. |
+| `LIB` | `examples/stock/yaml` | The data directory the server runs against. It must be one the server can read — a `yaml` directory, not a CircleMUD `lib/`. |
 | `PORT` | `4000` | Plaintext telnet port. |
 | `TLS_PORT` | `4443` | TLS port for `run-tls`. |
 | `METRICS_PORT` | `9090` | `/metrics`, `/healthz`, `/readyz`. |
@@ -33,22 +33,31 @@ Common variables, settable on any target:
 ## Getting a server in front of you
 
 ```sh
-make run-mini     # tiny world, three zones, boots instantly
-make connect      # in another terminal
+make run LIB=examples/mini/yaml   # one small zone, boots instantly
+make connect                      # in another terminal
 ```
 
-`run-mini` passes `--mini-mud`, which switches every world subdirectory from
-`index` to `index.mini`: 69 rooms, 51 mobiles, 59 objects, 3 zones instead
-of 1,878 / 569 / 679 / 30. It is the right default for testing anything
-that is not about the world itself — it loads in milliseconds, and a bug in
-zone resets is much easier to see in three zones than in thirty.
+A small world is the right default for testing anything that is not about
+the world itself — it loads in milliseconds, and a bug in zone resets is
+much easier to see in one zone than in thirty.
+
+**`make run-mini` is not that, at the moment.** It passes `--mini-mud`,
+which in the C server and in this port's `classic` reader switches every
+world subdirectory from `index` to `index.mini` — 69 rooms, 51 mobiles, 59
+objects, 3 zones instead of 1,878 / 569 / 679 / 30. The `yaml` world
+format has no equivalent (`world/sets.yaml`, `docs/design/data-format.md`
+§4, was designed and never built), so `world.Config.Mini` reaches a source
+that ignores it and the flag does nothing: `make run-mini` boots the same
+30 zones `make run` does. `docs/configuration.md` marks it *(inert)* and
+`docs/deviations.md` tracks the gap; `examples/mini/yaml` is the small
+world in the meantime.
 
 The other run targets:
 
 | Target | What you get |
 |---|---|
-| `make run` | The full world in `examples/stock/binary/`, plaintext telnet. |
-| `make run-mini` | The same directory, reduced world. |
+| `make run` | The full world in `examples/stock/yaml/`, plaintext telnet. |
+| `make run-mini` | The same, plus `--mini-mud` — which currently does nothing; see above. |
 | `make run-fresh` | A throwaway copy of the data with no players in it. |
 | `make run-tls` | The TLS listener, with a self-signed local certificate. |
 | `make run LIB=/path/to/lib` | Any other data directory (see below). |
@@ -70,7 +79,7 @@ the port.
 ### A character with powers
 
 The first character created on an empty roster is made an Implementor
-(level 34, all skills, `LIB/pfiles` empty). This is stock CircleMUD
+(level 34, all skills, `LIB/players` empty). This is stock CircleMUD
 behaviour — db.c's *"if this is our first player --- he be God"*, kept
 deliberately in `internal/game/create.go` — and it is the fastest way to get
 a god to test with.
@@ -81,16 +90,16 @@ You only get one per roster, though, so:
 make run-fresh
 ```
 
-builds `out/scratch-lib`, a copy of `LIB` (`examples/stock/binary/` by
+builds `out/scratch-lib`, a copy of `LIB` (`examples/stock/yaml/` by
 default) with the player state stripped out, and runs against that. Log
 in, pick any name, and you are an Implementor. `make clean` or `make
 scratch` throws it away and you can do it again.
 
-The copy deliberately excludes `pfiles/`, `plrobjs/`, `plralias/`, `house/`,
-`etc/players` and `etc/plrmail`: partly because an empty roster is the whole
-point, and partly because `LIB/pfiles` may hold the real ex-players'
-password hashes and mail if `LIB` has been pointed at a converted archive,
-which should not be getting copied around the filesystem.
+The copy re-creates `players/` and `state/` empty rather than copying
+them: partly because an empty roster is the whole point, and partly
+because `LIB/players` may hold the real ex-players' password hashes and
+mail if `LIB` has been pointed at a converted archive, which should not be
+getting copied around the filesystem.
 
 ### Against a real data directory
 
@@ -111,7 +120,7 @@ make run LIB=out/data
 `dlctl import` verifies its own output by default: it loads both
 directories afterwards and compares them subsystem by subsystem, and
 fails the import if they do not agree. `docs/operations.md`'s own
-"Converting into the yaml format" section has the full walkthrough.
+"Converting an old data directory" section has the full walkthrough.
 
 ### TLS
 
@@ -180,9 +189,10 @@ Useful `FLAGS` when reproducing something specific:
 ## What running writes
 
 Everything the server persists goes under its `--lib-dir`. Locally that is
-`examples/stock/binary/` by default, and the player-bearing parts of it
-are gitignored on purpose: `pfiles/`, `plrobjs/`, `plralias/`, `house/`,
-`etc/players`, `etc/plrmail`, under whatever `--lib-dir` is.
+`examples/stock/yaml/` by default, and the player-bearing parts of it are
+gitignored on purpose: `players/` and `state/` in a converted directory,
+and `pfiles/`, `plrobjs/`, `plralias/`, `house/`, `etc/players`,
+`etc/plrmail` in a legacy one, under whatever `--lib-dir` is.
 
 Two rules follow, and they are worth keeping in reflex:
 
@@ -191,9 +201,11 @@ Two rules follow, and they are worth keeping in reflex:
   should show nothing new under those paths; if it does, something wrote
   somewhere it should not have.
 - **Test destructive things against `out/scratch-lib`**, not
-  `examples/stock/binary/`. That is what `make run-fresh` is for.
+  `examples/stock/yaml/`. That is what `make run-fresh` is for. Booting on
+  the default `--lib-dir` writes `state/clock.yaml` in the checked-in
+  example world, which shows up as a working-tree change.
 
-The world files in `examples/stock/binary/world` are tracked, so anything that edits the world
+The world files in `examples/stock/yaml/world` are tracked, so anything that edits the world
 in-game — a builder command, once those exist — shows up as a working-tree
 change. That is intended: the world is source.
 
@@ -352,9 +364,12 @@ Some things worth knowing before adding to it:
   logged at ERROR (`internal/engine/engine.go:227`) — a player sees very
   little and a test asserting on output sees nothing at all. This is the
   cheap net that catches it anyway.
-- **`bothFormats`** runs a test on `examples/mini/binary` and
-  `examples/mini/yaml`. Use it for anything about the *data*; a test about
-  a rule does not need to pay for a second boot.
+- **The suite runs on `examples/mini/yaml` only.** It used to run every
+  scenario on `examples/mini/binary` as well, through a `bothFormats`
+  helper; that went with yaml-only (`docs/proposals/yaml-only.md` §5.4),
+  because a scenario proved on a format the server will not run proves
+  nothing. What replaced it is one level down: `dlctl verify --against`
+  and the differential tests over `stock`, `mini` and `torture`.
 - **`tourCommands`** in `tour_test.go` is the list of commands
   `examples/mini`'s own room descriptions tell a player to type. Two
   entries in it turned out to be commands the server does not accept. Add a
@@ -372,10 +387,11 @@ go test -tags=parity -count=1 -run TestSessionParity/shops ./test/parity/
 ```
 
 `make parity` compares what the two servers **loaded**. This compares what
-they **say**: it boots the C server and `dlmud` on their own throwaway
-copies of `examples/stock/binary/`, types the same script at each, and
-compares the transcripts line for line. Where they differ, the C server is
-right.
+they **say**: it stages a throwaway copy of `examples/stock/binary/` for
+each server, runs `dlctl import` over the Go server's copy so it plays on
+the `yaml` directory it will really ship on, types the same script at
+each, and compares the transcripts line for line. Where they differ, the C
+server is right.
 
 It is the sibling of `test/play`, and the difference is what each is
 evidence of. `test/play` asserts that the server says what *this project

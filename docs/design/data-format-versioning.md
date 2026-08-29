@@ -124,11 +124,18 @@ dlversion` stamp answers "which release of *our own* format code wrote
 this", and a directory running only the inherited formats was never
 touched by that code.
 
-A directory can be mixed — `--player-format=yaml` with `--world-format=
-classic`, say — and still carry exactly one `.dlversion` at its root: the
-stamp describes the yaml-format code available, not which subsystems
-happen to be pointed at it right now. A future run with more of its
-flags set to `yaml` does not need a new stamp for that reason alone.
+A directory used to be able to be mixed — `--player-format=yaml` with
+`--world-format=classic`, say — and it still carried exactly one
+`.dlversion` at its root, because the stamp describes the yaml-format code
+that wrote it rather than which subsystems happened to be pointed at it.
+Since yaml-only there is no mixing left to do: the server reads `yaml`
+throughout, and a partially converted directory is one `dlctl` produced
+mid-migration rather than one anything runs. **The rule the mixed case
+established is what still matters, and it did not change**: one stamp per
+directory, describing the writer, not an inventory of which subsystems
+have been converted so far. A later `dlctl import --type=...` filling in a
+subsystem the last one skipped does not need a new stamp for that reason
+alone.
 
 ## 4. The file itself
 

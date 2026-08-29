@@ -25,15 +25,17 @@ below. Phase 7 (`docs/proposals/go-port-plan.md` §10) is what would have to
 be true before anything took real connections again, and it hasn't started.
 
 **The data in this repo is stock.** `examples/stock/binary/` is CircleMUD
-3.0 bpl20's `lib/`, unmodified — Midgaard, not Disgracelands — and it is
-the Go server's default `--lib-dir`, so a fresh clone boots something
-playable with no setup. `examples/stock/yaml/` is the same world again,
-through this project's own `yaml` format, as a worked example of both
-formats side by side (`examples/stock/README.md`). The world, help text
-and boards the game actually ran on are in a private archive and are
-not committed here; point `--lib-dir` at a converted copy to run the real
-thing (`dlctl convert`, see `docs/operations.md`). Everything in
-`docs/investigations/` describes that archive rather than what ships.
+3.0 bpl20's `lib/`, unmodified — Midgaard, not Disgracelands — and
+`examples/stock/yaml/` is that same world through this project's own
+`yaml` format, as a worked example of the two side by side
+(`examples/stock/README.md`). The `yaml` one is the Go server's default
+`--lib-dir`, so a fresh clone boots something playable with no setup; the
+`binary` one is what the C server reads and what the parity harnesses
+compare against. The world, help text and boards the game actually ran on
+are in a private archive and are not committed here; point `--lib-dir` at
+a converted copy to run the real thing (`dlctl import`, see
+`docs/operations.md`). Everything in `docs/investigations/` describes that
+archive rather than what ships.
 
 **Phases 0–5 of `docs/proposals/go-port-plan.md` are done**, every slice of
 Phase 5 included. It loads the world, listens on TLS or plaintext telnet,
@@ -65,10 +67,15 @@ a restart (`reloadmob`/`reloadzone`/`reloadobj`/`reloadshop`) — and the eighth
 `docs/deviations.md` gives: this server does no reverse DNS to slow down.
 Phase 6 (OasisOLC) was decided against on those terms.
 
-The data itself is pluggable: run on the original `classic`/`ascii`
-file shapes, or convert a whole `lib/` into one `yaml` directory — one
-file per zone and per character — with `dlctl import`. See
-`docs/design/data-format.md` and `docs/operations.md`.
+**The server reads one on-disk format**, the `yaml` one — one file per
+zone and one per character (`docs/design/data-format.md`). A CircleMUD
+`lib/` is converted into it once, with `dlctl import`, and pointing
+`--lib-dir` at an unconverted archive is refused at boot with that command
+in the message. The `classic`/`ascii`/`binary` decoders are not deleted
+and never will be — they are how `dlctl` reads an archive and how the
+parity harnesses read the C server's own data — but they are not in the
+server binary at all. See `docs/operations.md` and
+`docs/proposals/yaml-only.md`.
 
 **From here, the two servers are allowed to differ.** Reaching playable was
 the point at which strict fidelity stopped being the right default for
@@ -126,12 +133,14 @@ docs/           This project's own documentation. The root is operator
 
 examples/       Runtime game data, not the port's own code. stock/binary/
                 is stock CircleMUD 3.0 bpl20 lib/ - world files, help text
-                and socials - read by both servers and the Go server's
-                default --lib-dir; stock/yaml/ is the same world again in
-                this project's own yaml format. See
-                examples/stock/README.md. Neither the real Disgracelands
-                data nor any player data ships here - see "Player data"
-                below.
+                and socials - which the C server reads; stock/yaml/ is the
+                same world again in this project's own yaml format, and is
+                the Go server's default --lib-dir. mini/ is the same pair,
+                three zones, for the play suite; torture/ is a deliberately
+                hostile legacy lib/ and its import, the compatibility
+                corpus. See each one's README.md. Neither the real
+                Disgracelands data nor any player data ships here - see
+                "Player data" below.
 
 reference/      Everything that is not the Go port.
   moderncserver/  The C server: the reference implementation and the
@@ -151,8 +160,9 @@ No player accounts, passwords, mail, or house/object saves are committed
 here, deliberately, and never have been — see `.gitignore` and the first
 commit's message for the reasoning (this was real ex-players' data:
 password hashes, private in-game mail, connection hosts). A checkout with
-no `etc/players` in its lib-dir is the *normal* fresh-install state, not a broken
-one: CircleMUD auto-creates it on boot, and whoever registers the first
+an empty roster in its lib-dir (`players/` here, `etc/players` in a
+CircleMUD `lib/`) is the *normal* fresh-install state, not a broken
+one: it is created on boot, and whoever registers the first
 character is automatically promoted to Implementor (top wizard) — that's
 original stock CircleMUD behavior (`reference/moderncserver/src/db.c`, "if
 this is our first player --- he be God"), not something added for this

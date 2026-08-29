@@ -85,13 +85,15 @@ Two binaries:
   environment (`--lib-dir` ↔ `DL_LIB_DIR`); precedence is flag >
   environment > default. `--help` lists the lot.
 - **`dlctl`** — offline tooling: world linting and dumping, player-file
-  conversion, inspection and password setting, and converting a whole
-  original data directory — into the classic/ascii shapes the server runs
-  on by default (`dlctl convert`), or straight into `yaml` (`dlctl
-  import`, `docs/design/data-format.md`).
-  The jobs `reference/moderncserver/src/util/` and `reference/tools/` do
-  today. Any subcommand added before the layer it needs reports which plan
-  phase implements it rather than pretending to work.
+  inspection and password setting, comparing one data directory against
+  another (`dlctl verify --against`), and converting a whole original
+  CircleMUD `lib/` into the `yaml` format the server reads (`dlctl
+  import`, `docs/design/data-format.md`). It is the only program in the
+  tree that still reads `classic`, `ascii` and `binary`; `dlmud` does not
+  link them at all. The jobs `reference/moderncserver/src/util/` and
+  `reference/tools/` do today. Any subcommand added before the layer it
+  needs reports which plan phase implements it rather than pretending to
+  work.
 
 ## Checking against the C server
 
@@ -152,17 +154,21 @@ it.
 
 ## Where the game data lives
 
-`examples/stock/binary/` at the repository root: world files, help text,
-socials, and — locally, never committed — player data. Both servers read
-it, and it is the Go server's own default `--lib-dir`. The C server
-reaches it through a `lib` symlink, because its compiled-in default is
-`lib` (`config.c`'s `DFLT_DIR`).
+`examples/stock/` at the repository root, in two shapes of the same world:
+world files, help text, socials, and — locally, never committed — player
+data.
 
-What ships there is **stock CircleMUD 3.0 bpl20's `lib/`**, unmodified —
-see `examples/stock/README.md`, which also has the same world converted to
-this project's own `yaml` format at `examples/stock/yaml/`, as a worked
-example of both formats side by side. It is enough to build, boot, test
-and compare both servers, which is what the tree needs it for. The
+- `examples/stock/binary/` is **stock CircleMUD 3.0 bpl20's `lib/`**,
+  unmodified. It is what the C server reads, reaching it through a `lib`
+  symlink because its compiled-in default is `lib` (`config.c`'s
+  `DFLT_DIR`), and it is the legacy side of both parity harnesses.
+- `examples/stock/yaml/` is that same world through this project's own
+  `yaml` format, and it is the Go server's own default `--lib-dir`. The Go
+  server reads `yaml` and nothing else; point it at the `binary/` one and
+  it refuses to boot, naming the `dlctl import` that would convert it.
+
+See `examples/stock/README.md`. Between them it is enough to build, boot,
+test and compare both servers, which is what the tree needs it for. The
 Disgracelands world and text are archive material and are not in this
-repo; `dlctl convert` turns a copy of the archive into a directory either
-server runs on, and `--lib-dir` points at it.
+repo; `dlctl import` turns a copy of the archive into a directory the Go
+server runs on, and `--lib-dir` points at that.
