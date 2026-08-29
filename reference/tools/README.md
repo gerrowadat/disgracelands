@@ -80,7 +80,18 @@ wrong. Every oracle written so far has caught at least one real mistake.
   match and is a whole-word one, which this port got wrong for four phases;
   `get_number` rewrites the caller's buffer before deciding the prefix was a
   number, so what it leaves behind matters as much as what it returns. Checked
-  over 168 name pairings and 15 argument forms.
+  over 1,456 name pairings and 15 argument forms.
+
+  **Its own corpus is the thing worth watching here, not its code.** Until
+  2026-08-29 every namelist it swept was made only of letters and spaces, and
+  over an alphabetic namelist `isname`'s real terminator (`!isalpha`) and the
+  wrong one this port had (whitespace) cannot disagree — so 168 pairings
+  agreed with a C they were not testing, for a year, and `look 6` did not
+  match the stock newbie zone's `staircase stair 606 rs` (#277). The sweep now
+  carries digits, punctuation, an apostrophe, a hyphen, doubled and trailing
+  spaces and a namelist wrapped across lines by `fread_string`, and the Go
+  test fails if it ever narrows back. An oracle is only as good as what it is
+  swept over: when adding one, spend the effort on the inputs.
 
 If you are about to port anything with a division, a cast, or a comment
 describing numbers in it, the next file in this directory is probably the one

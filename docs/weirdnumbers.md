@@ -875,6 +875,34 @@ swo` picks up a sword"*, and a test asserting it. All three were wrong, and
 `reference/tools/nameoracle.c` is what settled it — 168 pairings, compared
 rather than read.
 
+**And "the keyword has ended" means a non-*letter*, not whitespace — which
+this port then got wrong a second time, for a year, behind that same
+oracle.** `!isalpha(*curname)` is false for a digit, so a digit ends a
+keyword: the C matches `6` and `60` against a keyword of `606`, and `a`
+against `a1b`. The second version of `matchesKeywords` was `strings.Fields`
+plus equality, and **every namelist in the oracle's own sweep was made only
+of letters and spaces** — over which the two rules cannot disagree. 168
+pairings agreed with a C they were not testing.
+
+That is worth more than the fix. An oracle is only as good as the inputs it
+sweeps, and a corpus of `"sword long"`, `"dragon fractal puff"` and
+`"guard cityguard"` is a corpus with the hard case designed out of it — the
+same shape as the transcoding gap that sat inert against every fixture in
+the repo (`docs/design/data-format.md` §11.1) and as the fixtures
+`docs/proposals/yaml-only.md` §5.1 was written about. It is reachable in the
+shipped data, not theoretical: stock CircleMUD's newbie zone has an extra
+description keyed `staircase stair 606 rs`, so on the real server `look 6`
+matches it and here it did not.
+
+Fixed 2026-08-29 (#277) by transliterating the C's two loops rather than
+restating them — the inner loop breaks on a literal space and the outer one
+skips a run of *alphabetic* bytes, so where a match may begin depends on
+where the previous attempt gave up, which is not a thing to summarise in a
+sentence — and by widening the sweep to digits, punctuation, an apostrophe,
+a hyphen, doubled and trailing spaces and a namelist wrapped across lines by
+`fread_string`. 1,456 pairings now, and the test fails if the sweep ever
+narrows back to letters and spaces.
+
 *Source*: `handler.c:56`.
 
 ### `get_number` rewrites the argument before it decides the prefix was a number

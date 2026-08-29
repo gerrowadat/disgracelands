@@ -85,6 +85,17 @@ int get_number(char **name)
 
 /* --- the sweep -------------------------------------------------------- */
 
+/* The namelists to sweep.
+ *
+ * The first seven are the original set and are all pure alphabetic, which
+ * is how this oracle missed for months that isname's keyword terminator is
+ * !isalpha() and not "whitespace": every pairing over an alphabetic list
+ * gives the same answer either way. The rest are the shapes a real world
+ * file actually holds -- keywords with digits in them (the stock newbie
+ * zone has "staircase stair 606 rs"), a namelist wrapped across lines by
+ * fread_string, punctuation, and the doubled and trailing spaces four real
+ * records carry. Widening this list is the fix for the gap; the code change
+ * it forced is the smaller half. */
 static const char *namelists[] = {
   "sword long",
   "sword",
@@ -93,6 +104,34 @@ static const char *namelists[] = {
   "Zod",
   "a b c",
   "",
+
+  /* Digits: not alphabetic, so the C ends a keyword at one. */
+  "606",
+  "staircase stair 606 rs",
+  "a1b",
+  "sword2",
+  "2sword",
+  "r2d2 droid",
+  "1 2 3",
+
+  /* Wrapped by fread_string, which is legal in a .wld extra description
+   * and is what put a CRLF inside a keyword list in the real data. */
+  "staircase stair 606\r\nrs",
+  "cape\r\nwool",
+  "a\nb",
+  "a\tb",
+
+  /* Whitespace a builder left behind. Four real records have one. */
+  "cape wool woolen ",
+  " cape wool",
+  "cape  wool",
+
+  /* Punctuation, which is also not alphabetic. */
+  "wizard's hat",
+  "long-sword",
+  "a.b",
+  "!",
+  " ",
   NULL
 };
 
@@ -101,8 +140,35 @@ static const char *words[] = {
   "dragon", "puff", "PUFF", "fractal", "frac",
   "guard", "cityguard", "city", "zod", "ZOD", "zo",
   "a", "b", "c", "d", "ab", "",
+
+  /* The digit cases the alphabetic-only list could not reach. */
+  "6", "60", "606", "6060", "0",
+  "staircase", "stair", "rs", "r", "r2", "r2d2", "d2", "droid",
+  "a1", "a1b", "1b", "1", "2", "3", "sword2", "2sword",
+
+  /* And the punctuation ones. */
+  "wizard", "s", "hat", "wizard's", "long-sword", "cape", "wool",
+  "woolen", "!", "-", ".",
   NULL
 };
+
+/* putesc prints s with the escapes the Go side unescapes, so that a
+ * namelist may contain a tab or a newline without breaking the
+ * tab-separated, line-per-row output. Escaping rather than dropping those
+ * cases is the point: a keyword list wrapped across lines is exactly what
+ * the original set could not express. */
+static void putesc(const char *s)
+{
+  for (; *s; s++) {
+    switch (*s) {
+    case '\\': fputs("\\\\", stdout); break;
+    case '\n': fputs("\\n", stdout);  break;
+    case '\r': fputs("\\r", stdout);  break;
+    case '\t': fputs("\\t", stdout);  break;
+    default:   putchar(*s);          break;
+    }
+  }
+}
 
 int main(void)
 {
@@ -112,9 +178,13 @@ int main(void)
 
   /* isname over every pairing. */
   for (n = 0; namelists[n]; n++)
-    for (w = 0; words[w]; w++)
-      printf("isname\t%s\t%s\t%d\n", words[w], namelists[n],
-	     isname(words[w], namelists[n]));
+    for (w = 0; words[w]; w++) {
+      fputs("isname\t", stdout);
+      putesc(words[w]);
+      putchar('\t');
+      putesc(namelists[n]);
+      printf("\t%d\n", isname(words[w], namelists[n]));
+    }
 
   /* get_number: the number it returns *and* what it leaves in the string,
    * because it rewrites in place and both halves matter to the caller. */
@@ -130,7 +200,11 @@ int main(void)
       strcpy(buf, cases[i]);
       p = buf;
       n = get_number(&p);
-      printf("get_number\t%s\t%d\t%s\n", cases[i], n, p);
+      fputs("get_number\t", stdout);
+      putesc(cases[i]);
+      printf("\t%d\t", n);
+      putesc(p);
+      putchar('\n');
     }
   }
 
