@@ -86,27 +86,54 @@ type known struct {
 // nothing one scenario does is visible to the next. What a scenario needs to
 // exist, its own script makes, which is what !reconnect is for — see
 // mail.session, which has four connections and two characters in it.
-// Two differences show up in every scenario, so they are named once and
-// composed into the tables below rather than written out eleven times. Both
-// are in docs/deviations.md, under "What the session-parity suite found".
+// One difference shows up in every scenario, so it is named once and composed
+// into the tables below rather than written out thirteen times. It is in
+// docs/deviations.md, under "What the session-parity suite found".
+//
+// There were two. `quitReturnsToTheMenu` — the C's `quit` leaves the
+// descriptor at the main menu, and this port's disconnected — was the other,
+// and it is gone because #202 built the menu return. It then matched nothing
+// in any of the thirteen scenarios, which is exactly the failure this suite
+// exists to produce and which nobody read for two months, because nothing
+// runs it (#268).
 var (
-	// `quit` leaves the C server at the main menu — extract_char() puts the
-	// descriptor back into CON_MENU — and disconnects here
-	// (internal/session/commands.go's doQuit, Session.Close).
-	quitReturnsToTheMenu = known{
-		match: `^(Welcome to CircleMUD!|[0-5]\) .*|   Make your choice:)$`,
-		why:   "`quit` returns to the menu in the C and disconnects here; docs/deviations.md",
-	}
-	// The prompt. It differs for two reasons at once and they cannot be
-	// told apart line by line: the C sends one where this port does not
-	// (after `quit`, on the way to the menu above), and a mortal's vitals
-	// themselves differ — hit points are rolled differently at creation,
-	// and this port never charges movement points for walking.
+	// The prompt, which is still not line-for-line the same. Both of its
+	// original causes are fixed — hit points are rolled in the C's own draw
+	// order since #204, and walking has been charged for since #201 — so
+	// what is left is when a prompt is sent rather than what is in it. A
+	// prompt is a line like any other to this comparison, so a server that
+	// sends one at a moment the other does not shifts everything after it.
 	theVitalsPrompt = known{
 		match: `^\d+H \d+M \d+V >$`,
-		why:   "the prompt: the C sends one this port does not, and a mortal's rolled HP and unspent movement differ; docs/deviations.md",
+		why:   "the prompt: the two servers send one at different moments, so the lines do not pair up; docs/deviations.md",
 	}
 )
+
+// theCommandsListing is `announce`, and it is the one difference in this file
+// that is a *feature* rather than a gap.
+//
+// `announce { Off | Brief | All }` is a local addition (#223,
+// docs/deviations.md): a per-character preference for the four `<DoC>`
+// game-wide broadcasts, which the C has no way to turn down. So the Go
+// server has one mortal command the C does not, and `commands` — which
+// prints the whole table in seven columns — cannot agree about a single
+// line of its output once an extra word is inserted near the top of the
+// alphabet. Two scenarios type it.
+//
+// Same shape and same reasoning as the `wizhelp` entry in `listings` below,
+// which is the mirror image: eight commands the C has and this port declines
+// outright. Between them they are the only two listings in the game that
+// cannot agree, and both are `match: "."` because a column layout turns one
+// differing word into every differing line.
+//
+// It was never triaged when #223 landed, and the suite ran nowhere, so it
+// sat behind five stale entries and was found only when they were pruned
+// (#268). That is the whole argument for running this thing.
+var theCommandsListing = known{
+	command: "commands",
+	match:   `.`,
+	why:     "`announce` is a local addition to the command table (#223), so the seven-column `commands` grid cannot agree from that word on; docs/deviations.md, under `announce`: a player can turn the game-wide broadcasts down",
+}
 
 // theShopkeepersTell is the same finding wherever a shop or a postmaster
 // speaks, so it is written once too.
@@ -126,8 +153,8 @@ var scenarios = []scenario{
 		name:  "login-and-look",
 		about: "creating a character, and the wording of what a player reads first",
 		known: []known{
-			quitReturnsToTheMenu,
 			theVitalsPrompt,
+			theCommandsListing,
 		},
 	},
 	{
@@ -152,7 +179,6 @@ var scenarios = []scenario{
 		about:     "the ANSI a new character is meant to be seeing",
 		colourGap: true,
 		known: []known{
-			quitReturnsToTheMenu,
 			theVitalsPrompt,
 		},
 	},
@@ -160,7 +186,6 @@ var scenarios = []scenario{
 		name:  "objects",
 		about: "getting, wearing, wielding and putting things, and the refusals",
 		known: []known{
-			quitReturnsToTheMenu,
 			theVitalsPrompt,
 		},
 	},
@@ -168,8 +193,8 @@ var scenarios = []scenario{
 		name:  "listings",
 		about: "who, exits, commands and socials, and the command table's own levels",
 		known: []known{
-			quitReturnsToTheMenu,
 			theVitalsPrompt,
+			theCommandsListing,
 			{
 				command: "wizhelp",
 				match:   `.`,
@@ -181,7 +206,6 @@ var scenarios = []scenario{
 		name:  "self",
 		about: "`self` and `me` as targets, and the refusals beside them",
 		known: []known{
-			quitReturnsToTheMenu,
 			theVitalsPrompt,
 		},
 	},
@@ -189,7 +213,6 @@ var scenarios = []scenario{
 		name:  "fountains",
 		about: "look_in_obj's drink-container branch: fullness[] and color_liquid[]",
 		known: []known{
-			quitReturnsToTheMenu,
 			theVitalsPrompt,
 		},
 	},
@@ -200,7 +223,6 @@ var scenarios = []scenario{
 		// a fight is not finished answering for several of them.
 		quiet: 3 * time.Second,
 		known: []known{
-			quitReturnsToTheMenu,
 			theVitalsPrompt,
 		},
 	},
@@ -211,7 +233,6 @@ var scenarios = []scenario{
 		// the command, which is why this one waits longer than most.
 		quiet: time.Second,
 		known: []known{
-			quitReturnsToTheMenu,
 			theVitalsPrompt,
 			theShopkeepersTell,
 			{
@@ -225,22 +246,19 @@ var scenarios = []scenario{
 		name:  "banking-and-the-inn",
 		about: "the ATM and the receptionist: balance, deposit, withdraw, offer",
 		quiet: time.Second,
+		// No theShopkeepersTell here, unlike `shops` and `mail`. The ATM and
+		// the receptionist are `act`/`send_to_char` specials rather than
+		// shopkeepers, so nothing in this scenario goes through do_tell at
+		// all and the entry matched nothing (#268).
 		known: []known{
-			quitReturnsToTheMenu,
 			theVitalsPrompt,
-			theShopkeepersTell,
 		},
 	},
 	{
 		name:  "boards",
 		about: "reading, writing and removing on a bulletin board, through the line editor",
 		known: []known{
-			quitReturnsToTheMenu,
 			theVitalsPrompt,
-			{
-				match: `^\]$`,
-				why:   "the improved editor prompts for each line with `]` in the C and silently here; docs/deviations.md",
-			},
 		},
 	},
 	{
@@ -248,18 +266,8 @@ var scenarios = []scenario{
 		about: "the postmaster: check, send, collect, and the block-allocated mail file",
 		quiet: time.Second,
 		known: []known{
-			quitReturnsToTheMenu,
 			theVitalsPrompt,
 			theShopkeepersTell,
-			{
-				match: `^\]$`,
-				why:   "as the boards scenario: the editor's per-line prompt; docs/deviations.md",
-			},
-			{
-				command: "/s",
-				match:   `^Message sent!$`,
-				why:     "the C confirms a sent letter and this port does not; docs/deviations.md",
-			},
 			{
 				command: "receive",
 				match:   `.`,
@@ -286,7 +294,6 @@ var scenarios = []scenario{
 		name:  "housing",
 		about: "hcontrol: building a house, showing the control file, destroying it",
 		known: []known{
-			quitReturnsToTheMenu,
 			theVitalsPrompt,
 		},
 	},
@@ -294,13 +301,7 @@ var scenarios = []scenario{
 		name:  "mortal-refusals",
 		about: "what a level 1 mortal is told they cannot do",
 		known: []known{
-			quitReturnsToTheMenu,
 			theVitalsPrompt,
-			{
-				command: "score",
-				match:   `^You have \d+\(\d+\) hit, \d+\(\d+\) mana and \d+\(\d+\) movement points\.$`,
-				why:     "a mortal's hit points are rolled differently at creation; docs/deviations.md",
-			},
 		},
 	},
 }

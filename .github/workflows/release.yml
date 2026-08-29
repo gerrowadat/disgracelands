@@ -325,6 +325,28 @@ jobs:
       - name: The play regression suite
         run: go test -tags=play -race -count=1 -timeout 30m ./test/play/...
 
+      # The session-parity suite: the same scripts typed at *both* servers,
+      # transcripts compared. Until now it ran in no workflow at all, which
+      # is exactly the condition its own triage list rots under -- an entry
+      # that matches nothing is a deliberate failure ("either it is fixed,
+      # delete the entry, or the script stopped exercising it"), and five
+      # of them sat unread for two months because nothing ever printed the
+      # message (#268). Ten minutes at release time is what stops that
+      # happening again.
+      #
+      # Release-only, like the play suite and for stronger reasons: it
+      # builds the C server, starts two of them, and frames each command's
+      # answer by silence. The C tree is already configured above.
+      - name: The session-parity suite must not have skipped
+        run: |
+          go test -tags=parity -count=1 -v -timeout 35m ./test/parity/... > parity.txt 2>&1 || { cat parity.txt; exit 1; }
+          if grep -q -- "--- SKIP" parity.txt; then
+            echo "the session-parity suite skipped; it must run for a release:"
+            grep -A2 -- "--- SKIP" parity.txt
+            exit 1
+          fi
+          grep -c -- "--- PASS: TestSessionParity/" parity.txt
+
       - name: Lint the world files
         run: go run ./cmd/dlctl lint --type=world --dir=examples/stock/yaml --format=yaml
 
