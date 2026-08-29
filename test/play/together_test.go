@@ -122,7 +122,7 @@ func TestEmote(t *testing.T) {
 // whether anybody else is on at all.
 func TestWho(t *testing.T) {
 	m := start(t, mini)
-	alfie, _ := twoInARoom(t, m)
+	alfie, bertha := twoInARoom(t, m)
 
 	// "displayed", not "playing", and the class abbreviation in the brackets:
 	// the rows are "[%s %2d] %s %s" (act.informative.c:1163) and the count
@@ -131,6 +131,16 @@ func TestWho(t *testing.T) {
 	// runs at release time -- the same way #198's did.
 	contains(t, "who", alfie.do("who"),
 		"Players", "[Wa  1] Alfie", "[Cl  1] Bertha", "2 characters displayed.")
+
+	// The annotations do_who hangs off each line (act.informative.c:1169-1201),
+	// reached the way a player reaches them: by typing the toggles. #216 --
+	// every fact behind them existed in the port and none of them was printed,
+	// which is exactly the shape of bug this suite is here to catch, since
+	// nothing below the socket can tell that a line is missing its tail.
+	bertha.do("nogossip")
+	bertha.do("quest")
+	contains(t, "who with annotations", alfie.do("who"),
+		"[Cl  1] Bertha", "(nogossip)", "(quest)")
 
 	m.noServerErrors()
 }

@@ -1308,15 +1308,21 @@ compared against is not:
 
 Listed here so they are not mistaken for deliberate differences.
 
-- **`who` prints no annotations.** `do_who` marks each line with
-  `(i<n>)`/`(invis)`, `(mailing)`/`(writing)`, `(deaf)`, `(notell)`,
-  `(nogossip)`, `(quest)`, `(THIEF)`, `(KILLER)` and the `<DoC>` paladin
-  `(UNWORTHY)`/`(FALLEN)` (`act.informative.c:1169-1201`); `doWho`
-  prints the bracket, the name, the title and the remort colour, and
-  none of the rest. Every fact behind them is already in this port. The
-  room listing's own `" (writing)"` (`list_one_char`,
-  `act.informative.c:306`) *is* ported and works. Filed as #216; found
-  while fixing #214.
+- ~~**`who` prints no annotations.**~~ Ported (#216). `do_who` marks each
+  line with `(i<n>)`/`(invis)`, `(mailing)`/`(writing)`, `(deaf)`,
+  `(notell)`, `(nogossip)`, `(quest)`, `(THIEF)`, `(KILLER)` and the
+  `<DoC>` paladin `(UNWORTHY)`/`(FALLEN)`
+  (`act.informative.c:1169-1201`); `whoAnnotations`
+  (`internal/session/commands.go`) is the same run of tests in the same
+  order, appended between the title and the escape that closes the
+  line's colour, exactly where `strcat(buf, KNRM)` sits in the C. Both
+  of the C's `else if` pairs are reproduced rather than tidied — the
+  invis level winning over `AFF_INVISIBLE`, and `(mailing)` being tested
+  *before* `(writing)` so that the who-list never says "(writing)" for a
+  letter (`weirdnumbers.md`, "`wiznet @` and `do_who` disagree about
+  which of writing and mailing wins"). The room listing's own
+  `" (writing)"` (`list_one_char`, `act.informative.c:306`) is a separate
+  site and was already working. Found while fixing #214.
 - ~~**A death trap does not kill.**~~ Ported (#209). `do_simple_move`'s
   last three lines — `log_death_trap(ch); death_cry(ch); extract_char(ch);`
   (`act.movement.c:171-176`) — are `Context.deathTrap`

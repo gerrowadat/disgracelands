@@ -1759,8 +1759,9 @@ func doWho(c *Context) error {
 		// than through the CC macros, so it arrives whatever the reader has
 		// set `color` to. See docs/weirdnumbers.md. colour.Off is how that is
 		// spelled here — a threshold nobody can be below.
-		c.SendAt(colour.Off, "%s[%s %2d] %s %s{{/}}\r\n",
-			whoColour(p), classAbbrev(p), p.Level(), p.Name, p.Title())
+		c.SendAt(colour.Off, "%s[%s %2d] %s %s%s{{/}}\r\n",
+			whoColour(p), classAbbrev(p), p.Level(), p.Name, p.Title(),
+			whoAnnotations(p))
 	}
 	// The C counts in words below two and in digits above it
 	// (act.informative.c:1212-1216).
@@ -1786,6 +1787,83 @@ func doWho(c *Context) error {
 // in the remort vector" — but only `if (prevclasses > 0)`, so somebody with
 // an empty vector stays at zero rather than going to -1 and colouring
 // themselves like a god.
+// whoAnnotations is the run of parenthesised flags do_who hangs off the end of
+// each line (act.informative.c:1169-1201), between the title and the KNRM that
+// closes the colour.
+//
+// Two of these pairs are `else if` in the C and are reproduced that way,
+// because in one of them the difference is observable:
+//
+//   - An invis level wins over AFF_INVISIBLE, so a god at `invis 50` reads
+//     "(i50)" rather than "(invis)". Anyone who could see both would only ever
+//     be told the more specific one.
+//   - **`(mailing)` is tested before `(writing)`, and do_mail sets both bits**
+//     — so `do_who`'s "(writing)" arm can never fire for a letter, and the
+//     who-list says "(mailing)" for the whole of it. `wiznet @` tests the same
+//     two bits the other way round (act.wizard.c:1907-1911) and so has the
+//     opposite dead arm, never saying "(Writing mail)". Both are the C's, both
+//     are in docs/weirdnumbers.md, and the order is reproduced rather than
+//     tidied: making either consistent would change what a player sees.
+//
+// The rest are independent tests, in the C's order. `list_one_char`'s own
+// "(writing)" in the room listing is a separate site and unaffected.
+func whoAnnotations(who *game.Character) string {
+	rec := who.Record
+	if rec == nil {
+		return ""
+	}
+
+	var b strings.Builder
+
+	if rec.InvisLevel > 0 {
+		fmt.Fprintf(&b, " (i%d)", rec.InvisLevel)
+	} else if who.HasAffect(game.AffectInvisible) {
+		b.WriteString(" (invis)")
+	}
+
+	if rec.PlayerFlags.Has(game.PlayerMailing) {
+		b.WriteString(" (mailing)")
+	} else if rec.PlayerFlags.Has(game.PlayerWriting) {
+		b.WriteString(" (writing)")
+	}
+
+	for _, a := range []struct {
+		flag game.Flags
+		text string
+	}{
+		{game.PrefDeaf, " (deaf)"},
+		{game.PrefNoTell, " (notell)"},
+		{game.PrefNoGoss, " (nogossip)"},
+		{game.PrefQuest, " (quest)"},
+	} {
+		if rec.Preferences.Has(a.flag) {
+			b.WriteString(a.text)
+		}
+	}
+
+	if rec.PlayerFlags.Has(game.PlayerThief) {
+		b.WriteString(" (THIEF)")
+	}
+	if rec.PlayerFlags.Has(game.PlayerKiller) {
+		b.WriteString(" (KILLER)")
+	}
+
+	// The `<DoC>` local addition: a paladin's standing, and only a paladin's.
+	// The class test is the C's own, so a non-paladin carrying the bits from
+	// a remort shows nothing.
+	if game.IsPaladin(rec) {
+		spec := game.SpecFlagsOf(rec)
+		if spec.Has(game.PaladinUnworthy) {
+			b.WriteString(" (UNWORTHY)")
+		}
+		if spec.Has(game.PaladinFallen) {
+			b.WriteString(" (FALLEN)")
+		}
+	}
+
+	return b.String()
+}
+
 func whoColour(who *game.Character) string {
 	if who.Level() >= game.LevelImmortal {
 		return "{{bright-blue}}"
