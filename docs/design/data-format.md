@@ -48,7 +48,7 @@ assumes them.
 |---|---|
 | **Scope** | **Everything.** World, players, rent, aliases, boards, mail, houses, socials, damage messages, help, screen text, banned names and game-rules configuration. One format, one `data/` tree. The point is that "point it at `data/` and run" is true without exceptions. |
 | **Identity** | **Vnums stay canonical, and stay integers.** A room is `3001`. No string IDs, no namespaces, no translation layer. Extensibility comes from adding fields, not from changing what a record is called. |
-| **Layout** | **One file per zone, holding everything in that zone** — the zone header, its resets, and every room, mobile, object and shop whose vnum falls in its range. A zone is the unit builders own and the unit OLC writes back. |
+| **Layout** | **One file per zone, holding everything in that zone** — the zone header, its resets, and every room, mobile and object whose vnum falls in its range, plus every shop whose *keeper* does (§4.5). A zone is the unit builders own and the unit OLC writes back. |
 | **Surface syntax** | **YAML 1.2 over a JSON data model.** Files are `.yaml`. The data model is strictly JSON-compatible, so JSON Schema, the existing parity dump and GMCP all keep working, and any `.json` file is accepted verbatim — YAML is a superset of JSON. |
 | **Prose** | **Stays prose.** Help entries, the MOTD, credits, news, policies and the greeting screens are plain UTF-8 text files, indexed from the data format rather than embedded in it. |
 | **Colour** | **Named `{{red}}` codes in the data, ANSI rendered at the socket.** Symbolic markup is forced rather than chosen: a raw ESC byte is not a legal character anywhere in a YAML stream. The *spelling* is free, because the original data contains no colour codes to stay compatible with — so it is chosen for readability and for occurring zero times in the existing corpus, rather than borrowing the `&r` convention and its escaping burden. Export to `classic` renders codes back to the raw escapes `screen.h` defines, which is what the C server expects. See §5. |
@@ -707,7 +707,7 @@ time, reported with a line number rather than silently neutered. The parity
 dump keeps emitting the `classic` behaviour for as long as `classic` is the
 oracle.
 
-### 4.5 Two shop fields kept awkward on purpose
+### 4.5 Shops: two awkward fields, and which file a shop lives in
 
 Two shop details are deliberately *not* prettified. `refuses` keeps the C's
 polarity — `with_who` is a bitvector of who the keeper will **not** serve,
@@ -716,6 +716,33 @@ positive one is exactly the kind of transformation that gets a sign wrong in
 one direction only, and the bug surfaces as a shop that serves the wrong
 people. `markup`/`markdown` are the C's `profit_buy`/`profit_sell`, renamed
 because those two names have never once told anybody which is which.
+
+A shop is also the one record type that is **not** filed by its own vnum.
+It goes in the file of the zone whose range claims its **keeper**, falling
+back to its own vnum when no zone claims the keeper (or there is none).
+
+The reason is that a shop's number is the one vnum in the world nothing
+derives anything from. `db.c` reads it to print it, and only OasisOLC's
+`real_shop` ever looks one up, so a hand-written `.shp` file is free to
+number its shops from 1 — and the archived Disgracelands `lib/` does
+exactly that in two of its seventeen shop files: `20.shp` holds shops
+`#1`-`#5` with keepers in the `#2000`s, and `190.shp` holds `#190`-`#194`
+with keepers in the `#19000`s. (OasisOLC's own `save_shops` walks the
+zone's range and asks `real_shop` for each number, so a zone whose shop
+file it has ever rewritten *is* vnum-aligned. Both shapes are in the wild;
+only one of them is self-describing.)
+
+Filing those by shop vnum does not lose them — the reader rebuilds one
+flat table either way — but it does lose their **order**, because zone
+files load in vnum order and the C loads shops in `shp/index` order. Shop
+order is `shop_index[]`'s order, and it is not inert: it decides which
+shop `shop_keeper` (`shop.c`) finds first when one mobile keeps two, and
+which row `show shops <n>` numbers as *n*. The keeper is the shop in every
+way the game can see — the special is attached to the keeper mobile, and
+the shop does nothing anywhere the keeper is not — and, unlike the shop's
+own number, it is a vnum somebody had to allocate out of a zone's range.
+It identifies the source file for all 77 of the archive's shops and all 46
+of stock CircleMUD's, where it agrees with the shop vnum anyway.
 
 ### 4.6 Text fidelity is the sharp edge
 

@@ -58,7 +58,7 @@ func zoneDocFrom(zone *game.ZoneDef, w *game.World) zoneDoc {
 		}
 	}
 	for _, sh := range w.Shops {
-		if writtenUnder(w.Zones, zone, int32(sh.Vnum)) {
+		if writtenUnder(w.Zones, zone, shopHomeVnum(w.Zones, sh)) {
 			doc.Shops = append(doc.Shops, shopDocFrom(sh))
 		}
 	}
@@ -96,12 +96,60 @@ func writtenUnder(zones []*game.ZoneDef, zone *game.ZoneDef, vnum int32) bool {
 	if vnum >= int32(zone.Bottom) && vnum <= int32(zone.Top) {
 		return true
 	}
-	for _, z := range zones {
-		if vnum >= int32(z.Bottom) && vnum <= int32(z.Top) {
-			return false // claimed by a zone, and not this one
-		}
+	if claimingZone(zones, vnum) != nil {
+		return false // claimed by a zone, and not this one
 	}
 	return zone == fallbackZone(zones, vnum)
+}
+
+// shopHomeVnum picks the vnum that decides which file a shop is written
+// under: its keeper's, when some zone's range claims that, and its own
+// otherwise.
+//
+// A shop is the one record type whose vnum routinely has nothing to do with
+// the zone it belongs to. Nothing derives a shop's number from anything —
+// the C reads it only to print it and to answer OLC's `real_shop` — so a
+// hand-written .shp file is free to number its shops from 1, and the
+// archived Disgracelands lib/ has exactly that: 20.shp holds shops #1-#5,
+// keepers #2021, #2020, #2015, #2014 and #2019, and 190.shp holds #190-#194
+// with keepers in the #19000s. (OasisOLC's own save_shops, genshp.c:317,
+// does write by shop vnum — it walks the zone's range and asks real_shop
+// for each number — so a zone whose shop file it has ever rewritten *is*
+// vnum-aligned. Both shapes are in the wild; only one of them is
+// self-describing.)
+//
+// Writing those by shop vnum scattered them: #1-#5 to zone 0's file because
+// 0-99 happens to claim them, #190-#194 to the fallback because no zone's
+// range covers 100-199. The records all survived — the reader rebuilds one
+// flat table either way — but the *order* did not, and shop order is not
+// inert. It is `shop_index`'s order in the C, which decides which shop
+// `shop_keeper` (shop.c) finds first when one mobile keeps two, and which
+// row `show shops <n>` numbers as n. Zone files load in vnum order, so a
+// shop written under the wrong zone comes back in the wrong place, and
+// `dlctl import --verify` refused the whole archive over it.
+//
+// The keeper is the shop, in every way the game can see: the special is
+// attached to the keeper mobile, and the shop does nothing anywhere the
+// keeper is not. It is also, unlike the shop's own number, a vnum somebody
+// had to allocate out of a zone's range — which is why it identifies the
+// file the shop came from in all 77 of the archive's shops and all 46 of
+// stock CircleMUD's, where it agrees with the shop vnum anyway.
+func shopHomeVnum(zones []*game.ZoneDef, sh *game.ShopDef) int32 {
+	if sh.Keeper != game.NoMob && claimingZone(zones, int32(sh.Keeper)) != nil {
+		return int32(sh.Keeper)
+	}
+	return int32(sh.Vnum)
+}
+
+// claimingZone returns the zone whose declared range covers vnum, or nil if
+// none does.
+func claimingZone(zones []*game.ZoneDef, vnum int32) *game.ZoneDef {
+	for _, z := range zones {
+		if vnum >= int32(z.Bottom) && vnum <= int32(z.Top) {
+			return z
+		}
+	}
+	return nil
 }
 
 // fallbackZone picks the zone an unclaimed vnum is written under: the one

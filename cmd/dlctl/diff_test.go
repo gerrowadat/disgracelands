@@ -84,3 +84,67 @@ func TestKeywordsCompareAsListsNotBytes(t *testing.T) {
 		}
 	})
 }
+
+// Two lists of the same vnum-keyed records in a different order are the
+// one shape the positional walk describes worst, and the shape a per-zone
+// yaml directory can actually produce: it loads zone files in vnum order,
+// so a record written under the wrong zone comes back in the wrong place
+// with nothing missing. Importing the archived Disgracelands lib/ hit it
+// with 77 shops and reported 200 field mismatches for it.
+func TestReorderedRecordsAreReportedAsAReordering(t *testing.T) {
+	type shop struct {
+		Vnum   int32
+		Keeper int32
+	}
+	type world struct{ Shops []*shop }
+
+	a, b, c := &shop{Vnum: 190, Keeper: 19004}, &shop{Vnum: 2505, Keeper: 2505}, &shop{Vnum: 3000, Keeper: 3000}
+
+	t.Run("a pure reordering is one line", func(t *testing.T) {
+		diffs := diffValues(world{Shops: []*shop{b, c, a}}, world{Shops: []*shop{a, b, c}})
+		if len(diffs) != 1 {
+			t.Fatalf("got %d difference(s), want 1:\n%s", len(diffs), strings.Join(diffs, "\n"))
+		}
+		for _, want := range []string{"the same 3 record(s) in a different order", "#2505 is 1st on the left and 2nd on the right"} {
+			if !strings.Contains(diffs[0], want) {
+				t.Errorf("report does not mention %q:\n%s", want, diffs[0])
+			}
+		}
+	})
+
+	// The reason this is safe rather than merely quieter: a record that has
+	// both moved and changed still reports the change, against its own
+	// counterpart and under a path that names the vnum rather than a
+	// position that now means nothing.
+	t.Run("a record that also changed still reports", func(t *testing.T) {
+		moved := &shop{Vnum: 2505, Keeper: 9999}
+		diffs := diffValues(world{Shops: []*shop{b, c, a}}, world{Shops: []*shop{a, moved, c}})
+		if len(diffs) != 2 {
+			t.Fatalf("got %d difference(s), want 2:\n%s", len(diffs), strings.Join(diffs, "\n"))
+		}
+		if want := "Shops[#2505].Keeper: 2505 vs 9999"; !strings.Contains(diffs[1], want) {
+			t.Errorf("got %q, want it to contain %q", diffs[1], want)
+		}
+	})
+
+	// A different *set* of records is not a reordering, and pairing them up
+	// by vnum would hide the fact that one is not there at all.
+	t.Run("a different set falls back to positions", func(t *testing.T) {
+		other := &shop{Vnum: 4201, Keeper: 4203}
+		diffs := diffValues(world{Shops: []*shop{a, b, c}}, world{Shops: []*shop{a, b, other}})
+		if len(diffs) == 0 {
+			t.Fatal("got no differences, want the third element to disagree")
+		}
+		if !strings.Contains(diffs[0], "Shops[2]") {
+			t.Errorf("got %q, want a positional path", diffs[0])
+		}
+	})
+
+	// Same order, same records: still nothing to say.
+	t.Run("identical lists are identical", func(t *testing.T) {
+		diffs := diffValues(world{Shops: []*shop{a, b, c}}, world{Shops: []*shop{a, b, c}})
+		if len(diffs) != 0 {
+			t.Errorf("got %d difference(s), want none:\n%s", len(diffs), strings.Join(diffs, "\n"))
+		}
+	})
+}
