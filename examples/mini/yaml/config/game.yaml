@@ -66,3 +66,10 @@
 # tally is what the "N LOGIN FAILURES SINCE LAST SUCCESSFUL LOGIN" notice
 # reports on the next successful login.
 # max_bad_pws: 3
+
+# tunnel_size (config.c:69): how many players may be in a room flagged TUNNEL
+# at once. Counts players only -- mobiles in the room do not fill it -- and
+# applies to everybody, gods included: it is the one movement check an
+# immortal cannot walk through. Raising it above 1 also changes the refusal
+# message, which is how the C tells the two cases apart.
+# tunnel_size: 2

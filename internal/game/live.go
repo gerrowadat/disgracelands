@@ -496,6 +496,24 @@ func (l *Live) Remove(c *Character) {
 // not retain or reorder it.
 func (l *Live) Occupants(room RoomVnum) []*Character { return l.occupants[room] }
 
+// PlayersInRoom counts the players in a room, porting num_pc_in_room
+// (utils.c:575).
+//
+// "PC" is the C's word and it means exactly `!IS_NPC`, so this counts
+// immortals, linkdead bodies and anybody invisible right along with everyone
+// else — it is a count of characters, not of who can be seen, and the one
+// caller (the tunnel cap in do_simple_move) wants it that way. A tunnel does
+// not become roomier because the person in it is invisible.
+func (l *Live) PlayersInRoom(room RoomVnum) int32 {
+	var n int32
+	for _, ch := range l.occupants[room] {
+		if !ch.IsNPC() {
+			n++
+		}
+	}
+	return n
+}
+
 // FindInRoom finds a character in a room by a typed word, porting
 // get_char_room_vis' matching (handler.c:1071).
 //

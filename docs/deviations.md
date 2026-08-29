@@ -978,9 +978,10 @@ port is right and the thing it is compared against is wrong.
   exhausted to follow" — and only if they have a master at all. That is
   `Context.moveCharacterChecking`.
 
-  Still not ported, and unchanged by this: the boat, tunnel and godroom
-  checks that surround it in `do_simple_move`, and `AFF_SNEAK` suppressing
-  the leave and arrive messages. The tunnel one has its own entry below.
+  Still not ported, and unchanged by this: the boat and godroom checks
+  that surround it in `do_simple_move`, and `AFF_SNEAK` suppressing the
+  leave and arrive messages. Those are issues #265, #266 and #267. The
+  tunnel check *is* ported now (#136) — it has its own entry below.
 - ~~**The C colours what it prints and the port does not.**~~ New characters
   get colour turned on for them in both (interpreter.c:1616, a `<DoC>` local
   change the port has as `game.ApplyNewCharacterDefaults`), but the C wraps
@@ -1891,18 +1892,40 @@ Listed here so they are not mistaken for deliberate differences.
   that had been tuned must not come out of a format conversion quietly back
   on the defaults.
 
-- **`tunnel_size` was picked for tunability, then found unbuilt.** The
-  `TUNNEL` room flag is recognised (parsed, named) but nothing enforces an
-  occupancy limit on it. The behaviour is missing from the port entirely,
-  not merely hardcoded, so there is no constant to unhardcode yet. Deferred
-  rather than built as a side effect of a config-file change: whoever ports
-  do_gen_comm's tunnel check should wire it to a `GameTuning.TunnelSize` at
-  the same time, rather than reopening `config.c` again for it.
+- ~~**`tunnel_size` was picked for tunability, then found unbuilt.**~~
+  Built 2026-08-29 (#136), and built the way this entry asked for: the
+  gate and `GameTuning.TunnelSize` landed together, rather than the
+  config key being added to something that did not exist. The `TUNNEL`
+  room flag had been recognised — parsed, named, shown by `show
+  godrooms`' neighbours — with nothing enforcing an occupancy limit on
+  it, so the behaviour was missing entirely rather than hardcoded, which
+  is why there was no constant to unhardcode.
 
-  `max_bad_pws` was the other half of this entry until 2026-08-28, and is
-  no longer a gap: the disconnect it governs is built (issue #135), and
-  `GameTuning.MaxBadPws` was added with it, exactly as this entry asked
-  for. The one difference from the C is the next entry.
+  `Context.moveCharacterChecking` now refuses the step when the
+  destination is `ROOM_TUNNEL` and already holds `tunnel_size` players
+  (`act.movement.c:139-146`), sitting where the C puts it: after the
+  atrium check and before the movement points are spent, so a refusal is
+  free. Three things about it read wrongly at a glance and are commented
+  at the call site — the flag is on the room being *entered*; the count
+  is `num_pc_in_room` (`utils.c:575`), which skips mobiles, so a tunnel
+  full of rats is empty; and there is no level or NPC guard on the mover,
+  making this **the one gate in `do_simple_move` an implementor cannot
+  walk through**. `goto` and `teleport` do not come through here, which
+  is how a god gets past it.
+
+  The one difference from the C is validation: `tunnel_size: 0` is
+  rejected on load rather than accepted. The C would take it and the
+  arithmetic still works — `num_pc >= 0` is true of an empty room — so
+  every `TUNNEL` room in the world becomes permanently unenterable, while
+  the message blames a person who is not there. That is a world-breaking
+  typo rather than a setting, and unlike the C this port has a
+  `Validate()` to say so before a `SIGHUP` applies it. Same reasoning,
+  same shape, as `max_bad_pws`' own floor of one.
+
+  `max_bad_pws` was the other half of this entry until 2026-08-28 and
+  closed the same way a day earlier: the disconnect it governs is built
+  (issue #135) and `GameTuning.MaxBadPws` was added with it. Its own one
+  difference from the C is the next entry.
 
 - **A wrong password does not overwrite a player who is already logged in.**
   `nanny`'s CON_PASSWORD counts the attempt on the character's own record

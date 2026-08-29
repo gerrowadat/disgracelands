@@ -1615,6 +1615,37 @@ func (c *Context) moveCharacterChecking(who *game.Character, dir game.Direction,
 		}
 	}
 
+	// The tunnel cap (act.movement.c:139-146), which sits here: after the
+	// atrium check and *before* the movement points are spent, so somebody
+	// turned back at a full tunnel keeps the points the step would have
+	// cost.
+	//
+	// Three things about it are easy to get wrong by reading it quickly:
+	//
+	//   - The flag is on the room being *entered*, not the one being left.
+	//   - `num_pc_in_room` (utils.c:575) counts non-NPCs only, so a tunnel
+	//     crowded with mobiles is empty as far as the cap is concerned.
+	//   - There is no `IS_NPC` or level guard on the mover at all. A
+	//     wandering mobile is refused, and so is an implementor — this is
+	//     the one gate in do_simple_move that a god cannot simply walk
+	//     through, and the only ways past it are `goto` and `teleport`,
+	//     which do not come through here.
+	//
+	// The comparison is `>=`, so the cap is how many may be in the room, not
+	// how many may already be there. Which of the two messages is used is
+	// decided by the *setting* rather than by the room's occupancy, so a
+	// server on the default 2 always says the first one.
+	if to := c.World.Room(exit.ToRoom); to != nil && to.Flags.Has(game.RoomTunnel) {
+		if size := game.Tuning().TunnelSize; c.World.PlayersInRoom(exit.ToRoom) >= size {
+			if size > 1 {
+				who.Tell("There isn't enough room for you to go there!\r\n")
+			} else {
+				who.Tell("There isn't enough room there for more than one person!\r\n")
+			}
+			return false
+		}
+	}
+
 	// "Now we know we're allowed to go into the room." Mobiles and immortals
 	// walk for nothing.
 	if !who.IsNPC() && who.Record != nil && who.Level() < game.LevelImmortal {
