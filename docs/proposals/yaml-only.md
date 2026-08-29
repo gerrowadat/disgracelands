@@ -262,6 +262,15 @@ fit for what this needs, so this is an extension rather than a new surface.
   thing you run against *your* archive, which the repo's own fixtures
   cannot cover because the real data is private. It is also what makes §5's
   tests cheap to write: they are `verify --against` over a fixture.
+
+  It also grows an eighth, non-subsystem `--type=copied`, added by #241:
+  `import` *copies* `text/`'s prose, `config/game.yaml` and
+  `text/help/screen` rather than converting them, so they have no loader to
+  compare through and are compared as bytes — the one place in this
+  comparison where bytes are the right question, for the same reason §4.1
+  says they are the wrong one everywhere else. Nothing compared them at
+  all until then, and losing `config/game.yaml` is losing a server's whole
+  tuning.
 - **`dlctl import` gains `--verify`, default on**, running the above
   immediately after importing and failing the import if it does not hold.
 - **`dlctl convert` with no `--type` is retired** (§1): it produces a

@@ -28,6 +28,13 @@ const (
 	typeMessages dirType = "messages"
 	typeSocials  dirType = "socials"
 	typeHelp     dirType = "help"
+	// typeCopied is not a subsystem and has no importer: it is the files
+	// `dlctl import` copies rather than converts (text/'s prose,
+	// config/game.yaml, text/help/screen), which `verify --against`
+	// compares as bytes. See copied.go. It is deliberately not in
+	// allTypes — nothing imports it, because copying is what import does
+	// with it — and verify adds it to its own list.
+	typeCopied dirType = "copied"
 )
 
 // allTypes lists every --type value, in the order usage/error text shows

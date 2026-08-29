@@ -19,11 +19,11 @@ import (
 	"github.com/gerrowadat/disgracelands/internal/persist/player/binary"
 )
 
-// verifyTypes is who `dlctl verify` supports. Every type, now — the
-// --against comparison below works for all seven, and the older
-// "does this decode" report is pfile-only and says so when asked for
-// anything else.
-var verifyTypes = allTypes
+// verifyTypes is who `dlctl verify` supports: every type, plus `copied`
+// for the files import copies rather than converts. The --against
+// comparison below works for all eight, and the older "does this decode"
+// report is pfile-only and says so when asked for anything else.
+var verifyTypes = append(append([]dirType{}, allTypes...), typeCopied)
 
 // cmdVerify checks a directory and reports what it found.
 //
@@ -81,7 +81,10 @@ func cmdVerify(args []string) error {
 		return fmt.Errorf("unknown encoding %q (have: %v)", *encName, encodingNames())
 	}
 
-	types := allTypes
+	// Everything, when no --type is given: the seven convertible
+	// subsystems and then the copied files, which are not a subsystem but
+	// are half of what `import` actually writes (#241).
+	types := verifyTypes
 	if *typeRaw != "" {
 		t, err := parseType(*typeRaw, verifyTypes)
 		if err != nil {
@@ -141,8 +144,12 @@ func verifyAgainst(types []dirType, left, right loadOptions) error {
 	}
 
 	if len(failed) > 0 {
-		_, _ = fmt.Fprintf(out, "\n%s %s and %s do not load to the same state\n",
-			joinTypes(toTypes(failed)), pluralVerb(len(failed)), left.base)
+		// Both directories, not one: the sentence named only the left one
+		// and read "copied differs: and <dir> do not load to the same
+		// state", which is the sort of thing nobody sees until a
+		// comparison actually fails.
+		_, _ = fmt.Fprintf(out, "\n%s %s %s and %s do not load to the same state\n",
+			joinTypes(toTypes(failed)), pluralVerb(len(failed)), left.base, right.base)
 		if err := out.Flush(); err != nil {
 			return err
 		}
@@ -192,6 +199,13 @@ func reportOrphanHouses(out *bufio.Writer, left, right loadOptions) {
 // stdout — one implementation, two callers, which was the argument for
 // building this as a command first.
 func compareSubsystem(t dirType, left, right loadOptions) ([]string, error) {
+	// The copied files have no loader to compare through, and want none:
+	// nothing converts them, so either the bytes arrived or they did not.
+	// copied.go's own comment has the argument for why this is the one
+	// place a byte comparison is right.
+	if t == typeCopied {
+		return compareCopiedFiles(left, right)
+	}
 	a, err := loadSubsystem(t, left)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", left.base, err)

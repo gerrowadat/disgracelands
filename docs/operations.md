@@ -535,6 +535,7 @@ knows *both* layouts, and which one it uses is what `--format` (or
 | `state` | `etc/`, `house/`, `misc/` | `state/` |
 | `names`, `messages`, `socials` | `misc/` | `config/` |
 | `help` | `text/help/` | `text/help/` |
+| `copied` (`verify` only) | `text/`, `config/game.yaml`, `text/help/screen` | the same paths |
 
 Pointing `--dir` straight at, say, a `pfiles/` directory does not work —
 the two layouts do not agree closely enough on shape for that to be
@@ -629,6 +630,18 @@ directions: two `classic` files differing only in whitespace load
 identically, and two identical loads can be written back differently by
 any writer that does not reproduce 1990s formatting quirks exactly. See
 `docs/proposals/yaml-only.md` §4.1.
+
+There is one exception, and it is reported as an eighth line called
+**`copied`**: `text/`'s plain prose (`motd`, `news`, `policies`, ...),
+`config/game.yaml` and `text/help/screen` are *copied* by `import` rather
+than converted, so there is no loader to compare them through and either
+the bytes arrived or they did not. Those files were compared by nothing at
+all before this — `text/greetings` and `text/credits` were covered by
+accident, because the server refuses to start without them, and the other
+nine were not, and neither was the tuning. A directory that came out of a
+conversion without its `config/game.yaml` is a server quietly back on
+`config.c`'s defaults, and `import --verify` used to call it clean. Ask
+for that comparison on its own with `--type=copied`.
 
 `dlctl import` runs the same comparison itself, on what it has just
 written, and **fails the import if it does not hold**. That is the default;
