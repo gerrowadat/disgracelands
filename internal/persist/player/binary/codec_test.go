@@ -194,6 +194,23 @@ func pad6(n int) string {
 	return s
 }
 
+// spareFieldSet is spareFields' three lists, flattened into one set of
+// field names — what TestRoundTripPreservesEverySignificantByte excludes,
+// since decode/encode alone cannot carry them (see its own doc comment).
+func spareFieldSet() map[string]bool {
+	set := make(map[string]bool)
+	for _, name := range spareFields.bytes {
+		set[name] = true
+	}
+	for _, name := range spareFields.ints {
+		set[name] = true
+	}
+	for _, name := range spareFields.longs {
+		set[name] = true
+	}
+	return set
+}
+
 // TestDecodeAgainstCWrittenFixture reads a file written by a C program using
 // the real struct, and checks every field.
 func TestDecodeAgainstCWrittenFixture(t *testing.T) {
@@ -252,6 +269,7 @@ func TestRoundTripPreservesEverySignificantByte(t *testing.T) {
 
 			c := newCodec(m)
 			size := c.RecordSize()
+			spare := spareFieldSet()
 
 			for i := 0; i < count; i++ {
 				orig := data[i*size : (i+1)*size]
@@ -266,6 +284,17 @@ func TestRoundTripPreservesEverySignificantByte(t *testing.T) {
 
 				sig := c.layout.significantBytes(orig)
 				for b := range orig {
+					// The reserved slots are excluded here on purpose, not
+					// missed: they are not on game.PlayerRecord any more
+					// (wantSpares' own doc comment), so a bare decode/encode
+					// through this codec cannot carry them by construction —
+					// only Store.Save does, by copying them out of the
+					// record it is replacing, and that path is
+					// TestSparesSurviveARewrite's job to check, not this
+					// one's.
+					if spare[c.fieldAt(b)] {
+						continue
+					}
 					if sig[b] && orig[b] != again[b] {
 						t.Errorf("record %d: significant byte %d changed: %#x -> %#x (%s)",
 							i, b, orig[b], again[b], c.fieldAt(b))
