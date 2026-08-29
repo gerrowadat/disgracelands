@@ -460,6 +460,21 @@ func importWorld(o importOptions) error {
 		return fmt.Errorf("writing zones.yaml: %w", err)
 	}
 
+	// Carry the source's index.mini across as sets.yaml's "mini" subset, so
+	// that a converted archive keeps the small world it already had and
+	// `dlmud --mini-mud` on the result means what it meant before the
+	// conversion (issue #274). Only on a full import: `--mini` is already
+	// "convert the small world into a whole directory", which has no subset
+	// of its own to record.
+	if !o.mini {
+		if vnums := miniZones(fromDir); len(vnums) > 0 {
+			if err := worldyaml.WriteSets(toDir, map[string][]int32{worldyaml.MiniSet: vnums}); err != nil {
+				return fmt.Errorf("writing %s: %w", worldyaml.SetsFile, err)
+			}
+			_, _ = fmt.Fprintf(out, "mini world: %d zone(s) recorded in %s\n", len(vnums), worldyaml.SetsFile)
+		}
+	}
+
 	nsrc, err := worldyaml.New(world.Config{Dir: toDir})
 	if err != nil {
 		return err
@@ -865,4 +880,40 @@ func importHelp(o importOptions) error {
 		_, _ = fmt.Fprintf(out, "copied %s unchanged (not a help entry)\n", helpScreenName)
 	}
 	return out.Flush()
+}
+
+// miniZones is the set of zone vnums a classic world's index.mini files
+// select — the `-m` world, as zone numbers.
+//
+// It loads the source a second time with Mini set rather than parsing the
+// five index.mini files here, because the zone vnums that matter are the
+// ones *inside* the .zon files and not the ones in their filenames, and
+// because "which index file, in which subdirectory, terminated how" is
+// knowledge that belongs in the classic reader and nowhere else. The mini
+// world is a handful of zones; reading it twice costs nothing.
+//
+// A source with no index.mini has no mini world, which is not an error and
+// not worth reporting: most directories do not have one, and `import` then
+// writes no sets.yaml at all rather than an empty one.
+//
+// The subset is expressed over zones because the classic mini indexes are
+// themselves per-zone. Stock's are `0.wld 12.wld 30.wld`, `0.obj 30.obj`,
+// `30.shp`, which looks like three different subsets and is one subset of
+// three zones — there is no 12.obj or 12.shp in that tree at all.
+func miniZones(fromDir string) []int32 {
+	src, err := classic.New(world.Config{Dir: fromDir, Mini: true})
+	if err != nil {
+		return nil
+	}
+	defer func() { _ = src.Close() }()
+
+	w, err := src.Load(context.Background())
+	if err != nil || w == nil {
+		return nil
+	}
+	vnums := make([]int32, 0, len(w.Zones))
+	for _, z := range w.Zones {
+		vnums = append(vnums, int32(z.Vnum))
+	}
+	return vnums
 }

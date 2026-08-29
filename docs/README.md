@@ -103,9 +103,9 @@ hide that it started as a proposal.
   eight unrelated formats a CircleMUD `lib/` carries, and is a superset of all of them. YAML
   over a JSON data model, one file per zone, one file per player, vnums
   unchanged. It is the *only* format the server reads now (§11 step 7).
-  Two pieces of the document are not built: the `classic` export writer,
-  declined rather than pending (`yaml-only.md` §0.3), and `world/sets.yaml`
-  — which is why `--mini-mud` does nothing here. §11 tracks the rest.
+  One piece of the document is not built, and is declined rather than
+  pending: the `classic` export writer (`yaml-only.md` §0.3). §11 tracks
+  the rest.
 - **[data-format-versioning.md](design/data-format-versioning.md)** — the
   `.dlversion` stamp a data directory carries: the `major.minor.patch`
   release of the `dlctl` that wrote it. A *differing* major refuses to

@@ -33,31 +33,34 @@ Common variables, settable on any target:
 ## Getting a server in front of you
 
 ```sh
-make run LIB=examples/mini/yaml   # one small zone, boots instantly
-make connect                      # in another terminal
+make run-mini     # three zones of the stock world, boots instantly
+make connect      # in another terminal
 ```
 
-A small world is the right default for testing anything that is not about
-the world itself — it loads in milliseconds, and a bug in zone resets is
-much easier to see in one zone than in thirty.
+`run-mini` passes `--mini-mud`, which loads only the zones named by
+`world/sets.yaml`'s `mini` set — on `examples/stock/yaml` that is zones 0,
+12 and 30: 69 rooms, 51 mobiles, 59 objects and 3 zones instead of 1,878 /
+569 / 679 / 30. It is the right default for testing anything that is not
+about the world itself: it loads in milliseconds, and a bug in zone resets
+is much easier to see in three zones than in thirty.
 
-**`make run-mini` is not that, at the moment.** It passes `--mini-mud`,
-which in the C server and in this port's `classic` reader switches every
-world subdirectory from `index` to `index.mini` — 69 rooms, 51 mobiles, 59
-objects, 3 zones instead of 1,878 / 569 / 679 / 30. The `yaml` world
-format has no equivalent (`world/sets.yaml`, `docs/design/data-format.md`
-§4, was designed and never built), so `world.Config.Mini` reaches a source
-that ignores it and the flag does nothing: `make run-mini` boots the same
-30 zones `make run` does. `docs/configuration.md` marks it *(inert)* and
-`docs/deviations.md` tracks the gap; `examples/mini/yaml` is the small
-world in the meantime.
+`sets.yaml` is the yaml format's answer to classic's `index.mini`, and
+`dlctl import` derives it from exactly those files, so a converted archive
+keeps the small world it already had. Asking for it where it is not
+defined is an error rather than a silent full load — which is what
+`--mini-mud` *was* between the yaml-only release and 2026-08-29, since
+only the `classic` reader ever read the flag and the server had stopped
+linking `classic` (#274).
+
+`make run LIB=examples/mini/yaml` is the other small world: one zone,
+written as a tutorial, and what `test/play` drives.
 
 The other run targets:
 
 | Target | What you get |
 |---|---|
 | `make run` | The full world in `examples/stock/yaml/`, plaintext telnet. |
-| `make run-mini` | The same, plus `--mini-mud` — which currently does nothing; see above. |
+| `make run-mini` | The same directory, reduced world (`--mini-mud`). |
 | `make run-fresh` | A throwaway copy of the data with no players in it. |
 | `make run-tls` | The TLS listener, with a self-signed local certificate. |
 | `make run LIB=/path/to/lib` | Any other data directory (see below). |

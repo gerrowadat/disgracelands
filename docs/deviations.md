@@ -1491,18 +1491,29 @@ Listed here so they are not mistaken for deliberate differences.
   The contract is the same idea one conversion further along; what it
   cost is written up in `go-port-plan.md`'s rollback paragraph.
 
-- **`--mini-mud` does nothing.** Issue #274. It is accepted, validated and
-  passed to `world.Config.Mini`, which only the `classic` source reads —
-  and `cmd/dlmud` stopped linking `classic` when yaml-only landed. The
-  `yaml` world format has no reduced index: `docs/design/data-format.md`
-  §4 specifies `world/sets.yaml` for exactly this and it was never built,
-  so the reader knows the filename only well enough to skip it. `dlmud
-  --mini-mud` boots all 30 zones and 1,878 rooms, identically to `dlmud`
-  without it, and `make run-mini` is `make run` with a no-op flag. Listed
-  here rather than as a deviation because nobody decided it: the flag went
-  inert when the format underneath it changed, with no test failing and
-  nothing printed. `--lib-dir=examples/mini/yaml` is the small world in
-  the meantime.
+- ~~**`--mini-mud` does nothing.**~~ **Built 2026-08-29** (#274).
+  `world/sets.yaml` — named subsets of zones, which
+  `docs/design/data-format.md` §4 had specified from the day the format
+  was designed and nothing had built — is read by the yaml source and
+  written by `dlctl import`, derived from the source's own `index.mini`
+  files, so a converted archive keeps the small world it already had.
+  `dlmud --mini-mud` on `examples/stock/yaml` now loads 69 rooms and 3
+  zones against 1,878 and 30.
+
+  Kept rather than deleted, for what it was: the flag was accepted,
+  validated and passed to `world.Config.Mini`, which only the `classic`
+  source ever read — and `cmd/dlmud` stopped linking `classic` when
+  yaml-only landed. **No test failed and nothing was printed.** The flag
+  stayed valid, the field stayed plumbed, and the one implementation that
+  read it stopped being there. That is a shape worth recognising rather
+  than a one-off: anything the server passes to a driver that only one
+  format implements goes the same way. `world.Config` has exactly two
+  fields, so `Mini` was the whole of that exposure.
+
+  The fix takes the other side of it deliberately: asking for a subset a
+  directory does not define is an **error**, not a quiet full load, which
+  is also what the C does (`index_boot` exits when its index file is
+  missing).
 - ~~**`generic_find`'s combined forms are ported only where a command needed
   them.**~~ `CAN_SEE` and `N.thing` both reach the search functions, so an
   invisible thief can neither be seen nor named and `2.sword` picks the

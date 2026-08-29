@@ -33,6 +33,14 @@ func init() {
 // Source reads and writes a yaml world directory.
 type Source struct {
 	dir string
+	// mini restricts the load to sets.yaml's "mini" subset — world.Config's
+	// own Mini, which is --mini-mud, which is the C's -m.
+	//
+	// This field not existing is issue #274: New dropped cfg.Mini on the
+	// floor, classic was the only source that read it, and cmd/dlmud stopped
+	// linking classic when yaml-only landed. The flag stayed valid and the
+	// field stayed plumbed, so nothing failed and nothing was printed.
+	mini bool
 }
 
 // New opens a yaml world source. It does not touch the filesystem; a
@@ -42,7 +50,7 @@ func New(cfg world.Config) (*Source, error) {
 	if cfg.Dir == "" {
 		return nil, fmt.Errorf("yaml: no world directory configured")
 	}
-	return &Source{dir: cfg.Dir}, nil
+	return &Source{dir: cfg.Dir, mini: cfg.Mini}, nil
 }
 
 // Name implements world.Source.
@@ -59,13 +67,14 @@ func (s *Source) Load(ctx context.Context) (*game.World, error) {
 
 // LoadWithWarnings implements world.FindingSource.
 func (s *Source) LoadWithWarnings(ctx context.Context) (*game.World, []world.Warning, error) {
-	l := &loader{dir: s.dir}
+	l := &loader{dir: s.dir, mini: s.mini}
 	w, err := l.load(ctx)
 	return w, l.warnings, err
 }
 
 type loader struct {
 	dir      string
+	mini     bool
 	warnings []world.Warning
 }
 
@@ -91,6 +100,25 @@ func (l *loader) load(_ context.Context) (*game.World, error) {
 		l.warnf("%s", f)
 	}
 
+	// --mini-mud: restrict to sets.yaml's "mini" subset. Resolved before
+	// anything is loaded so that asking for a subset a directory does not
+	// have fails at boot rather than half way through a world.
+	var wanted map[int32]bool
+	if l.mini {
+		sets, serr := readSets(l.dir)
+		if serr != nil {
+			return nil, fmt.Errorf("yaml: %w", serr)
+		}
+		vnums, serr := selectSet(sets, MiniSet)
+		if serr != nil {
+			return nil, fmt.Errorf("yaml: --mini-mud: %w", serr)
+		}
+		wanted = make(map[int32]bool, len(vnums))
+		for _, v := range vnums {
+			wanted[v] = true
+		}
+	}
+
 	seen := make(map[int32]bool, len(manifest.Zones))
 	w := &game.World{}
 
@@ -100,6 +128,12 @@ func (l *loader) load(_ context.Context) (*game.World, error) {
 
 	for _, entry := range entries {
 		seen[entry.Vnum] = true
+		if wanted != nil && !wanted[entry.Vnum] {
+			// Not a warning: being outside the subset is the whole point of
+			// asking for one, and thirty of these on every --mini-mud boot
+			// would be noise around the three lines that matter.
+			continue
+		}
 		if !entry.Enabled {
 			l.infof("zone %d: not loaded (%s)", entry.Vnum, noteOr(entry.Note, "disabled in zones.yaml"))
 			continue
@@ -117,6 +151,15 @@ func (l *loader) load(_ context.Context) (*game.World, error) {
 	for vnum, filename := range files {
 		if !seen[vnum] {
 			l.warnf("%s: zone %d exists on disk but is not listed in zones.yaml", filename, vnum)
+		}
+	}
+
+	// A subset naming a zone the manifest does not is a real mistake and an
+	// easy one — sets.yaml and zones.yaml are edited separately — so it is
+	// an error rather than a silently smaller world.
+	for vnum := range wanted {
+		if !seen[vnum] {
+			l.errorf("%s: the %q set names zone %d, which is not in %s", SetsFile, MiniSet, vnum, ManifestFile)
 		}
 	}
 

@@ -1,0 +1,6 @@
+schema: dl/sets@1
+sets:
+  mini:
+  - 0
+  - 12
+  - 30
