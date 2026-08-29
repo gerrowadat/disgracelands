@@ -101,7 +101,7 @@ are not doing one of these three things, expect to be wrong.
 | `internal/session` | Commands and the login/menu state machine. |
 | `internal/server` | The world goroutine, ticks, and the integration tests. |
 | `test/play` | The play regression suite: a real `dlmud`, booted on `examples/mini`, driven over a socket. Build-tagged `play`, release-only, `make play`. |
-| `test/parity` | The session-parity suite: the same scripts typed at *both* servers, transcripts compared. Build-tagged `parity`, in no workflow at all, `make session-parity`. |
+| `test/parity` | The session-parity suite: the same scripts typed at *both* servers, transcripts compared. Build-tagged `parity`, release-only, `make session-parity`. |
 | `internal/persist/world` | Zone/mob/obj/shop file readers. |
 | `internal/persist/player` | The roster and the rent files, behind interfaces. |
 | `reference/` | The original C, the modernised C build, and the oracle tools. |
@@ -253,7 +253,10 @@ there, not path-filtered: a release is exactly the point where "probably
 didn't touch the layout code" stops being good enough), the C-vs-Go
 world-parity check, the licence check, three doc-coverage checks, a check
 that `examples/stock/yaml`/`examples/mini/yaml` still match a fresh
-`dlctl import` of their binary source, a container build, and a
+`dlctl import` of their binary source, the session-parity suite
+(`test/parity` — added there 2026-08-29, having run in no workflow at all
+until five of its `known` entries went stale unread for two months, #268),
+a container build, and a
 cross-compile of both binaries for every published platform
 (`linux/amd64`, `linux/arm64`, `windows/amd64`), which is also what
 produces the archives attached to the release —

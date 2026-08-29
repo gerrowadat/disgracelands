@@ -810,6 +810,30 @@ has a matching entry in the suite's own triage table, so a difference that
 gets fixed fails the suite with "delete the entry" rather than quietly
 staying on this list.
 
+**That only works if somebody reads the failure, and for two months nobody
+did.** The suite ran in no workflow at all — deliberately, on the grounds
+that it needs a C toolchain and its timing depends on how busy the machine
+is — so by 2026-08-29 five entries were failing that way unread and `make
+session-parity` was red on `main` for no reason but bookkeeping (#268):
+`quit` returning to the menu (fixed by #202), the editor's per-line `]`
+prompt and "Message sent!" (both #205), a mortal's rolled hit points
+(#204), and the shopkeepers' `do_tell` in the banking scenario alone
+(#200 — the ATM and the receptionist are `act`/`send_to_char` specials, so
+nothing there ever went through `do_tell`, and the entry was over-applied
+from the start).
+
+Pruning those five exposed a sixth thing, which is the part worth
+remembering. **`commands` has disagreed since #223 and nobody had
+triaged it**: `announce` is a command this port adds and the C does not
+have, `commands` prints the table in seven columns, and one extra word
+near the top of the alphabet shifts every line after it. It is a
+deliberate addition with its own entry above — so the fix was a triage
+entry, not a code change — but it had been sitting in a red suite behind
+the stale ones, invisible. **The suite now runs in `release.yml`'s
+`full-suite`**, failing on a skip the way the 32-bit checks do. A
+self-pruning list that nothing runs prunes nothing, and a red suite
+nobody reads hides its own real findings behind its stale ones.
+
 **None of these were fixed when the list was written**, on 2026-08-26.
 They were gaps, not decisions — but every one of them had been *ruled on*
 by then, which is the half of precondition 2 that needed a person rather

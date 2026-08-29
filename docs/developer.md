@@ -383,13 +383,26 @@ believes* it should say — and the belief is a reading of the C, which is
 what has been wrong repeatedly. This suite has no expected output in it at
 all. The C server is the expectation.
 
-**In neither workflow, deliberately — not even `release.yml`.** It needs a C
-toolchain, starts two servers per scenario, and frames a command's output by
-silence, which makes it the one thing in the tree whose timing depends on
-how busy the machine is. Run it by hand after changing anything a player
-reads. It builds the C server itself if `reference/moderncserver/bin/circle`
-is missing or older than the source, and skips rather than fails if there is
-no `gcc`.
+**Release-only, like `test/play`** — `release.yml`'s `full-suite`, never
+`go.yml`. It needs a C toolchain, starts two servers per scenario, and
+frames a command's output by silence, which makes it the one thing in the
+tree whose timing depends on how busy the machine is. Run it by hand too,
+after changing anything a player reads. It builds the C server itself if
+`reference/moderncserver/bin/circle` is missing or older than the source,
+and skips rather than fails if there is no `gcc` — so the release step
+greps for `--- SKIP` and fails on it, the same way the 32-bit checks do.
+
+It was in **no** workflow at all until 2026-08-29, deliberately, on that
+timing argument. What changed the answer is what the silence cost. The
+triage list below is self-pruning by design — a `known` entry that matches
+*nothing* fails, because "a list nobody prunes becomes a list of things
+that used to be true" — and five entries had been failing that way for two
+months without anybody reading the message, because nothing ever printed
+it (#268). A suite whose findings nobody sees is not cheaper than a suite
+that occasionally needs a re-run: a release that fails on timing leaves no
+tag, no release and no package behind (`scripts/release.sh`), so the cost
+of a flaky run is one re-dispatch, and the cost of not running it was a
+red `main`.
 
 **What it found on its first green run is in `docs/deviations.md`**, under
 "What the session-parity suite found" — twenty differences, from `quit`
