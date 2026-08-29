@@ -143,6 +143,35 @@ func TestLookAtSomebody(t *testing.T) {
 // long description is what `look` at the room prints, not what looking at the
 // object prints. Checked against the real C server before changing, with
 // scripts/session-parity.sh, rather than from a reading.
+// TestLookInNothingSaysTheTypoBack, which is do_look's container branch
+// refusing (act.informative.c:503).
+//
+// The C builds the refusal out of AN() and the player's own argument, and
+// AN() picks the article off the first letter alone (utils.h:133) — so it
+// says the typo back, article and all, and gets "an hour" and "a onion"
+// wrong on the way. `look in nothing` is "There doesn't seem to be a nothing
+// here.", not a generic "You do not see that here."
+//
+// Untested until #263 despite being one of the differences the parity suite
+// found and somebody fixed: docs/deviations.md's "Refusal wording" entry
+// recorded the fix in prose and nothing pinned it.
+func TestLookInNothingSaysTheTypoBack(t *testing.T) {
+	srv, _ := newTestServer(t)
+	c := dialClient(t, listening(t, srv))
+	c.create("Zod", "swordfish", "m", "w")
+
+	for _, tc := range []struct{ arg, want string }{
+		{"nothing", "There doesn't seem to be a nothing here."},
+		// AN() is one test on one letter, so both of these are the C's own
+		// mistakes and both are reproduced.
+		{"hour", "There doesn't seem to be a hour here."},
+		{"onion", "There doesn't seem to be an onion here."},
+	} {
+		c.send("look in " + tc.arg)
+		c.expect(tc.want)
+	}
+}
+
 func TestLookAtAnObject(t *testing.T) {
 	srv, _ := newTestServer(t)
 	c := dialClient(t, listening(t, srv))

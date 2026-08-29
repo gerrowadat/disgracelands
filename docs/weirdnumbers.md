@@ -95,7 +95,14 @@ Stock CircleMUD sets `dam = 0` here. This tree doubles it, and the original
 comment was left in place when the line changed. Whether that was deliberate
 or a typo is unknowable now, and it is what the game did.
 
-*Reproduced*, with a test named after the surprise so nobody tidies it away.
+*Not reproduced any more.* It was, for the whole of Phases 1-5, with a test
+named after the surprise so nobody tidied it away. #261 reverses that
+deliberately: the port sets `dam = 0`, which is stock CircleMUD's behaviour
+and what this very comment says. It stays in this file because the constant
+is still surprising and somebody reading `fight.c` will still find it — but
+the entry now records a difference the port makes on purpose rather than one
+it carries. [`deviations.md`](deviations.md) has the reasoning, under "An
+immortal takes no damage, where the archive doubled it".
 
 ### Armour class has a granularity of ten
 
