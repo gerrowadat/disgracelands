@@ -1,0 +1,37 @@
+RELOADMOB RELOADZONE RELOADOBJ RELOADSHOP
+
+Usage: reloadmob <vnum>
+       reloadzone <vnum>
+       reloadobj <vnum>
+       reloadshop <vnum>
+
+These four re-read one piece of the world -- a mobile, a whole zone, an
+object, or a shop -- from the world files on disk, and apply it to the
+running server without a restart. Edit the file in your library
+directory, then reload the vnum it belongs to.
+
+RELOADMOB refreshes a mobile's own definition and every currently
+spawned instance of it at once, since they all share the one prototype.
+It refuses if any instance is fighting, because the update cannot land
+on some instances and not others.
+
+RELOADZONE goes further and reloads a whole zone's rooms and mobiles. It
+refuses if a player is anywhere in the zone, or a mobile within its
+range is fighting -- the same all-or-nothing reasoning as RELOADMOB, at
+a bigger blast radius.
+
+RELOADOBJ reloads an object's prototype only. Anything already dropped,
+worn or carried keeps what it is; only an object created after the
+reload uses the new definition, so there is nothing to refuse.
+
+RELOADSHOP reloads a shop's configuration -- what it buys and sells, its
+markup, its keeper. A shop is never instantiated, so this never refuses
+either.
+
+  > reloadmob 1200
+  Reloaded mob #1200 -- 3 instance(s) refreshed.
+
+  > reloadzone 12
+  Reloaded zone #12 -- 40 room(s), 5 mobile instance(s) refreshed.
+
+See also: RELOAD

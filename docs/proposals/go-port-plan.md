@@ -1618,6 +1618,17 @@ right place for any of this: none of it is a deviation, it is simply new
 capability with no `interpreter.c` row to compare against, the same as
 `reloadmob`/`reloadzone` before it.
 
+All four finally have in-game help, one combined `RELOADMOB RELOADZONE
+RELOADOBJ RELOADSHOP` entry in `examples/mini/binary/text/help/
+wizhelp.hlp` next to the stock `RELOAD` it cross-references — grouped the
+way the stock file already groups a closely related family under one
+lookup (`BAN UNBAN`, `FREEZE THAW`), rather than four nearly identical
+entries. `announce`'s own help entry (`help-announce`,
+`docs/deviations.md`) is the precedent for adding hand-written content
+to `mini` rather than `stock`, for the same reason: these commands have
+no `interpreter.c` row, so the stock help database — which only ever
+answers to what `load_help` was given — has never heard of them either.
+
 **The pager ✅ — `page_string`, ported in full, then wired into the rest
 of its own call sites.** `next_page`/`count_pages`/`paginate_string`/
 `show_string` (`modify.c`) landed as `internal/session/pager.go`, with a
