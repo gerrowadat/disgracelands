@@ -296,12 +296,56 @@ answer:
   world parity (`make parity`), the license check, the three doc-coverage
   checks, a check that `examples/stock/yaml`/`examples/mini/yaml` still
   match a fresh `dlctl import` of their binary source, the play
-  regression suite (`make play`, below), a container build, and a
+  regression suite (`make play`, below), the session-parity suite
+  (`make session-parity`), a real fuzzing budget (`make fuzz`, below),
+  a container build, and a
   cross-compile of both binaries for every published platform
   (`make dist`, below) — the licence check here is the full five, not
   just the notices — and only once all of that is green does it tag the
   commit, create the GitHub release, attach the archives to it and push
   the image. See "Cutting a release" below.
+
+### Fuzzing
+
+```sh
+make fuzz                  # every target, 1 minute each
+make fuzz FUZZTIME=30m     # a real hunt, after touching a parser
+```
+
+There are four targets — `FuzzTextRoundTrip` and
+`FuzzNestedTextRoundTrip` (`internal/persist/world/yaml`), and
+`FuzzClassicRecordRoundTrip` and `FuzzBinaryRecordRoundTrip`
+(`cmd/dlctl`) — and they all assert the same property: **whatever a
+legacy reader accepts must survive the trip through yaml unchanged.**
+
+**Two different things get called "fuzzing" here, and only one of them is
+new.** Because the targets are ordinary Go tests, `go test ./...` already
+replays every input committed under `testdata/fuzz/` on every push. That
+is regression testing: those files are findings somebody already had.
+`make fuzz` is the other half — generating inputs nobody has thought of —
+and it runs nowhere except by hand and at release time
+(`.github/workflows/release.yml`, two minutes a target), by the same
+scope rule that keeps `make play` off day-to-day CI.
+
+`go test -fuzz` takes one target per invocation, so the loop is
+`scripts/fuzz.sh`. It *discovers* the targets with `go test -list` rather
+than listing them, so a new `FuzzXxx` anywhere in the tree is picked up
+by `make fuzz` and by the release with no change to either.
+
+**When it finds something, commit the file.** Go writes the failing input
+to that target's `testdata/fuzz/<Target>/`, which turns the finding into a
+permanent regression test the moment it is committed — but a CI run throws
+its working tree away, so `scripts/fuzz.sh` prints the file on the way out
+for exactly that case.
+
+The first finding is a good illustration of what these are for, and it was
+not a crash: a newline inside an extra description's keyword list made
+`dlctl verify --against` report a difference that was not one, which meant
+`import --verify` would have refused a conversion that had lost nothing.
+Every fixture in this repo has single-spaced keywords, so nothing here had
+ever shown it — the same shape as the transcoding gap in
+`docs/design/data-format.md` §11.1, real but inert against everything
+checked in.
 
 ### The play regression suite
 

@@ -743,6 +743,30 @@ for, to preserve whitespace that has no meaning to the server. Four
 records in the real world data have it, all trailing spaces a builder left
 behind. (`internal/persist/world/yaml`.)
 
+**It is any whitespace, not only a space, and that was found rather than
+intended** (2026-08-29, by `make fuzz` on its first real budget). A
+classic keyword *string* can contain a newline, because `fread_string`
+reads to the `~` and a builder is free to wrap a long namelist — so
+`"staircase stair 606\r\nrs"` is a legal keyword list and comes back
+`"staircase stair 606 rs"`. The entry's own argument covers it, and the
+oracle says so rather than the reasoning: `isname`'s C body ends a keyword
+at any non-alphabetic character (`!isalpha(*curname)`, handler.c:56), so
+`\r\n` separates two keywords exactly as a space does, and the C returns
+the same answer for both spellings of every keyword in that list —
+checked against `reference/tools/nameoracle.c`, not read off it.
+
+What *was* wrong is that `dlctl`'s comparator did not know this. It
+compared the field byte for byte, so `dlctl verify --against` reported a
+difference that was not one — and since `import --verify` is on by default
+and a failed verification leaves the output unstamped and unbootable, a
+real archive with a wrapped keyword line would have been refused a
+conversion that had lost nothing. Every fixture in this repo has
+single-spaced keywords, so it was latent, exactly like the transcoding gap
+in `docs/design/data-format.md` §11.1. Fixed in `cmd/dlctl/diff.go`
+(`compareKeywords`), which compares that one field as a list and every
+other string byte for byte; `TestKeywordsCompareAsListsNotBytes` pins both
+halves.
+
 ### `.dlversion` names a release, and an existing `1.0.0` stamp will now be refused
 
 `.dlversion` (`docs/design/data-format-versioning.md`) used to hold a

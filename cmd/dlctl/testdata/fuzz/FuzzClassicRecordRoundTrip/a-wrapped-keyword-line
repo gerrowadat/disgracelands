@@ -1,0 +1,2 @@
+go test fuzz v1
+string("#1\nA Room~\nA description.\n~\n0 0 0\nE\nstaircase stair 606\nrs~\nThey are constructed of smooth, beautiful marble\n~\nS\n$\n")

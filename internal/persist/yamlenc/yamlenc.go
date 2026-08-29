@@ -120,6 +120,22 @@ func MarshalString(s string) ([]byte, error) {
 //     ("---" or "..."). goccy panics with a nil pointer dereference on
 //     both, and fails to marshal "...x" at all.
 //
+//   - The string does not spell one of the core schema's float specials:
+//     [-+]?(.inf|.Inf|.INF) or (.nan|.NaN|.NAN), §10.2.1.4. Plain, those
+//     resolve to a *float*, not to a string — so a room description of
+//     ".NAN" is written `desc: .NAN`, read back as a float, and reaches
+//     the string field as "NaN". Three characters in, three characters
+//     out, silently different ones.
+//
+//     This is the clause that most repays being taken from the spec
+//     rather than from the failure. goccy resolves only the six unsigned
+//     spellings that way — "+.inf" survives, and "true", "null", "12"
+//     and "0x1F" all reach a string field as their own text — so an
+//     observed-failure rule would have excluded six strings and left
+//     "+.inf" to break on a library upgrade. The spec says all eight are
+//     floats; all eight are quoted. Nothing in twenty years of world data
+//     is a description of "+.inf".
+//
 // Anchoring on the spec rather than on observed failures is deliberate.
 // The observed list grew by one every time the fuzzer was re-run, which
 // is a fact about goccy 1.19.2 rather than about the format; and the
@@ -140,6 +156,8 @@ func MarshalString(s string) ([]byte, error) {
 //	"---"   document marker
 //	"? a"   leading indicator
 //	"...x"  document marker
+//	".NAN"  float special (found by the first real `make fuzz` budget,
+//	        2026-08-29 -- the seed corpus had never produced one)
 func PlainlySafe(s string) bool {
 	if s == "" {
 		return true // the library's own `""`, which round-trips
@@ -156,7 +174,27 @@ func PlainlySafe(s string) bool {
 	if strings.HasPrefix(s, "---") || strings.HasPrefix(s, "...") {
 		return false
 	}
+	if isFloatSpecial(s) {
+		return false
+	}
 	return true
+}
+
+// isFloatSpecial reports whether s is one of the core schema's float
+// spellings that has no digits in it (§10.2.1.4) -- the ones a plain
+// scalar resolves to a float rather than to text. The rest of that
+// production needs a digit, so it cannot collide with a word.
+func isFloatSpecial(s string) bool {
+	// One optional sign, not "as many as are there": "+-.inf" is not a
+	// float in any schema and has no business being quoted as if it were.
+	if len(s) > 0 && (s[0] == '+' || s[0] == '-') {
+		s = s[1:]
+	}
+	switch s {
+	case ".inf", ".Inf", ".INF", ".nan", ".NaN", ".NAN":
+		return true
+	}
+	return false
 }
 
 // indicators is YAML 1.2 §5.3's c-indicator set: the characters that carry

@@ -25,6 +25,11 @@ OUT     ?= out
 # against a real directory; the default is the one in the repository.
 LIB     ?= examples/stock/yaml
 
+# How long `make fuzz` runs each target for. One minute apiece is a sanity
+# pass; a real hunt is tens of minutes, and worth doing after touching a
+# parser or the yaml text codec.
+FUZZTIME ?= 1m
+
 # Listen addresses for the dev targets. The plaintext port is the C server's
 # habitual 4000; 4443 is the TLS one; 9090 carries /metrics, /healthz, /readyz.
 HOST         ?= 127.0.0.1
@@ -71,8 +76,8 @@ help: ## List the targets
 	     /^##@/ {printf "\n\033[1m%s\033[0m\n", substr($$0, 5); next} \
 	     /^[a-zA-Z0-9_-]+:.*##/ {printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2}' \
 	     $(MAKEFILE_LIST)
-	@printf '\nVariables: LIB=%s PORT=%s TLS_PORT=%s METRICS_PORT=%s LOG_LEVEL=%s FLAGS=\n\n' \
-	     '$(LIB)' '$(PORT)' '$(TLS_PORT)' '$(METRICS_PORT)' '$(LOG_LEVEL)'
+	@printf '\nVariables: LIB=%s PORT=%s TLS_PORT=%s METRICS_PORT=%s LOG_LEVEL=%s FUZZTIME=%s FLAGS=\n\n' \
+	     '$(LIB)' '$(PORT)' '$(TLS_PORT)' '$(METRICS_PORT)' '$(LOG_LEVEL)' '$(FUZZTIME)'
 
 ##@ Running a server
 
@@ -202,6 +207,21 @@ play: ## Run the play regression suite against examples/mini (slow; release-only
 play-fast: ## The play suite without the race detector, for a quicker answer
 	$(GO) test -tags=play -count=1 -timeout 30m ./test/play/...
 
+# Fuzzing, the half of the budget that was proposed and never built
+# (docs/proposals/yaml-only.md §10). The seed corpora already replay on
+# every push -- the targets are ordinary Go tests, so `go test ./...` runs
+# their seeds -- and that is regression testing, not coverage. This is the
+# part that generates inputs nobody thought of.
+#
+# `go test -fuzz` takes one target per invocation, so the loop lives in
+# scripts/fuzz.sh, which discovers the targets rather than listing them.
+# Release-only in CI, by the same scope rule as play and session-parity
+# (CLAUDE.md, "CI"): a budget short enough for every push finds nothing,
+# and a budget long enough to find something does not belong on every push.
+.PHONY: fuzz
+fuzz: ## Fuzz every target for FUZZTIME each (default 1m; FUZZTIME=10m for a real hunt)
+	./scripts/fuzz.sh $(FUZZTIME)
+
 .PHONY: cover
 cover: ## Run the tests with coverage and open the HTML report
 	$(GO) test -coverprofile=$(OUT)/coverage.out $(PKG)
@@ -280,12 +300,14 @@ parity: ## Check the Go and C world loaders agree (builds the C server; slow)
 # said compared line for line. `parity` above compares what the two servers
 # *loaded*; this compares what they *say*.
 #
-# In neither workflow, deliberately -- not even release.yml. It needs a C
-# toolchain and starts two servers per scenario, and it frames a command's
-# output by silence, which makes it both slow and the one thing here whose
-# timing depends on how busy the machine is. Run it by hand after changing
-# anything a player reads, which is most things. It builds the C server
-# itself if the binary is missing or older than the source.
+# Release-only, not day-to-day: it needs a C toolchain and starts two
+# servers per scenario, and it frames a command's output by silence, which
+# makes it both slow and the one thing here whose timing depends on how
+# busy the machine is. It was in *no* workflow until #268, which is how
+# five of its triage entries went stale unread for two months; it runs in
+# release.yml's full-suite now, failing on a skip. Run it by hand too,
+# after changing anything a player reads, which is most things. It builds
+# the C server itself if the binary is missing or older than the source.
 #
 # No -race: what is under test is the C server's output, and instrumenting
 # the Go side of a comparison changes only how long it takes. test/play is

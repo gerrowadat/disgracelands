@@ -347,6 +347,32 @@ jobs:
           fi
           grep -c -- "--- PASS: TestSessionParity/" parity.txt
 
+      # Fuzzing, the other half of a budget that only ever ran its seeds.
+      # The targets are ordinary Go tests, so `go test ./...` replays their
+      # committed corpora on every push -- but that is regression testing:
+      # until this step, nothing in any workflow had ever generated an
+      # input nobody had already thought of.
+      #
+      # Release-only for the reason docs/proposals/yaml-only.md §10 gives:
+      # "a short budget in go test is nearly worthless; a long one belongs
+      # in release.yml or nowhere."
+      #
+      # Two minutes per target rather than ten. This gates a release, so
+      # its cost is paid every time one is cut, and the value is
+      # front-loaded -- the first finding (a newline inside an extra
+      # description's keyword list, which made import --verify refuse a
+      # conversion that had lost nothing) turned up in seconds. Raise it
+      # here if a release ever starts feeling too cheap; `make fuzz
+      # FUZZTIME=30m` is the real hunt and is meant to be run by hand.
+      #
+      # A finding fails the release, which is the point: release.yml is
+      # needs:-gated, so nothing is tagged or published. The failing input
+      # is printed by scripts/fuzz.sh, because the runner's working tree
+      # goes away and an uncommitted crasher is a finding nobody can
+      # reproduce.
+      - name: Fuzz every target
+        run: ./scripts/fuzz.sh 2m
+
       - name: Lint the world files
         run: go run ./cmd/dlctl lint --type=world --dir=examples/stock/yaml --format=yaml
 
