@@ -24,6 +24,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+	"unicode/utf8"
 
 	"github.com/gerrowadat/disgracelands/internal/colour"
 	"github.com/gerrowadat/disgracelands/internal/game"
@@ -982,10 +983,25 @@ func (s *Session) readLoop(ctx context.Context, deps Deps) error {
 				// Erasing nothing is not an error — `write_point > tmp` guards
 				// the same case in the C — it is what backspace at the start of
 				// a line does everywhere.
+				//
+				// One *rune*, and this is where it parts company with the
+				// C. process_input drops everything that is not
+				// `isascii && isprint` a few lines further on
+				// (comm.c:1796), so a multi-byte character could never
+				// reach the buffer it is erasing from and one byte was
+				// always one character there. This port has no such
+				// filter and takes UTF-8 -- invalidName reads a name with
+				// unicode.IsLetter -- so erasing a byte leaves a broken
+				// rune behind: "Zoë", backspace, "e" became "Zo\xc3e",
+				// and the login answered "Names may only contain
+				// letters." DecodeLastRune returns (RuneError, 1) for a
+				// trailing malformed byte, which erases exactly that byte
+				// and is the right answer for it too.
 				if b == del || b == '\b' {
 					lastEOL = 0
 					if len(line) > 0 {
-						line = line[:len(line)-1]
+						_, size := utf8.DecodeLastRune(line)
+						line = line[:len(line)-size]
 					}
 					continue
 				}

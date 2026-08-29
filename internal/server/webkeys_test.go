@@ -103,6 +103,42 @@ func TestBackspaceOverTheWebSocketErases(t *testing.T) {
 	}
 }
 
+// TestBackspaceErasesAWholeRune: the erase is one *character*, not one
+// byte, which is where this port has to part company with the C.
+//
+// process_input drops everything that is not `isascii && isprint`
+// (comm.c:1796), so a multi-byte character could never reach the buffer it
+// erases from — one byte was always one character there, and the question
+// never came up. This port has no such filter and takes UTF-8 names:
+// invalidName reads them with unicode.IsLetter. Erasing a byte left half a
+// rune behind, so "Zoë", backspace, "e" reached the login as "Zo\xc3e" and
+// answered "Names may only contain letters." for a name that read "Zoe" on
+// screen — the same class of bug as #233 itself, one layer down.
+func TestBackspaceErasesAWholeRune(t *testing.T) {
+	srv, _ := newTestServer(t)
+	ts := listeningWeb(t, srv, "", false)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	c, _, err := websocket.Dial(ctx, toWS(t, ts.URL)+"/ws", nil)
+	if err != nil {
+		t.Fatalf("dialing /ws: %v", err)
+	}
+	defer c.Close(websocket.StatusNormalClosure, "")
+
+	conn := websocket.NetConn(ctx, c, websocket.MessageText)
+	buf := make([]byte, 8192)
+	readUntilString(t, conn, "By what name", buf)
+
+	if _, err := conn.Write([]byte("Zoë\x7fe\r\n")); err != nil {
+		t.Fatalf("sending a name with a multi-byte character in it: %v", err)
+	}
+	got := readUntilString(t, conn, "(Y/N)", buf)
+	if !strings.Contains(got, "Did I get that right, Zoe (Y/N)?") {
+		t.Errorf("erasing a multi-byte character left part of it behind:\n%s", got)
+	}
+}
+
 // TestThePlayPageSwallowsEveryArrowKey is a contract check on the rendered
 // page, not an execution of it: it asserts the eight sequences a cursor key
 // can arrive as are all accounted for.
