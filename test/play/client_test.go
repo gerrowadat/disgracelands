@@ -282,6 +282,35 @@ func contains(t *testing.T, what, out string, want ...string) {
 	}
 }
 
+// inventoryOrderChanged reports whether the named items appear in a different
+// relative order in the two listings.
+//
+// Relative rather than absolute on purpose: it answers "did this transform
+// reorder things", which is what a save/load round trip has to get right,
+// without also pinning what order they were in to begin with. An item missing
+// from either listing counts as changed, since that is a failure too.
+func inventoryOrderChanged(before, after string, items ...string) bool {
+	rank := func(text string) []int {
+		out := make([]int, 0, len(items))
+		for _, it := range items {
+			out = append(out, strings.Index(text, it))
+		}
+		return out
+	}
+	b, a := rank(before), rank(after)
+	for i := range items {
+		if b[i] < 0 || a[i] < 0 {
+			return true
+		}
+		for j := range items {
+			if (b[i] < b[j]) != (a[i] < a[j]) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // missing fails the test if out holds any of unwanted.
 func missing(t *testing.T, what, out string, unwanted ...string) {
 	t.Helper()

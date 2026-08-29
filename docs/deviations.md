@@ -1163,14 +1163,55 @@ port is right and the thing it is compared against is wrong.
   about a long sword." or the room's long description, and a zero count —
   `0.thing`, or a bare leading dot — answers "Look at what?" before any
   search happens.
-- **Objects are listed in a different order**, both on the floor and in an
-  inventory.
+- ~~**Objects are listed in a different order**, both on the floor and in an
+  inventory.~~
   *Ruling (2026-08-26):*
   **Later** — the one difference of the seventeen that is not a cutover
   blocker. It is a consequence of where the port inserts into its lists,
   visible but harmless, with the caveat that ordering is what `2.sword`
   selects against, so it is not purely presentational.
-  **Tracked:** #193.
+  **Fixed 2026-08-29** (#193). The C's `obj_to_char`, `obj_to_room` and
+  `obj_to_obj` are the same two lines each — `object->next_content =
+  list; list = object;` (handler.c:418-419, 685-686, 737-738) — so all
+  three insert at the head, and every reader walks from the head. Newest
+  first, everywhere. This port appended, which reversed all of it;
+  `prependObject` (`internal/game/carry.go`) is the correction, in the
+  three places, and every consumer was already iterating in list order
+  and so came right for free.
+
+  What did *not* come right for free is everywhere the port had already
+  compensated for the difference, and that is the part worth knowing:
+  **two reversals that cancel are a fine way to get the right answer and
+  a terrible way to keep it.** Three sites had one, and each became a bug
+  the moment the insertion end was fixed.
+
+  - `restoreObjects` (`internal/server/rent.go`) walked the rent file
+    backwards. It now walks it forwards, which is `Crash_load`'s own
+    direction (objsave.c:214-224) — and it only works because
+    `Crash_save` recurses on `next_content` *before* writing the object
+    it was handed (objsave.c:520-521), so the file holds the inventory
+    back to front and reading it forwards into a head-growing list puts
+    it back. Neither half preserves order alone. The writer's reversal
+    is not compensation of this kind and stays: it is Crash_save's order,
+    which the C server's own reader depends on, so a rent file this port
+    writes is still one the C can read.
+  - `SortShopObjects` (`internal/game/shopstate.go`) took the unsorted
+    objects off the *tail*, with a comment explaining that the slice's
+    tail was the same set the C peels off its head. It now takes them
+    off the head and reverses them, which is what `sort_keeper_objs`
+    does with its second list (shop.c:684-689).
+  - `SlideShopObject`, in the same file, appended an object it found no
+    match for. The C leaves it where `obj_to_char` put it, by assigning
+    it back over the head it saved (`keeper->carrying = obj`,
+    shop.c:668) — so a shop lists what it most recently took in first.
+
+  Four tests pin the result over a socket
+  (`internal/server/objectorder_test.go`), including the half that is not
+  presentation: `2.filler` counts down the same list the listing prints,
+  so this decides which object a numbered reference picks. Three existing
+  tests changed with it and none of them was wrong before — `wear all`
+  now works newest-first, the shop listing pages at the other end, and
+  the rent round-trip is preserved by a different pair of walks.
 - ~~**Death.** The C sends `death_cry` to the room~~ ("Your blood freezes as you
   hear the beastly fido's death cry.") ~~and the killer's own "is dead!
   R.I.P." once; the port sends the room's line to the killer twice and no

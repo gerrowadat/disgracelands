@@ -118,15 +118,24 @@ func TestShopListingPaginates(t *testing.T) {
 		w.SortShopObjects(w.ShopFor(keeper), keeper)
 	})
 
+	// Asserted on the entry *number* rather than on a named item, because
+	// which item lands last is a property of the list's insertion end and
+	// this test is about PAGE_LENGTH. It named "filler item 19" until #193,
+	// when obj_to_char started putting new objects at the head the way the
+	// C's does (handler.c:418-419): the twenty fillers now list newest-first
+	// ahead of the sword the keeper was already holding, so the line that
+	// falls onto page two is the twenty-first either way, and it is no
+	// longer a filler at all.
+	before := len(c.transcript())
 	c.send("list")
 	c.expect("Available")
 	c.expect("Return to continue")
-	if c.seen("filler item 19") {
+	if strings.Contains(c.transcript()[before:], " 21)") {
 		t.Error("the first page already shows content past PAGE_LENGTH")
 	}
 
 	c.send("")
-	c.expect("filler item 19")
+	c.expect(" 21)")
 	c.expect("V > ")
 }
 

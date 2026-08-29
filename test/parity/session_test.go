@@ -162,21 +162,6 @@ var scenarios = []scenario{
 		known: []known{
 			quitReturnsToTheMenu,
 			theVitalsPrompt,
-			{
-				command: "inventory",
-				match:   `^(a shield|a chain mail shirt|a small sword|a bag)$`,
-				why:     "the order an inventory is listed in; docs/deviations.md",
-			},
-			{
-				command: "look",
-				match:   `^An automatic teller machine has been installed in the wall here\.$`,
-				why:     "the order a room's objects are listed in; docs/deviations.md",
-			},
-			{
-				command: "drop all",
-				match:   `^You drop (a bag|a chain mail shirt|a shield)\.$`,
-				why:     "the order an inventory is walked in, which is the same Later-ruled difference as `inventory` above: the C's obj_to_char puts a new object at the *head* of the list and this port appends, so `all` runs newest-first there and oldest-first here; docs/deviations.md",
-			},
 		},
 	},
 	{
@@ -189,11 +174,6 @@ var scenarios = []scenario{
 				command: "wizhelp",
 				match:   `.`,
 				why:     "the eight commands this port declines outright -- the seven OasisOLC editors and `slowns` -- are all immortal-level, so `wizhelp` is the one listing that names them and the only one that cannot agree; docs/deviations.md, \"Eight of the C's 318 commands are not implemented\"",
-			},
-			{
-				command: "goto 3110",
-				match:   `^A desk is set against the western wall\.$`,
-				why:     "the order a room's objects are listed in; docs/deviations.md",
 			},
 		},
 	},
@@ -222,11 +202,6 @@ var scenarios = []scenario{
 		known: []known{
 			quitReturnsToTheMenu,
 			theVitalsPrompt,
-			{
-				command: "look",
-				match:   `^(A small sword lies here\.|An automatic teller machine has been installed in the wall here\.|The corpse of the beastly fido is lying here\.)$`,
-				why:     "the order a room's objects are listed in, and the corpse's own contents; docs/deviations.md",
-			},
 		},
 	},
 	{
@@ -242,17 +217,7 @@ var scenarios = []scenario{
 			{
 				command: "list",
 				match:   `^ +\d+\) `,
-				why:     "the keeper's stock is listed in the opposite order, and the prices differ by one: this C is built 64-bit and the archived server was not (CLAUDE.md's shop-price oracle, -m32 -mfpmath=387); docs/deviations.md",
-			},
-			{
-				command: "buy sword",
-				match:   `^You now have a (small|long) sword\.$`,
-				why:     "which sword `sword` matches follows the listing order above; docs/deviations.md",
-			},
-			{
-				command: "inventory",
-				match:   `^a (small|long) sword$`,
-				why:     "as `buy sword` above; docs/deviations.md",
+				why:     "the prices differ by one: this C is built 64-bit and the archived server was not (CLAUDE.md's shop-price oracle, -m32 -mfpmath=387); docs/deviations.md. The stock used to be listed in the opposite order too, which #193 fixed -- so what is left here is arithmetic, not ordering",
 			},
 		},
 	},

@@ -620,14 +620,27 @@ func (l *Live) SortShopObjects(shop *ShopDef, keeper *Character) {
 		return
 	}
 
-	// Everything not yet sorted, oldest first. The C peels these off the head
-	// of the list, which is the newest end; the slice's tail is the same set.
-	unsorted := append([]*Object(nil), keeper.Carrying[st.Sorted:]...)
-	keeper.Carrying = keeper.Carrying[:st.Sorted]
+	// The C peels the unsorted objects off the *head* one at a time and
+	// pushes each onto a second list (shop.c:684-689), which reverses them:
+	// it walks them oldest-first below. The head is the newest end here as
+	// it is there, so the unsorted set is the leading `n` and reversing it
+	// gives the C's own walk order.
+	//
+	// This read `keeper.Carrying[st.Sorted:]` until #193 — the same set, at
+	// the other end, because the list grew the other way round. The
+	// arithmetic is the part that had to change with it, not just the
+	// insertion.
+	n := len(keeper.Carrying) - st.Sorted
+	unsorted := make([]*Object, 0, n)
+	for i := n - 1; i >= 0; i-- {
+		unsorted = append(unsorted, keeper.Carrying[i])
+	}
+	keeper.Carrying = append([]*Object(nil), keeper.Carrying[n:]...)
 
 	for _, obj := range unsorted {
 		if l.ShopProduces(shop, obj) && !hasSameObject(keeper.Carrying, obj) {
-			keeper.Carrying = append(keeper.Carrying, obj)
+			// obj_to_char, which is to say the head (shop.c:695).
+			keeper.Carrying = prependObject(keeper.Carrying, obj)
 			obj.Location, obj.Holder = CarriedBy, keeper
 			st.Sorted++
 			continue
@@ -665,7 +678,12 @@ func (l *Live) SlideShopObject(shop *ShopDef, keeper *Character, obj *Object) {
 			return
 		}
 	}
-	keeper.Carrying = append(keeper.Carrying, obj)
+	// Nothing identical: the C leaves the object where obj_to_char put it,
+	// by assigning it back over the head it had saved
+	// (`keeper->carrying = obj`, shop.c:668). So an unmatched item goes to
+	// the *front* of the stock, not the back — which is why a shop lists
+	// what it most recently took in first. This appended until #193.
+	keeper.Carrying = prependObject(keeper.Carrying, obj)
 }
 
 // ExtractFromChar takes an object out of somebody's hands without destroying

@@ -134,10 +134,15 @@ func TestWearingEverything(t *testing.T) {
 	}
 	c.expect("You get a long sword.")
 
+	// `wear all` walks the inventory from the head, which since #193 is the
+	// newest end (obj_to_char prepends, handler.c:418-419) — so the three
+	// are picked up plate, ring, sword and worn sword, ring, plate. The
+	// assertion is the same one the other way round: the last message to
+	// arrive is the plate's, and the ring's has to already be in front of it.
 	c.send("wear all")
-	got := c.expect("You slide a gold ring on to your right ring finger.")
-	if !strings.Contains(got, "You wear a suit of plate mail on your body.") {
-		t.Errorf("`wear all` missed the plate:\n%s", got)
+	got := c.expect("You wear a suit of plate mail on your body.")
+	if !strings.Contains(got, "You slide a gold ring on to your right ring finger.") {
+		t.Errorf("`wear all` missed the ring:\n%s", got)
 	}
 	// A sword is not wearable, so `wear all` passes over it in silence.
 	if strings.Contains(got, "wield") {
