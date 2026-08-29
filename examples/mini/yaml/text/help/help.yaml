@@ -693,6 +693,12 @@ entries:
   - RELOAD
   file: reload.txt
 - keywords:
+  - RELOADMOB
+  - RELOADZONE
+  - RELOADOBJ
+  - RELOADSHOP
+  file: reloadmob-reloadzone-reloadobj-reloadshop.txt
+- keywords:
   - REROLL
   file: reroll.txt
 - keywords:
