@@ -179,10 +179,26 @@ type Session struct {
 	// on the first run once the syslog echo started walking sessions.
 	// The echo reads the C's PLR_WRITING flag instead now (#214), but the
 	// two command call sites remain and the atomic with them.
-	state     atomic.Int32
-	character *game.Character
-	// original is set while this session is switched into somebody else.
-	original *game.Character
+	state atomic.Int32
+	// character is atomic for the same reason state is, and it is the
+	// third field of this shape to need it — state in #134, Record.Level
+	// in #210, this one in #251, which is where the -race report is.
+	//
+	// Two goroutines write it and both are unavoidable. The session's own
+	// goroutine sets it at the end of login and character creation
+	// (login.go); the *world* goroutine sets it in SwitchInto/SwitchBack,
+	// because `switch` and `return` are commands. And the world goroutine
+	// reads it for a session that is not its own, in `users` (do_users
+	// walks every descriptor) and `show snoop`, and in the dupe check on
+	// behalf of a different connection entirely. So this is not a field
+	// one call site can be moved off, the way #134 moved echoWizVis onto
+	// w.Players(): the write is on the far side too.
+	character atomic.Pointer[game.Character]
+	// original is set while this session is switched into somebody else,
+	// and is atomic for the same reason: SwitchInto writes it on the world
+	// goroutine and perform_dupe_check reads it there for somebody else's
+	// connection (internal/server/server.go's dupe pass).
+	original atomic.Pointer[game.Character]
 	// snooping is the session this one is watching; snoopedBy is the session
 	// watching this one. Guarded by mu because Send runs from the world
 	// goroutine and the commands that set them run there too, but Close can
@@ -322,9 +338,11 @@ func (s *Session) Quit() bool { return s.quit.Load() }
 // closing it does not extract, save or crash-save a character that now
 // belongs to somebody else. Doing it as a flag rather than by clearing
 // s.character is not squeamishness: the dupe check runs on the world
-// goroutine, on behalf of a *different* connection, and s.character is a
-// plain field this session's own goroutine reads. An atomic flag says the
-// same thing without writing across that boundary.
+// goroutine, on behalf of a *different* connection, and clearing the
+// character there would be reaching into a session to change what it is,
+// not merely to read it. An atomic flag says the same thing without that.
+// (The field itself is an atomic.Pointer since #251, so the write would
+// no longer be a *race* — it would still be the wrong thing to do.)
 func (s *Session) MarkDisplaced() { s.displaced.Store(true) }
 
 // Displaced reports whether this connection's character was taken over.
@@ -545,10 +563,10 @@ func (s *Session) setState(st State) {
 }
 
 // Character returns the logged-in character, or nil.
-func (s *Session) Character() *game.Character { return s.character }
+func (s *Session) Character() *game.Character { return s.character.Load() }
 
 // SetCharacter attaches a character to the session.
-func (s *Session) SetCharacter(c *game.Character) { s.character = c }
+func (s *Session) SetCharacter(c *game.Character) { s.character.Store(c) }
 
 // Original is the character this session belongs to when it has been
 // switched into somebody else's body, or nil.
@@ -559,7 +577,7 @@ func (s *Session) SetCharacter(c *game.Character) { s.character = c }
 // the level check on every command: a god switched into a rat is a rat, and
 // the interpreter refuses them their own commands. The C has a message for
 // exactly that case ("You can't use immortal commands while switched").
-func (s *Session) Original() *game.Character { return s.original }
+func (s *Session) Original() *game.Character { return s.original.Load() }
 
 // SwitchedFromLevel answers game.Character.RealLevel: the level of the
 // character this connection really belongs to, and whether it is switched at
@@ -570,35 +588,43 @@ func (s *Session) Original() *game.Character { return s.original }
 // their own level entitles them to. Everything else about a switched god uses
 // the body's level.
 func (s *Session) SwitchedFromLevel() (int32, bool) {
-	if s == nil || s.original == nil {
+	if s == nil {
 		return 0, false
 	}
-	return s.original.Level(), true
+	original := s.original.Load()
+	if original == nil {
+		return 0, false
+	}
+	return original.Level(), true
 }
 
 // SwitchInto puts this session in charge of another character.
+//
+// On the world goroutine, like every command — which is why both fields it
+// writes are atomic.
 func (s *Session) SwitchInto(victim *game.Character) {
-	if s.original == nil {
-		s.original = s.character
+	if s.original.Load() == nil {
+		s.original.Store(s.character.Load())
 	}
-	s.character = victim
+	s.character.Store(victim)
 	victim.Client = s
 }
 
 // SwitchBack undoes it, returning the character that was borrowed.
 func (s *Session) SwitchBack() *game.Character {
-	if s.original == nil {
+	original := s.original.Load()
+	if original == nil {
 		return nil
 	}
-	borrowed := s.character
+	borrowed := s.character.Load()
 	if borrowed != nil && borrowed.Client == game.Client(s) {
 		borrowed.Client = nil
 	}
-	s.character = s.original
-	s.original = nil
-	if s.character != nil {
-		s.character.Client = s
-	}
+	s.character.Store(original)
+	s.original.Store(nil)
+	// original cannot be nil here: SwitchInto only stores it when it has a
+	// character to store, and the early return above covers the rest.
+	original.Client = s
 	return borrowed
 }
 
@@ -707,12 +733,13 @@ func (s *Session) sendRendered(text string) {
 // no character yet — the greeting, the name prompt — gets none, which matches
 // the C: every one of its macros takes a char_data and there is not one.
 func (s *Session) colourLevel() colour.Level {
-	if s.character == nil || s.character.Record == nil || s.character.IsNPC() {
+	c := s.Character()
+	if c == nil || c.Record == nil || c.IsNPC() {
 		return colour.Off
 	}
 	return colour.LevelOf(
-		s.character.Record.Preferences.Has(game.PrefColour1),
-		s.character.Record.Preferences.Has(game.PrefColour2),
+		c.Record.Preferences.Has(game.PrefColour1),
+		c.Record.Preferences.Has(game.PrefColour2),
 	)
 }
 
@@ -836,11 +863,11 @@ func (s *Session) Serve(ctx context.Context, deps Deps) {
 	// at the menu ever since. close_socket takes the same branch —
 	// IS_PLAYING(d) is false at CON_MENU, so the C neither announces a lost
 	// link nor saves again (comm.c:1956).
-	if s.character != nil && !s.Displaced() && !s.Extracted() {
-		if err := deps.Login.Leave(context.WithoutCancel(ctx), s, s.character); err != nil {
+	if character := s.Character(); character != nil && !s.Displaced() && !s.Extracted() {
+		if err := deps.Login.Leave(context.WithoutCancel(ctx), s, character); err != nil {
 			s.logger.Error("removing the character from the world", "error", err)
 		}
-	} else if s.character != nil && !s.Displaced() {
+	} else if character != nil && !s.Displaced() {
 		// close_socket's `else` (comm.c:1977-1979): a descriptor closing
 		// with a character attached but not IS_PLAYING — which after #187
 		// is the ordinary end of a session, the player having typed
@@ -858,7 +885,7 @@ func (s *Session) Serve(ctx context.Context, deps Deps) {
 		// s.character is a connection that never authenticated — so the
 		// line would fire on every idle port-scan instead.
 		wizlog(s.logger, obs.LogComplete, game.LevelImmortal,
-			"Losing player: %s.", s.character.Name)
+			"Losing player: %s.", character.Name)
 	}
 	// Give the writer a moment to finish before the backstop close. Without
 	// this, a session that ends by saying something — "Wrong password.", or

@@ -81,10 +81,11 @@ func (s *Session) beginEditor(maxLength int, done func(text string, saved bool))
 // reached from a command, which Dispatcher.Do already runs on the world
 // goroutine. Clearing it is the awkward half — see finishEditing.
 func (s *Session) markWriting() {
-	if s.character == nil || s.character.IsNPC() || s.character.Record == nil {
+	c := s.Character()
+	if c == nil || c.IsNPC() || c.Record == nil {
 		return
 	}
-	s.character.Record.PlayerFlags = s.character.Record.PlayerFlags.Set(game.PlayerWriting)
+	c.Record.PlayerFlags = c.Record.PlayerFlags.Set(game.PlayerWriting)
 }
 
 // beginEditorSeeded is beginEditor with existing content already in the
@@ -946,8 +947,8 @@ func (s *Session) finishEditing(ctx context.Context, deps Deps, saved bool) erro
 		// `REMOVE_BIT(PLR_FLAGS(d->character), PLR_MAILING | PLR_WRITING)`
 		// (modify.c:218-219), on both the save and the abort path, and
 		// guarded by the same `!IS_NPC` the set was.
-		if s.character != nil && !s.character.IsNPC() && s.character.Record != nil {
-			rec := s.character.Record
+		if c := s.Character(); c != nil && !c.IsNPC() && c.Record != nil {
+			rec := c.Record
 			rec.PlayerFlags = rec.PlayerFlags.Clear(game.PlayerMailing | game.PlayerWriting)
 		}
 		if done != nil {

@@ -317,7 +317,7 @@ func (s *Session) handlePassword(ctx context.Context, deps Deps, line string) er
 	if existing, mode := deps.Login.DupeCheck(ctx, s, character); existing != nil {
 		s.logger.Info("taking over an existing body",
 			"character", existing.Name, "mode", mode)
-		s.character = existing
+		s.SetCharacter(existing)
 		s.setState(StatePlaying)
 
 		// The three mudlogs of do_perform_dupe_check's tail, one per
@@ -343,7 +343,7 @@ func (s *Session) handlePassword(ctx context.Context, deps Deps, line string) er
 		return deps.Commands.Do(ctx, s, "look")
 	}
 
-	s.character = character
+	s.SetCharacter(character)
 	s.setState(StateReadMOTD)
 	s.Send("%s\r\n", motdFor(deps, character))
 	// mudlog(buf, BRF, MAX(LVL_IMMORT, GET_INVIS_LEV(d->character)), TRUE)
@@ -371,7 +371,7 @@ func (s *Session) handlePassword(ctx context.Context, deps Deps, line string) er
 // C_SPR, so the red is there for anybody who asked for any colour at all,
 // and three bells, which the C really does mean.
 func (s *Session) reportLoginFailures() {
-	rec := s.character.Record
+	rec := s.Character().Record
 	if rec == nil || rec.BadPasswords <= 0 {
 		return
 	}
@@ -472,7 +472,7 @@ func (s *Session) handleQueryClass(ctx context.Context, deps Deps, line string) 
 		return nil
 	}
 
-	s.character = character
+	s.SetCharacter(character)
 	s.setState(StateReadMOTD)
 	// mudlog(buf, NRM, LVL_IMMORT, TRUE) (interpreter.c:1629). The C
 	// builds this string at :1606 and then, in the `<DoC>` block that

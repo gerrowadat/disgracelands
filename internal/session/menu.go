@@ -51,8 +51,8 @@ func (s *Session) handleMenu(ctx context.Context, deps Deps, line string) error 
 		return s.enterWorld(ctx, deps)
 
 	case '2':
-		if s.character != nil && s.character.Record != nil && s.character.Record.Description != "" {
-			s.Send("Old description:\r\n%s", ensureTrailingNewline(s.character.Record.Description))
+		if c := s.Character(); c != nil && c.Record != nil && c.Record.Description != "" {
+			s.Send("Old description:\r\n%s", ensureTrailingNewline(c.Record.Description))
 			// The C frees the old description here, so a player who
 			// disconnects mid-edit loses it. That is not a behaviour worth
 			// reproducing: the old text is kept until a new one replaces it.
@@ -116,11 +116,12 @@ func (s *Session) enterWorld(ctx context.Context, deps Deps) error {
 	// character on an empty roster — made an Implementor during creation —
 	// correctly never runs it. Enter does the honours, since it is the side
 	// that owns the record.
-	firstTime := s.character != nil && s.character.Record != nil && s.character.Record.Level == 0
+	character := s.Character()
+	firstTime := character != nil && character.Record != nil && character.Record.Level == 0
 
 	s.Send("%s", deps.Text.Welcome())
 
-	result, err := deps.Login.Enter(ctx, s, s.character)
+	result, err := deps.Login.Enter(ctx, s, character)
 	if err != nil {
 		s.logger.Error("entering the world", "error", err)
 		s.Send("Something went wrong putting you into the world. Try again shortly.\r\n")
@@ -133,7 +134,7 @@ func (s *Session) enterWorld(ctx context.Context, deps Deps) error {
 	// and must get the "$n has lost $s link." treatment if their connection
 	// drops, not the menu's silence.
 	s.clearExtracted()
-	s.logger.Info("entered the world", "character", s.character.Name)
+	s.logger.Info("entered the world", "character", character.Name)
 
 	if firstTime {
 		s.Send("%s", deps.Text.Start())
@@ -163,10 +164,10 @@ func (s *Session) handleEnterDescription(ctx context.Context, deps Deps, line st
 		}
 		s.editorBuf = editText{}
 
-		if s.character != nil && s.character.Record != nil {
-			s.character.Record.Description = text
-			if err := deps.Login.Save(ctx, s.character); err != nil {
-				s.logger.Error("saving a description", "character", s.character.Name, "error", err)
+		if c := s.Character(); c != nil && c.Record != nil {
+			c.Record.Description = text
+			if err := deps.Login.Save(ctx, c); err != nil {
+				s.logger.Error("saving a description", "character", c.Name, "error", err)
 			}
 		}
 		s.setState(StateMenu)
@@ -191,10 +192,11 @@ func (s *Session) handleEnterDescription(ctx context.Context, deps Deps, line st
 // handleChangePasswordOld checks the current password before letting it be
 // replaced.
 func (s *Session) handleChangePasswordOld(ctx context.Context, deps Deps, line string) error {
-	ok, err := deps.Login.CheckPassword(ctx, s.character, strings.TrimSpace(line))
+	character := s.Character()
+	ok, err := deps.Login.CheckPassword(ctx, character, strings.TrimSpace(line))
 	if err != nil {
 		s.EchoOn()
-		s.logger.Error("checking a password", "character", s.character.Name, "error", err)
+		s.logger.Error("checking a password", "character", character.Name, "error", err)
 		s.Send("\r\nSomething went wrong checking that.\r\n%s", deps.Text.Menu())
 		s.setState(StateMenu)
 		return nil
@@ -212,7 +214,7 @@ func (s *Session) handleChangePasswordOld(ctx context.Context, deps Deps, line s
 
 func (s *Session) handleChangePasswordNew(deps Deps, line string) error {
 	password := strings.TrimSpace(line)
-	if reason := badNewPassword(password, s.character.Name); reason != "" {
+	if reason := badNewPassword(password, s.Character().Name); reason != "" {
 		s.Send("\r\n%s\r\nPassword: ", reason)
 		return nil
 	}
@@ -234,13 +236,14 @@ func (s *Session) handleChangePasswordVerify(ctx context.Context, deps Deps, lin
 	s.pendingPassword = ""
 	s.EchoOn()
 
-	if err := deps.Login.SetPassword(ctx, s.character, password); err != nil {
-		s.logger.Error("changing a password", "character", s.character.Name, "error", err)
+	character := s.Character()
+	if err := deps.Login.SetPassword(ctx, character, password); err != nil {
+		s.logger.Error("changing a password", "character", character.Name, "error", err)
 		s.Send("\r\nSomething went wrong saving that.\r\n%s", deps.Text.Menu())
 		s.setState(StateMenu)
 		return nil
 	}
-	s.logger.Info("password changed", "character", s.character.Name)
+	s.logger.Info("password changed", "character", character.Name)
 	s.Send("\r\nDone.\r\n%s", deps.Text.Menu())
 	s.setState(StateMenu)
 	return nil
@@ -250,10 +253,11 @@ func (s *Session) handleChangePasswordVerify(ctx context.Context, deps Deps, lin
 func (s *Session) handleDeleteVerify(ctx context.Context, deps Deps, line string) error {
 	s.EchoOn()
 
-	ok, err := deps.Login.CheckPassword(ctx, s.character, strings.TrimSpace(line))
+	character := s.Character()
+	ok, err := deps.Login.CheckPassword(ctx, character, strings.TrimSpace(line))
 	if err != nil || !ok {
 		if err != nil {
-			s.logger.Error("checking a password", "character", s.character.Name, "error", err)
+			s.logger.Error("checking a password", "character", character.Name, "error", err)
 		}
 		s.Send("\r\nIncorrect password.\r\n%s", deps.Text.Menu())
 		s.setState(StateMenu)
@@ -278,7 +282,8 @@ func (s *Session) handleDeleteConfirm(ctx context.Context, deps Deps, line strin
 		return nil
 	}
 
-	rec := s.character.Record
+	character := s.Character()
+	rec := character.Record
 	if rec != nil && rec.PlayerFlags.Has(game.PlayerFrozen) {
 		s.Send("You try to kill yourself, but the ice stops you.\r\n")
 		s.Send("Character not deleted.\r\n\r\n")
@@ -286,24 +291,24 @@ func (s *Session) handleDeleteConfirm(ctx context.Context, deps Deps, line strin
 		return nil
 	}
 
-	if err := deps.Login.Delete(ctx, s.character); err != nil {
-		s.logger.Error("deleting a character", "character", s.character.Name, "error", err)
+	if err := deps.Login.Delete(ctx, character); err != nil {
+		s.logger.Error("deleting a character", "character", character.Name, "error", err)
 		s.Send("\r\nSomething went wrong deleting that character.\r\n%s", deps.Text.Menu())
 		s.setState(StateMenu)
 		return nil
 	}
 
-	s.logger.Info("character self-deleted", "character", s.character.Name, "level", s.character.Level())
+	s.logger.Info("character self-deleted", "character", character.Name, "level", character.Level())
 	// mudlog(buf, NRM, LVL_GOD, TRUE) (interpreter.c:1778-1780), a bare
 	// LVL_GOD with no GET_INVIS_LEV() around it — an immortal deleting
 	// themselves cannot hide it. The level in the text is the one they
 	// had when they went.
 	wizlog(s.logger, obs.LogNormal, game.LevelGod,
-		"%s (lev %d) has self-deleted.", s.character.Name, s.character.Level())
-	s.Send("Character '%s' deleted!\r\nGoodbye.\r\n", s.character.Name)
+		"%s (lev %d) has self-deleted.", character.Name, character.Level())
+	s.Send("Character '%s' deleted!\r\nGoodbye.\r\n", character.Name)
 	// Not MarkQuit: they were never in the world, so there is nothing to
 	// remove from it.
-	s.character = nil
+	s.SetCharacter(nil)
 	s.Close()
 	return nil
 }
