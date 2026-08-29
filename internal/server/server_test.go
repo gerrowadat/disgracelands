@@ -1255,6 +1255,45 @@ func TestEveryFormOfEnterEndsALine(t *testing.T) {
 	}
 }
 
+// TestBackspaceErasesRatherThanBeingRead is the C's own line discipline,
+// which this port was missing until #233.
+//
+// process_input drops a backspace or a DEL and takes back the character
+// before it (comm.c:1787). readLoop appended every byte instead, so a client
+// that sends its keystrokes as they are typed — the browser terminal always,
+// telnet(1) as soon as it has SUPPRESS-GO-AHEAD — had its erases read as
+// data: a player who typed "Newcomerr", saw the second r and erased it, was
+// answered "Names may only contain letters." for a name that looked correct
+// on their screen.
+func TestBackspaceErasesRatherThanBeingRead(t *testing.T) {
+	for _, tc := range []struct {
+		name  string
+		typed string
+	}{
+		{"DEL, what a terminal's Backspace key sends", "Zodd\x7f"},
+		{"BS, which is also Ctrl-H", "Zodd\b"},
+		{"erasing the whole line and starting again", "Wrong\x7f\x7f\x7f\x7f\x7fZod"},
+		{"erasing past the start of the line, which is not an error", "\x7f\x7f\x7fZod"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			srv, _ := newTestServer(t)
+			c := dialClient(t, listening(t, srv))
+
+			c.expect("By what name")
+			c.sendRaw([]byte(tc.typed + "\r\n"))
+			// The name read is the one left on the player's screen, and
+			// nothing else: not the typed bytes with the erases in them
+			// (which is not a legal name at all — "Names may only contain
+			// letters."), and not some prefix of them either.
+			got := c.expect("(Y/N)")
+			if !strings.Contains(got, "Did I get that right, Zod (Y/N)?") {
+				t.Errorf("after typing %q the server read something other "+
+					"than Zod:\n%s", tc.typed, got)
+			}
+		})
+	}
+}
+
 // TestASplitLineEndingIsStillOneLine checks the CR and the LF arriving in
 // different reads, which is what a slow connection does and what the state
 // held across the read loop exists for.
