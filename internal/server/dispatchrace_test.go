@@ -7,8 +7,11 @@
 package server
 
 import (
+	"context"
 	"fmt"
+	"sync"
 	"testing"
+	"time"
 )
 
 // Issue #210: the dispatcher read Record.Level on the session's own
@@ -62,4 +65,106 @@ func TestAdvancingSomebodyWhileTheyTypeIsNotARace(t *testing.T) {
 	// deadlocks the dispatch instead of ordering it.
 	mortal.settle()
 	god.settle()
+}
+
+// Issue #251, in the shape it was reported: one connection finishing
+// character creation while another player types `users`.
+//
+// Session.character was a plain field, written on the session's own
+// goroutine at the end of login and creation and read on the *world*
+// goroutine by any command that walks the descriptor list. It is an
+// atomic.Pointer now — the third field of this shape to need one, after
+// Session.state (#134) and the level read in Dispatcher.Do (#210).
+//
+// **The regression test for it lives in internal/session**
+// (characterrace_test.go), and this one is the scenario rather than the
+// assertion, because the window here is genuinely narrow: the write lands
+// just after the DoSync that made the character, and the wizlog a few
+// lines later queues a task to the world goroutine, which is a channel
+// send and so an ordering edge that closes the window again within
+// microseconds. That is why the original report did not reproduce on the
+// next run either. This finds it some runs and not others — worth having
+// for the end-to-end shape, not worth trusting as the only check.
+func TestListingUsersWhileSomebodyLogsInIsNotARace(t *testing.T) {
+	srv, _ := newTestServer(t)
+
+	// Its own listener, with room for the whole crowd: the shared helper
+	// allows eight connections from one address and every client here comes
+	// from the loopback, so the default would refuse most of them.
+	ln, err := ListenTelnet("127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	accepted := make(chan struct{})
+	go func() {
+		defer close(accepted)
+		_ = srv.Accept(ctx, ln, Limits{MaxPerHost: 64, LoginGrace: time.Minute})
+	}()
+	t.Cleanup(func() {
+		cancel()
+		<-accepted
+	})
+	addr := ln.Addr().String()
+
+	god := dialClient(t, addr)
+	god.create("Zod", "swordfish", "m", "w")
+
+	// Six goroutines making thirty characters between them, all of it
+	// against a `users` loop: enough arrivals at the write to be worth
+	// running, cheap enough to sit in the ordinary suite.
+	var joiners sync.WaitGroup
+	for _, prefix := range []string{"Ana", "Bo", "Cyd", "Dee", "Eve", "Fay"} {
+		joiners.Add(1)
+		go func() {
+			// Letters only: an all-letter name is the only kind character
+			// creation accepts, so the run is spelled out rather than
+			// numbered.
+			defer joiners.Done()
+			for _, suffix := range []string{"a", "b", "c", "d", "e"} {
+				c := dialClient(t, addr)
+				// Creation stopped at the MOTD rather than c.create's whole
+				// sequence: pressing return enters the world, which is
+				// another trip through the world goroutine and one more
+				// edge that did not need to be there.
+				c.expect("By what name")
+				c.send(prefix + suffix)
+				c.expect("Did I get that right")
+				c.send("y")
+				c.expect("Give me a password")
+				c.send("swordfish")
+				c.expect("retype password")
+				c.send("swordfish")
+				c.expect("What is your sex")
+				c.send("m")
+				c.expect("Class:")
+				c.send("w")
+				c.expect("PRESS RETURN")
+				// Hanging up rather than pressing return leaves the
+				// teardown to read the same field on the connection
+				// goroutine, which is the other unordered read.
+				c.close()
+			}
+		}()
+	}
+
+	joined := make(chan struct{})
+	go func() {
+		joiners.Wait()
+		close(joined)
+	}()
+
+	// `users` walks every session and reads each one's character — do_users'
+	// own loop over descriptor_list (users.go, `who = s.Character()`) — on
+	// the world goroutine. expectCount, because expect returns at once for a
+	// marker already in the transcript.
+	for n := 1; ; n++ {
+		god.send("users")
+		god.expectCount("visible sockets connected.", n)
+		select {
+		case <-joined:
+			return
+		default:
+		}
+	}
 }
