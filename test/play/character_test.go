@@ -34,6 +34,44 @@ func TestTheGreetingNamesTheCreators(t *testing.T) {
 	m.noServerErrors()
 }
 
+// TestBackspaceCorrectsWhatWasTyped is the erase the C's process_input does
+// (comm.c:1787) and this port did not until #233.
+//
+// It is invisible to a line-mode telnet client, whose terminal driver edits
+// the line before any of it is sent -- which is why it went unnoticed here
+// for so long, this suite's own client included. A client that sends each
+// keystroke as it is typed, as the browser terminal always does and
+// telnet(1) does once it has SUPPRESS-GO-AHEAD, sends the erase to the
+// server and needs the server to honour it.
+func TestBackspaceCorrectsWhatWasTyped(t *testing.T) {
+	m := start(t, mini)
+	c := m.dial()
+
+	// At the name prompt, where a player who cannot correct a typo is
+	// told their name may only contain letters and cannot see why.
+	c.expect("By what name do you wish to be known?")
+	c.send("Touristt\x7f")
+	c.expect("Did I get that right, Tourist (Y/N)?")
+	c.send("y")
+	c.expect("Give me a password for Tourist:")
+	c.send("tourpass")
+	c.expect("retype password")
+	c.send("tourpass")
+	c.expect("What is your sex")
+	c.send("m")
+	c.expect("Class:")
+	c.send("w")
+	c.expect("PRESS RETURN")
+	c.send("")
+	c.enterGame()
+
+	// And in the game, where it is an ordinary command.
+	room := c.do("loo\x7fok")
+	contains(t, "a backspaced `look`", room, "[ Exits:")
+
+	m.noServerErrors()
+}
+
 // TestCreatingACharacter walks the creation sequence and checks each refusal
 // on the way, because every one of them is a state in the login machine that
 // a player can reach by typing something ordinary.

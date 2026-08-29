@@ -143,23 +143,15 @@ var playTemplate = template.Must(template.New("play").Parse(`<!doctype html>
 	// What the player has typed on the line so far, as they can see it,
 	// and the last line they finished. lastCommand is what up-arrow
 	// repeats.
+	//
+	// 'line' is also what the server holds, exactly: every keystroke goes
+	// out as it is typed (see term.onData below; the pager depends on it),
+	// and since #233 the server erases on a backspace the same way this
+	// does. Before that fix the two diverged -- a backspace was erased on
+	// screen and still counted by the server -- and up-arrow had to track
+	// the difference separately to know whether it was safe to type.
 	var line = '';
 	var lastCommand = '';
-
-	// Whether anything at all has been sent to the server since the last
-	// line ending -- which is not the same question as whether 'line' is
-	// empty, and the difference is why this is counted separately.
-	//
-	// Every keystroke goes to the server as it is typed (see term.onData
-	// below; the pager depends on it), and the server has no line editing
-	// of its own: readLoop appends every byte until a line ending, so a
-	// backspace is *not* subtracted there. It is erased on screen here and
-	// still sent, so 'line' models what the player sees and this models
-	// what the server holds. Up-arrow may only inject a command when the
-	// server holds nothing, or the two would run together -- half-typed
-	// "ki" plus a repeated "look" is the command "kilook". If #233 gives
-	// the server line editing, this restriction can be revisited.
-	var pending = 0;
 
 	var proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
 	var ws = new WebSocket(proto + '//' + location.host + '/ws');
@@ -188,28 +180,28 @@ var playTemplate = template.Must(template.New("play").Parse(`<!doctype html>
 
 	// repeat is the up-arrow: run the last command again.
 	//
-	// Two things stop it. Nothing may have been typed since the last
-	// Enter, for the reason 'pending' explains -- with a half-typed line
-	// in the server's buffer there is no way to take it back, since the
-	// characters have already gone. And local echo must be on: echo is
-	// off around a password, so a password is never recorded as
-	// lastCommand and up-arrow can never replay one in the clear.
+	// Two things stop it. The line must be empty: a repeat is sent as
+	// text plus an Enter, so with a half-typed line already in the
+	// server's buffer the two would run together -- "ki" plus a repeated
+	// "look" is the command "kilook". Erasing back to an empty line is
+	// enough now that the server erases too, which it was not before
+	// #233. And local echo must be on: echo is off around a password, so
+	// a password is never recorded as lastCommand and up-arrow can never
+	// replay one in the clear.
 	function repeat() {
-		if (!lastCommand || pending !== 0 || !localEcho) return;
+		if (!lastCommand || line !== '' || !localEcho) return;
 		send(lastCommand);
 	}
 
-	// consume walks what was typed, keeping 'line', 'lastCommand' and
-	// 'pending' up to date, and echoing it if echo is on.
+	// consume walks what was typed, keeping 'line' and 'lastCommand' up to
+	// date, and echoing it if echo is on.
 	//
 	// Echoing is this page's own job: xterm.js has no local echo, unlike a
 	// real telnet client's terminal driver, which echoes by itself and
 	// only stops when told to around a password. Backspace is erased off
-	// the screen the same way that driver would -- though note it is *not*
-	// taken back out of the server's buffer, which it cannot be from
-	// here: the byte has already gone, and readLoop has no line editing
-	// to undo it with. That is issue #233, and it is why 'pending' counts
-	// a backspace as one more thing the server is holding, not one fewer.
+	// the screen the same way that driver would, and the byte still goes
+	// to the server -- which since #233 erases on it as well, so the two
+	// buffers stay in step. readLoop's own comment has the C citation.
 	//
 	// \r\n is collapsed to \r first so a pasted chunk with Windows line
 	// endings does not echo a blank line, or record an empty command, for
@@ -224,15 +216,12 @@ var playTemplate = template.Must(template.New("play").Parse(`<!doctype html>
 				// one up-arrow repeats.
 				if (echo && line !== '') lastCommand = line;
 				line = '';
-				pending = 0;
 			} else if (ch === '\x7f' || ch === '\b') {
 				if (echo) term.write('\b \b');
 				line = line.slice(0, -1);
-				pending++;
 			} else {
 				if (echo) term.write(ch);
 				line += ch;
-				pending++;
 			}
 		}
 	}

@@ -215,14 +215,16 @@ terminal driver would. Two consequences a player notices:
   this the page forwarded it to the game as command text (an arrow at the
   name prompt answered "Names may only contain letters.") and echoed it
   back into the terminal, where it moved the cursor. Now it is swallowed
-  in the browser and never reaches either. Up-arrow repeats only when you
-  have typed nothing since the last Enter — with a half-finished line
-  already sent, there is no way to take it back — and never repeats
+  in the browser and never reaches either. Up-arrow repeats only when the
+  line is empty — a repeat is sent as text plus an Enter, so it would run
+  into a half-finished line rather than replace it — and never repeats
   anything typed with echo off, so a password can never be replayed.
-- **Backspace is currently only cosmetic** (#233): it is erased from the
-  screen but the byte has already gone to the game, which has no line
-  editing to drop it. This does not affect a telnet client, whose own
-  terminal driver edits the line before sending it.
+- **Backspace erases, on the screen and in the game.** The byte goes to
+  the server like every other keystroke, and the server drops it along
+  with the character before it, which is what the C server's own
+  `process_input` does (`comm.c:1787`) and what this port was missing
+  until #233. Erasing back to an empty line therefore re-enables the
+  up-arrow, as it should.
 
 If `--tls-cert`/`--tls-key` (or, once implemented, `--tls-acme-domain`) are
 set, the web interface serves HTTPS and `wss://`; otherwise it is plain

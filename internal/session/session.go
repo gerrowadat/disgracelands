@@ -871,6 +871,10 @@ func (s *Session) Serve(ctx context.Context, deps Deps) {
 	s.logger.Info("disconnected")
 }
 
+// del is DEL, what a terminal's Backspace key actually sends. RFC 854 calls
+// it Erase Character; the C tests for it as the bare 127 (comm.c:1787).
+const del = 0x7f
+
 // maxLineLength bounds one line of input.
 //
 // A line longer than this is not something a person typed, and a client that
@@ -947,6 +951,42 @@ func (s *Session) readLoop(ctx context.Context, deps Deps) error {
 				// bare CR, and says to ignore it wherever it appears.
 				if b == 0 {
 					lastEOL = 0
+					continue
+				}
+				// Erase, which the C does too and this loop did not.
+				//
+				// process_input's copy loop drops a backspace or a DEL and
+				// takes back the character before it (comm.c:1787, and
+				// CircleMUD's own comm.c:1712 — the comment there reads
+				// "handle backspacing or delete key"). It is the C server's
+				// only line discipline, and it is there because a client that
+				// has gone character-at-a-time sends every keystroke as it is
+				// typed, backspace included: nothing between the keyboard and
+				// the interpreter has edited the line, so this is where the
+				// editing has to happen.
+				//
+				// A line-mode telnet client never sends these — its terminal
+				// driver does the editing and only the finished line leaves the
+				// client — which is why the gap went unnoticed here for so long.
+				// But this server agrees to SUPPRESS-GO-AHEAD the moment a
+				// client asks for it (protocol.go), and the browser terminal
+				// sends keystroke-at-a-time unconditionally
+				// (internal/server/web_templates.go: the pager depends on a
+				// keypress arriving without an Enter after it), with no driver
+				// of its own to edit for it. A player there who typed
+				// "Newcomerr", noticed the second r and erased it, saw
+				// "Newcomer" on screen while the server read "Newcomerr\x7f":
+				// the erase was cosmetic, and only ever on the client. Issue
+				// #233.
+				//
+				// Erasing nothing is not an error — `write_point > tmp` guards
+				// the same case in the C — it is what backspace at the start of
+				// a line does everywhere.
+				if b == del || b == '\b' {
+					lastEOL = 0
+					if len(line) > 0 {
+						line = line[:len(line)-1]
+					}
 					continue
 				}
 				lastEOL = 0

@@ -322,9 +322,13 @@ end reads the other's answer as a fresh request.
 **Suppress-go-ahead is agreed on request and never volunteered**, which keeps
 `telnet(1)` in line mode as it is against the C server. Offering it tips the
 client into character-at-a-time mode, where the terminal stops echoing and
-stops handling backspace and the server is expected to do both instead: a
-player typing at the login prompt gets `^M` for Enter and `^?` for backspace.
-A client that wants SGA still gets it the moment it asks.
+the server is expected to echo instead — which this server does not do, so a
+player would type into a blank line. A client that wants SGA still gets it
+the moment it asks, and the two things the server *does* have to do for one
+are both done: `readLoop` ends a line on CR NUL, which is the Enter key in
+that mode, and erases on a backspace or a DEL the way the C's own
+`process_input` does (`comm.c:1787`; the erase was missing until #233, which
+is why the browser terminal saw it first).
 
 ### GMCP
 
