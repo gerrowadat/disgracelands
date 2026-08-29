@@ -127,3 +127,42 @@ func sortedKeys[V any](m map[string]V) []string {
 	sort.Strings(keys)
 	return keys
 }
+
+// TestTheCorpusCarriesNoClockDependency pins the one thing
+// TestTheCheckedInCorpusMatchesThisGenerator cannot catch in time.
+//
+// The classic report format writes asctime's six-character month-and-day
+// slice, and the store falls back to time.Now() when a Report carries no
+// When. So a generator that forgets one produces a corpus that matches
+// what is committed all day and stops at midnight — the failure lands on
+// whoever happens to run the tests next, in a package they did not touch,
+// with a diff that says "generated 93 bytes, committed 93".
+//
+// That is not hypothetical: the corpus was committed on 2026-08-28 and
+// went red across the whole repository on the 29th.
+//
+// This looks for the fixed date instead, so reintroducing the dependency
+// fails at once — in the same commit that does it, rather than in
+// somebody else's.
+func TestTheCorpusCarriesNoClockDependency(t *testing.T) {
+	fresh := t.TempDir()
+	if err := generate(fresh); err != nil {
+		t.Fatalf("generate: %v", err)
+	}
+
+	// asctime's own rendering of reportedAt, which is what the classic
+	// format writes: "Sep  9", two spaces, the day being single-digit.
+	want := reportedAt.Format("Jan _2")
+
+	for _, name := range []string{"bugs", "ideas", "typos"} {
+		body, err := os.ReadFile(filepath.Join(fresh, "misc", name))
+		if err != nil {
+			t.Fatalf("reading misc/%s: %v", name, err)
+		}
+		if !bytes.Contains(body, []byte(want)) {
+			t.Errorf("misc/%s does not carry the fixed date %q, so it is "+
+				"being stamped from the clock and will break at midnight:\n%s",
+				name, want, body)
+		}
+	}
+}

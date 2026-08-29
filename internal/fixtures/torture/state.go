@@ -241,6 +241,22 @@ func writeHouses(etc, house, _ string) error {
 	return store.SaveObjects(5006, []player.StoredObject{{Vnum: 5003, Weight: 1}})
 }
 
+// reportedAt is the timestamp every generated report carries.
+//
+// It has to be *some* fixed instant, and it cannot be left out: the
+// classic store falls back to time.Now() for a zero When
+// (internal/persist/reports/classic), and the format writes asctime's own
+// six-character month-and-day slice. So a corpus generated without one
+// embeds the day it was generated, matches the committed copy until
+// midnight, and then fails for everybody — which is exactly what
+// happened, the corpus having been committed on 2026-08-28 and
+// TestTheCheckedInCorpusMatchesThisGenerator going red on the 29th.
+//
+// The same instant etc/time uses (writeClock below), for no better reason
+// than that a corpus with one arbitrary date in it is easier to read than
+// one with two.
+var reportedAt = time.Unix(1000000000, 0).UTC()
+
 // writeReports covers all three kinds, CP1252 text, an empty body and a
 // body with embedded newlines — the last of which matters because the
 // classic format is line-oriented and has no way to escape one.
@@ -252,10 +268,10 @@ func writeReports(_, _, misc string) error {
 	defer func() { _ = store.Close() }()
 
 	for _, r := range []reports.Report{
-		{Kind: reports.KindBug, Reporter: "Torturer", Room: 5000, Body: "The room with every flag is unpleasant."},
-		{Kind: reports.KindIdea, Reporter: "Nobody", Room: 5008, Body: "A caf\xe9 would be nice. Or a cr\xeape stand."},
-		{Kind: reports.KindTypo, Reporter: "Torturer", Room: 5005, Body: "\x93Antechamber\x94 is spelled oddly."},
-		{Kind: reports.KindBug, Reporter: "Torturer", Room: 5006, Body: ""},
+		{Kind: reports.KindBug, Reporter: "Torturer", Room: 5000, When: reportedAt, Body: "The room with every flag is unpleasant."},
+		{Kind: reports.KindIdea, Reporter: "Nobody", Room: 5008, When: reportedAt, Body: "A caf\xe9 would be nice. Or a cr\xeape stand."},
+		{Kind: reports.KindTypo, Reporter: "Torturer", Room: 5005, When: reportedAt, Body: "\x93Antechamber\x94 is spelled oddly."},
+		{Kind: reports.KindBug, Reporter: "Torturer", Room: 5006, When: reportedAt, Body: ""},
 	} {
 		if _, err := store.Append(r); err != nil {
 			return err
