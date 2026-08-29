@@ -244,6 +244,15 @@ func writeHouses(etc, house, _ string) error {
 // writeReports covers all three kinds, CP1252 text, an empty body and a
 // body with embedded newlines — the last of which matters because the
 // classic format is line-oriented and has no way to escape one.
+//
+// Every report carries an explicit When, and it has to. A zero When means
+// "now" to reportsclassic.Append (classic.go:114), and the line it writes
+// holds asctime's own month-and-day slice — so a corpus generated with the
+// clock left in stopped matching the committed bytes at the next midnight,
+// and this package's own TestTheCheckedInCorpusMatchesThisGenerator failed
+// on a tree nobody had touched. A fixture is only a fixture if it is the
+// same bytes tomorrow: writeBans and writeBoards already fix their dates
+// for the same reason, and this was the one place left reading the clock.
 func writeReports(_, _, misc string) error {
 	store, err := reportsclassic.New(reports.Config{Dir: misc})
 	if err != nil {
@@ -251,11 +260,20 @@ func writeReports(_, _, misc string) error {
 	}
 	defer func() { _ = store.Close() }()
 
+	// Dates chosen to exercise the format's own padding: asctime pads the
+	// day of the month to two characters with a *space*, so a single-digit
+	// day is the case where a reader that assumed a zero goes wrong.
+	when := func(month time.Month, day int) time.Time {
+		return time.Date(2003, month, day, 12, 0, 0, 0, time.UTC)
+	}
 	for _, r := range []reports.Report{
-		{Kind: reports.KindBug, Reporter: "Torturer", Room: 5000, Body: "The room with every flag is unpleasant."},
-		{Kind: reports.KindIdea, Reporter: "Nobody", Room: 5008, Body: "A caf\xe9 would be nice. Or a cr\xeape stand."},
-		{Kind: reports.KindTypo, Reporter: "Torturer", Room: 5005, Body: "\x93Antechamber\x94 is spelled oddly."},
-		{Kind: reports.KindBug, Reporter: "Torturer", Room: 5006, Body: ""},
+		{Kind: reports.KindBug, Reporter: "Torturer", Room: 5000, When: when(time.August, 1),
+			Body: "The room with every flag is unpleasant."},
+		{Kind: reports.KindIdea, Reporter: "Nobody", Room: 5008, When: when(time.September, 12),
+			Body: "A caf\xe9 would be nice. Or a cr\xeape stand."},
+		{Kind: reports.KindTypo, Reporter: "Torturer", Room: 5005, When: when(time.December, 25),
+			Body: "\x93Antechamber\x94 is spelled oddly."},
+		{Kind: reports.KindBug, Reporter: "Torturer", Room: 5006, When: when(time.August, 2), Body: ""},
 	} {
 		if _, err := store.Append(r); err != nil {
 			return err

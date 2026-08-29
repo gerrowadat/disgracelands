@@ -185,7 +185,11 @@ hostile:
   deliberately: the difference is real, and a corpus that avoided it
   would leave it to be discovered by an operator.
 - **`bugs`/`ideas`/`typos`** — all three kinds, CP1252 text, and an empty
-  body.
+  body. The dates are fixed (`Aug  1`, `Sep 12`, `Dec 25`) rather than
+  taken from the clock, and one of them is single-digit on purpose:
+  `asctime` pads the day with a *space*, not a zero. Leaving them to the
+  clock is what the generator originally did, and it made the corpus stop
+  matching itself at the next midnight.
 - **`time`** — the clock's epoch, which `db.c` stores as a bare integer
   with nothing around it.
 

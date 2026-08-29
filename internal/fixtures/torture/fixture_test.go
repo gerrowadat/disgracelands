@@ -60,6 +60,35 @@ func TestTheCheckedInCorpusMatchesThisGenerator(t *testing.T) {
 	}
 }
 
+// TestTheReportDatesAreFixedRatherThanToday is a guard on the clock, not on
+// the format.
+//
+// reportsclassic.Append substitutes time.Now() for a zero When
+// (classic.go:114) and writes asctime's month-and-day slice into the file.
+// The generator did leave it zero, so the corpus it produced was correct on
+// the day it was committed and different the next morning: the test above
+// failed on a tree nobody had touched, naming three files whose byte counts
+// matched exactly. Checking for the fixed dates fails at once instead of at
+// the next midnight, which is the difference between a bug found by reading
+// it and one found by waiting.
+func TestTheReportDatesAreFixedRatherThanToday(t *testing.T) {
+	for file, want := range map[string]string{
+		"bugs":  "(Aug  1)",
+		"ideas": "(Sep 12)",
+		"typos": "(Dec 25)",
+	} {
+		body, err := os.ReadFile(filepath.Join(checkedIn, "misc", file))
+		if err != nil {
+			t.Fatalf("reading the committed %s: %v", file, err)
+		}
+		if !bytes.Contains(body, []byte(want)) {
+			t.Errorf("misc/%s does not carry the fixed date %s, so it was "+
+				"written with the clock and will differ from a fresh "+
+				"generation tomorrow:\n%s", file, want, body)
+		}
+	}
+}
+
 // TestTheHostileCasesAreActuallyInTheBytes asserts the three string shapes
 // internal/persist/world/yaml/text.go's needsQuoting exists for are really
 // in the committed world file.
