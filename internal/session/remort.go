@@ -74,6 +74,9 @@ func doRemort(c *Context) error {
 
 	mask := game.RemortMask(which)
 	vector := game.RemortFlagsOf(rec)
+	// Captured before game.Remort moves it: the confirmation names the class
+	// they were and the statistic pinned for it.
+	oldClass := rec.Class
 
 	// Refused if they *are* that class: there is nothing to do, and it is
 	// the C's own first guard. Applies to an undo too — you cannot take away
@@ -98,18 +101,27 @@ func doRemort(c *Context) error {
 		return nil
 	}
 
-	// Paladin is the end of the road, and remorting *away* from it would be
-	// a one-way door in the wrong direction: it is the one class with no bit
-	// in the remort vector (RemortMask returns 0), so there is nowhere to
-	// record that somebody has been one. Under the C this could not arise —
-	// remort never changed the class field — and now that it does, refusing
-	// is the only answer that does not silently destroy something with no
-	// way back. `redeem` lifts a fall; nothing un-remorts a paladin.
-	if !undo && rec.Class == game.ClassPaladin {
-		c.Send("%s is a paladin, and paladinhood is the end of the road: there is no bit "+
-			"in the remort vector to remember it by, so remorting away from it could not be undone.\r\n",
-			victim.Name)
-		return nil
+	// **Paladin is earned, not chosen: you must have been both a warrior and
+	// a cleric.** That is the game's own rule, from the person who ran it
+	// (#262), and the C never enforced it — `do_remort` has no such check,
+	// so it was a rule the wizards kept by hand. Enforcing it is a
+	// deviation, and it is in docs/deviations.md.
+	//
+	// "Has been" is the IS_<CLASS> question, not the class field: being a
+	// warrior right now counts, and so does having been one and moved on,
+	// which is exactly what those macros already answer.
+	//
+	// Remorting *away* from paladin is allowed, and nothing here stops it.
+	// An earlier version of this refused it on the grounds that paladin had
+	// no bit in the remort vector to remember it by. That was simply wrong —
+	// paladin's mask is 16 (class.c:82) like every other class's, and what
+	// it lacks is an IS_PALADIN macro reading it.
+	if !undo && which == game.ClassPaladin {
+		if !game.IsWarrior(rec) || !game.IsCleric(rec) {
+			c.Send("%s has not earned paladinhood: it takes somebody who has been "+
+				"both a warrior and a cleric.\r\n", victim.Name)
+			return nil
+		}
 	}
 
 	if undo {
@@ -145,10 +157,14 @@ func doRemort(c *Context) error {
 	} else {
 		c.Send("%s remorted to become a %s!\r\n", victim.Name, short)
 		// The god gets told what the command did on their behalf, because
-		// they used to have to do it themselves and will otherwise reach for
-		// `set` out of habit (#262).
-		c.Send("%s is now a level 1 %s with %d hit points, %d mana and %d movement.\r\n",
-			victim.Name, short, rec.Points.MaxHit, rec.Points.MaxMana, rec.Points.MaxMove)
+		// they used to type all of it themselves and will otherwise reach
+		// for `set` out of habit (#262). Naming the pinned statistic
+		// matters most: it is the least obvious line of the procedure this
+		// replaces, and the one whose absence would be noticed last.
+		c.Send("%s is now a level 1 %s: %d hit, %d mana, %d move, no practices banked, "+
+			"and %s pinned at 18 for the %s they were.\r\n",
+			victim.Name, short, rec.Points.MaxHit, rec.Points.MaxMana, rec.Points.MaxMove,
+			game.PrimeAbilityName(oldClass), game.ClassShortNames[oldClass])
 		victim.Tell("You fall to the ground, clutching your chest, as an unearthly force "+
 			"bestows new knowledge and powers on you!\r\nYou gain the skills and privileges of a %s!\r\n",
 			short)
@@ -187,8 +203,11 @@ func remortClassList(victim *game.Character) string {
 	var b strings.Builder
 	for _, class := range game.ClassShortNameOrder {
 		mask := game.RemortMask(class)
-		// A class with no bit — paladin — can never appear here, which is why
-		// remorting *to* paladin lists nothing new.
+		// Paladin appears here like any other class. It has a mask in the C's
+		// table (16, class.c:82) and always has; what it lacks is an
+		// IS_PALADIN macro reading it, which is a fact about how paladin
+		// abilities are gated and not about whether the vector remembers.
+		// An earlier comment here had that backwards.
 		if mask != 0 && vector.Has(mask) {
 			b.WriteString(" ")
 			b.WriteString(game.ClassShortNames[class])

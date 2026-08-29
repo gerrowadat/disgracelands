@@ -292,10 +292,12 @@ var intApplyLearn = [26]int32{
 // RemortMask is the bit a class occupies in the remort vector, from class.c's
 // `pc_class_remort_masks`, or 0 for a class with none.
 //
-// Paladin has a mask in the C's table and no `IS_` macro reading it, since
-// paladin is where remorting ends rather than somewhere it passes through — so
-// setting its bit does nothing and `remort` lists nothing new for it. The
-// table is reproduced faithfully all the same; the emptiness is the C's.
+// Paladin has a mask in the C's table (16) like every other class, and no
+// `IS_PALADIN` macro reading it — the four macros in utils.h:508 cover mage,
+// cleric, thief and warrior only. So the bit is set, saved and listed by
+// `remort` as normal, and what it does *not* do is gate abilities the way the
+// other four do. That is a fact about how paladin powers are checked, not
+// about whether the vector remembers somebody was one: it does.
 func RemortMask(class int32) Flags {
 	if mask, ok := classRemortMasks[class]; ok {
 		return remortFlags(mask)
