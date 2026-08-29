@@ -652,18 +652,30 @@ operator-facing tool as strong as the release-time check. Deferred because
 it puts a C dependency inside a command an operator runs, which is exactly
 what §5.2 keeps out of day-to-day CI.
 
-**How long does the fuzz budget run, and where? — half-answered, and the
-open half is still open.** The proposal was seed-corpus-only on every push
-and a real budget at release. The first half happened by default: the four
-targets (`FuzzTextRoundTrip`, `FuzzNestedTextRoundTrip`,
+**How long does the fuzz budget run, and where? — answered, exactly as
+proposed, 2026-08-29.** Seed-corpus-only on every push, a real budget at
+release. The first half had happened by default: the four targets
+(`FuzzTextRoundTrip`, `FuzzNestedTextRoundTrip`,
 `FuzzClassicRecordRoundTrip`, `FuzzBinaryRecordRoundTrip`) are ordinary Go
-tests, so `go test -race ./...` replays their seed corpora on every push
-without anything being wired up. **The second half was never built**: there
-is no `make fuzz` target and no fuzzing step in `release.yml`, so no budget
-beyond the seeds has ever run in CI. The twelve corpus entries currently
-checked in are seeds and crashers from writing the targets, not from a
-campaign. Worth knowing before treating the fuzz layer as coverage rather
-than as regression tests for what has already gone wrong.
+tests, so `go test -race ./...` replays their committed corpora on every
+push with nothing wired up. The second half is `make fuzz`
+(`scripts/fuzz.sh`), two minutes a target in `release.yml`'s full-suite and
+`FUZZTIME=30m` by hand. `go test -fuzz` takes one target per invocation, so
+it is a loop rather than a flag; the loop *discovers* its targets with `go
+test -list` rather than listing them, so a fifth target is picked up
+without anyone remembering to come back.
+
+Worth recording what it cost and what it bought, since the question was
+whether a budget was worth having at all. It found something in seconds,
+and not a crash: a newline inside an extra description's keyword list —
+legal in a classic file, because `fread_string` reads to the `~` and a
+builder may wrap a long namelist — made `dlctl verify --against` report a
+difference that was not one. Since `import --verify` is on by default and
+a failed verification leaves the output unstamped and unbootable, a real
+archive with a wrapped keyword line would have been refused a conversion
+that had lost nothing. §5.1's own lesson, one level up: every fixture in
+this repo has single-spaced keywords, so the corpus could not have shown
+it and only generated input did.
 
 **Does `examples/torture/` belong in the repo or get generated on demand?**
 Checked in, per §5.1, on the grounds that a fixture you regenerate is a

@@ -9,6 +9,7 @@ package main
 import (
 	"fmt"
 	"reflect"
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -103,6 +104,10 @@ func (d *differ) walk(path string, a, b reflect.Value) {
 			if !f.IsExported() {
 				continue
 			}
+			if isKeywordField(f) {
+				d.compareKeywords(join(path, f.Name), a.Field(i).String(), b.Field(i).String())
+				continue
+			}
 			d.walk(join(path, f.Name), a.Field(i), b.Field(i))
 		}
 
@@ -137,6 +142,49 @@ func (d *differ) walk(path string, a, b reflect.Value) {
 			d.reportf(path, "%s vs %s", format(a), format(b))
 		}
 	}
+}
+
+// isKeywordField reports whether f holds a space-separated keyword list —
+// an object's or mobile's name list, or an extra description's
+// (internal/game: Object.Keywords, ExtraDesc.Keywords). Every one of them
+// is spelled `Keywords string`, which is what makes matching on the name
+// safe rather than lucky.
+func isKeywordField(f reflect.StructField) bool {
+	return f.Name == "Keywords" && f.Type.Kind() == reflect.String
+}
+
+// compareKeywords compares two keyword lists as *lists*, not as bytes.
+//
+// This is the one field where the yaml format does not promise to give
+// back the bytes it was handed, and it is written down as a deviation
+// ("The yaml format re-spaces a keyword list"): keywords are a YAML
+// sequence, so the writer splits on whitespace (`strings.Fields`,
+// internal/persist/world/yaml/writer.go) and the reader joins with one
+// space. A classic namelist with a doubled space, a trailing space, or —
+// the case that found this — a *newline* inside it does not come back
+// byte for byte.
+//
+// Comparing the bytes here made `import --verify` refuse a conversion that
+// had lost nothing, which matters more than it sounds: since yaml-only,
+// `import` is the only path from an archive to a running server, it
+// verifies itself by default, and a failed verification leaves the output
+// unstamped and unbootable. Every fixture in this repo has single-spaced
+// keywords, so it was latent — the same shape as the transcoding gap in
+// docs/design/data-format.md §11.1, real but inert against everything
+// checked in. `scripts/fuzz.sh` found it in seconds by putting a newline
+// in the newbie zone's `staircase stair 606 rs`.
+//
+// That the difference is unobservable is not assumed. isname() is the only
+// consumer of the string, and its C body (reference/tools/nameoracle.c)
+// ends a keyword at any non-alphabetic character — so `\r\n` separates two
+// keywords exactly as a space does, and the C answers "606", "rs",
+// "stair" and "staircase" identically for both spellings. Checked against
+// that oracle, not read off it.
+func (d *differ) compareKeywords(path, a, b string) {
+	if slices.Equal(strings.Fields(a), strings.Fields(b)) {
+		return
+	}
+	d.reportf(path, "%q vs %q", a, b)
 }
 
 // format renders a scalar for a report, quoting strings so a difference

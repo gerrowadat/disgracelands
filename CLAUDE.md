@@ -262,6 +262,10 @@ that `examples/stock/yaml`/`examples/mini/yaml` still match a fresh
 `dlctl import` of their binary source, the session-parity suite
 (`test/parity` — added there 2026-08-29, having run in no workflow at all
 until five of its `known` entries went stale unread for two months, #268),
+a real fuzzing budget (`scripts/fuzz.sh`, two minutes per target — the
+seed corpora replay on every push because the targets are ordinary Go
+tests, but until 2026-08-29 nothing anywhere *generated* an input, and
+the first budget that did found a comparator bug in seconds),
 a container build, and a
 cross-compile of both binaries for every published platform
 (`linux/amd64`, `linux/arm64`, `windows/amd64`), which is also what

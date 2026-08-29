@@ -1719,6 +1719,33 @@ deeper that would need one (`NestedText`) — correct everywhere, at the cost
 of losing block-scalar readability for the rare content (four ASCII-art
 signs in the real corpus) that needs it at that depth.
 
+**A fourth finding, from the first real fuzzing budget: a plain scalar can
+resolve to something that is not a string.** The three above are all about
+*block* scalars, and this one is about the other path — a string with no
+newline in it, written as a plain scalar. `.NAN` is written `desc: .NAN`,
+and YAML's core schema resolves that to a **float** (§10.2.1.4), so it
+arrives at a `string` field as `"NaN"`. Three characters in, three
+different characters out, with no error anywhere.
+
+The rule that decides plain-versus-quoted is
+`internal/persist/yamlenc`'s `PlainlySafe`, shared by every plain string
+field of every format here, and it now excludes the whole float-special
+production — `[-+]?(.inf|.Inf|.INF)` and `(.nan|.NaN|.NAN)`. Taken from
+the spec rather than from the failure, deliberately, and that choice is
+load-bearing rather than tidy: `goccy` resolves only the six *unsigned*
+spellings this way, so a rule written from the observed failures would
+have quoted six strings and left `+.inf` to start losing data on a library
+upgrade. Nothing in twenty years of world data is a description of
+`+.inf`, so the cost of the wider rule is zero.
+
+Worth recording *how* it was found, because it is the argument for the
+budget existing. Every other finding in this section came from
+round-tripping the real corpus; this one could not have, because no real
+description is `.NAN`. It took `make fuzz` (`scripts/fuzz.sh`, 2026-08-29)
+about ninety seconds of generated input on its first run — the seed
+corpora, which replay on every push, had never produced one and never
+would have.
+
 **Alias persistence is not quite everywhere the roster is.** `ascii` and
 `yaml` both persist `alias`'s definitions (§8); `binary` does not, and
 this is a real, permanent gap rather than a "not yet" — `alias.c`'s
