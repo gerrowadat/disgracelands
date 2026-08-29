@@ -86,7 +86,11 @@ func TestAliasFileMatchesTheC(t *testing.T) {
 		}
 	}
 
-	if got := string(encodeAliases(aliasCases)); got != wantFile {
+	written, err := encodeAliases(aliasCases)
+	if err != nil {
+		t.Fatalf("encoding: %v", err)
+	}
+	if got := string(written); got != wantFile {
 		t.Errorf("written file differs from write_aliases':\n got %q\nwant %q", got, wantFile)
 	}
 	// What the C reads back out of its own file is what this must too.
@@ -117,6 +121,50 @@ func TestAliasStoreRoundTrips(t *testing.T) {
 	}
 	if !reflect.DeepEqual(got, aliasCases) {
 		t.Errorf("round trip:\n got %+v\nwant %+v", got, aliasCases)
+	}
+}
+
+// TestAReplacementWithNoLeadingSpaceIsRefused is #242.
+//
+// encodeAliases dropped the first character of every non-empty
+// replacement, on the assumption that it was the space do_alias leaves in
+// front of one. The assumption is right about the game — any_one_arg does
+// not skip the whitespace it stops on, so an in-memory replacement always
+// begins with that space — and was unchecked about everything else, so
+// anything constructing a game.Alias programmatically got silent
+// corruption: "get all corpse" stored and read back as " et all corpse".
+//
+// Refusing rather than repairing is this package's posture everywhere
+// else (putStr refuses a name too long for its field rather than
+// truncating it), and repairing would be a guess: whether the caller meant
+// to include the space or forgot it is not something the encoder knows.
+func TestAReplacementWithNoLeadingSpaceIsRefused(t *testing.T) {
+	dir := t.TempDir()
+	s, err := NewAliasStore(player.Config{Dir: dir})
+	if err != nil {
+		t.Fatalf("NewAliasStore: %v", err)
+	}
+
+	err = s.SaveAliases("Zaphod", []game.Alias{{Name: "gc", Replacement: "get all corpse"}})
+	if err == nil {
+		t.Fatal("saving a replacement with no leading space was accepted; it would have " +
+			"stored \" et all corpse\"")
+	}
+	if !strings.Contains(err.Error(), "gc") {
+		t.Errorf("the error does not name the alias it is about: %v", err)
+	}
+	// And nothing was written: a refused save leaves the file alone
+	// rather than half of it.
+	if _, statErr := os.Stat(filepath.Join(dir, "plralias", "U-Z", "zaphod.alias")); !os.IsNotExist(statErr) {
+		t.Errorf("a refused save wrote a file anyway: %v", statErr)
+	}
+
+	// An empty replacement is not this case. The C cannot produce one —
+	// do_alias treats it as a delete — and it is written as the empty
+	// string rather than as a negative length, which is what the encoder
+	// has always done.
+	if err := s.SaveAliases("Zaphod", []game.Alias{{Name: "x", Replacement: ""}}); err != nil {
+		t.Errorf("an empty replacement was refused: %v", err)
 	}
 }
 

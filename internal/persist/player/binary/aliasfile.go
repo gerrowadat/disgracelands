@@ -127,14 +127,35 @@ func (s *AliasStore) SaveAliases(name string, aliases []game.Alias) error {
 		}
 		return nil
 	}
+	body, err := encodeAliases(aliases)
+	if err != nil {
+		return fmt.Errorf("%s's aliases: %w", name, err)
+	}
 	if err := os.MkdirAll(filepath.Dir(path), 0o750); err != nil {
 		return err
 	}
-	return os.WriteFile(path, encodeAliases(aliases), 0o600)
+	return os.WriteFile(path, body, 0o600)
 }
 
 // encodeAliases is write_aliases (alias.c:22).
-func encodeAliases(aliases []game.Alias) []byte {
+//
+// It refuses a replacement that does not begin with a space rather than
+// writing one, which is the same posture putStr takes toward a name too
+// long for its field: a truncated name is a different character, and a
+// replacement missing its first character is a different command.
+//
+// The leading space is an invariant of game.Alias.Replacement, not an
+// accident of this format — the file header above has the C citations, and
+// $* substitutes the raw untrimmed remainder because of it. Nothing the
+// *game* produces can violate it, since do_alias builds every replacement
+// with any_one_arg. But SaveAliases is a public writer, and this stripped
+// the first character of anything else unconditionally: "get all corpse"
+// came back as " et all corpse", with the missing g replaced by a space on
+// the way in. It went unnoticed because both sides of every comparison
+// went through this same encoder — examples/torture's alias fixture was
+// written that way and the corpus built to expose blind spots recorded the
+// mangled form on both sides of its own conversion (#242).
+func encodeAliases(aliases []game.Alias) ([]byte, error) {
 	var b bytes.Buffer
 	for _, a := range aliases {
 		// The C writes strlen(replacement) - 1 and replacement + 1, which
@@ -144,12 +165,18 @@ func encodeAliases(aliases []game.Alias) []byte {
 		// the empty string rather than as a negative length.
 		repl := a.Replacement
 		if repl != "" {
+			if repl[0] != ' ' {
+				return nil, fmt.Errorf(
+					"alias %q: a replacement must begin with the space do_alias leaves in front of it, "+
+						"and %q does not — write_aliases stores it one character shorter (alias.c:22), "+
+						"so storing this would lose its first character", a.Name, a.Replacement)
+			}
 			repl = repl[1:]
 		}
 		fmt.Fprintf(&b, "%d\n%s\n%d\n%s\n%d\n",
 			len(a.Name), a.Name, len(repl), repl, aliasType(a.Replacement))
 	}
-	return b.Bytes()
+	return b.Bytes(), nil
 }
 
 // aliasType is the ALIAS_SIMPLE/ALIAS_COMPLEX decision (interpreter.c:737),
