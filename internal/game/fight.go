@@ -165,14 +165,17 @@ const maxDamagePerBlow int32 = 1000
 // subtracting it, porting the arithmetic between damage()'s guards and its
 // `GET_HIT(victim) -= dam`.
 //
-// **The immortal case is a local deviation and it is not a small one.** Stock
-// CircleMUD sets `dam = 0` here, under a comment reading "You can't damage an
-// immortal!". This tree doubles it instead — the comment was left in place
-// when the line was changed. See docs/deviations.md; it is reproduced because
-// it is what players fought against.
+// **The immortal case is a deliberate difference from the archived server,
+// and it is the one place this port takes stock CircleMUD's behaviour over
+// the archive's.** The archived `damage()` has `dam = dam*2` under a comment
+// reading "You can't damage an immortal!" (fight.c:805-807) — the comment was
+// left in place when the line was changed, and the line does the opposite of
+// what it says. Stock CircleMUD sets `dam = 0` there, and that is what this
+// does. See docs/deviations.md for the reasoning; it was reproduced as `*2`
+// until #261.
 func ApplyDamage(dam int32, victim *PlayerRecord, vf Fighter) int32 {
 	if !vf.IsNPC() && victim.Level >= LevelImmortal {
-		dam *= 2
+		dam = 0
 	}
 	if vf.Sanctuary() && dam >= 2 {
 		dam /= 2

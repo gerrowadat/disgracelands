@@ -369,18 +369,31 @@ func TestEveryHitDoesAtLeastOne(t *testing.T) {
 	}
 }
 
-// TestAttackingAnImmortalDoublesTheDamage.
+// TestAttackingAnImmortalDoesNothing, which is what the C's own comment says
+// and what its code stopped doing.
 //
-// This is a local deviation from stock CircleMUD and a startling one: the
-// comment above it still reads "You can't damage an immortal!", which is what
-// `dam = 0` did before somebody changed the line. Reproduced because it is
-// what players fought against.
-func TestAttackingAnImmortalDoublesTheDamage(t *testing.T) {
+// The archived `damage()` reads (fight.c:805-807):
+//
+//	/* You can't damage an immortal! */
+//	if (!IS_NPC(victim) && (GET_LEVEL(victim) >= LVL_IMMORT))
+//	  dam = dam*2;
+//
+// — the comment is stock CircleMUD's, describing the `dam = 0` it replaced,
+// and nobody updated it when the line was changed. This port reproduced the
+// doubling on fidelity grounds until #261; it is now stock's `dam = 0`, which
+// is a deliberate gameplay deviation and written up as one in
+// docs/deviations.md.
+//
+// The scope of it is unchanged and is the part worth keeping: the guard is
+// `!IS_NPC(victim)`, so an immortal-*level mobile* is not covered and takes
+// damage normally. That is what stops the protection leaking onto anything a
+// builder happens to have made level 34.
+func TestAttackingAnImmortalDoesNothing(t *testing.T) {
 	immortal := &PlayerRecord{Class: ClassWarrior, Level: LevelImplementor}
 	mortal := &PlayerRecord{Class: ClassWarrior, Level: 30}
 
-	if got := ApplyDamage(50, immortal, fighter{pos: PosStanding}); got != 100 {
-		t.Errorf("50 damage to an implementor became %d, want 100", got)
+	if got := ApplyDamage(50, immortal, fighter{pos: PosStanding}); got != 0 {
+		t.Errorf("50 damage to an implementor became %d, want 0", got)
 	}
 	if got := ApplyDamage(50, mortal, fighter{pos: PosStanding}); got != 50 {
 		t.Errorf("50 damage to a level-30 mortal became %d, want 50", got)
@@ -388,6 +401,11 @@ func TestAttackingAnImmortalDoublesTheDamage(t *testing.T) {
 	// A mobile of immortal level is not covered by the check.
 	if got := ApplyDamage(50, immortal, fighter{npc: true, pos: PosStanding}); got != 50 {
 		t.Errorf("50 damage to an immortal-level mobile became %d, want 50", got)
+	}
+	// And an immortal under sanctuary is still on zero rather than halving
+	// something: the immortal branch runs first and leaves nothing to halve.
+	if got := ApplyDamage(50, immortal, fighter{pos: PosStanding, sanctuary: true}); got != 0 {
+		t.Errorf("50 damage to an immortal under sanctuary became %d, want 0", got)
 	}
 }
 

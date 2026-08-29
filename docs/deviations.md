@@ -167,14 +167,15 @@ the C never gets there, and a Go string simply ends.
 | **Why** | The one difference is a board `write`, which prints "Post aborted." rather than the C's "Post not aborted, use REMOVE <post #>." (modify.c:239-243). That message assumes the empty-bodied post was already in the board's list — true in the C, where `Board_write_message` inserts it before editing starts, and not here, where the post is appended only on save. That is an earlier, separate choice, recorded in `boardWrite`'s own doc comment. |
 | **Where** | `finishEditing` in `internal/session/editor.go`; `internal/session/boards.go`, `mail.go`, `tedit.go`. |
 
-### Attacking an immortal doubles the damage
+### An immortal takes no damage, where the archive doubled it
 
 | | |
 |---|---|
-| **C** | `damage()` (fight.c) has, under a comment reading *"You can't damage an immortal!"*, the line `dam = dam*2;`. |
-| **Go** | The same. |
-| **Why** | This is **not** a deviation — it is reproduced — but it is here because it looks like one and somebody will eventually "fix" it. Stock CircleMUD sets `dam = 0` there; this tree doubles it and the original comment was left in place when the line was changed. Whether that was deliberate or a typo, it is what players fought against for seven years, and the fidelity rule says the C wins. |
-| **Where** | `ApplyDamage` in `internal/game/fight.go`, asserted in `TestAttackingAnImmortalDoublesTheDamage`. |
+| **C** | `damage()` has, under a comment reading *"You can't damage an immortal!"*, the line `dam = dam*2;` (fight.c:805-807). The comment is stock CircleMUD's, describing the `dam = 0` it replaced; nobody updated it when the line was changed. |
+| **Go** | `dam = 0` — stock CircleMUD's behaviour, and what the archive's own comment says. |
+| **Why** | This was reproduced as `*2` for the whole of Phases 1-5, on the fidelity rule, and this entry used to exist to stop somebody "fixing" it by mistake. #261 fixes it on purpose: the doubling was a joke or a typo in the archived tree, not a rule anybody designed, and a server where hitting a god hurts *more* is not the game anyone means to run. It is the one place this port takes stock CircleMUD's behaviour over the archive's. |
+| **Scope** | Unchanged, and the part most worth keeping: the guard is `!IS_NPC(victim)`, so an immortal-*level mobile* is not covered and takes damage normally. That is what stops the protection leaking onto anything a builder happened to make level 34. Sanctuary is unaffected — it halves what is left, and after this there is nothing left. |
+| **Where** | `ApplyDamage` in `internal/game/fight.go`, asserted in `TestAttackingAnImmortalDoesNothing`. |
 
 ### The wounded-victim damage multiplier is not what its comment says
 
@@ -809,24 +810,38 @@ has a matching entry in the suite's own triage table, so a difference that
 gets fixed fails the suite with "delete the entry" rather than quietly
 staying on this list.
 
-**None of these are fixed.** They are gaps, not decisions — but as of
-2026-08-26 every one of them has been *ruled on*, which is the half of
-precondition 2 that needed a person rather than a harness. Twenty
-differences are listed below; eighteen needed a ruling, and each carries
-it. A fixed one keeps its entry, struck through and with what closed it —
-the ruling is the record of the decision, and deleting it would lose why
-the work was done:
+**None of these were fixed when the list was written**, on 2026-08-26.
+They were gaps, not decisions — but every one of them had been *ruled on*
+by then, which is the half of precondition 2 that needed a person rather
+than a harness. Twenty differences are listed below; eighteen needed a
+ruling, and each carries it. A fixed one keeps its entry, struck through
+and with what closed it — the ruling is the record of the decision, and
+deleting it would lose why the work was done:
 
 - **Blocker** — fix before cutover. A returning player would not forgive
-  it. Sixteen of the eighteen, which is the honest answer to "how close
+  it. Sixteen of the eighteen, which was the honest answer to "how close
   is this to being playable by someone who played the original": closer
-  than the list looks, since most are one command each, and not as close
-  as a green suite suggests. **Ten are fixed so far** — both halves of
-  `look`, `remove all`, `get 2.sword`, the refusal wording, `who`, `exits`,
-  the `'`/`:`/`hop` split, death and `flee` — leaving six.
-- **Later** — a real gap, worth closing, not gating cutover.
+  than the list looked, since most are one command each, and not as close
+  as a green suite suggested. **All sixteen are fixed as of 2026-08-29**,
+  the last of them being the colour at the C's own call sites (#190) and
+  the refusal wording (#263) — which had been built on 2026-08-26/27 and
+  simply never marked, and so went on reading as open for three days.
+- **Later** — a real gap, worth closing, not gating cutover. One of the
+  eighteen: the order objects are listed in, fixed 2026-08-29 (#193).
 - **Accepted** — the difference stands; this file is where it is
-  recorded, and that is the whole disposition.
+  recorded, and that is the whole disposition. One of the eighteen: the
+  CRLF the C prepends to output that interrupts a prompt.
+
+So every one of the eighteen is now either fixed or accepted, and
+precondition 2 is met. That is not the same as the suite passing: five
+of its `known` entries have gone stale from these very fixes and now
+match nothing, which the suite treats as a failure by design. See #268.
+
+**Nothing here should be read as "the two servers now agree about
+everything."** This list is what one afternoon of scripted sessions
+found, not a proof; and at least one difference is now deliberate in the
+other direction — an immortal takes no damage here and took double in
+the archive (#261, its own entry above).
 
 The two 64-bit reference-build entries at the end need no ruling: the
 port is right and the thing it is compared against is wrong.
@@ -1119,10 +1134,10 @@ port is right and the thing it is compared against is wrong.
   name it looked for. It now honours it, and the count picks where the run
   starts rather than how long it is — `get 3 2.sword` is "from the second
   sword, take three" (act.item.c:301).
-- **Refusal wording**: `look in nothing` is "There doesn't seem to be a
+- ~~**Refusal wording**: `look in nothing` is "There doesn't seem to be a
   nothing here." in the C and "You do not see that here." here.
   `kill self` is "Your mother would be so sad.. :(" in the C, and here
-  `self` does not resolve as a target at all ("They aren't here.").
+  `self` does not resolve as a target at all ("They aren't here.").~~
   *Ruling (2026-08-26):*
   **Blocker.** The exact wording is part of what the game felt like, and
   `self` not resolving as a target at all is a gap in the target lookup
@@ -1150,6 +1165,19 @@ port is right and the thing it is compared against is wrong.
   it searches at all (handler.c:1345); the `0.<name> means a player` branch
   is real but unreachable through `look`, and reachable through `hit`,
   which calls get_char_vis directly (act.offensive.c:108).
+
+  **Struck through 2026-08-29** (#263). All four behaviours in this bullet
+  — the two it opens with and the two the scenario turned up — were built
+  between 2026-08-26 and 2026-08-27 and the entry recorded that in prose
+  without ever marking itself done, so it went on reading as an open
+  Blocker for three days while the summary above already counted it among
+  the fixed. Confirmed against the C on each: `look in nothing`
+  (`doLookIn`, `internal/session/look.go`, and AN()'s first-letter test
+  reproduced quirks and all), `kill self` (`internal/session/offensive.go`),
+  the `$m` pronoun (`internal/session/informative.go`) and `look
+  0.anything` (`internal/session/informative.go`). Three of the four were
+  already pinned by tests; `look in nothing` was not, and
+  `TestLookInNothingSaysTheTypoBack` is the missing one.
 - ~~**`look at <object>` finds the object's extra description in the C**~~ —
   the ATM's own note — ~~and answers with the room's line for it here.~~
   *Ruling (2026-08-26):*
