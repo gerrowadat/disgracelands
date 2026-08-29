@@ -292,6 +292,86 @@ func TestADuplicateHouseRecordIsCollapsedAndCounted(t *testing.T) {
 	}
 }
 
+// TestVerifyNoticesACopiedFileThatDidNotArrive is #241: `import` copies
+// two things rather than converting them — text/'s plain prose and
+// config/game.yaml, the game tuning — and the comparison looked at
+// neither, so a conversion that lost either reported clean, including the
+// --verify pass import runs on itself.
+//
+// game.yaml is the one that mattered. copyGameConfig goes out of its way
+// to carry it across ("a lib/ that has been tuned must not silently lose
+// its tuning on the way through a format conversion") and a directory
+// that came out the other side without it is a server quietly back on
+// config.c's defaults.
+func TestVerifyNoticesACopiedFileThatDidNotArrive(t *testing.T) {
+	const mini = "../../examples/mini"
+	to := t.TempDir()
+	if err := run([]string{"import", "--from-dir", mini + "/binary", "--to-dir", to}); err != nil {
+		t.Fatalf("import: %v", err)
+	}
+
+	left := loadOptions{base: mini + "/binary", enc: convert.Encodings[convert.DefaultEncoding]}
+	right := loadOptions{base: to, format: "yaml", enc: convert.Encodings[convert.DefaultEncoding]}
+
+	// A faithful copy first, or the assertions below prove nothing.
+	if diffs, err := compareCopiedFiles(left, right); err != nil || len(diffs) != 0 {
+		t.Fatalf("a fresh import reported %v, %v; want no differences", diffs, err)
+	}
+
+	// One file gone entirely, and one emptied — `truncate -s 0` is a real
+	// way to lose the tuning, and an empty file is not a missing one.
+	if err := os.Remove(filepath.Join(to, "text", "motd")); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(to, "config", "game.yaml"), nil, 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	diffs, err := compareCopiedFiles(left, right)
+	if err != nil {
+		t.Fatalf("comparing: %v", err)
+	}
+	if len(diffs) != 2 {
+		t.Fatalf("comparing reported %v, want two differences", diffs)
+	}
+	joined := strings.Join(diffs, "\n")
+	if !strings.Contains(joined, filepath.Join("config", "game.yaml")) {
+		t.Errorf("the emptied tuning file was not named:\n%s", joined)
+	}
+	if !strings.Contains(joined, filepath.Join("text", "motd")) {
+		t.Errorf("the missing motd was not named:\n%s", joined)
+	}
+}
+
+// TestTheCopiedComparisonIgnoresTheHelpDatabase keeps `copied` and `help`
+// from overlapping.
+//
+// text/help/ is a converted subsystem with a --type of its own, and
+// copyTextFiles walks only the regular files directly inside text/ for
+// exactly that reason. The one file in there that *is* copied is
+// HELP_PAGE_FILE, `text/help/screen`, which is not a help entry and which
+// the help comparison — which loads the help database — cannot see.
+func TestTheCopiedComparisonIgnoresTheHelpDatabase(t *testing.T) {
+	const mini = "../../examples/mini"
+	paths, err := copiedPaths(mini + "/binary")
+	if err != nil {
+		t.Fatalf("listing: %v", err)
+	}
+	var sawScreen bool
+	for _, rel := range paths {
+		if rel == helpScreenPath {
+			sawScreen = true
+			continue
+		}
+		if strings.HasPrefix(rel, filepath.Join("text", "help")+string(filepath.Separator)) {
+			t.Errorf("%s is part of the help database and should be compared by --type=help, not as a copied file", rel)
+		}
+	}
+	if !sawScreen {
+		t.Errorf("text/help/screen is copied by import and is not in %v", paths)
+	}
+}
+
 // copyTree copies a directory tree, so a test can run `fmt` in place
 // without editing the checked-in corpus.
 func copyTree(t *testing.T, from, to string) {

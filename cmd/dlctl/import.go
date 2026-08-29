@@ -245,7 +245,12 @@ func cmdImportAll(o importOptions) error {
 	// Say so: an operator who expected a stamp should find out here, from
 	// the tool that did not write it, rather than from a server that
 	// later checked nothing.
-	if err := verifyImport(allTypes, o); err != nil {
+	// verifyTypes, not allTypes: the copied files above — text/'s prose,
+	// config/game.yaml, text/help/screen — are half of what this command
+	// has just written, and were verified by nothing until #241. A
+	// conversion that lost the tuning reported itself clean and got
+	// stamped for it.
+	if err := verifyImport(verifyTypes, o); err != nil {
 		fmt.Printf("%s was not stamped with a release version: it does not load to the same state as %s.\n",
 			o.toDir, o.fromDir)
 		return err
