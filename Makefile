@@ -330,6 +330,15 @@ release: ## Cut a release: make release BUMP=patch|minor|major (or BUMP=v1.2.3)
 # container build, and it cannot notice a workflow change at all. These
 # targets run .github/workflows/go.yml itself, in containers, via act. They
 # need Docker. See docs/developer.md for what they do and do not reproduce.
+#
+# Since 2026-08-29 these are a *fallback*, not the pre-push routine. go.yml
+# runs on GitHub for every push and pull request whatever happens here, its
+# two jobs run in parallel on cold runners in about three minutes, and both
+# are required checks on main -- so a local run of the same workflow is a
+# second copy of it on the critical path, run sequentially, behind a lock
+# shared with every other worktree on this machine. Use these when you are
+# editing a workflow file, chasing a failure that only happens on the
+# runner, or offline. CLAUDE.md's "CI" section has the reasoning.
 ACT_VERSION ?= v0.2.89
 
 # Same reasoning as GOLANGCI_VERSION above: fetch the pinned version rather
@@ -443,7 +452,7 @@ endif
 CI_WORKFLOW ?= .github/workflows/go.yml
 
 .PHONY: ci
-ci: ## Run go.yml locally, in containers (needs Docker; slow)
+ci: ## Run go.yml locally, in containers (fallback; normally just push and let GitHub run it)
 	$(ACT) -W $(CI_WORKFLOW)
 
 .PHONY: ci-job

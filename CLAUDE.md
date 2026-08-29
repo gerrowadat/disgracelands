@@ -239,24 +239,54 @@ formats have no trailing period.
   ```
   make lint                       # must be 0 issues
   go test -race -count=1 ./...    # must be green, and re-run if a race appears
-  make ci                         # runs go.yml itself, in containers, via act -- see below
   ```
-- Wait for CI green, then squash-merge and delete the branch.
+- Push the branch, open the PR, and let GitHub run `go.yml`. Wait for it
+  green, then squash-merge and delete the branch.
 
 ### CI
 
-**Verify locally with `act`, not by pushing and watching GitHub.** GitHub
-Actions is where a push or PR gets its *final* answer, not where it should
-be discovered for the first time — `make ci` runs the actual
-`.github/workflows/go.yml` file, in containers, via
-[`act`](https://github.com/nektos/act) (`docs/developer.md` has the full
-detail: `.actrc`'s defaults, the `act-*` volume-staleness trap, `make
-ci-clean`). Run it before pushing, the same way `make lint`/`go test
--race` already are — a green `make ci` locally is what a green PR check
-should be confirming, not the first place either gets checked. This
-applies to an agent working on this repo exactly as much as it does to a
-human: do not treat GitHub's own run as the place to find out whether
-something works.
+**Push and let GitHub answer. Do not run `go.yml` locally under `act`
+first.** This reverses, on 2026-08-29, the rule that stood here before it
+("verify locally with `act`, not by pushing and watching GitHub"). That
+rule was arguing against treating GitHub as the place a problem is
+*discovered*, which is a fair thing to argue against and is not what this
+is. Four things it did not weigh:
+
+- **GitHub's run is not optional and never was.** `go.yml` fires on every
+  push and every pull request whatever anyone did locally, so `make ci`
+  was never *instead of* it — it was a second full run of the same checks,
+  on the critical path, ahead of the one that actually counts.
+- **The local copy is the slower half.** GitHub runs `test` and `lint` as
+  two jobs in parallel on cold, dedicated runners and comes back in about
+  three minutes — measured over the last fifteen `go.yml` runs, 171–202s
+  wall-clock, every one of them. `act` runs the jobs sequentially in one
+  Docker daemon, on a machine already busy building this repo, behind a
+  machine-wide `flock` shared with every other checkout — and this repo is
+  routinely developed from eleven worktrees at once, so its wall-clock is
+  a queue, not a run. That queue is also what the `act-guard.sh` /
+  `act-clean.sh` / per-checkout-cache apparatus exists to survive.
+- **The repo has been public since 2026-08-26**, so GitHub-hosted standard
+  runners are free and unmetered. Nothing is being spent by letting the
+  runner do it.
+- **`test` and `lint` are required status checks on `main`** (the "pr only
+  on main" ruleset, 2026-08-29), so a red or unfinished run now blocks the
+  squash-merge instead of relying on somebody having looked. That is what
+  makes GitHub the gate the local run was standing in for — and it is a
+  stronger gate than the local run ever was, because it checks the commit
+  that is actually being merged rather than the working tree `act` copied
+  in.
+
+What is still worth doing locally is the fast, targeted part — `make lint`
+and `go test -race ./...` above, which answer in seconds to a couple of
+minutes and catch nearly everything, without containers.
+
+**`make ci` stays, for the cases where pushing genuinely cannot answer**:
+a change to a workflow file itself, where the loop of push-and-watch is
+slow and noisy and the run you want to test is the one you just edited;
+reproducing a failure that appears on the runner and not on your machine;
+and working with no network. `docs/developer.md` has the full detail —
+`.actrc`'s defaults, the `act-*` volume-staleness trap, `make ci-clean` —
+and it is all still true when you do reach for it.
 
 This is also a scope rule, not just a practice one: **day-to-day GitHub
 Actions runs (`go.yml`, every push and pull request) are correctness and
@@ -321,10 +351,13 @@ If a check feels like it is missing from day-to-day CI, that is very
 likely correct, not an oversight — it moved to `release.yml` on purpose
 (2026-08-23, the same change that added this rule). **Do not add it back
 to `go.yml`, and do not "run the release checks too, just to be safe" on
-an ordinary PR** — run `make ci-job JOB=full-suite
-CI_WORKFLOW=.github/workflows/release.yml` (or just `make check`/`make
-parity` directly) locally instead, if a change genuinely needs that
-broader verification before it lands. Cutting a real release
+an ordinary PR** — run `make check`/`make parity`/`make play` directly,
+locally, if a change genuinely needs that broader verification before it
+lands. (`make ci-job JOB=full-suite
+CI_WORKFLOW=.github/workflows/release.yml` runs the whole release job
+under `act`, but it builds a C tree and a container inside the job and is
+far slower than the targets it wraps; reach for it when what you are
+checking is `release.yml` itself.) Cutting a real release
 (`scripts/release.sh`) is the only thing that should trigger `release.yml`
 on GitHub itself.
 
