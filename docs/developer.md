@@ -1,7 +1,9 @@
 # Developing
 
 How to work on the Go server day to day: how to get one running in front of
-you, how to poke at it by hand, and what to run before pushing.
+you, how to poke at it by hand, and what to run before pushing (`make
+lint` and `go test -race ./...`; the workflows themselves run on GitHub,
+not locally — see "Running CI itself, locally" for when that flips).
 
 For building from source see `BUILDING.md`; for running one for real,
 `docs/operations.md`; for the settings, `docs/configuration.md`.
@@ -670,6 +672,26 @@ stops, which is how to exercise the workflow without cutting a release.
 
 ## Running CI itself, locally
 
+**Not the normal route any more.** Since 2026-08-29 the day-to-day answer
+comes from GitHub: run `make lint` and `go test -race -count=1 ./...`,
+push the branch, and let `go.yml` run there. It runs on every push and
+every pull request regardless, its `test` and `lint` jobs go in parallel
+on cold runners and come back in about three minutes, and both are
+required status checks on `main`, so nothing merges past a red one.
+Running the same workflow locally first was a second copy of that on the
+critical path — sequential, sharing a Docker daemon with whatever else the
+machine is doing, and serialised by a `flock` shared with every other
+worktree of this repo. `CLAUDE.md`'s "CI" section has the full reasoning
+and the numbers.
+
+What is below is the fallback, and it is a real one. Reach for it when:
+
+- you are **changing a workflow file itself**, where push-and-watch means
+  a commit per attempt against the version you just edited;
+- something **fails on the runner and not on your machine**, and you want
+  the runner's environment locally to poke at;
+- you are **offline**.
+
 ```sh
 make ci                    # go.yml, every job, in containers
 make ci-job JOB=test       # one job: test | lint
@@ -951,7 +973,7 @@ one thing, and the mistakes it catches all look right.
 | `make roster` | The characters in the player directory. |
 | `make ctl ARGS="dump --type=pfile --name=Someone"` | Any `dlctl` command. |
 | `make docker` / `make compose-up` / `make compose-down` | The container image and the local stack. |
-| `make ci` / `make ci-job JOB=…` | `go.yml`, locally, in containers (`CI_WORKFLOW=...` for `release.yml`). |
+| `make ci` / `make ci-job JOB=…` | `go.yml`, locally, in containers (`CI_WORKFLOW=...` for `release.yml`). Fallback only — push and let GitHub run it. |
 | `make ci-list` / `make ci-clean` | What `make ci` would run; discard this repo's reused containers (waits for any run in progress). |
 | `make release BUMP=patch\|minor\|major` | Regenerate the example worlds if stale, check locally, then dispatch `release.yml` and wait — see "Cutting a release". |
 | `make clean` | Removes `out/`: binaries, scratch data directory, dev certificate. |

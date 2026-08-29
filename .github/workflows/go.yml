@@ -30,6 +30,21 @@ on:
 permissions:
   contents: read
 
+# Now that this workflow is the answer rather than a confirmation of a local
+# `act` run (CLAUDE.md, "CI"), the queue in front of it matters. A branch
+# that gets three pushes while its first run is still going had three runs
+# in flight and only ever cared about the last, which on a repo developed
+# from a dozen worktrees at once is how everyone else's PR ends up waiting
+# behind runs nobody is reading.
+#
+# `cancel-in-progress` is scoped to pull requests on purpose. On a push to
+# main, two merges landing close together would otherwise leave the first
+# commit with a cancelled run and no answer at all — and main is exactly
+# where an unverified commit must not sit.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   test:
     runs-on: ubuntu-latest
