@@ -118,6 +118,38 @@ func (c *client) expectCount(want string, n int) string {
 	}
 }
 
+// sendExpectNew sends a command and waits for one *more* occurrence of want
+// than the transcript already held, rather than for the first.
+//
+// This is the barrier to reach for whenever the marker could plausibly
+// already be there — and after twoInARoom (visibility_test.go) that is
+// every room name in the world the two characters have walked through,
+// which is exactly the two rooms these tests move between. `expect` returns
+// immediately in that case, by design and for a good reason (see its own
+// comment), so:
+//
+//	god.send("north")
+//	god.expect("The Immortal Board Room")   // matches Zod's *creation*
+//	mortal.send("north")                    // races the god's move
+//
+// waits for nothing at all. Nothing is wrong with the god's own assertion —
+// he does end up there — but the *next* line runs before the world goroutine
+// has processed the move, so a test about what the second character then
+// sees is a coin toss. That is the mechanism behind two flaky failures seen
+// within a day of each other (#275, and TestARefusedTunnelStepCostsNoMovement
+// on a PR that touched none of this), and CLAUDE.md's note that this trap
+// "has recurred at least nine times" is about the same shape.
+//
+// Counting before the send is the whole point and is not a stylistic
+// choice: doing it afterwards would race the very output being counted.
+func (c *client) sendExpectNew(line, want string) string {
+	c.t.Helper()
+
+	before := strings.Count(c.text.String(), want)
+	c.send(line)
+	return c.expectCount(want, before+1)
+}
+
 // settle waits for everything sent so far to have been processed, by sending
 // a command that always prints something and waiting for one *more* copy of
 // it than the transcript already holds.

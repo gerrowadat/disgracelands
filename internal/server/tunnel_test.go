@@ -7,6 +7,7 @@
 package server
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/gerrowadat/disgracelands/internal/game"
@@ -49,10 +50,8 @@ func TestATunnelFillsUp(t *testing.T) {
 	tunnelWorld(t, srv, 2)
 
 	// Two fit, on the default setting.
-	god.send("north")
-	god.expect("The Immortal Board Room")
-	mortal.send("north")
-	mortal.expect("The Immortal Board Room")
+	god.sendExpectNew("north", "The Immortal Board Room")
+	mortal.sendExpectNew("north", "The Immortal Board Room")
 
 	// The third does not.
 	third := dialClient(t, addr)
@@ -74,8 +73,7 @@ func TestATunnelOfOneHasItsOwnMessage(t *testing.T) {
 	god, mortal := twoInARoom(t, srv, addr)
 	tunnelWorld(t, srv, 1)
 
-	god.send("north")
-	god.expect("The Immortal Board Room")
+	god.sendExpectNew("north", "The Immortal Board Room")
 
 	mortal.send("north")
 	mortal.expect("There isn't enough room there for more than one person!")
@@ -97,8 +95,7 @@ func TestMobilesDoNotFillATunnel(t *testing.T) {
 	spawnDog(t, srv, ImmortStartRoom)
 	spawnDog(t, srv, ImmortStartRoom)
 
-	mortal.send("north")
-	mortal.expect("The Immortal Board Room")
+	mortal.sendExpectNew("north", "The Immortal Board Room")
 }
 
 // TestATunnelStopsAnImmortalToo. There is no level test and no IS_NPC test on
@@ -111,15 +108,22 @@ func TestATunnelStopsAnImmortalToo(t *testing.T) {
 	god, mortal := twoInARoom(t, srv, addr)
 	tunnelWorld(t, srv, 1)
 
-	mortal.send("north")
-	mortal.expect("The Immortal Board Room")
+	mortal.sendExpectNew("north", "The Immortal Board Room")
 
 	god.send("north")
 	god.expect("There isn't enough room there for more than one person!")
 
-	// And `goto` still works, which is what makes the refusal survivable.
-	god.send("goto 1200")
-	god.expect("The Immortal Board Room")
+	// And `goto` still works, which is what makes the refusal survivable:
+	// it does not come through do_simple_move at all, so no gate in there
+	// applies to it.
+	//
+	// This said `goto 1200` until 2026-08-29 and asserted nothing. There is
+	// no room 1200 — ImmortStartRoom is 1204 (game/world.go:144) — so the
+	// command answered "No room exists with that number." and the `expect`
+	// matched the room description Zod had been shown when he was created.
+	// A wrong vnum and a stale match cancelling out is exactly the failure
+	// sendExpectNew exists to stop being invisible.
+	god.sendExpectNew(fmt.Sprintf("goto %d", ImmortStartRoom), "The Immortal Board Room")
 }
 
 // TestARefusedTunnelStepCostsNoMovement. The check sits before the charge
@@ -132,8 +136,7 @@ func TestARefusedTunnelStepCostsNoMovement(t *testing.T) {
 	god, mortal := twoInARoom(t, srv, addr)
 	tunnelWorld(t, srv, 1)
 
-	god.send("north")
-	god.expect("The Immortal Board Room")
+	god.sendExpectNew("north", "The Immortal Board Room")
 
 	var before, after int32
 	inWorld(t, srv, func(w *game.Live) {
