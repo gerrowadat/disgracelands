@@ -77,10 +77,11 @@ func doSend(c *Context) error {
 
 // doGecho is do_gecho (act.wizard.c:1616): to everybody in the game.
 func doGecho(c *Context) error {
+	// No delete_doubledollar. It is there in the C because the text goes
+	// out as a format string there and every `$` in it was doubled on the
+	// way in; here it goes out as an argument to %s, and nothing doubled.
+	// See alias.go and docs/deviations.md.
 	text := strings.TrimSpace(c.Arg)
-	// delete_doubledollar, because this goes out as a format string in the C
-	// and a lone `$` would eat the next character.
-	text = strings.ReplaceAll(text, "$$", "$")
 	if text == "" {
 		c.Send("That must be a mistake...\r\n")
 		return nil
@@ -229,8 +230,11 @@ func doWiznet(c *Context) error {
 		return nil
 	}
 
+	// The delete_doubledollar beside skip_spaces in do_wiznet
+	// (act.wizard.c:1721) is not ported, for the reason alias.go sets out:
+	// nothing in this port doubles a `$` on the way in, so collapsing here
+	// would only eat one an immortal typed on purpose.
 	text := strings.TrimSpace(c.Arg)
-	text = strings.ReplaceAll(text, "$$", "$")
 	if text == "" {
 		c.Send("Usage: wiznet <text> | #<level> <text> | *<emotetext> |\r\n" +
 			"       wiznet @<level> *<emotetext> | wiz @\r\n")

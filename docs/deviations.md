@@ -230,6 +230,62 @@ in step 6b otherwise touches. Two connections racing to create the exact
 same name at the exact same moment is the only case this leaves open; it
 would need its own scoping pass.
 
+### A typed `$` is left alone, at both ends
+
+| | |
+|---|---|
+| **C** | `process_input` doubles every `$` in a line on its way in off the socket (comm.c:1806-1810). `perform_complex_alias` re-doubles ("redouble $ for act safety", interpreter.c:794). `act()` and the half-dozen `delete_doubledollar` calls halve it again at the far end. |
+| **Go** | None of it. A `$` a player typed is one `$` from the socket to the screen. |
+| **Why** | The doubling exists because the C builds act() format strings by `sprintf`-ing player text into them — `do_say` is `snprintf(buf, "$n says, '%s'", argument); act(buf, ...)` — so a player typing `$n` would otherwise have it expanded. This port composes those messages differently: everything is a `%s` argument, and the two places that did concatenate into an act() format now pass the text as `$T` instead, which act() writes out whole without rescanning. With the hazard gone, doubling would be an escape nothing unescapes, and every display path in the tree would have to learn to halve it or players would see `$$`. |
+| **Where** | `internal/session/input.go`'s file comment; `deliverTell` and the channel loop in `internal/session/comm.go`; `expandComplexAlias` in `internal/session/alias.go`. `TestATypedDollarIsLeftAlone`. |
+
+This is a change of position rather than a gap. The port used to have the
+*second* half of the C's scheme without the first — five `delete_doubledollar`
+call sites (`alias`, the board headline, `bug`/`idea`/`typo`, `gecho`,
+`wiznet`) collapsing an escape nothing had introduced — so `alias gc $$foo`
+stored `$foo` where the C stored and showed `$$foo`. Those five are gone, and
+`expandComplexAlias` writes one dollar where the C writes two, which is what
+makes `alias cash gecho $$$1` print `$100` on both servers rather than `$100`
+on one and `$$100` here.
+
+It also fixed a real bug on the way: `tell Zod costs $n gold` used to arrive
+as "costs Bystander gold", because the message was concatenated into
+`"$n tells you, '" + message + "'"` and act() rescanned it. #238.
+
+### `!`, `!<prefix>` and `^old^new` do not remember a password
+
+| | |
+|---|---|
+| **C** | `process_input` stores every line it reads in `history` and `last_input`, and copies every line to a snooper, whatever state the descriptor is in — including the password prompt. So a password went into the five-command history in the clear, where `!p` would find it, echo it back and run it as a command. |
+| **Go** | Nothing is recorded, recalled or relayed while the server has told the client to stop echoing. |
+| **Why** | It is a password. The same rule the browser terminal's up-arrow already follows for the same reason (#235, `internal/server/web_templates.go`: "a password is never recorded as lastCommand and up-arrow can never replay one in the clear"), applied to the server-side history that #238 added. |
+| **Where** | `recordable` in `internal/session/input.go`. `TestAPasswordIsNeverPutInTheHistory`. |
+
+Not recalling has a second effect, and it fixes rather than causes a
+difference: **a password may begin with `!` or `^`**. Six characters and no
+other rule is all `badNewPassword` asks for, so `^secret^` is a legal
+password — and on the real server it could never be used, because
+`process_input` runs for the password prompt like every other, read it as a
+substitution, and answered "Invalid substitution." every time it was typed.
+
+### An over-long line is truncated *and said so*
+
+| | |
+|---|---|
+| **C** | `process_input` has the message — `Line too long.  Truncated to:\r\n<the line>\r\n` (comm.c:1815-1821) — and, for a line of ordinary text, never prints it. Its copy loop stops with `space_left == 1` and the message is gated on `space_left <= 0`, which only a `$` at the boundary can reach, because a `$` costs two. See `docs/weirdnumbers.md`. |
+| **Go** | Truncates at the same place and always prints the message. |
+| **Why** | The limit is the C's and is not the deviation; the silence is. This port has no `$`-doubling (above), so being faithful here would mean porting a message that can never appear, and a player whose line was cut in half is exactly who needs to be told. |
+| **Where** | `truncateInput` in `internal/session/input.go`, `readLoop` in `internal/session/session.go`. `TestALineTooLongIsTruncatedAndSaidSo`. |
+
+### Input keeps every byte above 127
+
+| | |
+|---|---|
+| **C** | `process_input` copies a byte only if `isascii(*ptr) && isprint(*ptr)` (comm.c:1796), so control characters *and* every byte above 127 are dropped. |
+| **Go** | The `isprint` half is ported — a control character never reaches a command — and the `isascii` half is not. |
+| **Why** | This port takes UTF-8 on purpose (`invalidName` reads a name with `unicode.IsLetter`, output is transcoded per connection, and the backspace erases a rune), so `isascii` would throw away exactly the characters that support exists for. The two halves are independent: one is about encoding, the other about what a terminal sends by accident. |
+| **Where** | `readLoop` in `internal/session/session.go`. `TestControlCharactersNeverReachACommand`. |
+
 ### Output is UTF-8, and the client is asked what it reads
 
 | | |

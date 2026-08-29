@@ -117,14 +117,26 @@ func TestExpandAliasGlobSubstitutesRawUntrimmedRemainder(t *testing.T) {
 	}
 }
 
-func TestExpandAliasDoubleDollarStaysDoubled(t *testing.T) {
+// TestExpandAliasDoubleDollarIsOneDollar is how a player writes a literal
+// dollar next to a positional token, and it is the one place this expansion
+// deliberately does not do what the C does.
+//
+// The C writes two dollars here ("redouble $ for act safety",
+// interpreter.c:794) because it is the middle link of an escaping chain:
+// every `$` is doubled on the way in off the socket, redoubled here, and
+// halved again by act() or delete_doubledollar at the far end. This port has
+// never had the first link, so redoubling left the escape with nothing to
+// undo it — `alias cash gecho $$$1` then `cash 100` printed "$$100" where
+// the C prints "$100". #238, and docs/deviations.md.
+func TestExpandAliasDoubleDollarIsOneDollar(t *testing.T) {
 	aliases := []game.Alias{{Name: "cash", Replacement: "gecho $$$1"}}
 	commands, matched := ExpandAlias(aliases, "cash 100")
 	if !matched {
 		t.Fatal("expected a match")
 	}
-	// "$$" -> "$$" (redoubled, not collapsed), then "$1" -> "100".
-	if want := []string{"gecho $$100"}; !reflect.DeepEqual(commands, want) {
+	// "$$" -> "$", then "$1" -> "100" — the same text the C's player sees
+	// once do_gecho has halved its own copy.
+	if want := []string{"gecho $100"}; !reflect.DeepEqual(commands, want) {
 		t.Fatalf("commands = %v, want %v", commands, want)
 	}
 }

@@ -1982,6 +1982,105 @@ carries no `(invis)`/`(mailing)`/`(deaf)`/`(notell)` markers — which
 
 ---
 
+## `process_input` keeps five commands and `!` can only find four
+
+```c
+    int starting_pos = t->history_pos,
+	cnt = (t->history_pos == 0 ? HISTORY_SIZE - 1 : t->history_pos - 1);
+
+    skip_spaces(&commandln);
+    for (; cnt != starting_pos; cnt--) {
+      if (t->history[cnt] && is_abbrev(commandln, t->history[cnt])) {
+	...
+	break;
+      }
+      if (cnt == 0)	/* At top, loop to bottom. */
+	cnt = HISTORY_SIZE;
+    }
+```
+
+`HISTORY_SIZE` is 5 and its comment says "Keep last 5 commands"
+(`structs.h:558`), which is true of what is *stored*. It is not true of
+what `!<prefix>` can find.
+
+`history_pos` is the slot the next line will be written into, so — once
+the buffer has wrapped — it is also the slot holding the **oldest** of the
+five. The walk starts at `history_pos - 1` and its condition is `cnt !=
+starting_pos` with `starting_pos == history_pos`, so it visits exactly
+`HISTORY_SIZE - 1` slots and stops one short. The oldest command is passed
+over every single time.
+
+Type five commands and `!` the first of them and you get "Huh?!?", from a
+history that still has it. There is no off-by-one to fix at any single
+line: `cnt` is initialised correctly, the wrap at the bottom is correct,
+and the termination test is the natural one for a circular walk. The
+buffer is simply one larger than the walk.
+
+*Reproduced*: `recallHistory` (`internal/session/input.go`) is the same
+walk with the same bound, and `TestTheHistoryOnlyEverFindsFourOfItsFive`
+(`internal/server/input_test.go`) types five commands and requires the
+first to be unreachable. That test was vacuous when first written — it
+used the suite's own `settle()` helper, which types `time` and so put two
+entries in the history per iteration, pushing the command out of the
+buffer entirely and passing for the wrong reason. It is written without it
+now, and was checked by mutation: adding a check of the skipped slot makes
+it fail.
+
+*Source*: `comm.c:1819-1834`, `structs.h:558`.
+
+---
+
+## "Line too long." is unreachable for a line of ordinary text
+
+```c
+    /* The '> 1' reserves room for a '$ => $$' expansion. */
+    for (ptr = read_point; (space_left > 1) && (ptr < nl_pos); ptr++) {
+      ...
+      } else if (isascii(*ptr) && isprint(*ptr)) {
+	if ((*(write_point++) = *ptr) == '$') {		/* copy one character */
+	  *(write_point++) = '$';	/* if it's a $, double it */
+	  space_left -= 2;
+	} else
+	  space_left--;
+      }
+    }
+
+    *write_point = '\0';
+
+    if ((space_left <= 0) && (ptr < nl_pos)) {
+      char buffer[MAX_INPUT_LENGTH + 64];
+
+      snprintf(buffer, sizeof(buffer), "Line too long.  Truncated to:\r\n%s\r\n", tmp);
+```
+
+Two numbers here are not what they look like.
+
+**The limit is 254 characters, not 255.** `space_left` starts at
+`MAX_INPUT_LENGTH - 1` = 255 and the loop runs while `space_left > 1`, not
+`> 0` — the comment says why, a `$` needs room for two — so it stops with
+one byte still unspent and the last character it writes is the 254th.
+
+**And the message almost never fires.** It is gated on `space_left <= 0`,
+and an ordinary character decrements by one, so a line of plain text stops
+the loop at exactly `space_left == 1` and never reaches zero. The only way
+below is the `$` branch, which subtracts two: from `space_left == 2` a `$`
+lands on 0, from 1 it would land on -1 — except the loop has already
+exited at 1. So a player who typed 300 characters of plain text on the
+real server had them silently cut to 254 and was told nothing, and the
+message they were meant to get could only ever appear for a line whose
+254th character was a dollar sign.
+
+*Reproduced, except for the silence*: `truncateInput`
+(`internal/session/input.go`) cuts at the same 254, and this port prints
+the message every time. That is a deliberate divergence and
+[`deviations.md`](deviations.md) records it — this port has no
+`$`-doubling at all, so being faithful here would mean porting a message
+that can never appear.
+
+*Source*: `comm.c:1786-1821`, `structs.h:560`.
+
+---
+
 ## What to do about all this
 
 The rule that has worked: **anything with a division, a cast, or a comment

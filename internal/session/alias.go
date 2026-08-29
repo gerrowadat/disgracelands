@@ -77,17 +77,17 @@ func doAlias(cmd *Context) error {
 		return nil
 	}
 
-	// delete_doubledollar (interpreter.c:734): collapses a literal "$$" back
-	// to "$" before storing. In the real C this undoes a blanket doubling
-	// every raw input line gets on the way in off the socket
-	// (comm.c:1749-1761, protecting a stray "$" from later being misread as
-	// an act() code); this port never added that universal doubling (see
-	// boards.go and wizcomm.go, which apply the same collapse at their own
-	// output points for the same reason), so this is a no-op unless someone
-	// literally types "$$" — kept for consistency with those two call sites
-	// rather than because it currently undoes anything here.
-	repl = strings.ReplaceAll(repl, "$$", "$")
-
+	// No delete_doubledollar (interpreter.c:734), and that is the whole of
+	// this port's answer to the C's `$` handling. See docs/deviations.md.
+	//
+	// The C collapses "$$" to "$" here because process_input doubled every
+	// `$` in the line on the way in off the socket, so that player text
+	// could not later be read as an act() code (comm.c:1806-1810). This
+	// port does not double — nothing here interpolates player text into an
+	// act() format, the two places that did having been fixed in #238 —
+	// and so must not collapse either. Doing one without the other is what
+	// ate a character: `alias gc $$foo` stored `$foo`, where the C stored
+	// `$$foo` and showed `$$foo`.
 	rec.Aliases = append([]game.Alias{{Name: name, Replacement: repl}}, rec.Aliases...)
 	cmd.Send("Alias added.\r\n")
 	return nil
@@ -242,11 +242,17 @@ func strtokSpace(s string, max int) []string {
 //   - ';' (ALIAS_SEP_CHAR) ends the current command and starts the next.
 //   - '$' followed by '1'-'9' substitutes that token of rest, if there are
 //     that many; '$*' (ALIAS_GLOB_CHAR) substitutes all of rest, untrimmed.
-//   - '$$' substitutes "$$" — the C's "redouble $ for act safety" leaves it
-//     doubled rather than collapsing it, since what perform_alias hands back
-//     may itself flow through an act()-consuming command afterward.
 //   - '$' followed by anything else drops the '$' and keeps the one byte
-//     after it.
+//     after it — '$$' included, which is where this parts company with the
+//     C and where the whole `$` question lands. The C writes *two* dollars
+//     there, and its comment says why: "redouble $ for act safety"
+//     (interpreter.c:794). That is one link in an escaping chain — doubled
+//     on the way in off the socket, redoubled here, halved again by act()
+//     or delete_doubledollar at the far end — and this port has never had
+//     the first link (docs/deviations.md, "A typed `$` is left alone").
+//     Redoubling without it left the escape with nothing to unescape it:
+//     `alias cash gecho $$$1` then `cash 100` printed "$$100" where the C
+//     prints "$100". One dollar in, one dollar out, all the way through.
 //   - A '$' as the very last byte of replacement contributes nothing: the C
 //     writes a stray NUL there that its own terminator immediately
 //     overwrites (interpreter.c:790, ptr walks one past the string), which
@@ -275,9 +281,12 @@ func expandComplexAlias(rest, replacement string) []string {
 				buf.WriteString(tokens[next-'1'])
 			case next == '*':
 				buf.WriteString(rest)
-			case next == '$':
-				buf.WriteString("$$")
 			default:
+				// '$$' falls in here too, and writes one dollar. The C
+				// has the same shape — its default branch writes the
+				// byte and then adds a second one *if* it was a '$' —
+				// and it is that second one this port does not want.
+				// See the doc comment above.
 				buf.WriteByte(next)
 			}
 			i += 2

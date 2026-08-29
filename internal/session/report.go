@@ -8,7 +8,6 @@ package session
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/gerrowadat/disgracelands/internal/game"
 	"github.com/gerrowadat/disgracelands/internal/obs"
@@ -44,11 +43,12 @@ func doGenWrite(kind string) func(*Context) error {
 			return nil
 		}
 
-		// skip_spaces + delete_doubledollar (act.other.c:899-900): Arg is
-		// already trimmed by the dispatcher, so only the $$ collapse is
-		// left — the same idiom boards.go's headline uses, for the same
-		// reason: this text may later pass through act().
-		arg := strings.ReplaceAll(c.Arg, "$$", "$")
+		// skip_spaces (act.other.c:899); Arg is already trimmed by the
+		// dispatcher, so there is nothing left to do. The
+		// delete_doubledollar beside it in the C (act.other.c:900) is not
+		// ported, for the reason alias.go sets out: this port never
+		// doubled, so collapsing would only eat a `$` a player meant.
+		arg := c.Arg
 		if arg == "" {
 			c.Send("That must be a mistake...\r\n")
 			return nil
