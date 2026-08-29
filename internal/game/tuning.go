@@ -64,6 +64,18 @@ type GameTuning struct {
 	// per-character tally is what the "N LOGIN FAILURES SINCE LAST
 	// SUCCESSFUL LOGIN" notice reports (interpreter.c:1466-1474).
 	MaxBadPws int32 `yaml:"max_bad_pws"`
+
+	// TunnelSize is tunnel_size (config.c:69): how many *players* may stand
+	// in a ROOM_TUNNEL room at once. do_simple_move refuses the step when
+	// the destination already holds this many (act.movement.c:139-146).
+	//
+	// Players, not creatures: the count is num_pc_in_room (utils.c:575),
+	// which skips mobiles entirely, so a tunnel packed with rats is still
+	// empty as far as this is concerned. And the refusal has no level or
+	// NPC guard on the mover, so a wandering mobile and an implementor are
+	// both turned back by a full tunnel — the one gate in do_simple_move
+	// that an immortal cannot walk through.
+	TunnelSize int32 `yaml:"tunnel_size"`
 }
 
 // DefaultGameTuning returns config.c's own values — the archive's settings,
@@ -81,6 +93,7 @@ func DefaultGameTuning() GameTuning {
 		HollerMoveCost:   20,
 		MaxFileSize:      50000,
 		MaxBadPws:        3,
+		TunnelSize:       2,
 	}
 }
 
@@ -111,6 +124,15 @@ func (t GameTuning) Validate() error {
 		// `++(d->bad_pws) >= max_bad_pws`, so one is the smallest setting
 		// that still lets a password be typed at all.
 		return fmt.Errorf("max_bad_pws: must be at least 1, got %d", t.MaxBadPws)
+	case t.TunnelSize < 1:
+		// The C would take 0 and the arithmetic still works — `num_pc >= 0`
+		// is true of an empty room, so every tunnel room in the world
+		// becomes permanently unenterable, and the message a player gets
+		// says "more than one person" while refusing the first. That is a
+		// world-breaking typo rather than a setting, and unlike the C this
+		// port has somewhere to say so before it takes effect. An operator
+		// who really wants a sealed room has the exit to remove.
+		return fmt.Errorf("tunnel_size: must be at least 1, got %d", t.TunnelSize)
 	}
 	return nil
 }

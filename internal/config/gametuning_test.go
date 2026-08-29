@@ -101,6 +101,7 @@ level_can_shout: 5
 holler_move_cost: 30
 max_filesize: 100000
 max_bad_pws: 5
+tunnel_size: 4
 `)
 
 	got, err := LoadGameTuning(path)
@@ -113,6 +114,7 @@ max_bad_pws: 5
 		NPCCorpseTime: 3, PlayerCorpseTime: 20,
 		LevelCanShout: 5, HollerMoveCost: 30,
 		MaxFileSize: 100000, MaxBadPws: 5,
+		TunnelSize: 4,
 	}
 	if got != want {
 		t.Errorf("LoadGameTuning(%q) = %+v, want %+v", path, got, want)

@@ -450,7 +450,7 @@ Two C options have no flag equivalent:
 ## A config file: `<lib-dir>/config/game.yaml`
 
 The game tuning is a YAML file of `reference/moderncserver/src/config.c`'s
-runtime-tunable values — eleven fields, picked deliberately rather than
+runtime-tunable values — twelve fields, picked deliberately rather than
 reopening `config.c` wholesale; see `docs/deviations.md` for which and why.
 
 **It lives in the data directory**, at `<lib-dir>/config/game.yaml`, beside
@@ -481,7 +481,8 @@ typo in it is a mistake rather than a directory that has never been tuned.
 
 The running server rereads whichever file it is on `SIGHUP` and applies it
 live, no restart needed. A file that fails to parse, or parses but fails
-validation (`autosave_time: 0`, `max_bad_pws: 0`, a negative cost, ...), is
+validation (`autosave_time: 0`, `max_bad_pws: 0`, `tunnel_size: 0`, a
+negative cost, ...), is
 logged and ignored — the server keeps running on whatever tuning it had
 before, and a `SIGHUP` with no file to read at all says so and changes
 nothing. `docs/operations.md` has how to send a signal under each runtime,
@@ -492,6 +493,7 @@ free_rent: false
 min_rent_cost: 250
 level_can_shout: 5
 max_bad_pws: 3
+tunnel_size: 2
 ```
 
 Everything else in `config.c` — `pk_allowed`, the room vnums, autowiz, the

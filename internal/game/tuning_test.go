@@ -25,6 +25,7 @@ func TestDefaultGameTuningMatchesConfigC(t *testing.T) {
 		HollerMoveCost:   20,    // config.c:64
 		MaxFileSize:      50000, // config.c:233
 		MaxBadPws:        3,     // config.c:236
+		TunnelSize:       2,     // config.c:69
 	}
 	if d != want {
 		t.Errorf("DefaultGameTuning() = %+v, want %+v", d, want)
@@ -82,6 +83,11 @@ func TestGameTuningValidate(t *testing.T) {
 		{"one max_bad_pws", func(g *GameTuning) { g.MaxBadPws = 1 }, false},
 		{"zero max_bad_pws", func(g *GameTuning) { g.MaxBadPws = 0 }, true},
 		{"negative max_bad_pws", func(g *GameTuning) { g.MaxBadPws = -1 }, true},
+		// Same shape of floor, for the same shape of reason: `num_pc >= 0`
+		// is true of an empty room, so zero seals every tunnel in the world.
+		{"one tunnel_size", func(g *GameTuning) { g.TunnelSize = 1 }, false},
+		{"zero tunnel_size", func(g *GameTuning) { g.TunnelSize = 0 }, true},
+		{"negative tunnel_size", func(g *GameTuning) { g.TunnelSize = -1 }, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

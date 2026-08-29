@@ -726,10 +726,12 @@ historical 100ms), `--allow-legacy-passwords`, `--max-players`,
 
 Much of `reference/moderncserver/src/config.c` is compile-time game tuning
 (rent costs, level caps, OK/NOPERSON message strings, autosave behaviour).
-**Built 2026-08-23** for the ten fields decided worth it, and an eleventh
-(`max_bad_pws`) on 2026-08-28 once the behaviour behind it existed to tune
-(`docs/deviations.md`
-has the list and the reasoning field by field): a YAML **config file** —
+**Built 2026-08-23** for the ten fields decided worth it, an eleventh
+(`max_bad_pws`) on 2026-08-28 and a twelfth (`tunnel_size`) on 2026-08-29,
+each once the behaviour behind it existed to tune — which is the rule the
+last two set: a knob and the thing it turns land together, rather than
+`config.c` being reopened for a field with nothing behind it
+(`docs/deviations.md` has the list and the reasoning field by field): a YAML **config file** —
 `<lib-dir>/config/game.yaml`, in the data directory it configures
 (`docs/design/data-format.md` §6; moved there 2026-08-28 from a repo-level
 `config/` directory, with `--config` kept as a path override), shipped as a
