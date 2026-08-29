@@ -76,10 +76,11 @@ func boardWrite(sc *SpecialCall, board *game.Board) bool {
 		return true
 	}
 
+	// No delete_doubledollar: nothing in this port ever doubled, so
+	// collapsing here only lost a character out of a heading somebody typed
+	// on purpose. alias.go has the argument, docs/deviations.md the entry.
+	// The heading is printed with %s and never becomes an act() format.
 	headline := strings.TrimSpace(sc.Arg)
-	// delete_doubledollar: `$$` becomes `$`, because the heading goes through
-	// act() later and a lone `$` there would eat the next character.
-	headline = strings.ReplaceAll(headline, "$$", "$")
 	if len(headline) > game.MaxBoardHeadline {
 		headline = headline[:game.MaxBoardHeadline]
 	}

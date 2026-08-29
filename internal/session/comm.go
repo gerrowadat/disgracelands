@@ -196,12 +196,21 @@ func tellIsOKFor(w *game.Live, speaker, victim *game.Character) (bool, string) {
 // "someone", and it capitalises the first letter of the finished line — which
 // is where "The grocer tells you," gets its capital, a mobile's own name
 // being lower case.
+//
+// The message goes in as $T rather than being concatenated into the format,
+// which matters and did not used to be true. act() rescans its format for
+// codes but writes $T's text out whole, so what a player typed cannot be
+// read as a code: `tell Zod costs $n gold` said "costs Bystander gold"
+// before this. The C has the same hazard and answers it at the other end,
+// by doubling every `$` in input; this port does not double (see
+// docs/deviations.md) and so has to keep player text out of the format
+// instead. #238.
 func deliverTell(w *game.Live, from, to *game.Character, message string) {
 	// Red, at C_NRM — the C brackets the act() with bare writes of
 	// CCRED/CCNRM (act.comm.c:109-112) rather than putting the escapes in
 	// the string, which comes to the same thing here.
 	to.TellAt(colour.Normal, "{{red}}%s{{/}}",
-		w.Act("$n tells you, '"+message+"'", game.ActArgs{Actor: from}, to))
+		w.Act("$n tells you, '$T'", game.ActArgs{Actor: from, Text: message}, to))
 }
 
 // performTell delivers one, and remembers who to reply to.
@@ -395,8 +404,11 @@ func (c *Context) genComm(name string) error {
 		if ch.sameZone && (!c.sameZone(other.Room) || !other.Position.Awake()) {
 			continue
 		}
+		// $T, not concatenation: see deliverTell for why what a player
+		// typed must not become part of an act() format.
 		other.TellAt(colour.Normal, "{{%s}}%s{{/}}", ch.colour,
-			c.World.Act("$n "+ch.verb+"s, '"+said+"'", game.ActArgs{Actor: c.Character}, other))
+			c.World.Act("$n "+ch.verb+"s, '$T'",
+				game.ActArgs{Actor: c.Character, Text: said}, other))
 	}
 	return nil
 }

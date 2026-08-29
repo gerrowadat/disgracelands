@@ -199,6 +199,10 @@ type Session struct {
 	// goroutine and perform_dupe_check reads it there for somebody else's
 	// connection (internal/server/server.go's dupe pass).
 	original atomic.Pointer[game.Character]
+	// input is the command history `!`, `!<prefix>` and `^old^new` work
+	// against — process_input's own, and readLoop's alone. See input.go.
+	input inputHistory
+
 	// snooping is the session this one is watching; snoopedBy is the session
 	// watching this one. Guarded by mu because Send runs from the world
 	// goroutine and the commands that set them run there too, but Close can
@@ -903,10 +907,14 @@ func (s *Session) Serve(ctx context.Context, deps Deps) {
 // it Erase Character; the C tests for it as the bare 127 (comm.c:1787).
 const del = 0x7f
 
-// maxLineLength bounds one line of input.
+// maxLineLength bounds the *buffer*, not the line.
 //
-// A line longer than this is not something a person typed, and a client that
-// never sends a newline would otherwise grow this buffer without limit.
+// The line's own limit is MAX_INPUT_LENGTH, applied once the line is
+// finished (input.go's truncateInput), because that is where the C applies
+// it and because a player who typed too much has to be told so. This is the
+// other bound, and it is a different job: a client that never sends a
+// newline at all would otherwise grow this slice without limit, and there is
+// nobody to tell.
 const maxLineLength = 64 * 1024
 
 // readLoop reads lines and dispatches them.
@@ -959,12 +967,45 @@ func (s *Session) readLoop(ctx context.Context, deps Deps) error {
 
 					text := string(line)
 					line = line[:0]
+
+					// process_input's line stage, in its order: truncate,
+					// copy to a snooper, then `!`/`^`. See input.go.
+					if truncated, cut := truncateInput(text); cut {
+						text = truncated
+						s.Send("Line too long.  Truncated to:\r\n%s\r\n", text)
+					}
+					s.snoopInput(text)
+					text, run := s.recallInput(text)
+					if !run {
+						// A failed `^old^new` has already been answered
+						// and is not run — `if (!failed_subst)
+						// write_to_q(...)`. The C's player still gets a
+						// prompt, because the game loop writes one whether
+						// a command ran or not; this port's prompt comes
+						// out of the dispatcher, so an empty line through
+						// it is how to ask for the same thing. Only while
+						// playing: an empty line means something else
+						// everywhere else, and at the name prompt it
+						// closes the connection.
+						if s.State() == StatePlaying {
+							if handleErr := s.handle(ctx, deps, ""); handleErr != nil {
+								return handleErr
+							}
+						}
+						continue
+					}
+
 					// perform_alias (comm.c:803), run once per line actually
 					// read off the socket rather than once per command: a
 					// complex alias expands to several, run here in order,
 					// before anything further is read — the same effect as
 					// the C pushing them to the front of the input queue. See
 					// alias.go's expandAliasedLine.
+					//
+					// After the history stage, not before: the C queues the
+					// substituted line and perform_alias runs on what comes
+					// back off the queue, so `!` recalls what was typed and
+					// the alias expands what `!` produced.
 					for _, part := range s.expandAliasedLine(text) {
 						if handleErr := s.handle(ctx, deps, part); handleErr != nil {
 							return handleErr
@@ -1030,6 +1071,31 @@ func (s *Session) readLoop(ctx context.Context, deps Deps) error {
 						_, size := utf8.DecodeLastRune(line)
 						line = line[:len(line)-size]
 					}
+					continue
+				}
+				// The `isascii(*ptr) && isprint(*ptr)` filter
+				// (comm.c:1796): anything else is dropped rather than
+				// copied, so a control character never reaches a command.
+				//
+				// Half of it, and deliberately. The C's test excludes
+				// every byte above 127 as well, which this port cannot
+				// adopt: it takes UTF-8 on purpose — invalidName reads a
+				// name with unicode.IsLetter, and the backspace above
+				// erases a rune because of it — so `isascii` would throw
+				// away exactly the characters that support is for. The
+				// `isprint` half has nothing to do with encoding and
+				// everything to do with what a terminal sends by accident:
+				// an escape sequence typed at the name prompt arrived as
+				// ESC, `[` and `A` and was read as command text, which is
+				// why the browser has to swallow arrow keys before they
+				// are sent at all (#235). ESC is dropped here now; `[A`
+				// still is not, exactly as in the C.
+				//
+				// NUL, CR, LF and DEL are all handled above, so what is
+				// left to drop is the rest of the C0 controls — tab
+				// included, which `isprint` excludes too.
+				if b < 0x20 {
+					lastEOL = 0
 					continue
 				}
 				lastEOL = 0

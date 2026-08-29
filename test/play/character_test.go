@@ -72,6 +72,42 @@ func TestBackspaceCorrectsWhatWasTyped(t *testing.T) {
 	m.noServerErrors()
 }
 
+// TestTheHistorySubstitutions are process_input's `!`, `!<prefix>` and
+// `^old^new` (comm.c:1816-1846), typed at a real server.
+//
+// None of the three has a command-table entry, which is the point of testing
+// them here: they are handled before the interpreter ever sees the line, so
+// nothing in `commands` or `help` would find them and no test that drives the
+// dispatcher directly can reach them either. #238.
+func TestTheHistorySubstitutions(t *testing.T) {
+	m := start(t, mini)
+	c := m.dial()
+	c.create("Historian", "rememberit", "m", "w")
+
+	c.do("say hello")
+	contains(t, "the first line", c.transcript(), "You say, 'hello'")
+
+	// `!` replays the last line without echoing it.
+	before := strings.Count(c.transcript(), "You say, 'hello'")
+	c.do("!")
+	if after := strings.Count(c.transcript(), "You say, 'hello'"); after != before+1 {
+		t.Errorf("`!` did not replay the last command: %d occurrences, want %d",
+			after, before+1)
+	}
+
+	// `^old^new` runs it again with a substitution.
+	contains(t, "a caret substitution", c.do("^hello^goodbye"), "You say, 'goodbye'")
+
+	// `!<prefix>` walks back for the most recent match, and echoes what it
+	// found before running it.
+	c.do("gold")
+	c.do("say something else")
+	out := c.do("!go")
+	contains(t, "a history search", out, "gold", "You're broke!")
+
+	m.noServerErrors()
+}
+
 // TestCreatingACharacter walks the creation sequence and checks each refusal
 // on the way, because every one of them is a state in the login machine that
 // a player can reach by typing something ordinary.
