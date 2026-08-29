@@ -183,7 +183,11 @@ hostile:
   contents inside its own control entry, so contents belonging to no
   house have nowhere to go and are dropped on import. It is kept here
   deliberately: the difference is real, and a corpus that avoided it
-  would leave it to be discovered by an operator.
+  would leave it to be discovered by an operator. It earned its keep —
+  #239 was exactly this file being dropped in silence, with `verify
+  --against` reporting the conversion identical because both sides
+  enumerated houses from the control records. `import` now names it and
+  `verify` notes it.
 - **`bugs`/`ideas`/`typos`** — all three kinds, CP1252 text, and an empty
   body. The dates are fixed (`Aug  1`, `Sep 12`, `Dec 25`) rather than
   taken from the clock, and one of them is single-digit on purpose:

@@ -214,6 +214,28 @@ func (s *Store) LoadObjects(vnum int32) ([]player.StoredObject, error) {
 	return append([]player.StoredObject(nil), e.contents...), nil
 }
 
+// ObjectVnums implements houses.Store: every entry holding at least one
+// object, sorted.
+//
+// Every one of them has a control record here, and that is the difference
+// this method exists to expose rather than a fact worth relying on: this
+// file cannot hold contents belonging to no house, so a classic directory
+// with an orphaned `<vnum>.house` in it converts to a yaml one that answers
+// this differently. See the package comment, and #239.
+func (s *Store) ObjectVnums() ([]int32, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	out := make([]int32, 0, len(s.entries))
+	for vnum, e := range s.entries {
+		if len(e.contents) > 0 {
+			out = append(out, vnum)
+		}
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i] < out[j] })
+	return out, nil
+}
+
 // SaveObjects implements houses.Store, or clears them when there are none.
 // A vnum with no control record yet gets one created empty rather than
 // being refused — SaveHouse can run before the control file's own next

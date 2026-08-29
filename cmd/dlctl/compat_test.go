@@ -7,6 +7,7 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"os"
 	"path/filepath"
@@ -183,6 +184,58 @@ func TestVerifyAgainstNoticesAnEditedFile(t *testing.T) {
 	}
 	if len(diffs) != 1 || !strings.Contains(diffs[0], "Title") {
 		t.Errorf("comparing an edited title reported %v, want one difference naming Title", diffs)
+	}
+}
+
+// TestAnOrphanedHouseContentsFileIsNamedAndNoted covers both halves of
+// #239 on the corpus built to have the case: examples/torture's
+// house/5006.house has contents and etc/hcontrol does not mention 5006.
+//
+// Before this, import dropped it without a word and `verify --against`
+// reported the conversion identical — the check built to catch a silent
+// loss enumerated houses from the control records exactly like the
+// importer it was checking. Both are asserted here because either alone
+// would leave the other blind.
+func TestAnOrphanedHouseContentsFileIsNamedAndNoted(t *testing.T) {
+	const torture = "../../examples/torture"
+	to := t.TempDir()
+
+	var report bytes.Buffer
+	out := bufio.NewWriter(&report)
+	etcDir, houseDir, _ := stateClassicDirs(torture + "/binary")
+	if err := importHouses(etcDir, houseDir, to, out); err != nil {
+		t.Fatalf("importing houses: %v", err)
+	}
+	if err := out.Flush(); err != nil {
+		t.Fatal(err)
+	}
+	if got := report.String(); !strings.Contains(got, "#5006: 1 object(s)") {
+		t.Errorf("import did not name the dropped contents file:\n%s", got)
+	}
+
+	// And the comparison says so too — beside the verdict rather than in
+	// it, because nothing ever reads an orphan and the two directories do
+	// load to the same state. orphanHouseContents' doc comment has the
+	// argument.
+	enc := convert.Encodings[convert.DefaultEncoding]
+	full := t.TempDir()
+	if err := run([]string{"import", "--from-dir", torture + "/binary", "--to-dir", full}); err != nil {
+		t.Fatalf("import: %v", err)
+	}
+	var note bytes.Buffer
+	noteOut := bufio.NewWriter(&note)
+	reportOrphanHouses(noteOut,
+		loadOptions{base: torture + "/binary", format: defaultFormat(typeState, ""), enc: enc},
+		loadOptions{base: full, format: "yaml", enc: enc})
+	if err := noteOut.Flush(); err != nil {
+		t.Fatal(err)
+	}
+	if got := note.String(); !strings.Contains(got, "#5006 (1 object(s))") {
+		t.Errorf("verify said nothing about the orphaned contents file:\n%s", got)
+	}
+	// The converted directory has none of its own: yaml cannot hold one.
+	if got := note.String(); strings.Contains(got, full) {
+		t.Errorf("the yaml side was reported as holding an orphan, which it cannot:\n%s", got)
 	}
 }
 

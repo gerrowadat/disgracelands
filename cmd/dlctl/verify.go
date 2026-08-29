@@ -12,6 +12,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/gerrowadat/disgracelands/internal/persist/convert"
 	"github.com/gerrowadat/disgracelands/internal/persist/player"
@@ -134,6 +135,9 @@ func verifyAgainst(types []dirType, left, right loadOptions) error {
 			_, _ = fmt.Fprintf(out, "%-8s %s\n", t, summarise(diffs))
 			failed = append(failed, string(t))
 		}
+		if t == typeState {
+			reportOrphanHouses(out, l, r)
+		}
 	}
 
 	if len(failed) > 0 {
@@ -146,6 +150,39 @@ func verifyAgainst(types []dirType, left, right loadOptions) error {
 	}
 	_, _ = fmt.Fprintf(out, "\n%s and %s load to the same state\n", left.base, right.base)
 	return out.Flush()
+}
+
+// reportOrphanHouses prints, beside the state verdict, any house contents
+// either directory holds that no control record names.
+//
+// It is a note and not a difference, and orphanHouseContents' own doc
+// comment argues why at length: nothing ever reads one, so two directories
+// that disagree about them still load to the same state, and making it a
+// difference would stop `dlctl import` — which verifies itself and refuses
+// to stamp anything that differs — from converting any archive that has
+// ever destroyed a house. Reporting it is the half that was missing (#239):
+// before this, the comparison enumerated houses from the control records
+// on both sides, exactly like the importer it exists to check, and called
+// a conversion that dropped a contents file identical.
+//
+// A failure to look is reported and does not fail the verification: the
+// answer is a footnote to a verdict that has already been reached.
+func reportOrphanHouses(out *bufio.Writer, left, right loadOptions) {
+	for _, side := range []loadOptions{left, right} {
+		orphans, err := orphanHouseContents(side)
+		if err != nil {
+			_, _ = fmt.Fprintf(out, "%-8s (could not check %s for orphaned house contents: %v)\n",
+				"", side.base, err)
+			continue
+		}
+		if len(orphans) == 0 {
+			continue
+		}
+		_, _ = fmt.Fprintf(out, "%-8s note: %s holds %d house contents file(s) that no control "+
+			"record names: %s.\n", "", side.base, len(orphans), strings.Join(orphans, ", "))
+		_, _ = fmt.Fprintf(out, "%-8s       Nothing reads one — every reader starts from the "+
+			"control records — so it is not part of the comparison, and import drops it.\n", "")
+	}
 }
 
 // compareSubsystem loads one subsystem from both sides and diffs them.
