@@ -154,3 +154,79 @@ func TestParseSex(t *testing.T) {
 		}
 	}
 }
+
+// setPrimeAbility and RollAbilities have to agree about which statistic is a
+// class's prime requisite. RollAbilities hands table[0] — the best of the six
+// rolls — to it, and Remort pins that same statistic for the class being left
+// behind (#262's "set player prime-stat-from-previous-class 18").
+//
+// Two independent lists of one fact is the shape that drifts, so this derives
+// the answer from the roll rather than restating it: for every roll, the
+// prime statistic must be at least as high as all five others, because it was
+// given the maximum.
+func TestPrimeAbilityIsTheOneTheRollFavours(t *testing.T) {
+	classes := []struct {
+		class int32
+		name  string
+	}{
+		{ClassMagicUser, "intelligence"},
+		{ClassCleric, "wisdom"},
+		{ClassThief, "dexterity"},
+		{ClassWarrior, "strength"},
+		{ClassPaladin, "charisma"},
+	}
+	for _, c := range classes {
+		if got := PrimeAbilityName(c.class); got != c.name {
+			t.Errorf("PrimeAbilityName(%d) = %q, want %q", c.class, got, c.name)
+		}
+
+		r := rng.NewRand(rng.NewCircle(4242))
+		for i := 0; i < 500; i++ {
+			a := RollAbilities(c.class, r)
+			all := map[string]int32{
+				"strength":     a.Strength,
+				"intelligence": a.Intelligence,
+				"wisdom":       a.Wisdom,
+				"dexterity":    a.Dexterity,
+				"constitution": a.Constitution,
+				"charisma":     a.Charisma,
+			}
+			prime := all[c.name]
+			for name, v := range all {
+				if v > prime {
+					t.Fatalf("%s: roll %d gave %s=%d over the prime %s=%d; "+
+						"PrimeAbilityName and RollAbilities disagree about the prime requisite",
+						c.name, i, name, v, c.name, prime)
+				}
+			}
+		}
+	}
+}
+
+// setPrimeAbility writes the field PrimeAbilityName names, and clears
+// percentile strength with it the way `set str` does.
+func TestSetPrimeAbility(t *testing.T) {
+	for _, tc := range []struct {
+		class int32
+		read  func(Abilities) int32
+	}{
+		{ClassMagicUser, func(a Abilities) int32 { return a.Intelligence }},
+		{ClassCleric, func(a Abilities) int32 { return a.Wisdom }},
+		{ClassThief, func(a Abilities) int32 { return a.Dexterity }},
+		{ClassWarrior, func(a Abilities) int32 { return a.Strength }},
+		{ClassPaladin, func(a Abilities) int32 { return a.Charisma }},
+	} {
+		a := Abilities{StrengthPercentile: 91}
+		setPrimeAbility(&a, tc.class, 18)
+		if got := tc.read(a); got != 18 {
+			t.Errorf("class %d: prime statistic = %d, want 18", tc.class, got)
+		}
+	}
+
+	// Warrior alone: 18/00, not 18 plus whatever percentile was there.
+	a := Abilities{StrengthPercentile: 91}
+	setPrimeAbility(&a, ClassWarrior, 18)
+	if a.StrengthPercentile != 0 {
+		t.Errorf("strength percentile = %d, want 0: `set str 18` clears it", a.StrengthPercentile)
+	}
+}

@@ -390,7 +390,22 @@ func Start(rec *PlayerRecord, r *rng.Rand) {
 	// max_move: init_char set those, and this is the one place where
 	// WipeMud-src's do_start differs and resets all three.
 	rec.Points.MaxHit = baseMaxHit
-	rec.Skills = StartingSkills(rec.Class)
+	// **Merged, not assigned.** The C's do_start has no memset: SET_SKILL
+	// (utils.h:325) writes one array element, and the six thief lines are
+	// the only writes in the function, so everything already practised
+	// survives it. At creation the array is calloc'd and the distinction
+	// cannot show — but do_start is also what `advance <name> 1` runs to
+	// demote somebody (doAdvance), and there it is the difference between
+	// losing a level and losing every skill ever practised. Assigning here
+	// was silently the second of those.
+	for num, pct := range StartingSkills(rec.Class) {
+		if rec.Skills == nil {
+			rec.Skills = make(map[int32]int32, 6)
+		}
+		if rec.Skills[num] < pct {
+			rec.Skills[num] = pct
+		}
+	}
 
 	AdvanceLevel(rec, r)
 
@@ -417,101 +432,171 @@ func randRange(r *rng.Rand, lo, hi int32) int32 { return r.Number(lo, hi) }
 // **This is a deliberate gameplay change, not a port of anything.** The C's
 // do_remort (act.wizard.c:355) sets a bit in the remort vector and stops:
 // class, level, hit points, mana and experience are all left exactly as they
-// were, so a level 30 warrior remorted to mage was a level 30 warrior who
-// could also cast, and an implementor had to follow up with `set <name> class
-// mage`, `set <name> level 1` and the rest by hand. Issue #262 is that that
-// homework should be the command's job. docs/deviations.md carries the entry.
+// were. Issue #262 is that the rest should be the command's job, and
+// docs/deviations.md carries the entry.
 //
-// The mechanic it has to preserve is the one the whole port has carried since
-// Phase 3: the IS_<CLASS> macros (utils.h:508) are
+// **The steps are not invented.** They are the sequence whoever ran the game
+// typed by hand after every remort, recovered from their own notes (#262):
+//
+//	set player class whatever
+//	set player lessons 0
+//	advance player 1
+//	set player maxmana 100
+//	set player maxmove 100
+//	(hp's should be okay)
+//	set player prime-stat-from-previous-class 18
+//
+// Each line below is one of those, in that order, and the order matters:
+// `advance 1` re-rolls the abilities, so pinning the old class's prime stat
+// has to come after it or the roll would overwrite it.
+//
+// The mechanic all of it has to preserve is the one the port has carried
+// since Phase 3: the IS_<CLASS> macros (utils.h:508) are
 //
 //	(GET_CLASS(ch) == CLASS_X) || (GET_REMORT_VECTOR(ch) & mask_X)
 //
 // — your *current* class counts for free, and the vector records the others.
 // So changing the class field without setting the outgoing class's bit would
-// take away the very abilities remorting exists to keep. Setting that bit
-// first is the whole trick, and it is why this cannot be `set class` plus
-// `set level`.
-//
-// What it deliberately does *not* do, each of which do_start does and each of
-// which would be wrong here:
-//
-//   - **No re-roll.** do_start calls roll_real_abils (class.c:1808). A
-//     character's abilities are the thing they have had since creation, and
-//     silently rolling new ones during what is presented as a reward would be
-//     the most destructive possible reading of "set up the new class".
-//   - **No skill wipe.** do_start *assigns* StartingSkills; this merges them,
-//     and only upwards. Everything already practised survives, which is the
-//     point of remorting rather than rerolling.
-//   - **Practices are kept.** AdvanceLevel adds one level's worth on top of
-//     whatever they had saved. Taking them away would be taking away
-//     something earned, and having some to spend is what "ready to get going
-//     right away" means.
-//   - **Played time, gold, equipment and conditions are untouched.**
-//
-// Maximum hit points, mana and movement go back to init_char's starting
-// figures and then take one level's advance, which is what makes this a
-// level-one character rather than a level-one character with a level 30
-// body. They are set on the *real* values and then re-totalled, so anything
-// worn is re-applied rather than baked into the baseline — the mistake that
-// would otherwise make every remort a small permanent stat gain.
+// take away the very abilities remorting exists to keep.
 func Remort(rec *PlayerRecord, newClass int32, r *rng.Rand) {
-	// Keep what they have been. The outgoing class first: that is the bit
-	// that stops the class change from taking abilities away.
+	oldClass := rec.Class
+
+	// Keep what they have been. The outgoing class's bit is what stops the
+	// class change from taking abilities away.
 	//
-	// ApplyNewCharacterDefaults already sets a character's own class bit at
-	// creation, so for most characters this is belt and braces. It is not
-	// redundant: `set <name> class <x>` changes the class field and does not
-	// touch the vector, so a character an implementor has moved between
-	// classes by hand can reach here with the bit missing — and that is
-	// precisely the character for whom losing it would be silent.
+	// The hand-run procedure did not need this line, because it ran the
+	// *old* remort command first and that set the incoming class's bit,
+	// while the outgoing one was already set — by ApplyNewCharacterDefaults
+	// at creation, or by whichever earlier remort put them in that class.
+	// Setting it explicitly is what makes the command self-contained, and it
+	// is not merely belt and braces: `set <name> class` moves the class
+	// field without touching the vector, so a character an implementor has
+	// moved by hand can reach here with the bit missing.
 	vector := RemortFlagsOf(rec)
-	if mask := RemortMask(rec.Class); mask != 0 {
+	if mask := RemortMask(oldClass); mask != 0 {
 		vector = vector.Set(mask)
 	}
-	// And the incoming one, which the C also sets. Redundant while they are
-	// that class, and not redundant the moment they remort again.
 	if mask := RemortMask(newClass); mask != 0 {
 		vector = vector.Set(mask)
 	}
 	SetRemortFlags(rec, vector)
 
+	// set player class whatever
 	rec.Class = newClass
-	rec.Level = 1
-	rec.Points.Exp = 1
-	rec.Title = Title(newClass, rec.Level, rec.Sex)
 
-	// A level-one body. On the real values, because RecomputeAffects below
-	// rebuilds the totals from these plus equipment and spells; writing the
-	// totals directly would make the next recompute lose the difference.
-	rec.RealMaxHit = baseMaxHit
-	rec.RealMaxMana = baseMaxMana
-	rec.RealMaxMove = baseMaxMove
-	rec.Points.MaxHit = baseMaxHit
-	rec.Points.MaxMana = baseMaxMana
-	rec.Points.MaxMove = baseMaxMove
+	// set player lessons 0
+	//
+	// "lessons" is do_set's other name for practices (act.wizard.c:2397-8,
+	// both rows write the same field). Thirty levels of banked practices
+	// spent instantly on a new class's spell list is what this is stopping.
+	rec.SpellsToLearn = 0
 
-	// The new class's starting skills, merged upwards. A thief who remorts
-	// to warrior keeps their sneak; a warrior who remorts to thief gains it.
-	for num, pct := range StartingSkills(newClass) {
-		if rec.Skills == nil {
-			rec.Skills = make(map[int32]int32, len(StartingSkills(newClass)))
-		}
-		if rec.Skills[num] < pct {
-			rec.Skills[num] = pct
-		}
-	}
+	// advance player 1
+	//
+	// Demoting through `advance` runs do_start (doAdvance's own branch, and
+	// class.c:1802), which is where the level, the experience, the title,
+	// the re-rolled abilities, max_hit back to 10, the class's starting
+	// skills and one AdvanceLevel all come from. Calling the same function
+	// rather than restating its effects is the point: whatever `advance
+	// <name> 1` does to a character, remorting does, because that is what
+	// was being typed.
+	Start(rec, r)
 
-	AdvanceLevel(rec, r)
+	// set player maxmana 100
+	// set player maxmove 100
+	//
+	// do_start deliberately does not touch either (it sets max_hit alone),
+	// so without these two a remorted character keeps a level-30 mana and
+	// movement pool on a level-1 body — which is exactly why the notes have
+	// them. 100 and 100, as written down, rather than init_char's 100 and
+	// 82: the movement figure is a choice somebody made, and the notes are
+	// the evidence of which choice.
+	//
+	// "(hp's should be okay)" — do_start's max_hit and AdvanceLevel between
+	// them leave hit points right, so there is no third line here.
+	rec.Points.MaxMana = remortMaxMana
+	rec.Points.MaxMove = remortMaxMove
 
-	// AdvanceLevel works on the totals, so fold its gains back into the real
-	// figures before re-applying equipment.
-	rec.RealMaxHit = rec.Points.MaxHit
-	rec.RealMaxMana = rec.Points.MaxMana
-	rec.RealMaxMove = rec.Points.MaxMove
+	// set player prime-stat-from-previous-class 18
+	//
+	// The reward, and the least obvious line in the notes. do_start re-rolls
+	// for the *new* class, so the new class's prime requisite gets the best
+	// of the six rolls and the old one gets whatever is left — and the whole
+	// point of the remort vector is that the character goes on being their
+	// old class too. Without this they would keep the old class's spells and
+	// lose the statistic that made them worth casting. 18 is the maximum a
+	// roll can produce.
+	//
+	// Percentile strength is cleared with it, because `set str 18` clears it
+	// (wizset.go, and the C's do_set does the same): 18/00, not 18 plus
+	// whatever the new roll happened to leave behind.
+	setPrimeAbility(&rec.Abilities, oldClass, maxRolledAbility)
+
+	// Everything above is what this character is without anything worn or
+	// cast on them, so it becomes the real baseline; then equipment and
+	// affects go back on top. Doing it in that order is what stops a remort
+	// from baking a worn item's bonus permanently into the character.
+	SnapshotReal(rec)
 	RecomputeAffects(rec)
 
 	rec.Points.Hit = rec.Points.MaxHit
 	rec.Points.Mana = rec.Points.MaxMana
 	rec.Points.Move = rec.Points.MaxMove
+}
+
+// remortMaxMana and remortMaxMove are the figures the hand-run remort
+// procedure set (#262). The mana one is init_char's own; the movement one is
+// not — init_char gives 82 — and the difference is deliberate rather than a
+// slip in the notes, so it is named here rather than reusing baseMaxMove.
+const (
+	remortMaxMana int32 = 100
+	remortMaxMove int32 = 100
+)
+
+// maxRolledAbility is the highest a rolled statistic can be: 4d6 drop the
+// lowest, so 6+6+6.
+const maxRolledAbility int32 = 18
+
+// setPrimeAbility sets a class's prime requisite — the statistic
+// roll_real_abils (class.c) hands the best of the six rolls to, which is the
+// first field in that class's arm of the switch.
+//
+// Paladin's is charisma, which is worth knowing and easy to get wrong: it is
+// the only class whose ordering was ported without ever being reachable at
+// creation, because paladin is remort-only.
+func setPrimeAbility(a *Abilities, class int32, value int32) {
+	switch class {
+	case ClassMagicUser:
+		a.Intelligence = value
+	case ClassCleric:
+		a.Wisdom = value
+	case ClassThief:
+		a.Dexterity = value
+	case ClassWarrior:
+		a.Strength = value
+		// As `set str` does: 18/00, not 18 plus a percentile from the roll
+		// that has just been overwritten.
+		a.StrengthPercentile = 0
+	case ClassPaladin:
+		a.Charisma = value
+	}
+}
+
+// PrimeAbilityName names a class's prime requisite, for a message that has to
+// say which statistic it pinned and why. Same table as setPrimeAbility, which
+// is the one that does it.
+func PrimeAbilityName(class int32) string {
+	switch class {
+	case ClassMagicUser:
+		return "intelligence"
+	case ClassCleric:
+		return "wisdom"
+	case ClassThief:
+		return "dexterity"
+	case ClassWarrior:
+		return "strength"
+	case ClassPaladin:
+		return "charisma"
+	}
+	return "nothing"
 }
