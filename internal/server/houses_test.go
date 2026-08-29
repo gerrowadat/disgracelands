@@ -348,14 +348,19 @@ func TestHouseBootDropsRecordsThatNoLongerMakeSense(t *testing.T) {
 	// six control records for what is mostly the same room, and
 	// state/houses.yaml cannot hold that: it keys a house by its room
 	// vnum, since a house's contents are nested inside its own entry
-	// (docs/design/data-format.md §9), so duplicates collapse to the last
-	// one written. The C's hcontrol is a flat array and does not care.
+	// (docs/design/data-format.md §9), so duplicates collapse to one. The
+	// C's hcontrol is a flat array and does not care.
+	//
+	// Which one survives is House_boot's own answer since #240 — the
+	// first, matching the `this vnum is already a house -- skip` check at
+	// house.c:265 and the same rule the switch below applies — but one is
+	// still all there is, and House_boot's per-record sanity checks are
+	// what this test is about, which need a store that will hand over
+	// contradictory records to check.
 	//
 	// That uniqueness is a property of the yaml format worth knowing
-	// about rather than working around — two houses at the same room is
-	// nonsense the C's array merely fails to prevent — and House_boot's
-	// per-record sanity checks are what this test is about, which need a
-	// store that will hand over contradictory records to check.
+	// about rather than working around: two houses at the same room is
+	// nonsense the C's array merely fails to prevent.
 	houseDir := t.TempDir()
 	houseStore, err := housesclassic.New(houses.Config{
 		ControlPath: filepath.Join(houseDir, "hcontrol"), ObjectDir: filepath.Join(houseDir, "house"),

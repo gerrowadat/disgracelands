@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"golang.org/x/text/encoding/charmap"
@@ -219,7 +220,17 @@ func importHouses(fromDir, fromHouseDir, toDir string, out *bufio.Writer) error 
 	}
 	objects := 0
 	declared := make(map[int32]bool, len(list))
+	var duplicates []int32
 	for _, h := range list {
+		// A second record for a room already seen is one the conversion
+		// collapses — and one the C would never have booted either, since
+		// House_boot skips a vnum that is already a house (house.c:265).
+		// Counting its objects again would report contents that were
+		// written once as if they had been written twice.
+		if declared[h.Vnum] {
+			duplicates = append(duplicates, h.Vnum)
+			continue
+		}
 		declared[h.Vnum] = true
 		objs, err := src.LoadObjects(h.Vnum)
 		if err != nil {
@@ -233,9 +244,34 @@ func importHouses(fromDir, fromHouseDir, toDir string, out *bufio.Writer) error 
 		}
 		objects += len(objs)
 	}
-	_, _ = fmt.Fprintf(out, "houses: imported %d house(s), %d object(s)\n", len(list), objects)
+
+	// The count reported is the store's own, read back, rather than the
+	// length of what was handed to it. Those are different numbers exactly
+	// when the conversion dropped something, which is the moment a summary
+	// line most needs to be true — before #240 this printed len(list) and
+	// so said "imported 4 house(s)" for three that arrived.
+	stored, err := dst.Load()
+	if err != nil {
+		return err
+	}
+	_, _ = fmt.Fprintf(out, "houses: imported %d house(s), %d object(s)\n", len(stored), objects)
+	if len(duplicates) > 0 {
+		_, _ = fmt.Fprintf(out, "houses: collapsed %d duplicate control record(s) — "+
+			"state/houses.yaml keys a house by its room and the C boots the first record "+
+			"for a room and skips the rest (house.c:265): %s\n",
+			len(duplicates), joinVnums(duplicates))
+	}
 
 	return reportOrphanedHouseContents(src, declared, out)
+}
+
+// joinVnums renders a vnum list for a report line: "#5007, #5008".
+func joinVnums(vnums []int32) string {
+	parts := make([]string, len(vnums))
+	for i, v := range vnums {
+		parts[i] = fmt.Sprintf("#%d", v)
+	}
+	return strings.Join(parts, ", ")
 }
 
 // reportOrphanedHouseContents names every `<vnum>.house` file whose room

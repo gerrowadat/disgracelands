@@ -183,6 +183,23 @@ func (s *Store) Load() ([]houses.House, error) {
 // Save implements houses.Store: replaces the whole roster. See the package
 // comment for how this differs from classic's own leave-the-orphan-file
 // behaviour.
+//
+// Two records for the same room collapse to one, because this file is
+// keyed by room vnum — a house's contents are nested inside its own entry
+// (docs/design/data-format.md §9), so there is one entry per room and no
+// second place for a second record to live. classic's hcontrol is a flat
+// array and does not prevent it.
+//
+// **The first record wins, not the last**, which is House_boot's own rule:
+// its third sanity check is `if (find_house(temp_house.vnum) != NOWHERE)
+// continue; /* this vnum is already a house -- skip */` (house.c:265), and
+// find_house scans from the start (house.c:207), so the record the C keeps
+// is the earliest one in the file. This port's own boot does the same
+// thing for the same reason (internal/server/houses.go's `house room is
+// already a house; skipping`). Until #240 this map assignment kept the
+// last, so a directory with a duplicate converted to a *different* house
+// — a different owner, atrium and guest list — from the one the C would
+// have booted.
 func (s *Store) Save(list []houses.House) error {
 	if s.readOnly {
 		return fmt.Errorf("houses: the data directory is open read-only")
@@ -191,6 +208,9 @@ func (s *Store) Save(list []houses.House) error {
 	s.mu.Lock()
 	next := make(map[int32]*houseEntry, len(list))
 	for _, h := range list {
+		if _, dup := next[h.Vnum]; dup {
+			continue
+		}
 		e := &houseEntry{house: h}
 		if old, ok := s.entries[h.Vnum]; ok {
 			e.contents = old.contents

@@ -155,6 +155,39 @@ func TestSaveReplacesTheRosterButKeepsSurvivingContents(t *testing.T) {
 	}
 }
 
+// TestTwoRecordsForOneRoomKeepTheFirst is House_boot's rule, which this
+// file is keyed to obey: its third sanity check skips a vnum that is
+// already a house (house.c:265) and find_house scans from the start
+// (house.c:207), so the record the C keeps is the earliest in the file.
+//
+// The map assignment here kept the last until #240, so a classic
+// directory with a duplicate — which its flat hcontrol array does nothing
+// to prevent — converted to a different house than the C would have
+// booted: a different owner, atrium and guest list, silently.
+func TestTwoRecordsForOneRoomKeepTheFirst(t *testing.T) {
+	s, err := New(houses.Config{ObjectDir: t.TempDir()})
+	if err != nil {
+		t.Fatalf("opening: %v", err)
+	}
+	if err := s.Save([]houses.House{
+		{Vnum: 3200, Atrium: 3201, Owner: 7, Guests: []int64{11}},
+		{Vnum: 3200, Atrium: 3299, Owner: 9},
+	}); err != nil {
+		t.Fatalf("saving: %v", err)
+	}
+
+	got, err := s.Load()
+	if err != nil {
+		t.Fatalf("loading: %v", err)
+	}
+	if len(got) != 1 {
+		t.Fatalf("two records for one room stored as %d houses, want 1", len(got))
+	}
+	if got[0].Owner != 7 || got[0].Atrium != 3201 || len(got[0].Guests) != 1 {
+		t.Errorf("the surviving record is %+v, want the first one (owner 7, atrium 3201)", got[0])
+	}
+}
+
 func TestDeleteObjectsClearsButKeepsTheControlRecord(t *testing.T) {
 	s, err := New(houses.Config{ObjectDir: t.TempDir()})
 	if err != nil {
