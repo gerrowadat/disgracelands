@@ -136,7 +136,17 @@ them; exercising the archived one is the point.
   using all 30 of its own, a real `crypt(3)` DES hash, and
   `2038-01-19T03:14:07Z` — the last instant a four-byte signed `time_t`
   can name. A rent file with a container inside a container inside a
-  container, and an alias file with both alias shapes.
+  container, and an alias file with both alias shapes — every replacement
+  in it beginning with a space, which is not a typo: `do_alias` builds one
+  with `any_one_arg`, which does not skip the whitespace it stops on, so
+  the space separating the alias's name from the rest of the line is part
+  of the value. `write_aliases` stores it one character shorter and
+  `read_aliases` puts the space back (`alias.c:22`, `:55`). This fixture
+  was written without them until #242, and the encoder silently dropped
+  the first character of each instead — the committed `.alias` file and
+  the `aliases:` block in `yaml/` both held `" et all corpse"`, and no
+  test failed, because both sides of every comparison went through the
+  same encoder.
 - **`Abbbbbbbbbbbbbbbbbb`** — nineteen letters, every byte of `char[20]`.
 - **`Cddddddddddddddddd`** — eighteen, one short of the limit. An
   off-by-one in a fixed-width field is only visible with both.

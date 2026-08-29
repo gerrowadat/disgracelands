@@ -232,6 +232,18 @@ type Alias struct {
 	// alias, or a template using ';' to separate multiple commands and
 	// '$1'-'$9'/'$*' for positional/whole-line substitution for a complex
 	// one. See internal/session's alias expansion.
+	//
+	// **It always begins with a space**, and that is an invariant rather
+	// than an accident. do_alias builds a replacement with any_one_arg,
+	// which — unlike one_argument — does not skip the whitespace it stops
+	// on, so the space separating the alias's name from the rest of the
+	// line is part of the value the C holds in memory. This port keeps it
+	// for the same reason the C's own behaviour depends on it: $*
+	// substitutes the raw untrimmed remainder. The legacy alias file
+	// stores the replacement one character shorter and puts the space back
+	// on the way in (alias.c:22, :55), so a value without one loses its
+	// first character there — which internal/persist/player/binary now
+	// refuses rather than does (#242).
 	Replacement string
 }
 

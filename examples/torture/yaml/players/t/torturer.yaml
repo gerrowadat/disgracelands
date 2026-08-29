@@ -520,13 +520,13 @@ affects:
   sets_raw: 2147483648
 aliases:
 - name: gc
-  replacement: " et all corpse"
+  replacement: " get all corpse"
 - name: bs
-  replacement: " ackstab $1; flee"
+  replacement: " backstab $1; flee"
 - name: everything
-  replacement: " ay $*"
+  replacement: " say $*"
 - name: gc
-  replacement: " n earlier, shadowed definition of the same name"
+  replacement: " an earlier, shadowed definition of the same name"
 rent:
   code: rented
   written: "2038-01-19T03:14:07Z"

@@ -323,11 +323,26 @@ func crashFileLostToRent() *player.RentFile {
 // which it derives from the replacement's own text rather than storing:
 // ALIAS_COMPLEX for anything containing ';' or '$', ALIAS_SIMPLE
 // otherwise (interpreter.c:735-738).
+//
+// Every replacement begins with a space, and that is the shape the C
+// produces rather than a typo. do_alias builds one with any_one_arg,
+// which — unlike one_argument — does not skip the whitespace it stops on,
+// so the space separating the alias's name from the rest of the line is
+// part of the value. write_aliases strips it on the way out and
+// read_aliases puts it back (alias.c:22, :55), and $* substitutes the raw
+// untrimmed remainder because of it.
+//
+// This fixture was written without them, and the encoder dropped the
+// first character of each instead of saying so — the committed
+// plralias/P-T/torturer.alias held " et all corpse", and so did the
+// aliases: block in examples/torture/yaml, because both sides of every
+// comparison went through the same encoder (#242). A corpus built to
+// expose blind spots is not much use recording one.
 func torturedAliases() []game.Alias {
 	return []game.Alias{
-		{Name: "gc", Replacement: "get all corpse"},
-		{Name: "bs", Replacement: "backstab $1; flee"},
-		{Name: "everything", Replacement: "say $*"},
-		{Name: "gc", Replacement: "an earlier, shadowed definition of the same name"},
+		{Name: "gc", Replacement: " get all corpse"},
+		{Name: "bs", Replacement: " backstab $1; flee"},
+		{Name: "everything", Replacement: " say $*"},
+		{Name: "gc", Replacement: " an earlier, shadowed definition of the same name"},
 	}
 }
