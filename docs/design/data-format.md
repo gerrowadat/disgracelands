@@ -1302,6 +1302,20 @@ containment was step 5's own explicitly-scoped deviation for player rent
 files, not extended here. The `MAX_HOUSES` of 100 and `MAX_GUESTS` of 10
 go the same way as the board limits.
 
+Nesting the contents inside the control entry has one consequence worth
+stating outright, because it is a value that stops existing at the
+conversion boundary: **a `<vnum>.house` file belonging to no control
+record has nowhere to go, and is dropped.** The C accumulates these —
+`House_save_control` writes the control array and nothing else, so a
+house destroyed by `hcontrol destroy`, or dropped by the boot checks in
+`internal/server/houses.go`, leaves its contents file behind forever — so
+a real archive is expected to have some. `dlctl import` names each one it
+drops, by vnum and object count, and `dlctl verify --against` reports
+them beside the state verdict rather than inside it: nothing ever reads
+one (every reader starts from the control array and asks for a house's
+objects by vnum), so two directories that disagree about them still load
+to the same state. Both halves were silent until #239.
+
 **`state/reports.yaml` ✅** — the `bugs`, `ideas` and `typos` files, which
 were three append-only text logs with a timestamp convention that could
 only hold a month and a day, no year. One list with a `kind`, a reporter,

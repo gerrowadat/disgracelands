@@ -25,6 +25,9 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -163,6 +166,56 @@ func (s *Store) LoadObjects(vnum int32) ([]player.StoredObject, error) {
 		return nil, fmt.Errorf("reading house %d: %w", vnum, err)
 	}
 	return objs, nil
+}
+
+// ObjectVnums implements houses.Store: every `<vnum>.house` file in the
+// house directory that holds at least one object, sorted.
+//
+// The "at least one object" part is not fussiness. A zero-length or
+// undecodable `<vnum>.house` is contents nobody can lose — LoadObjects
+// returns nil for both — and counting one as a room with contents would
+// make this disagree with the yaml side, which has no way to hold an empty
+// contents list either. So the question this answers is "which rooms have
+// objects in a file", not "which files exist", and the two formats can
+// answer it the same way.
+//
+// Anything that is not `<digits>.house` is ignored rather than refused:
+// this is a directory in somebody's archive, and House_get_filename's own
+// naming is the only thing that makes a file here meaningful.
+func (s *Store) ObjectVnums() ([]int32, error) {
+	s.mu.RLock()
+	entries, err := os.ReadDir(s.dir)
+	s.mu.RUnlock()
+	if errors.Is(err, os.ErrNotExist) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("reading the house directory: %w", err)
+	}
+
+	var out []int32
+	for _, e := range entries {
+		if e.IsDir() {
+			continue
+		}
+		base, ok := strings.CutSuffix(e.Name(), ".house")
+		if !ok {
+			continue
+		}
+		vnum, err := strconv.ParseInt(base, 10, 32)
+		if err != nil {
+			continue
+		}
+		objs, err := s.LoadObjects(int32(vnum))
+		if err != nil {
+			return nil, err
+		}
+		if len(objs) > 0 {
+			out = append(out, int32(vnum))
+		}
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i] < out[j] })
+	return out, nil
 }
 
 // SaveObjects implements houses.Store, or removes the file when there are

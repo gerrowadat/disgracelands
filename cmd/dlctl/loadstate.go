@@ -228,15 +228,18 @@ type stateState struct {
 	Clock   string
 }
 
-func loadStateState(o loadOptions) (any, error) {
-	stateDir, err := resolveDir(typeState, o.base, o.format)
+// stateDirs resolves the directories one side of a --type=state comparison
+// lives in, and the format name to open its stores with.
+//
+// Classic spreads what yaml collects into one state/ directory across
+// three: etc/ for the clock, boards, mail, bans and the house control
+// file, house/ for house objects, misc/ for the reports.
+func stateDirs(o loadOptions) (stateDir, houseDir, miscDir, format string, err error) {
+	stateDir, err = resolveDir(typeState, o.base, o.format)
 	if err != nil {
-		return nil, err
+		return "", "", "", "", err
 	}
-	// Classic spreads what yaml collects into one state/ directory across
-	// three: etc/ for the clock, boards, mail, bans and the house control
-	// file, house/ for house objects, misc/ for the reports.
-	houseDir, miscDir := stateDir, stateDir
+	houseDir, miscDir = stateDir, stateDir
 	if o.format != "yaml" {
 		_, houseDir, miscDir = stateClassicDirs(o.base)
 		if o.houseDir != "" {
@@ -246,7 +249,14 @@ func loadStateState(o loadOptions) (any, error) {
 			miscDir = o.miscDir
 		}
 	}
-	format := nonYamlAs(o.format, "classic")
+	return stateDir, houseDir, miscDir, nonYamlAs(o.format, "classic"), nil
+}
+
+func loadStateState(o loadOptions) (any, error) {
+	stateDir, houseDir, miscDir, format, err := stateDirs(o)
+	if err != nil {
+		return nil, err
+	}
 	yaml := format == "yaml"
 	// Every classic store below is named by a file inside etc/; every yaml
 	// one by the directory that holds the lot.
@@ -360,6 +370,71 @@ func transcodeStateStrings(s *stateState, enc *charmap.Charmap) {
 	for i := range s.Reports {
 		transcodeString(&s.Reports[i].Body, enc)
 	}
+}
+
+// orphanHouseContents lists the rooms one directory holds house contents
+// for that no control record names, with the number of objects in each.
+//
+// It is deliberately *not* part of stateState, and that is the whole
+// judgement in this file. `verify --against`'s claim is that a server
+// running on either directory behaves identically (docs/proposals/
+// yaml-only.md §4.1), and no server ever reads an orphaned contents file:
+// every reader — House_boot, this port's own loadHouseObjects — starts
+// from the control array and asks for that house's objects by vnum. A
+// file belonging to no house is bytes on a disk that nothing opens. Making
+// it a *difference* would fail the comparison for every real archive that
+// has one, and `dlctl import` verifies itself and refuses to stamp a
+// directory that differs — so an archive with seven years of destroyed
+// houses in it could not be converted at all.
+//
+// Silence was not right either, which is what #239 was about: the check
+// built to catch a silent loss enumerated houses from the control records
+// exactly like the importer it was checking, so it reported the
+// conversion identical while a contents file went missing. So it is
+// reported, beside the verdict rather than inside it, saying which side it
+// was found on.
+func orphanHouseContents(o loadOptions) ([]string, error) {
+	stateDir, houseDir, _, format, err := stateDirs(o)
+	if err != nil {
+		return nil, err
+	}
+	controlPath := stateDir
+	if format != "yaml" {
+		controlPath = filepath.Join(stateDir, "hcontrol")
+	}
+	store, err := houses.Open(format, houses.Config{
+		ControlPath: controlPath, ObjectDir: houseDir, ReadOnly: true,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("houses: %w", err)
+	}
+	defer func() { _ = store.Close() }()
+
+	list, err := store.Load()
+	if err != nil {
+		return nil, fmt.Errorf("houses: %w", err)
+	}
+	declared := make(map[int32]bool, len(list))
+	for _, h := range list {
+		declared[h.Vnum] = true
+	}
+	withObjects, err := store.ObjectVnums()
+	if err != nil {
+		return nil, fmt.Errorf("houses: %w", err)
+	}
+
+	var out []string
+	for _, vnum := range withObjects {
+		if declared[vnum] {
+			continue
+		}
+		objs, err := store.LoadObjects(vnum)
+		if err != nil {
+			return nil, fmt.Errorf("house #%d: %w", vnum, err)
+		}
+		out = append(out, fmt.Sprintf("#%d (%d object(s))", vnum, len(objs)))
+	}
+	return out, nil
 }
 
 func loadNamesState(o loadOptions) (any, error) {

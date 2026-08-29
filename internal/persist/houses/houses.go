@@ -81,6 +81,19 @@ type Store interface {
 	// SaveObjects writes a house's contents, or clears them when there are
 	// none.
 	SaveObjects(vnum int32, objs []player.StoredObject) error
+	// ObjectVnums lists every room this store holds contents for, sorted,
+	// *whether or not a control record names it*.
+	//
+	// That distinction is the whole reason it exists. classic never
+	// deletes a `<vnum>.house` file when its hcontrol entry goes away —
+	// Save only ever touches the control file — so an archive that has had
+	// houses destroyed over seven years has orphaned contents files lying
+	// around, belonging to no house. Enumerating from Load() cannot see
+	// them, which is how `dlctl import` came to drop one in silence
+	// (#239). A caller that wants "the houses" still asks Load(); this is
+	// for a caller that has to account for every file, and it is the only
+	// way to ask.
+	ObjectVnums() ([]int32, error)
 	// DeleteObjects removes a house's contents entirely.
 	DeleteObjects(vnum int32) error
 }

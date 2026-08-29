@@ -218,7 +218,9 @@ func importHouses(fromDir, fromHouseDir, toDir string, out *bufio.Writer) error 
 		return err
 	}
 	objects := 0
+	declared := make(map[int32]bool, len(list))
 	for _, h := range list {
+		declared[h.Vnum] = true
 		objs, err := src.LoadObjects(h.Vnum)
 		if err != nil {
 			return fmt.Errorf("house #%d: %w", h.Vnum, err)
@@ -232,6 +234,53 @@ func importHouses(fromDir, fromHouseDir, toDir string, out *bufio.Writer) error 
 		objects += len(objs)
 	}
 	_, _ = fmt.Fprintf(out, "houses: imported %d house(s), %d object(s)\n", len(list), objects)
+
+	return reportOrphanedHouseContents(src, declared, out)
+}
+
+// reportOrphanedHouseContents names every `<vnum>.house` file whose room
+// has no control record, because the conversion drops it.
+//
+// The C never deletes one: House_save_control writes the control array and
+// nothing else, so a house destroyed by `hcontrol destroy` — or dropped by
+// the boot checks in internal/server/houses.go — leaves its contents file
+// behind forever. Seven years of that and an archive has several. yaml has
+// nowhere to put them: state/houses.yaml nests a house's contents inside
+// its own control entry (docs/design/data-format.md §9), so contents
+// belonging to no house have no entry to sit in.
+//
+// Dropping them is right — no server ever reads one, since every reader
+// starts from the control array — but doing it in silence is not. This is
+// the conversion boundary where a value stops existing, and
+// docs/proposals/yaml-only.md §6 rule 2 says an importer names what it
+// could not carry across. It went unnamed until #239, and `verify
+// --against` could not see it either, because both sides of that
+// comparison enumerated houses from the control records too.
+func reportOrphanedHouseContents(src houses.Store, declared map[int32]bool, out *bufio.Writer) error {
+	withObjects, err := src.ObjectVnums()
+	if err != nil {
+		return err
+	}
+	var orphans []string
+	for _, vnum := range withObjects {
+		if declared[vnum] {
+			continue
+		}
+		objs, err := src.LoadObjects(vnum)
+		if err != nil {
+			return fmt.Errorf("house #%d: %w", vnum, err)
+		}
+		orphans = append(orphans, fmt.Sprintf("  #%d: %d object(s)", vnum, len(objs)))
+	}
+	if len(orphans) == 0 {
+		return nil
+	}
+	_, _ = fmt.Fprintf(out, "houses: dropped %d contents file(s) belonging to no house — "+
+		"the C leaves these behind when a house is destroyed and yaml has nowhere to keep "+
+		"them (data-format.md §9):\n", len(orphans))
+	for _, o := range orphans {
+		_, _ = fmt.Fprintln(out, o)
+	}
 	return nil
 }
 

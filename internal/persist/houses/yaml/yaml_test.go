@@ -177,6 +177,34 @@ func TestDeleteObjectsClearsButKeepsTheControlRecord(t *testing.T) {
 	}
 }
 
+// TestObjectVnumsListsHousesWithContents is the same enumeration classic's
+// own test does, and the point is that the answer here can never include an
+// orphan: this file has no way to hold contents belonging to no house, so a
+// classic directory with one converts to a yaml one that answers this
+// differently. That is what `dlctl verify --against` reports beside the
+// state verdict (#239).
+func TestObjectVnumsListsHousesWithContents(t *testing.T) {
+	s, err := New(houses.Config{ObjectDir: t.TempDir()})
+	if err != nil {
+		t.Fatalf("opening: %v", err)
+	}
+	if err := s.Save([]houses.House{{Vnum: 3210, Owner: 9}, {Vnum: 3200, Owner: 7}}); err != nil {
+		t.Fatalf("saving: %v", err)
+	}
+	if err := s.SaveObjects(3210, []player.StoredObject{{Vnum: 1}}); err != nil {
+		t.Fatalf("saving objects: %v", err)
+	}
+
+	got, err := s.ObjectVnums()
+	if err != nil {
+		t.Fatalf("listing: %v", err)
+	}
+	// 3200 has a control record and no contents, so it is not one.
+	if len(got) != 1 || got[0] != 3210 {
+		t.Errorf("ObjectVnums = %v, want [3210]", got)
+	}
+}
+
 func TestAMissingFileIsNoHouses(t *testing.T) {
 	s, err := New(houses.Config{ObjectDir: t.TempDir()})
 	if err != nil {

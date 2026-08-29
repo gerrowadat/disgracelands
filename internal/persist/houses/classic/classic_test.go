@@ -167,6 +167,63 @@ func TestHouseObjectFiles(t *testing.T) {
 	}
 }
 
+// TestObjectVnumsSeesAnOrphan is the enumeration Load() cannot do.
+//
+// The C never deletes a `<vnum>.house` when its control record goes away,
+// so an archive accumulates contents files belonging to no house. Anything
+// that walks the control array — House_boot, this port's own boot, and
+// `dlctl import` until #239 — cannot see one at all.
+func TestObjectVnumsSeesAnOrphan(t *testing.T) {
+	s, dir := newStore(t)
+	if err := s.Save([]houses.House{{Vnum: 3200, Owner: 7}}); err != nil {
+		t.Fatalf("saving the control file: %v", err)
+	}
+	if err := s.SaveObjects(3200, []player.StoredObject{{Vnum: 1}}); err != nil {
+		t.Fatalf("saving a house's contents: %v", err)
+	}
+	// The orphan: contents for a room the control file says nothing about,
+	// which is what House_delete_file not being called leaves behind.
+	if err := s.SaveObjects(3210, []player.StoredObject{{Vnum: 2}, {Vnum: 3}}); err != nil {
+		t.Fatalf("saving the orphan's contents: %v", err)
+	}
+	if err := s.Save([]houses.House{{Vnum: 3200, Owner: 7}}); err != nil {
+		t.Fatalf("re-saving the control file: %v", err)
+	}
+
+	// Two files a real house directory can have beside the object files,
+	// neither of which is one: a name that is not a vnum at all, and a
+	// zero-length file, which LoadObjects reads as no objects rather than
+	// as an error and which yaml has no way to represent either.
+	houseDir := filepath.Join(dir, "house")
+	if err := os.WriteFile(filepath.Join(houseDir, "notes.txt"), []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(houseDir, "3220.house"), nil, 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	got, err := s.ObjectVnums()
+	if err != nil {
+		t.Fatalf("listing: %v", err)
+	}
+	if len(got) != 2 || got[0] != 3200 || got[1] != 3210 {
+		t.Errorf("ObjectVnums = %v, want [3200 3210] — sorted, the orphan included, "+
+			"and neither the empty file nor the non-vnum one", got)
+	}
+
+	// And a directory that was never created is no contents, not an error:
+	// a server with no houses on it has no house/ at all.
+	empty, err := New(houses.Config{
+		ControlPath: filepath.Join(dir, "hcontrol"), ObjectDir: filepath.Join(dir, "nothing-here"),
+	})
+	if err != nil {
+		t.Fatalf("opening: %v", err)
+	}
+	if got, err := empty.ObjectVnums(); err != nil || got != nil {
+		t.Errorf("ObjectVnums on a missing directory = %v, %v; want nil, nil", got, err)
+	}
+}
+
 func TestAReadOnlyStoreRefusesToWrite(t *testing.T) {
 	dir := t.TempDir()
 	s, err := New(houses.Config{ControlPath: filepath.Join(dir, "hcontrol"), ObjectDir: filepath.Join(dir, "house"), ReadOnly: true})
