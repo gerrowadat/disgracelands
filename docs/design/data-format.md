@@ -234,9 +234,8 @@ data/
     ...
     zones.yaml               Which zones load, and which exist but do not.
     sets.yaml                Named subsets of zones (`mini`, for --mini-mud).
-                             NOT BUILT: the yaml reader skips this filename
-                             and nothing writes it, so --mini-mud is inert
-                             (docs/deviations.md, docs/configuration.md).
+                             Optional: a directory with no subsets has no
+                             file, and --mini-mud against one is an error.
 
   config/
     game.yaml                Rules tuning: config.c, made data.
@@ -318,6 +317,43 @@ Import reads the *source index*, never the directory listing, and reports
 every on-disk file the index does not mention rather than quietly adopting
 or quietly discarding it. `dlctl lint --type=world` flags a zone file with no
 manifest entry, so the two cannot drift apart in the other direction either.
+
+**`world/sets.yaml` names subsets of that manifest**, and `--mini-mud`
+selects the one called `mini`:
+
+```yaml
+# data/world/sets.yaml
+schema: dl/sets@1
+sets:
+  mini:
+  - 0
+  - 12
+  - 30
+```
+
+This is the yaml answer to classic's `index.mini`, and the reason it is
+expressed over *zones* rather than over five per-subdirectory file lists is
+that the classic mini indexes are themselves per-zone. Stock's are
+`0.wld 12.wld 30.wld`, `0.obj 30.obj` and `30.shp`, which reads like three
+different subsets and is one subset of three zones — there is no `12.obj`
+or `12.shp` in that tree at all. Checked against the data, not assumed.
+`dlctl import` derives the file from those indexes, so a converted archive
+keeps the small world it already had.
+
+The file is optional and a directory with no subsets simply has none.
+**Asking for a subset that is not defined is an error rather than a full
+load** — the C's own posture (`index_boot` exits when the index file it was
+told to open is missing), and the specific failure this file's absence
+caused for a while: `--mini-mud` was accepted, validated and passed to the
+world source, and only the `classic` reader ever read it, so once the
+server stopped linking `classic` the flag silently did nothing (issue
+#274, `docs/deviations.md`). A flag that quietly does nothing looks exactly
+like a flag that worked.
+
+A map of named sets rather than a single `mini:` list because the file is
+called "sets": a builder's working set, or a fixture's, is the obvious next
+one to want, and storing a second name costs nothing. Only `mini` is
+consulted today.
 
 **One writer per file.** Every file in this tree is written by exactly one
 subsystem, and always in full, never appended to. Writes are

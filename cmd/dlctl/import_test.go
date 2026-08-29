@@ -7,11 +7,17 @@
 package main
 
 import (
+	"context"
 	"os"
 	"path/filepath"
+	"slices"
+	"sort"
 	"testing"
 
 	"github.com/gerrowadat/disgracelands/internal/persist/dataversion"
+	"github.com/gerrowadat/disgracelands/internal/persist/world"
+	"github.com/gerrowadat/disgracelands/internal/persist/world/classic"
+	worldyaml "github.com/gerrowadat/disgracelands/internal/persist/world/yaml"
 )
 
 // stockBinaryDir is examples/stock/binary from cmd/dlctl's own package
@@ -212,5 +218,85 @@ func TestCopyGameConfigWithNoneIsNotAnError(t *testing.T) {
 	}
 	if _, err := os.Stat(filepath.Join(to, "config")); !os.IsNotExist(err) {
 		t.Errorf("config/ was created for a file that does not exist: %v", err)
+	}
+}
+
+// TestImportCarriesTheMiniWorldAcross: a converted archive keeps the small
+// world it already had.
+//
+// `--mini-mud` is the C's `-m`, and in a classic lib/ it means "read
+// index.mini instead of index in each of the five world subdirectories".
+// The yaml format's answer is world/sets.yaml's "mini" subset
+// (docs/design/data-format.md §4), and until issue #274 nothing wrote it
+// and nothing read it, so the flag was silently inert on the only format
+// the server runs.
+//
+// Every fixture here has index.mini files, so every one of them should come
+// out of a full import with a sets.yaml naming the same zones — checked
+// against the classic reader's own view of the mini world rather than
+// against a number written down here, so that a fixture gaining a zone does
+// not need this test edited.
+func TestImportCarriesTheMiniWorldAcross(t *testing.T) {
+	for _, fx := range libImportFixtures {
+		t.Run(fx.name, func(t *testing.T) {
+			src, err := classic.New(world.Config{Dir: filepath.Join(fx.binaryDir, "world"), Mini: true})
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer func() { _ = src.Close() }()
+			mini, err := src.Load(context.Background())
+			if err != nil {
+				t.Skipf("%s has no mini world to carry across: %v", fx.name, err)
+			}
+			want := make([]int32, 0, len(mini.Zones))
+			for _, z := range mini.Zones {
+				want = append(want, int32(z.Vnum))
+			}
+			if len(want) == 0 {
+				t.Skipf("%s has an empty mini world", fx.name)
+			}
+			sort.Slice(want, func(i, j int) bool { return want[i] < want[j] })
+
+			to := t.TempDir()
+			if err := run([]string{"import", "--from-dir", fx.binaryDir, "--to-dir", to}); err != nil {
+				t.Fatalf("run([import]): %v", err)
+			}
+
+			// Through the loader, not by reading the file: what matters is
+			// that `dlmud --mini-mud` on this directory loads that world.
+			ysrc, err := worldyaml.New(world.Config{Dir: filepath.Join(to, "world"), Mini: true})
+			if err != nil {
+				t.Fatal(err)
+			}
+			got, err := ysrc.Load(context.Background())
+			if err != nil {
+				t.Fatalf("loading the converted mini world: %v", err)
+			}
+			var gotVnums []int32
+			for _, z := range got.Zones {
+				gotVnums = append(gotVnums, int32(z.Vnum))
+			}
+			sort.Slice(gotVnums, func(i, j int) bool { return gotVnums[i] < gotVnums[j] })
+
+			if !slices.Equal(gotVnums, want) {
+				t.Errorf("converted mini world has zones %v, the classic one has %v", gotVnums, want)
+			}
+
+			// And the point of the whole exercise: it is smaller than the
+			// full one. A mini world identical to the full world would pass
+			// every assertion above and be exactly the bug #274 was.
+			full, err := worldyaml.New(world.Config{Dir: filepath.Join(to, "world")})
+			if err != nil {
+				t.Fatal(err)
+			}
+			fullWorld, err := full.Load(context.Background())
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(fullWorld.Zones) > len(got.Zones) && len(got.Rooms) >= len(fullWorld.Rooms) {
+				t.Errorf("the mini world has %d room(s) and the full one %d, from %d zones against %d: the subset is not subsetting",
+					len(got.Rooms), len(fullWorld.Rooms), len(got.Zones), len(fullWorld.Zones))
+			}
+		})
 	}
 }
