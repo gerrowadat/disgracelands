@@ -75,10 +75,10 @@ func doRemort(c *Context) error {
 	mask := game.RemortMask(which)
 	vector := game.RemortFlagsOf(rec)
 
-	// Refused if they *are* that class, or if they already have the bit and
-	// this is not an undo. Note the first half applies to an undo too: you
-	// cannot take away the class somebody is currently walking around as.
-	if which == rec.Class || (vector.Has(mask) && !undo) {
+	// Refused if they *are* that class: there is nothing to do, and it is
+	// the C's own first guard. Applies to an undo too — you cannot take away
+	// the class somebody is currently walking around as.
+	if which == rec.Class {
 		short := game.ClassShortNames[which]
 		c.Send("But %s is already a %s! To undo a remort, try 'remort %s -%s'. "+
 			"Remember, you cannot undo a remort if the player is currently that class.\r\n",
@@ -86,15 +86,52 @@ func doRemort(c *Context) error {
 		return nil
 	}
 
-	// XOR for an undo, OR for a grant. The XOR is the C's, and it means
-	// undoing a remort the character never had *grants* it — see
-	// docs/weirdnumbers.md.
-	if undo {
-		vector = vector ^ mask
-	} else {
-		vector = vector.Set(mask)
+	// The C's *second* guard — refuse if the bit is already set — is gone,
+	// and #262 is why. It meant "they already have those abilities", which
+	// was the whole of what remorting did; now that remorting also makes
+	// them that class and starts them again at level one, having been a mage
+	// before is no reason to refuse to make somebody a mage now. Undo still
+	// needs the bit to be there, since there is otherwise nothing to clear.
+	if undo && !vector.Has(mask) {
+		short := game.ClassShortNames[which]
+		c.Send("But %s has never been a %s.\r\n", victim.Name, short)
+		return nil
 	}
-	game.SetRemortFlags(rec, vector)
+
+	// Paladin is the end of the road, and remorting *away* from it would be
+	// a one-way door in the wrong direction: it is the one class with no bit
+	// in the remort vector (RemortMask returns 0), so there is nowhere to
+	// record that somebody has been one. Under the C this could not arise —
+	// remort never changed the class field — and now that it does, refusing
+	// is the only answer that does not silently destroy something with no
+	// way back. `redeem` lifts a fall; nothing un-remorts a paladin.
+	if !undo && rec.Class == game.ClassPaladin {
+		c.Send("%s is a paladin, and paladinhood is the end of the road: there is no bit "+
+			"in the remort vector to remember it by, so remorting away from it could not be undone.\r\n",
+			victim.Name)
+		return nil
+	}
+
+	if undo {
+		// Undo stays exactly what it was: a vector operation and nothing
+		// else. It does not un-set a class, un-reset a level or hand back
+		// hit points, because there is nothing recorded anywhere that says
+		// what those were before — the character has been played since.
+		// Deliberately the smaller half of #262.
+		//
+		// The C's XOR is kept. It is only reachable now when the bit is
+		// set, since the guard above rejects the other case, so the "undo a
+		// remort the character never had and it *grants* it" behaviour
+		// docs/weirdnumbers.md records is no longer reachable through this
+		// command. The entry says so.
+		vector = vector ^ mask
+		game.SetRemortFlags(rec, vector)
+	} else {
+		// Everything else: the class, the level, the body. game.Remort sets
+		// the outgoing class's bit itself, which is what stops the class
+		// change from taking away the abilities remorting exists to keep.
+		game.Remort(rec, which, c.RNG)
+	}
 
 	short := game.ClassShortNames[which]
 	if undo {
@@ -107,9 +144,18 @@ func doRemort(c *Context) error {
 		victim.Tell("You sink to the ground, aghast, as you feel your %shood slip away!\r\n", short)
 	} else {
 		c.Send("%s remorted to become a %s!\r\n", victim.Name, short)
+		// The god gets told what the command did on their behalf, because
+		// they used to have to do it themselves and will otherwise reach for
+		// `set` out of habit (#262).
+		c.Send("%s is now a level 1 %s with %d hit points, %d mana and %d movement.\r\n",
+			victim.Name, short, rec.Points.MaxHit, rec.Points.MaxMana, rec.Points.MaxMove)
 		victim.Tell("You fall to the ground, clutching your chest, as an unearthly force "+
 			"bestows new knowledge and powers on you!\r\nYou gain the skills and privileges of a %s!\r\n",
 			short)
+		// And the player, who is about to look at a very different score
+		// sheet and should know why rather than assume something broke.
+		victim.Tell("Your old strength leaves you, and you begin again at level 1 — " +
+			"but everything you have ever been, you still are.\r\n")
 		// send_to_all_color (act.wizard.c:465): the whole game hears it, in
 		// cyan, and anybody mid-edit does not. The comment said "in cyan" and
 		// the call was the *uncoloured* broadcast — the fourth of the family

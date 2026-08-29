@@ -410,3 +410,108 @@ func Start(rec *PlayerRecord, r *rng.Rand) {
 // randRange returns a value in [lo, hi]. It is number() by another name, kept
 // because the call sites read better with it.
 func randRange(r *rng.Rand, lo, hi int32) int32 { return r.Number(lo, hi) }
+
+// Remort makes rec a fresh level-one member of newClass while keeping
+// everything they have already been.
+//
+// **This is a deliberate gameplay change, not a port of anything.** The C's
+// do_remort (act.wizard.c:355) sets a bit in the remort vector and stops:
+// class, level, hit points, mana and experience are all left exactly as they
+// were, so a level 30 warrior remorted to mage was a level 30 warrior who
+// could also cast, and an implementor had to follow up with `set <name> class
+// mage`, `set <name> level 1` and the rest by hand. Issue #262 is that that
+// homework should be the command's job. docs/deviations.md carries the entry.
+//
+// The mechanic it has to preserve is the one the whole port has carried since
+// Phase 3: the IS_<CLASS> macros (utils.h:508) are
+//
+//	(GET_CLASS(ch) == CLASS_X) || (GET_REMORT_VECTOR(ch) & mask_X)
+//
+// — your *current* class counts for free, and the vector records the others.
+// So changing the class field without setting the outgoing class's bit would
+// take away the very abilities remorting exists to keep. Setting that bit
+// first is the whole trick, and it is why this cannot be `set class` plus
+// `set level`.
+//
+// What it deliberately does *not* do, each of which do_start does and each of
+// which would be wrong here:
+//
+//   - **No re-roll.** do_start calls roll_real_abils (class.c:1808). A
+//     character's abilities are the thing they have had since creation, and
+//     silently rolling new ones during what is presented as a reward would be
+//     the most destructive possible reading of "set up the new class".
+//   - **No skill wipe.** do_start *assigns* StartingSkills; this merges them,
+//     and only upwards. Everything already practised survives, which is the
+//     point of remorting rather than rerolling.
+//   - **Practices are kept.** AdvanceLevel adds one level's worth on top of
+//     whatever they had saved. Taking them away would be taking away
+//     something earned, and having some to spend is what "ready to get going
+//     right away" means.
+//   - **Played time, gold, equipment and conditions are untouched.**
+//
+// Maximum hit points, mana and movement go back to init_char's starting
+// figures and then take one level's advance, which is what makes this a
+// level-one character rather than a level-one character with a level 30
+// body. They are set on the *real* values and then re-totalled, so anything
+// worn is re-applied rather than baked into the baseline — the mistake that
+// would otherwise make every remort a small permanent stat gain.
+func Remort(rec *PlayerRecord, newClass int32, r *rng.Rand) {
+	// Keep what they have been. The outgoing class first: that is the bit
+	// that stops the class change from taking abilities away.
+	//
+	// ApplyNewCharacterDefaults already sets a character's own class bit at
+	// creation, so for most characters this is belt and braces. It is not
+	// redundant: `set <name> class <x>` changes the class field and does not
+	// touch the vector, so a character an implementor has moved between
+	// classes by hand can reach here with the bit missing — and that is
+	// precisely the character for whom losing it would be silent.
+	vector := RemortFlagsOf(rec)
+	if mask := RemortMask(rec.Class); mask != 0 {
+		vector = vector.Set(mask)
+	}
+	// And the incoming one, which the C also sets. Redundant while they are
+	// that class, and not redundant the moment they remort again.
+	if mask := RemortMask(newClass); mask != 0 {
+		vector = vector.Set(mask)
+	}
+	SetRemortFlags(rec, vector)
+
+	rec.Class = newClass
+	rec.Level = 1
+	rec.Points.Exp = 1
+	rec.Title = Title(newClass, rec.Level, rec.Sex)
+
+	// A level-one body. On the real values, because RecomputeAffects below
+	// rebuilds the totals from these plus equipment and spells; writing the
+	// totals directly would make the next recompute lose the difference.
+	rec.RealMaxHit = baseMaxHit
+	rec.RealMaxMana = baseMaxMana
+	rec.RealMaxMove = baseMaxMove
+	rec.Points.MaxHit = baseMaxHit
+	rec.Points.MaxMana = baseMaxMana
+	rec.Points.MaxMove = baseMaxMove
+
+	// The new class's starting skills, merged upwards. A thief who remorts
+	// to warrior keeps their sneak; a warrior who remorts to thief gains it.
+	for num, pct := range StartingSkills(newClass) {
+		if rec.Skills == nil {
+			rec.Skills = make(map[int32]int32, len(StartingSkills(newClass)))
+		}
+		if rec.Skills[num] < pct {
+			rec.Skills[num] = pct
+		}
+	}
+
+	AdvanceLevel(rec, r)
+
+	// AdvanceLevel works on the totals, so fold its gains back into the real
+	// figures before re-applying equipment.
+	rec.RealMaxHit = rec.Points.MaxHit
+	rec.RealMaxMana = rec.Points.MaxMana
+	rec.RealMaxMove = rec.Points.MaxMove
+	RecomputeAffects(rec)
+
+	rec.Points.Hit = rec.Points.MaxHit
+	rec.Points.Mana = rec.Points.MaxMana
+	rec.Points.Move = rec.Points.MaxMove
+}

@@ -976,7 +976,16 @@ else
 XOR, not AND-NOT. The guard above it refuses a grant when the bit is already
 set, but it explicitly allows an undo when it is *not* — so `remort bob
 -cleric` on a character who has never been a cleric turns the bit on and tells
-them their clerichood has slipped away. Reproduced.
+them their clerichood has slipped away.
+
+The XOR is still there, and **is no longer reachable through the command**.
+`remort` grew a guard with #262 (`docs/deviations.md`, "`remort` changes the
+class, resets the level and rebuilds the body"): an undo of a class the
+character has never had is refused before it gets this far, so the only way
+into the XOR now is with the bit already set, where it does what AND-NOT
+would. The line is kept rather than rewritten because the arithmetic is the
+C's and this file is the record of it; what changed is which arguments can
+reach it.
 
 *Source*: `act.wizard.c:437`.
 

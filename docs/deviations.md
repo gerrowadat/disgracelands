@@ -546,6 +546,18 @@ simply dark, or simply lit, with nothing to say why. Same reasoning as
 `affect_total` above, and the same shape. Rooms hold a handful of people, so
 the cost is nothing.
 
+### `remort` changes the class, resets the level and rebuilds the body
+
+| | |
+|---|---|
+| **C** | `do_remort` (act.wizard.c:355) sets one bit in the remort vector and stops. Class, level, experience, hit points, mana and movement are all left exactly as they were, so a level 30 warrior remorted to mage was a level 30 warrior who could also cast. Whoever ran the game then typed `set <name> class mage`, `set <name> level 1` and the rest by hand. |
+| **Go** | `remort <name> <class>` does the rest of it: sets the class, puts the level back to 1 with experience to match, resets maximum hit points, mana and movement to a level-one body, merges in the new class's starting skills, and heals them to full. The outgoing class's bit goes into the remort vector first, so nothing is lost. |
+| **Why** | Issue #262, and asked for by the person who ran the game. The C's version leaves a character in a state nobody wants and no player can use — half-way through a class change, with the other half in a wizard's muscle memory. A step that is always taken, always taken the same way, and disastrous to forget is a step that belongs in the command. |
+| **What it deliberately does not do** | `do_start` (class.c:1802) is the obvious thing to reuse and would be wrong in four places, each left alone on purpose. **No re-roll of abilities**: `roll_real_abils` is in `do_start` because a character being *created* has none yet; silently replacing a played character's stats during what is presented as a reward is the most destructive available reading of "set up the new class". **No skill wipe**: `do_start` assigns the class's starting skills, this merges them upwards, so everything practised survives — which is the entire point of remorting rather than rerolling. **Practices are kept**, because having some to spend is what "ready to get going right away" means. **Played time, gold and equipment are untouched.** |
+| **Two rules changed with it** | The C's second guard — refuse if the class's bit is already set — is **gone**. It meant "they already have those abilities", which was all remorting did; now that remorting is also a class change, having been a mage before is no reason to refuse to make somebody a mage now. The first guard stays: you cannot remort somebody into what they already are. And **a paladin cannot be remorted away from**, which is new: paladin is the one class with no bit in the vector (`pc_class_remort_masks`, class.c:82, and `RemortMask` returns 0), so there is nowhere to record having been one. Under the C this could not arise, because the class never changed; now that it does, leaving paladin would be a one-way door with nothing behind it. |
+| **Undo is untouched** | `remort <name> -<class>` is still a vector operation and nothing else. It does not un-set a class or hand back a level, because nothing anywhere records what those were before — the character has been played since. It does now refuse when the bit is not set, which makes the C's XOR (undoing a remort nobody had *grants* it, `docs/weirdnumbers.md`) unreachable through the command. |
+| **Where** | `game.Remort` in `internal/game/class.go`, `doRemort` in `internal/session/remort.go`; `TestRemortDoesTheHomework`, `TestRemortRefusesToLeavePaladin`, `TestRemortIntoAClassAlreadyHeld`, `TestUndoingARemortNobodyHadIsRefused`. |
+
 ### Undoing a remort says something rather than nothing
 
 | | |
