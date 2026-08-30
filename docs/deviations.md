@@ -1497,6 +1497,31 @@ compared against is not:
 
 Listed here so they are not mistaken for deliberate differences.
 
+- **`mag_unaffects` is handed the wrong spell number**, so `cure blind`,
+  `remove poison` and `remove curse` do nothing to a character (#299). The
+  C maps the cure to the affliction before removing anything — cure blind
+  and heal both remove `SPELL_BLINDNESS`, remove poison removes
+  `SPELL_POISON`, remove curse removes `SPELL_CURSE` (`magic.c:910-929`) —
+  and `internal/session/cast.go` removes affects of the *cure's* own
+  number instead, which nothing ever applies. The messages are the C's
+  per-spell ones too, and `heal` deliberately suppresses `NOEFFECT`
+  (`magic.c:932`) where this prints it. Found by
+  `internal/server/spellbook_test.go`, where all three cases are written
+  and marked `pending`.
+- **`control weather` is not written** (#300). It is in the spell table
+  and `castManual` has no case for it, so it reaches `castSpell`'s
+  "is not implemented yet" fallback — which is the fallback working, not a
+  silent failure, but the spell is still missing.
+- **`cast_spell`'s three refusals were never ported** (#301):
+  `TAR_SELF_ONLY`, `TAR_NOT_SELF` and the `MAG_GROUPS`
+  "you can't cast this spell if you're not in a group"
+  (`spell_parser.c:506-517`). `TargetSelfOnly` and `TargetNotSelf` are set
+  correctly on eleven and two spells respectively and read by nothing, so
+  a self-only detection spell can be put on somebody else; and a group
+  spell cast while ungrouped is silent *and charges the full mana*,
+  because `spellGroup` returns early after `castSpell` has already
+  counted the spell as done.
+
 - ~~**`who` prints no annotations.**~~ Ported (#216). `do_who` marks each
   line with `(i<n>)`/`(invis)`, `(mailing)`/`(writing)`, `(deaf)`,
   `(notell)`, `(nogossip)`, `(quest)`, `(THIEF)`, `(KILLER)` and the

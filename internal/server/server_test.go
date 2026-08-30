@@ -190,6 +190,7 @@ const (
 	testStaffVnum    game.ObjVnum = 111
 	testBoatVnum     game.ObjVnum = 112
 	testBootsVnum    game.ObjVnum = 113
+	testJugVnum      game.ObjVnum = 114
 )
 
 // testFillerVnumBase starts a run of otherwise-uninteresting, mutually
@@ -216,6 +217,10 @@ const (
 	testDogVnum         game.MobVnum = 999
 	testGuildmasterVnum game.MobVnum = 998
 	testShopkeeperVnum  game.MobVnum = 997
+	// testZombieVnum is not this suite's choice: mag_summons hard-codes it
+	// (magic.c:790), so `animate dead` needs a prototype at exactly this
+	// number or it has nothing to raise.
+	testZombieVnum game.MobVnum = 11
 )
 
 // testShopVnum and the shop's room. The shop buys and sells weapons and
@@ -405,6 +410,31 @@ func testWorld() *game.Live {
 			Weight:      5,
 		},
 		{
+			// An empty drink container, carried: create water needs
+			// something in an inventory to fill, and a fountain is neither
+			// takeable nor an ItemDrinkCon.
+			Vnum: testJugVnum, Keywords: "jug", ShortDesc: "a clay jug",
+			Description: "A clay jug is lying here.",
+			Type:        game.ItemDrinkCon,
+			WearFlags:   game.ItemWearTake,
+			Weight:      3,
+			// Capacity 20, empty, and water is liquid 0.
+			Values: [game.NumObjValues]int32{20, 0, game.LiquidWater, 0},
+		},
+		{
+			// mag_creations' own object: `create food` makes this vnum and
+			// nothing else (game.CreateFoodVnum, magic.c's spell_create_food),
+			// and without a prototype for it the spell answers "I seem to
+			// have goofed."
+			Vnum: game.CreateFoodVnum, Keywords: "waybread food", ShortDesc: "a Waybread",
+			Description: "A Waybread is lying here.",
+			Type:        game.ItemFood,
+			WearFlags:   game.ItemWearTake,
+			Weight:      1,
+			// Value 0 is how many hours of hunger it fills.
+			Values: [game.NumObjValues]int32{5},
+		},
+		{
 			Vnum: testFountainVnum, Keywords: "fountain", ShortDesc: "a fountain",
 			Description: "A fountain bubbles here.",
 			Type:        game.ItemFountain,
@@ -430,6 +460,18 @@ func testWorld() *game.Live {
 			DefaultPosition: int32(game.PosStanding),
 		},
 	}
+
+	mobiles = append(mobiles, &game.MobDef{
+		// mag_summons' zombie (magic.c:790). `animate dead` makes this vnum
+		// and nothing else, so without a prototype the spell can only ever
+		// say it does not remember how.
+		Vnum: testZombieVnum, Keywords: "zombie", ShortDesc: "a zombie",
+		LongDesc:        "A zombie shambles here.\r\n",
+		Level:           5,
+		HitDice:         game.Dice{Number: 1, Size: 1, Bonus: 100},
+		Position:        int32(game.PosStanding),
+		DefaultPosition: int32(game.PosStanding),
+	})
 
 	mobiles = append(mobiles, &game.MobDef{
 		Vnum: testShopkeeperVnum, Keywords: "shopkeeper keeper",
