@@ -147,6 +147,56 @@ is visibly wrong; a port that concludes a new character therefore has *no*
 mana is also wrong, and produces the memorable `0H 0M 0V` prompt that started
 this catalogue.
 
+### A hundred mana, floored again on every load
+
+```c
+if (ch->points.max_mana < 100)
+  ch->points.max_mana = 100;
+```
+
+`store_to_char` (db.c:2254-2255) applies this to every character on the way in
+from disk, before the stored affects go back on — so it raises the *base* every
+affect modifier is applied to, and `char_to_store` writes that base straight
+out again. A character who ends up under a hundred comes back with a hundred
+and keeps it.
+
+It is invisible almost all of the time, which is what makes it easy to leave
+out: a hundred is the flat figure `init_char` gives everybody (above), and
+`advance_level` only ever adds, so nothing in ordinary play takes a character
+below it. It fires for records something else has written — a `set mana`, a
+conversion from another server, a hand-edited file — and for those it is the
+difference between a mage with 40 maximum mana and a mage with 100.
+
+Ported in #295, along with the restore below; neither had an equivalent
+anywhere in the Go server.
+
+### An hour away and you come back whole
+
+```c
+if (!AFF_FLAGGED(ch, AFF_POISON) &&
+      time(0) - st->last_logon >= SECS_PER_REAL_HOUR) {
+  GET_HIT(ch) = GET_MAX_HIT(ch);
+  GET_MOVE(ch) = GET_MAX_MOVE(ch);
+  GET_MANA(ch) = GET_MAX_MANA(ch);
+}
+```
+
+The last thing `store_to_char` does (db.c:2276-2287). Log off hurt, come back
+an hour later, and you are full — of hit points, mana and movement at once —
+unless you are poisoned.
+
+Three things about it are easy to get wrong, and all three are ordering:
+
+- it reads `st->last_logon`, the value *in the file*, not the `time(0)` that
+  `store_to_char` has already written into `ch->player.time.logon` twenty
+  lines earlier;
+- it runs *after* `affect_to_char`, so the maxima it fills to include
+  everything the character is wearing and carrying;
+- the poison exemption reads the flags after the affects too, which is the
+  only point at which anyone is poisoned at all — poison is an affect.
+
+An hour is `SECS_PER_REAL_HOUR` (utils.h:116), real time, not mud time.
+
 ### `MAX(1, ...)` on the gains, and where it bites
 
 ```c

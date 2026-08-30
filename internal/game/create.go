@@ -6,7 +6,11 @@
 
 package game
 
-import "github.com/gerrowadat/disgracelands/internal/rng"
+import (
+	"time"
+
+	"github.com/gerrowadat/disgracelands/internal/rng"
+)
 
 // Character creation, ported from init_char (db.c:2688) and the local
 // additions the C makes at the class prompt (interpreter.c's CON_QCLASS).
@@ -36,6 +40,18 @@ const (
 	baseMaxMove int32 = 82
 	baseArmor   int32 = 100
 )
+
+// MinMaxMana is store_to_char's floor on a loaded character's maximum mana
+// (db.c:2254-2255), applied on every load from disk before the stored
+// affects go back on. It is the same flat 100 init_char gives everyone, so
+// in practice it only fires for a character something else has taken mana
+// away from -- which is exactly why it is easy to leave out (#295).
+const MinMaxMana = baseMaxMana
+
+// AwayLongEnoughToHeal is SECS_PER_REAL_HOUR (utils.h:116). A character who
+// has been logged out at least this long, and is not poisoned, comes back
+// with full hit points, mana and movement (db.c:2276-2287).
+const AwayLongEnoughToHeal = time.Hour
 
 // implementorExp is the experience init_char hands the first character.
 const implementorExp int32 = 7000000
