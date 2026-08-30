@@ -179,11 +179,11 @@ dist: ## Cross-compile the release archives (linux/amd64, linux/arm64, windows/a
 	VERSION=$(VERSION) COMMIT=$(COMMIT) ./scripts/build-dist.sh $(OUT)/dist
 
 .PHONY: test
-test: ## go test -race (the race detector is not optional here; see the plan's §3.1)
+test: ## go test -race -- what go.yml runs; locally, reach for it only for concurrency work
 	$(GO) test -race -count=1 $(PKG)
 
 .PHONY: test-fast
-test-fast: ## go test without -race, for a quick inner loop
+test-fast: ## go test without -race -- the inner loop, and the check to run before pushing
 	$(GO) test $(PKG)
 
 # The play regression suite: a real dlmud process, booted on

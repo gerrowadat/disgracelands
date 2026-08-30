@@ -16,9 +16,15 @@ Needs Go 1.25+ and nothing else: no autoconf, no 32-bit toolchain, no
 
 ```sh
 go build ./...          # both binaries
-go test -race ./...     # -race is not optional here, see the plan's §3.1
+go test ./...           # the tests
 go run ./cmd/dlmud --help
 ```
+
+`go test -race ./...` is the run that counts, and it is not optional — the
+world is owned by a single goroutine and the whole safety argument for that
+rests on nothing else touching it (`go-port-plan.md` §3.1). It runs on every
+push and pull request in `.github/workflows/go.yml`, and `docs/developer.md`
+says when to spend the seven minutes on it yourself instead.
 
 This document covers *building*. For running and administering the result,
 see `docs/operations.md`; for the full settings list,
