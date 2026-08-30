@@ -108,11 +108,21 @@ wrong. Every oracle written so far has caught at least one real mistake.
   branch, and refused 1,145 of the 1,549 per-word abbreviations of the game's
   own 71 spell names — including `cast 'mag mis'`, which is about as common
   a thing to type as this game has (#355). Found by writing this file;
-  `docs/investigations/partial-matching.md` has the sweep.
+  `docs/investigations/partial-matching.md` has the sweep. Checked over 1,569
+  queries now: every per-word abbreviation, plus whitespace, tabs, case, runs
+  of spaces, queries longer than the name, and every full spell name.
 
   Its name table comes in on stdin rather than being compiled in, so the Go
-  test can feed it the port's own spell table and the two cannot drift apart
-  the way they would if the names were duplicated here.
+  test feeds it the port's own spell table and the two cannot drift apart the
+  way they would if the names were duplicated here.
+
+  It also found what the investigation had not: **an empty query matches the
+  first spell**. With no words rule 2's loop never runs, `ok` is still true
+  and `!*first2` holds, so `find_skill_num("")` is 1 — and `cast '  '` casts
+  armor on the real server, because `do_cast`'s `strtok` hands the spaces
+  straight through. Reproduced, unlike `isname`'s own empty-string case a few
+  entries up, and the difference between those two calls is reachability
+  rather than taste.
 
 If you are about to port anything with a division, a cast, or a comment
 describing numbers in it, the next file in this directory is probably the one

@@ -1010,6 +1010,74 @@ narrows back to letters and spaces.
 
 *Source*: `handler.c:56`.
 
+### `find_skill_num` has two matching rules, and an empty query matches the first spell
+
+```c
+if (is_abbrev(name, spell_info[index].name))       /* 1 */
+  return (index);
+
+ok = TRUE;
+temp  = any_one_arg(strcpy(tempbuf, spell_info[index].name), first);
+temp2 = any_one_arg(name, first2);
+while (*first && *first2 && ok) {                  /* 2 */
+  if (!is_abbrev(first2, first))
+    ok = FALSE;
+  temp  = any_one_arg(temp,  first);
+  temp2 = any_one_arg(temp2, first2);
+}
+if (ok && !*first2)
+  return (index);
+```
+
+The first rule is the obvious one and returns on its own line, which is
+most of why the second gets missed: the whole typed string against the
+whole spell name, so `magic mis` finds *magic missile*. The second walks
+both a word at a time and requires each typed word to abbreviate the
+name-word in the same position — so **`mag mis` finds it too**, and `b h`
+finds *burning hands*, and `det inv` finds *detect invisibility*. That is
+what a caster actually types, and this port had only the first rule until
+2026-08-30, refusing 1,145 of the 1,549 per-word abbreviations of the
+game's own 71 names (#355).
+
+Three things the loop does not say out loud.
+
+**It stops when *either* string runs out, and the verdict is `ok &&
+!*first2`.** So a query with **fewer** words than the name matches — `cure`
+reaches *cure blind* this way as well as through rule 1 — while a query
+with **more** words does not: `magic missile extra` finds nothing.
+
+**Both rules are tried for each entry before moving to the next**, and the
+walk is ascending, so the first entry matching *either* way wins. `c l` is
+*call lightning* (6) and not *cure light* (16), for the same reason `n` is
+`north`: the order is the answer.
+
+**An empty query returns the first spell.** With no words the loop never
+runs, `ok` is still `TRUE` and `!*first2` holds, so `find_skill_num("")`
+is 1 — armor. It is reachable: `do_cast` gets the spell name from
+`strtok(NULL, "'")`, which for `cast '  '` hands over two spaces, so
+**`cast '  '` casts armor on the real server**. *Reproduced*, which is the
+opposite of the call made for `isname`'s own empty-string case a few
+entries above — and the difference between them is reachability. `isname`'s
+is unreachable because every caller checks first; this one is not.
+
+Verified against `reference/tools/skilloracle.c` over 1,569 queries: every
+per-word abbreviation of every name, plus whitespace, case, tabs, runs of
+spaces, too-many-words and every full name. The oracle takes its name table
+on stdin so it is asked about the port's own `spellTable` rather than a
+duplicated copy that could drift.
+
+The corpus is the part worth reviewing, as ever. Before the fix the port's
+four test cases were `magic missile`, `magic mis`, `armor` and `heal` — one
+full two-word name, one abbreviation of the *last* word, and two
+single-word spells. Rule 2 only ever fires when the **first** word is
+abbreviated, so all four agreed with a C they were not testing, which is
+`isname`'s letters-and-spaces sweep happening again in a different
+function. `TestSkillQueriesCoverBothRules` now asserts the sweep still
+contains queries only rule 2 can answer.
+
+*Source*: `spell_parser.c`'s `find_skill_num`, `interpreter.c:1057`'s
+`is_abbrev`. See `docs/investigations/partial-matching.md`.
+
 ### `get_number` rewrites the argument before it decides the prefix was a number
 
 ```c

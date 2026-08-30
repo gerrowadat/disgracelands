@@ -243,6 +243,62 @@ func TestTheServerSurvivesNonsense(t *testing.T) {
 	m.noServerErrors()
 }
 
+// TestAbbreviatedSpellNamesReachTheSpell is `cast 'mag mis'`, which is what
+// a caster actually types and which this server refused until #355.
+//
+// find_skill_num has two matching rules and the port had one: the whole
+// typed string against the whole spell name, but not the second pass that
+// walks both a word at a time. So `magic mis` worked and `mag mis` did not,
+// along with 1,144 other abbreviations of the game's own spell names
+// (docs/investigations/partial-matching.md §4).
+//
+// internal/game has the exhaustive comparison against
+// reference/tools/skilloracle.c. This is here because that one tests a
+// function and this tests the thing a player types, through a real socket,
+// on a server that read its spell table off disk — which is the distinction
+// this suite exists for.
+func TestAbbreviatedSpellNamesReachTheSpell(t *testing.T) {
+	m := start(t, mini)
+	c := m.dial()
+	// A magic user, because a warrior does not know magic missile and would
+	// be refused for a reason that has nothing to do with the name.
+	c.create("Abbrev", "abbrevpass", "m", "m")
+
+	// Whatever the server says to the full name, it must say to every
+	// abbreviation of it. Asserted as equality rather than against a fixed
+	// string so this does not have to know whether the reply is a target
+	// question, a mana refusal or the spell going off.
+	full := c.do("cast 'magic missile'")
+	if strings.Contains(full, "Cast what?!?") {
+		t.Fatalf("the full spell name was not recognised:\n%s", full)
+	}
+
+	for _, abbrev := range []string{
+		"cast 'magic mis'", // rule 1: the whole string as a prefix
+		"cast 'mag mis'",   // rule 2: the first word abbreviated -- the bug
+		"cast 'm mis'",     // one letter of it
+		"cast 'mag missile'",
+		"cast 'MAG MIS'",  // is_abbrev lowers both sides
+		"cast 'mag  mis'", // a run of spaces, which any_one_arg skips
+	} {
+		got := c.do(abbrev)
+		if strings.Contains(got, "Cast what?!?") {
+			t.Errorf("%s was not recognised as magic missile:\n%s", abbrev, got)
+			continue
+		}
+		if got != full {
+			t.Errorf("%s answered differently from the full name:\n got: %s\nwant: %s", abbrev, got, full)
+		}
+	}
+
+	// The other half: more words than the name has is *not* a match, because
+	// the C's verdict is `ok && !*first2` and the query has words left over.
+	contains(t, "a query longer than the spell name",
+		c.do("cast 'magic missile extra'"), "Cast what?!?")
+
+	m.noServerErrors()
+}
+
 // TestARestartKeepsWhatWasSaved is the operator's question rather than the
 // player's: a server that has been stopped and started again is the same
 // game, with the same characters, their things and their money.

@@ -7,6 +7,7 @@
 package game
 
 import (
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -136,29 +137,103 @@ func SpellName(number SpellID) string {
 	return "!UNUSED!"
 }
 
-// SpellNumberByName finds a spell by name, matching a prefix as the C's
-// find_skill_num does — so `cast 'magic mis'` works.
-func SpellNumberByName(name string) (SpellID, bool) {
-	name = strings.ToLower(strings.TrimSpace(name))
-	if name == "" {
-		return 0, false
+// spellIDsInOrder is every spell number, ascending — the order
+// find_skill_num walks its table in, and therefore the order that decides
+// which of several matching spells an abbreviation means. Built once
+// because ranging a map would make the answer depend on iteration order.
+var spellIDsInOrder = func() []SpellID {
+	ids := make([]SpellID, 0, len(spellTable))
+	for id := range spellTable {
+		ids = append(ids, id)
 	}
+	slices.Sort(ids)
+	return ids
+}()
 
-	// An exact match wins outright; otherwise the lowest-numbered prefix
-	// match, so the answer does not depend on map iteration order.
-	best := SpellID(-1)
-	for number, info := range spellTable {
-		if info.Name == name {
+// isAbbrevOf is is_abbrev (interpreter.c:1057): a case-insensitive prefix
+// match, false for an empty prefix.
+//
+// ASCII-only lowering, as the C's LOWER() is, and byte-oriented for the
+// same reason matchesKeywords is — but it cannot matter here, because both
+// sides are spell names and query words rather than world data.
+func isAbbrevOf(prefix, full string) bool {
+	if prefix == "" || len(prefix) > len(full) {
+		return false
+	}
+	return strings.EqualFold(prefix, full[:len(prefix)])
+}
+
+// SpellNumberByName finds a spell or skill by name, porting find_skill_num
+// (spell_parser.c).
+//
+// **It has two rules, not one**, and the second is the one that gets
+// missed — this port had only the first until #355, and refused 1,145 of
+// the 1,549 per-word abbreviations of the 71 names below.
+//
+//		if (is_abbrev(name, spell_info[index].name))    /* 1 */
+//		  return (index);
+//		...                                             /* 2, word by word */
+//
+//	 1. The whole typed string against the whole spell name, so `magic mis`
+//	    finds magic missile.
+//	 2. Both walked a word at a time, each typed word required to be an
+//	    abbreviation of the name-word in the same position — so `mag mis`
+//	    finds it too, and `b h` finds burning hands, and `det inv` finds
+//	    detect invisibility. This is what a caster actually types.
+//
+// Both are tried for each entry before moving to the next, and the walk is
+// in ascending spell number, so the first entry that matches *either* way
+// wins. That ordering is the whole answer where several spells could
+// match: `c` is burning hands because burning hands is spell 5.
+//
+// Three things about rule 2 that reading it does not give you, all of them
+// checked against reference/tools/skilloracle.c rather than reasoned about
+// (docs/investigations/partial-matching.md §4.3):
+//
+//   - The C's loop stops when *either* string runs out and the verdict is
+//     `ok && !*first2`, so a query with **fewer** words than the name
+//     matches — `cure` reaches cure blind this way as well as through rule
+//     1 — while a query with **more** words does not. `magic missile
+//     extra` finds nothing.
+//   - Whitespace between words is a run, not a character: any_one_arg
+//     skips spaces, so `magic  mis` matches where rule 1 alone would fail.
+//   - **An empty query matches the first spell in the table.** With no
+//     words, the loop never runs, `ok` is still true and `!*first2` holds,
+//     so find_skill_num("") returns 1 — armor. That is not hypothetical:
+//     `cast '  '` reaches it through do_cast's strtok, and casts armor on
+//     the real server. It is reproduced rather than refused, which is the
+//     opposite of the call matchesKeywords made for isname's own
+//     empty-string case — and the difference between them is reachability.
+//     isname's is unreachable because every caller checks first; this one
+//     is not.
+func SpellNumberByName(name string) (SpellID, bool) {
+	queryWords := strings.Fields(name)
+
+	for _, number := range spellIDsInOrder {
+		spellName := spellTable[number].Name
+
+		// Rule 1: the whole string. Not trimmed — is_abbrev is handed the
+		// caller's string as it stands, and a leading space simply fails to
+		// match here and is skipped by rule 2's tokeniser instead.
+		if isAbbrevOf(name, spellName) {
 			return number, true
 		}
-		if strings.HasPrefix(info.Name, name) && (best < 0 || number < best) {
-			best = number
+
+		// Rule 2: word against word, in the C's own loop shape.
+		nameWords := strings.Fields(spellName)
+		ok, i := true, 0
+		for i < len(nameWords) && i < len(queryWords) && ok {
+			if !isAbbrevOf(queryWords[i], nameWords[i]) {
+				ok = false
+			}
+			i++
+		}
+		// `ok && !*first2`: the query ran out, not the name.
+		if ok && i >= len(queryWords) {
+			return number, true
 		}
 	}
-	if best < 0 {
-		return 0, false
-	}
-	return best, true
+	return 0, false
 }
 
 // SpellNameOrNumber names a spell/skill number via SpellName, or formats it

@@ -326,6 +326,23 @@ func TestSpellNumberByName(t *testing.T) {
 		"magic mis":     SpellMagicMissile,
 		"armor":         SpellArmor,
 		"heal":          SpellHeal,
+
+		// find_skill_num's second rule, which this port did not have until
+		// #355. Every one of these was refused before, and every one is
+		// what a caster actually types. The four cases above could not
+		// have caught it: the rule only fires when the *first* word is
+		// abbreviated, and not one of them abbreviates a first word.
+		"mag mis":    SpellMagicMissile,
+		"m mis":      SpellMagicMissile,
+		"magic  mis": SpellMagicMissile, // a run of spaces, not one
+		"MAG MIS":    SpellMagicMissile, // is_abbrev lowers both sides
+		"det inv":    SpellDetectInvis,
+		"cure lig":   SpellCureLight,
+		"cu l":       SpellCureLight,
+		// Ascending spell number decides between two that both match: `c l`
+		// is call lightning (6) rather than cure light (16), because 6 comes
+		// first. The order is the answer, exactly as it is for commands.
+		"c l": SpellCallLightning,
 	} {
 		got, ok := SpellNumberByName(name)
 		if !ok || got != want {
@@ -336,8 +353,26 @@ func TestSpellNumberByName(t *testing.T) {
 	if _, ok := SpellNumberByName("frobnicate"); ok {
 		t.Error("an invented spell was found")
 	}
-	if _, ok := SpellNumberByName(""); ok {
-		t.Error("an empty name was found")
+
+	// More words than the name has is *not* a match: the C's loop exits
+	// when the name runs out and its verdict is `ok && !*first2`, so the
+	// query having words left over fails it.
+	if got, ok := SpellNumberByName("magic missile extra"); ok {
+		t.Errorf("SpellNumberByName(%q) = %d; want no match", "magic missile extra", got)
+	}
+
+	// An empty query matches the *first* spell in the table, which is armor.
+	// With no words the C's loop never runs, `ok` is still true and
+	// `!*first2` holds. Reachable: `cast '  '` casts armor on the real
+	// server (do_cast's strtok hands find_skill_num the spaces).
+	//
+	// This test asserted the opposite until #355 — that an empty name is
+	// not found — which was the port's behaviour and not the C's.
+	if got, ok := SpellNumberByName(""); !ok || got != SpellArmor {
+		t.Errorf("SpellNumberByName(%q) = %d, %v; want armor (%d)", "", got, ok, SpellArmor)
+	}
+	if got, ok := SpellNumberByName("   "); !ok || got != SpellArmor {
+		t.Errorf("SpellNumberByName(%q) = %d, %v; want armor (%d)", "   ", got, ok, SpellArmor)
 	}
 
 	// A prefix that matches several is resolved deterministically, not by map

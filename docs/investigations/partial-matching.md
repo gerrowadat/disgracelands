@@ -3,7 +3,8 @@
 **Question asked:** partial keyword matching should keep working the way it
 did in the C server — does it?
 
-**Answer:** mostly, and the one place it does not is `cast`.
+**Answer:** it does now. It did not when this was written, and the place it
+did not was `cast`.
 
 "Partial keyword matching" sounds like one feature. In CircleMUD it is five
 different rules living in four different functions, and they disagree with
@@ -12,9 +13,18 @@ the taxonomy right is most of the work here, because the interesting bug —
 §4 — is in the rule nobody thinks of as keyword matching.
 
 Investigated 2026-08-30, against `reference/CircleMUD3-src/src` and the
-port at `044ddc2`. Findings are in §4 (a real gap, now
-[#355](https://github.com/gerrowadat/disgracelands/issues/355)) and §7 (a
-comment that says the opposite of what its own function does).
+port at `044ddc2`. Findings were in §4 (a real gap) and §7 (a comment that
+says the opposite of what its own function does).
+
+> **Both are fixed, 2026-08-30.** §4's gap was
+> [#355](https://github.com/gerrowadat/disgracelands/issues/355):
+> `find_skill_num`'s second rule is now ported and checked against
+> `reference/tools/skilloracle.c` over 1,569 queries, which found one more
+> thing this document had not — see §4.5. §7's comment was corrected in the
+> change that added this file. The taxonomy in §1 and the C readings
+> throughout are what the document is for now; the port-state claims are
+> kept in past tense where they have moved on rather than deleted, because
+> what was wrong and why is the useful part.
 
 ---
 
@@ -110,10 +120,11 @@ port.
 
 ---
 
-## 4. Rule 4 — `find_skill_num` has two branches and the port has one
+## 4. Rule 4 — `find_skill_num` has two branches and the port had one
 
-**This is the finding.** `cast 'mag mis'` worked on the real server. It
-does not work here.
+**This was the finding.** `cast 'mag mis'` worked on the real server and
+did not work here. Fixed 2026-08-30; §4.5 records what fixing it turned
+up.
 
 ```c
 for (index = 1; index <= TOP_SPELL_DEFINE; index++) {
@@ -145,8 +156,9 @@ position. That is what makes `mag mis` work, and `b h` for *burning hands*,
 and `det inv` for *detect invisibility*. It is how anybody who played this
 game actually cast a spell.
 
-`internal/game/spell.go`'s `SpellNumberByName` is `strings.HasPrefix(info.Name, name)`
-— the first branch and nothing else.
+`internal/game/spell.go`'s `SpellNumberByName` was
+`strings.HasPrefix(info.Name, name)` — the first branch and nothing else.
+It is now both, in the C's own loop shape, with the C's own ordering.
 
 ### 4.1 How wrong, measured
 
@@ -192,15 +204,52 @@ both are in `skilloracle.c`'s header:
   query. A Go port has no such hazard and no reason to reproduce it, but a
   C-shaped transliteration that missed it would be quietly destructive.
 
-### 4.4 One difference that is *not* a bug
+### 4.4 A difference that looked harmless, and went anyway
 
-`SpellNumberByName` prefers an exact name outright, then the lowest-numbered
-prefix match; the C takes the first match in table order with no exact-match
-preference. These disagree only where one spell's full name is a strict
-prefix of another's. **No such pair exists** in the 71-name table — checked
-— so the difference is unreachable. Worth leaving as it is: it makes
-`SpellNameOrNumber`'s round trip exact by construction, which the yaml
-format depends on.
+`SpellNumberByName` preferred an exact name outright, then the
+lowest-numbered prefix match; the C takes the first match in table order
+with no exact-match preference. Those disagree only where one spell's full
+name is a strict prefix of another's, and **no such pair exists** in the
+71-name table — so this document originally recorded it as unreachable and
+worth keeping, because it made `SpellNameOrNumber`'s round trip exact by
+construction.
+
+It went with the fix anyway, and the reasoning is worth keeping. Rule 2
+creates matches rule 1 never could, so "unreachable" was a claim about a
+one-rule function and the function now has two. Rather than re-derive
+whether the exception was still safe, the port now does what the C does —
+ascending order, rule 1 then rule 2 per entry, first match wins — and the
+round-trip property is *asserted* instead of arranged: every full spell
+name is in the oracle sweep, so a name that resolved to some earlier spell
+would fail the comparison rather than quietly changing what a wand
+round-trips to.
+
+### 4.5 What fixing it turned up: an empty query matches the first spell
+
+Not in the original investigation, and found by writing the oracle sweep.
+
+With no words at all, rule 2's loop never runs, `ok` is still `TRUE` and
+`!*first2` holds — so `find_skill_num("")` returns **1**, which is armor.
+
+It is reachable. `do_cast` takes the spell name from `strtok(NULL, "'")`,
+which for `cast '  '` hands over two spaces, so **`cast '  '` casts armor
+on the real server**. The port answered "Cast what?!?".
+
+Reproduced rather than refused, which is the opposite of the call
+`matchesKeywords` made for `isname`'s own empty-string case:
+
+> The one deliberate difference: an empty word matches nothing here, where
+> the C's isname matches it against anything. Every caller checks for an
+> empty argument first, so the difference is unreachable, and refusing is
+> the safer shape.
+
+The difference between the two is exactly that reachability. `isname`'s
+callers do all check; `find_skill_num`'s do not — `SPECIAL(guild)` and
+`do_skillset` guard, and `do_cast` does not. So the same reasoning lands
+on opposite answers in the two functions, which is worth knowing before
+somebody "makes them consistent".
+
+Recorded in `docs/weirdnumbers.md` beside the `isname` entry.
 
 ---
 
@@ -259,7 +308,7 @@ The consequence worth knowing: an object whose keyword list is literally
 
 ---
 
-## 7. A comment that says the opposite of its own function
+## 7. A comment that said the opposite of its own function
 
 `internal/game/object.go`:
 
@@ -300,13 +349,13 @@ matches correctly.
 | 1. `isname` — objects, mobiles, exits | **Correct**, oracle-checked over 1,456 pairings |
 | 2. Command abbreviation | **Correct**, table order re-parsed from `interpreter.c`, level-in-match reproduced |
 | 3. `is_abbrev` | **Correct** |
-| 4. `find_skill_num` — spells | **Broken**: second branch missing, 1,145/1,549 abbreviations refused (#355) |
+| 4. `find_skill_num` — spells | **Was broken**: second branch missing, 1,145/1,549 abbreviations refused. Fixed and oracle-checked (#355) |
 | 5. `search_block` — fixed tables | **Correct** in shape; empty-argument quirk not reproduced, and unreachable |
 | 0. `fill_word` | **Correct** |
 
-So: partial keyword matching does keep working the way it did in the C
-server, for keywords. For spell names it does not, and `cast 'mag mis'` is
-the shape of the loss.
+So: partial matching now works the way it did in the C server, in all five
+of its rules. It did not for spell names when this was written, and `cast
+'mag mis'` was the shape of the loss.
 
 ---
 
