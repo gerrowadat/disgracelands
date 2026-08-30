@@ -136,9 +136,8 @@ func Attack(attacker, victim *PlayerRecord, af, vf Fighter, r *rng.Rand) Swing {
 	dam := Strength(attacker.Abilities.Strength, attacker.Abilities.StrengthPercentile).ToDamage
 	dam += attacker.Points.DamRoll
 
-	if wielded := af.Wielded(); wielded != nil && wielded.Type == ItemWeapon {
-		// Values 1 and 2 are the number and size of the damage dice.
-		dam += r.Dice(wielded.Values[1], wielded.Values[2])
+	if weapon, ok := af.Wielded().WeaponValues(); ok {
+		dam += r.Dice(weapon.Dice.Number, weapon.Dice.Size)
 	} else if af.IsNPC() {
 		dam += r.Dice(attacker.DamageDice, attacker.DamageSize)
 	} else {

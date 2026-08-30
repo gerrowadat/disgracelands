@@ -31,16 +31,17 @@ package game
 // C call these percentages — 30%, 20%, 10% — which they were before somebody
 // multiplied the whole scale by ten.
 func ArmorClassOf(obj *Object, pos WearPosition) int32 {
-	if obj == nil || obj.Type != ItemArmor {
+	armor, ok := obj.ArmorValues()
+	if !ok {
 		return 0
 	}
 	switch pos {
 	case WearBody:
-		return 3 * obj.Values[0]
+		return 3 * armor.ACApply
 	case WearHead, WearLegs:
-		return 2 * obj.Values[0]
+		return 2 * armor.ACApply
 	default:
-		return obj.Values[0]
+		return armor.ACApply
 	}
 }
 

@@ -343,7 +343,7 @@ func TradeWith(shop *ShopDef, obj *Object) TradeResult {
 		// A wand or staff with no charges is refused *whatever* the keyword
 		// says, and the loop stops there rather than trying the next entry
 		// for the same type.
-		if obj.Values[2] == 0 && (obj.Type == ItemWand || obj.Type == ItemStaff) {
+		if charges, ok := obj.ChargesValues(); ok && charges.Remaining == 0 {
 			return TradeDead
 		}
 		if EvaluateShopExpression(obj, want.Keyword) {

@@ -228,11 +228,11 @@ func (c *Context) getObjectFromContainer(obj, cont *game.Object, onGround bool) 
 // up in an inventory. The C runs this after the "You get $p." line, so a
 // player sees themselves pick up a pile and then be told what was in it.
 func (c *Context) checkMoney(obj *game.Object) {
-	if obj.Type != game.ItemMoney || obj.Values[0] <= 0 || c.Character.Record == nil {
+	if obj.Type != game.ItemMoney || obj.Coins() <= 0 || c.Character.Record == nil {
 		return
 	}
 
-	value := obj.Values[0]
+	value := obj.Coins()
 	c.World.ExtractObject(obj)
 	c.Character.Record.Points.Gold += value
 

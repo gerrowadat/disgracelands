@@ -226,9 +226,12 @@ const (
 // documented simplification (docs/deviations.md) rather than a silent
 // gap, until the world format carries that field.
 func WeaponAttackType(wielded *Object) int32 {
-	if wielded != nil && wielded.Type == ItemWeapon {
-		return TypeHit + AttackHit + wielded.Values[3]
+	if weapon, ok := wielded.WeaponValues(); ok {
+		return weapon.Damage.AttackType()
 	}
+	// AttackHit is zero, so bare hands are TypeHit itself. Written out
+	// because the C writes it out, and because "TypeHit + AttackHit" is
+	// the shape every other caller of this scale has.
 	return TypeHit + AttackHit
 }
 

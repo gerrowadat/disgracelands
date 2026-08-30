@@ -141,6 +141,12 @@ func doBackstab(c *Context) error {
 		return nil
 	}
 	// Value 3 is the weapon's attack type, and only a piercing one will do.
+	//
+	// Raw rather than through WeaponValues(), because do_backstab reads the
+	// slot **without checking the type** (act.offensive.c) — anything with
+	// the wield flag can be in that slot, and whether it backstabs depends
+	// on what happens to be in its value 3. A typed accessor refuses a
+	// non-weapon outright, which is a stricter rule than the game has.
 	if weapon.Values[3] != game.AttackPierce {
 		c.Send("Only piercing weapons can be used for backstabbing.\r\n")
 		return nil

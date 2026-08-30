@@ -52,7 +52,8 @@ const (
 // burnout timer skips it because that is guarded on `> 0`
 // (handler.c:823). Both readings are load-bearing and neither is obvious.
 func LitLight(o *Object) bool {
-	return o != nil && o.Type == ItemLight && o.Values[2] != 0
+	light, ok := o.LightValues()
+	return ok && light.Hours != 0
 }
 
 // LightsIn counts the light sources in a room.

@@ -248,6 +248,118 @@ func (o *Object) ContainerValues() (ContainerValues, bool) {
 	}, true
 }
 
+// The setters below are per field, deliberately. A Set<Thing>Values that
+// wrote all four slots would zero the ones this file does not name -- a
+// weapon's value 0, the hitroll modifier oedit prompts for and nothing
+// reads -- and a builder's number is not ours to discard. The
+// ValuesOf<Thing> functions write whole groups because they are used to
+// *build* an object, where every slot starts at zero anyway.
+
+// SetWeaponDice sets a weapon's damage dice, leaving its damage type and
+// its unnamed value 0 alone. This is what cursing and uncursing a weapon
+// move: a curse takes a point off the die size, so a 2d6 sword becomes
+// 2d5 (objmagic.go).
+func (o *Object) SetWeaponDice(d Dice) {
+	if o == nil || o.Type != ItemWeapon {
+		return
+	}
+	o.Values[weaponDiceCount], o.Values[weaponDiceSize] = d.Number, d.Size
+}
+
+// SetChargesRemaining sets how many charges a wand or staff has left.
+func (o *Object) SetChargesRemaining(n int32) {
+	if o == nil || (o.Type != ItemWand && o.Type != ItemStaff) {
+		return
+	}
+	o.Values[chargesRemaining] = n
+}
+
+// SetDrinkFilled sets how much is in a drink container or fountain.
+func (o *Object) SetDrinkFilled(n int32) {
+	if o == nil || (o.Type != ItemDrinkCon && o.Type != ItemFountain) {
+		return
+	}
+	o.Values[drinkFilled] = n
+}
+
+// SetDrinkLiquid sets which liquid a drink container or fountain holds.
+//
+// It does not touch the container's *name*: the liquid's keyword is
+// appended and removed by NameToDrinkCon and NameFromDrinkCon, and getting
+// that pairing wrong is how a bottle stops answering to `water`.
+func (o *Object) SetDrinkLiquid(l Liquid) {
+	if o == nil || (o.Type != ItemDrinkCon && o.Type != ItemFountain) {
+		return
+	}
+	o.Values[drinkLiquid] = l.Number()
+}
+
+// Poisoned reports whether a consumable has been poisoned, and SetPoisoned
+// sets it.
+//
+// One accessor for all three consumable types rather than a field of
+// DrinkValues alone, because the slot really is shared: oedit's value-4
+// menu lists ITEM_DRINKCON, ITEM_FOUNTAIN and ITEM_FOOD together under one
+// "Poisoned (0 = not poison)" prompt, and drinkPoisoned and foodPoisoned
+// are the same 3. Anything else answers false and refuses to be set, which
+// is what spell_poison's own `consumable` guard already required.
+func (o *Object) Poisoned() bool {
+	if !o.Consumable() {
+		return false
+	}
+	return o.Values[drinkPoisoned] != 0
+}
+
+// SetPoisoned poisons a consumable, or takes the poison back out.
+func (o *Object) SetPoisoned(poisoned bool) {
+	if !o.Consumable() {
+		return
+	}
+	o.Values[drinkPoisoned] = 0
+	if poisoned {
+		o.Values[drinkPoisoned] = 1
+	}
+}
+
+// Consumable reports whether the object is something a character can eat or
+// drink -- the three types the poison slot is shared by.
+func (o *Object) Consumable() bool {
+	return o != nil && (o.Type == ItemDrinkCon || o.Type == ItemFountain || o.Type == ItemFood)
+}
+
+// FoodFilling is how many hours of hunger a piece of food settles, and
+// SetFoodFilling sets it. Eating takes it down by one an hour.
+func (o *Object) FoodFilling() int32 {
+	if o == nil || o.Type != ItemFood {
+		return 0
+	}
+	return o.Values[foodFilling]
+}
+
+// SetFoodFilling sets how much of a piece of food is left.
+func (o *Object) SetFoodFilling(n int32) {
+	if o == nil || o.Type != ItemFood {
+		return
+	}
+	o.Values[foodFilling] = n
+}
+
+// Coins is how much gold a pile of money is, and SetCoins sets it.
+func (o *Object) Coins() int32 {
+	if o == nil || o.Type != ItemMoney {
+		return 0
+	}
+	return o.Values[moneyCoins]
+}
+
+// SetCoins sets how much gold a pile of money is.
+func (o *Object) SetCoins(amount int32) {
+	if o == nil || o.Type != ItemMoney {
+		return
+	}
+	o.Values[moneyCoins] = amount
+}
+
 // ValuesOfWeapon, ValuesOfArmor and the rest are the accessors' inverses:
 // the four slots a typed form encodes to. They take the values rather than
 // an object because the world reader builds a prototype's slots before
