@@ -18,9 +18,13 @@ fence, and it is drawn carefully, because "implementation only" is very
 easy to say and this is a change that could break the game in ways no test
 would notice if the fence were drawn casually.
 
-> **Status, 2026-08-30: proposed, nothing built.** This is the forward
-> plan. `go-port-plan.md` and `yaml-only.md` both moved to `docs/design/`
-> on the same day this was written; neither is extended with new work.
+> **Status, 2026-08-30: in progress.** §7's step table is the tracker;
+> each row is struck through as it lands. `go-port-plan.md` and
+> `yaml-only.md` both moved to `docs/design/` on the day this was written;
+> neither is extended with new work.
+>
+> - **Step 0, the resave fixture — done.** It found something on its
+>   first run: see §7's row.
 
 ---
 
@@ -611,7 +615,7 @@ so that the riskiest step is last and separable.
 
 | | Step | What it is | Risk |
 | --- | --- | --- | --- |
-| **0** | **The resave fixture** | §6's load-and-resave test, plus a `go test` that walks every `examples/` directory. Nothing else. | None. Do this first; everything after it leans on it. |
+| **0** | ~~**The resave fixture**~~ **Done.** | §6's load-and-resave test, over all three corpora and all seven subsystems: `cmd/dlctl`'s `TestFmtLeavesTheCheckedInCorporaAlone`. It failed the first time it ran — `dlctl fmt --type=state` was the only caller in the tree that could bring a `state/bans.yaml` into existence, so formatting a converted directory added a file the conversion had deliberately not written. Fixed in `bans/yaml`'s `Rewrite`, not in the corpus. | None. Do this first; everything after it leans on it. |
 | **1** | **A type per flag domain** | §4.1. `Flags` → `Set[RoomFlag]`, `Set[AffectFlag]`, `Set[PlayerFlag]`, … One domain per PR, eleven or so PRs. `Raw()`/`Unknown()` at the persistence boundary only. | Low, high volume. The compiler finds every site. `bitnames_test.go` must still re-parse `constants.c`. |
 | **2** | **A type per enumeration** | §4.2. Class, Sex, Race, ItemType, Apply, SpellID, Sector, Liquid, and `MobDef.Position` onto the existing `game.Position`. `RemortVector` becomes `Set[Class]`. | Low, high volume. Watch the table-indexed tests (§5). |
 | **3** | **Typed object values** | §4.3. Lift `values.go`'s taxonomy into `game`, typed accessors, raw kept as the stored truth. 84 positional accesses go. | Medium. The five-types-only rule is a constraint, not a starting point to improve on. |

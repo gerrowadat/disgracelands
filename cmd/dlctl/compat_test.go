@@ -551,3 +551,63 @@ func treeBytes(t *testing.T, dir string) map[string][]byte {
 	}
 	return out
 }
+
+// TestFmtLeavesTheCheckedInCorporaAlone is the load-and-resave check
+// docs/proposals/idiomatic-go.md §6 asks for as its step 0, and the one
+// direction this repository's compatibility suite did not cover.
+//
+// Every other format check in the tree runs *binary → yaml*:
+// TestImportMatchesTheCheckedInExamples regenerates the corpus from its
+// legacy source and diffs, TestEveryCorpusConvertsWithNoLoss loads both
+// formats and deep-compares, and release.yml re-runs the first of those
+// against a fresh build. All three start at a legacy directory. None of
+// them goes *yaml → memory → yaml*, which is the only path a change to
+// what the server holds in memory can actually alter — a field that
+// stopped surviving the trip through `internal/game` would be reproduced
+// faithfully by an importer that never round-trips it.
+//
+// TestFmtIsIdempotent above walks the same code and deliberately does not
+// make this claim: it allows the *first* `fmt` to change the checked-in
+// bytes, because idempotence is a property of the writer ("twice equals
+// once") rather than of the corpus. This is the stability half of the same
+// pair, against the committed bytes, and the difference between them is
+// exactly the failure a memory-model refactor produces. Kept as a separate
+// test rather than tightened into that one so that a genuine writer change
+// — which is allowed to reformat a corpus, once, with the corpus updated
+// in the same commit — fails here with a message that says which it was.
+func TestFmtLeavesTheCheckedInCorporaAlone(t *testing.T) {
+	for _, fx := range corpora {
+		t.Run(fx.name, func(t *testing.T) {
+			for _, ty := range allTypes {
+				t.Run(string(ty), func(t *testing.T) {
+					dir := t.TempDir()
+					copyTree(t, fx.yamlDir, dir)
+					before := treeBytes(t, dir)
+
+					if err := run([]string{"fmt", "--type", string(ty), "--dir", dir}); err != nil {
+						t.Fatalf("fmt: %v", err)
+					}
+					after := treeBytes(t, dir)
+
+					for path, want := range before {
+						got, ok := after[path]
+						switch {
+						case !ok:
+							t.Errorf("%s: loading and re-saving removed it", path)
+						case !bytes.Equal(got, want):
+							t.Errorf("%s: loading and re-saving changed it (%d bytes, was %d) — "+
+								"either the writer changed, in which case regenerate the corpus in "+
+								"the same commit, or a field no longer survives the trip through "+
+								"memory, in which case do not", path, len(got), len(want))
+						}
+					}
+					for path := range after {
+						if _, ok := before[path]; !ok {
+							t.Errorf("%s: loading and re-saving created it", path)
+						}
+					}
+				})
+			}
+		})
+	}
+}

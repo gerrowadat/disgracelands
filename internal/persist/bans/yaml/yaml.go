@@ -94,7 +94,27 @@ func (s *Store) Close() error { return nil }
 // changing its contents — `dlctl fmt --type=state`'s way of reformatting bans,
 // since Add/Remove are the only ways to change what is stored and neither
 // is the right shape for "no changes, just rewrite."
-func (s *Store) Rewrite() error { return s.save() }
+//
+// A directory with no ban file and nobody banned is left alone rather than
+// given an empty one. Nothing else ever creates that file: New treats a
+// missing file as "nobody has been thrown off yet", `dlctl import` writes
+// bans only through Add, and so does the game. Rewriting unconditionally
+// made `dlctl fmt --type=state` the one caller in the tree that could
+// bring a bans.yaml into existence, so formatting a converted directory
+// added a file its own conversion had deliberately not written — which is
+// the asymmetry cmd/dlctl's TestFmtLeavesTheCheckedInCorporaAlone found on
+// the first run it ever made. Mail has the same rule from the other end
+// (mail/yaml's save removes an emptied file, matching classic); houses and
+// reports genuinely do write a schema-only file, because their importers
+// always Save.
+func (s *Store) Rewrite() error {
+	if len(s.List()) == 0 {
+		if _, err := os.Stat(s.path); os.IsNotExist(err) {
+			return nil
+		}
+	}
+	return s.save()
+}
 
 func (s *Store) load() error {
 	b, err := os.ReadFile(s.path) //nolint:gosec // a configured path

@@ -132,3 +132,45 @@ func TestWrittenFileIsReadableStrictYAML(t *testing.T) {
 		t.Errorf("the file is:\n%s\nwant:\n%s", b, want)
 	}
 }
+
+// TestRewriteDoesNotInventAFile pins the rule Rewrite's own comment
+// explains: `dlctl fmt --type=state` reformats a ban file, and a directory
+// that has none because nobody has been banned has nothing to reformat.
+//
+// The second half is the one that makes it a test rather than a
+// restatement: a file that *does* exist and holds an empty list is still
+// rewritten, so `fmt` cannot be made to leave a stale or non-canonical
+// file behind by the simple expedient of it being empty.
+func TestRewriteDoesNotInventAFile(t *testing.T) {
+	dir := t.TempDir()
+	s, err := New(bans.Config{Path: dir})
+	if err != nil {
+		t.Fatalf("opening: %v", err)
+	}
+	if err := s.Rewrite(); err != nil {
+		t.Fatalf("Rewrite: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(dir, fileName)); !os.IsNotExist(err) {
+		t.Errorf("Rewrite created %s for a directory with nobody banned: %v", fileName, err)
+	}
+
+	other := t.TempDir()
+	path := filepath.Join(other, fileName)
+	if err := os.WriteFile(path, []byte("schema: dl/bans@1\nbans: []\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	s2, err := New(bans.Config{Path: other})
+	if err != nil {
+		t.Fatalf("opening: %v", err)
+	}
+	if err := s2.Rewrite(); err != nil {
+		t.Fatalf("Rewrite: %v", err)
+	}
+	got, err := os.ReadFile(path) //nolint:gosec // a file this test wrote
+	if err != nil {
+		t.Fatalf("reading it back: %v", err)
+	}
+	if want := "schema: dl/bans@1\n"; string(got) != want {
+		t.Errorf("an existing empty ban file rewrote as %q, want %q", got, want)
+	}
+}
