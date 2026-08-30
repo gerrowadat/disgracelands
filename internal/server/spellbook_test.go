@@ -798,7 +798,7 @@ var spellbook = map[game.SpellID]spellCase{
 		if contents <= 0 {
 			t.Errorf("the jug holds %d, want some water", contents)
 		}
-		if liquid != game.LiquidWater {
+		if game.Liquid(liquid) != game.LiquidWater {
 			t.Errorf("the jug holds liquid %d, want water (%d)", liquid, game.LiquidWater)
 		}
 	}},

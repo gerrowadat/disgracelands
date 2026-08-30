@@ -31,7 +31,7 @@ func giveFood(t *testing.T, srv *Server, who string, filling, poison int32) *gam
 }
 
 // giveDrink puts a filled container in their hands.
-func giveDrink(t *testing.T, srv *Server, who string, liquid, units int32) *game.Object {
+func giveDrink(t *testing.T, srv *Server, who string, liquid game.Liquid, units int32) *game.Object {
 	t.Helper()
 
 	var vessel *game.Object
@@ -44,7 +44,7 @@ func giveDrink(t *testing.T, srv *Server, who string, liquid, units int32) *game
 		vessel.Weight = units
 		vessel.Values[0] = units
 		vessel.Values[1] = units
-		vessel.Values[2] = liquid
+		vessel.Values[2] = liquid.Number()
 		// A full container carries the liquid's keyword, as the loader and
 		// every pour give it: `drink beer` has to find the bottle.
 		game.NameToDrinkCon(vessel, liquid)
@@ -318,7 +318,7 @@ func TestPouringEmptiesAContainer(t *testing.T) {
 
 // TestDrinkTablesMatchTheC, spot-checked against constants.c's drink_aff.
 func TestDrinkTables(t *testing.T) {
-	for liquid, want := range map[int32][3]int32{
+	for liquid, want := range map[game.Liquid][3]int32{
 		0:  {0, 1, 10}, // water
 		5:  {6, 1, 4},  // whisky
 		7:  {10, 0, 0}, // firebreather

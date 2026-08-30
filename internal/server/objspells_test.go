@@ -131,7 +131,7 @@ func TestCreateWater(t *testing.T) {
 	c.settle()
 
 	inWorld(t, srv, func(_ *game.Live) {
-		if bottle.Values[2] != game.LiquidSlime {
+		if game.Liquid(bottle.Values[2]) != game.LiquidSlime {
 			t.Errorf("the beer is liquid %d, want slime", bottle.Values[2])
 		}
 		if !bottle.Matches("juice") {
@@ -149,7 +149,7 @@ func TestCreateWater(t *testing.T) {
 		if bottle.Values[1] != bottle.Values[0] {
 			t.Errorf("the bottle holds %d of %d", bottle.Values[1], bottle.Values[0])
 		}
-		if bottle.Values[2] != game.LiquidWater || !bottle.Matches("water") {
+		if game.Liquid(bottle.Values[2]) != game.LiquidWater || !bottle.Matches("water") {
 			t.Errorf("the bottle holds liquid %d, keywords %q", bottle.Values[2], bottle.Keywords)
 		}
 	})
@@ -173,7 +173,7 @@ func TestFillingFromAFountain(t *testing.T) {
 	inWorld(t, srv, func(_ *game.Live) {
 		fountain.Values[0] = 100
 		fountain.Values[1] = 100
-		fountain.Values[2] = game.LiquidWater
+		fountain.Values[2] = game.LiquidWater.Number()
 	})
 
 	c.send("fill bottle from fountain")
