@@ -110,6 +110,40 @@ func doCast(c *Context) error {
 		return nil
 	}
 
+	// cast_spell's own three refusals (spell_parser.c:506-522). They are
+	// *here*, after the concentration roll and before call_magic, because
+	// that is where the C has them: do_cast rolls, and only then calls
+	// cast_spell, which makes these checks and returns 0.
+	//
+	// Where they sit is not cosmetic. Two things follow from it:
+	//
+	//   - A refusal costs nothing at all. The full mana is subtracted only
+	//     when cast_spell returns 1, and the half-mana penalty belongs to
+	//     the failed roll, which this is not. `cast 'group heal'` while
+	//     ungrouped used to charge all 60 for a spell that did nothing and
+	//     said nothing -- spellGroup returns early when the caster is not
+	//     grouped, but castSpell had already set did = true (#301).
+	//   - A caster who fails the roll never sees them. Aim a self-only
+	//     spell at somebody else and lose the concentration roll, and the
+	//     C says "You lost your concentration!" and takes half the mana,
+	//     exactly as it would for any other spell.
+	//
+	// They are not in castSpell, which is call_magic: a wand or a scroll
+	// reaches call_magic without going through cast_spell, so
+	// `mag_objectmagic` has never made these checks and neither does this.
+	if victim != nil && victim != c.Character && info.Targets.Has(game.TargetSelfOnly) {
+		c.Send("You can only cast this spell upon yourself!\r\n")
+		return nil
+	}
+	if victim == c.Character && info.Targets.Has(game.TargetNotSelf) {
+		c.Send("You cannot cast this spell upon yourself!\r\n")
+		return nil
+	}
+	if info.Routines.Has(game.MagGroups) && !c.Character.Grouped() {
+		c.Send("You can't cast this spell if you're not in a group!\r\n")
+		return nil
+	}
+
 	if c.castSpell(info, number, victim, object, game.SaveSpell) && mana > 0 {
 		rec.Points.Mana = max(0, min(rec.Points.MaxMana, rec.Points.Mana-mana))
 	}
