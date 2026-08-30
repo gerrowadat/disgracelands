@@ -221,6 +221,61 @@ construction, which the yaml format depends on.
 
 ---
 
+### 4.5 What that fix did not cover: an empty query matches the first spell
+
+Not in this investigation, and found by widening the oracle's corpus
+afterwards. #355's fix agreed with the C on **1,565 of 1,569** queries; the
+four it did not were `""`, `" "`, `"   "` and `"\t"`.
+
+With no words at all, rule 2's loop never runs, `ok` is still true and
+`!*first2` holds — so `find_skill_num("")` returns **1**, which is armor.
+
+#355 considered this and concluded the C could not reach it, on the
+reasoning that `do_cast` gets the spell name from `strtok(argument, "'")`
+and strtok skips leading delimiters, so `cast ''` never hands an empty name
+over. That is **right about `cast ''` and wrong in general**, because only
+the quote is a delimiter and a space is not:
+
+```
+cast ''             -> "Spell names must be enclosed..."   (the C, and here)
+cast '  '           -> find_skill_num("  ")   ->  armor    (the C)
+```
+
+`any_one_arg` tokenises the two spaces away before either rule sees them, so
+`find_skill_num` cannot tell `"  "` from `""`. **`cast '  '` casts armor on
+the real server.**
+
+The reasoning was reached by reading `strtok` rather than running it, which
+is this document's own §2 lesson arriving in a new place, and the fix for it
+is `reference/tools/castparse.c` — do_cast's three calls and nothing else.
+
+Fixing it needed the parser too, which is why #365 carries both. This port's
+`ParseCastArgument` found the first quote and then the second, collapsing
+`cast ''` and `cast '  '` into the same empty spell name — so removing the
+refusal in `SpellNumberByName` on its own would have made `cast ''` cast
+armor, which the C does not. Four answers had to move together:
+
+| typed | the C | this port, before |
+|---|---|---|
+| `cast ''` | "must be enclosed" | "Cast what?!?" |
+| `cast '  '` | casts armor | "Cast what?!?" |
+| `cast '' fido` | spell name is `" fido"` | "Cast what?!?" |
+| `cast 'magic missile` | works, no closing quote needed | "must be enclosed" |
+
+And the refusal moved rather than being deleted:
+`SpellNumberFromNameOrNumber`, which is the *format* lookup the yaml readers
+call, refuses an empty name itself — so a blank `spell:` in a file stays an
+error instead of becoming armor. One function serving both a player's typing
+and a file's contents wants different answers for each.
+
+Recorded in `docs/weirdnumbers.md` beside the `isname` entry, whose own
+empty-string case this is deliberately the opposite of. The difference is
+reachability: every `isname` caller checks for an empty argument first;
+`find_skill_num`'s do not all check.
+
+
+---
+
 ## 5. Rule 5 — `search_block`, and a quirk nobody reproduced
 
 ```c
@@ -317,7 +372,7 @@ matches correctly.
 | 1. `isname` — objects, mobiles, exits | **Correct**, oracle-checked over 1,456 pairings |
 | 2. Command abbreviation | **Correct**, table order re-parsed from `interpreter.c`, level-in-match reproduced |
 | 3. `is_abbrev` | **Correct** |
-| 4. `find_skill_num` — spells | **Broken**: second branch missing, 1,145/1,549 abbreviations refused (#355) |
+| 4. `find_skill_num` — spells | **Was broken** twice: the second branch (#355) and the empty query (#365, with do_cast's parse). Both fixed and oracle-checked |
 | 5. `search_block` — fixed tables | **Correct** in shape; empty-argument quirk not reproduced, and unreachable |
 | 0. `fill_word` | **Correct** |
 

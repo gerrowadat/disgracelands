@@ -353,8 +353,26 @@ func TestSpellNumberByName(t *testing.T) {
 	if _, ok := SpellNumberByName("frobnicate"); ok {
 		t.Error("an invented spell was found")
 	}
-	if _, ok := SpellNumberByName(""); ok {
-		t.Error("an empty name was found")
+	// An empty name matches the *first* spell in the table, which is the C's
+	// answer: is_abbrev rejects an empty arg1 so rule 1 declines, then the
+	// word loop never runs, leaving `ok` TRUE and `first2` empty. Reachable
+	// as `cast '  '` — only the quote is a strtok delimiter, so the spaces
+	// are handed over and any_one_arg tokenises them away (#365).
+	//
+	// This asserted the opposite until then.
+	for _, empty := range []string{"", " ", "   ", "\t"} {
+		if got, ok := SpellNumberByName(empty); !ok || got != SpellArmor {
+			t.Errorf("SpellNumberByName(%q) = %d, %v; want armor (%d)", empty, got, ok, SpellArmor)
+		}
+	}
+
+	// The refusal lives at the format boundary instead, where an empty name
+	// is a malformed file rather than somebody's typing.
+	if got, ok := SpellNumberFromNameOrNumber(""); ok {
+		t.Errorf("SpellNumberFromNameOrNumber(%q) = %d; want it refused", "", got)
+	}
+	if got, ok := SpellNumberFromNameOrNumber("  "); ok {
+		t.Errorf("SpellNumberFromNameOrNumber(%q) = %d; want it refused", "  ", got)
 	}
 
 	// A prefix that matches several is resolved deterministically, not by map

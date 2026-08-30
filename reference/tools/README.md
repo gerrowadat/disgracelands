@@ -114,6 +114,24 @@ wrong. Every oracle written so far has caught at least one real mistake.
   test can feed it the port's own spell table and the two cannot drift apart
   the way they would if the names were duplicated here.
 
+- **`castparse.c`** — `do_cast`'s argument parse (`spell_parser.c:604`),
+  which is three `strtok` calls and is not what it looks like. Not
+  arithmetic and not a CircleMUD function at all: what it pins is *libc*,
+  because two properties of `strtok` decide four answers a
+  find-the-quotes parser gets wrong. It skips a **run** of delimiters
+  rather than one, and **only the quote is a delimiter** — a space is not.
+  So `cast ''` is "must be enclosed" (the quotes collapse into one skipped
+  run), `cast '  '` hands two spaces to `find_skill_num` and casts armor,
+  `cast '' fido` makes the *target* the spell name, and `cast 'magic
+  missile` works without a closing quote. This port's `ParseCastArgument`
+  got all four wrong (#358), and the third is why the empty-spell-name
+  behaviour could not be fixed on its own (#365).
+
+  Worth having as a tool rather than a table of remembered answers because
+  the previous reasoning about it was written from reading `strtok`'s
+  documented behaviour and was wrong in exactly one case — the one that
+  mattered.
+
 If you are about to port anything with a division, a cast, or a comment
 describing numbers in it, the next file in this directory is probably the one
 you are about to write. `docs/developer.md` has the pattern.

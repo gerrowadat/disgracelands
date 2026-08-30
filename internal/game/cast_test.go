@@ -23,9 +23,33 @@ func TestParseCastArgument(t *testing.T) {
 		{in: "'armor'", spell: "armor"},
 		{in: "  'cure light'  welmar  ", spell: "cure light", target: "welmar"},
 		{in: "", err: "Cast what where?\r\n"},
-		{in: "   ", err: "Cast what where?\r\n"},
 		{in: "magic missile", err: "Spell names must be enclosed in the Holy Magic Symbols: '\r\n"},
-		{in: "'magic missile", err: "Spell names must be enclosed in the Holy Magic Symbols: '\r\n"},
+
+		// The four strtok answers a quote-finding parser gets wrong, all of
+		// them from reference/tools/castparse.c rather than from reading
+		// (#358). The first three are why the empty-spell-name behaviour
+		// could not be fixed on its own (#365).
+		//
+		// `''` is not an empty spell name: strtok skips a *run* of
+		// delimiters, so the two quotes collapse and there is no second
+		// token at all.
+		{in: "''", err: "Spell names must be enclosed in the Holy Magic Symbols: '\r\n"},
+		{in: "'''", err: "Spell names must be enclosed in the Holy Magic Symbols: '\r\n"},
+		// `'  '` *is* handed over, because a space is not a delimiter.
+		// It reaches find_skill_num as two spaces and is answered as armor.
+		{in: "'  '", spell: "  "},
+		{in: "' '", spell: " "},
+		// The empty quotes vanish and the target becomes the spell name.
+		{in: "'' fido", spell: " fido"},
+		// No closing quote is not an error: the second strtok has no
+		// delimiter left and returns the rest of the line.
+		{in: "'magic missile", spell: "magic missile"},
+		{in: "'mag mis fido", spell: "mag mis fido"},
+
+		// Not "   ": Context.Arg is trimmed by session.split, so an
+		// all-whitespace argument cannot reach here, and the C answer for
+		// it ("must be enclosed", where this port says "Cast what where?")
+		// is unreachable. ParseCastArgument's doc comment says so.
 	} {
 		spell, target, err := ParseCastArgument(tc.in)
 		if err != tc.err {

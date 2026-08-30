@@ -154,30 +154,85 @@ func KnowsSpell(rec *PlayerRecord, info SpellInfo) bool {
 	return false
 }
 
-// ParseCastArgument splits `'spell name' target` as do_cast's strtok calls do.
+// ParseCastArgument splits `'spell name' target` the way do_cast's three
+// strtok calls do (spell_parser.c:604) — which is **not** "find the first
+// quote, then the second".
 //
-// The quotes are not decoration: the C splits on them, so a spell name must
-// be enclosed and everything after the closing quote is the target. The error
-// for a missing quote is one of the game's better lines.
+//	s = strtok(argument, "'");   if (!s) "Cast what where?"
+//	s = strtok(NULL, "'");       if (!s) "Spell names must be enclosed..."
+//	t = strtok(NULL, "\0");
+//
+// Two properties of strtok decide four answers a quote-finding parser gets
+// wrong, and this port got all four wrong until #358: it **skips a run of
+// delimiters** rather than one, and **only the quote is a delimiter** — a
+// space is not.
+//
+//	cast ''              -> "must be enclosed". The two quotes are one
+//	                        skipped run, so there is no second token.
+//	cast '  '            -> the spell name is "  ", which find_skill_num
+//	                        tokenises away and answers as if it were empty:
+//	                        armor, the first spell in the table (#365).
+//	cast '' fido         -> the spell name is " fido". The empty quotes
+//	                        vanish and the target becomes the spell.
+//	cast 'magic missile  -> works. The second strtok has no delimiter left
+//	                        and returns the rest of the line, so the quote
+//	                        is only needed at the front.
+//
+// Checked against reference/tools/castparse.c, which is those three calls
+// and nothing else, rather than reasoned about — the reasoning is what went
+// wrong before.
+//
+// The target is trimmed here where the C trims it a few lines later
+// (`one_argument(strcpy(arg, t), t); skip_spaces(&t)`), which is the same
+// string by the time anything looks at it. The spell name is *not* trimmed,
+// because "  " and "" are different arguments to a function that treats
+// them identically only by accident.
 func ParseCastArgument(arg string) (spell, target string, err string) {
-	if strings.TrimSpace(arg) == "" {
+	// The C's `argument` still carries the space any_one_arg stopped on —
+	// do_cast does no skip_spaces before its strtok — while this port's
+	// Context.Arg is trimmed at the dispatcher (session.split). Put it back,
+	// because strtok's *first* token is everything before the first quote
+	// and whether that token exists at all is what "Cast what where?" turns
+	// on. One space is enough however many were typed: token 1's content is
+	// discarded and only its existence is read.
+	//
+	// The one case that leaves behind: `cast` and `cast   ` are the same
+	// empty Arg here, where the C answers "Cast what where?" to the first
+	// and "must be enclosed" to the second. Two refusals differing by a
+	// sentence, over trailing spaces nobody can see, and closing it would
+	// mean carrying an untrimmed argument through every command for this
+	// one. Left alone deliberately.
+	if arg == "" {
 		return "", "", "Cast what where?\r\n"
 	}
+	line := " " + arg
 
-	// strtok(argument, "'") takes everything before the first quote, which
-	// the C then discards; the second call takes the spell name.
-	first := strings.Index(arg, "'")
-	if first < 0 {
+	// strtok(line, "'"): skip a run of leading delimiters, then take
+	// everything up to the next one.
+	rest := strings.TrimLeft(line, "'")
+	if rest == "" {
+		return "", "", "Cast what where?\r\n"
+	}
+	quote := strings.Index(rest, "'")
+	if quote < 0 {
+		// The first token ran to the end of the line, so the second call has
+		// nothing to return. This is `cast magic missile`, unquoted.
 		return "", "", "Spell names must be enclosed in the Holy Magic Symbols: '\r\n"
 	}
-	rest := arg[first+1:]
+	rest = rest[quote+1:]
 
-	second := strings.Index(rest, "'")
-	if second < 0 {
+	// strtok(NULL, "'"): the same again, and the *run* is what makes
+	// `cast ''` an error rather than an empty spell name.
+	rest = strings.TrimLeft(rest, "'")
+	if rest == "" {
 		return "", "", "Spell names must be enclosed in the Holy Magic Symbols: '\r\n"
 	}
-
-	return strings.TrimSpace(rest[:second]), strings.TrimSpace(rest[second+1:]), ""
+	if quote = strings.Index(rest, "'"); quote < 0 {
+		// No closing quote: the rest of the line is the spell name, and
+		// strtok(NULL, "\0") then has nothing to give as a target.
+		return rest, "", ""
+	}
+	return rest[:quote], strings.TrimSpace(rest[quote+1:]), ""
 }
 
 // TargetQuestion is what to ask when a spell needs a target and none was

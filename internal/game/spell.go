@@ -140,27 +140,36 @@ func SpellName(number SpellID) string {
 // (spell_parser.c) — so `cast 'magic mis'` works, and so does
 // `cast 'mag mis'`.
 //
-// The empty name is refused here, where find_skill_num would answer. That
-// is not a deviation, because the C cannot reach it: find_skill_num("")
-// skips is_abbrev (which rejects an empty arg1) and falls into the word
-// loop, which does not run at all — leaving ok TRUE and first2 empty, so
-// `ok && !*first2` holds and it returns the *first spell in the table* —
-// but do_cast reaches find_skill_num through `strtok(argument, "'")`
-// (spell_parser.c:604), and strtok skips leading delimiters, so `cast ”`
-// gets "Cast what where?" and an empty spell name is never handed over.
-// Refusing it is therefore a free choice, and returning the lowest-
-// numbered spell in the table is not the one to make.
+// **An empty name matches the first spell in the table**, which is armor,
+// and that is the C's answer rather than a shrug. is_abbrev rejects an
+// empty arg1, so rule 1 declines; the word loop then does not run at all,
+// leaving `ok` TRUE and `first2` empty, so `ok && !*first2` holds on the
+// very first entry.
 //
-// This port's ParseCastArgument does *not* reproduce that strtok
-// behaviour: `cast ”` yields an empty spell name here, which this then
-// refuses with do_cast's later "Cast what?!?" rather than its earlier
-// "Cast what where?". Same refusal, different sentence, in an edge case
-// nobody types on purpose. Out of scope for #355; see #358.
+// This was refused here until #365, on the reasoning that the C cannot
+// reach it: do_cast gets the spell name from `strtok(argument, "'")`
+// followed by `strtok(NULL, "'")` (spell_parser.c:604), and strtok skips
+// leading delimiters, so `cast ”` never hands an empty name over. That is
+// right about `cast ”` and wrong about the general claim. Only the quote
+// is a delimiter — a space is not — so:
+//
+//	cast ''        -> "Spell names must be enclosed..."   (the C, and here)
+//	cast '  '      -> find_skill_num("  ")  ->  armor     (the C)
+//	cast ' '       -> find_skill_num(" ")   ->  armor     (the C)
+//
+// and find_skill_num cannot tell "  " from "" because any_one_arg
+// tokenises the whitespace away before either rule looks at it. Checked by
+// running do_cast's own strtok pair rather than by reading it, which is
+// how the earlier reasoning went wrong.
+//
+// So the refusal moved rather than being deleted: this function is
+// find_skill_num and answers as it does, and
+// SpellNumberFromNameOrNumber — which is a *format* lookup rather than a
+// player's typing — refuses an empty name itself, so that an empty
+// `spell:` in a yaml file stays an error instead of silently becoming
+// armor.
 func SpellNumberByName(name string) (SpellID, bool) {
 	name = strings.ToLower(strings.TrimSpace(name))
-	if name == "" {
-		return 0, false
-	}
 
 	// An exact match wins outright; otherwise the lowest-numbered match,
 	// so the answer does not depend on map iteration order. The C has no
@@ -249,7 +258,18 @@ func SpellNameOrNumber(n SpellID) string {
 // before it ever falls back to a prefix — so a name SpellNameOrNumber
 // produced is always matched exactly, never by coincidental abbreviation
 // against some other entry sharing a prefix. "#N" parses back to N.
+//
+// The empty name is refused here and not in SpellNumberByName, and the
+// split is the point. This is what the yaml readers call — the player
+// file's skills and affects, a wand's charge spell, a damage message's
+// subject — where an empty name is a malformed file and should say so.
+// SpellNumberByName is what a player's typing reaches, where the C's own
+// answer is armor (#365). A format that inherited that would turn a blank
+// `spell:` into armor without a word.
 func SpellNumberFromNameOrNumber(s string) (SpellID, bool) {
+	if strings.TrimSpace(s) == "" {
+		return 0, false
+	}
 	if rest, ok := strings.CutPrefix(s, "#"); ok {
 		n, err := strconv.Atoi(rest)
 		if err != nil {
