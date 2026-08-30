@@ -125,7 +125,7 @@ func (l *loader) parseSimpleMob(r *reader, mob *game.MobDef) error {
 	}
 	mob.Position = trip[0]
 	mob.DefaultPosition = trip[1]
-	mob.Sex = trip[2]
+	mob.Sex = game.Sex(trip[2])
 
 	return nil
 }

@@ -236,23 +236,36 @@ func RollAbilities(class Class, r *rng.Rand) Abilities {
 // exactly the order the C server would. See internal/rng.
 func randN(r *rng.Rand, n int32) int32 { return r.Number(0, n-1) }
 
+// Sex is a character's sex, matching structs.h. Like Class, the numbers are
+// in every player record and every mob file, so they are the format as well
+// as an enumeration — docs/proposals/idiomatic-go.md §4.2.
+type Sex int
+
 // Sexes, matching structs.h.
 const (
-	SexNeutral int32 = 0
-	SexMale    int32 = 1
-	SexFemale  int32 = 2
+	SexNeutral Sex = 0
+	SexMale    Sex = 1
+	SexFemale  Sex = 2
+	// SexUndefined is what ParseSex answers for a letter that is neither
+	// 'm' nor 'f'. It was a bare -1; naming it is the point of §3.4.
+	SexUndefined Sex = -1
 )
+
+// Number is the sex's stored number, for the file formats and the
+// value-indexed name tables — the same narrowing point Class.Number is, and
+// for the same reason.
+func (s Sex) Number() int32 { return int32(s) } //nolint:gosec // three sexes; the format's width, not an arithmetic conversion
 
 // ParseSex interprets the letter typed at the sex prompt, as
 // interpreter.c's nanny does.
-func ParseSex(arg byte) int32 {
+func ParseSex(arg byte) Sex {
 	switch lower(arg) {
 	case 'm':
 		return SexMale
 	case 'f':
 		return SexFemale
 	}
-	return -1
+	return SexUndefined
 }
 
 // StartingConditions are the hunger, thirst and drunkenness a new character

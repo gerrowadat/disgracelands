@@ -41,7 +41,7 @@ type classTitles struct {
 //
 // A player who has set their own title keeps it; this is only what they are
 // given at creation and on each level gained.
-func Title(class Class, level, sex int32) string {
+func Title(class Class, level int32, sex Sex) string {
 	// The C checks these before it looks at the class at all, so an
 	// implementor of any class is "the Implementor".
 	if level <= 0 || level > LevelImplementor {

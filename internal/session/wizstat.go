@@ -387,7 +387,7 @@ func (c *Context) statCharacter(k *game.Character) {
 
 	var b strings.Builder
 	fmt.Fprintf(&b, "%s %s '%s'  IDNum: [%5d], In room [%5d]\r\n",
-		game.SprintType(rec.Sex, game.GenderNames()), kindOf(k), k.Name, rec.IDNum, k.Room)
+		game.SprintType(rec.Sex.Number(), game.GenderNames()), kindOf(k), k.Name, rec.IDNum, k.Room)
 
 	if k.IsNPC() && k.MobDef != nil {
 		fmt.Fprintf(&b, "Alias: %s, VNum: [%5d], RNum: [%5d]\r\n",

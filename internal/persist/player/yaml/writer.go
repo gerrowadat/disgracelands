@@ -24,7 +24,7 @@ func docFromRecord(rec *game.PlayerRecord) playerDoc {
 	// NameOrNumber rather than NameByValue: a value outside the table
 	// used to be written as the empty string and read back as 0, so a
 	// record with an out-of-range sex or class came back as neither.
-	sex := game.NameOrNumber(rec.Sex, game.YamlSexNames())
+	sex := game.NameOrNumber(rec.Sex.Number(), game.YamlSexNames())
 	class := game.NameOrNumber(rec.Class.Number(), game.YamlClassNames())
 	remort, remortRaw := game.NameBits(rec.RemortVector.Raw(), game.YamlClassNames())
 	act, actRaw := game.NameBits(rec.PlayerFlags.Raw(), game.YamlPlayerFlagNames())

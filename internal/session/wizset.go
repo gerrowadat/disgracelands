@@ -343,7 +343,7 @@ var setFields = []setField{
 			s.refuse("Must be 'male', 'female', or 'neutral'.\r\n")
 			return
 		}
-		s.rec.Sex = int32(sex) //nolint:gosec // an index into a three-entry table
+		s.rec.Sex = game.Sex(sex)
 	}},
 	{"age", game.LevelGreaterGod, setBoth, setNumber, func(s *setContext) {
 		if s.value < 2 || s.value > 200 {

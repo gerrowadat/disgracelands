@@ -173,7 +173,7 @@ func (l *loader) mobFromDoc(path string, md mobDoc) *game.MobDef {
 		l.errorf("%s: mob #%d: unknown default_position %q", path, md.Vnum, md.DefaultPosition)
 	}
 	if sex, ok := game.ValueByNameOrNumber(md.Sex, game.YamlSexNames()); ok {
-		mob.Sex = sex
+		mob.Sex = game.Sex(sex)
 	} else {
 		l.errorf("%s: mob #%d: unknown sex %q", path, md.Vnum, md.Sex)
 	}

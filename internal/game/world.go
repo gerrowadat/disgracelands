@@ -105,7 +105,7 @@ type MobDef struct {
 
 	Position        int32
 	DefaultPosition int32
-	Sex             int32
+	Sex             Sex
 
 	// Especs are the `Key: value` lines of an enhanced mob, in file order.
 	// They are kept raw here: interpreting them needs the ability tables,

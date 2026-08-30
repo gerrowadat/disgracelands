@@ -35,7 +35,7 @@ func TestTitlesMatchTheCSource(t *testing.T) {
 
 	for _, tc := range []struct {
 		function string
-		sex      int32
+		sex      Sex
 	}{
 		{"title_male", SexMale},
 		{"title_female", SexFemale},
@@ -151,8 +151,9 @@ func parseTitleFunction(t *testing.T, src, function string) map[Class]map[int32]
 // makes before it ever looks at the class.
 func TestImplementorsAndOddLevelsBypassTheClassTables(t *testing.T) {
 	for _, tc := range []struct {
-		level, sex int32
-		want       string
+		level int32
+		sex   Sex
+		want  string
 	}{
 		{LevelImplementor, SexMale, "the Implementor"},
 		{LevelImplementor, SexFemale, "the Implementress"},
