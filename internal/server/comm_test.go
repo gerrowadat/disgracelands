@@ -133,16 +133,16 @@ func TestTellingYourselfAndTheDeaf(t *testing.T) {
 	// notell on the listener.
 	inWorld(t, srv, func(_ *game.Live) {
 		bob.Client = &recorder{}
-		bob.Record.Preferences = bob.Record.Preferences.Set(game.PrefNoTell)
+		bob.Record.Preferences = bob.Record.Preferences.With(game.PrefNoTell)
 	})
 	c.send("tell bob hello")
 	c.expect("He can't hear you.")
 
 	// notell on the teller.
 	inWorld(t, srv, func(w *game.Live) {
-		bob.Record.Preferences = bob.Record.Preferences.Clear(game.PrefNoTell)
+		bob.Record.Preferences = bob.Record.Preferences.Without(game.PrefNoTell)
 		w.Find("Zod").Record.Preferences =
-			w.Find("Zod").Record.Preferences.Set(game.PrefNoTell)
+			w.Find("Zod").Record.Preferences.With(game.PrefNoTell)
 	})
 	c.send("tell bob hello")
 	c.expect("You can't tell other people while you have notell on.")

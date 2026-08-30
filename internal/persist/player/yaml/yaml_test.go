@@ -57,9 +57,9 @@ func richRecord() *game.PlayerRecord {
 		},
 		Alignment:     350,
 		IDNum:         42,
-		PlayerFlags:   game.PlayerSiteOK | game.PlayerCryo,
+		PlayerFlags:   game.NewSet(game.PlayerSiteOK, game.PlayerCryo),
 		AffectFlags:   game.NewSet(game.AffectSanctuary, game.AffectDetectInvis),
-		Preferences:   game.PrefAutoExit | game.PrefColour1 | game.PrefColour2,
+		Preferences:   game.NewSet(game.PrefAutoExit, game.PrefColour1, game.PrefColour2),
 		SavingThrows:  [5]int32{-12, -10, -11, -13, -14},
 		Skills:        map[int32]int32{game.SkillBash: 85, game.SkillKick: 100},
 		Affects:       []game.Affect{{Type: game.SpellSanctuary, Duration: 12, Modifier: 0, Location: 0, Bits: game.NewSet(game.AffectSanctuary)}},
@@ -158,7 +158,7 @@ func TestList(t *testing.T) {
 
 	for _, rec := range []*game.PlayerRecord{
 		{Name: "Alice", IDNum: 1, Level: 10},
-		{Name: "Bob", IDNum: 2, Level: 20, PlayerFlags: game.PlayerSiteOK},
+		{Name: "Bob", IDNum: 2, Level: 20, PlayerFlags: game.NewSet(game.PlayerSiteOK)},
 		{Name: "Zod", IDNum: 3, Level: 34},
 	} {
 		if err := s.Save(ctx, rec); err != nil {

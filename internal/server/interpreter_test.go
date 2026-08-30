@@ -140,7 +140,7 @@ func TestAFrozenCharacterCannotType(t *testing.T) {
 	if err := srv.engine.DoSync(context.Background(), func(w *game.Live) {
 		rec := w.Find("Zod").Record
 		rec.Level = 10
-		rec.PlayerFlags = rec.PlayerFlags.Set(game.PlayerFrozen)
+		rec.PlayerFlags = rec.PlayerFlags.With(game.PlayerFrozen)
 	}); err != nil {
 		t.Fatal(err)
 	}
@@ -162,7 +162,7 @@ func TestAFrozenImplementorCanStillType(t *testing.T) {
 		if rec.Level != game.LevelImplementor {
 			t.Errorf("the first character on the roster is level %d, expected an implementor", rec.Level)
 		}
-		rec.PlayerFlags = rec.PlayerFlags.Set(game.PlayerFrozen)
+		rec.PlayerFlags = rec.PlayerFlags.With(game.PlayerFrozen)
 	}); err != nil {
 		t.Fatal(err)
 	}

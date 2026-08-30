@@ -32,8 +32,8 @@ func TestAnnounceLevelRoundTrips(t *testing.T) {
 		}
 		// Nothing outside the two bits is touched, because this shares a
 		// word with twenty-three other settings.
-		if rec.Preferences&^(PrefNoAnnounce1|PrefNoAnnounce2) != 0 {
-			t.Errorf("setting %v disturbed other preferences: %#x", level, rec.Preferences)
+		if !rec.Preferences.Without(PrefNoAnnounce1, PrefNoAnnounce2).Empty() {
+			t.Errorf("setting %v disturbed other preferences: %#x", level, rec.Preferences.Raw())
 		}
 	}
 }
@@ -42,7 +42,7 @@ func TestAnnounceLevelRoundTrips(t *testing.T) {
 // or 2 — but a hand-edited pfile can hold it, and it should answer quietly
 // rather than with a fourth state nothing names.
 func TestBothSuppressionBitsIsOff(t *testing.T) {
-	rec := &PlayerRecord{Preferences: PrefNoAnnounce1 | PrefNoAnnounce2}
+	rec := &PlayerRecord{Preferences: NewSet(PrefNoAnnounce1, PrefNoAnnounce2)}
 	if got := AnnounceLevelOf(rec); got != AnnounceOff {
 		t.Errorf("both bits set reads as %v, want %v", got, AnnounceOff)
 	}

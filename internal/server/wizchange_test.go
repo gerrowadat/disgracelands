@@ -298,7 +298,7 @@ func TestPardonAndMute(t *testing.T) {
 
 	inWorld(t, srv, func(w *game.Live) {
 		if who := w.Find("Rascal"); who != nil && who.Record != nil {
-			who.Record.PlayerFlags = who.Record.PlayerFlags.Set(game.PlayerThief)
+			who.Record.PlayerFlags = who.Record.PlayerFlags.With(game.PlayerThief)
 		}
 	})
 

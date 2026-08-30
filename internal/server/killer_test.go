@@ -56,7 +56,7 @@ func TestAttackingAnotherPlayerSetsThePlayerKillerFlag(t *testing.T) {
 func TestCheckKillerLeavesAnAlreadyFlaggedVictimAlone(t *testing.T) {
 	for _, tc := range []struct {
 		name string
-		flag game.Flags
+		flag game.PlayerFlag
 	}{
 		{"a player killer", game.PlayerKiller},
 		{"a thief", game.PlayerThief},
@@ -65,7 +65,7 @@ func TestCheckKillerLeavesAnAlreadyFlaggedVictimAlone(t *testing.T) {
 			srv, _ := newTestServer(t)
 			attacker, attackerClient := place(t, srv, fighterRecord("Zod", 20, 100), MortalStartRoom)
 			victim, _ := place(t, srv, fighterRecord("Welmar", 20, 100), MortalStartRoom)
-			victim.Record.PlayerFlags = victim.Record.PlayerFlags.Set(tc.flag)
+			victim.Record.PlayerFlags = victim.Record.PlayerFlags.With(tc.flag)
 
 			var message string
 			inWorld(t, srv, func(w *game.Live) {
@@ -91,7 +91,7 @@ func TestCheckKillerLeavesAnAlreadyFlaggedVictimAlone(t *testing.T) {
 func TestCheckKillerDoesNotRepeatOnceAlreadyAKiller(t *testing.T) {
 	srv, _ := newTestServer(t)
 	attacker, attackerClient := place(t, srv, fighterRecord("Zod", 20, 100), MortalStartRoom)
-	attacker.Record.PlayerFlags = attacker.Record.PlayerFlags.Set(game.PlayerKiller)
+	attacker.Record.PlayerFlags = attacker.Record.PlayerFlags.With(game.PlayerKiller)
 	victim, _ := place(t, srv, fighterRecord("Welmar", 20, 100), MortalStartRoom)
 
 	var message string

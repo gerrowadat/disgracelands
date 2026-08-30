@@ -37,8 +37,8 @@ const (
 // LevelFor derives the two-bit colour level from a player's preference
 // flags, matching PRF_COLOR_1/PRF_COLOR_2 (playerflags.go). Any combination
 // with at least one bit set renders; neither bit set is C_OFF.
-func LevelFor(prefs Flags) ColourLevel {
-	if prefs.HasAny(PrefColour1 | PrefColour2) {
+func LevelFor(prefs Preferences) ColourLevel {
+	if prefs.HasAny(PrefColour1, PrefColour2) {
 		return ColourNormal
 	}
 	return ColourOff

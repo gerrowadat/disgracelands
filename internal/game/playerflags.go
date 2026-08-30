@@ -14,57 +14,76 @@ package game
 // for the next one needed, and inventing one here would corrupt records the
 // C server can still read.
 
-// PlayerFlags: the PLR_* bits.
+// PlayerFlag is one of the PLR_* bits and PlayerFlags is a character's set
+// of them. Bit indices, not masks: docs/proposals/idiomatic-go.md §4.1,
+// with §4.1.1 and §4.1.2 for the three ways that bites. player_bits[] in
+// constants.c is the name table.
+type PlayerFlag int
+
+// PlayerFlags is a set of PlayerFlag.
+type PlayerFlags = Set[PlayerFlag]
+
 const (
-	PlayerKiller     Flags = 1 << 0
-	PlayerThief      Flags = 1 << 1
-	PlayerFrozen     Flags = 1 << 2
-	PlayerDontSet    Flags = 1 << 3 // the ISNPC bit; never set on a player
-	PlayerWriting    Flags = 1 << 4
-	PlayerMailing    Flags = 1 << 5
-	PlayerCrash      Flags = 1 << 6
-	PlayerSiteOK     Flags = 1 << 7
-	PlayerNoShout    Flags = 1 << 8
-	PlayerNoTitle    Flags = 1 << 9
-	PlayerDeleted    Flags = 1 << 10
-	PlayerLoadRoom   Flags = 1 << 11
-	PlayerNoWizList  Flags = 1 << 12
-	PlayerNoDelete   Flags = 1 << 13
-	PlayerInvisStart Flags = 1 << 14
-	PlayerCryo       Flags = 1 << 15
-	PlayerNotDeadYet Flags = 1 << 16
+	PlayerKiller     PlayerFlag = 0
+	PlayerThief      PlayerFlag = 1
+	PlayerFrozen     PlayerFlag = 2
+	PlayerDontSet    PlayerFlag = 3 // the ISNPC bit; never set on a player
+	PlayerWriting    PlayerFlag = 4
+	PlayerMailing    PlayerFlag = 5
+	PlayerCrash      PlayerFlag = 6
+	PlayerSiteOK     PlayerFlag = 7
+	PlayerNoShout    PlayerFlag = 8
+	PlayerNoTitle    PlayerFlag = 9
+	PlayerDeleted    PlayerFlag = 10
+	PlayerLoadRoom   PlayerFlag = 11
+	PlayerNoWizList  PlayerFlag = 12
+	PlayerNoDelete   PlayerFlag = 13
+	PlayerInvisStart PlayerFlag = 14
+	PlayerCryo       PlayerFlag = 15
+	PlayerNotDeadYet PlayerFlag = 16
 	// PlayerBanned is a local addition (structs.h:194).
-	PlayerBanned Flags = 1 << 17
+	PlayerBanned PlayerFlag = 17
 )
 
-// Preferences: the PRF_* bits.
+// PrefFlag is one of the PRF_* bits and Preferences is a character's set of
+// them. Bit indices, not masks: docs/proposals/idiomatic-go.md §4.1.
+// preference_bits[] in constants.c is the name table.
+//
+// The set alias is Preferences, not PrefFlags, because that is what the
+// field and the concept have always been called — a player has
+// preferences, not "pref flags".
+type PrefFlag int
+
+// Preferences is a set of PrefFlag.
+type Preferences = Set[PrefFlag]
+
 const (
-	PrefBrief       Flags = 1 << 0
-	PrefCompact     Flags = 1 << 1
-	PrefDeaf        Flags = 1 << 2
-	PrefNoTell      Flags = 1 << 3
-	PrefDisplayHP   Flags = 1 << 4
-	PrefDisplayMana Flags = 1 << 5
-	PrefDisplayMove Flags = 1 << 6
-	PrefAutoExit    Flags = 1 << 7
-	PrefNoHassle    Flags = 1 << 8
-	PrefQuest       Flags = 1 << 9
-	PrefSummonable  Flags = 1 << 10
-	PrefNoRepeat    Flags = 1 << 11
-	PrefHolylight   Flags = 1 << 12
+	PrefBrief       PrefFlag = 0
+	PrefCompact     PrefFlag = 1
+	PrefDeaf        PrefFlag = 2
+	PrefNoTell      PrefFlag = 3
+	PrefDisplayHP   PrefFlag = 4
+	PrefDisplayMana PrefFlag = 5
+	PrefDisplayMove PrefFlag = 6
+	PrefAutoExit    PrefFlag = 7
+	PrefNoHassle    PrefFlag = 8
+	PrefQuest       PrefFlag = 9
+	PrefSummonable  PrefFlag = 10
+	PrefNoRepeat    PrefFlag = 11
+	PrefHolylight   PrefFlag = 12
 	// PrefColour1 and PrefColour2 are a two-bit level, not two switches:
 	// neither is off, both is full colour.
-	PrefColour1   Flags = 1 << 13
-	PrefColour2   Flags = 1 << 14
-	PrefNoWiz     Flags = 1 << 15
-	PrefLog1      Flags = 1 << 16
-	PrefLog2      Flags = 1 << 17
-	PrefNoAuct    Flags = 1 << 18
-	PrefNoGoss    Flags = 1 << 19
-	PrefNoGratz   Flags = 1 << 20
-	PrefRoomFlags Flags = 1 << 21
+	PrefColour1   PrefFlag = 13
+	PrefColour2   PrefFlag = 14
+	PrefNoWiz     PrefFlag = 15
+	PrefLog1      PrefFlag = 16
+	PrefLog2      PrefFlag = 17
+	PrefNoAuct    PrefFlag = 18
+	PrefNoGoss    PrefFlag = 19
+	PrefNoGratz   PrefFlag = 20
+	PrefRoomFlags PrefFlag = 21
 	// PrefClearScreen is OasisOLC's.
-	PrefClearScreen Flags = 1 << 22
+	PrefClearScreen PrefFlag = 22
 
 	// PrefNoAnnounce1 and PrefNoAnnounce2 are a local addition: a two-bit
 	// level saying how much of the `<DoC>` broadcast stream a player wants
@@ -79,8 +98,8 @@ const (
 	// zero meant "off" would therefore mute the entire roster the moment
 	// this shipped. Zero means the full stream, the way PrefNoGoss and its
 	// neighbours already read.
-	PrefNoAnnounce1 Flags = 1 << 23
-	PrefNoAnnounce2 Flags = 1 << 24
+	PrefNoAnnounce1 PrefFlag = 23
+	PrefNoAnnounce2 PrefFlag = 24
 )
 
 // RoomFlag is one of the ROOM_* bits, from structs.h:75, and RoomFlags is a

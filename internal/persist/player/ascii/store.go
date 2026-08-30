@@ -284,7 +284,8 @@ func (s *Store) readIndex() ([]player.IndexEntry, error) {
 			skipped = append(skipped, fmt.Sprintf("line %d: level %q is not a number", line, fields[2]))
 			continue
 		}
-		flags, _ := game.ParseFlags(fields[3])
+		flagBits, _ := game.ParseFlagLetters(fields[3])
+		flags := game.SetFromRaw[game.PlayerFlag](flagBits)
 		out = append(out, player.IndexEntry{
 			Name: fields[1], IDNum: id, Level: int32(level), Flags: flags,
 		})
@@ -342,7 +343,7 @@ func (s *Store) rebuildIndex() error {
 		// Flags are written as "0" when empty; an empty field here would
 		// misalign the whitespace-separated reader.
 		flags := "0"
-		if rec.PlayerFlags != 0 {
+		if !rec.PlayerFlags.Empty() {
 			flags = rec.PlayerFlags.String()
 		}
 		fmt.Fprintf(&b, "%d %s %d %s %d\n",

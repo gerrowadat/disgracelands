@@ -97,7 +97,7 @@ func (l *Live) checkKillerOrSanction(c, victim *Character) string {
 // check_killer is the C's own choke point for this and a future caller
 // should not have to remember to.
 func (l *Live) checkKiller(c, victim *Character) string {
-	if victim.Record != nil && victim.Record.PlayerFlags.HasAny(PlayerKiller|PlayerThief) {
+	if victim.Record != nil && victim.Record.PlayerFlags.HasAny(PlayerKiller, PlayerThief) {
 		return ""
 	}
 	if (c.Record != nil && c.Record.PlayerFlags.Has(PlayerKiller)) ||
@@ -105,7 +105,7 @@ func (l *Live) checkKiller(c, victim *Character) string {
 		return ""
 	}
 
-	c.Record.PlayerFlags = c.Record.PlayerFlags.Set(PlayerKiller)
+	c.Record.PlayerFlags = c.Record.PlayerFlags.With(PlayerKiller)
 	c.Tell("If you want to be a PLAYER KILLER, so be it...\r\n")
 
 	name := ""

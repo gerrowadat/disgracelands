@@ -161,7 +161,7 @@ func TestNoHassleWalksThroughUnmolested(t *testing.T) {
 
 	mob := mobile(t, srv, "a guard dog", game.NewSet(game.MobSentinel, game.MobAggressive), MortalStartRoom)
 	rec := fighterRecord("Zod", 34, 500)
-	rec.Preferences = rec.Preferences.Set(game.PrefNoHassle)
+	rec.Preferences = rec.Preferences.With(game.PrefNoHassle)
 	place(t, srv, rec, MortalStartRoom)
 
 	for i := 0; i < 20; i++ {

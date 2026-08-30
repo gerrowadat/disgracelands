@@ -123,7 +123,7 @@ func TestPromptChoosesWhatTheNumbersAre(t *testing.T) {
 	c.expect("Okay.")
 	inWorld(t, srv, func(w *game.Live) {
 		p := w.Find("Zod").Record.Preferences
-		if p.HasAny(game.PrefDisplayHP | game.PrefDisplayMana | game.PrefDisplayMove) {
+		if p.HasAny(game.PrefDisplayHP, game.PrefDisplayMana, game.PrefDisplayMove) {
 			t.Error("prompt none left something switched on")
 		}
 	})

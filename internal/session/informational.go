@@ -289,28 +289,29 @@ func doDisplay(c *Context) error {
 		return nil
 	}
 
-	const all = game.PrefDisplayHP | game.PrefDisplayMana | game.PrefDisplayMove
+	// A var rather than a const: a set is a struct, so it cannot be one.
+	all := []game.PrefFlag{game.PrefDisplayHP, game.PrefDisplayMana, game.PrefDisplayMove}
 	switch arg {
 	case "on", "all":
-		rec.Preferences = rec.Preferences.Set(all)
+		rec.Preferences = rec.Preferences.With(all...)
 	case "off", "none":
-		rec.Preferences = rec.Preferences.Clear(all)
+		rec.Preferences = rec.Preferences.Without(all...)
 	default:
-		wanted := game.Flags(0)
+		var wanted []game.PrefFlag
 		for _, ch := range arg {
 			switch ch {
 			case 'h':
-				wanted |= game.PrefDisplayHP
+				wanted = append(wanted, game.PrefDisplayHP)
 			case 'm':
-				wanted |= game.PrefDisplayMana
+				wanted = append(wanted, game.PrefDisplayMana)
 			case 'v':
-				wanted |= game.PrefDisplayMove
+				wanted = append(wanted, game.PrefDisplayMove)
 			default:
 				c.Send("Usage: prompt { { H | M | V } | all | none }\r\n")
 				return nil
 			}
 		}
-		rec.Preferences = rec.Preferences.Clear(all).Set(wanted)
+		rec.Preferences = rec.Preferences.Without(all...).With(wanted...)
 	}
 
 	c.Send("Okay.\r\n")
@@ -349,7 +350,7 @@ func doToggle(c *Context) error {
 	if rec.WimpLevel != 0 {
 		wimp = strconv.Itoa(int(rec.WimpLevel))
 	}
-	on := func(flag game.Flags) string {
+	on := func(flag game.PrefFlag) string {
 		if rec.Preferences.Has(flag) {
 			return "ON"
 		}

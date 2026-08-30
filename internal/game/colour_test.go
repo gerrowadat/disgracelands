@@ -151,13 +151,13 @@ func TestClassicRoundTripSyntheticColour(t *testing.T) {
 }
 
 func TestLevelFor(t *testing.T) {
-	if LevelFor(0) != ColourOff {
+	if LevelFor(Preferences{}) != ColourOff {
 		t.Fatal("no colour prefs should be ColourOff")
 	}
-	if LevelFor(PrefColour1) != ColourNormal {
+	if LevelFor(NewSet(PrefColour1)) != ColourNormal {
 		t.Fatal("PrefColour1 alone should render")
 	}
-	if LevelFor(PrefColour1|PrefColour2) != ColourNormal {
+	if LevelFor(NewSet(PrefColour1, PrefColour2)) != ColourNormal {
 		t.Fatal("both colour bits should render")
 	}
 }

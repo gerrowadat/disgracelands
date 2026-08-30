@@ -22,7 +22,7 @@ import "github.com/gerrowadat/disgracelands/internal/game"
 
 // toggle is one preference and what to say about it.
 type toggle struct {
-	flag game.Flags
+	flag game.PrefFlag
 	// on and off are the C's tog_messages[subcmd][TOG_ON] and [TOG_OFF],
 	// which are indexed by the *result* of flipping rather than by intent.
 	on, off string
@@ -147,11 +147,11 @@ func toggleCommand(name string) func(*Context) error {
 
 		rec := c.Character.Record
 		if rec.Preferences.Has(t.flag) {
-			rec.Preferences = rec.Preferences.Clear(t.flag)
+			rec.Preferences = rec.Preferences.Without(t.flag)
 			c.Send("%s", t.off)
 			return nil
 		}
-		rec.Preferences = rec.Preferences.Set(t.flag)
+		rec.Preferences = rec.Preferences.With(t.flag)
 		c.Send("%s", t.on)
 		return nil
 	}

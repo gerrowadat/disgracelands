@@ -81,9 +81,9 @@ func maximumCharacter() *game.PlayerRecord {
 		Alignment:  -1000,
 		IDNum:      1,
 
-		PlayerFlags: game.Flags(0xffffffff),
+		PlayerFlags: game.SetFromRaw[game.PlayerFlag](0xffffffff),
 		AffectFlags: game.SetFromRaw[game.AffectFlag](0xffffffff),
-		Preferences: game.Flags(0xffffffff),
+		Preferences: game.SetFromRaw[game.PrefFlag](0xffffffff),
 
 		Conditions:    [3]int32{24, 24, 24},
 		WimpLevel:     32000,

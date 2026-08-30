@@ -127,12 +127,12 @@ func SetAnnounceLevel(rec *PlayerRecord, level AnnounceLevel) {
 	case AnnounceAll:
 		suppress = 0
 	}
-	rec.Preferences = rec.Preferences.Clear(PrefNoAnnounce1 | PrefNoAnnounce2)
+	rec.Preferences = rec.Preferences.Without(PrefNoAnnounce1, PrefNoAnnounce2)
 	if suppress&1 != 0 {
-		rec.Preferences = rec.Preferences.Set(PrefNoAnnounce1)
+		rec.Preferences = rec.Preferences.With(PrefNoAnnounce1)
 	}
 	if suppress&2 != 0 {
-		rec.Preferences = rec.Preferences.Set(PrefNoAnnounce2)
+		rec.Preferences = rec.Preferences.With(PrefNoAnnounce2)
 	}
 }
 

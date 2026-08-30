@@ -45,9 +45,9 @@ func fullRecord(name string) *game.PlayerRecord {
 		Points:       game.Points{Hit: 500, MaxHit: 600, Mana: 100, MaxMana: 110, Move: 82, MaxMove: 90, Armor: -100, Gold: 12345, BankGold: 67890, Exp: 9999999, HitRoll: 5, DamRoll: 6},
 		Alignment:    -750,
 		IDNum:        42,
-		PlayerFlags:  1 << 7,
+		PlayerFlags:  game.SetFromRaw[game.PlayerFlag](1 << 7),
 		AffectFlags:  game.SetFromRaw[game.AffectFlag](1<<3 | 1<<9),
-		Preferences:  1<<4 | 1<<21,
+		Preferences:  game.SetFromRaw[game.PrefFlag](1<<4 | 1<<21),
 		SavingThrows: [5]int32{-10, -20, -30, -40, -50},
 		Skills:       map[int32]int32{1: 100, 2: 85, 200: 42},
 		Affects: []game.Affect{

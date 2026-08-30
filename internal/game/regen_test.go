@@ -264,7 +264,7 @@ func TestGainCondition(t *testing.T) {
 // to be told so.
 func TestWritingSuppressesTheConditionMessageButNotTheChange(t *testing.T) {
 	rec := &PlayerRecord{Conditions: [3]int32{5, 24, 24}}
-	rec.PlayerFlags = rec.PlayerFlags.Set(PlayerWriting)
+	rec.PlayerFlags = rec.PlayerFlags.With(PlayerWriting)
 
 	rec.Conditions[CondFull] = 1
 	change := GainCondition(rec, CondFull, -5)
@@ -277,7 +277,7 @@ func TestWritingSuppressesTheConditionMessageButNotTheChange(t *testing.T) {
 	}
 
 	// Out of the editor, the same step does say so.
-	rec.PlayerFlags = rec.PlayerFlags.Clear(PlayerWriting)
+	rec.PlayerFlags = rec.PlayerFlags.Without(PlayerWriting)
 	rec.Conditions[CondFull] = 1
 	if change := GainCondition(rec, CondFull, -5); change.Message != "You are hungry.\r\n" {
 		t.Errorf("outside the editor, reaching zero food said %q", change.Message)

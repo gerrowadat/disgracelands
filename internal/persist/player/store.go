@@ -82,7 +82,7 @@ type IndexEntry struct {
 	Level int32
 	// Flags carries the PLR_* bits, which is what `autowiz` and the deleted
 	// check need without loading the whole record.
-	Flags game.Flags
+	Flags game.PlayerFlags
 }
 
 // Capabilities describes a format's limits.

@@ -85,7 +85,7 @@ func (s *Session) markWriting() {
 	if c == nil || c.IsNPC() || c.Record == nil {
 		return
 	}
-	c.Record.PlayerFlags = c.Record.PlayerFlags.Set(game.PlayerWriting)
+	c.Record.PlayerFlags = c.Record.PlayerFlags.With(game.PlayerWriting)
 }
 
 // beginEditorSeeded is beginEditor with existing content already in the
@@ -949,7 +949,7 @@ func (s *Session) finishEditing(ctx context.Context, deps Deps, saved bool) erro
 		// guarded by the same `!IS_NPC` the set was.
 		if c := s.Character(); c != nil && !c.IsNPC() && c.Record != nil {
 			rec := c.Record
-			rec.PlayerFlags = rec.PlayerFlags.Clear(game.PlayerMailing | game.PlayerWriting)
+			rec.PlayerFlags = rec.PlayerFlags.Without(game.PlayerMailing, game.PlayerWriting)
 		}
 		if done != nil {
 			done(text, saved)
