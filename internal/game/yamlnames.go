@@ -24,11 +24,7 @@ package game
 // round-trips through flags_raw instead (§4.1).
 
 // yamlRoomFlagNames match roomBitNames bit for bit.
-var yamlRoomFlagNames = []string{
-	"dark", "death", "no_mob", "indoors", "peaceful", "soundproof", "no_track",
-	"no_magic", "tunnel", "private", "godroom", "house", "house_crash",
-	"atrium", "olc", "", "good_regen", "can_quit", "pkill",
-}
+var yamlRoomFlagNames = yamlNamesOf(roomFlagNames)
 
 // yamlExitDoorNames name the raw 0/1/2 door byte the file always held —
 // §4.2's "door: pickproof # absent = no door; regular | pickproof". Index 0
@@ -40,48 +36,28 @@ var yamlExitDoorNames = []string{"", "regular", "pickproof"}
 var yamlDoorStateNames = []string{"open", "closed", "locked"}
 
 // yamlSectorNames match sectorNames value for value.
-var yamlSectorNames = []string{
-	"inside", "city", "field", "forest", "hills", "mountains", "water_swim",
-	"water_noswim", "flying", "underwater",
-}
+var yamlSectorNames = yamlNamesOf(sectorTypeNames)
 
 // yamlPositionNames match positionNames value for value.
-var yamlPositionNames = []string{
-	"dead", "mortally_wounded", "incapacitated", "stunned", "sleeping",
-	"resting", "sitting", "fighting", "standing",
-}
+var yamlPositionNames = yamlNamesOf(positionTypeNames)
 
 // yamlSexNames match genderNames value for value.
-var yamlSexNames = []string{"neutral", "male", "female"}
+var yamlSexNames = yamlNamesOf(sexNames)
 
 // yamlMobActFlagNames match actionBitNames bit for bit. "isnpc" is never
 // written by the yaml writer — it is force-set on every mobile regardless
 // of the file, the same rule MobIsNPC documents — but it is still named so a
 // file that spells it out explicitly loads without complaint rather than
 // tripping the "unknown name" error.
-var yamlMobActFlagNames = []string{
-	"spec", "sentinel", "scavenger", "isnpc", "aware", "aggressive",
-	"stay_zone", "wimpy", "aggr_evil", "aggr_good", "aggr_neutral", "memory",
-	"helper", "no_charm", "no_summon", "no_sleep", "no_bash", "no_blind",
-	"dead",
-}
+var yamlMobActFlagNames = yamlNamesOf(mobActFlagNames)
 
 // yamlAffectFlagNames match affectBitNames bit for bit. Used for both a
 // mobile's `affected:` list and a player's `flags.affected:` list — both are
 // the same AFF_* bitfield.
-var yamlAffectFlagNames = []string{
-	"blind", "invisible", "detect_align", "detect_invis", "detect_magic",
-	"sense_life", "waterwalk", "sanctuary", "group", "curse", "infravision",
-	"poison", "protect_evil", "protect_good", "sleep", "no_track", "",
-	"holy_shield", "sneak", "hide", "silence", "charm",
-}
+var yamlAffectFlagNames = yamlNamesOf(affectFlagNames)
 
 // yamlItemExtraFlagNames match extraBitNames bit for bit.
-var yamlItemExtraFlagNames = []string{
-	"glow", "hum", "no_rent", "no_donate", "no_invis", "invisible", "magic",
-	"no_drop", "bless", "anti_good", "anti_evil", "anti_neutral", "anti_mage",
-	"anti_cleric", "anti_thief", "anti_warrior", "no_sell", "no_locate",
-}
+var yamlItemExtraFlagNames = yamlNamesOf(itemExtraFlagNames)
 
 // yamlWearPositionNames name the 18 WearPosition slots (object.go), not
 // the coarser 15-bit wear *flags* a prototype's `wear:` field carries —
@@ -89,37 +65,20 @@ var yamlItemExtraFlagNames = []string{
 // object *may* go on a finger, a position says *which* finger it is
 // actually wearing it on. This is what a reset's `slot:` field names (§4.4:
 // "wear position 16 in a reset becomes wield" — WearWield is index 16).
-var yamlWearPositionNames = []string{
-	"light", "finger_right", "finger_left", "neck1", "neck2", "body", "head",
-	"legs", "feet", "hands", "arms", "shield", "about", "waist",
-	"wrist_right", "wrist_left", "wield", "hold",
-}
+var yamlWearPositionNames = yamlNamesOf(wearPositionNames)
 
 // yamlWearFlagNames match wearBitNames bit for bit.
-var yamlWearFlagNames = []string{
-	"take", "finger", "neck", "body", "head", "legs", "feet", "hands", "arms",
-	"shield", "about", "waist", "wrist", "wield", "hold",
-}
+var yamlWearFlagNames = yamlNamesOf(wearFlagNames)
 
 // yamlApplyTypeNames match applyTypeNames value for value.
-var yamlApplyTypeNames = []string{
-	"none", "str", "dex", "int", "wis", "con", "cha", "class", "level", "age",
-	"char_weight", "char_height", "max_mana", "max_hit", "max_move", "gold",
-	"exp", "armor", "hitroll", "damroll", "saving_para", "saving_rod",
-	"saving_petri", "saving_breath", "saving_spell",
-}
+var yamlApplyTypeNames = yamlNamesOf(applyNames)
 
 // yamlItemTypeNames match game.ItemTypeNames value for value. Index 17
 // ("LIQ CONTAINER" in the display table) is spelled "drink_container" here,
 // following §4.3's worked example literally rather than §4.1's passing
 // mention of "liq_container" — the two disagree in the proposal itself, and
 // §4.3 is the concrete schema.
-var yamlItemTypeNames = []string{
-	"undefined", "light", "scroll", "wand", "staff", "weapon", "fire_weapon",
-	"missile", "treasure", "armor", "potion", "worn", "other", "trash",
-	"trap", "container", "note", "drink_container", "key", "food", "money",
-	"pen", "boat", "fountain",
-}
+var yamlItemTypeNames = yamlNamesOf(itemTypeNames)
 
 // yamlAttackTypeNames match the AttackHit..AttackStab constants
 // (violence.go) value for value — a weapon's fourth value, per §4.3's
@@ -132,11 +91,7 @@ var yamlAttackTypeNames = []string{
 // yamlLiquidNames name the LIQ_* constants (structs.h:427) a drink
 // container's third value holds, in drink.go's drinkEffects/drinkKeywords
 // order — 16 entries, LIQ_WATER (0) through LIQ_CLEARWATER (15).
-var yamlLiquidNames = []string{
-	"water", "beer", "wine", "ale", "dark_ale", "whisky", "lemonade",
-	"firebreather", "local_specialty", "slime_mold_juice", "milk", "tea",
-	"coffee", "blood", "salt_water", "clear_water",
-}
+var yamlLiquidNames = yamlNamesOf(liquidNames)
 
 // yamlPlayerFlagNames match playerBitNames bit for bit — the PLR_* flags
 // a player record's `flags.act:` list uses. PlayerBanned (bit 17) has no
@@ -146,21 +101,12 @@ var yamlLiquidNames = []string{
 // "UNDEFINED" today — the yaml format leaves it exactly as unnamed as the
 // C does, rather than inventing the identifier the original source never
 // had. It still round-trips, via flags_raw.
-var yamlPlayerFlagNames = []string{
-	"killer", "thief", "frozen", "dont_set", "writing", "mailing",
-	"crash_save", "siteok", "no_shout", "no_title", "deleted", "load_room",
-	"no_wizlist", "no_delete", "invis_start", "cryo", "not_dead_yet",
-}
+var yamlPlayerFlagNames = yamlNamesOf(playerFlagNames)
 
 // yamlPreferenceNames match preferenceBitNames bit for bit — a player's
 // `flags.prefs:` list. PrefClearScreen (bit 22, OasisOLC's own addition) is
 // unnamed for the same reason PlayerBanned is above.
-var yamlPreferenceNames = []string{
-	"brief", "compact", "deaf", "no_tell", "display_hp", "display_mana",
-	"display_move", "autoexit", "no_hassle", "quest", "summonable",
-	"no_repeat", "holylight", "color_1", "color_2", "no_wiz", "log_1",
-	"log_2", "no_auction", "no_gossip", "no_grats", "room_flags",
-}
+var yamlPreferenceNames = yamlNamesOf(preferenceNames)
 
 // yamlClassNames match ClassNames value for value (ClassMagicUser through
 // ClassPaladin) — a player's `identity.class:` field. The same table also
@@ -168,9 +114,7 @@ var yamlPreferenceNames = []string{
 // bit 1<<N, so a class name at index N is simultaneously its remort-vector
 // bit's name, and `identity.remort:` reads through NameBits/ParseBitNames
 // against this table rather than a second one.
-var yamlClassNames = []string{
-	"magic_user", "cleric", "thief", "warrior", "paladin",
-}
+var yamlClassNames = yamlNamesOf(classNames)
 
 // yamlShopFlagNames match shopstate.go's ShopWillFight/ShopUsesBank.
 var yamlShopFlagNames = []string{"will_fight", "uses_bank"}
