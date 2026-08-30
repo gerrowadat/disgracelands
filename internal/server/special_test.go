@@ -258,7 +258,7 @@ func TestGuildGuardsBlockTheWrongClass(t *testing.T) {
 		zod := w.Find("Zod")
 		zod.Record.Level = 10 // a mortal; an immortal walks past guards
 		zod.Record.Class = game.ClassWarrior
-		zod.Record.RemortVector = 0
+		zod.Record.RemortVector = game.RemortClasses{}
 		if err := w.Enter(zod, MageGuildRoom); err != nil {
 			t.Error(err)
 		}
@@ -271,7 +271,7 @@ func TestGuildGuardsBlockTheWrongClass(t *testing.T) {
 
 	// A character who has been a magic-user is let through.
 	inWorld(t, srv, func(w *game.Live) {
-		w.Find("Zod").Record.RemortVector = int32(game.RemortMagicUser)
+		w.Find("Zod").Record.RemortVector = game.NewSet(game.ClassMagicUser)
 	})
 
 	c.send("south")

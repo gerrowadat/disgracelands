@@ -33,6 +33,10 @@ const (
 	ClassPaladin Class = 4
 )
 
+// RemortClasses is the set of classes a character has passed through: the
+// Disgracelands remort vector, whose bits are `1 << class`.
+type RemortClasses = Set[Class]
+
 // Number is the class's stored number: what every player record holds and
 // what the value-indexed name tables (pc_class_types, the yaml class names)
 // are keyed by.
@@ -492,14 +496,10 @@ func Remort(rec *PlayerRecord, newClass Class, r *rng.Rand) {
 	// is not merely belt and braces: `set <name> class` moves the class
 	// field without touching the vector, so a character an implementor has
 	// moved by hand can reach here with the bit missing.
-	vector := RemortFlagsOf(rec)
-	if mask := RemortMask(oldClass); mask != 0 {
-		vector = vector.Set(mask)
-	}
-	if mask := RemortMask(newClass); mask != 0 {
-		vector = vector.Set(mask)
-	}
-	SetRemortFlags(rec, vector)
+	vector := RemortClassesOf(rec)
+	vector = vector.Union(RemortMask(oldClass))
+	vector = vector.Union(RemortMask(newClass))
+	SetRemortClasses(rec, vector)
 
 	// set player class whatever
 	rec.Class = newClass

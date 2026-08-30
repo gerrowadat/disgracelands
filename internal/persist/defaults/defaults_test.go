@@ -216,7 +216,7 @@ flags: {}
 	check(t, "Aliases", len(rec.Aliases), 0)
 	check(t, "SpecFlags", rec.SpecFlags, int32(0))
 	check(t, "OLCZone", rec.OLCZone, int32(0))
-	check(t, "RemortVector", rec.RemortVector, int32(0))
+	check(t, "RemortVector", rec.RemortVector, game.RemortClasses{})
 	if !rec.Birth.IsZero() || !rec.LastLogon.IsZero() {
 		t.Errorf("an absent timestamp loaded as %v/%v, want the zero time — not 1970",
 			rec.Birth, rec.LastLogon)

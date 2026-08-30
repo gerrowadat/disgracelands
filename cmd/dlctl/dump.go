@@ -154,7 +154,7 @@ func printRecord(w *bufio.Writer, r *game.PlayerRecord) {
 	p("Player flags", r.PlayerFlags)
 	p("Affect flags", r.AffectFlags)
 	p("Preferences", r.Preferences)
-	p("Remort vector", fmt.Sprintf("%d (%s)", r.RemortVector, remortFlags(r.RemortVector)))
+	p("Remort vector", fmt.Sprintf("%d (%s)", r.RemortVector.Raw(), r.RemortVector))
 	p("Gold / bank", fmt.Sprintf("%d / %d", r.Points.Gold, r.Points.BankGold))
 	p("Exp", r.Points.Exp)
 	p("HP / mana / move", fmt.Sprintf("%d/%d  %d/%d  %d/%d",
@@ -172,10 +172,6 @@ func printRecord(w *bufio.Writer, r *game.PlayerRecord) {
 		_, _ = fmt.Fprintf(w, "\nDescription:\n%s\n", r.Description)
 	}
 }
-
-// remortFlags renders the multiclass bitmask in the same letter form the
-// world files use for their flags.
-func remortFlags(v int32) game.Flags { return game.Flags(uint32(v)) } //nolint:gosec // reinterpretation, not truncation
 
 func formatTime(t time.Time) string {
 	if t.IsZero() {

@@ -1014,7 +1014,7 @@ func TestCreateAMortalAndLogBackIn(t *testing.T) {
 	if len(rec.Skills) != 6 {
 		t.Errorf("a new thief knows %d skills, want 6", len(rec.Skills))
 	}
-	if rec.RemortVector == 0 {
+	if rec.RemortVector.Empty() {
 		t.Error("a new character's remort vector was not set to their own class")
 	}
 

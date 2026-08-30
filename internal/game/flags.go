@@ -12,13 +12,16 @@ import (
 	"strings"
 )
 
-// Flags is a bitfield. The C code calls this bitvector_t and defines it as
-// `unsigned long` (structs.h:599), which was 32 bits on the platform this game
-// was written for and is 64 on modern Linux — exactly the kind of silent width
-// change docs/design/go-port-plan.md §4 exists to eliminate. Here it is
-// always 64 bits, and the places that must round-trip through a 32-bit
-// representation say so explicitly.
-type Flags uint64
+// The C's bitvector_t encoding, and nothing else.
+//
+// There was a `Flags uint64` here — one type for eleven unrelated flag
+// domains, which is what docs/proposals/idiomatic-go.md §3.1 was written
+// about. Step 1 gave each domain its own `Set[T]` and step 2's Class
+// retired the last user, the remort vector, by making it a `Set[Class]`.
+// What is left is the *encoding*: `asciiflag_conv`'s letters in and
+// `sprintbits`' letters out, over a raw bit vector, because a bit vector
+// is the one thing thirteen unrelated domains have in common. See
+// FlagLetters for why this layer speaks `uint64`.
 
 // CFlagLimit is the number of bits the C server can actually represent.
 //
@@ -29,24 +32,7 @@ type Flags uint64
 // cannot round-trip to the C server whatever we do here.
 const CFlagLimit = 32
 
-// Has reports whether every bit in mask is set.
-func (f Flags) Has(mask Flags) bool { return f&mask == mask }
-
-// HasAny reports whether any bit in mask is set.
-func (f Flags) HasAny(mask Flags) bool { return f&mask != 0 }
-
-// Set returns f with the bits in mask set.
-func (f Flags) Set(mask Flags) Flags { return f | mask }
-
-// Clear returns f with the bits in mask cleared.
-func (f Flags) Clear(mask Flags) Flags { return f &^ mask }
-
-// ExceedsCRange reports whether f uses bits the C server cannot represent.
-// Used by the linter to warn about world data that the two servers would
-// disagree about.
-func (f Flags) ExceedsCRange() bool { return f>>CFlagLimit != 0 }
-
-// ParseFlags decodes the world files' bitfield encoding.
+// ParseFlagLetters decodes the world files' bitfield encoding.
 //
 // The encoding has two forms and the reader accepts both, matching
 // asciiflag_conv() in db.c:
@@ -65,13 +51,6 @@ func (f Flags) ExceedsCRange() bool { return f>>CFlagLimit != 0 }
 // neither letters nor digits are silently ignored. That behaviour is kept,
 // because real world files rely on the reader being forgiving, but the
 // unrecognised runes are reported so the linter can complain about them.
-func ParseFlags(s string) (flags Flags, unknown []rune) {
-	bits, unknown := ParseFlagLetters(s)
-	return Flags(bits), unknown
-}
-
-// ParseFlagLetters is ParseFlags over a raw bit vector, and is the actual
-// implementation — see FlagLetters for why the pair is shaped this way.
 func ParseFlagLetters(s string) (bits uint64, unknown []rune) {
 	if s == "" {
 		return 0, nil
@@ -105,9 +84,6 @@ func ParseFlagLetters(s string) (bits uint64, unknown []rune) {
 
 	return bits, unknown
 }
-
-// String renders f in the letter encoding the C writer (sprintbits) produces.
-func (f Flags) String() string { return FlagLetters(uint64(f)) }
 
 // FlagLetters renders a raw bit vector in the letter encoding the C writer
 // (sprintbits) produces: one letter per set bit in bit order, or the literal
@@ -148,6 +124,3 @@ func FlagLetters(bits uint64) string {
 	}
 	return b.String()
 }
-
-// Toggle flips the given bits, porting the C's TOG_BIT.
-func (f Flags) Toggle(bits Flags) Flags { return f ^ bits }

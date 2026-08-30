@@ -15,19 +15,34 @@ import (
 // can be reproduced and so these roll the numbers the C would.
 func newRNG() *rng.Rand { return rng.NewRand(rng.NewCircle(20)) }
 
-// TestRemortMasksMatchTheFlagConstants ties pc_class_remort_masks to the bits
-// the IS_<CLASS> macros test. They are written as separate types — one is
-// stored in the record, one is a Flags constant — so nothing but this stops
-// them drifting apart.
-func TestRemortMasksMatchTheFlagConstants(t *testing.T) {
-	for class, want := range map[Class]Flags{
-		ClassMagicUser: RemortMagicUser,
-		ClassCleric:    RemortCleric,
-		ClassThief:     RemortThief,
-		ClassWarrior:   RemortWarrior,
-	} {
-		if got := remortFlags(classRemortMasks[class]); got != want {
-			t.Errorf("class %d has mask %d, want %d", class, got, want)
+// TestRemortMasksAreOneShiftedByTheClass is the invariant the remort vector's
+// type rests on, and it is now the only thing holding it up.
+//
+// The vector is a Set[Class] (apply.go), which means bit N *is* class N.
+// That is true because pc_class_remort_masks (class.c:82) assigns 1, 2, 4, 8
+// and 16 to the five classes in their own numeric order — a coincidence of
+// the C's making, not a rule it states anywhere. If somebody ever renumbered
+// a class or reassigned a mask, every remort check in the game would quietly
+// be about a different class, and nothing else would notice.
+//
+// This test used to compare the table against a second set of constants
+// (RemortMagicUser and friends). Those are gone: they were another spelling
+// of the class numbers, which is the duplication §3.5 objects to. What
+// replaced them is the rule itself, asserted directly.
+func TestRemortMasksAreOneShiftedByTheClass(t *testing.T) {
+	for _, class := range []Class{ClassMagicUser, ClassCleric, ClassThief, ClassWarrior, ClassPaladin} {
+		mask, ok := classRemortMasks[class]
+		if !ok {
+			t.Errorf("class %d has no remort mask", class)
+			continue
+		}
+		if want := int32(1) << uint(class); mask != want {
+			t.Errorf("class %d has mask %d, want %d (1 << %d) — Set[Class] assumes bit N is class N",
+				class, mask, want, class)
+		}
+		// And the set built from the class agrees with the stored mask.
+		if got := NewSet(class).Raw(); got != uint64(mask) { //nolint:gosec // five small positive masks
+			t.Errorf("NewSet(%d) is %#x, the C's mask is %#x", class, got, mask)
 		}
 	}
 	if classRemortMasks[ClassPaladin] != 16 {
@@ -141,7 +156,7 @@ func TestNewCharacterDefaultsAreTheLocalOnes(t *testing.T) {
 	rec := &PlayerRecord{Class: ClassCleric}
 	ApplyNewCharacterDefaults(rec)
 
-	if rec.RemortVector != classRemortMasks[ClassCleric] {
+	if rec.RemortVector != NewSet(ClassCleric) {
 		t.Errorf("remort vector %d, want a cleric's %d",
 			rec.RemortVector, classRemortMasks[ClassCleric])
 	}

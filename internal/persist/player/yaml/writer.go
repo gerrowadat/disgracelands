@@ -26,7 +26,7 @@ func docFromRecord(rec *game.PlayerRecord) playerDoc {
 	// record with an out-of-range sex or class came back as neither.
 	sex := game.NameOrNumber(rec.Sex, game.YamlSexNames())
 	class := game.NameOrNumber(rec.Class.Number(), game.YamlClassNames())
-	remort, remortRaw := game.NameBits(uint64(uint32(rec.RemortVector)), game.YamlClassNames()) //nolint:gosec // a small per-class bitmask, reinterpreted not truncated
+	remort, remortRaw := game.NameBits(rec.RemortVector.Raw(), game.YamlClassNames())
 	act, actRaw := game.NameBits(rec.PlayerFlags.Raw(), game.YamlPlayerFlagNames())
 	aff, affRaw := game.NameBits(rec.AffectFlags.Raw(), game.YamlAffectFlagNames())
 	prefs, prefsRaw := game.NameBits(rec.Preferences.Raw(), game.YamlPreferenceNames())

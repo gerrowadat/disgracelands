@@ -27,7 +27,7 @@ const usersFormat = "format: users [-l minlevel[-maxlevel]] [-n name] " +
 type userFilter struct {
 	low, high  int32
 	name, host string
-	classes    game.Flags
+	classes    game.RemortClasses
 	outlaws    bool
 	// playing and deadweight are opposites and both can be set, in which case
 	// nothing matches at all — the C does not stop you asking.
@@ -75,7 +75,9 @@ func parseUserFlags(arg string) (userFilter, bool) {
 			// The C walks the argument byte by byte and lowercases each
 			// one, so a multi-byte rune simply never matches a class letter.
 			for i := 0; i < len(list); i++ {
-				f.classes |= classBit(list[i])
+				if class, ok := classBit(list[i]); ok {
+					f.classes = f.classes.With(class)
+				}
 			}
 		default:
 			return f, false
@@ -114,28 +116,14 @@ func clampLevel(n int) int32 {
 	return int32(n)
 }
 
-// classBit is find_class_bitvector (class.c:129).
-func classBit(c byte) game.Flags {
-	switch lowerByte(c) {
-	case 'm':
-		return 1 << game.ClassMagicUser
-	case 'c':
-		return 1 << game.ClassCleric
-	case 't':
-		return 1 << game.ClassThief
-	case 'w':
-		return 1 << game.ClassWarrior
-	case 'p':
-		return 1 << game.ClassPaladin
+// classBit is find_class_bitvector (class.c:129). The C builds a bit vector
+// keyed by class number, which is a Set[Class] — the same observation the
+// remort vector rests on.
+func classBit(c byte) (game.Class, bool) {
+	if class := game.ParseClass(c); class != game.ClassUndefined {
+		return class, true
 	}
-	return 0
-}
-
-func lowerByte(b byte) byte {
-	if b >= 'A' && b <= 'Z' {
-		return b - 'A' + 'a'
-	}
-	return b
+	return game.ClassUndefined, false
 }
 
 func doUsers(c *Context) error {
@@ -232,7 +220,7 @@ func (c *Context) matchesUserFilter(who *game.Character, s *Session, f userFilte
 	if f.outlaws && !rec.PlayerFlags.HasAny(game.PlayerKiller, game.PlayerThief) {
 		return false
 	}
-	if f.classes != 0 && !f.classes.Has(1<<rec.Class) {
+	if !f.classes.Empty() && !f.classes.Has(rec.Class) {
 		return false
 	}
 	// The C's next line is `if (GET_INVIS_LEV(ch) > GET_LEVEL(ch)) continue;`

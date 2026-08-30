@@ -148,15 +148,21 @@ func RemortCount(rec *PlayerRecord) int {
 	if rec == nil {
 		return 0
 	}
-	remaining, n := rec.RemortVector, 0
+	// Raw bits, and the C's subtract-based count rather than a member count,
+	// because the two disagree on a vector with bits the C never set. The C
+	// only ever inspects the five masks in its own table, so 0x7fffffff —
+	// which examples/torture holds — counts as five classes and not
+	// thirty-one. docs/proposals/idiomatic-go.md §2.2: a refactor may not
+	// change what the arithmetic does.
+	remaining, n := rec.RemortVector.Raw(), 0
 	for class := ClassPaladin; class >= 0; class-- {
-		mask, ok := classRemortMasks[class]
-		if !ok {
+		if _, ok := classRemortMasks[class]; !ok {
 			continue
 		}
-		if remaining >= mask {
+		bit := uint64(1) << uint(class)
+		if remaining >= bit {
 			n++
-			remaining -= mask
+			remaining -= bit
 		}
 	}
 	if n > 0 {
@@ -192,8 +198,8 @@ var classRemortMasks = map[Class]int32{
 func ApplyNewCharacterDefaults(rec *PlayerRecord) {
 	// A new player's remort vector is their own class, so the IS_<CLASS>
 	// macros — which consult the vector — answer correctly from the start.
-	if mask, ok := classRemortMasks[rec.Class]; ok {
-		rec.RemortVector = mask
+	if _, ok := classRemortMasks[rec.Class]; ok {
+		rec.RemortVector = NewSet(rec.Class)
 	}
 	rec.Preferences = rec.Preferences.With(
 		PrefColour1, PrefColour2, PrefDisplayHP, PrefDisplayMana, PrefDisplayMove, PrefAutoExit)

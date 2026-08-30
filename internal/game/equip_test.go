@@ -163,7 +163,7 @@ func TestZappingObjects(t *testing.T) {
 
 	// The class test is remort-aware, because it uses the IS_<CLASS> macros:
 	// a warrior who was once a thief is still zapped by anti-thief kit.
-	exThief := &PlayerRecord{Class: ClassWarrior, RemortVector: int32(RemortThief)}
+	exThief := &PlayerRecord{Class: ClassWarrior, RemortVector: NewSet(ClassThief)}
 	if !Zaps(exThief, &Object{ExtraFlags: NewSet(ItemAntiThief)}) {
 		t.Error("an ex-thief was not zapped by an anti-thief object")
 	}

@@ -148,7 +148,7 @@ func TestPracticesFollowTheRemortAwareClassTest(t *testing.T) {
 
 	remorted := &PlayerRecord{
 		Class: ClassWarrior, Level: 5, Abilities: abils,
-		RemortVector: int32(RemortCleric),
+		RemortVector: NewSet(ClassCleric),
 	}
 	AdvanceLevel(remorted, r)
 	if remorted.SpellsToLearn != 5 {

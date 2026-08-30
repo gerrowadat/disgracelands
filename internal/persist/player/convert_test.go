@@ -61,7 +61,7 @@ func fullRecord(name string) *game.PlayerRecord {
 		LoadRoom:      3001,
 		BadPasswords:  2,
 		SpellsToLearn: 3,
-		RemortVector:  0b0101,
+		RemortVector:  game.SetFromRaw[game.Class](0b0101),
 	}
 }
 
