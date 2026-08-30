@@ -350,7 +350,7 @@ func freshGuardDef() *MobDef {
 		Level:    20, Thac0: 5, ArmorClass: 1,
 		HitDice: Dice{Number: 4, Size: 8, Bonus: 20},
 		Gold:    999, Exp: 5000, Position: int32(PosStanding),
-		ActionFlags: MobIsNPC | 1<<10, // an arbitrary extra bit, not just the always-set one
+		ActionFlags: NewSet(MobIsNPC, MobAggrNeutral), // an arbitrary extra flag, not just the always-set one
 	}
 }
 
@@ -376,7 +376,7 @@ func TestReloadMobileUpdatesTheSharedPrototype(t *testing.T) {
 	if c.MobDef.LongDesc != "A reloaded cityguard stands here.\r\n" {
 		t.Errorf("MobDef.LongDesc = %q, want the reloaded text", c.MobDef.LongDesc)
 	}
-	if c.MobDef.ActionFlags&(1<<10) == 0 {
+	if !c.MobDef.ActionFlags.Has(MobAggrNeutral) {
 		t.Error("MobDef.ActionFlags did not pick up the new flag")
 	}
 

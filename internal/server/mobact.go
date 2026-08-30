@@ -111,7 +111,7 @@ func (s *Server) wander(w *game.Live, mob *game.Character) {
 
 // beAggressive attacks somebody, porting the aggressive branch.
 func (s *Server) beAggressive(w *game.Live, mob *game.Character) {
-	if !mob.HasMobFlag(game.MobAggressive|game.MobAggrToAlign) || mob.Fighting != nil {
+	if !mob.HasAnyMobFlag(game.MobAggrToAlign.With(game.MobAggressive)) || mob.Fighting != nil {
 		return
 	}
 

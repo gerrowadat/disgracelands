@@ -28,7 +28,7 @@ func mayor(t *testing.T, srv *Server) *game.Character {
 		Position: game.PosSleeping,
 		MobDef: &game.MobDef{
 			Vnum: 3105, ShortDesc: "the Mayor", Keywords: "mayor",
-			ActionFlags: game.MobSpec, Spec: "mayor",
+			ActionFlags: game.NewSet(game.MobSpec), Spec: "mayor",
 		},
 		Record: &game.PlayerRecord{
 			Name: "the Mayor", Level: 24, Birth: time.Now(),
@@ -81,7 +81,7 @@ func TestMayorDoesNothingOutsideItsHours(t *testing.T) {
 		Position: game.PosSleeping,
 		MobDef: &game.MobDef{
 			Vnum: 3105, ShortDesc: "the Mayor", Keywords: "mayor",
-			ActionFlags: game.MobSpec, Spec: "mayor",
+			ActionFlags: game.NewSet(game.MobSpec), Spec: "mayor",
 		},
 		Record: &game.PlayerRecord{
 			Name: "the Mayor", Level: 24, Birth: time.Now(),

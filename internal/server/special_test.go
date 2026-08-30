@@ -28,7 +28,7 @@ func withSpec(t *testing.T, srv *Server, vnum game.MobVnum, spec string, room ga
 			return
 		}
 		def.Spec = spec
-		def.ActionFlags = def.ActionFlags.Set(game.MobSpec)
+		def.ActionFlags = def.ActionFlags.With(game.MobSpec)
 
 		if mob = w.SpawnMobile(vnum, room, srv.rng); mob == nil {
 			problem = "could not spawn it"
@@ -107,7 +107,7 @@ func TestPuffSaysThings(t *testing.T) {
 	// Sentinel, or she wanders out of earshot within a few pulses and the
 	// test is watching an empty room.
 	inWorld(t, srv, func(_ *game.Live) {
-		puff.MobDef.ActionFlags = puff.MobDef.ActionFlags.Set(game.MobSentinel)
+		puff.MobDef.ActionFlags = puff.MobDef.ActionFlags.With(game.MobSentinel)
 	})
 	_, listener := place(t, srv, fighterRecord("Bob", 10, 100), ImmortStartRoom)
 

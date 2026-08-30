@@ -463,7 +463,7 @@ func (c *Context) statCharacter(k *game.Character) {
 
 	if k.IsNPC() {
 		fmt.Fprintf(&b, "NPC flags: {{cyan}}%s{{/}}\r\n",
-			game.SprintBit(uint64(mobFlagsOf(k)), game.ActionBitNames()))
+			game.SprintBit(mobFlagsOf(k).Raw(), game.ActionBitNames()))
 	} else {
 		fmt.Fprintf(&b, "PLR: {{cyan}}%s{{/}}\r\n",
 			game.SprintBit(uint64(rec.PlayerFlags), game.PlayerBitNames()))
@@ -545,9 +545,9 @@ func (r statRegen) GoodRegen() bool {
 }
 
 // mobFlagsOf is MOB_FLAGS: a mobile's action bits live on its prototype.
-func mobFlagsOf(k *game.Character) game.Flags {
+func mobFlagsOf(k *game.Character) game.MobFlags {
 	if k.MobDef == nil {
-		return 0
+		return game.MobFlags{}
 	}
 	return k.MobDef.ActionFlags
 }

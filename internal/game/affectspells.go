@@ -45,7 +45,7 @@ type AffectSpell struct {
 // level and several check the victim's state. savedThrow is the result of
 // mag_savingthrow, computed by the caller so the roll happens once.
 func AffectsOfSpell(spell int32, caster, victim *PlayerRecord, victimIsNPC bool,
-	victimFlags Flags, level int32, savedThrow bool, r *rng.Rand,
+	victimFlags MobFlags, level int32, savedThrow bool, r *rng.Rand,
 ) AffectSpell {
 	var out AffectSpell
 	add := func(a Affect) {

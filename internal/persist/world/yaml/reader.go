@@ -148,7 +148,7 @@ func (l *loader) mobFromDoc(path string, md mobDoc) *game.MobDef {
 		Gold:        md.Gold,
 		Exp:         md.Exp,
 	}
-	mob.ActionFlags = game.Flags(l.flags(path, md.Act, game.YamlMobActFlagNames(), "mob act flag", md.Vnum) | md.ActRaw).Set(game.MobIsNPC)
+	mob.ActionFlags = game.SetFromRaw[game.MobFlag](l.flags(path, md.Act, game.YamlMobActFlagNames(), "mob act flag", md.Vnum) | md.ActRaw).With(game.MobIsNPC)
 	mob.AffectionFlags = game.Flags(l.flags(path, md.Affected, game.YamlAffectFlagNames(), "affect flag", md.Vnum) | md.AffectedRaw)
 
 	if hp, ok := parseDiceString(md.HP); ok {
