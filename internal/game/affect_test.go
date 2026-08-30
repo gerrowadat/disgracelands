@@ -320,3 +320,75 @@ func TestAlreadyAffectedAndNotAccumulating(t *testing.T) {
 		t.Error("an accumulating spell was refused")
 	}
 }
+
+// TestBaseRecordUndoesWhatAffectsDid: BaseRecord and SnapshotReal are the
+// two halves of a save/load round trip, and the round trip has to be a fixed
+// point. A record written through BaseRecord, read back and snapshotted, and
+// recomputed must land on exactly the figures it started with — otherwise
+// every logout moves the character, which is the doubling char_to_store's own
+// comment warns about (db.c:2319-2324).
+func TestBaseRecordUndoesWhatAffectsDid(t *testing.T) {
+	rec := affectedCharacter()
+	AddAffect(rec, Affect{Type: SpellArmor, Location: ApplyAC, Modifier: -20, Duration: 24})
+	AddAffect(rec, Affect{Type: SpellBless, Location: ApplyHitRoll, Modifier: 2, Duration: 6})
+	AddAffect(rec, Affect{Type: SpellStrength, Location: ApplyStr, Modifier: 1, Duration: 6})
+	live := *rec
+
+	// What a save writes.
+	saved := BaseRecord(*rec)
+	if saved.Points.MaxHit != rec.RealMaxHit || saved.Points.MaxMana != rec.RealMaxMana ||
+		saved.Points.MaxMove != rec.RealMaxMove {
+		t.Errorf("saved pools are %+v, want the real ones (%d/%d/%d)",
+			saved.Points, rec.RealMaxHit, rec.RealMaxMana, rec.RealMaxMove)
+	}
+	if saved.Abilities != rec.RealAbilities {
+		t.Errorf("saved abilities are %+v, want %+v", saved.Abilities, rec.RealAbilities)
+	}
+	// Not the real values but the C's own constants, because equip_char
+	// adjusts RealArmor directly: db.c:2354-2356.
+	if saved.Points.Armor != 100 || saved.Points.HitRoll != 0 || saved.Points.DamRoll != 0 {
+		t.Errorf("saved armour/hitroll/damroll are %d/%d/%d, want 100/0/0",
+			saved.Points.Armor, saved.Points.HitRoll, saved.Points.DamRoll)
+	}
+
+	// BaseRecord takes a copy: the live character is untouched, which is
+	// what lets a background save work from a snapshot.
+	if rec.Points.Armor != live.Points.Armor || rec.Abilities != live.Abilities {
+		t.Error("BaseRecord mutated the record it was given")
+	}
+
+	// What a load then does with it.
+	reloaded := saved
+	SnapshotReal(&reloaded)
+	RecomputeAffects(&reloaded)
+
+	if reloaded.Points != live.Points {
+		t.Errorf("round trip moved the points:\n got %+v\nwant %+v", reloaded.Points, live.Points)
+	}
+	if reloaded.Abilities != live.Abilities {
+		t.Errorf("round trip moved the abilities:\n got %+v\nwant %+v", reloaded.Abilities, live.Abilities)
+	}
+	if reloaded.AffectFlags != live.AffectFlags {
+		t.Errorf("round trip moved the affect flags: got %v, want %v",
+			reloaded.AffectFlags, live.AffectFlags)
+	}
+}
+
+// TestBaseRecordDoesNotSaveWornArmour. equip_char subtracts an ITEM_ARMOR's
+// class from RealArmor directly rather than going through an affect — the one
+// place this port keeps the C's method (docs/deviations.md) — so RealArmor on
+// an equipped character already has the armour folded in. Writing it would
+// fold it in a second time on the next login, which is why BaseRecord writes
+// the C's flat 100 instead (db.c:2354).
+func TestBaseRecordDoesNotSaveWornArmour(t *testing.T) {
+	rec := affectedCharacter()
+	rec.RealArmor = 70 // as if wearing a suit of plate worth 30
+	RecomputeAffects(rec)
+	if rec.Points.Armor != 70 {
+		t.Fatalf("armour is %d, want 70", rec.Points.Armor)
+	}
+
+	if got := BaseRecord(*rec).Points.Armor; got != 100 {
+		t.Errorf("saved armour is %d, want 100 — worn armour must not reach the file", got)
+	}
+}

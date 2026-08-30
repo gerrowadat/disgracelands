@@ -512,6 +512,21 @@ because there it is not a recompute at all: `equip_char` changes the
 character's own figure and `unequip_char` changes it back. See
 `docs/weirdnumbers.md`.
 
+What crosses the disk is the C's, exactly. `char_to_store` strips a character
+before writing them — unequip everything, remove every affect, `aff_abils =
+real_abils` — with the comment saying why: "remove the affections so that the
+raw values are stored; otherwise the effects are doubled when the char logs
+back in" (db.c:2319-2324). A player file therefore holds the *unaffected*
+figures, and `store_to_char` puts the saved affects back on the way in
+(db.c:2245-2246, 2270-2273). Here that is `game.BaseRecord` on the way out —
+a copy, because the real values are already kept, so nothing has to be
+stripped and put back — and `game.SnapshotReal` at the end of every store's
+decode plus one `RecomputeAffects` in `Server.Authenticate` on the way in.
+Both directions include armour class, hitroll and damroll being reset rather
+than saved (`st->points.armor = 100`, db.c:2354-2356), which is not an
+oversight in the C: `equip_char`'s direct adjustment above is precisely what
+makes a stored armour class meaningless.
+
 ### Three skill numbers were wrong, and are now right
 
 Not a deviation — a bug in this port, recorded because the shape of it is

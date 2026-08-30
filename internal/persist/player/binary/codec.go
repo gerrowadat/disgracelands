@@ -266,6 +266,10 @@ func (c *codec) decode(rec []byte) (*game.PlayerRecord, error) {
 		})
 	}
 
+	// As ascii's Decode and yaml's recordFromDoc: char_file_u holds
+	// real_abils and the unaffected points, so the decoded record is the
+	// base every affect is applied to. See game.SnapshotReal.
+	game.SnapshotReal(p)
 	return p, nil
 }
 
