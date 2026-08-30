@@ -270,7 +270,7 @@ func (l *Live) SpawnMobile(vnum MobVnum, room RoomVnum, r *rng.Rand) *Character 
 		Keywords: def.Keywords,
 		Record:   mobileRecord(def, r),
 		NPC:      true,
-		Position: Position(def.Position),
+		Position: def.Position,
 		MobDef:   def,
 	}
 

@@ -460,7 +460,7 @@ func (c *Context) statCharacter(k *game.Character) {
 	b.WriteString("\r\n")
 
 	fmt.Fprintf(&b, "Default position: %s, Idle Timer (in tics) [%d]\r\n",
-		game.SprintType(defaultPositionOf(k), game.PositionNames()), 0)
+		game.SprintType(int32(defaultPositionOf(k)), game.PositionNames()), 0)
 
 	if k.IsNPC() {
 		fmt.Fprintf(&b, "NPC flags: {{cyan}}%s{{/}}\r\n",
@@ -674,9 +674,9 @@ func holderName(obj *game.Object, want game.Location) string {
 	return "Nobody"
 }
 
-func defaultPositionOf(k *game.Character) int32 {
+func defaultPositionOf(k *game.Character) game.Position {
 	if k.MobDef != nil {
 		return k.MobDef.DefaultPosition
 	}
-	return int32(game.PosStanding)
+	return game.PosStanding
 }

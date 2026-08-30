@@ -103,8 +103,12 @@ type MobDef struct {
 	Gold int32
 	Exp  int32
 
-	Position        int32
-	DefaultPosition int32
+	// Position is where the mobile stands when it is loaded, and
+	// DefaultPosition where it returns to. game.Position is a defined type
+	// and these were the same domain held as int32 -- exactly the split
+	// docs/proposals/idiomatic-go.md §3.2 calls out by name.
+	Position        Position
+	DefaultPosition Position
 	Sex             Sex
 
 	// Especs are the `Key: value` lines of an enhanced mob, in file order.

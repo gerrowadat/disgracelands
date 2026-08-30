@@ -25,12 +25,26 @@ would notice if the fence were drawn casually.
 >
 > - **Step 0, the resave fixture — done.** It found something on its
 >   first run: see §7's row.
-> - **Step 2, a type per enumeration — under way.** Class first, because
->   it is what retires `Flags`. `Class.Number()` is the narrowing point,
->   the same job `Set.Raw` does for a flag domain. **`game.Flags` is
->   gone** as of the remort vector becoming `Set[Class]`; what is left in
->   `flags.go` is the letter *encoding* over raw bits, which is all
->   thirteen domains ever had in common.
+> - **Step 2, a type per enumeration — done.** Class first, because it is
+>   what retires `Flags`. `Class.Number()` is the narrowing point, the
+>   same job `Set.Raw` does for a flag domain — and every enumeration
+>   after it grew the same accessor, which is §3.8's width question
+>   arriving six steps early: widening an enumeration does not remove its
+>   conversions to the format's width, it *concentrates* them. **`game.
+>   Flags` is gone** as of the remort vector becoming `Set[Class]`; what
+>   is left in `flags.go` is the letter *encoding* over raw bits, which is
+>   all thirteen domains ever had in common.
+>
+>   Four of the nine were not what §3.2 had them down as.
+>   **Race** enumerates nothing at all — no name table in Go or in the C,
+>   never read by `internal/game`, absent from `char_file_u` entirely — so
+>   its type exists to say that in one place and to stop it being
+>   interchangeable with `Level`. **SpellID** is one domain for spells and
+>   skills both, and gave the step its only real finding: its spells.h
+>   oracle had gone stale, checking 19 of 79 constants, and now derives
+>   its list from the type. **Sector** and **Liquid** were both
+>   *deliberately partial* enumerations whose comments said as much, with
+>   three of ten and two of sixteen values named; all of them are now.
 > - **Step 1, a type per flag domain — done.** `Set[T]` and the
 >   raw-bits helper boundary landed with the first domain, room flags.
 >   Read §4.1.1, the OR trap, before converting another one. Done so far:
@@ -750,7 +764,7 @@ so that the riskiest step is last and separable.
 | --- | --- | --- | --- |
 | **0** | ~~**The resave fixture**~~ **Done.** | §6's load-and-resave test, over all three corpora and all seven subsystems: `cmd/dlctl`'s `TestFmtLeavesTheCheckedInCorporaAlone`. It failed the first time it ran — `dlctl fmt --type=state` was the only caller in the tree that could bring a `state/bans.yaml` into existence, so formatting a converted directory added a file the conversion had deliberately not written. Fixed in `bans/yaml`'s `Rewrite`, not in the corpus. | None. Do this first; everything after it leans on it. |
 | **1** | **A type per flag domain** — **under way** | §4.1. `Flags` → `Set[RoomFlag]`, `Set[AffectFlag]`, `Set[PlayerFlag]`, … One domain per PR, eleven or so PRs. `Raw()`/`SetFromRaw` at the persistence boundary only. **Done: room flags** (with `Set[T]` itself and the raw-bits helper boundary), **exit/door flags**, **container flags**, **shop flags**, **paladin spec flags**, **spell targeting and routine flags**, **item wear flags**, **item extra flags**, **mob act flags**, **affect flags**, **player flags and preferences**. | Low, high volume, *and one real hazard*: §4.1.1's OR trap, which the first domain hit twice. The compiler finds every site; it does not find that one. `bitnames_test.go` must still re-parse `constants.c`. |
-| **2** | **A type per enumeration** — **under way** | §4.2. Class, Sex, Race, ItemType, Apply, SpellID, Sector, Liquid, and `MobDef.Position` onto the existing `game.Position`. `RemortVector` becomes `Set[Class]`. **Done: Class** (and the remort vector, which retired `Flags`), **Sex**, **ItemType**, **Apply**, **Sector**, **Race** (which turned out to enumerate nothing — see its doc comment), **SpellID** (spells and skills are one domain; it also retired five dead `SpellType*` constants and made `TestSpellNumbersMatchTheHeader` derive its list, which had gone from covering 19 of 19 constants to 19 of 79), **Liquid**. | Low, high volume. Watch the table-indexed tests (§5). |
+| **2** | ~~**A type per enumeration**~~ **Done.** | §4.2. Class, Sex, Race, ItemType, Apply, SpellID, Sector, Liquid, and `MobDef.Position` onto the existing `game.Position`. `RemortVector` becomes `Set[Class]`. **Done: Class** (and the remort vector, which retired `Flags`), **Sex**, **ItemType**, **Apply**, **Sector**, **Race** (which turned out to enumerate nothing — see its doc comment), **SpellID** (spells and skills are one domain; it also retired five dead `SpellType*` constants and made `TestSpellNumbersMatchTheHeader` derive its list, which had gone from covering 19 of 19 constants to 19 of 79), **Liquid**, **`MobDef.Position`** onto the existing `game.Position`. **Step 2 is done.** | Low, high volume. Watch the table-indexed tests (§5). |
 | **3** | **Typed object values** | §4.3. Lift `values.go`'s taxonomy into `game`, typed accessors, raw kept as the stored truth. 84 positional accesses go. | Medium. The five-types-only rule is a constraint, not a starting point to improve on. |
 | **4** | **Absence over sentinels** | §4.4, in the places §3.4 lists, excluding the vnum sentinels that reach disk. | Medium. Each one is a small semantic argument; do not batch them. |
 | **5** | **The object placement union** | §4.5. Five fields to one. | Medium. Everything already goes through `Put`/`Take`, which is what makes it tractable. |

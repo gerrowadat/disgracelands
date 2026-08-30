@@ -26,9 +26,9 @@ func resetWorld(commands []ResetCommand) *Live {
 				LongDesc: "A cityguard stands here.\r\n",
 				Level:    10, Thac0: 15, ArmorClass: 5,
 				HitDice: Dice{Number: 2, Size: 8, Bonus: 10},
-				Gold:    100, Exp: 500, Position: int32(PosStanding),
+				Gold:    100, Exp: 500, Position: PosStanding,
 			},
-			{Vnum: 3061, Keywords: "dog", ShortDesc: "a dog", Level: 2, Position: int32(PosStanding)},
+			{Vnum: 3061, Keywords: "dog", ShortDesc: "a dog", Level: 2, Position: PosStanding},
 		},
 		Objects: []*ObjDef{
 			{Vnum: 3020, Keywords: "sword", ShortDesc: "a sword", Type: ItemWeapon,
@@ -349,7 +349,7 @@ func freshGuardDef() *MobDef {
 		LongDesc: "A reloaded cityguard stands here.\r\n",
 		Level:    20, Thac0: 5, ArmorClass: 1,
 		HitDice: Dice{Number: 4, Size: 8, Bonus: 20},
-		Gold:    999, Exp: 5000, Position: int32(PosStanding),
+		Gold:    999, Exp: 5000, Position: PosStanding,
 		ActionFlags: NewSet(MobIsNPC, MobAggrNeutral), // an arbitrary extra flag, not just the always-set one
 	}
 }
@@ -534,9 +534,9 @@ func shopWorld() *Live {
 		Rooms: []*RoomDef{temple},
 		Mobiles: []*MobDef{
 			{Vnum: 3060, Keywords: "keeper", ShortDesc: "the keeper",
-				Level: 10, Position: int32(PosStanding)},
+				Level: 10, Position: PosStanding},
 			{Vnum: 3061, Keywords: "second keeper", ShortDesc: "the second keeper",
-				Level: 10, Position: int32(PosStanding)},
+				Level: 10, Position: PosStanding},
 		},
 		Shops: []*ShopDef{
 			{Vnum: 9001, Keeper: 3060, ProfitBuy: 1.1, ProfitSell: 0.5, Temper: 0},

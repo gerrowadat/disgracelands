@@ -1351,7 +1351,7 @@ var charPositions = [...]string{
 // that has it standing at attention.
 func listOneChar(w *game.Live, who, viewer *game.Character) string {
 	if who.MobDef != nil && who.MobDef.LongDesc != "" &&
-		who.Position == game.Position(who.MobDef.Position) {
+		who.Position == who.MobDef.Position {
 		var b strings.Builder
 		// A `*` in front of a long description means invisible. You only ever
 		// see it with detect invisible on, since otherwise the mobile is not

@@ -448,16 +448,16 @@ func testWorld() *game.Live {
 			LongDesc:        "A large dog is here.\r\n",
 			Level:           5,
 			HitDice:         game.Dice{Number: 1, Size: 1, Bonus: 100},
-			Position:        int32(game.PosStanding),
-			DefaultPosition: int32(game.PosStanding),
+			Position:        game.PosStanding,
+			DefaultPosition: game.PosStanding,
 		},
 		{
 			Vnum: testGuildmasterVnum, Keywords: "guildmaster",
 			ShortDesc: "the guildmaster", LongDesc: "The guildmaster stands here.\r\n",
 			Level:           30,
 			HitDice:         game.Dice{Number: 1, Size: 1, Bonus: 500},
-			Position:        int32(game.PosStanding),
-			DefaultPosition: int32(game.PosStanding),
+			Position:        game.PosStanding,
+			DefaultPosition: game.PosStanding,
 		},
 	}
 
@@ -469,8 +469,8 @@ func testWorld() *game.Live {
 		LongDesc:        "A zombie shambles here.\r\n",
 		Level:           5,
 		HitDice:         game.Dice{Number: 1, Size: 1, Bonus: 100},
-		Position:        int32(game.PosStanding),
-		DefaultPosition: int32(game.PosStanding),
+		Position:        game.PosStanding,
+		DefaultPosition: game.PosStanding,
 	})
 
 	mobiles = append(mobiles, &game.MobDef{
@@ -478,8 +478,8 @@ func testWorld() *game.Live {
 		ShortDesc: "the shopkeeper", LongDesc: "The shopkeeper stands here.\r\n",
 		Level:           30,
 		HitDice:         game.Dice{Number: 1, Size: 1, Bonus: 500},
-		Position:        int32(game.PosStanding),
-		DefaultPosition: int32(game.PosStanding),
+		Position:        game.PosStanding,
+		DefaultPosition: game.PosStanding,
 		Gold:            10_000,
 	})
 
