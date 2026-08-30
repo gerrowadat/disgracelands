@@ -2116,6 +2116,43 @@ Listed here so they are not mistaken for deliberate differences.
   setting — ported anyway, and now genuinely reachable by turning
   `free_rent` off in `<lib-dir>/config/game.yaml`.
 
+- **The boot-time rent sweep does not run while rent is free.** `db.c:456`
+  calls `update_obj_file` unconditionally, whatever `free_rent` is set to;
+  this server skips it entirely unless rent charging is on (2026-08-30,
+  #294).
+
+  The reasoning is that the sweep is the enforcement half of a charge that
+  is not being made. A rent file times out because its owner stopped paying
+  for the room it sits in — but with `free_rent` YES nobody ever paid:
+  `do_quit` stores `Crash_rentsave(ch, 0)` (`act.other.c:163`), the idle
+  force-rent does the same rather than `Crash_idlesave` (`limits.c:443`),
+  and every file in the archive therefore carries a per-day cost of zero.
+  `Crash_load` still computes `net_cost_per_diem * num_of_days`
+  (`objsave.c:470`), and it is `0 × days` forever. Deleting somebody's
+  possessions for falling behind on a bill of nothing is a rule with its
+  reason removed.
+
+  What made it worth a deviation rather than merely defensible is what it
+  did: convert an archived `lib/`, boot on the result, and the first sweep
+  deleted the stored possessions of every character who had not played for
+  thirty days — which, for an archive, is all of them. Silently, one log
+  line each, and with nothing to undo it. The conversion's whole purpose is
+  to preserve what was there and the very next step destroyed a large part
+  of it.
+
+  Turning `free_rent` off restores the C's behaviour unchanged, timeouts and
+  all: the charge exists again, and so does the reason. Both halves are
+  asserted in `TestNothingIsSweptWhileRentIsFree`.
+
+  One thing inside the sweep is not conditional on any of this: a rent file
+  with no `written:` at all is never swept, in either mode. `written:` is
+  `omitempty`, so an absent one reads back as the zero `time.Time` and
+  `now.Sub(zero)` is about two thousand years. `IsZero()` distinguishes "the
+  file did not say" from "the file said 1970" — a genuine epoch timestamp
+  reads back as `time.Unix(0, 0)`, an ordinary instant, and is still swept
+  exactly as the C sweeps it. Deleting possessions on the strength of a
+  value that failed to parse is the worst of the available outcomes.
+
 - **The game tuning lives in the data directory**, at
   `<lib-dir>/config/game.yaml`. A new file in what `--lib-dir` points at, so
   it is written down here even though the C never had a file to differ from:

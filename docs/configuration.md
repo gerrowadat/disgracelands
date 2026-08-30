@@ -384,6 +384,15 @@ quietly does nothing looks exactly like a flag that worked.
 older than 30 real days and crash files older than 10 — `update_obj_file()`
 (objsave.c:332), called from `db.c:457` under exactly this condition.
 
+**On a default server the flag makes no difference, because the sweep does
+not run at all.** It is skipped whenever rent is free, which is the default
+(`free_rent`, below) and was the archive's own setting: the sweep enforces a
+charge that is not being made, and on a freshly converted `lib/` it deleted
+the stored possessions of every character who had not played in thirty days.
+See `docs/deviations.md` for the full argument. Turn `free_rent` off in
+`<lib-dir>/config/game.yaml` and the sweep — and this flag — behave exactly
+as the C's do.
+
 | Flag | C equivalent | Meaning |
 |---|---|---|
 | `--freeze-mobiles` | `-M` | Hold the mobiles still: no wandering, no scavenging, no mobile-activity dice. |
