@@ -169,7 +169,7 @@ type ObjDef struct {
 
 	Type       int32
 	ExtraFlags Flags
-	WearFlags  Flags
+	WearFlags  WearFlagSet
 	// PermAffect is the bitvector of affects worn objects confer. Read as a
 	// plain integer by the C loader, not as letter flags.
 	PermAffect int32

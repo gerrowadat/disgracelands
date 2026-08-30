@@ -308,7 +308,7 @@ func BuildDumpWithOptions(w *game.World, opts Options) *Dump {
 			Vnum: o.Vnum, Keywords: Text(o.Keywords), ShortDesc: Text(o.ShortDesc),
 			Desc: Text(o.Description), ActionDesc: Text(o.ActionDesc), Type: o.Type,
 			ExtraFlags: o.ExtraFlags.String(), ExtraBits: uint64(o.ExtraFlags),
-			WearFlags: o.WearFlags.String(), WearBits: uint64(o.WearFlags),
+			WearFlags: o.WearFlags.String(), WearBits: o.WearFlags.Raw(),
 			PermAffect: o.PermAffect, Values: o.Values,
 			Weight: o.Weight, Cost: o.Cost, RentPerDay: o.RentPerDay,
 			MinLevel: o.MinLevel, Affects: affects,

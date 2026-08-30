@@ -32,11 +32,11 @@ func resetWorld(commands []ResetCommand) *Live {
 		},
 		Objects: []*ObjDef{
 			{Vnum: 3020, Keywords: "sword", ShortDesc: "a sword", Type: ItemWeapon,
-				WearFlags: ItemWearTake | ItemWearWield, Weight: 10},
+				WearFlags: NewSet(ItemWearTake, ItemWearWield), Weight: 10},
 			{Vnum: 3021, Keywords: "bag", ShortDesc: "a bag", Type: ItemContainer,
-				WearFlags: ItemWearTake, Weight: 5},
+				WearFlags: NewSet(ItemWearTake), Weight: 5},
 			{Vnum: 3022, Keywords: "coin", ShortDesc: "a coin", Type: ItemTreasure,
-				WearFlags: ItemWearTake, Weight: 1},
+				WearFlags: NewSet(ItemWearTake), Weight: 1},
 		},
 		Zones: []*ZoneDef{
 			{Vnum: 30, Name: "Midgaard", Bottom: 3000, Top: 3099,
@@ -466,7 +466,7 @@ func TestReloadObjectLeavesExistingInstancesAlone(t *testing.T) {
 	fresh := &ObjDef{
 		Vnum: 3020, Keywords: "sword", ShortDesc: "a reloaded sword",
 		Description: "A freshly reloaded sword lies here.",
-		Type:        ItemWeapon, WearFlags: ItemWearTake | ItemWearWield,
+		Type:        ItemWeapon, WearFlags: NewSet(ItemWearTake, ItemWearWield),
 		Weight: 12, MinLevel: 5, RentPerDay: 3,
 	}
 	if !l.ReloadObject(fresh) {

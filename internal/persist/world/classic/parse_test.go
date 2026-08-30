@@ -238,8 +238,9 @@ A
 	if obj.Type != 9 {
 		t.Errorf("Type = %d, want 9", obj.Type)
 	}
-	if want := game.Flags(1<<0 | 1<<4); obj.WearFlags != want {
-		t.Errorf("WearFlags = %#b, want %#b (from \"ae\")", obj.WearFlags, want)
+	// "ae" is bits 0 and 4: ITEM_WEAR_TAKE and ITEM_WEAR_HEAD.
+	if want := game.NewSet(game.ItemWearTake, game.ItemWearHead); obj.WearFlags != want {
+		t.Errorf("WearFlags = %#b, want %#b (from \"ae\")", obj.WearFlags.Raw(), want.Raw())
 	}
 	if obj.Values != [4]int32{6, 0, 0, 0} {
 		t.Errorf("Values = %v", obj.Values)

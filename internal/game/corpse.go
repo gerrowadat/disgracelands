@@ -44,7 +44,7 @@ func (l *Live) MakeCorpse(c *Character) *Object {
 	corpse.Description = fmt.Sprintf("The corpse of %s is lying here.", c.Name)
 
 	corpse.Type = ItemContainer
-	corpse.WearFlags = ItemWearTake
+	corpse.WearFlags = NewSet(ItemWearTake)
 	corpse.ExtraFlags = ItemNoDonate
 	corpse.Values[containerCapacity] = 0 // capacity: nothing more goes in
 	corpse.Values[containerCorpseValue] = corpseIdentifier
@@ -84,7 +84,7 @@ func (l *Live) MakeCorpse(c *Character) *Object {
 func (l *Live) MakeMoney(amount int32) *Object {
 	money := l.NewBareObject()
 	money.Type = ItemMoney
-	money.WearFlags = ItemWearTake
+	money.WearFlags = NewSet(ItemWearTake)
 	money.Values[0] = amount
 
 	switch amount {

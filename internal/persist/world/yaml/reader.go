@@ -202,7 +202,7 @@ func (l *loader) objFromDoc(path string, od objDoc) *game.ObjDef {
 		l.errorf("%s: object #%d: unknown type %q", path, od.Vnum, od.Type)
 	}
 	obj.Type = typ
-	obj.WearFlags = game.Flags(l.flags(path, od.Wear, game.YamlWearFlagNames(), "wear flag", od.Vnum) | od.WearRaw)
+	obj.WearFlags = game.SetFromRaw[game.WearFlag](l.flags(path, od.Wear, game.YamlWearFlagNames(), "wear flag", od.Vnum) | od.WearRaw)
 	obj.ExtraFlags = game.Flags(l.flags(path, od.Flags, game.YamlItemExtraFlagNames(), "item flag", od.Vnum) | od.FlagsRaw)
 	permAffect, unknown := game.ParseBitNames(od.PermAffect, game.YamlAffectFlagNames())
 	if len(unknown) > 0 {

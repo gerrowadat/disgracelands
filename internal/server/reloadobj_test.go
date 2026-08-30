@@ -55,7 +55,7 @@ func TestReloadObjCommandEndToEnd(t *testing.T) {
 		Vnum: testSwordVnum, Keywords: "sword long", ShortDesc: "the reloaded sword",
 		Description: "A reloaded sword is lying here.",
 		Type:        game.ItemWeapon,
-		WearFlags:   game.ItemWearTake | game.ItemWearWield,
+		WearFlags:   game.NewSet(game.ItemWearTake, game.ItemWearWield),
 		Weight:      10,
 		Cost:        200,
 		Values:      [game.NumObjValues]int32{0, 3, 8, 3},

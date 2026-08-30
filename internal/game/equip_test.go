@@ -13,7 +13,7 @@ func armourFor(ac int32, affects ...ObjAffect) *Object {
 	return &Object{
 		Keywords: "armour", ShortDesc: "a suit of armour",
 		Type:      ItemArmor,
-		WearFlags: ItemWearTake | ItemWearBody | ItemWearHead | ItemWearWrist,
+		WearFlags: NewSet(ItemWearTake, ItemWearBody, ItemWearHead, ItemWearWrist),
 		Values:    [NumObjValues]int32{ac},
 		Affects:   affects,
 	}
@@ -89,7 +89,7 @@ func TestAnObjectsAppliesAreRecomputedRatherThanAccumulated(t *testing.T) {
 
 	ring := &Object{
 		Keywords: "ring", ShortDesc: "a gold ring",
-		Type: ItemArmor, WearFlags: ItemWearTake | ItemWearFinger,
+		Type: ItemArmor, WearFlags: NewSet(ItemWearTake, ItemWearFinger),
 		Affects: []ObjAffect{
 			{Location: ApplyHitRoll, Modifier: 3},
 			{Location: ApplyDamRoll, Modifier: 2},

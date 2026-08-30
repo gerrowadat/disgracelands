@@ -288,7 +288,7 @@ func (c *Context) statObject(obj *game.Object) {
 		existsOrNone(obj.ObjSpec() != ""))
 	fmt.Fprintf(&b, "L-Des: %s\r\n", orNone(obj.Description))
 
-	fmt.Fprintf(&b, "Can be worn on: %s\r\n", game.SprintBit(uint64(obj.WearFlags), game.WearBitNames()))
+	fmt.Fprintf(&b, "Can be worn on: %s\r\n", game.SprintBit(obj.WearFlags.Raw(), game.WearBitNames()))
 	fmt.Fprintf(&b, "Set char bits : %s\r\n", game.SprintBit(uint64(obj.PermAffect), game.AffectBitNames()))
 	fmt.Fprintf(&b, "Extra flags   : %s\r\n", game.SprintBit(uint64(obj.ExtraFlags), game.ExtraBitNames()))
 

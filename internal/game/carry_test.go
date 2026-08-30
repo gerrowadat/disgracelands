@@ -17,15 +17,15 @@ func objectWorld() *Live {
 	objects := []*ObjDef{
 		{
 			Vnum: 100, Keywords: "sword long", ShortDesc: "a long sword",
-			Type: ItemWeapon, WearFlags: ItemWearTake | ItemWearWield, Weight: 10,
+			Type: ItemWeapon, WearFlags: NewSet(ItemWearTake, ItemWearWield), Weight: 10,
 		},
 		{
 			Vnum: 101, Keywords: "bag small", ShortDesc: "a small bag",
-			Type: ItemContainer, WearFlags: ItemWearTake, Weight: 5,
+			Type: ItemContainer, WearFlags: NewSet(ItemWearTake), Weight: 5,
 		},
 		{
 			Vnum: 102, Keywords: "ring gold", ShortDesc: "a gold ring",
-			Type: ItemArmor, WearFlags: ItemWearTake | ItemWearFinger, Weight: 1,
+			Type: ItemArmor, WearFlags: NewSet(ItemWearTake, ItemWearFinger), Weight: 1,
 		},
 		{
 			Vnum: 103, Keywords: "fountain", ShortDesc: "a fountain",
