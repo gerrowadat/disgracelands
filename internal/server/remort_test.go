@@ -314,7 +314,7 @@ func TestRedeemLiftsTheFallenState(t *testing.T) {
 
 	if err := srv.engine.DoSync(context.Background(), func(w *game.Live) {
 		rec := w.Find("Bystander").Record
-		game.SetSpecFlags(rec, game.SpecFlagsOf(rec).Set(game.PaladinFallen))
+		game.SetSpecFlags(rec, game.SpecFlagsOf(rec).With(game.PaladinFallen))
 	}); err != nil {
 		t.Fatal(err)
 	}

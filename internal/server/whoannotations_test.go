@@ -174,7 +174,7 @@ func TestWhoShowsPaladinStandingOnlyToPaladins(t *testing.T) {
 	_, mortal := twoInARoom(t, srv, addr)
 
 	setRecord(t, srv, "Bystander", func(r *game.PlayerRecord) {
-		game.SetSpecFlags(r, game.PaladinUnworthy|game.PaladinFallen)
+		game.SetSpecFlags(r, game.NewSet(game.PaladinUnworthy, game.PaladinFallen))
 	})
 
 	// Created as a warrior by twoInARoom.
