@@ -24,7 +24,7 @@ import (
 // something distinctive, so a round trip that silently zeroes or swaps two
 // fields fails a comparison instead of passing by coincidence.
 func richRecord() *game.PlayerRecord {
-	return &game.PlayerRecord{
+	r := &game.PlayerRecord{
 		Name:       "Zaphod",
 		Credential: game.Credential{Scheme: game.SchemeArgon2id, Hash: "$argon2id$v=19$..."},
 		Title:      "the Confused",
@@ -73,6 +73,11 @@ func richRecord() *game.PlayerRecord {
 		SpellsToLearn: 3,
 		RemortVector:  1 << game.ClassThief,
 	}
+	// A record that has been through a decoder has its unaffected figures
+	// snapshotted, and a round trip is only a round trip against one that
+	// looks the same. See game.SnapshotReal.
+	game.SnapshotReal(r)
+	return r
 }
 
 func TestSaveLoadRoundTripsARichRecord(t *testing.T) {

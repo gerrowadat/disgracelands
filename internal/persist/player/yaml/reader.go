@@ -132,6 +132,10 @@ func recordFromDoc(doc *playerDoc) (*game.PlayerRecord, []string, error) {
 		SpecFlags:     int32(doc.SpecFlags), //nolint:gosec // a local bitmask, 32 bits wide in the format it came from
 		OLCZone:       doc.OLCZone,
 	}
+	// The document holds the unaffected figures — what game.BaseRecord
+	// wrote — so they are this record's base, and the doc's own `affects:`
+	// apply on top of them. See game.SnapshotReal.
+	game.SnapshotReal(rec)
 	return rec, unknown, nil
 }
 

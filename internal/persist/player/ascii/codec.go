@@ -351,6 +351,11 @@ func Decode(r io.Reader) (*game.PlayerRecord, []string, error) {
 	if p.Name == "" {
 		return nil, unknown, fmt.Errorf("file has no Name")
 	}
+	// The decoded figures are the unaffected ones — this format, like every
+	// other, saves what a character has with no spell on them. See
+	// game.SnapshotReal: a record that reaches the world without this holds
+	// the right numbers only until the first thing that recomputes.
+	game.SnapshotReal(p)
 	return p, unknown, nil
 }
 

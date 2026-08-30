@@ -342,6 +342,30 @@ func (s *Server) Authenticate(ctx context.Context, name, password string) (*game
 		}
 	}
 
+	// store_to_char's tail: every stored affect goes back on
+	// (`affect_to_char(ch, &st->affected[i])`, db.c:2270-2273), and
+	// affect_to_char ends in affect_total. Load has already snapshotted the
+	// saved figures as the base, so this is the one recompute that turns
+	// them into what the character actually walks in with.
+	//
+	// It happens here and not in Load because Load is also what the
+	// conversion tools read through, and they must write back exactly what
+	// they read; only a character entering the world wants the affects
+	// resolved.
+	//
+	// Guarded on there being an affect at all, which is not an optimisation:
+	// the C reaches affect_total only *through* affect_to_char, so a
+	// character with an empty affect list is never totalled on the way in.
+	// The difference is visible, because affect_total clamps a player's
+	// abilities to 18 — an implementor created with 25s across the board
+	// (docs/weirdnumbers.md) keeps them through a login with nothing on
+	// them, and loses them to the first spell, exactly as on the archived
+	// server. Recomputing unconditionally here would take them at the login
+	// instead.
+	if len(rec.Affects) > 0 {
+		game.RecomputeAffects(rec)
+	}
+
 	return &game.Character{Name: rec.Name, Record: rec}, nil
 }
 
@@ -719,7 +743,7 @@ func (s *Server) Enter(ctx context.Context, sess *session.Session, c *game.Chara
 			// rather than merely creating a name.
 			s.wizlogInvis(obs.LogBrief, game.LevelImmortal, c,
 				"%s advanced to level %d", c.Name, c.Record.Level)
-			if err := s.players.Save(ctx, c.Record); err != nil {
+			if err := s.saveLive(ctx, c.Record); err != nil {
 				// The C saves here too. A failure is worth reporting but not
 				// worth refusing them entry over: the autosave will catch it.
 				s.logger.Error("saving a newly started character", "character", c.Name, "error", err)
@@ -866,7 +890,7 @@ func (s *Server) ExtractCharacter(w *game.Live, c *game.Character) {
 	// choose 1 at the menu and be back in the world — writing to the same
 	// record — before a background read of it had run. Copying now closes
 	// that window, and `-race` finds it if it is left open.
-	name, record := c.Name, *c.Record
+	name, record := c.Name, game.BaseRecord(*c.Record)
 	var crash *player.RentFile
 	if s.objects != nil && !c.IsNPC() {
 		crash = crashFileFor(c)
@@ -899,6 +923,25 @@ func (s *Server) ExtractCharacter(w *game.Live, c *game.Character) {
 	})
 }
 
+// saveLive writes the record of a character who is in the world or sitting at
+// the menu, through game.BaseRecord.
+//
+// The distinction it draws is against the handful of saves that read a record
+// off disk, change one field and write it straight back — a credential
+// upgrade, a bad-password tally, an alias list. Those records have had
+// nothing applied to them, so they are already base and go through
+// players.Save directly; putting them through BaseRecord would reset an
+// imported character's stored armour class for no reason.
+//
+// A live character is the other case, and is why this exists: c.Record's
+// figures include whatever a spell or a worn shield is currently
+// contributing, and writing those makes them the base the next login applies
+// the same spell to again. game.BaseRecord has the C's own comment on it.
+func (s *Server) saveLive(ctx context.Context, rec *game.PlayerRecord) error {
+	base := game.BaseRecord(*rec)
+	return s.players.Save(ctx, &base)
+}
+
 // Save writes a character's record back.
 //
 // It runs off the world goroutine deliberately: the record is read on that
@@ -918,7 +961,7 @@ func (s *Server) Save(ctx context.Context, c *game.Character) error {
 	}
 	var snapshot game.PlayerRecord
 	if err := s.engine.DoSync(ctx, func(_ *game.Live) {
-		snapshot = *c.Record
+		snapshot = game.BaseRecord(*c.Record)
 		// LoadRoom is *not* set from the current room. save_char writes
 		// whatever is on the record and nothing else touches it: the
 		// receptionist sets it when you rent (objsave.c:1143), and the entry
@@ -1079,7 +1122,7 @@ func (s *Server) CheckPassword(ctx context.Context, c *game.Character, password 
 	}
 	if result.Upgraded != nil {
 		c.Record.Credential = *result.Upgraded
-		if err := s.players.Save(ctx, c.Record); err != nil {
+		if err := s.saveLive(ctx, c.Record); err != nil {
 			s.logger.Error("saving an upgraded credential", "character", c.Name, "error", err)
 		}
 	}
@@ -1096,7 +1139,7 @@ func (s *Server) SetPassword(ctx context.Context, c *game.Character, password st
 		return err
 	}
 	c.Record.Credential = cred
-	return s.players.Save(ctx, c.Record)
+	return s.saveLive(ctx, c.Record)
 }
 
 // Delete implements session.LoginHandler.
@@ -1119,7 +1162,7 @@ func (s *Server) Delete(ctx context.Context, c *game.Character) error {
 		s.logger.Warn("refusing to delete a character of greater-god level or above",
 			"character", c.Name, "level", c.Record.Level)
 		c.Record.PlayerFlags = c.Record.PlayerFlags.Clear(game.PlayerDeleted)
-		return s.players.Save(ctx, c.Record)
+		return s.saveLive(ctx, c.Record)
 	}
 
 	// Recorded on the way out as well as removed, so a restored backup of the

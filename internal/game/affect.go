@@ -320,13 +320,66 @@ func countAffects(list []Affect, spell int32) int {
 	return n
 }
 
+// BaseRecord returns rec with every figure RecomputeAffects derives replaced
+// by the unaffected value it derives from: the port's char_to_store
+// (db.c:2292), which is what a live character must be written through.
+//
+// The C strips a character before writing them — unequip everything, then
+// `while (ch->affected) affect_remove(...)`, then `ch->aff_abils =
+// ch->real_abils` — and puts it all back afterwards, with the comment that
+// says exactly why: "remove the affections so that the raw values are
+// stored; otherwise the effects are doubled when the char logs back in"
+// (db.c:2319-2324). Saving a blessed character's blessed numbers makes them
+// the base the next login blesses again.
+//
+// Here the raw values are already kept beside the derived ones, so the same
+// result is a copy with the derived fields overwritten. Nothing is mutated
+// and nothing is put back, which is also what makes this safe to call on a
+// snapshot taken off the world goroutine.
+//
+// Armour class, hitroll and damroll are not saved at all but reset, matching
+// the C's own `st->points.armor = 100; st->points.hitroll = 0;
+// st->points.damroll = 0` (db.c:2354-2356) — and store_to_char forces the
+// same three on the way back in (db.c:2260-2262), so the C never round-trips
+// them either. RealArmor cannot be written in their place: equip_char adjusts
+// it directly rather than through an affect (docs/deviations.md, "Affects are
+// recomputed from stored real values"), so a character saved while wearing
+// armour would have the armour folded into their base and folded in again on
+// the next login.
+//
+// Only players reach this. char_to_store is guarded by save_char's
+// `if (IS_NPC(ch)) return` (db.c:2206), as Server.Save is.
+func BaseRecord(rec PlayerRecord) PlayerRecord {
+	rec.Abilities = rec.RealAbilities
+	rec.Points.MaxHit = rec.RealMaxHit
+	rec.Points.MaxMana = rec.RealMaxMana
+	rec.Points.MaxMove = rec.RealMaxMove
+	rec.SavingThrows = rec.RealSavingThrows
+	rec.AffectFlags = rec.BaseAffectFlags
+
+	rec.Points.Armor = baseArmor
+	rec.Points.HitRoll = 0
+	rec.Points.DamRoll = 0
+	return rec
+}
+
 // SnapshotReal records the current values as the unaffected ones.
 //
-// Called when a character is created and when one is loaded from disk. The
-// C's char_file_u stores real_abils, not aff_abils — the saved numbers are
-// what the character rolled, with no spell on them — so treating the loaded
-// record as the real values and then applying its saved affects is exactly
-// what the C's load does.
+// Called when a character is created and at the end of every player store's
+// Load. The C's char_file_u stores real_abils, not aff_abils — the saved
+// numbers are what the character rolled, with no spell on them — so treating
+// the loaded record as the real values and then applying its saved affects is
+// exactly what the C's load does (store_to_char's `ch->real_abils =
+// ch->aff_abils = st->abilities`, db.c:2245-2246).
+//
+// It must be called exactly once per record, before anything recomputes.
+// Never is the worse failure and was a real one: a record loaded with the
+// Real fields left at zero holds correct figures right up until the first
+// RecomputeAffects — a spell landing, a shield going on — which resets the
+// live values from a base of nothing and leaves the character with no hit
+// points, no mana, no movement and no abilities. Twice is the other
+// direction: called after RecomputeAffects it folds the affects into the base
+// they were applied to, which is the doubling BaseRecord's comment describes.
 func SnapshotReal(rec *PlayerRecord) {
 	rec.RealAbilities = rec.Abilities
 	rec.RealArmor = rec.Points.Armor
