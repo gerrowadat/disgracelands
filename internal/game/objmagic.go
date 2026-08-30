@@ -42,8 +42,9 @@ func AlterObject(spell SpellID, obj *Object, casterLevel int32) string {
 			// A cursed weapon also loses a point of damage size — value 2 is
 			// the die, so a 2d6 sword becomes 2d5. Curse it repeatedly and
 			// the die goes to nothing, except that the flag stops it.
-			if obj.Type == ItemWeapon {
-				obj.Values[2]--
+			if weapon, ok := obj.WeaponValues(); ok {
+				weapon.Dice.Size--
+				obj.SetWeaponDice(weapon.Dice)
 			}
 			return capitaliseFirst(obj.Name()) + " briefly glows red."
 		}
@@ -55,23 +56,24 @@ func AlterObject(spell SpellID, obj *Object, casterLevel int32) string {
 		}
 
 	case SpellPoison:
-		if consumable(obj) && obj.Values[3] == 0 {
-			obj.Values[3] = 1
+		if obj.Consumable() && !obj.Poisoned() {
+			obj.SetPoisoned(true)
 			return capitaliseFirst(obj.Name()) + " steams briefly."
 		}
 
 	case SpellRemoveCurse:
 		if obj.ExtraFlags.Has(ItemNoDrop) {
 			obj.ExtraFlags = obj.ExtraFlags.Without(ItemNoDrop)
-			if obj.Type == ItemWeapon {
-				obj.Values[2]++
+			if weapon, ok := obj.WeaponValues(); ok {
+				weapon.Dice.Size++
+				obj.SetWeaponDice(weapon.Dice)
 			}
 			return capitaliseFirst(obj.Name()) + " briefly glows blue."
 		}
 
 	case SpellRemovePoison:
-		if consumable(obj) && obj.Values[3] != 0 {
-			obj.Values[3] = 0
+		if obj.Consumable() && obj.Poisoned() {
+			obj.SetPoisoned(false)
 			return capitaliseFirst(obj.Name()) + " steams briefly."
 		}
 	}
@@ -80,10 +82,6 @@ func AlterObject(spell SpellID, obj *Object, casterLevel int32) string {
 
 // consumable reports whether an object is something that can be poisoned:
 // the two liquid types and food.
-func consumable(o *Object) bool {
-	return o.Type == ItemDrinkCon || o.Type == ItemFountain || o.Type == ItemFood
-}
-
 // CreateFoodVnum is the object mag_creations makes for `create food`
 // (magic.c:1016). It is a bare 10 in the C, with no constant and no comment.
 const CreateFoodVnum ObjVnum = 10
@@ -99,23 +97,27 @@ func FillWithWater(obj *Object) string {
 		return ""
 	}
 
-	// Values[2] is the liquid; step 3 types the slot, so it converts here.
-	if Liquid(obj.Values[2]) != LiquidWater && obj.Values[1] != 0 {
+	contents, _ := obj.DrinkValues()
+
+	if contents.Liquid != LiquidWater && contents.Filled != 0 {
 		NameFromDrinkCon(obj)
-		obj.Values[2] = LiquidSlime.Number()
+		obj.SetDrinkLiquid(LiquidSlime)
 		NameToDrinkCon(obj, LiquidSlime)
 		return ""
 	}
 
-	water := max(obj.Values[0]-obj.Values[1], 0)
+	water := max(contents.Capacity-contents.Filled, 0)
 	if water <= 0 {
 		return ""
 	}
-	if obj.Values[1] >= 0 {
+	// `>= 0` and not `> 0`: the C takes the keyword off even when the
+	// container was already empty, which is a no-op there and is why this
+	// reads oddly rather than wrongly.
+	if contents.Filled >= 0 {
 		NameFromDrinkCon(obj)
 	}
-	obj.Values[2] = LiquidWater.Number()
-	obj.Values[1] += water
+	obj.SetDrinkLiquid(LiquidWater)
+	obj.SetDrinkFilled(contents.Filled + water)
 	NameToDrinkCon(obj, LiquidWater)
 	obj.Weight += water
 
@@ -177,10 +179,10 @@ func PoisonReport(obj *Object) string {
 	if obj == nil {
 		return ""
 	}
-	if !consumable(obj) {
+	if !obj.Consumable() {
 		return "You sense that it should not be consumed.\r\n"
 	}
-	if obj.Values[3] != 0 {
+	if obj.Poisoned() {
 		return fmt.Sprintf("You sense that %s has been contaminated.\r\n", obj.Name())
 	}
 	return fmt.Sprintf("You sense that %s is safe for consumption.\r\n", obj.Name())

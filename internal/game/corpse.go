@@ -46,8 +46,9 @@ func (l *Live) MakeCorpse(c *Character) *Object {
 	corpse.Type = ItemContainer
 	corpse.WearFlags = NewSet(ItemWearTake)
 	corpse.ExtraFlags = NewSet(ItemNoDonate)
-	corpse.Values[containerCapacity] = 0 // capacity: nothing more goes in
-	corpse.Values[containerCorpseValue] = corpseIdentifier
+	// Capacity zero: nothing more goes in. The corpse marker is value 3,
+	// which OasisOLC never prompts for — see objvalues.go.
+	corpse.Values = ValuesOfContainer(ContainerValues{Corpse: true})
 
 	corpse.Weight = c.CarriedWeight()
 	if c.Record != nil {
@@ -85,7 +86,7 @@ func (l *Live) MakeMoney(amount int32) *Object {
 	money := l.NewBareObject()
 	money.Type = ItemMoney
 	money.WearFlags = NewSet(ItemWearTake)
-	money.Values[0] = amount
+	money.SetCoins(amount)
 
 	switch amount {
 	case 1:

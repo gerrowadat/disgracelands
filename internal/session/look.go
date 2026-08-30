@@ -91,8 +91,8 @@ func (c *Context) lookInObject(arg string) error {
 // it. Reproduced because the guard is what stops the division, and because
 // "murky" is what a player of the real game saw.
 func (c *Context) showLiquid(obj *game.Object) {
-	capacity, filled := obj.Values[0], obj.Values[1]
-	liquid := game.Liquid(obj.Values[2])
+	contents, _ := obj.DrinkValues()
+	capacity, filled, liquid := contents.Capacity, contents.Filled, contents.Liquid
 	switch {
 	case filled <= 0:
 		c.Send("It is empty.\r\n")

@@ -110,20 +110,20 @@ func (c *Context) useStaff(obj *game.Object) {
 		c.announce("%s taps %s three times on the ground.\r\n", c.Character.Name, obj.Name())
 	}
 
-	if obj.Values[2] <= 0 {
+	staff, _ := obj.ChargesValues()
+	if staff.Remaining <= 0 {
 		c.Send("It seems powerless.\r\n")
 		c.announce("Nothing seems to happen.\r\n")
 		return
 	}
-	obj.Values[2]--
+	obj.SetChargesRemaining(staff.Remaining - 1)
 	c.Character.Wait(1, c.roundLength())
 
-	level := obj.Values[0]
+	level := staff.Level
 	if level == 0 {
 		level = defaultStaffLevel
 	}
-	// Step 3 types the value slots; until then the conversion is here.
-	number := game.SpellID(obj.Values[3])
+	number := staff.Spell
 
 	info, ok := game.Spell(number)
 	if !ok {
@@ -151,7 +151,8 @@ func (c *Context) useStaff(obj *game.Object) {
 
 // useWand, porting the ITEM_WAND case: one target, pointed at.
 func (c *Context) useWand(obj *game.Object, arg string, victim *game.Character, target *game.Object) {
-	info, ok := game.Spell(game.SpellID(obj.Values[3]))
+	charged, _ := obj.ChargesValues()
+	info, ok := game.Spell(charged.Spell)
 	if !ok {
 		return
 	}
@@ -179,19 +180,20 @@ func (c *Context) useWand(obj *game.Object, arg string, victim *game.Character, 
 	}
 	_ = arg
 
-	if obj.Values[2] <= 0 {
+	wand, _ := obj.ChargesValues()
+	if wand.Remaining <= 0 {
 		c.Send("It seems powerless.\r\n")
 		c.announce("Nothing seems to happen.\r\n")
 		return
 	}
-	obj.Values[2]--
+	obj.SetChargesRemaining(wand.Remaining - 1)
 	c.Character.Wait(1, c.roundLength())
 
-	level := obj.Values[0]
+	level := wand.Level
 	if level == 0 {
 		level = defaultWandLevel
 	}
-	c.castAtLevel(info, game.SpellID(obj.Values[3]), victim, target, level, game.SaveRod)
+	c.castAtLevel(info, wand.Spell, victim, target, level, game.SaveRod)
 }
 
 // reciteScroll, porting the ITEM_SCROLL case: up to three spells, and the
@@ -215,6 +217,9 @@ func (c *Context) reciteScroll(obj *game.Object, arg string, victim *game.Charac
 
 	// Values 1, 2 and 3 are up to three spells, cast in order and stopping at
 	// the first that does nothing.
+	// Raw slots on purpose: a scroll's 1-3 are *three* spells, which is the
+	// case game/objvalues.go leaves untyped and values.go leaves in the raw
+	// `values:` form. Value 0 is the level, shared with a wand's layout.
 	for _, number := range obj.Values[1:] {
 		if !c.castFromItem(game.SpellID(number), victim, target, obj.Values[0], game.SaveRod) {
 			break

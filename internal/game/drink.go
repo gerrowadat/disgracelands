@@ -23,8 +23,8 @@ import "strings"
 // The zero value is LiquidWater, a real liquid -- as Class's and Sector's
 // zero values are real, and unlike ItemType's. That is load-bearing here in
 // a way it is not for the others: an object value slot that nobody filled
-// in reads as water, and create water's `Values[2] != LiquidWater` test
-// (objmagic.go) is asking about exactly that slot.
+// in reads as water, and create water's `contents.Liquid != LiquidWater`
+// test (objmagic.go) is asking about exactly that slot.
 //
 // Two of the sixteen are named in the rules -- water, which create water
 // makes, and slime, which it makes instead when it goes wrong. The other
@@ -132,7 +132,8 @@ func NameFromDrinkCon(o *Object) {
 	if o == nil || (o.Type != ItemDrinkCon && o.Type != ItemFountain) {
 		return
 	}
-	liquid := DrinkKeyword(Liquid(o.Values[2]))
+	contents, _ := o.DrinkValues()
+	liquid := DrinkKeyword(contents.Liquid)
 	if liquid == "" {
 		return
 	}

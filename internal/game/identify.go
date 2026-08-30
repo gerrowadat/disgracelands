@@ -51,21 +51,24 @@ func IdentifyObject(obj *Object) string {
 		out.WriteString("\r\n")
 
 	case ItemWand, ItemStaff:
+		charges, _ := obj.ChargesValues()
 		fmt.Fprintf(&out, "This %s casts:  %s\r\n",
-			SprintType(obj.Type.Number(), ItemTypeNames), SpellName(SpellID(obj.Values[3])))
+			SprintType(obj.Type.Number(), ItemTypeNames), SpellName(charges.Spell))
 		fmt.Fprintf(&out, "It has %d maximum charge%s and %d remaining.\r\n",
-			obj.Values[1], plural(obj.Values[1]), obj.Values[2])
+			charges.Max, plural(charges.Max), charges.Remaining)
 
 	case ItemWeapon:
 		// The average is the die's mean times the number of dice, and the C
 		// computes `(size + 1) / 2.0` — which is right for a die but reads
 		// like an off-by-one until you remember a d6 averages 3.5.
-		fmt.Fprintf(&out, "Damage Dice is '%dD%d'", obj.Values[1], obj.Values[2])
+		weapon, _ := obj.WeaponValues()
+		fmt.Fprintf(&out, "Damage Dice is '%dD%d'", weapon.Dice.Number, weapon.Dice.Size)
 		fmt.Fprintf(&out, " for an average per-round damage of %.1f.\r\n",
-			(float64(obj.Values[2]+1)/2.0)*float64(obj.Values[1]))
+			(float64(weapon.Dice.Size+1)/2.0)*float64(weapon.Dice.Number))
 
 	case ItemArmor:
-		fmt.Fprintf(&out, "AC-apply is %d\r\n", obj.Values[0])
+		armor, _ := obj.ArmorValues()
+		fmt.Fprintf(&out, "AC-apply is %d\r\n", armor.ACApply)
 	}
 
 	var found bool

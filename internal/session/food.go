@@ -76,7 +76,14 @@ func (c *Context) eat(taste bool) error {
 		c.announce("%s eats %s.\r\n", c.Character.Name, food.Name())
 	}
 
-	// Value 0 is how filling it is. A taste is worth one whatever the food.
+	// Raw slots here, on purpose. The check above lets a **god eat
+	// anything**, so `food` need not be ItemFood, and do_eat reads value 0
+	// regardless of type — an immortal eating a sword is fed by the sword's
+	// unused hitroll modifier. game.Object.FoodFilling refuses a non-food
+	// and would answer 0, which is a stricter rule than the C's and would
+	// change what a god eating a non-food gets.
+	//
+	// A taste is worth one whatever the food.
 	amount := food.Values[0]
 	if taste {
 		amount = 1
@@ -87,7 +94,8 @@ func (c *Context) eat(taste bool) error {
 		c.Send("You are full.\r\n")
 	}
 
-	// Value 3 is the poison flag, and an immortal is immune.
+	// Value 3 is the poison flag, and an immortal is immune. Raw for the
+	// same reason as above.
 	if food.Values[3] != 0 && c.Character.Level() < game.LevelImmortal {
 		c.Send("Oops, that tasted rather strange!\r\n")
 		c.announce("%s coughs and utters some strange sounds.\r\n", c.Character.Name)
@@ -161,12 +169,12 @@ func (c *Context) drink(sip bool) error {
 		return nil
 	}
 
-	// Value 1 is how much is left, value 2 which liquid it is.
-	if vessel.Values[1] <= 0 {
+	contents, _ := vessel.DrinkValues()
+	if contents.Filled <= 0 {
 		c.Send("It's empty.\r\n")
 		return nil
 	}
-	liquid := game.Liquid(vessel.Values[2])
+	liquid := contents.Liquid
 	name := game.DrinkName(liquid)
 
 	var amount int32
@@ -180,7 +188,7 @@ func (c *Context) drink(sip bool) error {
 		amount = game.DrinkAmount(liquid, rec.Conditions[game.CondThirst], c.RNG)
 	}
 
-	amount = min(amount, vessel.Values[1])
+	amount = min(amount, contents.Filled)
 
 	// The vessel gets lighter, but never below nothing. The C changes the
 	// weight here and the contents at the very end, after the poison; the
@@ -204,8 +212,7 @@ func (c *Context) drink(sip bool) error {
 		c.Send("You are full.\r\n")
 	}
 
-	// Value 3 is the poison flag on the liquid.
-	if vessel.Values[3] != 0 {
+	if contents.Poisoned {
 		c.Send("Oops, it tasted rather strange!\r\n")
 		c.announce("%s chokes and utters some strange sounds.\r\n", c.Character.Name)
 		game.JoinAffect(rec, game.Affect{
@@ -215,20 +222,17 @@ func (c *Context) drink(sip bool) error {
 		}, false, false)
 	}
 
-	vessel.Values[1] -= amount
-	if vessel.Values[1] == 0 {
+	vessel.SetDrinkFilled(contents.Filled - amount)
+	if contents.Filled-amount == 0 {
 		// The last of it. The liquid's keyword comes off the container's
 		// name, so an empty bottle stops answering to `water`, and it stops
 		// being poisoned along with it.
 		game.NameFromDrinkCon(vessel)
-		// Zero here is the C's, and it is LiquidWater rather than "no
-		// liquid" -- an emptied container reads as holding water with
-		// nothing in it, and every caller tests Values[1] first. Named
-		// rather than left as a literal, for the same reason all ten
-		// sectors got names (#343): the number is only obviously right
-		// once you know what it decodes to.
-		vessel.Values[2] = game.LiquidWater.Number()
-		vessel.Values[3] = 0
+		// The C writes a zero here, which is LiquidWater rather than "no
+		// liquid": an emptied container reads as holding water with nothing
+		// in it, and every caller tests how much is left first.
+		vessel.SetDrinkLiquid(game.LiquidWater)
+		vessel.SetPoisoned(false)
 	}
 	return nil
 }
@@ -291,7 +295,7 @@ func (c *Context) pour(filling bool) error {
 		}
 	}
 
-	if from.Values[1] == 0 {
+	if source, _ := from.DrinkValues(); source.Filled == 0 {
 		// The C's "The $p is empty." reads oddly because $p is already "a
 		// bottle"; it comes out as "The a bottle is empty."
 		c.Send("The %s is empty.\r\n", from.Name())
@@ -319,14 +323,16 @@ func (c *Context) pour(filling bool) error {
 		}
 	}
 
+	source, _ := from.DrinkValues()
+	dest, _ := to.DrinkValues()
 	switch {
 	case to == from:
 		c.Send("A most unproductive effort.\r\n")
 		return nil
-	case to.Values[1] != 0 && to.Values[2] != from.Values[2]:
+	case dest.Filled != 0 && dest.Liquid != source.Liquid:
 		c.Send("There is already another liquid in it!\r\n")
 		return nil
-	case to.Values[1] >= to.Values[0]:
+	case dest.Filled >= dest.Capacity:
 		c.Send("There is no room for more.\r\n")
 		return nil
 	}
@@ -338,29 +344,35 @@ func (c *Context) pour(filling bool) error {
 		// The C names the destination with the word the player typed rather
 		// than with the object's own name, and forgets the newline. Both
 		// reproduced; see docs/weirdnumbers.md.
-		c.Send("You pour the %s into the %s.", game.DrinkName(game.Liquid(from.Values[2])), arg2)
+		c.Send("You pour the %s into the %s.", game.DrinkName(source.Liquid), arg2)
 	}
 
-	if to.Values[1] == 0 {
-		game.NameToDrinkCon(to, game.Liquid(from.Values[2]))
+	if dest.Filled == 0 {
+		game.NameToDrinkCon(to, source.Liquid)
 	}
-	to.Values[2] = from.Values[2]
+	to.SetDrinkLiquid(source.Liquid)
 
 	// Fill it to the brim, then find out whether there was that much.
-	amount := to.Values[0] - to.Values[1]
-	from.Values[1] -= amount
-	to.Values[1] = to.Values[0]
+	amount := dest.Capacity - dest.Filled
+	from.SetDrinkFilled(source.Filled - amount)
+	to.SetDrinkFilled(dest.Capacity)
 
-	if from.Values[1] < 0 {
-		to.Values[1] += from.Values[1]
-		amount += from.Values[1]
+	if left := source.Filled - amount; left < 0 {
+		to.SetDrinkFilled(dest.Capacity + left)
+		amount += left
 		emptyDrinkContainer(from)
 	}
 
 	// "Then the poison boogie", says the C: poison travels with the liquid
 	// and never dilutes.
-	if from.Values[3] != 0 {
-		to.Values[3] = 1
+	//
+	// Read live rather than from `source`, because the order matters and is
+	// not obvious: emptyDrinkContainer has just cleared the source's poison
+	// (act.item.c:1113-1115), and the C only ORs it into the destination
+	// afterwards (:1117-1119). So pouring a poisoned bottle *dry* carries
+	// no poison across; pouring part of it does.
+	if from.Poisoned() {
+		to.SetPoisoned(true)
 	}
 
 	from.Weight = max(0, from.Weight-amount)
@@ -371,9 +383,10 @@ func (c *Context) pour(filling bool) error {
 // emptyDrinkContainer empties a vessel and takes the liquid's keyword back
 // off its name, which is the pair the C repeats in four places.
 func emptyDrinkContainer(o *game.Object) {
-	o.Weight = max(0, o.Weight-o.Values[1])
+	contents, _ := o.DrinkValues()
+	o.Weight = max(0, o.Weight-contents.Filled)
 	game.NameFromDrinkCon(o)
-	o.Values[1] = 0
-	o.Values[2] = game.LiquidWater.Number() // as above: the C's zero is water
-	o.Values[3] = 0
+	o.SetDrinkFilled(0)
+	o.SetDrinkLiquid(game.LiquidWater) // the C's zero is water, not "none"
+	o.SetPoisoned(false)
 }
