@@ -30,7 +30,9 @@ var webTestLimits = Limits{MaxPerHost: 8, LoginGrace: time.Minute}
 // httptest.Server, torn down with the test.
 func listeningWeb(t *testing.T, srv *Server, password string, captcha bool) *httptest.Server {
 	t.Helper()
-	h, err := srv.WebHandler(context.Background(), password, captcha, webTestLimits)
+	h, err := srv.WebHandler(context.Background(), WebOptions{
+		Password: password, Captcha: captcha, Limits: webTestLimits,
+	})
 	if err != nil {
 		t.Fatal(err)
 	}
