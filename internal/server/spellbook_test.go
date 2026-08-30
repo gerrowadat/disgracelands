@@ -567,7 +567,6 @@ var spellbook = map[int32]spellCase{
 	// (magic.c:910-929).
 
 	game.SpellCureBlind: {
-		pending: "cure blind does not cure blindness (#299)",
 		run: func(t *testing.T) {
 			srv, c := spellbookServer(t)
 			dog := prey(t, srv, ImmortStartRoom)
@@ -586,7 +585,6 @@ var spellbook = map[int32]spellCase{
 	},
 
 	game.SpellRemovePoison: {
-		pending: "remove poison does not remove poison (#299)",
 		run: func(t *testing.T) {
 			srv, c := spellbookServer(t)
 			dog := prey(t, srv, ImmortStartRoom)
@@ -607,7 +605,6 @@ var spellbook = map[int32]spellCase{
 	game.SpellRemoveCurse: {
 		// The object half of remove curse is mag_alter_objs and works;
 		// objspells_test.go covers it. This is the character half.
-		pending: "remove curse does not lift a curse from a character (#299)",
 		run: func(t *testing.T) {
 			srv, c := spellbookServer(t)
 			dog := prey(t, srv, ImmortStartRoom)

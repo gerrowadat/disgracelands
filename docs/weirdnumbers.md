@@ -147,6 +147,35 @@ is visibly wrong; a port that concludes a new character therefore has *no*
 mana is also wrong, and produces the memorable `0H 0M 0V` prompt that started
 this catalogue.
 
+### `full heal` is MAG_UNAFFECTS and `mag_unaffects` has never heard of it
+
+```c
+spello(SPELL_FULL_HEAL, "full heal", 200, 100, 5, POS_FIGHTING,
+	TAR_CHAR_ROOM, FALSE, MAG_POINTS | MAG_UNAFFECTS,
+	NULL);
+```
+
+`full heal` is a local addition (spell_parser.c:1007-1008), and whoever added
+it gave it the same routine pair as `heal`. But `mag_unaffects`'s switch
+(magic.c:910-929) has cases for `cure blind`, `heal`, `remove poison` and
+`remove curse` and nothing else, so every `full heal` falls through to:
+
+```c
+default:
+  log("SYSERR: unknown spellnum %d passed to mag_unaffects.", spellnum);
+  return;
+```
+
+So on the archived server `full heal` healed you completely, did *not* cure
+blindness despite carrying the flag that says it should, and wrote a SYSERR
+to the syslog every single time it was cast. The port does the first two and
+not the third — there is no logger on the command context and the
+player-visible behaviour is identical either way.
+
+Worth knowing because the obvious "fix" — adding a `SPELL_FULL_HEAL` case
+alongside `SPELL_HEAL` — would be a gameplay change dressed up as tidying:
+`full heal` would start curing blindness, which it never did.
+
 ### A hundred mana, floored again on every load
 
 ```c

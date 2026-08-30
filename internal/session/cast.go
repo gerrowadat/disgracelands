@@ -244,11 +244,7 @@ func (c *Context) castSpell(info game.SpellInfo, number int32, victim *game.Char
 
 	if info.Routines.Has(game.MagUnaffects) && victim != nil && victim.Record != nil {
 		did = true
-		if game.RemoveAffectsOf(victim.Record, number) {
-			victim.Tell("You feel better.\r\n")
-		} else {
-			c.Send("%s", game.NoEffect)
-		}
+		c.spellUnaffect(number, victim)
 	}
 
 	if info.Routines.Has(game.MagAlterObjs) && object != nil {
@@ -355,6 +351,45 @@ func (c *Context) spellAffect(number int32, victim *game.Character, save game.Sa
 		for _, other := range c.World.Occupants(victim.Room) {
 			if other != victim {
 				other.Tell(result.ToRoom+"\r\n", victim.Name)
+			}
+		}
+	}
+}
+
+// spellUnaffect is mag_unaffects (magic.c:901).
+//
+// The whole of it is the first line: the spell being cast is the *cure*, and
+// what comes off is the affliction it cures. This used to hand
+// RemoveAffectsOf the cure's own number, so `cure blind` removed affects of
+// type 14, `remove poison` type 43 and `remove curse` type 35 -- numbers
+// nothing ever applies -- and blindness, poison and curses were never
+// touched by the three spells named after them (#299).
+//
+// The messages come with the mapping because in the C they are part of the
+// same switch: "Your vision returns!" and a room line, not one "You feel
+// better." for all three.
+func (c *Context) spellUnaffect(number int32, victim *game.Character) {
+	cure, ok := game.UnaffectionOf(number)
+	if !ok {
+		// The C logs a SYSERR and returns. `full heal` reaches this on
+		// every cast; see game.UnaffectionOf.
+		return
+	}
+
+	if !game.RemoveAffectsOf(victim.Record, cure.Affliction) {
+		if !cure.Silent {
+			c.Send("%s", game.NoEffect)
+		}
+		return
+	}
+
+	if cure.ToVictim != "" {
+		victim.Tell("%s\r\n", cure.ToVictim)
+	}
+	if cure.ToRoom != "" {
+		for _, other := range c.World.Occupants(victim.Room) {
+			if other != victim {
+				other.Tell(cure.ToRoom+"\r\n", victim.Name)
 			}
 		}
 	}

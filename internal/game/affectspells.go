@@ -244,3 +244,67 @@ func ApplyAffectSpell(spell AffectSpell, target *PlayerRecord) {
 		JoinAffect(target, a, spell.AccumDuration, spell.AccumModifier)
 	}
 }
+
+// Unaffection is what one curing spell takes off, and what it says when it
+// works: mag_unaffects' own switch (magic.c:910-929), which maps the *cure*
+// to the affliction before touching anything.
+//
+// That mapping was the whole of #299. The port passed mag_unaffects the
+// cure's own spell number, so `cure blind` removed affects of type 14 --
+// a number nothing ever applies -- and left the blindness where it was.
+// Cure blind, remove poison and remove curse each did nothing at all to a
+// character, and each said "Nothing seems to happen."
+type Unaffection struct {
+	// Affliction is the spell whose affects come off.
+	Affliction int32
+	// ToVictim is sent to the character being cured, and ToRoom to
+	// everybody else in the room with a %s for their name.
+	ToVictim, ToRoom string
+	// Silent says the C sends no NOEFFECT when there was nothing to
+	// remove. It is true only for heal, which is MAG_POINTS |
+	// MAG_UNAFFECTS: without it, healing somebody who is not blind would
+	// print "Nothing seems to happen." immediately after healing them
+	// (`if (spellnum != SPELL_HEAL)`, magic.c:932).
+	Silent bool
+}
+
+// UnaffectionOf returns what a MAG_UNAFFECTS spell removes, and whether the
+// C's switch has a case for it at all.
+//
+// The false return is not a can't-happen. `full heal` is MAG_POINTS |
+// MAG_UNAFFECTS in the archived spell table (spell_parser.c:1007-1008) and
+// mag_unaffects has no case for it, so on the real server every full heal
+// fell through to the default: a SYSERR in the syslog, and no unaffection
+// and no message for anybody in the room. Reproduced here as doing nothing,
+// silently -- see docs/weirdnumbers.md.
+func UnaffectionOf(spell int32) (Unaffection, bool) {
+	switch spell {
+	case SpellCureBlind:
+		return Unaffection{
+			Affliction: SpellBlindness,
+			ToVictim:   "Your vision returns!",
+			ToRoom:     "There's a momentary gleam in %s's eyes.",
+		}, true
+	case SpellHeal:
+		return Unaffection{
+			Affliction: SpellBlindness,
+			ToVictim:   "Your vision returns!",
+			ToRoom:     "There's a momentary gleam in %s's eyes.",
+			Silent:     true,
+		}, true
+	case SpellRemovePoison:
+		return Unaffection{
+			Affliction: SpellPoison,
+			ToVictim:   "A warm feeling runs through your body!",
+			ToRoom:     "%s looks better.",
+		}, true
+	case SpellRemoveCurse:
+		// No room line in the C, which is not an oversight worth fixing:
+		// a curse lifting is between the caster and the cursed.
+		return Unaffection{
+			Affliction: SpellCurse,
+			ToVictim:   "You don't feel so unlucky.",
+		}, true
+	}
+	return Unaffection{}, false
+}
