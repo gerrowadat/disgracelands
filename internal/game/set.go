@@ -97,6 +97,11 @@ func (s Set[T]) Minus(o Set[T]) Set[T] { return Set[T]{bits: s.bits &^ o.bits} }
 // Overlaps reports whether the two sets share a bit.
 func (s Set[T]) Overlaps(o Set[T]) bool { return s.bits&o.bits != 0 }
 
+// Contains reports whether every member of o is also in s. The empty set is
+// contained in everything, which is the C's IS_SET(x, 0) and is load-bearing
+// where a required-flags mask can be "nothing in particular".
+func (s Set[T]) Contains(o Set[T]) bool { return s.bits&o.bits == o.bits }
+
 // All iterates the members in bit order, lowest first.
 //
 // Bit order rather than any other, deliberately: iteration order is

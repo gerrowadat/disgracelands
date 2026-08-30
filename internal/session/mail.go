@@ -188,7 +188,7 @@ func postmasterReceiveMail(sc *SpecialCall) {
 		letter.ShortDesc = "a piece of mail"
 		letter.Description = "Someone has left a piece of mail here."
 		letter.Type = game.ItemNote
-		letter.WearFlags = game.ItemWearTake | game.ItemWearHold
+		letter.WearFlags = game.NewSet(game.ItemWearTake, game.ItemWearHold)
 		letter.Weight = 1
 		letter.Cost = 30
 		letter.ActionDesc = text

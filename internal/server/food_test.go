@@ -22,7 +22,7 @@ func giveFood(t *testing.T, srv *Server, who string, filling, poison int32) *gam
 		food.Keywords = "bread"
 		food.ShortDesc = "a loaf of bread"
 		food.Type = game.ItemFood
-		food.WearFlags = game.ItemWearTake
+		food.WearFlags = game.NewSet(game.ItemWearTake)
 		food.Values[0] = filling
 		food.Values[3] = poison
 		w.ObjectToChar(food, w.Find(who))
@@ -40,7 +40,7 @@ func giveDrink(t *testing.T, srv *Server, who string, liquid, units int32) *game
 		vessel.Keywords = "bottle"
 		vessel.ShortDesc = "a bottle"
 		vessel.Type = game.ItemDrinkCon
-		vessel.WearFlags = game.ItemWearTake
+		vessel.WearFlags = game.NewSet(game.ItemWearTake)
 		vessel.Weight = units
 		vessel.Values[0] = units
 		vessel.Values[1] = units

@@ -162,7 +162,7 @@ objects:
 
 	obj := w.Objects[0]
 	check(t, "obj.ExtraFlags", obj.ExtraFlags, game.Flags(0))
-	check(t, "obj.WearFlags", obj.WearFlags, game.Flags(0))
+	check(t, "obj.WearFlags", obj.WearFlags, game.WearFlagSet{})
 	check(t, "obj.PermAffect", obj.PermAffect, int32(0))
 	check(t, "obj.MinLevel", obj.MinLevel, int32(0))
 	check(t, "obj.Values", obj.Values, [game.NumObjValues]int32{})

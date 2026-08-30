@@ -24,13 +24,13 @@ func darkWorld(t *testing.T) *Live {
 			// Value 2 is hours of fuel. 24 is an ordinary torch; -1 is an
 			// eternal one; 0 is burnt out.
 			{Vnum: 3040, Keywords: "torch", ShortDesc: "a torch", Type: ItemLight,
-				WearFlags: ItemWearTake, Values: [NumObjValues]int32{0, 0, 24}},
+				WearFlags: NewSet(ItemWearTake), Values: [NumObjValues]int32{0, 0, 24}},
 			{Vnum: 3041, Keywords: "lamp", ShortDesc: "an eternal lamp", Type: ItemLight,
-				WearFlags: ItemWearTake, Values: [NumObjValues]int32{0, 0, -1}},
+				WearFlags: NewSet(ItemWearTake), Values: [NumObjValues]int32{0, 0, -1}},
 			{Vnum: 3042, Keywords: "stub", ShortDesc: "a burnt-out stub", Type: ItemLight,
-				WearFlags: ItemWearTake, Values: [NumObjValues]int32{0, 0, 0}},
+				WearFlags: NewSet(ItemWearTake), Values: [NumObjValues]int32{0, 0, 0}},
 			{Vnum: 3043, Keywords: "sword", ShortDesc: "a sword", Type: ItemWeapon,
-				WearFlags: ItemWearTake},
+				WearFlags: NewSet(ItemWearTake)},
 		},
 		Zones: []*ZoneDef{{Vnum: 30, Name: "Midgaard", Bottom: 3000, Top: 3099}},
 	})

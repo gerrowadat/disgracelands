@@ -385,7 +385,7 @@ func (c *Context) findObject(list []*game.Object, word string) *game.Object {
 func findWearPosition(obj *game.Object) game.WearPosition {
 	where := game.WearPosition(-1)
 	for _, fit := range []struct {
-		flag game.Flags
+		flag game.WearFlag
 		pos  game.WearPosition
 	}{
 		{game.ItemWearFinger, game.WearFingerRight},

@@ -50,10 +50,10 @@ func (l *loader) parseMobile(r *reader, vnum game.MobVnum) (*game.MobDef, error)
 		return nil, fmt.Errorf("%s: malformed flags line %q, want '<act> <aff> <align> {S|E}'", r.where(what), line)
 	}
 
-	mob.ActionFlags = l.parseFlagField(r, what, "action flags", fields[0])
+	mob.ActionFlags = game.Flags(l.parseFlagField(r, what, "action flags", fields[0]))
 	// parse_mobile() force-sets this on every mobile regardless of the file.
 	mob.ActionFlags = mob.ActionFlags.Set(game.MobIsNPC)
-	mob.AffectionFlags = l.parseFlagField(r, what, "affection flags", fields[1])
+	mob.AffectionFlags = game.Flags(l.parseFlagField(r, what, "affection flags", fields[1]))
 
 	align, ok := scanInt(fields[2])
 	if !ok {
@@ -211,13 +211,17 @@ func upperASCII(b byte) byte {
 
 // parseFlagField decodes a bitfield and reports anything questionable about
 // it, so the same warnings appear wherever flags are read.
-func (l *loader) parseFlagField(r *reader, what, field, raw string) game.Flags {
-	flags, unknown := game.ParseFlags(raw)
+// Raw bits rather than any flag type: it serves several domains with
+// different destination types now (docs/proposals/idiomatic-go.md step 1),
+// and bits are the one thing they have in common. The loader is the
+// persistence boundary SetFromRaw exists for.
+func (l *loader) parseFlagField(r *reader, what, field, raw string) uint64 {
+	flags, unknown := game.ParseFlagLetters(raw)
 	if len(unknown) > 0 {
 		l.warnf("%s: %s %q contain characters that are neither letters nor digits (%q); the C loader ignores them",
 			r.where(what), field, raw, string(unknown))
 	}
-	if flags.ExceedsCRange() {
+	if flags>>game.CFlagLimit != 0 {
 		l.warnf("%s: %s %q use bits above %d, which the C server cannot represent",
 			r.where(what), field, raw, game.CFlagLimit)
 	}

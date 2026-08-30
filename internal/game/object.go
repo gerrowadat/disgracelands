@@ -114,22 +114,36 @@ const (
 // Wear flags, from structs.h:352. ItemWearTake is the odd one out: it is not
 // a place to wear something, it is whether the object can be picked up at
 // all.
+// WearFlag is one of them, and WearFlagSet is an object's set. Bit
+// indices, not masks: docs/proposals/idiomatic-go.md §4.1, and §4.1.1 for
+// the trap. wear_bits[] in constants.c is the name table and
+// bitnames_test.go is what keeps these numbers the C's.
+//
+// Named WearFlagSet rather than WearFlags because ObjDef.WearFlags is the
+// field, and a type with the same name as the field it holds reads badly
+// at the declaration — the same call ContainerFlagSet made, for the same
+// reason.
+type WearFlag int
+
+// WearFlagSet is a set of WearFlag.
+type WearFlagSet = Set[WearFlag]
+
 const (
-	ItemWearTake   Flags = 1 << 0
-	ItemWearFinger Flags = 1 << 1
-	ItemWearNeck   Flags = 1 << 2
-	ItemWearBody   Flags = 1 << 3
-	ItemWearHead   Flags = 1 << 4
-	ItemWearLegs   Flags = 1 << 5
-	ItemWearFeet   Flags = 1 << 6
-	ItemWearHands  Flags = 1 << 7
-	ItemWearArms   Flags = 1 << 8
-	ItemWearShield Flags = 1 << 9
-	ItemWearAbout  Flags = 1 << 10
-	ItemWearWaist  Flags = 1 << 11
-	ItemWearWrist  Flags = 1 << 12
-	ItemWearWield  Flags = 1 << 13
-	ItemWearHold   Flags = 1 << 14
+	ItemWearTake   WearFlag = 0
+	ItemWearFinger WearFlag = 1
+	ItemWearNeck   WearFlag = 2
+	ItemWearBody   WearFlag = 3
+	ItemWearHead   WearFlag = 4
+	ItemWearLegs   WearFlag = 5
+	ItemWearFeet   WearFlag = 6
+	ItemWearHands  WearFlag = 7
+	ItemWearArms   WearFlag = 8
+	ItemWearShield WearFlag = 9
+	ItemWearAbout  WearFlag = 10
+	ItemWearWaist  WearFlag = 11
+	ItemWearWrist  WearFlag = 12
+	ItemWearWield  WearFlag = 13
+	ItemWearHold   WearFlag = 14
 )
 
 // WearPosition is a slot on a body, from structs.h:300.
@@ -192,26 +206,36 @@ func (w WearPosition) String() string {
 	return wearNames[w]
 }
 
-// wearFlagFor maps a slot to the flag an object needs to go in it.
-var wearFlagFor = [NumWears]Flags{
-	WearLight:       0, // anything can be a light; the C checks the type
-	WearFingerRight: ItemWearFinger,
-	WearFingerLeft:  ItemWearFinger,
-	WearNeck1:       ItemWearNeck,
-	WearNeck2:       ItemWearNeck,
-	WearBody:        ItemWearBody,
-	WearHead:        ItemWearHead,
-	WearLegs:        ItemWearLegs,
-	WearFeet:        ItemWearFeet,
-	WearHands:       ItemWearHands,
-	WearArms:        ItemWearArms,
-	WearShield:      ItemWearShield,
-	WearAbout:       ItemWearAbout,
-	WearWaist:       ItemWearWaist,
-	WearWristRight:  ItemWearWrist,
-	WearWristLeft:   ItemWearWrist,
-	WearWield:       ItemWearWield,
-	WearHold:        ItemWearHold,
+// wearFlagFor maps a slot to the flags an object needs to go in it.
+//
+// A set per slot rather than a single flag, and the empty set for the light
+// slot rather than a zero. Under the old bitmask model `WearLight: 0` was
+// "no flag required" and `Has(0)` was trivially true; under bit indices 0
+// is ItemWearTake, so the same literal would have quietly started demanding
+// a takeable object. The empty set keeps the old meaning exactly —
+// Contains reports true for it, which is the C's IS_SET(x, 0). Neither
+// reader can actually reach this entry (both special-case WearLight before
+// the lookup), but a table that means the wrong thing when read is worth
+// fixing whether or not anything reads it.
+var wearFlagFor = [NumWears]WearFlagSet{
+	WearLight:       {}, // anything can be a light; the C checks the type
+	WearFingerRight: NewSet(ItemWearFinger),
+	WearFingerLeft:  NewSet(ItemWearFinger),
+	WearNeck1:       NewSet(ItemWearNeck),
+	WearNeck2:       NewSet(ItemWearNeck),
+	WearBody:        NewSet(ItemWearBody),
+	WearHead:        NewSet(ItemWearHead),
+	WearLegs:        NewSet(ItemWearLegs),
+	WearFeet:        NewSet(ItemWearFeet),
+	WearHands:       NewSet(ItemWearHands),
+	WearArms:        NewSet(ItemWearArms),
+	WearShield:      NewSet(ItemWearShield),
+	WearAbout:       NewSet(ItemWearAbout),
+	WearWaist:       NewSet(ItemWearWaist),
+	WearWristRight:  NewSet(ItemWearWrist),
+	WearWristLeft:   NewSet(ItemWearWrist),
+	WearWield:       NewSet(ItemWearWield),
+	WearHold:        NewSet(ItemWearHold),
 }
 
 // CanWearAt reports whether a prototype may go in a slot.
@@ -222,7 +246,7 @@ func CanWearAt(def *ObjDef, pos WearPosition) bool {
 	if pos == WearLight {
 		return def.Type == ItemLight
 	}
-	return def.WearFlags.Has(wearFlagFor[pos])
+	return def.WearFlags.Contains(wearFlagFor[pos])
 }
 
 // FitsAt reports whether an object may go in a slot, porting perform_wear's
@@ -238,9 +262,9 @@ func (o *Object) FitsAt(pos WearPosition) bool {
 	}
 	needs := wearFlagFor[pos]
 	if pos == WearLight || pos == WearHold {
-		needs = ItemWearTake
+		needs = NewSet(ItemWearTake)
 	}
-	return o.WearFlags.Has(needs)
+	return o.WearFlags.Contains(needs)
 }
 
 // ActionDescription is the object's `action_description`: what the room is
@@ -311,7 +335,7 @@ type Object struct {
 
 	Type       int32
 	ExtraFlags Flags
-	WearFlags  Flags
+	WearFlags  WearFlagSet
 	Values     [NumObjValues]int32
 	Weight     int32
 	Cost       int32
