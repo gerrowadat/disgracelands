@@ -45,4 +45,22 @@ ab 0 0 S
 20 10 0 10d10+100 2d4+2
 500 1000
 8 8 1
+#5150
+stray mobile~
+the stray mobile~
+A mobile no zone's range claims stands here.
+~
+   #5150 is above zone 50's top of 5099 and above every other range, so
+nothing claims it. It belongs in zone 50's file -- the zone whose range
+begins nearest below it -- and a writer that sent every unclaimed record
+to the lowest zone instead would put it in zone 49's and reverse the
+mobile table, which is what makes it worth having rather than merely
+present.
+   Last in the file, for real_object's reason above: the table is
+binary-searched, so it has to ascend.
+~
+a 0 0 S
+5 10 0 2d8+10 1d4+1
+0 100
+8 8 0
 $

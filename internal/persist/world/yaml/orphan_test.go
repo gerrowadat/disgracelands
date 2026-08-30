@@ -14,6 +14,13 @@ import (
 	"github.com/gerrowadat/disgracelands/internal/persist/world"
 )
 
+// Since #285 examples/torture carries this case too -- obj #4850 below
+// every range and mob #5150 above them, in a two-zone world -- so a plain
+// `dlctl import` of that directory fails if either branch of fallbackZone
+// goes wrong. This stays because it is finer grained: it builds the world
+// in memory and can put a record in the gap *between* two ranges, which a
+// corpus with adjacent zones cannot.
+//
 // outOfRangeWorld is two ordinary zones plus one mobile, one object and one
 // shop whose vnums land in the gap between them — a builder putting a
 // record in a zone's file without noticing it had run past the zone's

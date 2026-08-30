@@ -1,0 +1,25 @@
+CircleMUD v3.0 Shop File~
+#5040~
+5003
+-1
+1.2
+0.3
+-1
+%s I have none of those.~
+%s You do not have that.~
+%s I do not buy those.~
+%s I cannot afford that.~
+%s You cannot afford that.~
+%s That is %d coins.~
+%s I will give you %d coins.~
+0
+0
+4901
+0
+4900
+-1
+0
+28
+0
+0
+$~

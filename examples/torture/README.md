@@ -111,9 +111,38 @@ own converted copy, and from the four fuzz targets seeded off it:
 
 ### `world/`
 
-One zone, `#50`, vnums 5000–5099. Every record is described, in its own
-description, by the case it exists to break — so `dlctl dump` on this
-world is itself the documentation.
+Two zones: `#50` (vnums 5000–5099), which holds nearly everything, and
+`#49` (4900–4999), which exists only so that there is more than one.
+Every record is described, in its own description, by the case it exists
+to break — so `dlctl dump` on this world is itself the documentation.
+
+**Why a second zone.** The yaml format files every mobile, object and shop
+under some zone (`internal/persist/world/yaml/writer.go`'s `writtenUnder`),
+and with one zone every record has exactly one file it can go in — so the
+rule was structurally untestable here, and both bugs found in it had to be
+pinned by unit tests over a hand-built `game.World` instead
+(`orphan_test.go`, `shopplacement_test.go`). That is the same failure as
+`examples/stock` being pure ASCII or `isname`'s oracle sweeping only
+letters and spaces (#277): a corpus assembled from what the thing
+obviously does, with the hard case designed out. #285.
+
+Four records now cross a zone boundary, and each lands in a *different*
+file from the one it was read out of, which is what makes them
+discriminating rather than decorative. Reverting either placement rule in
+the writer fails a plain `dlctl import` of this directory:
+
+| Break the writer this way | and `dlctl import` says |
+|---|---|
+| File shops by their own vnum instead of their keeper's | the shop table is reordered (`#5040` and `#50` swap) |
+| Send every unclaimed record to the lowest zone | the mobile table is reordered (`#5150` moves) |
+| Drop records no zone's range claims | `#4850` and `#5150` are gone; the counts differ |
+
+One thing the corpus deliberately does *not* do: put a vnum out of
+ascending order. `real_object` and its siblings binary-search one flat
+table in load order (`db.c:2828-2846`), so vnums must ascend across every
+indexed file — `#4850` is therefore first in `obj/50.obj` and `#5150` last
+in `mob/50.mob`. A file that broke that would be invalid rather than
+hostile, which is the same line room `#5000`'s flag field is drawn at.
 
 | Record | The case |
 |---|---|
@@ -133,7 +162,12 @@ world is itself the documentation.
 | obj `#5002` | Three extra descriptions, so the C's prepend-and-therefore-reversed ordering is observable, with ASCII art in the middle one. |
 | obj `#5003` | The minimum an object can be; also the key to `#5006`'s door. |
 | obj `#5004` | A container, nested three deep by the zone's own resets. |
-| shop `#50` | Both fields `docs/design/data-format.md` §4.5 calls "kept awkward on purpose". |
+| shop `#50` | Both fields `docs/design/data-format.md` §4.5 calls "kept awkward on purpose". Its own vnum is below every zone's range, and its keeper `#5002` is in zone 50 — so it is written under zone 50, and filing it by shop vnum would send it to zone 49 instead. This is the shape the archive really has: `20.shp` holds shops `#1`–`#5`, `190.shp` holds `#190`–`#194`. |
+| room `#4900` | Zone 49's only room, and where its shop operates. |
+| mob `#4901` | Zone 49's shopkeeper, for a shop numbered in zone 50's range. |
+| mob `#5150` | Above every zone's range, so nothing claims it. Belongs in zone 50's file — the zone whose range begins nearest below — which is one of `fallbackZone`'s two branches. |
+| obj `#4850` | Below every zone's range. Read out of zone 50's file and written into zone 49's, the *lowest* zone: `fallbackZone`'s other branch, which a single-zone corpus cannot tell apart from the first. |
+| shop `#5040` | Numbered inside zone 50's range and kept by `#4901`, who is in zone 49 — the same keeper-over-vnum rule as `#50`, crossing the other way. |
 
 ### `etc/players`, `plrobjs/`, `plralias/`
 

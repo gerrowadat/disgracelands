@@ -43,21 +43,25 @@ const allCFlags = "abcdefghijklmnopqrstuvwxyzABCDEF"
 func worldFiles() map[string]string {
 	return map[string]string{
 		"zone.lst":       zoneList,
-		"wld/index":      "50.wld\n$\n",
-		"mob/index":      "50.mob\n$\n",
+		"wld/index":      "49.wld\n50.wld\n$\n",
+		"mob/index":      "49.mob\n50.mob\n$\n",
 		"obj/index":      "50.obj\n$\n",
-		"shp/index":      "50.shp\n$\n",
-		"zon/index":      "50.zon\n$\n",
+		"shp/index":      "49.shp\n50.shp\n$\n",
+		"zon/index":      "49.zon\n50.zon\n$\n",
+		"wld/49.wld":     antechamberRooms,
+		"mob/49.mob":     antechamberMobiles,
+		"shp/49.shp":     antechamberShops,
+		"zon/49.zon":     antechamberZone,
 		"wld/50.wld":     torturedRooms,
 		"mob/50.mob":     torturedMobiles,
 		"obj/50.obj":     torturedObjects,
 		"shp/50.shp":     torturedShops,
 		"zon/50.zon":     torturedZone,
-		"wld/index.mini": "50.wld\n$\n",
-		"mob/index.mini": "50.mob\n$\n",
+		"wld/index.mini": "49.wld\n50.wld\n$\n",
+		"mob/index.mini": "49.mob\n50.mob\n$\n",
 		"obj/index.mini": "50.obj\n$\n",
-		"shp/index.mini": "50.shp\n$\n",
-		"zon/index.mini": "50.zon\n$\n",
+		"shp/index.mini": "49.shp\n50.shp\n$\n",
+		"zon/index.mini": "49.zon\n50.zon\n$\n",
 	}
 }
 
@@ -68,7 +72,108 @@ func worldPath(base, rel string) string {
 const zoneList = `Zone Vnum List
 ***************
 
+49	- The Second Zone
 50	- The Torture Chamber
+`
+
+// Zone #49 exists for one reason: a corpus with a single zone cannot be
+// wrong about which zone a record belongs to.
+//
+// The yaml format files every mobile, object and shop under some zone
+// (internal/persist/world/yaml/writer.go's writtenUnder), and with one zone
+// every record has exactly one file it can go in -- so the rule was
+// untestable here, and both bugs found in it had to be pinned by unit tests
+// over a hand-built game.World instead (orphan_test.go, shopplacement_test.go).
+// That is the same failure as examples/stock being pure ASCII
+// (data-format.md §11.1) or isname's oracle sweeping only letters (#277): a
+// corpus assembled from what the thing obviously does, with the hard case
+// designed out. #285.
+//
+// Four records here cross a zone boundary, and each one lands in a
+// *different* file from the one it was read out of, which is what makes
+// them discriminating rather than decorative:
+//
+//	shop #50    read from shp/50.shp, keeper #5002 (zone 50) -> zone 50.
+//	            Its own vnum is below every range, so filing by shop vnum
+//	            would send it to zone 49 and reverse the shop table.
+//	shop #5040  read from shp/49.shp, keeper #4901 (zone 49) -> zone 49.
+//	            Its own vnum is claimed by zone 50, so filing by shop vnum
+//	            would send it there. The same rule, crossing the other way.
+//	mob #5150   read from mob/49.mob, above every range -> zone 50, the
+//	            zone whose range begins nearest below it.
+//	obj #4850   read from obj/50.obj, below every range -> zone 49, the
+//	            lowest zone. The other half of fallbackZone, which one zone
+//	            cannot tell apart from the first.
+//
+// Two zones is the smallest number that can express any of this, which is
+// the whole reason for the second one.
+
+// antechamberRooms is wld/49.wld.
+const antechamberRooms = "#4900\n" +
+	"The Antechamber Next Door~\n" +
+	"   Zone 49's only room. It exists so that this corpus has two zones,\n" +
+	"because a great deal of what the yaml writer decides -- which file a\n" +
+	"mobile, an object or a shop is written into -- has exactly one possible\n" +
+	"answer when there is only one zone to choose from.\n" +
+	"   The shopkeeper next door keeps a shop numbered in zone 50's range.\n" +
+	"~\n" +
+	"49 0 0\n" +
+	"S\n" +
+	"$\n"
+
+// antechamberMobiles is mob/49.mob: zone 49's shopkeeper.
+const antechamberMobiles = "#4901\n" +
+	"attendant antechamber~\n" +
+	"the antechamber's attendant~\n" +
+	"An attendant keeps a shop here, for a shop numbered elsewhere.\n" +
+	"~\n" +
+	"   This mobile keeps shop #5040, whose own vnum falls inside zone 50's\n" +
+	"range while this keeper falls inside zone 49's. A writer that files a\n" +
+	"shop by its own number sends the shop one way and its keeper the other.\n" +
+	"~\n" +
+	"ab 0 0 S\n" +
+	"20 10 0 10d10+100 2d4+2\n" +
+	"500 1000\n" +
+	"8 8 1\n" +
+	"$\n"
+
+// antechamberShops is shp/49.shp: one shop, numbered in the *other* zone's
+// range and kept by a mobile in this one.
+const antechamberShops = `CircleMUD v3.0 Shop File~
+#5040~
+5003
+-1
+1.2
+0.3
+-1
+%s I have none of those.~
+%s You do not have that.~
+%s I do not buy those.~
+%s I cannot afford that.~
+%s You cannot afford that.~
+%s That is %d coins.~
+%s I will give you %d coins.~
+0
+0
+4901
+0
+4900
+-1
+0
+28
+0
+0
+$~
+`
+
+// antechamberZone is zon/49.zon.
+const antechamberZone = `#49
+The Second Zone~
+4900 4999 30 2
+* The attendant, in the room they keep shop in.
+M 0 4901 1 4900
+S
+$
 `
 
 // torturedRooms is wld/50.wld.
@@ -290,6 +395,7 @@ const torturedRooms = "#5000\n" +
 //	5000  every action and affection bit, dice at their extremes, S format
 //	5001  E format with an espec for every ability the C names
 //	5002  the minimum a mobile can be, and a shopkeeper for shp/50.shp
+//	5150  a vnum above every zone's range, which lands in zone 50 anyway
 const torturedMobiles = "#5000\n" +
 	"everything mobile flags~\n" +
 	"the mobile with every flag~\n" +
@@ -339,6 +445,25 @@ const torturedMobiles = "#5000\n" +
 	"20 10 0 10d10+100 2d4+2\n" +
 	"500 1000\n" +
 	"8 8 1\n" +
+
+	"#5150\n" +
+	"stray mobile~\n" +
+	"the stray mobile~\n" +
+	"A mobile no zone's range claims stands here.\n" +
+	"~\n" +
+	"   #5150 is above zone 50's top of 5099 and above every other range, so\n" +
+	"nothing claims it. It belongs in zone 50's file -- the zone whose range\n" +
+	"begins nearest below it -- and a writer that sent every unclaimed record\n" +
+	"to the lowest zone instead would put it in zone 49's and reverse the\n" +
+	"mobile table, which is what makes it worth having rather than merely\n" +
+	"present.\n" +
+	"   Last in the file, for real_object's reason above: the table is\n" +
+	"binary-searched, so it has to ascend.\n" +
+	"~\n" +
+	"a 0 0 S\n" +
+	"5 10 0 2d8+10 1d4+1\n" +
+	"0 100\n" +
+	"8 8 0\n" +
 	"$\n"
 
 // torturedObjects is obj/50.obj.
@@ -347,8 +472,26 @@ const torturedMobiles = "#5000\n" +
 //	5001  a drink container the loader mutates at load time (the weight fix)
 //	5002  the maximum number of 'A' affect lines, and extra descriptions
 //	5003  the minimum an object can be
+//	4850  a vnum below every zone's range, read out of zone 50's file
 //	5004  a container, for the rent file's nesting
-const torturedObjects = "#5000\n" +
+const torturedObjects = "#4850\n" +
+	"stray object~\n" +
+	"a stray object~\n" +
+	"An object no zone's range claims lies here.~\n" +
+	"   #4850 is below every zone's range -- 4900 is the lowest bottom in\n" +
+	"this corpus -- so it is read out of zone 50's file and written into\n" +
+	"zone 49's, the lowest zone. That is one of fallbackZone's two branches;\n" +
+	"#5150 below is the other, and with a single zone they cannot disagree.\n" +
+	"   It is first in this file rather than last because the C looks records\n" +
+	"up by binary search over one flat table in load order (real_object,\n" +
+	"db.c:2828-2846), so vnums have to ascend across every indexed file. A\n" +
+	"corpus that broke that would be invalid rather than hostile.\n" +
+	"~\n" +
+	"18 0 0\n" +
+	"0 0 0 0\n" +
+	"0 0 0\n" +
+
+	"#5000\n" +
 	"extremes object every flag~\n" +
 	"the object of every extreme~\n" +
 	"An object whose every value is at an extreme lies here.~\n" +
