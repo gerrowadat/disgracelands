@@ -51,6 +51,118 @@ func (c *Context) spellAlterObject(number int32, obj *game.Object) {
 	c.announce("%s\r\n", message)
 }
 
+// cure is one row of mag_unaffects' switch (magic.c:910-929): which affect a
+// curing spell takes off, and what the victim and the room are told.
+//
+// The mapping is the whole of the routine and was the whole of the bug. The
+// C is handed the *cure's* spell number and immediately turns it into the
+// affliction's — cure blind and heal both remove SPELL_BLINDNESS, remove
+// poison removes SPELL_POISON, remove curse removes SPELL_CURSE — and this
+// port skipped that step and removed affects of the cure's own number, which
+// nothing anywhere applies. So none of the three did anything at all. See
+// docs/deviations.md.
+type cure struct {
+	// removes is the affect that comes off.
+	removes int32
+	// toVictim and toRoom are act()'s two lines, verbatim: $n is the
+	// *victim*, in both.
+	toVictim string
+	toRoom   string
+}
+
+// cureFor is the switch itself. The second return is the C's `default`,
+// which logs and does nothing — see spellUnaffect.
+func cureFor(number int32) (cure, bool) {
+	switch number {
+	case game.SpellCureBlind, game.SpellHeal:
+		return cure{
+			removes:  game.SpellBlindness,
+			toVictim: "Your vision returns!",
+			toRoom:   "There's a momentary gleam in $n's eyes.",
+		}, true
+	case game.SpellRemovePoison:
+		return cure{
+			removes:  game.SpellPoison,
+			toVictim: "A warm feeling runs through your body!",
+			toRoom:   "$n looks better.",
+		}, true
+	case game.SpellRemoveCurse:
+		// No room line in the C: a lifted curse is between the two of you.
+		return cure{removes: game.SpellCurse, toVictim: "You don't feel so unlucky."}, true
+	}
+	return cure{}, false
+}
+
+// spellUnaffect takes an affliction off somebody, porting mag_unaffects
+// (magic.c:901).
+func (c *Context) spellUnaffect(number int32, victim *game.Character) {
+	what, ok := cureFor(number)
+	if !ok {
+		// `log("SYSERR: unknown spellnum %d passed to mag_unaffects.")` and
+		// return, with nothing said to anybody (magic.c:926-928).
+		//
+		// This is not unreachable defensive code: `full heal` is
+		// MAG_POINTS | MAG_UNAFFECTS (spell_parser.c:1007-1009) and the
+		// archived server never added a case for it, so every full heal ever
+		// cast landed here. See docs/weirdnumbers.md. The point of
+		// reproducing it rather than quietly doing nothing is the silence —
+		// the previous code printed NOEFFECT here, so a full heal reported a
+		// failure immediately after restoring every hit point.
+		//
+		// log() and not mudlog(): this goes to the syslog and is not echoed
+		// to online immortals, which is why it does not use wizlog.
+		if c.Session != nil {
+			c.Session.logger.Error("unknown spellnum passed to mag_unaffects",
+				"spell", game.SpellNameOrNumber(number), "number", number)
+		}
+		return
+	}
+
+	if !game.AffectedBySpell(victim.Record, what.removes) {
+		// NOEFFECT to the *caster*, and suppressed for heal — the C's own
+		// comment on the line is "'cure blindness' message" (magic.c:932).
+		// Heal is a healing spell that happens to also cure blindness, so
+		// telling somebody nothing seems to happen straight after filling
+		// their hit points would be a lie about the wrong half.
+		if number != game.SpellHeal {
+			c.Send("%s", game.NoEffect)
+		}
+		return
+	}
+
+	game.RemoveAffectsOf(victim.Record, what.removes)
+
+	// act(to_vict, FALSE, victim, 0, ch, TO_CHAR) and
+	// act(to_room, TRUE, victim, 0, ch, TO_ROOM). Three things in those
+	// arguments matter and none of them is obvious from the strings:
+	//
+	//   - the *victim* is act's `ch`, so $n is the victim in both lines,
+	//   - TO_ROOM excludes `ch` — so the line goes to everybody in the room
+	//     except the victim, which includes the caster, who therefore reads
+	//     "There's a momentary gleam in <them>'s eyes" rather than the
+	//     "Your vision returns!" they caused,
+	//   - and it is a room the *victim* is in, which is not always the
+	//     caster's: nothing here requires them to be together.
+	//
+	// Through World.Act rather than a Tell with a %s, because that is the
+	// rule for anything said to more than one person (CLAUDE.md): the codes
+	// resolve per audience, and Act is also what capitalises the line, so a
+	// format beginning with $n names the victim with a capital where a
+	// hand-rolled format would not.
+	victim.Tell("%s", c.act(what.toVictim, game.ActArgs{Actor: victim}, victim))
+	if what.toRoom == "" {
+		// Remove curse has no room line, and an empty format must not
+		// become an empty write — the same guard Context.toRoom carries for
+		// a social with a blank line in the file.
+		return
+	}
+	for _, other := range c.World.Occupants(victim.Room) {
+		if other != victim {
+			other.Tell("%s", c.act(what.toRoom, game.ActArgs{Actor: victim}, other))
+		}
+	}
+}
+
 // spellCreation makes an object out of nothing, porting mag_creations.
 func (c *Context) spellCreation(number int32) {
 	if number != game.SpellCreateFood {

@@ -110,10 +110,65 @@ func doCast(c *Context) error {
 		return nil
 	}
 
-	if c.castSpell(info, number, victim, object, game.SaveSpell) && mana > 0 {
+	if c.castSpellFor(info, number, victim, object) && mana > 0 {
 		rec.Points.Mana = max(0, min(rec.Points.MaxMana, rec.Points.Mana-mana))
 	}
 	return nil
+}
+
+// castSpellFor is cast_spell (spell_parser.c:473), the step the C puts
+// between do_cast and call_magic.
+//
+// It exists for the three refusals in the middle of it, which had no port at
+// all: TargetSelfOnly and TargetNotSelf were being set correctly on thirteen
+// spells from the C's own table and then read by nothing, so `cast 'detect
+// magic' dog` put detect magic on the dog, and a group spell cast while
+// ungrouped did nothing, said nothing and charged the full mana anyway. See
+// docs/deviations.md.
+//
+// Where it sits is load-bearing. The C makes these checks *after* the mana
+// check and *after* the skill roll, and returns 0 — and do_cast only spends
+// the mana `if (cast_spell(...) && (mana > 0))`. So a refused spell costs
+// nothing, but the roll before it has already happened and a lost
+// concentration still costs half. Moving the checks up beside do_cast's own
+// `tch == ch && violent` test would be tidier and would change both.
+//
+// Only the object magic path skips this: mag_objectmagic calls call_magic
+// directly (spell_parser.c:352-455), so a scroll of detect magic read at
+// somebody else is not refused — which is the C's arrangement and not an
+// oversight here.
+//
+// **Three of cast_spell's six parts are still missing** and are #306: the
+// per-spell MinPosition check with its five position-specific messages, the
+// charmed-caster's "You are afraid you might hurt your master!", and the
+// `OK` plus say_spell that announce the casting to the room.
+func (c *Context) castSpellFor(info game.SpellInfo, number int32,
+	victim *game.Character, object *game.Object,
+) bool {
+	// `(tch != ch) && IS_SET(SINFO.targets, TAR_SELF_ONLY)`
+	// (spell_parser.c:506). Written as a comparison against the caster
+	// rather than "there is a victim and it is somebody else" because the
+	// C's is: tch is NULL for an object-targeted spell, and NULL != ch. No
+	// spell in the table is both self-only and object-targeted, so the two
+	// spellings cannot currently disagree — but the C's is the one that
+	// stays right if one ever is.
+	if victim != c.Character && info.Targets.Has(game.TargetSelfOnly) {
+		c.Send("You can only cast this spell upon yourself!\r\n")
+		return false
+	}
+	if victim == c.Character && info.Targets.Has(game.TargetNotSelf) {
+		c.Send("You cannot cast this spell upon yourself!\r\n")
+		return false
+	}
+	// mag_groups returns early for an ungrouped caster too (magic.c:855),
+	// and the C keeps both: this is what says so and what stops the mana
+	// being spent, and that one is the guard on the loop itself.
+	if info.Routines.Has(game.MagGroups) && !c.Character.Grouped() {
+		c.Send("You can't cast this spell if you're not in a group!\r\n")
+		return false
+	}
+
+	return c.castSpell(info, number, victim, object, game.SaveSpell)
 }
 
 // findSpellTarget resolves what the spell is aimed at, porting the target
@@ -244,11 +299,7 @@ func (c *Context) castSpell(info game.SpellInfo, number int32, victim *game.Char
 
 	if info.Routines.Has(game.MagUnaffects) && victim != nil && victim.Record != nil {
 		did = true
-		if game.RemoveAffectsOf(victim.Record, number) {
-			victim.Tell("You feel better.\r\n")
-		} else {
-			c.Send("%s", game.NoEffect)
-		}
+		c.spellUnaffect(number, victim)
 	}
 
 	if info.Routines.Has(game.MagAlterObjs) && object != nil {

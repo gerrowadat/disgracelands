@@ -1497,30 +1497,40 @@ compared against is not:
 
 Listed here so they are not mistaken for deliberate differences.
 
-- **`mag_unaffects` is handed the wrong spell number**, so `cure blind`,
-  `remove poison` and `remove curse` do nothing to a character (#299). The
-  C maps the cure to the affliction before removing anything — cure blind
-  and heal both remove `SPELL_BLINDNESS`, remove poison removes
+- ~~**`mag_unaffects` is handed the wrong spell number**, so `cure blind`,
+  `remove poison` and `remove curse` do nothing to a character.~~ Ported
+  (#299). The C maps the cure to the affliction before removing anything —
+  cure blind and heal both remove `SPELL_BLINDNESS`, remove poison removes
   `SPELL_POISON`, remove curse removes `SPELL_CURSE` (`magic.c:910-929`) —
-  and `internal/session/cast.go` removes affects of the *cure's* own
-  number instead, which nothing ever applies. The messages are the C's
-  per-spell ones too, and `heal` deliberately suppresses `NOEFFECT`
-  (`magic.c:932`) where this prints it. Found by
-  `internal/server/spellbook_test.go`, where all three cases are written
-  and marked `pending`.
+  and `internal/session/cast.go` removed affects of the *cure's* own
+  number, which nothing anywhere applies. `Context.spellUnaffect`
+  (`internal/session/spells.go`) is the whole routine now: the mapping, the
+  C's own per-spell victim and room lines through `game.Act` rather than a
+  format with a `%s` in it, the `NOEFFECT` to the caster when there was
+  nothing to cure, and its suppression for `heal` (`magic.c:932`) so that
+  healing somebody who is not blind no longer reports a failure straight
+  after succeeding. The `default` branch is reproduced too, and is not
+  unreachable: see `weirdnumbers.md` on `full heal`.
 - **`control weather` is not written** (#300). It is in the spell table
   and `castManual` has no case for it, so it reaches `castSpell`'s
   "is not implemented yet" fallback — which is the fallback working, not a
   silent failure, but the spell is still missing.
-- **`cast_spell`'s three refusals were never ported** (#301):
-  `TAR_SELF_ONLY`, `TAR_NOT_SELF` and the `MAG_GROUPS`
-  "you can't cast this spell if you're not in a group"
-  (`spell_parser.c:506-517`). `TargetSelfOnly` and `TargetNotSelf` are set
-  correctly on eleven and two spells respectively and read by nothing, so
-  a self-only detection spell can be put on somebody else; and a group
-  spell cast while ungrouped is silent *and charges the full mana*,
-  because `spellGroup` returns early after `castSpell` has already
-  counted the spell as done.
+- ~~**`cast_spell`'s three refusals were never ported**: `TAR_SELF_ONLY`,
+  `TAR_NOT_SELF` and the `MAG_GROUPS` "you can't cast this spell if you're
+  not in a group" (`spell_parser.c:506-517`).~~ Ported (#301), as
+  `Context.castSpellFor`. `TargetSelfOnly` and `TargetNotSelf` had been set
+  correctly on eleven and two spells respectively and read by nothing, so a
+  self-only detection spell could be put on somebody else; and a group
+  spell cast while ungrouped was silent *and charged the full mana*,
+  because `spellGroup` returns early after `castSpell` had already counted
+  the spell as done. Where the checks sit is the load-bearing part: the C
+  makes them after the mana check and after the skill roll and returns 0,
+  and `do_cast` spends the mana only `if (cast_spell(...) && (mana > 0))` —
+  so a refused spell is free, while a lost concentration before it still
+  costs half. **Three of `cast_spell`'s six parts are still missing**
+  (#306): the per-spell `MinPosition` check, the charmed caster's "You are
+  afraid you might hurt your master!", and the `OK` plus `say_spell` that
+  tell the room a spell was cast at all.
 
 - ~~**`who` prints no annotations.**~~ Ported (#216). `do_who` marks each
   line with `(i<n>)`/`(invis)`, `(mailing)`/`(writing)`, `(deaf)`,

@@ -567,7 +567,6 @@ var spellbook = map[int32]spellCase{
 	// (magic.c:910-929).
 
 	game.SpellCureBlind: {
-		pending: "cure blind does not cure blindness (#299)",
 		run: func(t *testing.T) {
 			srv, c := spellbookServer(t)
 			dog := prey(t, srv, ImmortStartRoom)
@@ -582,11 +581,15 @@ var spellbook = map[int32]spellCase{
 			if record(t, srv, dog).AffectFlags.Has(game.AffectBlind) {
 				t.Error("cure blind left the dog blind")
 			}
+			// The caster reads the room's line, not the victim's: act's
+			// to_room is the one everybody but the victim gets.
+			if !c.seen("There's a momentary gleam in a large dog's eyes.") {
+				t.Errorf("no room line for cure blind; the transcript was:\n%s", c.transcript())
+			}
 		},
 	},
 
 	game.SpellRemovePoison: {
-		pending: "remove poison does not remove poison (#299)",
 		run: func(t *testing.T) {
 			srv, c := spellbookServer(t)
 			dog := prey(t, srv, ImmortStartRoom)
@@ -601,13 +604,15 @@ var spellbook = map[int32]spellCase{
 			if record(t, srv, dog).AffectFlags.Has(game.AffectPoison) {
 				t.Error("remove poison left the dog poisoned")
 			}
+			if !c.seen("A large dog looks better.") {
+				t.Errorf("no room line for remove poison; the transcript was:\n%s", c.transcript())
+			}
 		},
 	},
 
 	game.SpellRemoveCurse: {
 		// The object half of remove curse is mag_alter_objs and works;
 		// objspells_test.go covers it. This is the character half.
-		pending: "remove curse does not lift a curse from a character (#299)",
 		run: func(t *testing.T) {
 			srv, c := spellbookServer(t)
 			dog := prey(t, srv, ImmortStartRoom)

@@ -2241,6 +2241,58 @@ that can never appear.
 
 ---
 
+## `full heal` logs a SYSERR every time it is cast
+
+```c
+  spello(SPELL_FULL_HEAL, "full heal", 200, 100, 5, POS_FIGHTING,
+	TAR_CHAR_ROOM, FALSE, MAG_POINTS | MAG_UNAFFECTS,
+	NULL);
+```
+
+`full heal` is one of this server's own additions (`spell_parser.c:1007-1009`,
+inside a `<DoC>` block), and it is declared `MAG_POINTS | MAG_UNAFFECTS` —
+copied, evidently, from `heal` three lines above it, which has exactly the
+same routines. `call_magic` therefore runs both, and `mag_unaffects` is a
+switch on the spell number with three cases in it:
+
+```c
+  switch (spellnum) {
+  case SPELL_CURE_BLIND:
+  case SPELL_HEAL:
+    spell = SPELL_BLINDNESS;
+    ...
+  case SPELL_REMOVE_POISON:
+    ...
+  case SPELL_REMOVE_CURSE:
+    ...
+  default:
+    log("SYSERR: unknown spellnum %d passed to mag_unaffects.", spellnum);
+    return;
+  }
+```
+
+Nobody added a case for 56. So every `full heal` ever cast on the real server
+restored the target's hit points and then wrote
+`SYSERR: unknown spellnum 56 passed to mag_unaffects.` to the syslog — and
+said nothing at all to anybody, because the `default` returns before the
+`affected_by_spell` check that would have produced `NOEFFECT`.
+
+The silence is the part that matters to a player, and it is why this is
+reproduced rather than tidied into "full heal is MAG_POINTS only". Getting it
+wrong is not hypothetical: this port's earlier `mag_unaffects` had no switch
+at all, so `full heal` reached the `NOEFFECT` branch and reported "Nothing
+seems to happen." immediately after filling every hit point.
+
+*Reproduced, and verified*: `Context.spellUnaffect`
+(`internal/session/spells.go`) has the `default`, logs it — `log()` rather
+than `mudlog()`, so the syslog and not the immortals — and returns without a
+message. `TestFullHealSaysNothingAboutBlindness`
+(`internal/server/cast_test.go`) is the silence.
+
+*Source*: `magic.c:901-935`, `spell_parser.c:1002-1009`.
+
+---
+
 ## What to do about all this
 
 The rule that has worked: **anything with a division, a cast, or a comment

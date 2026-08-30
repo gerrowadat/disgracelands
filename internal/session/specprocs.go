@@ -621,9 +621,20 @@ func (sc *SpecialCall) dropForDump() []*game.Object {
 	return append([]*game.Object(nil), sc.World.RoomObjects(sc.Actor.Room)...)
 }
 
-// cast throws a spell from a mobile, porting cast_spell's use by the mobile
-// specials — which skips do_cast's checks entirely: no mana, no skill roll,
-// no position test beyond the special's own.
+// cast throws a spell from a mobile, porting the mobile specials' own use of
+// cast_spell (spec_procs.c:690-730, castle.c:411-428).
+//
+// What it skips is do_cast: no mana, no skill roll, no "you do not know that
+// spell", no position test beyond the special's own. What it does *not* skip
+// is cast_spell itself, which is the function the specials actually call — so
+// it goes through castSpellFor and gets its refusals. Only one of them can
+// bite a stock special, and it is worth having: magic_user casts blindness,
+// which is TAR_NOT_SELF, so a mobile that ends up aimed at itself is refused
+// here exactly as it is in the C rather than blinding itself.
+//
+// The refusal text goes to a mobile with no descriptor, which is nothing at
+// all — `send_to_char` on a NULL descriptor is the C's no-op and Context.Send
+// with no session falls back to Character.Tell, which is the same.
 func (sc *SpecialCall) cast(number int32, victim *game.Character, obj *game.Object) {
 	info, ok := game.Spell(number)
 	if !ok {
@@ -633,5 +644,5 @@ func (sc *SpecialCall) cast(number int32, victim *game.Character, obj *game.Obje
 		World: sc.World, Character: sc.Actor,
 		RNG: sc.RNG, Violence: sc.Violence,
 	}
-	ctx.castSpell(info, number, victim, obj, game.SaveSpell)
+	ctx.castSpellFor(info, number, victim, obj)
 }
