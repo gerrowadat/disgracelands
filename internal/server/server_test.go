@@ -564,7 +564,7 @@ func testWorld() *game.Live {
 	}
 	cellarRoom := &game.RoomDef{
 		Vnum: CellarRoom, Name: "A Pitch Dark Cellar", Description: "A cellar.\r\n",
-		Flags: game.RoomDark,
+		Flags: game.NewSet(game.RoomDark),
 	}
 	houseRoom.Exits[game.North] = &game.ExitDef{ToRoom: AtriumRoom}
 	atriumRoom.Exits[game.South] = &game.ExitDef{ToRoom: HouseRoom}

@@ -55,7 +55,7 @@ var applyTypeNames = []string{
 // in `identify`'s output. A bit past the end of the table prints "UNDEFINED",
 // and the C's index deliberately stops advancing at the terminator so *every*
 // bit above the table prints it.
-func SprintBit(f Flags, names []string) string {
+func SprintBit(f uint64, names []string) string {
 	var out strings.Builder
 
 	nr := 0
@@ -194,9 +194,9 @@ var pcClassNames = []string{
 // not printed as a name at all: it comes back in raw instead, so a writer
 // can round-trip it as an explicit escape hatch (flags_raw) rather than
 // inventing a name or silently dropping it.
-func NameBits(f Flags, table []string) (names []string, raw Flags) {
+func NameBits(f uint64, table []string) (names []string, raw uint64) {
 	for bit := 0; bit < 64; bit++ {
-		mask := Flags(1) << uint(bit)
+		mask := uint64(1) << uint(bit)
 		if f&mask == 0 {
 			continue
 		}
@@ -215,14 +215,14 @@ func NameBits(f Flags, table []string) (names []string, raw Flags) {
 // name" treatment as any other typo, per §4.1's "an unknown name is an
 // error, not a shrug"). Every name not found in the table is returned in
 // unknown, for the caller to report rather than silently ignore.
-func ParseBitNames(names []string, table []string) (flags Flags, unknown []string) {
+func ParseBitNames(names []string, table []string) (flags uint64, unknown []string) {
 	for _, name := range names {
 		bit := indexOf(table, name)
 		if bit < 0 {
 			unknown = append(unknown, name)
 			continue
 		}
-		flags |= Flags(1) << uint(bit)
+		flags |= uint64(1) << uint(bit)
 	}
 	return flags, unknown
 }

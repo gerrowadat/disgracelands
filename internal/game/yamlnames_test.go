@@ -73,7 +73,7 @@ func TestYamlValueTablesMatchDisplayTables(t *testing.T) {
 
 func TestNameBitsRoundTrip(t *testing.T) {
 	table := []string{"a", "b", "", "d"}
-	f := Flags(0b1011) // bits 0, 1, 3 -> "a", "b", "d"
+	f := uint64(0b1011) // bits 0, 1, 3 -> "a", "b", "d"
 	names, raw := NameBits(f, table)
 	if raw != 0 {
 		t.Fatalf("raw = %d, want 0", raw)
@@ -89,7 +89,7 @@ func TestNameBitsRoundTrip(t *testing.T) {
 
 func TestNameBitsUnnamedBitGoesToRaw(t *testing.T) {
 	table := []string{"a", ""} // bit 1 unnamed
-	f := Flags(0b11)
+	f := uint64(0b11)
 	names, raw := NameBits(f, table)
 	if len(names) != 1 || names[0] != "a" {
 		t.Fatalf("names = %v, want [a]", names)
@@ -101,7 +101,7 @@ func TestNameBitsUnnamedBitGoesToRaw(t *testing.T) {
 
 func TestNameBitsBeyondTableGoesToRaw(t *testing.T) {
 	table := []string{"a"}
-	f := Flags(0b101) // bit 2 is past the table
+	f := uint64(0b101) // bit 2 is past the table
 	names, raw := NameBits(f, table)
 	if len(names) != 1 || names[0] != "a" {
 		t.Fatalf("names = %v, want [a]", names)

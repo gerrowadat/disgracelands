@@ -24,9 +24,9 @@ func setIndoors(t *testing.T, srv *Server, vnum game.RoomVnum, indoors bool) {
 			return
 		}
 		if indoors {
-			room.Flags = room.Flags.Set(game.RoomIndoors)
+			room.Flags = room.Flags.With(game.RoomIndoors)
 		} else {
-			room.Flags = room.Flags.Clear(game.RoomIndoors)
+			room.Flags = room.Flags.Without(game.RoomIndoors)
 		}
 	})
 }

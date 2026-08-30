@@ -83,33 +83,47 @@ const (
 	PrefNoAnnounce2 Flags = 1 << 24
 )
 
-// The ROOM_* bits, from structs.h:75.
+// RoomFlag is one of the ROOM_* bits, from structs.h:75, and RoomFlags is a
+// room's set of them.
+//
+// The first domain to get its own type, in
+// docs/proposals/idiomatic-go.md's step 1. The constants below are bit
+// *indices* rather than masks — RoomDark is 0 and not 1<<0 — which is the
+// only change to how they are declared and no change at all to what is
+// stored: bit 0 is still bit 0 on disk, is still what `asciiflag_conv`'s
+// 'a' decodes to, and is still what bitnames_test.go proves against
+// room_bits[] in constants.c. §2.1.
 //
 // The last three are local additions, and the first of them is the reason
 // this list is here at all: ROOM_GOOD_REGEN doubles every kind of
 // regeneration, which is not something a port can afford to leave out.
+type RoomFlag int
+
+// RoomFlags is a set of RoomFlag.
+type RoomFlags = Set[RoomFlag]
+
 const (
-	RoomDark       Flags = 1 << 0
-	RoomDeathTrap  Flags = 1 << 1
-	RoomNoMob      Flags = 1 << 2
-	RoomIndoors    Flags = 1 << 3
-	RoomPeaceful   Flags = 1 << 4
-	RoomSoundproof Flags = 1 << 5
-	RoomNoTrack    Flags = 1 << 6
-	RoomNoMagic    Flags = 1 << 7
-	RoomTunnel     Flags = 1 << 8
-	RoomPrivate    Flags = 1 << 9
-	RoomGodRoom    Flags = 1 << 10
-	RoomHouse      Flags = 1 << 11
-	RoomHouseCrash Flags = 1 << 12
-	RoomAtrium     Flags = 1 << 13
-	RoomOLC        Flags = 1 << 14
-	RoomBFSMark    Flags = 1 << 15
+	RoomDark       RoomFlag = 0
+	RoomDeathTrap  RoomFlag = 1
+	RoomNoMob      RoomFlag = 2
+	RoomIndoors    RoomFlag = 3
+	RoomPeaceful   RoomFlag = 4
+	RoomSoundproof RoomFlag = 5
+	RoomNoTrack    RoomFlag = 6
+	RoomNoMagic    RoomFlag = 7
+	RoomTunnel     RoomFlag = 8
+	RoomPrivate    RoomFlag = 9
+	RoomGodRoom    RoomFlag = 10
+	RoomHouse      RoomFlag = 11
+	RoomHouseCrash RoomFlag = 12
+	RoomAtrium     RoomFlag = 13
+	RoomOLC        RoomFlag = 14
+	RoomBFSMark    RoomFlag = 15
 
 	// Local additions (structs.h:92).
-	RoomGoodRegen Flags = 1 << 16
-	RoomCanQuit   Flags = 1 << 17
-	RoomPKill     Flags = 1 << 18
+	RoomGoodRegen RoomFlag = 16
+	RoomCanQuit   RoomFlag = 17
+	RoomPKill     RoomFlag = 18
 )
 
 // The AFF_* bits, from structs.h:247.

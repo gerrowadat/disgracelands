@@ -549,7 +549,7 @@ func (c *Context) randomRoom() game.RoomVnum {
 		if room == nil {
 			continue
 		}
-		if room.Flags.HasAny(game.RoomPrivate | game.RoomDeathTrap | game.RoomGodRoom) {
+		if room.Flags.HasAny(game.RoomPrivate, game.RoomDeathTrap, game.RoomGodRoom) {
 			continue
 		}
 		return room.Vnum

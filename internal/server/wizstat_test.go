@@ -30,7 +30,7 @@ func TestStatRoom(t *testing.T) {
 			t.Error("no board room")
 			return
 		}
-		room.Flags = room.Flags.Set(game.RoomIndoors | game.RoomPeaceful)
+		room.Flags = room.Flags.With(game.RoomIndoors, game.RoomPeaceful)
 	})
 
 	// Colour off first: do_stat_room writes the room name in cyan

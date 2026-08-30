@@ -33,7 +33,7 @@ func deathTrapRoom(t *testing.T, srv *Server) game.RoomVnum {
 			t.Errorf("no room %d", ImmortStartRoom)
 			return
 		}
-		room.Flags = room.Flags.Set(game.RoomDeathTrap)
+		room.Flags = room.Flags.With(game.RoomDeathTrap)
 	})
 	return ImmortStartRoom
 }

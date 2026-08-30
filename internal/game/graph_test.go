@@ -106,7 +106,7 @@ func TestNoTrackRoomsAreNotSearchedThrough(t *testing.T) {
 	// Wall off the second row, leaving 130 reachable only the long way — and
 	// since every route through row 1 is blocked, not at all.
 	for col := 0; col < 4; col++ {
-		w.Room(RoomVnum(110 + col)).Flags = w.Room(RoomVnum(110 + col)).Flags.Set(RoomNoTrack)
+		w.Room(RoomVnum(110 + col)).Flags = w.Room(RoomVnum(110 + col)).Flags.With(RoomNoTrack)
 	}
 	if got := w.FindFirstStep(100, 130); got != BFSNoPath {
 		t.Errorf("searching across a wall of NOTRACK rooms gave %d, want BFSNoPath", got)

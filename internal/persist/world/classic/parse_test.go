@@ -45,8 +45,8 @@ S
 		t.Errorf("Description = %q, want it to end with a CRLF", room.Description)
 	}
 	// "d" is bit 3.
-	if want := game.Flags(1 << 3); room.Flags != want {
-		t.Errorf("Flags = %#b, want %#b", room.Flags, want)
+	if want := game.NewSet(game.RoomIndoors); room.Flags != want {
+		t.Errorf("Flags = %#b, want %#b", room.Flags.Raw(), want.Raw())
 	}
 	if room.SectorType != 1 {
 		t.Errorf("SectorType = %d, want 1", room.SectorType)

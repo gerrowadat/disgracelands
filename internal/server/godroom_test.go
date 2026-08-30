@@ -29,7 +29,7 @@ func flagGodRoom(t *testing.T, srv *Server) {
 			t.Error("no room north of the temple to flag")
 			return
 		}
-		room.Flags = room.Flags.Set(game.RoomGodRoom)
+		room.Flags = room.Flags.With(game.RoomGodRoom)
 	})
 }
 

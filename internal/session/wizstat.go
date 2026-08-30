@@ -201,7 +201,7 @@ func (c *Context) statRoom() {
 		zoneNumberOf(c.World, room.Vnum), room.Vnum, room.Vnum,
 		game.SprintType(room.SectorType, game.SectorNames()))
 	fmt.Fprintf(&b, "SpecProc: %s, Flags: %s\r\n",
-		existsOrNone(room.Spec != ""), game.SprintBit(room.Flags, game.RoomBitNames()))
+		existsOrNone(room.Spec != ""), game.SprintBit(room.Flags.Raw(), game.RoomBitNames()))
 
 	b.WriteString("Description:\r\n")
 	if room.Description != "" {
@@ -251,7 +251,7 @@ func (c *Context) statRoom() {
 		}
 		fmt.Fprintf(&b, "Exit {{cyan}}%-5s{{/}}:  To: [%s], Key: [%5d], Keywrd: %s, Type: %s\r\n ",
 			dir, to, exit.Key, keyword,
-			game.SprintBit(game.Flags(exit.State), game.ExitBitNames()))
+			game.SprintBit(uint64(exit.State), game.ExitBitNames()))
 		if exit.Description != "" {
 			b.WriteString(ensureNewline(exit.Description))
 		} else {
@@ -288,9 +288,9 @@ func (c *Context) statObject(obj *game.Object) {
 		existsOrNone(obj.ObjSpec() != ""))
 	fmt.Fprintf(&b, "L-Des: %s\r\n", orNone(obj.Description))
 
-	fmt.Fprintf(&b, "Can be worn on: %s\r\n", game.SprintBit(obj.WearFlags, game.WearBitNames()))
-	fmt.Fprintf(&b, "Set char bits : %s\r\n", game.SprintBit(obj.PermAffect, game.AffectBitNames()))
-	fmt.Fprintf(&b, "Extra flags   : %s\r\n", game.SprintBit(obj.ExtraFlags, game.ExtraBitNames()))
+	fmt.Fprintf(&b, "Can be worn on: %s\r\n", game.SprintBit(uint64(obj.WearFlags), game.WearBitNames()))
+	fmt.Fprintf(&b, "Set char bits : %s\r\n", game.SprintBit(uint64(obj.PermAffect), game.AffectBitNames()))
+	fmt.Fprintf(&b, "Extra flags   : %s\r\n", game.SprintBit(uint64(obj.ExtraFlags), game.ExtraBitNames()))
 
 	fmt.Fprintf(&b, "Weight: %d, Value: %d, Cost/day: %d, Timer: %d, Min Level: %d\r\n",
 		obj.Weight, obj.Cost, obj.RentPerDay(), obj.Timer, obj.MinLevel())
@@ -360,7 +360,7 @@ func objectValues(obj *game.Object) string {
 		return fmt.Sprintf("Spell: %d, - Hitpoints: %d", v[0], v[1])
 	case game.ItemContainer:
 		return fmt.Sprintf("Weight capacity: %d, Lock Type: %s, Key Num: %d, Corpse: %s",
-			v[0], game.SprintBit(game.Flags(v[1]), game.ContainerBitNames()), //nolint:gosec // a bitfield
+			v[0], game.SprintBit(uint64(v[1]), game.ContainerBitNames()), //nolint:gosec // a bitfield
 			v[2], yesNo(v[3] != 0))
 	case game.ItemDrinkCon, game.ItemFountain:
 		return fmt.Sprintf("Capacity: %d, Contains: %d, Poisoned: %s, Liquid: %s",
@@ -463,12 +463,12 @@ func (c *Context) statCharacter(k *game.Character) {
 
 	if k.IsNPC() {
 		fmt.Fprintf(&b, "NPC flags: {{cyan}}%s{{/}}\r\n",
-			game.SprintBit(mobFlagsOf(k), game.ActionBitNames()))
+			game.SprintBit(uint64(mobFlagsOf(k)), game.ActionBitNames()))
 	} else {
 		fmt.Fprintf(&b, "PLR: {{cyan}}%s{{/}}\r\n",
-			game.SprintBit(rec.PlayerFlags, game.PlayerBitNames()))
+			game.SprintBit(uint64(rec.PlayerFlags), game.PlayerBitNames()))
 		fmt.Fprintf(&b, "PRF: {{green}}%s{{/}}\r\n",
-			game.SprintBit(rec.Preferences, game.PreferenceBitNames()))
+			game.SprintBit(uint64(rec.Preferences), game.PreferenceBitNames()))
 	}
 
 	if k.IsNPC() && k.MobDef != nil {
@@ -500,7 +500,7 @@ func (c *Context) statCharacter(k *game.Character) {
 	b.WriteString(joinWrapped(names))
 
 	fmt.Fprintf(&b, "AFF: {{yellow}}%s{{/}}\r\n",
-		game.SprintBit(rec.AffectFlags, game.AffectBitNames()))
+		game.SprintBit(uint64(rec.AffectFlags), game.AffectBitNames()))
 
 	for _, aff := range rec.Affects {
 		line := fmt.Sprintf("SPL: (%3dhr) {{cyan}}%-21s{{/}} ",
@@ -517,7 +517,7 @@ func (c *Context) statCharacter(k *game.Character) {
 			} else {
 				line += "sets "
 			}
-			line += game.SprintBit(aff.Bits, game.AffectBitNames())
+			line += game.SprintBit(uint64(aff.Bits), game.AffectBitNames())
 		}
 		b.WriteString(line + "\r\n")
 	}

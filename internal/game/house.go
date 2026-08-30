@@ -64,10 +64,10 @@ func (l *Live) AddHouse(h *House) {
 // hcontrol_destroy_house.
 func (l *Live) RemoveHouse(h *House) {
 	if room := l.Room(h.Atrium); room != nil {
-		room.Flags = room.Flags.Clear(RoomAtrium)
+		room.Flags = room.Flags.Without(RoomAtrium)
 	}
 	if room := l.Room(h.Vnum); room != nil {
-		room.Flags = room.Flags.Clear(RoomHouse | RoomPrivate | RoomHouseCrash)
+		room.Flags = room.Flags.Without(RoomHouse, RoomPrivate, RoomHouseCrash)
 	}
 	for i, other := range l.houses {
 		if other == h {
@@ -80,7 +80,7 @@ func (l *Live) RemoveHouse(h *House) {
 	// The C's comment, dated 9/19/94, and the only reason this loop exists.
 	for _, other := range l.houses {
 		if room := l.Room(other.Atrium); room != nil {
-			room.Flags = room.Flags.Set(RoomAtrium)
+			room.Flags = room.Flags.With(RoomAtrium)
 		}
 	}
 }
@@ -89,10 +89,10 @@ func (l *Live) RemoveHouse(h *House) {
 // its atrium.
 func (l *Live) flagHouseRooms(h *House) {
 	if room := l.Room(h.Vnum); room != nil {
-		room.Flags = room.Flags.Set(RoomHouse | RoomPrivate)
+		room.Flags = room.Flags.With(RoomHouse, RoomPrivate)
 	}
 	if room := l.Room(h.Atrium); room != nil {
-		room.Flags = room.Flags.Set(RoomAtrium)
+		room.Flags = room.Flags.With(RoomAtrium)
 	}
 }
 
@@ -100,7 +100,7 @@ func (l *Live) flagHouseRooms(h *House) {
 // save that this house has something new in it.
 func (l *Live) MarkHouseChanged(vnum RoomVnum) {
 	if room := l.Room(vnum); room != nil && room.Flags.Has(RoomHouse) {
-		room.Flags = room.Flags.Set(RoomHouseCrash)
+		room.Flags = room.Flags.With(RoomHouseCrash)
 	}
 }
 

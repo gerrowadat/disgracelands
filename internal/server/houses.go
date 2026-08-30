@@ -259,7 +259,7 @@ func (s *Server) SaveChangedHouses(ctx context.Context) {
 				continue
 			}
 			work = append(work, pending{vnum: h.Vnum, objs: houseObjects(nil, w.RoomObjects(h.Vnum))})
-			room.Flags = room.Flags.Clear(game.RoomHouseCrash)
+			room.Flags = room.Flags.Without(game.RoomHouseCrash)
 		}
 	}); err != nil {
 		s.logger.Error("collecting houses to save", "error", err)

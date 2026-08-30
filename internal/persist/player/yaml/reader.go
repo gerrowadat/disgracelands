@@ -40,7 +40,7 @@ func recordFromDoc(doc *playerDoc) (*game.PlayerRecord, []string, error) {
 	for _, name := range remortUnknown {
 		note("identity.remort: unknown class name %q", name)
 	}
-	remort = remort.Set(game.Flags(doc.Identity.RemortRaw))
+	remort |= doc.Identity.RemortRaw
 
 	created, err := timeFromRFC3339(doc.Times.Created)
 	if err != nil {
@@ -65,17 +65,17 @@ func recordFromDoc(doc *playerDoc) (*game.PlayerRecord, []string, error) {
 	for _, name := range actUnknown {
 		note("flags.act: unknown name %q", name)
 	}
-	act = act.Set(game.Flags(doc.Flags.ActRaw))
+	act |= doc.Flags.ActRaw
 	aff, affUnknown := game.ParseBitNames(doc.Flags.Affected, game.YamlAffectFlagNames())
 	for _, name := range affUnknown {
 		note("flags.affected: unknown name %q", name)
 	}
-	aff = aff.Set(game.Flags(doc.Flags.AffRaw))
+	aff |= doc.Flags.AffRaw
 	prefs, prefsUnknown := game.ParseBitNames(doc.Flags.Prefs, game.YamlPreferenceNames())
 	for _, name := range prefsUnknown {
 		note("flags.prefs: unknown name %q", name)
 	}
-	prefs = prefs.Set(game.Flags(doc.Flags.PrefsRaw))
+	prefs |= doc.Flags.PrefsRaw
 
 	skills, skillsUnknown := skillsFromDoc(doc.Skills)
 	for _, name := range skillsUnknown {
@@ -116,9 +116,9 @@ func recordFromDoc(doc *playerDoc) (*game.PlayerRecord, []string, error) {
 		SavingThrows:  [5]int32{doc.Combat.Saves.Paralyze, doc.Combat.Saves.Rod, doc.Combat.Saves.Petrify, doc.Combat.Saves.Breath, doc.Combat.Saves.Spell},
 		WimpLevel:     doc.Combat.Wimpy,
 		IDNum:         doc.ID,
-		PlayerFlags:   act,
-		AffectFlags:   aff,
-		Preferences:   prefs,
+		PlayerFlags:   game.Flags(act),
+		AffectFlags:   game.Flags(aff),
+		Preferences:   game.Flags(prefs),
 		Skills:        skills,
 		Affects:       affects,
 		Aliases:       aliasesFromDoc(doc.Aliases),
@@ -201,9 +201,9 @@ func affectsFromDoc(doc []affectDoc) ([]game.Affect, []string) {
 		for _, name := range bitsUnknown {
 			unknown = append(unknown, fmt.Sprintf("affects: unknown flag name %q", name))
 		}
-		bits = bits.Set(game.Flags(ad.SetsRaw))
+		bits |= ad.SetsRaw
 		affects = append(affects, game.Affect{
-			Type: spell, Duration: ad.Duration, Modifier: ad.Modifier, Location: location, Bits: bits,
+			Type: spell, Duration: ad.Duration, Modifier: ad.Modifier, Location: location, Bits: game.Flags(bits),
 		})
 	}
 	return affects, unknown
@@ -266,17 +266,17 @@ func StoredObjectFromDoc(od ObjInstanceDoc) (player.StoredObject, []string) {
 	for _, name := range extraUnknown {
 		unknown = append(unknown, fmt.Sprintf("inventory: object #%d: unknown flag name %q", od.Vnum, name))
 	}
-	extra = extra.Set(game.Flags(od.FlagsRaw))
+	extra |= od.FlagsRaw
 
 	perm, permUnknown := game.ParseBitNames(od.PermAffect, game.YamlAffectFlagNames())
 	for _, name := range permUnknown {
 		unknown = append(unknown, fmt.Sprintf("inventory: object #%d: unknown perm_affect name %q", od.Vnum, name))
 	}
-	perm = perm.Set(game.Flags(od.PermAffectRaw))
+	perm |= od.PermAffectRaw
 
 	st := player.StoredObject{
 		Vnum: game.ObjVnum(od.Vnum), Weight: od.Weight, Timer: od.Timer,
-		ExtraFlags: extra, PermAffect: perm,
+		ExtraFlags: game.Flags(extra), PermAffect: game.Flags(perm),
 	}
 	copy(st.Values[:], od.Values)
 

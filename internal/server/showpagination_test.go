@@ -188,7 +188,7 @@ func TestShowDeathPaginates(t *testing.T) {
 				t.Errorf("filler room %d missing", i)
 				continue
 			}
-			room.Flags = room.Flags.Set(game.RoomDeathTrap)
+			room.Flags = room.Flags.With(game.RoomDeathTrap)
 		}
 	})
 

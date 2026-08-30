@@ -26,10 +26,10 @@ func docFromRecord(rec *game.PlayerRecord) playerDoc {
 	// record with an out-of-range sex or class came back as neither.
 	sex := game.NameOrNumber(rec.Sex, game.YamlSexNames())
 	class := game.NameOrNumber(rec.Class, game.YamlClassNames())
-	remort, remortRaw := game.NameBits(game.Flags(rec.RemortVector), game.YamlClassNames()) //nolint:gosec // a small per-class bitmask
-	act, actRaw := game.NameBits(rec.PlayerFlags, game.YamlPlayerFlagNames())
-	aff, affRaw := game.NameBits(rec.AffectFlags, game.YamlAffectFlagNames())
-	prefs, prefsRaw := game.NameBits(rec.Preferences, game.YamlPreferenceNames())
+	remort, remortRaw := game.NameBits(uint64(uint32(rec.RemortVector)), game.YamlClassNames()) //nolint:gosec // a small per-class bitmask, reinterpreted not truncated
+	act, actRaw := game.NameBits(uint64(rec.PlayerFlags), game.YamlPlayerFlagNames())
+	aff, affRaw := game.NameBits(uint64(rec.AffectFlags), game.YamlAffectFlagNames())
+	prefs, prefsRaw := game.NameBits(uint64(rec.Preferences), game.YamlPreferenceNames())
 
 	doc := playerDoc{
 		Schema:     playerSchema,
@@ -43,7 +43,7 @@ func docFromRecord(rec *game.PlayerRecord) playerDoc {
 			Race:        rec.Race,
 			Level:       rec.Level,
 			Remort:      remort,
-			RemortRaw:   uint64(remortRaw),
+			RemortRaw:   remortRaw,
 			Home:        int32(rec.Hometown),
 			LoadRoom:    int32(rec.LoadRoom),
 			Description: Text(worldtext.ToStored(rec.Description)),
@@ -89,9 +89,9 @@ func docFromRecord(rec *game.PlayerRecord) playerDoc {
 			Thirst: rec.Conditions[2],
 		},
 		Flags: playerFlagsDoc{
-			Act: act, ActRaw: uint64(actRaw),
-			Affected: aff, AffRaw: uint64(affRaw),
-			Prefs: prefs, PrefsRaw: uint64(prefsRaw),
+			Act: act, ActRaw: actRaw,
+			Affected: aff, AffRaw: affRaw,
+			Prefs: prefs, PrefsRaw: prefsRaw,
 		},
 		PracticeSessions:    rec.SpellsToLearn,
 		InvisibilityLevel:   rec.InvisLevel,
@@ -127,11 +127,11 @@ func affectsDocFrom(affects []game.Affect) []affectDoc {
 	}
 	out := make([]affectDoc, 0, len(affects))
 	for _, a := range affects {
-		sets, setsRaw := game.NameBits(a.Bits, game.YamlAffectFlagNames())
+		sets, setsRaw := game.NameBits(uint64(a.Bits), game.YamlAffectFlagNames())
 		location := game.NameOrNumber(a.Location, game.YamlApplyTypeNames())
 		out = append(out, affectDoc{
 			Spell: game.SpellNameOrNumber(a.Type), Duration: a.Duration, Modifier: a.Modifier,
-			Location: location, Sets: sets, SetsRaw: uint64(setsRaw),
+			Location: location, Sets: sets, SetsRaw: setsRaw,
 		})
 	}
 	return out
@@ -187,15 +187,15 @@ func applyRentFile(doc *playerDoc, f *player.RentFile) {
 }
 
 func ObjInstanceDocFrom(st player.StoredObject) ObjInstanceDoc {
-	extra, extraRaw := game.NameBits(st.ExtraFlags, game.YamlItemExtraFlagNames())
-	perm, permRaw := game.NameBits(st.PermAffect, game.YamlAffectFlagNames())
+	extra, extraRaw := game.NameBits(uint64(st.ExtraFlags), game.YamlItemExtraFlagNames())
+	perm, permRaw := game.NameBits(uint64(st.PermAffect), game.YamlAffectFlagNames())
 
 	od := ObjInstanceDoc{
 		Vnum:   int32(st.Vnum),
 		Values: st.Values[:],
-		Flags:  extra, FlagsRaw: uint64(extraRaw),
+		Flags:  extra, FlagsRaw: extraRaw,
 		Weight: st.Weight, Timer: st.Timer,
-		PermAffect: perm, PermAffectRaw: uint64(permRaw),
+		PermAffect: perm, PermAffectRaw: permRaw,
 	}
 	for _, a := range st.Affects {
 		if a.Location == 0 && a.Modifier == 0 {

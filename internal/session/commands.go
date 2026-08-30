@@ -1234,7 +1234,7 @@ func roomDescription(w *game.Live, room *game.RoomDef, viewer *game.Character, i
 	// internal/colour — so this string is written once for everybody.
 	if hasPref(viewer, game.PrefRoomFlags) {
 		fmt.Fprintf(&b, "{{cyan}}[%5d] %s [ %s]{{/}}\r\n",
-			room.Vnum, room.Name, game.SprintBit(room.Flags, game.RoomBitNames()))
+			room.Vnum, room.Name, game.SprintBit(room.Flags.Raw(), game.RoomBitNames()))
 	} else {
 		fmt.Fprintf(&b, "{{cyan}}%s{{/}}\r\n", room.Name)
 	}
