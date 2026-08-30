@@ -208,7 +208,7 @@ func TestSameObjectIgnoresCharges(t *testing.T) {
 // top up to 15,000 rather than to 5,000.
 func TestAKeeperRefillsAllTheWayFromTheBank(t *testing.T) {
 	l := &Live{}
-	shop := &ShopDef{Vnum: 1, Flags: ShopUsesBank}
+	shop := &ShopDef{Vnum: 1, Flags: NewSet(ShopUsesBank)}
 	keeper := &Character{Record: &PlayerRecord{}}
 
 	// Over the maximum: the excess goes in.

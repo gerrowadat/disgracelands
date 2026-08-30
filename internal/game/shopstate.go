@@ -50,12 +50,20 @@ const (
 	tradeNoWarrior
 )
 
-// Shop flags.
+// ShopFlag is one of the shop bitvector's bits, and ShopFlags is a shop's
+// set of them. Bit indices, not masks: docs/proposals/idiomatic-go.md
+// §4.1, and §4.1.1 for the trap. shop_bits[] (shop.c:110) is the name
+// table, and the numbers are the file format's.
+type ShopFlag int
+
+// ShopFlags is a set of ShopFlag.
+type ShopFlags = Set[ShopFlag]
+
 const (
 	// ShopWillFight — the keeper fights back, and can be killed.
-	ShopWillFight Flags = 1 << 0
+	ShopWillFight ShopFlag = 0
 	// ShopUsesBank — the keeper banks their takings.
-	ShopUsesBank Flags = 1 << 1
+	ShopUsesBank ShopFlag = 1
 )
 
 // Runtime state, kept per shop. In the C this lives in `shop_index` beside

@@ -52,7 +52,7 @@ type ShopDef struct {
 	// Temper is how the keeper reacts to a player who cannot pay.
 	Temper int32
 	// Flags is the shop bitvector: WILL_FIGHT, USES_BANK.
-	Flags Flags
+	Flags ShopFlags
 
 	// Keeper is the shopkeeper's mob vnum, or -1 if the file named a mob
 	// that does not exist.

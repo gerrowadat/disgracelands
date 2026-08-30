@@ -330,7 +330,7 @@ func BuildDumpWithOptions(w *game.World, opts Options) *Dump {
 			Messages:   make([]Text, game.NumShopMessages),
 			Temper:     s.Temper,
 			Flags:      s.Flags.String(),
-			FlagBits:   uint64(s.Flags),
+			FlagBits:   s.Flags.Raw(),
 			Keeper:     s.Keeper,
 			TradeWith:  s.TradeWith,
 			Rooms:      emptyIfNil(s.Rooms),
