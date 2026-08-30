@@ -115,9 +115,9 @@ func maximumCharacter() *game.PlayerRecord {
 
 	// Every skill slot the format has, so nothing can quietly drop the
 	// tail of the array. Slot 0 is not a skill in the C either.
-	r.Skills = make(map[int32]int32, 200)
-	for n := int32(1); n <= 200; n++ {
-		r.Skills[n] = (n % 100) + 1
+	r.Skills = make(map[game.SpellID]int32, 200)
+	for n := game.SpellID(1); n <= 200; n++ {
+		r.Skills[n] = int32(n%100) + 1
 	}
 
 	// All 32 affect slots occupied. The C reads affects until it hits an
@@ -126,7 +126,7 @@ func maximumCharacter() *game.PlayerRecord {
 	// has nowhere to put a 33rd.
 	for i := 0; i < 32; i++ {
 		r.Affects = append(r.Affects, game.Affect{
-			Type:     int32(1 + i),
+			Type:     game.SpellID(1 + i),
 			Duration: int32(100 + i),
 			Modifier: int32(i - 16),
 			Location: game.Apply(i % 25),
@@ -190,7 +190,7 @@ func plainCharacter(name string, idnum int64, level int32) *game.PlayerRecord {
 		Conditions:    [3]int32{-1, -1, -1},
 		// 200 is the last slot char_file_u's skills[MAX_SKILLS+1]
 		// array has, MAX_SKILLS being 200.
-		Skills:   map[int32]int32{1: 50, 200: 99},
+		Skills:   map[game.SpellID]int32{1: 50, 200: 99},
 		LoadRoom: game.NoRoom,
 	}
 }

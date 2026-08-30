@@ -61,7 +61,7 @@ func richRecord() *game.PlayerRecord {
 		AffectFlags:   game.NewSet(game.AffectSanctuary, game.AffectDetectInvis),
 		Preferences:   game.NewSet(game.PrefAutoExit, game.PrefColour1, game.PrefColour2),
 		SavingThrows:  [5]int32{-12, -10, -11, -13, -14},
-		Skills:        map[int32]int32{game.SkillBash: 85, game.SkillKick: 100},
+		Skills:        map[game.SpellID]int32{game.SkillBash: 85, game.SkillKick: 100},
 		Affects:       []game.Affect{{Type: game.SpellSanctuary, Duration: 12, Modifier: 0, Location: game.Apply(0), Bits: game.NewSet(game.AffectSanctuary)}},
 		Aliases:       []game.Alias{{Name: "gbb", Replacement: "get bread bag"}, {Name: "gac", Replacement: "get all corpse"}},
 		Conditions:    [3]int32{21, 20, 0},

@@ -362,7 +362,7 @@ func testWorld() *game.Live {
 			Type:        game.ItemScroll,
 			WearFlags:   game.NewSet(game.ItemWearTake, game.ItemWearHold),
 			Weight:      1,
-			Values:      [game.NumObjValues]int32{20, game.SpellArmor, game.SpellBless, 0},
+			Values:      [game.NumObjValues]int32{20, game.SpellArmor.Number(), game.SpellBless.Number(), 0},
 		},
 		{
 			Vnum: testWandVnum, Keywords: "wand", ShortDesc: "a wand of missiles",
@@ -372,7 +372,7 @@ func testWorld() *game.Live {
 			Weight:      2,
 			Cost:        200,
 			// Level 20, three charges, three left, magic missile.
-			Values: [game.NumObjValues]int32{20, 3, 3, game.SpellMagicMissile},
+			Values: [game.NumObjValues]int32{20, 3, 3, game.SpellMagicMissile.Number()},
 		},
 		{
 			Vnum: testPotionVnum, Keywords: "potion", ShortDesc: "a potion of healing",
@@ -380,7 +380,7 @@ func testWorld() *game.Live {
 			Type:        game.ItemPotion,
 			WearFlags:   game.NewSet(game.ItemWearTake, game.ItemWearHold),
 			Weight:      1,
-			Values:      [game.NumObjValues]int32{20, game.SpellCureLight, 0, 0},
+			Values:      [game.NumObjValues]int32{20, game.SpellCureLight.Number(), 0, 0},
 		},
 		{
 			Vnum: testStaffVnum, Keywords: "staff", ShortDesc: "a staff of sleep",
@@ -388,7 +388,7 @@ func testWorld() *game.Live {
 			Type:        game.ItemStaff,
 			WearFlags:   game.NewSet(game.ItemWearTake, game.ItemWearHold),
 			Weight:      5,
-			Values:      [game.NumObjValues]int32{20, 5, 5, game.SpellMagicMissile},
+			Values:      [game.NumObjValues]int32{20, 5, 5, game.SpellMagicMissile.Number()},
 		},
 		{
 			// A boat you cannot wear anywhere, which is the only kind

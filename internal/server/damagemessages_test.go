@@ -224,7 +224,7 @@ func TestSkillDamageUsesARegisteredHitMessage(t *testing.T) {
 	victim, _ := place(t, srv, fighterRecord("Welmar", 5, 200), MortalStartRoom)
 
 	srv.text.messages = game.NewFightMessages([]game.FightMessage{
-		{AttackType: game.SkillKick, Hit: game.MsgSet{Attacker: "REGISTERED KICK HIT"}},
+		{AttackType: game.SkillKick.Number(), Hit: game.MsgSet{Attacker: "REGISTERED KICK HIT"}},
 	})
 
 	inWorld(t, srv, func(w *game.Live) {
@@ -243,7 +243,7 @@ func TestSkillDamageUsesARegisteredMissMessage(t *testing.T) {
 	victim, _ := place(t, srv, fighterRecord("Welmar", 5, 200), MortalStartRoom)
 
 	srv.text.messages = game.NewFightMessages([]game.FightMessage{
-		{AttackType: game.SkillBash, Miss: game.MsgSet{Attacker: "REGISTERED BASH MISS"}},
+		{AttackType: game.SkillBash.Number(), Miss: game.MsgSet{Attacker: "REGISTERED BASH MISS"}},
 	})
 
 	inWorld(t, srv, func(w *game.Live) {
@@ -262,7 +262,7 @@ func TestSkillDamageUsesARegisteredDieMessage(t *testing.T) {
 	victim, _ := place(t, srv, fighterRecord("Welmar", 5, 1), MortalStartRoom)
 
 	srv.text.messages = game.NewFightMessages([]game.FightMessage{
-		{AttackType: game.SkillBackstab, Die: game.MsgSet{Attacker: "REGISTERED BACKSTAB DIE"}},
+		{AttackType: game.SkillBackstab.Number(), Die: game.MsgSet{Attacker: "REGISTERED BACKSTAB DIE"}},
 	})
 
 	inWorld(t, srv, func(w *game.Live) {
@@ -391,7 +391,7 @@ func TestYamlMessagesFormatEndToEnd(t *testing.T) {
 		t.Fatalf("LoadText: %v", err)
 	}
 
-	if _, ok := text.FightMessages().Pick(game.SkillKick, testRNG()); !ok {
+	if _, ok := text.FightMessages().Pick(game.SkillKick.Number(), testRNG()); !ok {
 		t.Error("LoadText(dir, \"yaml\") found no registered kick message, want the real archive's")
 	}
 }

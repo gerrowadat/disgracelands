@@ -40,7 +40,7 @@ func sample(name string) *game.PlayerRecord {
 		IDNum:      7,
 		LastLogon:  time.Unix(1208649600, 0).UTC(),
 		Credential: game.Credential{Scheme: game.SchemeLegacyDES, Hash: "abFAKEHASH"},
-		Skills:     map[int32]int32{1: 95},
+		Skills:     map[game.SpellID]int32{1: 95},
 	}
 }
 

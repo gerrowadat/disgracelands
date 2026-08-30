@@ -225,7 +225,7 @@ func Encode(w io.Writer, p *game.PlayerRecord) error {
 		_, _ = fmt.Fprintf(bw, "%s:\n", tagSkil)
 		// Sorted, so two saves of the same character produce the same file.
 		// Ranging a map here would make every save a spurious diff.
-		nums := make([]int32, 0, len(p.Skills))
+		nums := make([]game.SpellID, 0, len(p.Skills))
 		for n := range p.Skills {
 			nums = append(nums, n)
 		}
@@ -511,8 +511,8 @@ func readTildeBlock(next func() (string, bool)) string {
 }
 
 // readSkills reads "<number> <percentage>" lines until "0 0".
-func readSkills(next func() (string, bool)) map[int32]int32 {
-	skills := map[int32]int32{}
+func readSkills(next func() (string, bool)) map[game.SpellID]int32 {
+	skills := map[game.SpellID]int32{}
 	for {
 		line, ok := next()
 		if !ok {
@@ -529,7 +529,7 @@ func readSkills(next func() (string, bool)) map[int32]int32 {
 		// express the difference — so dropping it keeps the two formats
 		// agreeing about what a character knows.
 		if pct != 0 {
-			skills[num] = pct
+			skills[game.SpellID(num)] = pct
 		}
 	}
 }
@@ -575,7 +575,7 @@ func readAffects(next func() (string, bool)) []game.Affect {
 			return affects
 		}
 		affects = append(affects, game.Affect{
-			Type: typ, Duration: dur, Modifier: mod,
+			Type: game.SpellID(typ), Duration: dur, Modifier: mod,
 			Location: game.Apply(loc), Bits: game.SetFromRaw[game.AffectFlag](bits),
 		})
 	}

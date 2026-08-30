@@ -243,7 +243,7 @@ func TestSpellsThatRefuse(t *testing.T) {
 	}
 
 	// Curse and poison say NOEFFECT.
-	for _, spell := range []int32{SpellCurse, SpellPoison} {
+	for _, spell := range []SpellID{SpellCurse, SpellPoison} {
 		result = AffectsOfSpell(spell, caster, victim, false, MobFlags{}, 20, true, r)
 		if !result.Refused || result.RefusalToCaster != NoEffect {
 			t.Errorf("spell %d against a save gave %+v", spell, result)

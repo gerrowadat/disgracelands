@@ -119,7 +119,7 @@ func wantRecord(i int) *game.PlayerRecord {
 		SpecFlags:     int32(i * 3),
 		OLCZone:       int32(30 + i),
 
-		Skills: map[int32]int32{1: int32(50 + i%50), 200: int32(i % 100)},
+		Skills: map[game.SpellID]int32{1: int32(50 + i%50), 200: int32(i % 100)},
 	}
 	if i%2 == 1 {
 		p.Alignment = int32(1000 - i)
@@ -152,11 +152,11 @@ func wantRecord(i int) *game.PlayerRecord {
 	}
 
 	p.Affects = []game.Affect{{
-		Type: int32(1 + i%50), Duration: int32(10 + i),
+		Type: game.SpellID(1 + i%50), Duration: int32(10 + i),
 		Modifier: int32(i % 10), Location: game.Apply(i % 20),
 		Bits: game.SetFromRaw[game.AffectFlag](1 << uint(i%15)),
 	}, {
-		Type: int32(51 + i%10), Duration: int32(20 + i),
+		Type: game.SpellID(51 + i%10), Duration: int32(20 + i),
 		Modifier: int32(-(i % 10)), Location: game.Apply(i % 5),
 	}}
 

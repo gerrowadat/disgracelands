@@ -164,7 +164,7 @@ func doRestore(c *Context) error {
 	// out, and it is the only place in the game those numbers are set.
 	if !victim.IsNPC() && levelOf(c.Character) >= game.LevelGreaterGod {
 		if rec.Level >= game.LevelImmortal {
-			for skill := int32(1); skill <= game.MaxSkills; skill++ {
+			for skill := game.SpellID(1); skill <= game.MaxSkills; skill++ {
 				rec.Skills[skill] = 100
 			}
 		}

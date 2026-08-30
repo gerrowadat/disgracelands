@@ -329,7 +329,7 @@ func heals(spell string) spellCase {
 // The table
 // ---------------------------------------------------------------------------
 
-var spellbook = map[int32]spellCase{
+var spellbook = map[game.SpellID]spellCase{
 	// -- mag_affects, on the caster ------------------------------------
 
 	game.SpellArmor: {run: func(t *testing.T) {
@@ -828,7 +828,7 @@ var spellbook = map[int32]spellCase{
 		srv, c := spellbookServer(t)
 		scroll := giveTo(t, srv, "Zod", testScrollVnum)
 		inWorld(t, srv, func(_ *game.Live) {
-			scroll.Values[1] = game.SpellIdentify
+			scroll.Values[1] = game.SpellIdentify.Number()
 			scroll.Values[2] = 0
 			scroll.Values[3] = 0
 		})
@@ -1153,7 +1153,7 @@ func TestEverySpellAndSkillIsAccountedFor(t *testing.T) {
 	const top = 256
 
 	var uncovered []string
-	for number := int32(1); number <= top; number++ {
+	for number := game.SpellID(1); number <= top; number++ {
 		info, ok := game.Spell(number)
 		if !ok {
 			continue
@@ -1178,7 +1178,7 @@ func TestEverySpellAndSkillIsAccountedFor(t *testing.T) {
 
 // TestSpellbook is the suite itself.
 func TestSpellbook(t *testing.T) {
-	numbers := make([]int32, 0, len(spellbook))
+	numbers := make([]game.SpellID, 0, len(spellbook))
 	for number := range spellbook {
 		numbers = append(numbers, number)
 	}

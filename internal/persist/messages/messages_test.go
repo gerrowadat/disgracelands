@@ -49,7 +49,7 @@ func TestYamlRoundTrips(t *testing.T) {
 			// strings written out.
 		},
 		{
-			AttackType: game.SkillKick,
+			AttackType: game.SkillKick.Number(),
 			Hit:        game.MsgSet{Attacker: "kick hit", Victim: "kicked", Room: "kick room"},
 		},
 	}

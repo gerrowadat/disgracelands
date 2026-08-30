@@ -16,7 +16,7 @@ import "github.com/gerrowadat/disgracelands/internal/rng"
 
 // MaxSpells is MAX_SPELLS (spells.h): the boundary between spell numbers and
 // skill numbers, and the upper bound `cast` checks.
-const MaxSpells int32 = 130
+const MaxSpells SpellID = 130
 
 // SpellDamage is what a damage spell does before saving throws, porting the
 // switch in mag_damage (magic.c:170).
@@ -25,7 +25,7 @@ const MaxSpells int32 = 130
 // for a mage and d6 for anybody else, which is the whole of a mage's
 // advantage at the low levels. The test is the remort-aware IS_MAGIC_USER, so
 // a cleric who remorted through mage keeps the better dice.
-func SpellDamage(spell int32, caster *PlayerRecord, victim *PlayerRecord, level int32, r *rng.Rand) int32 {
+func SpellDamage(spell SpellID, caster *PlayerRecord, victim *PlayerRecord, level int32, r *rng.Rand) int32 {
 	mage := IsMagicUser(caster)
 	// d8 for a magic-user, d6 for everybody else.
 	size := int32(6)
@@ -89,7 +89,7 @@ type DispelResult struct {
 // Both are symmetric and both are traps: casting one that matches your own
 // alignment turns it on you and takes all but one hit point. Casting it at
 // somebody of the opposite alignment to its target does nothing.
-func Dispel(spell int32, caster, victim *PlayerRecord, r *rng.Rand) DispelResult {
+func Dispel(spell SpellID, caster, victim *PlayerRecord, r *rng.Rand) DispelResult {
 	damage := r.Dice(6, 8) + 6
 
 	casterMatches := IsEvil(caster)
@@ -116,7 +116,7 @@ type Healing struct {
 }
 
 // SpellHealing returns the healing a spell does and what the target is told.
-func SpellHealing(spell int32, victim *PlayerRecord, level int32, r *rng.Rand) Healing {
+func SpellHealing(spell SpellID, victim *PlayerRecord, level int32, r *rng.Rand) Healing {
 	switch spell {
 	case SpellCureLight:
 		return Healing{r.Dice(1, 8) + 1 + level/4, "You feel better.\r\n"}

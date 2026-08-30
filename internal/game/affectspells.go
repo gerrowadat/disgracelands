@@ -44,7 +44,7 @@ type AffectSpell struct {
 // caster and victim are both needed: several spells scale on the caster's
 // level and several check the victim's state. savedThrow is the result of
 // mag_savingthrow, computed by the caller so the roll happens once.
-func AffectsOfSpell(spell int32, caster, victim *PlayerRecord, victimIsNPC bool,
+func AffectsOfSpell(spell SpellID, caster, victim *PlayerRecord, victimIsNPC bool,
 	victimFlags MobFlags, level int32, savedThrow bool, r *rng.Rand,
 ) AffectSpell {
 	var out AffectSpell
@@ -215,7 +215,7 @@ func AffectsOfSpell(spell int32, caster, victim *PlayerRecord, victimIsNPC bool,
 // its prototype* cannot be given it by a spell, because otherwise a player
 // could sanctuary a sanctuary-carrying mobile and wait for it to wear off,
 // stripping it of something its file said it always had.
-func CanAffect(spell AffectSpell, target *PlayerRecord, targetIsNPC bool, spellNumber int32) bool {
+func CanAffect(spell AffectSpell, target *PlayerRecord, targetIsNPC bool, spellNumber SpellID) bool {
 	if targetIsNPC && !AffectedBySpell(target, spellNumber) {
 		for _, a := range spell.Affects {
 			if !a.Bits.Empty() && target.AffectFlags.Overlaps(a.Bits) {
@@ -256,7 +256,7 @@ func ApplyAffectSpell(spell AffectSpell, target *PlayerRecord) {
 // character, and each said "Nothing seems to happen."
 type Unaffection struct {
 	// Affliction is the spell whose affects come off.
-	Affliction int32
+	Affliction SpellID
 	// ToVictim is sent to the character being cured, and ToRoom to
 	// everybody else in the room with a %s for their name.
 	ToVictim, ToRoom string
@@ -277,7 +277,7 @@ type Unaffection struct {
 // fell through to the default: a SYSERR in the syslog, and no unaffection
 // and no message for anybody in the room. Reproduced here as doing nothing,
 // silently -- see docs/weirdnumbers.md.
-func UnaffectionOf(spell int32) (Unaffection, bool) {
+func UnaffectionOf(spell SpellID) (Unaffection, bool) {
 	switch spell {
 	case SpellCureBlind:
 		return Unaffection{

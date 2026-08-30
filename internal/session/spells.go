@@ -41,7 +41,7 @@ const pkAllowed = game.PKAllowed
 // The C sends the same line to the caster and to the room, and prints
 // NOEFFECT to the caster when nothing changed — so a curse that fails because
 // the object is already cursed is indistinguishable from a curse that failed.
-func (c *Context) spellAlterObject(number int32, obj *game.Object) {
+func (c *Context) spellAlterObject(number game.SpellID, obj *game.Object) {
 	message := game.AlterObject(number, obj, c.Character.Level())
 	if message == "" {
 		c.Send("%s", game.NoEffect)
@@ -52,7 +52,7 @@ func (c *Context) spellAlterObject(number int32, obj *game.Object) {
 }
 
 // spellCreation makes an object out of nothing, porting mag_creations.
-func (c *Context) spellCreation(number int32) {
+func (c *Context) spellCreation(number game.SpellID) {
 	if number != game.SpellCreateFood {
 		c.Send("Spell unimplemented, it would seem.\r\n")
 		return
@@ -76,7 +76,7 @@ func (c *Context) spellCreation(number int32) {
 // players when player-killing is off, and charmed mobiles — somebody's pet.
 // The fifth is local, and it is the medusa: cast an area spell where she can
 // see you and you are the one who leaves.
-func (c *Context) spellArea(info game.SpellInfo, number int32, level int32) {
+func (c *Context) spellArea(info game.SpellInfo, number game.SpellID, level int32) {
 	if number == game.SpellEarthquake {
 		c.Send("You gesture and the earth begins to shake all around you!\r\n")
 		c.announce("%s gracefully gestures and the earth begins to shake violently!\r\n",
@@ -132,7 +132,7 @@ func (c *Context) medusaLooksAt(victim *game.Character) bool {
 // ordinary one: group heal is heal, group armor is armor, group recall is
 // word of recall. The caster is done *last* — which matters, because a group
 // spell can move everybody out of the room.
-func (c *Context) spellGroup(number int32, level int32) {
+func (c *Context) spellGroup(number game.SpellID, level int32) {
 	if !c.Character.Grouped() {
 		return
 	}
@@ -179,7 +179,7 @@ var summonFailMessages = [...]string{
 // which needs a corpse and fails one time in ten. The summoned creature is
 // charmed rather than merely following, so it fights for you and cannot
 // choose to leave.
-func (c *Context) spellSummon(number int32, obj *game.Object, level int32) {
+func (c *Context) spellSummon(number game.SpellID, obj *game.Object, level int32) {
 	var vnum game.MobVnum
 	var failure int32
 	var corpse *game.Object
@@ -346,7 +346,7 @@ func (c *Context) spellSummonPerson(victim *game.Character, level int32) {
 //
 // It returns false for a spell that is not written yet, so the caller can say
 // so rather than charging for nothing.
-func (c *Context) castManual(number int32, victim *game.Character, obj *game.Object, level int32) bool {
+func (c *Context) castManual(number game.SpellID, victim *game.Character, obj *game.Object, level int32) bool {
 	switch number {
 	case game.SpellCreateWater:
 		if obj == nil {

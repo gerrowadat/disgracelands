@@ -95,7 +95,7 @@ func TestAttackTypeNameRoundTrips(t *testing.T) {
 	}{
 		{"weapon", TypeHit + AttackSlash, "slash"},
 		{"bare hands", TypeHit + AttackHit, "hit"},
-		{"skill", SkillBackstab, "backstab"},
+		{"skill", SkillBackstab.Number(), "backstab"},
 		{"spell", 1, SpellName(1)},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

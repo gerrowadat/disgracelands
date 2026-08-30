@@ -71,6 +71,29 @@ const (
 	MagManual RoutineFlag = 10
 )
 
+// SpellID identifies a spell or a skill. The two are one domain: the C
+// declares a skill with skillo(), which is spello() with every number
+// zero, so a skill is a row of spell_info[] with a name and nothing else.
+// spellTable is keyed by this and holds both.
+//
+// The numbers are stored in every player record -- as the keys of
+// PlayerRecord.Skills, and in a wand or staff's object values -- so they
+// are the file format as much as they are an enumeration
+// (docs/proposals/idiomatic-go.md §2.1). They are not contiguous: the
+// spells run 0-58, the skills 131-140 with 136 unused, and the breath
+// weapons 201-206.
+//
+// The zero value is SpellReservedDbc, which is stock CircleMUD's own
+// placeholder for "not a spell" -- call_magic (spell_parser.c:229) rejects
+// anything below 1 outright. So an unset SpellID is inert rather than
+// meaning some real spell, which is the opposite of Class's zero value and
+// the same as ItemType's.
+type SpellID int
+
+// Number is the spell's stored number, for the player and world formats
+// and for the "#N" placeholder SpellNameOrNumber writes.
+func (s SpellID) Number() int32 { return int32(s) } //nolint:gosec // spell numbers top out at 206; the format's width
+
 // SpellInfo is one row of the C's spell_info[].
 type SpellInfo struct {
 	Name string
@@ -100,13 +123,13 @@ type SpellInfo struct {
 }
 
 // Spell returns a spell's row, and whether it exists.
-func Spell(number int32) (SpellInfo, bool) {
+func Spell(number SpellID) (SpellInfo, bool) {
 	info, ok := spellTable[number]
 	return info, ok
 }
 
 // SpellName returns a spell's name, or "!UNUSED!" as the C does.
-func SpellName(number int32) string {
+func SpellName(number SpellID) string {
 	if info, ok := spellTable[number]; ok {
 		return info.Name
 	}
@@ -115,7 +138,7 @@ func SpellName(number int32) string {
 
 // SpellNumberByName finds a spell by name, matching a prefix as the C's
 // find_skill_num does — so `cast 'magic mis'` works.
-func SpellNumberByName(name string) (int32, bool) {
+func SpellNumberByName(name string) (SpellID, bool) {
 	name = strings.ToLower(strings.TrimSpace(name))
 	if name == "" {
 		return 0, false
@@ -123,7 +146,7 @@ func SpellNumberByName(name string) (int32, bool) {
 
 	// An exact match wins outright; otherwise the lowest-numbered prefix
 	// match, so the answer does not depend on map iteration order.
-	best := int32(-1)
+	best := SpellID(-1)
 	for number, info := range spellTable {
 		if info.Name == name {
 			return number, true
@@ -145,7 +168,7 @@ func SpellNumberByName(name string) (int32, bool) {
 // exists. Shared here rather than duplicated per package, since both need
 // exactly the same rule: a wand's charge spell and a player's learned
 // skill are both just a spellTable number underneath.
-func SpellNameOrNumber(n int32) string {
+func SpellNameOrNumber(n SpellID) string {
 	if name := SpellName(n); name != "!UNUSED!" {
 		return name
 	}
@@ -157,13 +180,13 @@ func SpellNameOrNumber(n int32) string {
 // before it ever falls back to a prefix — so a name SpellNameOrNumber
 // produced is always matched exactly, never by coincidental abbreviation
 // against some other entry sharing a prefix. "#N" parses back to N.
-func SpellNumberFromNameOrNumber(s string) (int32, bool) {
+func SpellNumberFromNameOrNumber(s string) (SpellID, bool) {
 	if rest, ok := strings.CutPrefix(s, "#"); ok {
 		n, err := strconv.Atoi(rest)
 		if err != nil {
 			return 0, false
 		}
-		return int32(n), true //nolint:gosec // spell numbers are small
+		return SpellID(n), true
 	}
 	return SpellNumberByName(s)
 }
@@ -192,79 +215,74 @@ func ManaCost(info SpellInfo, level int32) int32 {
 // Spell numbers, from spells.h:35. Stored in every player record, so these
 // are the file format as much as they are constants.
 const (
-	SpellReservedDbc     int32 = 0
-	SpellArmor           int32 = 1
-	SpellTeleport        int32 = 2
-	SpellBless           int32 = 3
-	SpellBlindness       int32 = 4
-	SpellBurningHands    int32 = 5
-	SpellCallLightning   int32 = 6
-	SpellCharm           int32 = 7
-	SpellChillTouch      int32 = 8
-	SpellClone           int32 = 9
-	SpellColorSpray      int32 = 10
-	SpellControlWeather  int32 = 11
-	SpellCreateFood      int32 = 12
-	SpellCreateWater     int32 = 13
-	SpellCureBlind       int32 = 14
-	SpellCureCritic      int32 = 15
-	SpellCureLight       int32 = 16
-	SpellCurse           int32 = 17
-	SpellDetectAlign     int32 = 18
-	SpellDetectInvis     int32 = 19
-	SpellDetectMagic     int32 = 20
-	SpellDetectPoison    int32 = 21
-	SpellDispelEvil      int32 = 22
-	SpellEarthquake      int32 = 23
-	SpellEnchantWeapon   int32 = 24
-	SpellEnergyDrain     int32 = 25
-	SpellFireball        int32 = 26
-	SpellHarm            int32 = 27
-	SpellHeal            int32 = 28
-	SpellInvisible       int32 = 29
-	SpellLightningBolt   int32 = 30
-	SpellLocateObject    int32 = 31
-	SpellMagicMissile    int32 = 32
-	SpellPoison          int32 = 33
-	SpellProtFromEvil    int32 = 34
-	SpellRemoveCurse     int32 = 35
-	SpellSanctuary       int32 = 36
-	SpellShockingGrasp   int32 = 37
-	SpellSleep           int32 = 38
-	SpellStrength        int32 = 39
-	SpellSummon          int32 = 40
-	SpellVentriloquate   int32 = 41
-	SpellWordOfRecall    int32 = 42
-	SpellRemovePoison    int32 = 43
-	SpellSenseLife       int32 = 44
-	SpellAnimateDead     int32 = 45
-	SpellDispelGood      int32 = 46
-	SpellGroupArmor      int32 = 47
-	SpellGroupHeal       int32 = 48
-	SpellGroupRecall     int32 = 49
-	SpellInfravision     int32 = 50
-	SpellWaterwalk       int32 = 51
-	SpellHolySmite       int32 = 52
-	SpellHolyShield      int32 = 53
-	SpellDispelMagic     int32 = 54
-	SpellOuchie          int32 = 55
-	SpellFullHeal        int32 = 56
-	SpellSilence         int32 = 57
-	SpellImmolate        int32 = 58
-	SpellIdentify        int32 = 201
-	SpellFireBreath      int32 = 202
-	SpellGasBreath       int32 = 203
-	SpellFrostBreath     int32 = 204
-	SpellAcidBreath      int32 = 205
-	SpellLightningBreath int32 = 206
-	SpellTypeSpell       int32 = 0
-	SpellTypePotion      int32 = 1
-	SpellTypeWand        int32 = 2
-	SpellTypeStaff       int32 = 3
-	SpellTypeScroll      int32 = 4
+	SpellReservedDbc     SpellID = 0
+	SpellArmor           SpellID = 1
+	SpellTeleport        SpellID = 2
+	SpellBless           SpellID = 3
+	SpellBlindness       SpellID = 4
+	SpellBurningHands    SpellID = 5
+	SpellCallLightning   SpellID = 6
+	SpellCharm           SpellID = 7
+	SpellChillTouch      SpellID = 8
+	SpellClone           SpellID = 9
+	SpellColorSpray      SpellID = 10
+	SpellControlWeather  SpellID = 11
+	SpellCreateFood      SpellID = 12
+	SpellCreateWater     SpellID = 13
+	SpellCureBlind       SpellID = 14
+	SpellCureCritic      SpellID = 15
+	SpellCureLight       SpellID = 16
+	SpellCurse           SpellID = 17
+	SpellDetectAlign     SpellID = 18
+	SpellDetectInvis     SpellID = 19
+	SpellDetectMagic     SpellID = 20
+	SpellDetectPoison    SpellID = 21
+	SpellDispelEvil      SpellID = 22
+	SpellEarthquake      SpellID = 23
+	SpellEnchantWeapon   SpellID = 24
+	SpellEnergyDrain     SpellID = 25
+	SpellFireball        SpellID = 26
+	SpellHarm            SpellID = 27
+	SpellHeal            SpellID = 28
+	SpellInvisible       SpellID = 29
+	SpellLightningBolt   SpellID = 30
+	SpellLocateObject    SpellID = 31
+	SpellMagicMissile    SpellID = 32
+	SpellPoison          SpellID = 33
+	SpellProtFromEvil    SpellID = 34
+	SpellRemoveCurse     SpellID = 35
+	SpellSanctuary       SpellID = 36
+	SpellShockingGrasp   SpellID = 37
+	SpellSleep           SpellID = 38
+	SpellStrength        SpellID = 39
+	SpellSummon          SpellID = 40
+	SpellVentriloquate   SpellID = 41
+	SpellWordOfRecall    SpellID = 42
+	SpellRemovePoison    SpellID = 43
+	SpellSenseLife       SpellID = 44
+	SpellAnimateDead     SpellID = 45
+	SpellDispelGood      SpellID = 46
+	SpellGroupArmor      SpellID = 47
+	SpellGroupHeal       SpellID = 48
+	SpellGroupRecall     SpellID = 49
+	SpellInfravision     SpellID = 50
+	SpellWaterwalk       SpellID = 51
+	SpellHolySmite       SpellID = 52
+	SpellHolyShield      SpellID = 53
+	SpellDispelMagic     SpellID = 54
+	SpellOuchie          SpellID = 55
+	SpellFullHeal        SpellID = 56
+	SpellSilence         SpellID = 57
+	SpellImmolate        SpellID = 58
+	SpellIdentify        SpellID = 201
+	SpellFireBreath      SpellID = 202
+	SpellGasBreath       SpellID = 203
+	SpellFrostBreath     SpellID = 204
+	SpellAcidBreath      SpellID = 205
+	SpellLightningBreath SpellID = 206
 )
 
-var spellTable = map[int32]SpellInfo{
+var spellTable = map[SpellID]SpellInfo{
 	// The skills. The C declares these with skillo(), which is spello() with
 	// every number zero — so a skill has a name and a slot in the same table
 	// and nothing else. Their class levels come from init_spell_levels along

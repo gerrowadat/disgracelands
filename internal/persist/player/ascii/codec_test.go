@@ -141,7 +141,7 @@ func TestDecodeARealFile(t *testing.T) {
 	if len(rec.Affects) != 1 {
 		t.Fatalf("got %d affects, want 1", len(rec.Affects))
 	}
-	check("affect type", rec.Affects[0].Type, int32(23))
+	check("affect type", rec.Affects[0].Type, game.SpellID(23))
 	check("affect duration", rec.Affects[0].Duration, int32(12))
 }
 
@@ -184,7 +184,7 @@ func TestRoundTrip(t *testing.T) {
 		AffectFlags:  game.SetFromRaw[game.AffectFlag](1 << 3),
 		Preferences:  game.SetFromRaw[game.PrefFlag](1<<4 | 1<<21),
 		SavingThrows: [5]int32{-10, -20, -30, -40, -50},
-		Skills:       map[int32]int32{1: 100, 2: 85, 200: 42},
+		Skills:       map[game.SpellID]int32{1: 100, 2: 85, 200: 42},
 		Affects: []game.Affect{
 			{Type: 23, Duration: 12, Modifier: 3, Location: game.Apply(1), Bits: game.SetFromRaw[game.AffectFlag](1 << 5)},
 			{Type: 24, Duration: 6, Modifier: -2, Location: 2},
@@ -317,7 +317,7 @@ func TestEncodeIsDeterministic(t *testing.T) {
 	// different file, and every backup a spurious diff.
 	rec := &game.PlayerRecord{
 		Name: "Zod", IDNum: 1,
-		Skills: map[int32]int32{5: 50, 1: 100, 200: 42, 3: 75, 99: 10},
+		Skills: map[game.SpellID]int32{5: 50, 1: 100, 200: 42, 3: 75, 99: 10},
 	}
 	var first strings.Builder
 	if err := Encode(&first, rec); err != nil {

@@ -332,7 +332,7 @@ func (c *Context) hasKey(key game.ObjVnum) bool {
 }
 
 // skill returns a character's percentage in a skill.
-func (c *Context) skill(number int32) int32 {
+func (c *Context) skill(number game.SpellID) int32 {
 	if c.Character.Record == nil {
 		return 0
 	}

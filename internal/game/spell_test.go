@@ -7,7 +7,11 @@
 package game
 
 import (
+	"go/ast"
+	"go/parser"
+	"go/token"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -27,52 +31,147 @@ const (
 // skill numbers in this package were wrong until this test was written,
 // because they had been read off a comment in do_start rather than out of
 // spells.h.
+//
+// The list this checks is *derived*, not written down. It used to be a hand
+// map of nineteen entries with a comment saying "the ones this package
+// names" -- true when it was written, and by the time SpellID arrived the
+// package named seventy-nine, so sixty of them were being checked by
+// nothing. That is the failure CLAUDE.md describes as an oracle only being
+// as good as what it is swept over, and the fix is to sweep everything:
+// spellIDConstants reads this package's own source for the SpellID const
+// blocks, and every name it finds must be in spells.h at the same number.
+// A constant added later is covered the moment it is declared.
 func TestSpellNumbersMatchTheHeader(t *testing.T) {
 	src, err := os.ReadFile(spellsHeader)
 	if err != nil {
 		t.Fatalf("reading spells.h: %v", err)
 	}
 
-	want := map[string]int32{}
+	want := map[string]SpellID{}
 	for _, m := range regexp.MustCompile(`#define\s+((?:SPELL|SKILL)_\w+)\s+(\d+)`).
 		FindAllStringSubmatch(string(src), -1) {
 		n, err := strconv.Atoi(m[2])
 		if err != nil {
 			t.Fatalf("unparseable number for %s", m[1])
 		}
-		want[m[1]] = int32(n)
+		want[m[1]] = SpellID(n)
 	}
 	if len(want) < 70 {
 		t.Fatalf("parsed only %d constants from spells.h", len(want))
 	}
 
-	// The ones this package names. Anything not listed is simply not ported
-	// yet; anything listed must be right.
-	for cName, got := range map[string]int32{
-		"SKILL_BACKSTAB":       SkillBackstab,
-		"SKILL_BASH":           SkillBash,
-		"SKILL_HIDE":           SkillHide,
-		"SKILL_KICK":           SkillKick,
-		"SKILL_PICK_LOCK":      SkillPickLock,
-		"SKILL_RESCUE":         SkillRescue,
-		"SKILL_SNEAK":          SkillSneak,
-		"SKILL_STEAL":          SkillSteal,
-		"SKILL_TRACK":          SkillTrack,
-		"SPELL_ARMOR":          SpellArmor,
-		"SPELL_MAGIC_MISSILE":  SpellMagicMissile,
-		"SPELL_CURE_LIGHT":     SpellCureLight,
-		"SPELL_HEAL":           SpellHeal,
-		"SPELL_SANCTUARY":      SpellSanctuary,
-		"SPELL_POISON":         SpellPoison,
-		"SPELL_SLEEP":          SpellSleep,
-		"SPELL_HOLY_SHIELD":    SpellHolyShield,
-		"SPELL_SILENCE":        SpellSilence,
-		"SPELL_WORD_OF_RECALL": SpellWordOfRecall,
-	} {
-		if want[cName] != got {
-			t.Errorf("%s is %d here, %d in spells.h", cName, got, want[cName])
+	got := declaredSpellIDs(t)
+	if len(got) < 70 {
+		t.Fatalf("found only %d SpellID constants declared in this package; "+
+			"this check has stopped checking anything", len(got))
+	}
+	t.Logf("checking %d SpellID constants against %d spells.h defines", len(got), len(want))
+
+	for goName, value := range got {
+		if !strings.HasPrefix(goName, "Spell") && !strings.HasPrefix(goName, "Skill") {
+			// A SpellID that does not name one: MaxSpells is the boundary
+			// between the two halves of the numbering, checked below.
+			continue
+		}
+		cName := cSpellDefineName(goName)
+		w, ok := want[cName]
+		if !ok {
+			t.Errorf("%s = %d, but spells.h has no %s — either the name is "+
+				"wrong or the constant is invented", goName, value, cName)
+			continue
+		}
+		if w != value {
+			t.Errorf("%s is %d here, %d in spells.h (%s)", goName, value, w, cName)
 		}
 	}
+
+	// MaxSpells is not a spell, so the loop above skips it; it is still a
+	// number out of spells.h and gets the same treatment.
+	if c := cDefine(t, string(src), "MAX_SPELLS"); SpellID(c) != MaxSpells {
+		t.Errorf("MaxSpells is %d here, MAX_SPELLS is %d in spells.h", MaxSpells, c)
+	}
+}
+
+// cDefine reads one `#define NAME <number>` out of a C source.
+func cDefine(t *testing.T, src, name string) int {
+	t.Helper()
+	m := regexp.MustCompile(`#define\s+` + name + `\s+(\d+)`).FindStringSubmatch(src)
+	if m == nil {
+		t.Fatalf("no #define %s", name)
+	}
+	n, err := strconv.Atoi(m[1])
+	if err != nil {
+		t.Fatalf("#define %s is not a number: %v", name, err)
+	}
+	return n
+}
+
+// declaredSpellIDs reads this package's own source for `const` blocks
+// declaring SpellID values, and returns name -> value. The same trick
+// typedFlagConstants (set_test.go) uses for the flag domains, and for the
+// same reason: a list written by hand goes stale silently, and this one
+// already had.
+func declaredSpellIDs(t *testing.T) map[string]SpellID {
+	t.Helper()
+	out := map[string]SpellID{}
+	sources, err := filepath.Glob("*.go")
+	if err != nil {
+		t.Fatalf("listing internal/game: %v", err)
+	}
+	fset := token.NewFileSet()
+	for _, path := range sources {
+		if strings.HasSuffix(path, "_test.go") {
+			continue
+		}
+		f, err := parser.ParseFile(fset, path, nil, 0)
+		if err != nil {
+			t.Fatalf("parsing %s: %v", path, err)
+		}
+		for _, decl := range f.Decls {
+			gd, ok := decl.(*ast.GenDecl)
+			if !ok || gd.Tok != token.CONST {
+				continue
+			}
+			var typed bool
+			for _, spec := range gd.Specs {
+				vs, ok := spec.(*ast.ValueSpec)
+				if !ok {
+					continue
+				}
+				if id, ok := vs.Type.(*ast.Ident); ok {
+					typed = id.Name == "SpellID"
+				}
+				if !typed || len(vs.Values) != len(vs.Names) {
+					continue
+				}
+				for i, n := range vs.Names {
+					lit, ok := vs.Values[i].(*ast.BasicLit)
+					if !ok || lit.Kind != token.INT {
+						continue
+					}
+					v, err := strconv.Atoi(lit.Value)
+					if err != nil {
+						t.Fatalf("%s = %s is not an integer", n.Name, lit.Value)
+					}
+					out[n.Name] = SpellID(v)
+				}
+			}
+		}
+	}
+	return out
+}
+
+// cSpellDefineName is the C name a Go SpellID constant corresponds to:
+// SkillPickLock -> SKILL_PICK_LOCK, SpellCureLight -> SPELL_CURE_LIGHT.
+// A pure transformation, so nothing has to be listed anywhere.
+var camelBoundary = regexp.MustCompile(`(.)([A-Z])`)
+
+func cSpellDefineName(goName string) string {
+	prefix, rest := "SPELL_", strings.TrimPrefix(goName, "Spell")
+	if strings.HasPrefix(goName, "Skill") {
+		prefix, rest = "SKILL_", strings.TrimPrefix(goName, "Skill")
+	}
+	return prefix + strings.ToUpper(camelBoundary.ReplaceAllString(rest, "${1}_${2}"))
 }
 
 // TestTheThiefStartingSkillsAreTheRightSlots. do_start names six skills, and
@@ -81,7 +180,7 @@ func TestTheThiefStartingSkillsAreTheRightSlots(t *testing.T) {
 	skills := StartingSkills(ClassThief)
 
 	for _, tc := range []struct {
-		number  int32
+		number  SpellID
 		percent int32
 		name    string
 	}{
@@ -101,7 +200,7 @@ func TestTheThiefStartingSkillsAreTheRightSlots(t *testing.T) {
 	if len(skills) != 6 {
 		t.Errorf("a new thief has %d skills, want 6: %v", len(skills), skills)
 	}
-	for _, wrong := range []int32{SkillBash, SkillKick, SkillRescue} {
+	for _, wrong := range []SpellID{SkillBash, SkillKick, SkillRescue} {
 		if _, ok := skills[wrong]; ok {
 			t.Errorf("a new thief has a percentage in slot %d, which is not one of theirs", wrong)
 		}
@@ -222,7 +321,7 @@ func TestAClassThatNeverLearnsASpellCannotCastIt(t *testing.T) {
 }
 
 func TestSpellNumberByName(t *testing.T) {
-	for name, want := range map[string]int32{
+	for name, want := range map[string]SpellID{
 		"magic missile": SpellMagicMissile,
 		"magic mis":     SpellMagicMissile,
 		"armor":         SpellArmor,
@@ -370,7 +469,7 @@ func parseSpello(t *testing.T) map[string]spelloRow {
 
 // spellNumberFor maps a C constant name to the Go number, by reading
 // spells.h — so the test does not depend on the same table it is checking.
-func spellNumberFor(t *testing.T, cName string) (int32, bool) {
+func spellNumberFor(t *testing.T, cName string) (SpellID, bool) {
 	t.Helper()
 
 	if cachedSpellNumbers == nil {
@@ -378,18 +477,18 @@ func spellNumberFor(t *testing.T, cName string) (int32, bool) {
 		if err != nil {
 			t.Fatalf("reading spells.h: %v", err)
 		}
-		cachedSpellNumbers = map[string]int32{}
+		cachedSpellNumbers = map[string]SpellID{}
 		for _, m := range regexp.MustCompile(`#define\s+((?:SPELL|SKILL)_\w+)\s+(\d+)`).
 			FindAllStringSubmatch(string(src), -1) {
 			n, _ := strconv.Atoi(m[2])
-			cachedSpellNumbers[m[1]] = int32(n)
+			cachedSpellNumbers[m[1]] = SpellID(n)
 		}
 	}
 	n, ok := cachedSpellNumbers[cName]
 	return n, ok
 }
 
-var cachedSpellNumbers map[string]int32
+var cachedSpellNumbers map[string]SpellID
 
 // splitTopLevel splits an argument list on commas outside brackets and
 // strings.

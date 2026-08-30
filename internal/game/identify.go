@@ -45,14 +45,14 @@ func IdentifyObject(obj *Object) string {
 		// them prints the line with nothing after it.
 		for _, value := range obj.Values[1:] {
 			if value >= 1 {
-				fmt.Fprintf(&out, " %s", SpellName(value))
+				fmt.Fprintf(&out, " %s", SpellName(SpellID(value)))
 			}
 		}
 		out.WriteString("\r\n")
 
 	case ItemWand, ItemStaff:
 		fmt.Fprintf(&out, "This %s casts:  %s\r\n",
-			SprintType(obj.Type.Number(), ItemTypeNames), SpellName(obj.Values[3]))
+			SprintType(obj.Type.Number(), ItemTypeNames), SpellName(SpellID(obj.Values[3])))
 		fmt.Fprintf(&out, "It has %d maximum charge%s and %d remaining.\r\n",
 			obj.Values[1], plural(obj.Values[1]), obj.Values[2])
 

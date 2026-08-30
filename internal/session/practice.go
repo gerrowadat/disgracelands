@@ -69,7 +69,7 @@ func (c *Context) practise(arg string) error {
 	rec.SpellsToLearn--
 
 	if rec.Skills == nil {
-		rec.Skills = map[int32]int32{}
+		rec.Skills = map[game.SpellID]int32{}
 	}
 	rec.Skills[number] = min(learned, rec.Skills[number]+game.PracticeGain(rec))
 
@@ -101,7 +101,7 @@ func (c *Context) listSkills() error {
 	}
 	var entries []entry
 
-	for number := int32(1); number <= game.MaxSkills; number++ {
+	for number := game.SpellID(1); number <= game.MaxSkills; number++ {
 		info, ok := game.Spell(number)
 		if !ok {
 			continue

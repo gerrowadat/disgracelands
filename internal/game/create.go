@@ -105,8 +105,8 @@ func InitChar(rec *PlayerRecord, r *rng.Rand, first bool) {
 	// case where the values are not zero.
 	rec.Skills = nil
 	if rec.Level >= LevelImplementor {
-		rec.Skills = make(map[int32]int32, MaxSkills)
-		for i := int32(1); i <= MaxSkills; i++ {
+		rec.Skills = make(map[SpellID]int32, MaxSkills)
+		for i := SpellID(1); i <= MaxSkills; i++ {
 			rec.Skills[i] = 100
 		}
 	}

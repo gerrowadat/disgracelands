@@ -252,7 +252,11 @@ func AttackTypeName(attackType int32) string {
 		}
 		return "#" + strconv.Itoa(int(attackType))
 	}
-	return SpellNameOrNumber(attackType)
+	// Below TypeHit the number is a SpellID; at or above it, it is a
+	// weapon attack type. AttackType is a union of two domains rather than
+	// one enumeration, which is why it stays an int32 and converts here --
+	// see docs/proposals/idiomatic-go.md §4.5.
+	return SpellNameOrNumber(SpellID(attackType))
 }
 
 // AttackTypeFromName is AttackTypeName's inverse. A weapon-type name is
@@ -264,5 +268,6 @@ func AttackTypeFromName(name string) (int32, bool) {
 	if offset, ok := ValueByName(name, YamlAttackTypeNames()); ok {
 		return TypeHit + offset, true
 	}
-	return SpellNumberFromNameOrNumber(name)
+	spell, ok := SpellNumberFromNameOrNumber(name)
+	return spell.Number(), ok
 }

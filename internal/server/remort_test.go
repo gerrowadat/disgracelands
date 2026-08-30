@@ -360,7 +360,7 @@ func TestRemortFollowsTheHandRunProcedure(t *testing.T) {
 		rec.RealMaxMana = 400
 		rec.RealMaxMove = 400
 		if rec.Skills == nil {
-			rec.Skills = map[int32]int32{}
+			rec.Skills = map[game.SpellID]int32{}
 		}
 		rec.Skills[game.SkillBash] = 75
 	})
