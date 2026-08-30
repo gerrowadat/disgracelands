@@ -166,7 +166,7 @@ func (c *Context) drink(sip bool) error {
 		c.Send("It's empty.\r\n")
 		return nil
 	}
-	liquid := vessel.Values[2]
+	liquid := game.Liquid(vessel.Values[2])
 	name := game.DrinkName(liquid)
 
 	var amount int32
@@ -221,7 +221,13 @@ func (c *Context) drink(sip bool) error {
 		// name, so an empty bottle stops answering to `water`, and it stops
 		// being poisoned along with it.
 		game.NameFromDrinkCon(vessel)
-		vessel.Values[2] = 0
+		// Zero here is the C's, and it is LiquidWater rather than "no
+		// liquid" -- an emptied container reads as holding water with
+		// nothing in it, and every caller tests Values[1] first. Named
+		// rather than left as a literal, for the same reason all ten
+		// sectors got names (#343): the number is only obviously right
+		// once you know what it decodes to.
+		vessel.Values[2] = game.LiquidWater.Number()
 		vessel.Values[3] = 0
 	}
 	return nil
@@ -332,11 +338,11 @@ func (c *Context) pour(filling bool) error {
 		// The C names the destination with the word the player typed rather
 		// than with the object's own name, and forgets the newline. Both
 		// reproduced; see docs/weirdnumbers.md.
-		c.Send("You pour the %s into the %s.", game.DrinkName(from.Values[2]), arg2)
+		c.Send("You pour the %s into the %s.", game.DrinkName(game.Liquid(from.Values[2])), arg2)
 	}
 
 	if to.Values[1] == 0 {
-		game.NameToDrinkCon(to, from.Values[2])
+		game.NameToDrinkCon(to, game.Liquid(from.Values[2]))
 	}
 	to.Values[2] = from.Values[2]
 
@@ -368,6 +374,6 @@ func emptyDrinkContainer(o *game.Object) {
 	o.Weight = max(0, o.Weight-o.Values[1])
 	game.NameFromDrinkCon(o)
 	o.Values[1] = 0
-	o.Values[2] = 0
+	o.Values[2] = game.LiquidWater.Number() // as above: the C's zero is water
 	o.Values[3] = 0
 }

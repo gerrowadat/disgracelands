@@ -537,7 +537,7 @@ func shopListLine(sc *SpecialCall, shop *game.ShopDef, obj *game.Object, cnt, in
 
 	desc := obj.Name()
 	if obj.Type == game.ItemDrinkCon && obj.Values[1] != 0 {
-		desc += " of " + game.DrinkName(obj.Values[2])
+		desc += " of " + game.DrinkName(game.Liquid(obj.Values[2]))
 	}
 	if (obj.Type == game.ItemWand || obj.Type == game.ItemStaff) && obj.Values[2] < obj.Values[1] {
 		desc += " (partially used)"

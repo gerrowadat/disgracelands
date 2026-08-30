@@ -365,7 +365,7 @@ func objectValues(obj *game.Object) string {
 			v[2], yesNo(v[3] != 0))
 	case game.ItemDrinkCon, game.ItemFountain:
 		return fmt.Sprintf("Capacity: %d, Contains: %d, Poisoned: %s, Liquid: %s",
-			v[0], v[1], yesNo(v[3] != 0), game.DrinkName(v[2]))
+			v[0], v[1], yesNo(v[3] != 0), game.DrinkName(game.Liquid(v[2])))
 	case game.ItemNote:
 		return fmt.Sprintf("Tongue: %d", v[0])
 	case game.ItemKey:

@@ -419,7 +419,7 @@ func testWorld() *game.Live {
 			WearFlags:   game.NewSet(game.ItemWearTake),
 			Weight:      3,
 			// Capacity 20, empty, and water is liquid 0.
-			Values: [game.NumObjValues]int32{20, 0, game.LiquidWater, 0},
+			Values: [game.NumObjValues]int32{20, 0, game.LiquidWater.Number(), 0},
 		},
 		{
 			// mag_creations' own object: `create food` makes this vnum and

@@ -16,26 +16,46 @@ import "strings"
 // Salt water and blood have *negative* thirst values: drinking them makes you
 // thirstier, which is the joke and also a real hazard on a long walk.
 
-// The sixteen liquids, from structs.h:426. Only two are named anywhere in the
-// code — water, which create water makes, and slime, which it makes instead
-// when it goes wrong.
+// Liquid is what is in a drink container or a fountain, from structs.h:426.
+// The numbers are the world file's and index drinks[], drink_aff[] and
+// color_liquid[] in constants.c.
+//
+// The zero value is LiquidWater, a real liquid -- as Class's and Sector's
+// zero values are real, and unlike ItemType's. That is load-bearing here in
+// a way it is not for the others: an object value slot that nobody filled
+// in reads as water, and create water's `Values[2] != LiquidWater` test
+// (objmagic.go) is asking about exactly that slot.
+//
+// Two of the sixteen are named in the rules -- water, which create water
+// makes, and slime, which it makes instead when it goes wrong. The other
+// fourteen were bare numbers until this became a type, which is what
+// docs/proposals/idiomatic-go.md §3.2 objects to: a reader who needs
+// liquid 7 has to count entries in drinks[] to find out it is a
+// firebreather.
+type Liquid int
+
+// Number is the liquid's stored number, for the world file and the
+// value-indexed name tables.
+func (l Liquid) Number() int32 { return int32(l) } //nolint:gosec // sixteen liquids; the format's width
+
+// The sixteen liquids, from structs.h:426, in drinks[] order.
 const (
-	LiquidWater      int32 = 0
-	LiquidBeer       int32 = 1
-	LiquidWine       int32 = 2
-	LiquidAle        int32 = 3
-	LiquidDarkAle    int32 = 4
-	LiquidWhisky     int32 = 5
-	LiquidLemonade   int32 = 6
-	LiquidFirebrt    int32 = 7
-	LiquidLocalSpec  int32 = 8
-	LiquidSlime      int32 = 9
-	LiquidMilk       int32 = 10
-	LiquidTea        int32 = 11
-	LiquidCoffee     int32 = 12
-	LiquidBlood      int32 = 13
-	LiquidSaltWater  int32 = 14
-	LiquidClearWater int32 = 15
+	LiquidWater      Liquid = 0
+	LiquidBeer       Liquid = 1
+	LiquidWine       Liquid = 2
+	LiquidAle        Liquid = 3
+	LiquidDarkAle    Liquid = 4
+	LiquidWhisky     Liquid = 5
+	LiquidLemonade   Liquid = 6
+	LiquidFirebrt    Liquid = 7
+	LiquidLocalSpec  Liquid = 8
+	LiquidSlime      Liquid = 9
+	LiquidMilk       Liquid = 10
+	LiquidTea        Liquid = 11
+	LiquidCoffee     Liquid = 12
+	LiquidBlood      Liquid = 13
+	LiquidSaltWater  Liquid = 14
+	LiquidClearWater Liquid = 15
 )
 
 // drinkNames are drinks[] (constants.c:424).
@@ -95,7 +115,7 @@ var drinkKeywords = [16]string{
 
 // DrinkKeyword returns the keyword a liquid contributes to its container's
 // name.
-func DrinkKeyword(liquid int32) string {
+func DrinkKeyword(liquid Liquid) string {
 	if liquid < 0 || int(liquid) >= len(drinkKeywords) {
 		return ""
 	}
@@ -112,7 +132,7 @@ func NameFromDrinkCon(o *Object) {
 	if o == nil || (o.Type != ItemDrinkCon && o.Type != ItemFountain) {
 		return
 	}
-	liquid := DrinkKeyword(o.Values[2])
+	liquid := DrinkKeyword(Liquid(o.Values[2]))
 	if liquid == "" {
 		return
 	}
@@ -129,7 +149,7 @@ func NameFromDrinkCon(o *Object) {
 
 // NameToDrinkCon appends a liquid's keyword to a container, porting
 // name_to_drinkcon.
-func NameToDrinkCon(o *Object, liquid int32) {
+func NameToDrinkCon(o *Object, liquid Liquid) {
 	if o == nil || (o.Type != ItemDrinkCon && o.Type != ItemFountain) {
 		return
 	}
@@ -139,7 +159,7 @@ func NameToDrinkCon(o *Object, liquid int32) {
 }
 
 // DrinkName returns a liquid's name.
-func DrinkName(liquid int32) string {
+func DrinkName(liquid Liquid) string {
 	if liquid < 0 || int(liquid) >= len(drinkNames) {
 		return "something"
 	}
@@ -148,7 +168,7 @@ func DrinkName(liquid int32) string {
 
 // DrinkEffect returns what one unit-quarter of a liquid does to each
 // condition, in the record's order: drunk, full, thirst.
-func DrinkEffect(liquid int32) [3]int32 {
+func DrinkEffect(liquid Liquid) [3]int32 {
 	if liquid < 0 || int(liquid) >= len(drinkEffects) {
 		return [3]int32{}
 	}
@@ -162,7 +182,7 @@ func DrinkEffect(liquid int32) [3]int32 {
 // are — `(25 - thirst) / drunkenness` — so a parched character downs far more
 // whisky than a comfortable one, and gets correspondingly drunker. A drink
 // with no drunkenness is a plain number(3, 10).
-func DrinkAmount(liquid, thirst int32, r interface{ Number(int32, int32) int32 }) int32 {
+func DrinkAmount(liquid Liquid, thirst int32, r interface{ Number(int32, int32) int32 }) int32 {
 	effect := DrinkEffect(liquid)
 	if effect[CondDrunk] > 0 {
 		return (25 - thirst) / effect[CondDrunk]
@@ -233,7 +253,7 @@ var liquidColours = [16]string{
 // sentinel and answers "UNDEFINED" past the end. Nothing in the shipped world
 // has an out-of-range liquid, so the fallback here is a guard rather than a
 // reproduction of that.
-func LiquidColour(liquid int32) string {
+func LiquidColour(liquid Liquid) string {
 	if liquid < 0 || int(liquid) >= len(liquidColours) {
 		return "clear"
 	}

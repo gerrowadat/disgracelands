@@ -99,9 +99,10 @@ func FillWithWater(obj *Object) string {
 		return ""
 	}
 
-	if obj.Values[2] != LiquidWater && obj.Values[1] != 0 {
+	// Values[2] is the liquid; step 3 types the slot, so it converts here.
+	if Liquid(obj.Values[2]) != LiquidWater && obj.Values[1] != 0 {
 		NameFromDrinkCon(obj)
-		obj.Values[2] = LiquidSlime
+		obj.Values[2] = LiquidSlime.Number()
 		NameToDrinkCon(obj, LiquidSlime)
 		return ""
 	}
@@ -113,7 +114,7 @@ func FillWithWater(obj *Object) string {
 	if obj.Values[1] >= 0 {
 		NameFromDrinkCon(obj)
 	}
-	obj.Values[2] = LiquidWater
+	obj.Values[2] = LiquidWater.Number()
 	obj.Values[1] += water
 	NameToDrinkCon(obj, LiquidWater)
 	obj.Weight += water
