@@ -134,7 +134,7 @@ func (c *Context) useStaff(obj *game.Object) {
 	// person present instead — which is the same number of castings and the
 	// C's own comment says why: "Problem: Area/mass spells on staves can
 	// cause crashes."
-	if info.Routines.HasAny(game.MagAreas | game.MagMasses) {
+	if info.Routines.HasAny(game.MagAreas, game.MagMasses) {
 		for range c.World.Occupants(c.Character.Room) {
 			c.castAtLevel(info, number, nil, nil, level, game.SaveRod)
 		}
@@ -168,7 +168,7 @@ func (c *Context) useWand(obj *game.Object, arg string, victim *game.Character, 
 		c.Send("You point %s at %s.\r\n", obj.Name(), target.Name())
 		c.announceAction(obj, "%s points %s at %s.\r\n",
 			c.Character.Name, obj.Name(), target.Name())
-	case info.Routines.HasAny(game.MagAreas | game.MagMasses):
+	case info.Routines.HasAny(game.MagAreas, game.MagMasses):
 		// A wand of an area spell does not need pointing.
 		c.Send("You point %s outward.\r\n", obj.Name())
 		c.announce("%s points %s outward.\r\n", c.Character.Name, obj.Name())

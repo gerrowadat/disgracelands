@@ -138,14 +138,18 @@ func TestSpellTableMatchesTheCSource(t *testing.T) {
 		if int32(got.MinPosition) != row.minPosition {
 			t.Errorf("%s: min position is %d, want %d", name, got.MinPosition, row.minPosition)
 		}
-		if uint64(got.Targets) != row.targets {
-			t.Errorf("%s: targets are %d, want %d", name, got.Targets, row.targets)
+		// Raw(), not a re-derivation: row.targets is the bit vector this
+		// test parsed out of spells.h, so comparing the set's own bits is
+		// what keeps the C the authority for these numbers rather than
+		// the Go constants (docs/proposals/idiomatic-go.md §5).
+		if got.Targets.Raw() != row.targets {
+			t.Errorf("%s: targets are %d, want %d", name, got.Targets.Raw(), row.targets)
 		}
 		if got.Violent != row.violent {
 			t.Errorf("%s: violent is %v, want %v", name, got.Violent, row.violent)
 		}
-		if uint64(got.Routines) != row.routines {
-			t.Errorf("%s: routines are %d, want %d", name, got.Routines, row.routines)
+		if got.Routines.Raw() != row.routines {
+			t.Errorf("%s: routines are %d, want %d", name, got.Routines.Raw(), row.routines)
 		}
 	}
 }
