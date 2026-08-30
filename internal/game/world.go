@@ -81,7 +81,7 @@ type MobDef struct {
 	// Description is shown on `look at`.
 	Description string
 
-	ActionFlags    Flags
+	ActionFlags    MobFlags
 	AffectionFlags Flags
 	Alignment      int32
 
@@ -120,7 +120,7 @@ type MobDef struct {
 // the file lists it. structs.h calls it "(R) Automatically set on all Mobs"
 // and parse_mobile() does exactly that. It has to be set here too, or every
 // mob whose file omits it would differ from the C server's view of it.
-const MobIsNPC Flags = 1 << 3
+const MobIsNPC MobFlag = 3
 
 // Espec is one `Key: value` line from an enhanced mob's E section.
 type Espec struct {

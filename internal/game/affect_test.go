@@ -211,7 +211,7 @@ func TestBlessAppliesBothOfItsAffects(t *testing.T) {
 	caster := affectedCharacter()
 	victim := affectedCharacter()
 
-	result := AffectsOfSpell(SpellBless, caster, victim, false, 0, 20, false, newRNG())
+	result := AffectsOfSpell(SpellBless, caster, victim, false, MobFlags{}, 20, false, newRNG())
 	if result.Refused || len(result.Affects) != 2 {
 		t.Fatalf("bless gave %+v", result)
 	}
@@ -232,26 +232,26 @@ func TestSpellsThatRefuse(t *testing.T) {
 	r := newRNG()
 
 	// Blindness against a save says "You fail." to the caster.
-	result := AffectsOfSpell(SpellBlindness, caster, victim, false, 0, 20, true, r)
+	result := AffectsOfSpell(SpellBlindness, caster, victim, false, MobFlags{}, 20, true, r)
 	if !result.Refused || result.RefusalToCaster != "You fail.\r\n" {
 		t.Errorf("blindness against a save gave %+v", result)
 	}
 	// And against a NOBLIND mobile, whatever the roll.
-	result = AffectsOfSpell(SpellBlindness, caster, victim, true, MobNoBlind, 20, false, r)
+	result = AffectsOfSpell(SpellBlindness, caster, victim, true, NewSet(MobNoBlind), 20, false, r)
 	if !result.Refused {
 		t.Error("blindness landed on a NOBLIND mobile")
 	}
 
 	// Curse and poison say NOEFFECT.
 	for _, spell := range []int32{SpellCurse, SpellPoison} {
-		result = AffectsOfSpell(spell, caster, victim, false, 0, 20, true, r)
+		result = AffectsOfSpell(spell, caster, victim, false, MobFlags{}, 20, true, r)
 		if !result.Refused || result.RefusalToCaster != NoEffect {
 			t.Errorf("spell %d against a save gave %+v", spell, result)
 		}
 	}
 
 	// Sleep refuses silently.
-	result = AffectsOfSpell(SpellSleep, caster, victim, false, 0, 20, true, r)
+	result = AffectsOfSpell(SpellSleep, caster, victim, false, MobFlags{}, 20, true, r)
 	if !result.Refused || result.RefusalToCaster != "" {
 		t.Errorf("sleep against a save gave %+v", result)
 	}
@@ -259,7 +259,7 @@ func TestSpellsThatRefuse(t *testing.T) {
 	// Strength on somebody already at 18/00 refuses silently too.
 	strong := affectedCharacter()
 	strong.Abilities.StrengthPercentile = 100
-	result = AffectsOfSpell(SpellStrength, caster, strong, false, 0, 20, false, r)
+	result = AffectsOfSpell(SpellStrength, caster, strong, false, MobFlags{}, 20, false, r)
 	if !result.Refused || result.RefusalToCaster != "" {
 		t.Errorf("strength on an 18/00 character gave %+v", result)
 	}
@@ -275,7 +275,7 @@ func TestStrengthGivesTwoPointsAboveLevelEighteen(t *testing.T) {
 	for _, tc := range []struct{ level, want int32 }{
 		{1, 1}, {18, 1}, {19, 2}, {34, 2},
 	} {
-		result := AffectsOfSpell(SpellStrength, caster, victim, false, 0, tc.level, false, r)
+		result := AffectsOfSpell(SpellStrength, caster, victim, false, MobFlags{}, tc.level, false, r)
 		if result.Refused || len(result.Affects) != 1 {
 			t.Fatalf("strength at level %d gave %+v", tc.level, result)
 		}
@@ -291,8 +291,8 @@ func TestChillTouchDurationDependsOnTheSave(t *testing.T) {
 	victim := affectedCharacter()
 	r := newRNG()
 
-	saved := AffectsOfSpell(SpellChillTouch, caster, victim, false, 0, 20, true, r)
-	failed := AffectsOfSpell(SpellChillTouch, caster, victim, false, 0, 20, false, r)
+	saved := AffectsOfSpell(SpellChillTouch, caster, victim, false, MobFlags{}, 20, true, r)
+	failed := AffectsOfSpell(SpellChillTouch, caster, victim, false, MobFlags{}, 20, false, r)
 
 	if saved.Affects[0].Duration != 1 {
 		t.Errorf("a saved chill touch lasts %d, want 1", saved.Affects[0].Duration)

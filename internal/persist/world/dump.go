@@ -287,7 +287,7 @@ func BuildDumpWithOptions(w *game.World, opts Options) *Dump {
 		d.Mobiles = append(d.Mobiles, DumpMob{
 			Vnum: m.Vnum, Keywords: Text(m.Keywords), ShortDesc: Text(m.ShortDesc),
 			LongDesc: Text(m.LongDesc), Desc: Text(m.Description),
-			ActFlags: m.ActionFlags.String(), ActBits: uint64(m.ActionFlags),
+			ActFlags: m.ActionFlags.String(), ActBits: m.ActionFlags.Raw(),
 			AffFlags: m.AffectionFlags.String(), AffBits: uint64(m.AffectionFlags),
 			Alignment: m.Alignment, Enhanced: enhanced,
 			Level: m.Level, Thac0: m.Thac0, HitRoll: m.HitRoll(),

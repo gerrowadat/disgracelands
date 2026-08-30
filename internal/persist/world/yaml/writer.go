@@ -236,8 +236,8 @@ func doorName(flag int32) string {
 }
 
 func mobDocFrom(m *game.MobDef) mobDoc {
-	actFlags := m.ActionFlags.Clear(game.MobIsNPC) // never written; the reader force-sets it
-	actNames, actRaw := game.NameBits(uint64(actFlags), game.YamlMobActFlagNames())
+	actFlags := m.ActionFlags.Without(game.MobIsNPC) // never written; the reader force-sets it
+	actNames, actRaw := game.NameBits(actFlags.Raw(), game.YamlMobActFlagNames())
 	affNames, affRaw := game.NameBits(uint64(m.AffectionFlags), game.YamlAffectFlagNames())
 
 	md := mobDoc{

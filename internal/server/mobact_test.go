@@ -15,7 +15,7 @@ import (
 )
 
 // mobile puts a mobile into a room with the given flags.
-func mobile(t *testing.T, srv *Server, name string, flags game.Flags, room game.RoomVnum) *game.Character {
+func mobile(t *testing.T, srv *Server, name string, flags game.MobFlags, room game.RoomVnum) *game.Character {
 	t.Helper()
 
 	c := &game.Character{
@@ -51,7 +51,7 @@ func mobTick(t *testing.T, srv *Server) {
 // TestASentinelStaysPut, however many pulses go by.
 func TestASentinelStaysPut(t *testing.T) {
 	srv, _ := newTestServer(t)
-	mob := mobile(t, srv, "a shopkeeper", game.MobSentinel, MortalStartRoom)
+	mob := mobile(t, srv, "a shopkeeper", game.NewSet(game.MobSentinel), MortalStartRoom)
 
 	for i := 0; i < 200; i++ {
 		mobTick(t, srv)
@@ -66,7 +66,7 @@ func TestASentinelStaysPut(t *testing.T) {
 // time it is considered.
 func TestAnOrdinaryMobileWanders(t *testing.T) {
 	srv, _ := newTestServer(t)
-	mob := mobile(t, srv, "a large dog", 0, MortalStartRoom)
+	mob := mobile(t, srv, "a large dog", game.MobFlags{}, MortalStartRoom)
 
 	var moved bool
 	for i := 0; i < 300 && !moved; i++ {
@@ -88,7 +88,7 @@ func TestAMobileWillNotWalkIntoANoMobRoom(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	mob := mobile(t, srv, "a large dog", 0, MortalStartRoom)
+	mob := mobile(t, srv, "a large dog", game.MobFlags{}, MortalStartRoom)
 	for i := 0; i < 400; i++ {
 		mobTick(t, srv)
 		if mob.Room != MortalStartRoom {
@@ -108,7 +108,7 @@ func TestAClosedDoorStopsAMobile(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	mob := mobile(t, srv, "a large dog", 0, MortalStartRoom)
+	mob := mobile(t, srv, "a large dog", game.MobFlags{}, MortalStartRoom)
 	for i := 0; i < 400; i++ {
 		mobTick(t, srv)
 		if mob.Room != MortalStartRoom {
@@ -121,7 +121,7 @@ func TestAClosedDoorStopsAMobile(t *testing.T) {
 func TestAnAggressiveMobileAttacks(t *testing.T) {
 	srv, _ := newTestServer(t)
 
-	mob := mobile(t, srv, "a guard dog", game.MobSentinel|game.MobAggressive, MortalStartRoom)
+	mob := mobile(t, srv, "a guard dog", game.NewSet(game.MobSentinel, game.MobAggressive), MortalStartRoom)
 	victim, victimClient := place(t, srv, fighterRecord("Welmar", 5, 200), MortalStartRoom)
 
 	mobTick(t, srv)
@@ -143,8 +143,8 @@ func TestAnAggressiveMobileAttacks(t *testing.T) {
 func TestAnAggressiveMobileIgnoresOtherMobiles(t *testing.T) {
 	srv, _ := newTestServer(t)
 
-	aggressor := mobile(t, srv, "a guard dog", game.MobSentinel|game.MobAggressive, MortalStartRoom)
-	mobile(t, srv, "a rabbit", game.MobSentinel, MortalStartRoom)
+	aggressor := mobile(t, srv, "a guard dog", game.NewSet(game.MobSentinel, game.MobAggressive), MortalStartRoom)
+	mobile(t, srv, "a rabbit", game.NewSet(game.MobSentinel), MortalStartRoom)
 
 	for i := 0; i < 20; i++ {
 		mobTick(t, srv)
@@ -159,7 +159,7 @@ func TestAnAggressiveMobileIgnoresOtherMobiles(t *testing.T) {
 func TestNoHassleWalksThroughUnmolested(t *testing.T) {
 	srv, _ := newTestServer(t)
 
-	mob := mobile(t, srv, "a guard dog", game.MobSentinel|game.MobAggressive, MortalStartRoom)
+	mob := mobile(t, srv, "a guard dog", game.NewSet(game.MobSentinel, game.MobAggressive), MortalStartRoom)
 	rec := fighterRecord("Zod", 34, 500)
 	rec.Preferences = rec.Preferences.Set(game.PrefNoHassle)
 	place(t, srv, rec, MortalStartRoom)
@@ -176,7 +176,7 @@ func TestNoHassleWalksThroughUnmolested(t *testing.T) {
 func TestAlignmentSelectiveAggression(t *testing.T) {
 	for _, tc := range []struct {
 		name      string
-		flag      game.Flags
+		flag      game.MobFlag
 		alignment int32
 		attacks   bool
 	}{
@@ -196,7 +196,7 @@ func TestAlignmentSelectiveAggression(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			srv, _ := newTestServer(t)
 
-			mob := mobile(t, srv, "a paladin's hound", game.MobSentinel|tc.flag, MortalStartRoom)
+			mob := mobile(t, srv, "a paladin's hound", game.NewSet(game.MobSentinel, tc.flag), MortalStartRoom)
 			rec := fighterRecord("Welmar", 5, 200)
 			rec.Alignment = tc.alignment
 			place(t, srv, rec, MortalStartRoom)
@@ -214,7 +214,7 @@ func TestAlignmentSelectiveAggression(t *testing.T) {
 func TestAWimpyAggressiveMobileOnlyAttacksTheSleeping(t *testing.T) {
 	srv, _ := newTestServer(t)
 
-	mob := mobile(t, srv, "a jackal", game.MobSentinel|game.MobAggressive|game.MobWimpy, MortalStartRoom)
+	mob := mobile(t, srv, "a jackal", game.NewSet(game.MobSentinel, game.MobAggressive, game.MobWimpy), MortalStartRoom)
 	victim, _ := place(t, srv, fighterRecord("Welmar", 5, 200), MortalStartRoom)
 
 	mobTick(t, srv)
@@ -233,7 +233,7 @@ func TestAWimpyAggressiveMobileOnlyAttacksTheSleeping(t *testing.T) {
 func TestAHolyShieldTurnsAwayEvil(t *testing.T) {
 	srv, _ := newTestServer(t)
 
-	mob := mobile(t, srv, "a demon", game.MobSentinel|game.MobAggressive, MortalStartRoom)
+	mob := mobile(t, srv, "a demon", game.NewSet(game.MobSentinel, game.MobAggressive), MortalStartRoom)
 	mob.Record.Alignment = -1000
 
 	rec := fighterRecord("Welmar", 5, 200)
@@ -248,7 +248,7 @@ func TestAHolyShieldTurnsAwayEvil(t *testing.T) {
 	}
 
 	// A good mobile is not turned away by it.
-	good := mobile(t, srv, "a zealot", game.MobSentinel|game.MobAggressive, MortalStartRoom)
+	good := mobile(t, srv, "a zealot", game.NewSet(game.MobSentinel, game.MobAggressive), MortalStartRoom)
 	good.Record.Alignment = 1000
 
 	mobTick(t, srv)
@@ -261,7 +261,7 @@ func TestAHolyShieldTurnsAwayEvil(t *testing.T) {
 func TestAScavengerTakesTheMostValuableThing(t *testing.T) {
 	srv, _ := newTestServer(t)
 
-	mob := mobile(t, srv, "a beggar", game.MobSentinel|game.MobScavenger, MortalStartRoom)
+	mob := mobile(t, srv, "a beggar", game.NewSet(game.MobSentinel, game.MobScavenger), MortalStartRoom)
 
 	var cheap, dear *game.Object
 	if err := srv.engine.DoSync(context.Background(), func(w *game.Live) {
@@ -294,7 +294,7 @@ func TestAScavengerTakesTheMostValuableThing(t *testing.T) {
 func TestAScavengerIgnoresWorthlessThings(t *testing.T) {
 	srv, _ := newTestServer(t)
 
-	mob := mobile(t, srv, "a beggar", game.MobSentinel|game.MobScavenger, MortalStartRoom)
+	mob := mobile(t, srv, "a beggar", game.NewSet(game.MobSentinel, game.MobScavenger), MortalStartRoom)
 
 	if err := srv.engine.DoSync(context.Background(), func(w *game.Live) {
 		junk := w.NewObject(testRingVnum)
@@ -317,7 +317,7 @@ func TestAScavengerIgnoresWorthlessThings(t *testing.T) {
 func TestABusyMobileDoesNothingElse(t *testing.T) {
 	srv, _ := newTestServer(t)
 
-	mob := mobile(t, srv, "a large dog", game.MobScavenger, MortalStartRoom)
+	mob := mobile(t, srv, "a large dog", game.NewSet(game.MobScavenger), MortalStartRoom)
 	victim, _ := place(t, srv, fighterRecord("Welmar", 5, 200), MortalStartRoom)
 
 	if err := srv.engine.DoSync(context.Background(), func(w *game.Live) {
@@ -340,7 +340,7 @@ func TestABusyMobileDoesNothingElse(t *testing.T) {
 	}
 
 	// And a sleeping one is equally idle.
-	sleeper := mobile(t, srv, "a drunk", game.MobScavenger, ImmortStartRoom)
+	sleeper := mobile(t, srv, "a drunk", game.NewSet(game.MobScavenger), ImmortStartRoom)
 	sleeper.Position = game.PosSleeping
 	if err := srv.engine.DoSync(context.Background(), func(w *game.Live) {
 		obj := w.NewObject(testSwordVnum)

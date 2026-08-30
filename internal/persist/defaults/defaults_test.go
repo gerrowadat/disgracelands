@@ -155,7 +155,7 @@ objects:
 	// MobIsNPC is force-set by the loader on every mobile, in both
 	// formats, exactly as parse_mobile does — so the default here is not
 	// zero, and that is the point of asserting it.
-	check(t, "mob.ActionFlags", mob.ActionFlags, game.MobIsNPC)
+	check(t, "mob.ActionFlags", mob.ActionFlags, game.NewSet(game.MobIsNPC))
 	check(t, "mob.AffectionFlags", mob.AffectionFlags, game.Flags(0))
 	check(t, "mob.Enhanced", mob.Enhanced, false)
 	check(t, "mob.Especs", len(mob.Especs), 0)
