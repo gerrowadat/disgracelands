@@ -8,6 +8,7 @@ package main
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/gerrowadat/disgracelands/internal/persist/world"
@@ -63,6 +64,70 @@ func TestWorldExamplesLintClean(t *testing.T) {
 				}
 			})
 		}
+	}
+}
+
+// TestLintSaysTheSameThingsAboutBothFormats is #286's contract, on the
+// example the issue was written from.
+//
+// `dlctl lint` used to report a world's problems while it was still in the
+// format we are migrating *off* and report nothing once it was in the
+// format we actually run on: the cross-reference checks were written into
+// the classic reader, one warnf per parse site, and the yaml loader
+// produced none of them. On the archived lib/ that was twenty findings
+// against classic and zero against the converted directory, four of which
+// were still true of the converted data. `dlctl lint` exists to replace
+// src/util/scheck and `dlmud -c`; on a yaml world it replaced neither.
+//
+// The two halves are asserted together because the fix is a *split*, not a
+// move, and half of it alone would be wrong in the other direction:
+//
+//   - An observation about a loaded world survives conversion, so both
+//     formats must report it. examples/stock has one — room #12038's north
+//     exit is locked by object #12104, which does not exist. Nothing is
+//     dropped or rewritten; the dangling vnum is still in the file.
+//   - A finding that describes what the *classic reader changed* on the way
+//     in must not survive it. "shop #5484 produces object #5524, which does
+//     not exist; the C loader drops it silently" is one: real_object()
+//     discards the entry, so the yaml written from that load has no such
+//     entry and cannot honestly report one. A yaml world claiming it would
+//     be lint describing a file that no longer exists.
+func TestLintSaysTheSameThingsAboutBothFormats(t *testing.T) {
+	const (
+		observation = "room #12038's north exit is locked by object #12104, which does not exist"
+		rewrite     = "shop #5484 produces object #5524, which does not exist"
+	)
+	said := map[string]string{}
+	for _, format := range []string{"classic", "yaml"} {
+		dir := "../../examples/stock/binary/world"
+		if format == "yaml" {
+			dir = "../../examples/stock/yaml/world"
+		}
+		_, findings, err := loadWorld(context.Background(), dir, format, false, world.Options{})
+		if err != nil {
+			t.Fatalf("loading %s (%s): %v", dir, format, err)
+		}
+		var b strings.Builder
+		for _, f := range findings {
+			b.WriteString(f.String())
+			b.WriteString("\n")
+		}
+		said[format] = b.String()
+	}
+
+	for _, format := range []string{"classic", "yaml"} {
+		if !strings.Contains(said[format], observation) {
+			t.Errorf("the %s loader did not report %q — it is true of the world either "+
+				"format holds it in:\n%s", format, observation, said[format])
+		}
+	}
+	if !strings.Contains(said["classic"], rewrite) {
+		t.Errorf("the classic loader stopped reporting %q, which is a fact about what it "+
+			"does while reading:\n%s", rewrite, said["classic"])
+	}
+	if strings.Contains(said["yaml"], rewrite) {
+		t.Errorf("the yaml loader reported %q, but the conversion already dropped that "+
+			"entry — there is nothing left in the file to report:\n%s", rewrite, said["yaml"])
 	}
 }
 

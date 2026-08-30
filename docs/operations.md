@@ -443,6 +443,24 @@ which is how you find out a directory has not been through `dlctl import`
 with the right `--encoding`. The server works in UTF-8; see "Converting an
 old data directory" below.
 
+**The cross-reference findings are the same in both formats.** Exits to a
+room that is not there, exits locked by an object that is not there, reset
+commands naming a vnum nothing defines, shops operating in a room that
+does not exist, records defined twice, and zones whose vnum ranges overlap
+are all observations about a *loaded world*, so a converted directory
+reports them exactly as the directory it was converted from did. That was
+not true until #286: the checks lived in the classic reader, so `lint`
+went quiet at precisely the point a directory reached the format the
+server actually runs on.
+
+A few findings are still classic-only, and correctly so — the ones that
+describe something the classic reader *changed* while reading it. "shop
+#5484 produces object #5524, which does not exist; the C loader drops it
+silently" is one: the entry is discarded on the way in, so the yaml
+written from that load has nothing left to report. If a finding
+disappears after `dlctl import`, that is the distinction to check it
+against.
+
 The shipped world (`examples/stock/yaml`, the default `--lib-dir`) lints
 clean. The *unconverted* source beside it,
 `examples/stock/binary`, reports 0 errors, 11 warnings and 12 notes, and

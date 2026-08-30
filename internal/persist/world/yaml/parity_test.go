@@ -30,9 +30,21 @@ func TestClassicYamlParity(t *testing.T) {
 	}
 	defer func() { _ = src.Close() }()
 
-	cw, err := src.Load(context.Background())
+	cw, classicFindings, err := src.LoadWithWarnings(context.Background())
 	if err != nil {
 		t.Fatalf("classic load: %v", err)
+	}
+	// What the *source* directory already says about itself, so that the
+	// assertion below is about the conversion rather than about the world.
+	// examples/stock has a room whose north exit is locked by an object
+	// that does not exist (#12038, key #12104); since #286 both loaders
+	// report it, because it is an observation about a loaded world rather
+	// than about the file it came from. A yaml load repeating what the
+	// classic load already said is the two loaders agreeing, which is what
+	// this test is for.
+	said := map[string]bool{}
+	for _, wr := range classicFindings {
+		said[wr.Message] = true
 	}
 
 	dir := t.TempDir()
@@ -55,8 +67,8 @@ func TestClassicYamlParity(t *testing.T) {
 		t.Fatalf("yaml load: %v", err)
 	}
 	for _, wr := range warnings {
-		if wr.Severity >= world.Warn {
-			t.Errorf("yaml load finding: %s", wr)
+		if wr.Severity >= world.Warn && !said[wr.Message] {
+			t.Errorf("yaml load finding the classic load did not have: %s", wr)
 		}
 	}
 

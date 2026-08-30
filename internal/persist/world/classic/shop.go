@@ -365,11 +365,6 @@ func (l *loader) resolveShopReferences(w *game.World) {
 	for _, m := range w.Mobiles {
 		mobs[m.Vnum] = true
 	}
-	rooms := make(map[game.RoomVnum]bool, len(w.Rooms))
-	for _, rm := range w.Rooms {
-		rooms[rm.Vnum] = true
-	}
-
 	for _, shop := range w.Shops {
 		kept := shop.Producing[:0]
 		for _, v := range shop.Producing {
@@ -385,10 +380,12 @@ func (l *loader) resolveShopReferences(w *game.World) {
 			l.warnf("shop #%d is kept by mob #%d, which does not exist; the shop will have no keeper", shop.Vnum, shop.Keeper)
 			shop.Keeper = game.NoMob
 		}
-		for _, rv := range shop.Rooms {
-			if !rooms[rv] {
-				l.warnf("shop #%d operates in room #%d, which does not exist", shop.Vnum, rv)
-			}
-		}
+		// A shop's *rooms* are checked by world.CheckReferences instead, and
+		// the split is the point of #286: the two findings above describe
+		// something this loader did -- an entry dropped, a keeper read as no
+		// keeper -- so the world handed back no longer has the problem, and
+		// neither does the yaml written from it. A dangling room vnum is
+		// left exactly as it was found, so it is still true of the converted
+		// directory and both loaders must be able to say so.
 	}
 }

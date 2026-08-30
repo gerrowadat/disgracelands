@@ -69,7 +69,17 @@ func (s *Source) Load(ctx context.Context) (*game.World, error) {
 func (s *Source) LoadWithWarnings(ctx context.Context) (*game.World, []world.Warning, error) {
 	l := &loader{dir: s.dir, mini: s.mini}
 	w, err := l.load(ctx)
-	return w, l.warnings, err
+	if err != nil {
+		return w, l.warnings, err
+	}
+	// The same cross-reference pass the classic loader runs, over the same
+	// game.World, so that a converted directory reports the dangling vnums
+	// it still has rather than reporting nothing at all (#286). Before this
+	// the archived lib/ produced twenty findings as classic and none as
+	// yaml, four of which were still true of the converted data -- so `lint`
+	// went quiet exactly at the cutover, on the format we actually run on.
+	l.warnings = append(l.warnings, world.CheckReferences(w)...)
+	return w, l.warnings, nil
 }
 
 type loader struct {
