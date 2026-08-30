@@ -91,7 +91,7 @@ func recordFromDoc(doc *playerDoc) (*game.PlayerRecord, []string, error) {
 		Description: worldtext.FromStored(string(doc.Identity.Description)),
 		Sex:         game.Sex(sex),
 		Class:       game.Class(class),
-		Race:        doc.Identity.Race,
+		Race:        game.Race(doc.Identity.Race),
 		Level:       doc.Identity.Level,
 		Hometown:    doc.Identity.Home,
 		Birth:       created,

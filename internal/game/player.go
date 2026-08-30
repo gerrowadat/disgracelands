@@ -36,7 +36,7 @@ type PlayerRecord struct {
 
 	Sex   Sex
 	Class Class
-	Race  int32
+	Race  Race
 	Level int32
 
 	// Hometown is the recall point.

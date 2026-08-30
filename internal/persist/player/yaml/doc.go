@@ -113,9 +113,11 @@ type identityDoc struct {
 	Sex   string `yaml:"sex,omitempty"`
 	Class string `yaml:"class,omitempty"`
 	// Race has no symbolic name table: nothing in internal/game ever reads
-	// PlayerRecord.Race (confirmed by grep — it is written and read back
-	// by ascii/binary and touched nowhere else), so there is no meaning to
-	// name it against, only a number to preserve.
+	// PlayerRecord.Race, so there is no meaning to name it against, only a
+	// number to preserve. The ascii format is the only one that carries it
+	// — structs.h:972's char_file_u has no race field, so the binary format
+	// never had one — which is why it is a bare number here too. game.Race
+	// exists to say that in one place; see its doc comment.
 	Race      int32    `yaml:"race,omitempty"`
 	Level     int32    `yaml:"level,omitempty"`
 	Remort    []string `yaml:"remort,omitempty"`
