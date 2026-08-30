@@ -1,0 +1,94 @@
+schema: dl/world@1
+zone:
+  vnum: 49
+  name: The Second Zone
+  range:
+  - 4900
+  - 4999
+  lifespan: 30
+  reset: always
+rooms:
+- vnum: 4900
+  name: The Antechamber Next Door
+  sector: inside
+  desc: |2
+       Zone 49's only room. It exists so that this corpus has two zones,
+    because a great deal of what the yaml writer decides -- which file a
+    mobile, an object or a shop is written into -- has exactly one possible
+    answer when there is only one zone to choose from.
+       The shopkeeper next door keeps a shop numbered in zone 50's range.
+mobiles:
+- vnum: 4901
+  keywords:
+  - attendant
+  - antechamber
+  short: the antechamber's attendant
+  long: |
+    An attendant keeps a shop here, for a shop numbered elsewhere.
+  desc: |2
+       This mobile keeps shop #5040, whose own vnum falls inside zone 50's
+    range while this keeper falls inside zone 49's. A writer that files a
+    shop by its own number sends the shop one way and its keeper the other.
+  act:
+  - spec
+  - sentinel
+  alignment: 0
+  level: 20
+  thac0: 10
+  ac: 0
+  hp: 10d10+100
+  damage: 2d4+2
+  gold: 500
+  exp: 1000
+  position: standing
+  default_position: standing
+  sex: male
+objects:
+- vnum: 4850
+  keywords:
+  - stray
+  - object
+  short: a stray object
+  desc: An object no zone's range claims lies here.
+  action_desc: |2
+       #4850 is below every zone's range -- 4900 is the lowest bottom in
+    this corpus -- so it is read out of zone 50's file and written into
+    zone 49's, the lowest zone. That is one of fallbackZone's two branches;
+    #5150 below is the other, and with a single zone they cannot disagree.
+       It is first in this file rather than last because the C looks records
+    up by binary search over one flat table in load order (real_object,
+    db.c:2828-2846), so vnums have to ascend across every indexed file. A
+    corpus that broke that would be invalid rather than hostile.
+  type: key
+  values:
+  - 0
+  - 0
+  - 0
+  - 0
+  weight: 0
+  cost: 0
+  rent: 0
+shops:
+- vnum: 5040
+  keeper: 4901
+  rooms:
+  - 4900
+  sells:
+  - 5003
+  markup: 1.2
+  markdown: 0.3
+  hours:
+  - - 0
+    - 28
+  messages:
+    no_such_item_keeper: "%s I have none of those."
+    no_such_item_player: "%s You do not have that."
+    do_not_buy: "%s I do not buy those."
+    keeper_broke: "%s I cannot afford that."
+    player_broke: "%s You cannot afford that."
+    buy: "%s That is %d coins."
+    sell: "%s I will give you %d coins."
+resets:
+- mob: 4901
+  room: 4900
+  max: 1

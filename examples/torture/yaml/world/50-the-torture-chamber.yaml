@@ -323,6 +323,35 @@ mobiles:
   position: standing
   default_position: standing
   sex: male
+- vnum: 5150
+  keywords:
+  - stray
+  - mobile
+  short: the stray mobile
+  long: |
+    A mobile no zone's range claims stands here.
+  desc: |2
+       #5150 is above zone 50's top of 5099 and above every other range, so
+    nothing claims it. It belongs in zone 50's file -- the zone whose range
+    begins nearest below it -- and a writer that sent every unclaimed record
+    to the lowest zone instead would put it in zone 49's and reverse the
+    mobile table, which is what makes it worth having rather than merely
+    present.
+       Last in the file, for real_object's reason above: the table is
+    binary-searched, so it has to ascend.
+  act:
+  - spec
+  alignment: 0
+  level: 5
+  thac0: 10
+  ac: 0
+  hp: 2d8+10
+  damage: 1d4+1
+  gold: 0
+  exp: 100
+  position: standing
+  default_position: standing
+  sex: neutral
 objects:
 - vnum: 5000
   keywords:

@@ -1,3 +1,19 @@
+#4850
+stray object~
+a stray object~
+An object no zone's range claims lies here.~
+   #4850 is below every zone's range -- 4900 is the lowest bottom in
+this corpus -- so it is read out of zone 50's file and written into
+zone 49's, the lowest zone. That is one of fallbackZone's two branches;
+#5150 below is the other, and with a single zone they cannot disagree.
+   It is first in this file rather than last because the C looks records
+up by binary search over one flat table in load order (real_object,
+db.c:2828-2846), so vnums have to ascend across every indexed file. A
+corpus that broke that would be invalid rather than hostile.
+~
+18 0 0
+0 0 0 0
+0 0 0
 #5000
 extremes object every flag~
 the object of every extreme~

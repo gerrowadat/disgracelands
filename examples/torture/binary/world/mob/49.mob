@@ -1,0 +1,14 @@
+#4901
+attendant antechamber~
+the antechamber's attendant~
+An attendant keeps a shop here, for a shop numbered elsewhere.
+~
+   This mobile keeps shop #5040, whose own vnum falls inside zone 50's
+range while this keeper falls inside zone 49's. A writer that files a
+shop by its own number sends the shop one way and its keeper the other.
+~
+ab 0 0 S
+20 10 0 10d10+100 2d4+2
+500 1000
+8 8 1
+$

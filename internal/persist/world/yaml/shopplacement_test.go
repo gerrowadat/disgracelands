@@ -14,6 +14,13 @@ import (
 	"github.com/gerrowadat/disgracelands/internal/persist/world"
 )
 
+// Since #285 examples/torture carries this case too, with the same vnums
+// and for the same reason -- shop #5040 in zone 49's file, shop #50 in zone
+// 50's -- so filing a shop by its own vnum now fails a plain `dlctl import`
+// of that directory rather than only this test. This stays as the finer
+// grained one: it can assert which file each shop landed in, where the
+// corpus can only notice that the shop table came back reordered.
+//
 // handNumberedShopWorld is the shape the archived Disgracelands lib/ turned
 // out to have and no checked-in fixture did: two zones, and shop files whose
 // shops are numbered by hand rather than out of the zone's own range.

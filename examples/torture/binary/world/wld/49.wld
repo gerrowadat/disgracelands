@@ -1,0 +1,11 @@
+#4900
+The Antechamber Next Door~
+   Zone 49's only room. It exists so that this corpus has two zones,
+because a great deal of what the yaml writer decides -- which file a
+mobile, an object or a shop is written into -- has exactly one possible
+answer when there is only one zone to choose from.
+   The shopkeeper next door keeps a shop numbered in zone 50's range.
+~
+49 0 0
+S
+$
