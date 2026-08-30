@@ -1036,6 +1036,69 @@ func (s *Server) Save(ctx context.Context, c *game.Character) error {
 	return s.players.Save(ctx, &snapshot)
 }
 
+// playerSnapshot is one online character as of the moment a sweep read the
+// world: their name, the record to write, whether they still have a
+// connection, and the character itself.
+//
+// The character is carried for *identity* only — as a map key, and to hand
+// back to the world goroutine for `w.Remove`. Nothing outside the world
+// goroutine may dereference it, which is the whole reason `linked` is a
+// field here rather than a `c.Client != nil` at the point of use.
+type playerSnapshot struct {
+	character *game.Character
+	name      string
+	record    game.PlayerRecord
+	linked    bool
+}
+
+// snapshotPlayers reads every online player in one pass over the world,
+// for the autosave sweep.
+//
+// The sweep used to call Save per character, and Save opens with a DoSync
+// of its own — so a sweep of N players took N+1 round-trips onto the world
+// goroutine, each waited on in turn, interleaved with N disk writes. That
+// is the wrong shape twice over. It queues N tasks to copy N structs one
+// task could have copied; and it staggers the snapshots across however
+// long the sweep takes, so on a slow disk the last character is written as
+// they were seconds before the sweep reached them while the first is
+// written as they were when it began. A save sweep ought to mean
+// "everybody, as of one moment", and now it does. See #325.
+//
+// It also closes a data race that the per-character shape had been hiding.
+// The sweep held the `*game.Character` values across the whole loop and
+// read `c.Client` and `c.Name` off them to decide who was linkdead —
+// off the world goroutine, while the world goroutine writes `c.Client`
+// (Leave sets it to nil inside its own DoSync). `-race` never found it
+// because the autosave ticker is sixty seconds and nothing in the suite
+// runs that long, which is exactly the kind of race CLAUDE.md's
+// "never flaky-until-proven" rule is about: not observed is not absent.
+// Everything the sweep needs off the goroutine is copied on it now.
+//
+// Save keeps its own DoSync, which is right for its other callers —
+// `save`, wiz-set and quit each save one character and none of them wants
+// a sweep.
+func (s *Server) snapshotPlayers(ctx context.Context) ([]playerSnapshot, error) {
+	var out []playerSnapshot
+	err := s.engine.DoSync(ctx, func(w *game.Live) {
+		for _, c := range w.Players() {
+			// IS_NPC, for the reason Save documents at length: Players()
+			// already excludes mobiles, and a player file named after one
+			// breaks every login in the game, so this is checked at both
+			// ends rather than at whichever end is currently correct.
+			if c.Record == nil || c.IsNPC() {
+				continue
+			}
+			out = append(out, playerSnapshot{
+				character: c,
+				name:      c.Name,
+				record:    game.BaseRecord(*c.Record),
+				linked:    c.Client != nil,
+			})
+		}
+	})
+	return out, err
+}
+
 // SaveAliases writes back a character's aliases and leaves everything else on
 // disk exactly as it was, for do_save's duplication guard (act.other.c:180-
 // 184; see session.doSave).
@@ -1118,36 +1181,35 @@ func (s *Server) RunAutosave(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			var all []*game.Character
-			if err := s.engine.DoSync(ctx, func(w *game.Live) {
-				all = w.Players()
-			}); err != nil {
+			all, err := s.snapshotPlayers(ctx)
+			if err != nil {
 				return
 			}
 
 			doSave := tickAutosave(game.Tuning(), &minsSinceCrashsave)
 
 			now := time.Now()
-			for _, c := range all {
+			for i := range all {
+				p := &all[i]
 				if doSave {
-					if err := s.Save(ctx, c); err != nil {
-						s.logger.Error("autosave failed", "character", c.Name, "error", err)
+					if err := s.players.Save(ctx, &p.record); err != nil {
+						s.logger.Error("autosave failed", "character", p.name, "error", err)
 					}
 				}
 
-				if c.Client != nil {
-					delete(linkdeadSince, c)
+				if p.linked {
+					delete(linkdeadSince, p.character)
 					continue
 				}
-				if _, seen := linkdeadSince[c]; !seen {
-					linkdeadSince[c] = now
+				if _, seen := linkdeadSince[p.character]; !seen {
+					linkdeadSince[p.character] = now
 					continue
 				}
-				if now.Sub(linkdeadSince[c]) < linkdeadTimeout {
+				if now.Sub(linkdeadSince[p.character]) < linkdeadTimeout {
 					continue
 				}
-				delete(linkdeadSince, c)
-				s.logger.Info("reaping a linkdead character", "character", c.Name)
+				delete(linkdeadSince, p.character)
+				s.logger.Info("reaping a linkdead character", "character", p.name)
 				// mudlog(buf, CMP, LVL_GOD, TRUE) (limits.c:447-448), the
 				// tail of check_idling. The C force-rents on the way out
 				// (Crash_idlesave) and this port has already crash-saved
@@ -1156,8 +1218,8 @@ func (s *Server) RunAutosave(ctx context.Context) {
 				// god sees is a body that nobody came back for being
 				// taken away, which is the same thing either way.
 				s.wizlog(obs.LogComplete, game.LevelGod,
-					"%s force-rented and extracted (idle).", c.Name)
-				_ = s.engine.DoSync(ctx, func(w *game.Live) { w.Remove(c) })
+					"%s force-rented and extracted (idle).", p.name)
+				_ = s.engine.DoSync(ctx, func(w *game.Live) { w.Remove(p.character) })
 			}
 		}
 	}
