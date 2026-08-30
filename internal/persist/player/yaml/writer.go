@@ -40,7 +40,7 @@ func docFromRecord(rec *game.PlayerRecord) playerDoc {
 			Title:       rec.Title,
 			Sex:         sex,
 			Class:       class,
-			Race:        rec.Race,
+			Race:        rec.Race.Number(),
 			Level:       rec.Level,
 			Remort:      remort,
 			RemortRaw:   remortRaw,

@@ -268,6 +268,29 @@ func ParseSex(arg byte) Sex {
 	return SexUndefined
 }
 
+// Race is a character's race. Unlike Class and Sex it enumerates nothing
+// here: this server has no races, no race name table and no rule that
+// consults one, and `internal/game` never reads PlayerRecord.Race at all.
+// It is a number the ascii player format reserves a tag for and that this
+// server therefore has to preserve across a round-trip, and nothing else.
+//
+// The type exists for the other half of §3.2's argument. Race sat between
+// Class and Level as a bare int32, so `rec.Race = rec.Level` compiled and
+// so did the transposition of any pair of them; that is the same hazard
+// §3.2 cites Title(class, level, sex int32) for, one struct along. Naming
+// the domain costs one declaration and is also the only place a reader
+// can be told the field means nothing here, which is the more useful half.
+//
+// The archived binary format has no race at all -- structs.h:972's
+// char_file_u goes name, description, title, sex, chclass, level -- so a
+// character saved through it never had one to lose. See
+// docs/proposals/idiomatic-go.md §4.2.
+type Race int
+
+// Number is the race's stored number, for the player formats. There is no
+// name table to key, because there are no names.
+func (r Race) Number() int32 { return int32(r) } //nolint:gosec // the format's width, not an arithmetic conversion
+
 // StartingConditions are the hunger, thirst and drunkenness a new character
 // begins with, from do_start (class.c:1802). Order is drunk, full, thirsty.
 var StartingConditions = [3]int32{0, 24, 24}

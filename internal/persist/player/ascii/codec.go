@@ -391,7 +391,7 @@ func assign(p *game.PlayerRecord, tag, value string, next func() (string, bool),
 	case "Clas":
 		p.Class = game.Class(num32())
 	case "Race":
-		p.Race = num32()
+		p.Race = game.Race(num32())
 	case "Levl":
 		p.Level = num32()
 	case "Home":
