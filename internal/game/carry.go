@@ -239,7 +239,7 @@ func (l *Live) ExtractObject(o *Object) {
 	}
 
 	l.detach(o)
-	delete(l.objects, o.ID)
+	l.untrack(o)
 }
 
 // RoomObjects lists what is lying in a room.
@@ -276,7 +276,28 @@ func (l *Live) track(o *Object) {
 	if l.objects == nil {
 		l.objects = map[uint64]*Object{}
 	}
+	if _, already := l.objects[o.ID]; already {
+		return
+	}
 	l.objects[o.ID] = o
+	if l.objCounts == nil {
+		l.objCounts = map[ObjVnum]int32{}
+	}
+	l.objCounts[o.Vnum()]++
+}
+
+// untrack is track's other half: the one place that deletes from
+// l.objects, so objCounts cannot drift from it.
+//
+// An object's Def never changes while it exists — ReloadObject mutates the
+// shared *ObjDef in place and cannot alter its Vnum, having found it by
+// that vnum — so the vnum this decrements is the one track incremented.
+func (l *Live) untrack(o *Object) {
+	if _, tracked := l.objects[o.ID]; !tracked {
+		return
+	}
+	delete(l.objects, o.ID)
+	l.objCounts[o.Vnum()]--
 }
 
 // removeObject drops one object from a slice, preserving order.

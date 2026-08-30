@@ -277,7 +277,7 @@ func (l *Live) SpawnMobile(vnum MobVnum, room RoomVnum, r *rng.Rand) *Character 
 	if err := l.Enter(c, room); err != nil {
 		return nil
 	}
-	l.mobiles[c] = true
+	l.addMobile(c)
 	return c
 }
 
@@ -518,25 +518,56 @@ func (l *Live) ReloadZone(fresh *ZoneDef, freshRooms []*RoomDef, freshMobiles []
 
 // mobileCount is how many of a prototype exist, which is what the population
 // caps are measured against.
-func (l *Live) mobileCount(vnum MobVnum) int32 {
-	var n int32
-	for c := range l.mobiles {
-		if c.MobDef != nil && c.MobDef.Vnum == vnum {
-			n++
-		}
+//
+// A map lookup rather than a walk of l.mobiles, and the difference is not
+// cosmetic. ResetZone calls this once per `M` command, so counting by
+// scanning made a reset O(commands x mobiles in the world): a CPU profile
+// of the stock world's largest zone (54, "New Thalos", 401 commands) put
+// 97% of the whole reset inside this one function. See #322.
+func (l *Live) mobileCount(vnum MobVnum) int32 { return l.mobCounts[vnum] }
+
+// addMobile puts a mobile into the world's mobile list and keeps
+// mobCounts in step. The one place that writes l.mobiles, so the index
+// cannot drift from it.
+//
+// Idempotent: a mobile already listed is not counted twice. Track is
+// exported and callable on anything, and nothing in its contract says it
+// may not be called on a mobile already in the world.
+func (l *Live) addMobile(c *Character) {
+	if c == nil || l.mobiles[c] {
+		return
 	}
-	return n
+	l.mobiles[c] = true
+	if c.MobDef != nil {
+		if l.mobCounts == nil {
+			l.mobCounts = map[MobVnum]int32{}
+		}
+		l.mobCounts[c.MobDef.Vnum]++
+	}
 }
 
-func (l *Live) objectCount(vnum ObjVnum) int32 {
-	var n int32
-	for _, o := range l.objects {
-		if o.Vnum() == vnum {
-			n++
-		}
+// dropMobile is addMobile's other half: the one place that deletes from
+// l.mobiles.
+//
+// A mobile's MobDef never changes while it is in the world — ReloadMobile
+// mutates the shared *MobDef in place and cannot alter its Vnum, since it
+// found it by that vnum in the first place (reset.go's ReloadMobile) — so
+// the vnum this decrements is the one addMobile incremented.
+func (l *Live) dropMobile(c *Character) {
+	if c == nil || !l.mobiles[c] {
+		return
 	}
-	return n
+	delete(l.mobiles, c)
+	if c.MobDef != nil {
+		l.mobCounts[c.MobDef.Vnum]--
+	}
 }
+
+// objectCount is objectCount's object half, and is a map lookup for the
+// same reason: ResetZone calls it once per `O` command, and l.objects
+// holds every object anyone is carrying and everything lying on a floor,
+// so the scan it replaces got slower the longer the server stayed up.
+func (l *Live) objectCount(vnum ObjVnum) int32 { return l.objCounts[vnum] }
 
 func (l *Live) findObjectByVnum(vnum ObjVnum) *Object {
 	for _, o := range l.objects {
@@ -560,7 +591,7 @@ func (l *Live) findObjectInRoom(room RoomVnum, vnum ObjVnum) *Object {
 // implementor's `load`, or a test.
 func (l *Live) Track(c *Character) {
 	if c != nil && c.IsNPC() {
-		l.mobiles[c] = true
+		l.addMobile(c)
 	}
 }
 
@@ -575,7 +606,7 @@ func (l *Live) Mobiles() []*Character {
 
 // RemoveMobile takes a dead mobile out of the world.
 func (l *Live) RemoveMobile(c *Character) {
-	delete(l.mobiles, c)
+	l.dropMobile(c)
 	l.Remove(c)
 }
 
