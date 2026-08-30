@@ -102,7 +102,7 @@ type StoredObject struct {
 	Vnum game.ObjVnum
 
 	Values     [game.NumObjValues]int32
-	ExtraFlags game.Flags
+	ExtraFlags game.ExtraFlagSet
 	Weight     int32
 	Timer      int32
 	// PermAffect is obj_flags.bitvector: the AFF_* bits wearing it confers.

@@ -34,7 +34,7 @@ func IdentifyObject(obj *Object) string {
 		fmt.Fprintf(&out, "Item will give you following abilities:  %s\r\n",
 			SprintBit(uint64(obj.PermAffect), affectBitNames))
 	}
-	fmt.Fprintf(&out, "Item is: %s\r\n", SprintBit(uint64(obj.ExtraFlags), extraBitNames))
+	fmt.Fprintf(&out, "Item is: %s\r\n", SprintBit(obj.ExtraFlags.Raw(), extraBitNames))
 	fmt.Fprintf(&out, "Weight: %d, Value: %d, Rent: %d, Min Level: %d\r\n",
 		obj.TotalWeight(), obj.Cost, obj.RentPerDay(), obj.MinLevel())
 

@@ -386,7 +386,7 @@ func TestCursedThingsStayWithYou(t *testing.T) {
 	c.send("get bag")
 	c.expect("You get a bag.")
 	inWorld(t, srv, func(_ *game.Live) {
-		sword.ExtraFlags = sword.ExtraFlags.Set(game.ItemNoDrop)
+		sword.ExtraFlags = sword.ExtraFlags.With(game.ItemNoDrop)
 	})
 
 	c.send("drop sword")

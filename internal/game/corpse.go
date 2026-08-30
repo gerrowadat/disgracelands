@@ -45,7 +45,7 @@ func (l *Live) MakeCorpse(c *Character) *Object {
 
 	corpse.Type = ItemContainer
 	corpse.WearFlags = NewSet(ItemWearTake)
-	corpse.ExtraFlags = ItemNoDonate
+	corpse.ExtraFlags = NewSet(ItemNoDonate)
 	corpse.Values[containerCapacity] = 0 // capacity: nothing more goes in
 	corpse.Values[containerCorpseValue] = corpseIdentifier
 

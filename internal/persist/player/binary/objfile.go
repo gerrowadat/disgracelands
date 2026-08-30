@@ -143,8 +143,16 @@ func (c *objCodec) decode(b []byte) (*player.RentFile, error) {
 	for off := c.header.Size; off+c.elem.Size <= len(b); off += c.elem.Size {
 		rec := b[off : off+c.elem.Size]
 		obj := player.StoredObject{
-			Vnum:       game.ObjVnum(e.i32(rec, "item_number")),
-			ExtraFlags: game.Flags(e.i32(rec, "extra_flags")), //nolint:gosec // reinterpretation: the field is a bitvector
+			Vnum: game.ObjVnum(e.i32(rec, "item_number")),
+			// Sign-extended, not zero-extended: extra_flags is an int32 in the
+			// file and this port has always widened it as a signed value, so
+			// an object with bit 31 set comes back with bits 32-63 set too and
+			// the yaml writer records them in flags_raw. That is visible in
+			// examples/torture (flags_raw: 18446744073709289472), which makes
+			// it part of the checked-in format rather than an implementation
+			// detail — docs/proposals/idiomatic-go.md §2.1. Zero-extending
+			// here was caught by TestImportMatchesTheCheckedInExamples.
+			ExtraFlags: game.SetFromRaw[game.ExtraFlag](uint64(int64(e.i32(rec, "extra_flags")))), //nolint:gosec // reinterpretation: the field is a bitvector
 			Weight:     e.i32(rec, "weight"),
 			Timer:      e.i32(rec, "timer"),
 			PermAffect: game.Flags(e.varInt(rec, "bitvector")), //nolint:gosec // ditto
@@ -189,7 +197,7 @@ func (c *objCodec) encode(f *player.RentFile) ([]byte, error) {
 	for i, obj := range f.Objects {
 		rec := b[c.header.Size+i*c.elem.Size:][:c.elem.Size]
 		e.putI32(rec, "item_number", int32(obj.Vnum))
-		e.putI32(rec, "extra_flags", int32(obj.ExtraFlags)) //nolint:gosec // reinterpretation: the field is a bitvector
+		e.putI32(rec, "extra_flags", int32(uint32(obj.ExtraFlags.Raw()))) //nolint:gosec // reinterpretation: the field is a bitvector
 		e.putI32(rec, "weight", obj.Weight)
 		e.putI32(rec, "timer", obj.Timer)
 		e.putVar(rec, "bitvector", int64(obj.PermAffect)) //nolint:gosec // reinterpretation: the field is a bitvector

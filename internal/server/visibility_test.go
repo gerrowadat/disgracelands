@@ -236,7 +236,7 @@ func TestAnInvisibleObjectIsNotOnTheFloor(t *testing.T) {
 	c.expect("A long sword is lying here.")
 
 	if err := srv.engine.DoSync(context.Background(), func(_ *game.Live) {
-		sword.ExtraFlags = sword.ExtraFlags.Set(game.ItemInvisible)
+		sword.ExtraFlags = sword.ExtraFlags.With(game.ItemInvisible)
 	}); err != nil {
 		t.Fatal(err)
 	}

@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gerrowadat/disgracelands/internal/game"
 	"github.com/gerrowadat/disgracelands/internal/persist/houses"
 	"github.com/gerrowadat/disgracelands/internal/persist/player"
 )
@@ -135,7 +136,7 @@ func TestHouseObjectFiles(t *testing.T) {
 
 	contents := []player.StoredObject{
 		{Vnum: 3009, Weight: 1},
-		{Vnum: 3010, Weight: 2, ExtraFlags: 1},
+		{Vnum: 3010, Weight: 2, ExtraFlags: game.NewSet(game.ItemHum)},
 	}
 	if err := s.SaveObjects(3200, contents); err != nil {
 		t.Fatalf("saving: %v", err)

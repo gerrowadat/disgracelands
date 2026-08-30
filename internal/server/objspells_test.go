@@ -83,7 +83,7 @@ func TestBlessingSomethingTooHeavy(t *testing.T) {
 	c.expect("A suit of plate mail glows briefly.")
 
 	inWorld(t, srv, func(_ *game.Live) {
-		plate.ExtraFlags = plate.ExtraFlags.Clear(game.ItemBless)
+		plate.ExtraFlags = plate.ExtraFlags.Without(game.ItemBless)
 		plate.Weight = 500
 	})
 

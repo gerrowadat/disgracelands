@@ -292,7 +292,7 @@ func diceDocString(d game.Dice) string {
 
 func objDocFrom(o *game.ObjDef) objDoc {
 	wearNames, wearRaw := game.NameBits(o.WearFlags.Raw(), game.YamlWearFlagNames())
-	flagNames, flagRaw := game.NameBits(uint64(o.ExtraFlags), game.YamlItemExtraFlagNames())
+	flagNames, flagRaw := game.NameBits(o.ExtraFlags.Raw(), game.YamlItemExtraFlagNames())
 	permNames, permRaw := game.NameBits(uint64(o.PermAffect), game.YamlAffectFlagNames()) //nolint:gosec // affect bits fit comfortably
 
 	od := objDoc{

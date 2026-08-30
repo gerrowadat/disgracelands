@@ -32,13 +32,13 @@ func AlterObject(spell int32, obj *Object, casterLevel int32) string {
 		// Weight is the limit, and it scales with the caster: five pounds
 		// per level. A twentieth-level cleric cannot bless a suit of plate.
 		if !obj.ExtraFlags.Has(ItemBless) && obj.TotalWeight() <= 5*casterLevel {
-			obj.ExtraFlags = obj.ExtraFlags.Set(ItemBless)
+			obj.ExtraFlags = obj.ExtraFlags.With(ItemBless)
 			return capitaliseFirst(obj.Name()) + " glows briefly."
 		}
 
 	case SpellCurse:
 		if !obj.ExtraFlags.Has(ItemNoDrop) {
-			obj.ExtraFlags = obj.ExtraFlags.Set(ItemNoDrop)
+			obj.ExtraFlags = obj.ExtraFlags.With(ItemNoDrop)
 			// A cursed weapon also loses a point of damage size — value 2 is
 			// the die, so a 2d6 sword becomes 2d5. Curse it repeatedly and
 			// the die goes to nothing, except that the flag stops it.
@@ -49,8 +49,8 @@ func AlterObject(spell int32, obj *Object, casterLevel int32) string {
 		}
 
 	case SpellInvisible:
-		if !obj.ExtraFlags.HasAny(ItemNoInvis | ItemInvisible) {
-			obj.ExtraFlags = obj.ExtraFlags.Set(ItemInvisible)
+		if !obj.ExtraFlags.HasAny(ItemNoInvis, ItemInvisible) {
+			obj.ExtraFlags = obj.ExtraFlags.With(ItemInvisible)
 			return capitaliseFirst(obj.Name()) + " vanishes."
 		}
 
@@ -62,7 +62,7 @@ func AlterObject(spell int32, obj *Object, casterLevel int32) string {
 
 	case SpellRemoveCurse:
 		if obj.ExtraFlags.Has(ItemNoDrop) {
-			obj.ExtraFlags = obj.ExtraFlags.Clear(ItemNoDrop)
+			obj.ExtraFlags = obj.ExtraFlags.Without(ItemNoDrop)
 			if obj.Type == ItemWeapon {
 				obj.Values[2]++
 			}
@@ -145,7 +145,7 @@ func EnchantWeapon(obj *Object, caster *PlayerRecord, level int32) string {
 		}
 	}
 
-	obj.ExtraFlags = obj.ExtraFlags.Set(ItemMagic)
+	obj.ExtraFlags = obj.ExtraFlags.With(ItemMagic)
 	obj.Affects = []ObjAffect{
 		{Location: ApplyHitRoll, Modifier: 1 + boolToInt(level >= 18)},
 		{Location: ApplyDamRoll, Modifier: 1 + boolToInt(level >= 20)},
@@ -154,10 +154,10 @@ func EnchantWeapon(obj *Object, caster *PlayerRecord, level int32) string {
 	// The weapon takes the caster's side, and says so in their colour.
 	switch {
 	case IsGood(caster):
-		obj.ExtraFlags = obj.ExtraFlags.Set(ItemAntiEvil)
+		obj.ExtraFlags = obj.ExtraFlags.With(ItemAntiEvil)
 		return capitaliseFirst(obj.Name()) + " glows blue."
 	case IsEvil(caster):
-		obj.ExtraFlags = obj.ExtraFlags.Set(ItemAntiGood)
+		obj.ExtraFlags = obj.ExtraFlags.With(ItemAntiGood)
 		return capitaliseFirst(obj.Name()) + " glows red."
 	}
 	return capitaliseFirst(obj.Name()) + " glows yellow."

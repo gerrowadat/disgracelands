@@ -16,7 +16,7 @@ func objectWithKeywords(words string) *Object {
 
 func TestShopKeywordExpressions(t *testing.T) {
 	sword := objectWithKeywords("sword long steel")
-	sword.ExtraFlags = ItemGlow
+	sword.ExtraFlags = NewSet(ItemGlow)
 
 	for _, tc := range []struct {
 		expr string
@@ -162,7 +162,7 @@ func TestTradeWith(t *testing.T) {
 		t.Errorf("a worthless weapon got %v, want TradeNoValue", got)
 	}
 
-	noSell := &Object{Type: ItemWeapon, Cost: 100, ExtraFlags: ItemNoSell}
+	noSell := &Object{Type: ItemWeapon, Cost: 100, ExtraFlags: NewSet(ItemNoSell)}
 	if got := TradeWith(shop, noSell); got != TradeNotOK {
 		t.Errorf("a NOSELL weapon got %v, want TradeNotOK", got)
 	}

@@ -64,7 +64,7 @@ func (l *loader) parseObject(r *reader, vnum game.ObjVnum) (*game.ObjDef, error)
 		return nil, fmt.Errorf("%s: item type %q is not a number", r.where(what), fields[0])
 	}
 	obj.Type = typ
-	obj.ExtraFlags = game.Flags(l.parseFlagField(r, what, "extra flags", fields[1]))
+	obj.ExtraFlags = game.SetFromRaw[game.ExtraFlag](l.parseFlagField(r, what, "extra flags", fields[1]))
 	obj.WearFlags = game.SetFromRaw[game.WearFlag](l.parseFlagField(r, what, "wear flags", fields[2]))
 	if len(fields) >= 4 {
 		if perm, ok := scanInt(fields[3]); ok {
