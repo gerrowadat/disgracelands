@@ -24,29 +24,15 @@ import (
 // affectBitNames are affected_bits[] (constants.c:640). The last five are
 // local: no-track, the unused slot, holy shield, sneak, hide, silence and
 // charm run past where stock CircleMUD stops.
-var affectBitNames = []string{
-	"BLIND", "INVIS", "DET-ALIGN", "DET-INVIS", "DET-MAGIC", "SENSE-LIFE",
-	"WATWALK", "SANCT", "GROUP", "CURSE", "INFRA", "POISON", "PROT-EVIL",
-	"PROT-GOOD", "SLEEP", "NO_TRACK", "UNUSED", "HOLY-SHIELD", "SNEAK",
-	"HIDE", "SILENCE", "CHARM",
-}
+var affectBitNames = displayNamesOf(affectFlagNames)
 
 // extraBitNames are extra_bits[] (constants.c:665). NO_LOCATE is local, and
 // carries a `/*humbug*/` marker on either side of it in the C.
-var extraBitNames = []string{
-	"GLOW", "HUM", "NO_RENT", "NO_DONATE", "NO_INVIS", "INVISIBLE", "MAGIC",
-	"NO_DROP", "BLESS", "ANTI_GOOD", "ANTI_EVIL", "ANTI_NEUTRAL", "ANTI_MAGE",
-	"ANTI_CLERIC", "ANTI_THIEF", "ANTI_WARRIOR", "NO_SELL", "NO_LOCATE",
-}
+var extraBitNames = displayNamesOf(itemExtraFlagNames)
 
 // applyTypeNames are apply_types[] (constants.c:690), indexed by apply
 // location rather than by bit.
-var applyTypeNames = []string{
-	"NONE", "STR", "DEX", "INT", "WIS", "CON", "CHA", "CLASS", "LEVEL", "AGE",
-	"CHAR_WEIGHT", "CHAR_HEIGHT", "MAXMANA", "MAXHIT", "MAXMOVE", "GOLD",
-	"EXP", "ARMOR", "HITROLL", "DAMROLL", "SAVING_PARA", "SAVING_ROD",
-	"SAVING_PETRI", "SAVING_BREATH", "SAVING_SPELL",
-}
+var applyTypeNames = displayNamesOf(applyNames)
 
 // SprintBit lists the names of the set bits, porting sprintbit (utils.c).
 //
@@ -106,11 +92,7 @@ func ApplyTypeNames() []string { return applyTypeNames }
 // for the same reason: a table is data, and data is checked rather than read.
 
 // roomBitNames are room_bits[] (constants.c:40): the ROOM_* flags.
-var roomBitNames = []string{
-	"DARK", "DEATH", "NO_MOB", "INDOORS", "PEACEFUL", "SOUNDPROOF", "NO_TRACK",
-	"NO_MAGIC", "TUNNEL", "PRIVATE", "GODROOM", "HOUSE", "HCRSH", "ATRIUM",
-	"OLC", "*", "GOOD_REGEN", "CAN_QUIT", "PKILL",
-}
+var roomBitNames = displayNamesOf(roomFlagNames)
 
 // exitBitNames are exit_bits[] (constants.c:67): the EX_* flags on a door.
 var exitBitNames = []string{
@@ -118,42 +100,22 @@ var exitBitNames = []string{
 }
 
 // sectorNames are sector_types[] (constants.c:77), indexed by SECT_* rather than by bit.
-var sectorNames = []string{
-	"Inside", "City", "Field", "Forest", "Hills", "Mountains", "Water (Swim)",
-	"Water (No Swim)", "In Flight", "Underwater",
-}
+var sectorNames = displayNamesOf(sectorTypeNames)
 
 // genderNames are genders[] (constants.c:96).
-var genderNames = []string{
-	"neutral", "male", "female",
-}
+var genderNames = displayNamesOf(sexNames)
 
 // positionNames are position_types[] (constants.c:106), indexed by POS_*.
-var positionNames = []string{
-	"Dead", "Mortally wounded", "Incapacitated", "Stunned", "Sleeping",
-	"Resting", "Sitting", "Fighting", "Standing",
-}
+var positionNames = displayNamesOf(positionTypeNames)
 
 // playerBitNames are player_bits[] (constants.c:121): the PLR_* flags.
-var playerBitNames = []string{
-	"KILLER", "THIEF", "FROZEN", "DONTSET", "WRITING", "MAILING", "CSH",
-	"SITEOK", "NOSHOUT", "NOTITLE", "DELETED", "LOADRM", "NO_WIZL", "NO_DEL",
-	"INVST", "CRYO", "DEAD",
-}
+var playerBitNames = displayNamesOf(playerFlagNames)
 
 // actionBitNames are action_bits[] (constants.c:144): the MOB_* flags.
-var actionBitNames = []string{
-	"SPEC", "SENTINEL", "SCAVENGER", "ISNPC", "AWARE", "AGGR", "STAY-ZONE",
-	"WIMPY", "AGGR_EVIL", "AGGR_GOOD", "AGGR_NEUTRAL", "MEMORY", "HELPER",
-	"NO_CHARM", "NO_SUMMN", "NO_SLEEP", "NO_BASH", "NO_BLIND", "DEAD",
-}
+var actionBitNames = displayNamesOf(mobActFlagNames)
 
 // preferenceBitNames are preference_bits[] (constants.c:169): the PRF_* flags.
-var preferenceBitNames = []string{
-	"BRIEF", "COMPACT", "DEAF", "NO_TELL", "D_HP", "D_MANA", "D_MOVE", "AUTOEX",
-	"NO_HASS", "QUEST", "SUMN", "NO_REP", "LIGHT", "C1", "C2", "NO_WIZ", "L1",
-	"L2", "NO_AUC", "NO_GOS", "NO_GTZ", "RMFLG",
-}
+var preferenceBitNames = displayNamesOf(preferenceNames)
 
 // connectedNames are connected_types[] (constants.c:226): the CON_* login states.
 var connectedNames = []string{
@@ -166,10 +128,7 @@ var connectedNames = []string{
 }
 
 // wearBitNames are wear_bits[] (constants.c:336): the ITEM_WEAR_* flags.
-var wearBitNames = []string{
-	"TAKE", "FINGER", "NECK", "BODY", "HEAD", "LEGS", "FEET", "HANDS", "ARMS",
-	"SHIELD", "ABOUT", "WAIST", "WRIST", "WIELD", "HOLD",
-}
+var wearBitNames = displayNamesOf(wearFlagNames)
 
 // containerBitNames are container_bits[] (constants.c:414): the CONT_* flags.
 var containerBitNames = []string{
@@ -182,9 +141,7 @@ var npcClassNames = []string{
 }
 
 // pcClassNames are pc_class_types[] (class.c:58).
-var pcClassNames = []string{
-	"Magic User", "Cleric", "Thief", "Warrior", "Paladin",
-}
+var pcClassNames = displayNamesOf(classNames)
 
 // NameBits renders f as the names in table, for a format that writes bit
 // names rather than sprintbit's letter-and-space list (the yaml data
