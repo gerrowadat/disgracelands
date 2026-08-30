@@ -309,6 +309,35 @@ func TestWebWarnings(t *testing.T) {
 	}
 }
 
+// The usage text is printed to the writer Load is handed, and so are
+// flag's own complaints about it: PrintDefaults collects any panic
+// isZeroValue provoked and writes the notices to f.Output() after the
+// option list (flag.go:645-650). So an assertion on this string catches
+// them, and catches them for any Value type added later, not just for
+// aliasValue -- which is the point, since the failure is a property of
+// how a Value behaves when built by reflection rather than by us.
+func TestUsagePrintsNoPanicNotices(t *testing.T) {
+	var sb strings.Builder
+	if _, err := Load([]string{"--help"}, noEnv, &sb); err == nil {
+		t.Fatal("Load([--help]) succeeded, want flag.ErrHelp")
+	}
+	if out := sb.String(); strings.Contains(out, "panic calling String method") {
+		t.Errorf("usage output carries flag's zero-value panic notices (#284):\n%s", out)
+	}
+}
+
+// aliasValue's zero value is never registered as a flag -- but PrintDefaults
+// builds one by reflection on every run, so it has to survive being used.
+func TestZeroAliasValueHasAUsableString(t *testing.T) {
+	var zero aliasValue
+	if got := zero.String(); got != "" {
+		t.Errorf("aliasValue{}.String() = %q, want \"\"", got)
+	}
+	if zero.IsBoolFlag() {
+		t.Error("aliasValue{}.IsBoolFlag() = true, want false")
+	}
+}
+
 func TestUsageDocumentsEnvironmentVariables(t *testing.T) {
 	// The usage text is the only place the flag/env correspondence is visible
 	// to an operator, so it has to actually appear there.

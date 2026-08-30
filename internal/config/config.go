@@ -558,6 +558,25 @@ func (a aliasValue) IsBoolFlag() bool {
 	return ok && bf.IsBoolFlag()
 }
 
+// String tolerates a nil embedded Value, which is not a case any alias
+// registered above can reach -- but is exactly the case flag.PrintDefaults
+// manufactures. To decide whether a default is worth printing, isZeroValue
+// builds a fresh zero of the flag's Value type by reflection and calls
+// String on it (flag.go:538-560). The zero aliasValue embeds a nil
+// flag.Value interface, so the promoted String dereferences nil; flag
+// recovers, and prints "panic calling String method on zero
+// config.aliasValue for flag d" -- once per alias, six lines of it, between
+// the option list and the alias summary of every `dlmud --help` and every
+// usage error. Nothing was broken, but the first thing a new operator runs
+// printed six panics at them (#284). Same reason IsBoolFlag above is written
+// to work on a zero value.
+func (a aliasValue) String() string {
+	if a.Value == nil {
+		return ""
+	}
+	return a.Value.String()
+}
+
 func contains(haystack []string, needle string) bool {
 	for _, s := range haystack {
 		if s == needle {
