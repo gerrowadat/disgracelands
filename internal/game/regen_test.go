@@ -214,7 +214,7 @@ func TestRemortedCharactersHealLikeCasters(t *testing.T) {
 	warrior := &PlayerRecord{Class: ClassWarrior, Conditions: [3]int32{0, 24, 24}}
 	remorted := &PlayerRecord{
 		Class: ClassWarrior, Conditions: [3]int32{0, 24, 24},
-		RemortVector: int32(RemortCleric),
+		RemortVector: NewSet(ClassCleric),
 	}
 
 	plain := HitGain(warrior, ctx, now)

@@ -71,7 +71,7 @@ func richRecord() *game.PlayerRecord {
 		LoadRoom:      3001,
 		BadPasswords:  0,
 		SpellsToLearn: 3,
-		RemortVector:  1 << game.ClassThief,
+		RemortVector:  game.NewSet(game.ClassThief),
 	}
 	// A record that has been through a decoder has its unaffected figures
 	// snapshotted, and a round trip is only a round trip against one that

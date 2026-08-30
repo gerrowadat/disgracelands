@@ -128,7 +128,7 @@ func recordFromDoc(doc *playerDoc) (*game.PlayerRecord, []string, error) {
 		LoadRoom:      game.RoomVnum(doc.Identity.LoadRoom),
 		BadPasswords:  doc.BadPasswordAttempts,
 		SpellsToLearn: doc.PracticeSessions,
-		RemortVector:  int32(remort),        //nolint:gosec // a small per-class bitmask
+		RemortVector:  game.SetFromRaw[game.Class](remort),
 		SpecFlags:     int32(doc.SpecFlags), //nolint:gosec // a local bitmask, 32 bits wide in the format it came from
 		OLCZone:       doc.OLCZone,
 	}

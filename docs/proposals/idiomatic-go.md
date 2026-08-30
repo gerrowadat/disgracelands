@@ -27,7 +27,10 @@ would notice if the fence were drawn casually.
 >   first run: see §7's row.
 > - **Step 2, a type per enumeration — under way.** Class first, because
 >   it is what retires `Flags`. `Class.Number()` is the narrowing point,
->   the same job `Set.Raw` does for a flag domain.
+>   the same job `Set.Raw` does for a flag domain. **`game.Flags` is
+>   gone** as of the remort vector becoming `Set[Class]`; what is left in
+>   `flags.go` is the letter *encoding* over raw bits, which is all
+>   thirteen domains ever had in common.
 > - **Step 1, a type per flag domain — done.** `Set[T]` and the
 >   raw-bits helper boundary landed with the first domain, room flags.
 >   Read §4.1.1, the OR trap, before converting another one. Done so far:

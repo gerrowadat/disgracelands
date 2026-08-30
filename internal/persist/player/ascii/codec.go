@@ -215,7 +215,7 @@ func Encode(w io.Writer, p *game.PlayerRecord) error {
 	putIntIf(tagLern, int64(p.SpellsToLearn))
 	// Rmrt is a bitmask but is written as a plain number, matching every
 	// genuine example found; see the format document.
-	putIntIf(tagRmrt, int64(p.RemortVector))
+	putIntIf(tagRmrt, int64(p.RemortVector.Raw())) //nolint:gosec // a five-bit per-class mask
 
 	if p.Description != "" {
 		_, _ = fmt.Fprintf(bw, "%s:\n%s\n~\n", tagDesc, strings.TrimRight(p.Description, "\r\n"))
@@ -471,7 +471,7 @@ func assign(p *game.PlayerRecord, tag, value string, next func() (string, bool),
 	case "Lern":
 		p.SpellsToLearn = num32()
 	case "Rmrt":
-		p.RemortVector = num32()
+		p.RemortVector = game.SetFromRaw[game.Class](uint64(uint32(num32()))) //nolint:gosec // a bit pattern, not an arithmetic conversion
 
 	case "Desc":
 		p.Description = readTildeBlock(next)

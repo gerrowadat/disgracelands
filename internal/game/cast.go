@@ -143,9 +143,8 @@ func KnowsSpell(rec *PlayerRecord, info SpellInfo) bool {
 		return false
 	}
 
-	vector := remortFlags(rec.RemortVector)
-	for class, mask := range classRemortMasks {
-		if !vector.Has(remortFlags(mask)) {
+	for class := range classRemortMasks {
+		if !rec.RemortVector.Has(class) {
 			continue
 		}
 		if rec.Level >= MinLevelFor(info, class) {

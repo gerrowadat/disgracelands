@@ -71,33 +71,30 @@ func TestParseShortClassName(t *testing.T) {
 // TestRemortMask. Paladin has a mask in the C's table and no IS_ macro reads
 // it, which is why remorting into paladin lists nothing new.
 func TestRemortMask(t *testing.T) {
-	for class, want := range map[Class]Flags{
-		ClassMagicUser: RemortMagicUser,
-		ClassCleric:    RemortCleric,
-		ClassThief:     RemortThief,
-		ClassWarrior:   RemortWarrior,
-	} {
-		if got := RemortMask(class); got != want {
-			t.Errorf("RemortMask(%d) = %d, want %d", class, got, want)
+	for _, class := range []Class{ClassMagicUser, ClassCleric, ClassThief, ClassWarrior} {
+		if got, want := RemortMask(class), NewSet(class); got != want {
+			t.Errorf("RemortMask(%d) = %v, want %v", class, got.Members(), want.Members())
 		}
 	}
-	if RemortMask(ClassPaladin) == 0 {
+	if RemortMask(ClassPaladin).Empty() {
 		t.Error("paladin has a mask in the C's table and should have one here")
 	}
-	if RemortMask(99) != 0 {
+	if !RemortMask(99).Empty() {
 		t.Error("an unknown class has no mask")
 	}
 }
 
-// TestRemortVectorRoundTrips through the int32 the player file stores it in.
+// TestRemortVectorRoundTrips through the accessors internal/session uses.
 func TestRemortVectorRoundTrips(t *testing.T) {
 	rec := &PlayerRecord{}
-	SetRemortFlags(rec, RemortThief|RemortWarrior)
-	if got := RemortFlagsOf(rec); got != RemortThief|RemortWarrior {
-		t.Errorf("round trip gave %d", got)
+	want := NewSet(ClassThief, ClassWarrior)
+	SetRemortClasses(rec, want)
+	if got := RemortClassesOf(rec); got != want {
+		t.Errorf("round trip gave %v", got.Members())
 	}
-	if rec.RemortVector != int32(RemortThief|RemortWarrior) {
-		t.Errorf("the stored vector is %d", rec.RemortVector)
+	// The stored bits are still the C's: thief is 4 and warrior 8.
+	if got := rec.RemortVector.Raw(); got != 4|8 {
+		t.Errorf("the stored vector is %#x, want %#x", got, 4|8)
 	}
 }
 
@@ -105,12 +102,12 @@ func TestRemortVectorRoundTrips(t *testing.T) {
 // mechanic: the IS_<CLASS> macros read the vector, not the class field.
 func TestARemortedCharacterCountsAsBothClasses(t *testing.T) {
 	rec := &PlayerRecord{Class: ClassWarrior}
-	SetRemortFlags(rec, RemortWarrior)
+	SetRemortClasses(rec, NewSet(ClassWarrior))
 
 	if IsThief(rec) {
 		t.Error("a plain warrior counted as a thief")
 	}
-	SetRemortFlags(rec, RemortFlagsOf(rec).Set(RemortThief))
+	SetRemortClasses(rec, RemortClassesOf(rec).With(ClassThief))
 	if !IsThief(rec) || !IsWarrior(rec) {
 		t.Error("a warrior who remorted through thief should count as both")
 	}

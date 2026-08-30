@@ -115,11 +115,10 @@ func GuildBars(rec *PlayerRecord, room RoomVnum, dir Direction) bool {
 			// the guard blocks everyone.
 			return true
 		}
-		mask, ok := classRemortMasks[g.Class]
-		if !ok {
+		if _, ok := classRemortMasks[g.Class]; !ok {
 			continue
 		}
-		if !remortFlags(rec.RemortVector).Has(remortFlags(mask)) {
+		if !rec.RemortVector.Has(g.Class) {
 			return true
 		}
 	}

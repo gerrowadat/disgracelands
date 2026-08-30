@@ -53,14 +53,18 @@ func abilityIndex(score int32) int {
 	return int(score)
 }
 
-// Remort bits, from utils.h:505. One per class a character has passed
-// through; see docs/investigations/non-stock-features.md.
-const (
-	RemortMagicUser Flags = 1 << 0
-	RemortCleric    Flags = 1 << 1
-	RemortThief     Flags = 1 << 2
-	RemortWarrior   Flags = 1 << 3
-)
+// The remort vector is a Set[Class], not a flag domain of its own.
+//
+// utils.h:505's REMORT_* bits are `1 << class` for every class — mage 1,
+// cleric 2, thief 4, warrior 8, paladin 16 — so the bit *is* the class
+// number and the set is exactly "the classes this character has been".
+// docs/proposals/idiomatic-go.md §4.2 asks for this directly, and
+// create_test.go's TestRemortMasksMatchTheFlagConstants is what keeps the
+// correspondence honest against class.c's own table.
+//
+// The old RemortMagicUser/RemortCleric/RemortThief/RemortWarrior constants
+// are gone: they were a second spelling of ClassMagicUser and friends, and
+// two names for one number is what §3.5 complains about.
 
 // IsMagicUser and friends port the IS_<CLASS> macros (utils.h:505).
 //
@@ -69,36 +73,26 @@ const (
 // counts as one for every check in the game — that is what makes the local
 // multiclassing work at all. The stock definitions are still in the C source,
 // commented out above the replacements.
-func IsMagicUser(rec *PlayerRecord) bool { return isClass(rec, ClassMagicUser, RemortMagicUser) }
+func IsMagicUser(rec *PlayerRecord) bool { return isClass(rec, ClassMagicUser) }
 
 // IsCleric reports whether the character counts as a cleric.
-func IsCleric(rec *PlayerRecord) bool { return isClass(rec, ClassCleric, RemortCleric) }
+func IsCleric(rec *PlayerRecord) bool { return isClass(rec, ClassCleric) }
 
 // IsThief reports whether the character counts as a thief.
-func IsThief(rec *PlayerRecord) bool { return isClass(rec, ClassThief, RemortThief) }
+func IsThief(rec *PlayerRecord) bool { return isClass(rec, ClassThief) }
 
 // IsWarrior reports whether the character counts as a warrior.
-func IsWarrior(rec *PlayerRecord) bool { return isClass(rec, ClassWarrior, RemortWarrior) }
+func IsWarrior(rec *PlayerRecord) bool { return isClass(rec, ClassWarrior) }
 
 // IsPaladin has no macro in the C — paladin is the remort destination and has
 // no bit of its own — so it is the plain class check the C would have made.
 func IsPaladin(rec *PlayerRecord) bool { return rec != nil && rec.Class == ClassPaladin }
 
-func isClass(rec *PlayerRecord, class Class, bit Flags) bool {
+func isClass(rec *PlayerRecord, class Class) bool {
 	if rec == nil {
 		return false
 	}
-	return rec.Class == class || remortFlags(rec.RemortVector).Has(bit)
-}
-
-// remortFlags reads the remort vector as a bitfield.
-//
-// The record holds it as an int32 because that is its width in the player
-// file, and Flags is 64 bits wide. Going through uint32 makes the
-// reinterpretation explicit and total: every bit pattern maps to exactly one
-// Flags value, including the sign bit, which the C would treat as bit 31.
-func remortFlags(v int32) Flags {
-	return Flags(uint32(v)) //nolint:gosec // a deliberate bit-pattern reinterpretation, not an arithmetic conversion
+	return rec.Class == class || rec.RemortVector.Has(class)
 }
 
 // The rest of the ability-modifier tables from constants.c, and the accessors
@@ -298,29 +292,26 @@ var intApplyLearn = [26]int32{
 // `remort` as normal, and what it does *not* do is gate abilities the way the
 // other four do. That is a fact about how paladin powers are checked, not
 // about whether the vector remembers somebody was one: it does.
-func RemortMask(class Class) Flags {
-	if mask, ok := classRemortMasks[class]; ok {
-		return remortFlags(mask)
+func RemortMask(class Class) RemortClasses {
+	if _, ok := classRemortMasks[class]; ok {
+		return NewSet(class)
 	}
-	return 0
+	return RemortClasses{}
 }
 
-// RemortFlagsOf and SetRemortFlags read and write the record's remort vector
-// as a bitfield.
-//
-// The record stores it as an int32 because that is its width in the player
-// file — one of the `spare` longs `char_file_u` reserves — so the conversion
-// belongs here rather than at every caller.
-func RemortFlagsOf(rec *PlayerRecord) Flags {
+// RemortClassesOf and SetRemortClasses read and write the record's vector.
+// They are thin now — the field is already a set — and are kept because
+// `remort` and `redeem` in internal/session call them by name.
+func RemortClassesOf(rec *PlayerRecord) RemortClasses {
 	if rec == nil {
-		return 0
+		return RemortClasses{}
 	}
-	return remortFlags(rec.RemortVector)
+	return rec.RemortVector
 }
 
-// SetRemortFlags writes the vector back.
-func SetRemortFlags(rec *PlayerRecord, f Flags) {
+// SetRemortClasses writes the vector back.
+func SetRemortClasses(rec *PlayerRecord, f RemortClasses) {
 	if rec != nil {
-		rec.RemortVector = int32(uint32(f)) //nolint:gosec // the same reinterpretation as remortFlags, reversed
+		rec.RemortVector = f
 	}
 }

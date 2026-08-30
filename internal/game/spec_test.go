@@ -93,8 +93,8 @@ func TestEverySpecialNameIsOneTheCDefines(t *testing.T) {
 // reason the guild guard is worth its own table.
 func TestGuildGuardsUseTheRemortVector(t *testing.T) {
 	// The mage guild: room 3017, south.
-	mage := &PlayerRecord{Class: ClassMagicUser, RemortVector: int32(RemortMagicUser)}
-	warrior := &PlayerRecord{Class: ClassWarrior, RemortVector: int32(RemortWarrior)}
+	mage := &PlayerRecord{Class: ClassMagicUser, RemortVector: NewSet(ClassMagicUser)}
+	warrior := &PlayerRecord{Class: ClassWarrior, RemortVector: NewSet(ClassWarrior)}
 
 	if GuildBars(mage, 3017, South) {
 		t.Error("a magic-user was barred from the magic-user guild")
@@ -107,7 +107,7 @@ func TestGuildGuardsUseTheRemortVector(t *testing.T) {
 	// through. Stock CircleMUD compares GET_CLASS and would turn them away.
 	exMage := &PlayerRecord{
 		Class:        ClassWarrior,
-		RemortVector: int32(RemortWarrior | RemortMagicUser),
+		RemortVector: NewSet(ClassWarrior, ClassMagicUser),
 	}
 	if GuildBars(exMage, 3017, South) {
 		t.Error("a warrior who was once a magic-user was barred")

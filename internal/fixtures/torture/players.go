@@ -92,7 +92,7 @@ func maximumCharacter() *game.PlayerRecord {
 		LoadRoom:      5000,
 		BadPasswords:  255,
 		SpellsToLearn: 32000,
-		RemortVector:  0x7fffffff,
+		RemortVector:  game.SetFromRaw[game.Class](0x7fffffff),
 		SpecFlags:     0x7fffffff,
 		OLCZone:       50,
 	}

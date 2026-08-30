@@ -194,7 +194,7 @@ func TestRoundTrip(t *testing.T) {
 		LoadRoom:      3001,
 		BadPasswords:  2,
 		SpellsToLearn: 3,
-		RemortVector:  5,
+		RemortVector:  game.SetFromRaw[game.Class](5),
 	}
 
 	var buf strings.Builder

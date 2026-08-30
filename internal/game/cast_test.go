@@ -54,7 +54,7 @@ func TestARemortedCharacterKeepsTheirSpellbook(t *testing.T) {
 	// A cleric who has never been a mage does not know it.
 	cleric := &PlayerRecord{
 		Class: ClassCleric, Level: 30,
-		RemortVector: classRemortMasks[ClassCleric],
+		RemortVector: NewSet(ClassCleric),
 	}
 	if KnowsSpell(cleric, missile) {
 		t.Error("a plain cleric knows magic missile")
@@ -63,7 +63,7 @@ func TestARemortedCharacterKeepsTheirSpellbook(t *testing.T) {
 	// One who remorted through mage does, at the mage's level.
 	remorted := &PlayerRecord{
 		Class: ClassCleric, Level: 30,
-		RemortVector: classRemortMasks[ClassCleric] | classRemortMasks[ClassMagicUser],
+		RemortVector: NewSet(ClassCleric, ClassMagicUser),
 	}
 	if !KnowsSpell(remorted, missile) {
 		t.Error("a cleric who remorted through mage does not know magic missile")
@@ -79,7 +79,7 @@ func TestARemortedCharacterKeepsTheirSpellbook(t *testing.T) {
 
 	low := &PlayerRecord{
 		Class: ClassCleric, Level: need - 1,
-		RemortVector: classRemortMasks[ClassCleric] | classRemortMasks[ClassMagicUser],
+		RemortVector: NewSet(ClassCleric, ClassMagicUser),
 	}
 	if KnowsSpell(low, fireball) {
 		t.Errorf("a level %d character knows fireball, which needs %d", need-1, need)
@@ -189,8 +189,8 @@ func TestAGoodPaladinIsLeftAlone(t *testing.T) {
 func TestSpellDamageUsesTheBetterDiceForAMagicUser(t *testing.T) {
 	r := newRNG()
 
-	mage := &PlayerRecord{Class: ClassMagicUser, RemortVector: classRemortMasks[ClassMagicUser]}
-	cleric := &PlayerRecord{Class: ClassCleric, RemortVector: classRemortMasks[ClassCleric]}
+	mage := &PlayerRecord{Class: ClassMagicUser, RemortVector: NewSet(ClassMagicUser)}
+	cleric := &PlayerRecord{Class: ClassCleric, RemortVector: NewSet(ClassCleric)}
 	victim := &PlayerRecord{Class: ClassWarrior, Level: 10}
 
 	var mageMax, clericMax int32
@@ -210,7 +210,7 @@ func TestSpellDamageUsesTheBetterDiceForAMagicUser(t *testing.T) {
 	// A cleric who remorted through mage rolls the mage's dice.
 	remorted := &PlayerRecord{
 		Class:        ClassCleric,
-		RemortVector: classRemortMasks[ClassCleric] | classRemortMasks[ClassMagicUser],
+		RemortVector: NewSet(ClassCleric, ClassMagicUser),
 	}
 	var remortedMax int32
 	for i := 0; i < 3000; i++ {

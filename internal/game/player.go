@@ -169,7 +169,7 @@ type PlayerRecord struct {
 	// class the character has remorted through. See
 	// docs/investigations/non-stock-features.md — it is the headline local
 	// feature and touches every IS_<CLASS> check in the game.
-	RemortVector int32
+	RemortVector RemortClasses
 	// SpecFlags and OLCZone are local additions carried in what were spare
 	// slots; OLCZone is the zone a builder is permitted to edit.
 	SpecFlags int32

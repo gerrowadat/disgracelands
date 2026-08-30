@@ -72,8 +72,7 @@ func doRemort(c *Context) error {
 		return nil
 	}
 
-	mask := game.RemortMask(which)
-	vector := game.RemortFlagsOf(rec)
+	vector := game.RemortClassesOf(rec)
 	// Captured before game.Remort moves it: the confirmation names the class
 	// they were and the statistic pinned for it.
 	oldClass := rec.Class
@@ -95,7 +94,7 @@ func doRemort(c *Context) error {
 	// them that class and starts them again at level one, having been a mage
 	// before is no reason to refuse to make somebody a mage now. Undo still
 	// needs the bit to be there, since there is otherwise nothing to clear.
-	if undo && !vector.Has(mask) {
+	if undo && !vector.Has(which) {
 		short := game.ClassShortNames[which]
 		c.Send("But %s has never been a %s.\r\n", victim.Name, short)
 		return nil
@@ -136,8 +135,8 @@ func doRemort(c *Context) error {
 		// remort the character never had and it *grants* it" behaviour
 		// docs/weirdnumbers.md records is no longer reachable through this
 		// command. The entry says so.
-		vector = vector ^ mask
-		game.SetRemortFlags(rec, vector)
+		vector = vector.Toggle(which)
+		game.SetRemortClasses(rec, vector)
 	} else {
 		// Everything else: the class, the level, the body. game.Remort sets
 		// the outgoing class's bit itself, which is what stops the class
@@ -198,17 +197,16 @@ func remortClassList(victim *game.Character) string {
 	if victim.Record == nil {
 		return ""
 	}
-	vector := game.RemortFlagsOf(victim.Record)
+	vector := game.RemortClassesOf(victim.Record)
 
 	var b strings.Builder
 	for _, class := range game.ClassShortNameOrder {
-		mask := game.RemortMask(class)
 		// Paladin appears here like any other class. It has a mask in the C's
 		// table (16, class.c:82) and always has; what it lacks is an
 		// IS_PALADIN macro reading it, which is a fact about how paladin
 		// abilities are gated and not about whether the vector remembers.
 		// An earlier comment here had that backwards.
-		if mask != 0 && vector.Has(mask) {
+		if !game.RemortMask(class).Empty() && vector.Has(class) {
 			b.WriteString(" ")
 			b.WriteString(game.ClassShortNames[class])
 		}

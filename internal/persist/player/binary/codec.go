@@ -185,7 +185,7 @@ func (c *codec) decode(rec []byte) (*game.PlayerRecord, error) {
 		LoadRoom:      game.RoomVnum(c.i16(rec, "ps.load_room")),
 		BadPasswords:  c.u8(rec, "ps.bad_pws"),
 		SpellsToLearn: c.i32(rec, "ps.spells_to_learn"),
-		RemortVector:  c.i32(rec, "ps.remort_vector"),
+		RemortVector:  game.SetFromRaw[game.Class](uint64(uint32(c.i32(rec, "ps.remort_vector")))), //nolint:gosec // a bit pattern, not an arithmetic conversion
 		SpecFlags:     c.i32(rec, "ps.specflags"),
 		OLCZone:       c.i32(rec, "ps.olc_zone"),
 	}
@@ -415,7 +415,7 @@ func (c *codec) encode(p *game.PlayerRecord) ([]byte, error) {
 	c.putI16(rec, "ps.load_room", int32(p.LoadRoom))
 	c.putU8(rec, "ps.bad_pws", p.BadPasswords)
 	c.putI32(rec, "ps.spells_to_learn", p.SpellsToLearn)
-	c.putI32(rec, "ps.remort_vector", p.RemortVector)
+	c.putI32(rec, "ps.remort_vector", int32(uint32(p.RemortVector.Raw()))) //nolint:gosec // the same reinterpretation, reversed
 	c.putI32(rec, "ps.specflags", p.SpecFlags)
 	c.putI32(rec, "ps.olc_zone", p.OLCZone)
 

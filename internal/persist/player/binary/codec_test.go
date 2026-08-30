@@ -115,7 +115,7 @@ func wantRecord(i int) *game.PlayerRecord {
 		LoadRoom:      game.RoomVnum(3001 + i),
 		BadPasswords:  int32(i % 4),
 		SpellsToLearn: int32(i * 2),
-		RemortVector:  int32(i % 16),
+		RemortVector:  game.SetFromRaw[game.Class](uint64(i % 16)),
 		SpecFlags:     int32(i * 3),
 		OLCZone:       int32(30 + i),
 
