@@ -174,12 +174,12 @@ func TestRoundTrip(t *testing.T) {
 		Alignment:    1000,
 		IDNum:        2,
 		PlayerFlags:  128,
-		AffectFlags:  1 << 3,
+		AffectFlags:  game.SetFromRaw[game.AffectFlag](1 << 3),
 		Preferences:  1<<4 | 1<<21,
 		SavingThrows: [5]int32{-10, -20, -30, -40, -50},
 		Skills:       map[int32]int32{1: 100, 2: 85, 200: 42},
 		Affects: []game.Affect{
-			{Type: 23, Duration: 12, Modifier: 3, Location: 1, Bits: 1 << 5},
+			{Type: 23, Duration: 12, Modifier: 3, Location: 1, Bits: game.SetFromRaw[game.AffectFlag](1 << 5)},
 			{Type: 24, Duration: 6, Modifier: -2, Location: 2},
 		},
 		Aliases: []game.Alias{

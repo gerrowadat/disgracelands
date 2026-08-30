@@ -718,8 +718,8 @@ func (s *Server) DupeCheck(ctx context.Context, sess *session.Session, c *game.C
 		// is nothing here to zero.
 		if rec := target.Record; rec != nil {
 			rec.PlayerFlags = rec.PlayerFlags.Clear(game.PlayerMailing | game.PlayerWriting)
-			rec.BaseAffectFlags = rec.BaseAffectFlags.Clear(game.AffectGroup)
-			rec.AffectFlags = rec.AffectFlags.Clear(game.AffectGroup)
+			rec.BaseAffectFlags = rec.BaseAffectFlags.Without(game.AffectGroup)
+			rec.AffectFlags = rec.AffectFlags.Without(game.AffectGroup)
 		}
 
 		// And what the room sees. The C announces both of these and this

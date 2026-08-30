@@ -37,7 +37,7 @@ func TestCuringBlindnessSaysWhatTheCSays(t *testing.T) {
 	inWorld(t, srv, func(w *game.Live) {
 		rec := w.Find("Welmar").Record
 		rec.Affects = append(rec.Affects, game.Affect{
-			Type: game.SpellBlindness, Duration: 20, Bits: game.AffectBlind,
+			Type: game.SpellBlindness, Duration: 20, Bits: game.NewSet(game.AffectBlind),
 		})
 		game.RecomputeAffects(rec)
 	})

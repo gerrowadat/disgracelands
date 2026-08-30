@@ -100,7 +100,7 @@ func wantRecord(i int) *game.PlayerRecord {
 
 		IDNum:       int64(1 + i),
 		PlayerFlags: game.Flags(1) << uint(i%20),
-		AffectFlags: game.Flags(1) << uint(i%15),
+		AffectFlags: game.SetFromRaw[game.AffectFlag](1 << uint(i%15)),
 		// Up to bit 24, so the run covers PrefNoAnnounce1 and
 		// PrefNoAnnounce2 at 23 and 24 — the local announcement level, whose
 		// whole design rests on those bits surviving a round trip through
@@ -154,7 +154,7 @@ func wantRecord(i int) *game.PlayerRecord {
 	p.Affects = []game.Affect{{
 		Type: int32(1 + i%50), Duration: int32(10 + i),
 		Modifier: int32(i % 10), Location: int32(i % 20),
-		Bits: game.Flags(1) << uint(i%15),
+		Bits: game.SetFromRaw[game.AffectFlag](1 << uint(i%15)),
 	}, {
 		Type: int32(51 + i%10), Duration: int32(20 + i),
 		Modifier: int32(-(i % 10)), Location: int32(i % 5),

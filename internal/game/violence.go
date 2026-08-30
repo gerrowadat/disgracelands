@@ -50,7 +50,7 @@ func (l *Live) SetFighting(c, victim *Character) (bool, string) {
 	// just the flag, which matters when the spell would otherwise re-apply
 	// it.
 	if c.Record != nil {
-		c.Record.AffectFlags = c.Record.AffectFlags.Clear(AffectSleep)
+		c.Record.AffectFlags = c.Record.AffectFlags.Without(AffectSleep)
 	}
 
 	if l.fighting == nil {

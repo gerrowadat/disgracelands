@@ -106,7 +106,7 @@ type StoredObject struct {
 	Weight     int32
 	Timer      int32
 	// PermAffect is obj_flags.bitvector: the AFF_* bits wearing it confers.
-	PermAffect game.Flags
+	PermAffect game.AffectFlags
 	// Affects are the apply slots. Exactly MaxObjAffect of them are stored,
 	// including the empty ones.
 	Affects []game.ObjAffect

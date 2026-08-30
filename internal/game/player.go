@@ -80,7 +80,7 @@ type PlayerRecord struct {
 	RealSavingThrows [5]int32
 	// BaseAffectFlags are the flags a character has without any spell on
 	// them — a mobile's from its prototype, a player's usually none.
-	BaseAffectFlags Flags
+	BaseAffectFlags AffectFlags
 
 	// Worn points at the equipment of the character this record belongs to,
 	// and is nil for a record that is not in the world. Not saved.
@@ -111,7 +111,7 @@ type PlayerRecord struct {
 	// PlayerFlags are the PLR_* bits: killer, thief, frozen, deleted.
 	PlayerFlags Flags
 	// AffectFlags are the AFF_* bits: the spells currently on them.
-	AffectFlags Flags
+	AffectFlags AffectFlags
 	// Preferences are the PRF_* bits: brief mode, autoexit, colour.
 	Preferences Flags
 
@@ -216,7 +216,7 @@ type Affect struct {
 	// Location is the APPLY_* constant the modifier applies to.
 	Location int32
 	// Bits are the AFF_* flags the affect sets while it lasts.
-	Bits Flags
+	Bits AffectFlags
 }
 
 // Alias is one `alias` command definition — interpreter.c's alias_data,

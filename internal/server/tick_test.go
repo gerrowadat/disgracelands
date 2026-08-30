@@ -235,7 +235,7 @@ func TestPoisonDoesDamageOnTheTick(t *testing.T) {
 		Name: "Welmar", Class: game.ClassWarrior, Level: 10,
 		Birth:       time.Now(),
 		Conditions:  [3]int32{0, 24, 24},
-		AffectFlags: game.AffectPoison,
+		AffectFlags: game.NewSet(game.AffectPoison),
 		Points:      game.Points{Hit: 50, MaxHit: 50, Move: 50, MaxMove: 50},
 	}
 	place(t, srv, rec, MortalStartRoom)

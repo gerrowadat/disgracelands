@@ -116,7 +116,7 @@ func TestPoisonKeepsYouHurtHoweverLongYouAreAway(t *testing.T) {
 		rec.Points.Hit, rec.Points.Mana, rec.Points.Move = 1, 2, 3
 		rec.LastLogon = time.Now().UTC().Add(-48 * time.Hour)
 		rec.Affects = append(rec.Affects, game.Affect{
-			Type: game.SpellPoison, Duration: 20, Bits: game.AffectPoison,
+			Type: game.SpellPoison, Duration: 20, Bits: game.NewSet(game.AffectPoison),
 		})
 	})
 

@@ -289,7 +289,7 @@ func (c *Context) statObject(obj *game.Object) {
 	fmt.Fprintf(&b, "L-Des: %s\r\n", orNone(obj.Description))
 
 	fmt.Fprintf(&b, "Can be worn on: %s\r\n", game.SprintBit(obj.WearFlags.Raw(), game.WearBitNames()))
-	fmt.Fprintf(&b, "Set char bits : %s\r\n", game.SprintBit(uint64(obj.PermAffect), game.AffectBitNames()))
+	fmt.Fprintf(&b, "Set char bits : %s\r\n", game.SprintBit(obj.PermAffect.Raw(), game.AffectBitNames()))
 	fmt.Fprintf(&b, "Extra flags   : %s\r\n", game.SprintBit(obj.ExtraFlags.Raw(), game.ExtraBitNames()))
 
 	fmt.Fprintf(&b, "Weight: %d, Value: %d, Cost/day: %d, Timer: %d, Min Level: %d\r\n",
@@ -500,7 +500,7 @@ func (c *Context) statCharacter(k *game.Character) {
 	b.WriteString(joinWrapped(names))
 
 	fmt.Fprintf(&b, "AFF: {{yellow}}%s{{/}}\r\n",
-		game.SprintBit(uint64(rec.AffectFlags), game.AffectBitNames()))
+		game.SprintBit(rec.AffectFlags.Raw(), game.AffectBitNames()))
 
 	for _, aff := range rec.Affects {
 		line := fmt.Sprintf("SPL: (%3dhr) {{cyan}}%-21s{{/}} ",
@@ -511,13 +511,13 @@ func (c *Context) statCharacter(k *game.Character) {
 				game.SprintType(aff.Location, game.ApplyTypeNames()))
 			line += modifier
 		}
-		if aff.Bits != 0 {
+		if !aff.Bits.Empty() {
 			if modifier != "" {
 				line += ", sets "
 			} else {
 				line += "sets "
 			}
-			line += game.SprintBit(uint64(aff.Bits), game.AffectBitNames())
+			line += game.SprintBit(aff.Bits.Raw(), game.AffectBitNames())
 		}
 		b.WriteString(line + "\r\n")
 	}

@@ -221,7 +221,7 @@ func (c *Context) spellSummon(number int32, obj *game.Object, level int32) {
 		mob.Keywords = c.Character.Name
 	}
 	if mob.Record != nil {
-		mob.Record.BaseAffectFlags = mob.Record.BaseAffectFlags.Set(game.AffectCharm)
+		mob.Record.BaseAffectFlags = mob.Record.BaseAffectFlags.With(game.AffectCharm)
 		game.RecomputeAffects(mob.Record)
 	}
 
@@ -291,7 +291,7 @@ func (c *Context) spellCharm(victim *game.Character, level int32) {
 		game.AddAffect(victim.Record, game.Affect{
 			Type:     game.SpellCharm,
 			Duration: duration,
-			Bits:     game.AffectCharm,
+			Bits:     game.NewSet(game.AffectCharm),
 		})
 
 		victim.Tell("Isn't %s just such a nice fellow?\r\n", c.Character.Name)

@@ -117,7 +117,7 @@ func recordFromDoc(doc *playerDoc) (*game.PlayerRecord, []string, error) {
 		WimpLevel:     doc.Combat.Wimpy,
 		IDNum:         doc.ID,
 		PlayerFlags:   game.Flags(act),
-		AffectFlags:   game.Flags(aff),
+		AffectFlags:   game.SetFromRaw[game.AffectFlag](aff),
 		Preferences:   game.Flags(prefs),
 		Skills:        skills,
 		Affects:       affects,
@@ -203,7 +203,7 @@ func affectsFromDoc(doc []affectDoc) ([]game.Affect, []string) {
 		}
 		bits |= ad.SetsRaw
 		affects = append(affects, game.Affect{
-			Type: spell, Duration: ad.Duration, Modifier: ad.Modifier, Location: location, Bits: game.Flags(bits),
+			Type: spell, Duration: ad.Duration, Modifier: ad.Modifier, Location: location, Bits: game.SetFromRaw[game.AffectFlag](bits),
 		})
 	}
 	return affects, unknown
@@ -276,7 +276,7 @@ func StoredObjectFromDoc(od ObjInstanceDoc) (player.StoredObject, []string) {
 
 	st := player.StoredObject{
 		Vnum: game.ObjVnum(od.Vnum), Weight: od.Weight, Timer: od.Timer,
-		ExtraFlags: game.SetFromRaw[game.ExtraFlag](extra), PermAffect: game.Flags(perm),
+		ExtraFlags: game.SetFromRaw[game.ExtraFlag](extra), PermAffect: game.SetFromRaw[game.AffectFlag](perm),
 	}
 	copy(st.Values[:], od.Values)
 

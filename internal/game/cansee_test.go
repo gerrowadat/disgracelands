@@ -22,7 +22,7 @@ func seePair(t *testing.T, room RoomVnum) (*Live, *Character, *Character) {
 func TestYouAlwaysSeeYourself(t *testing.T) {
 	l, watcher, _ := seePair(t, 3003) // the dark cellar
 	watcher.Record.AffectFlags = watcher.Record.AffectFlags.
-		Set(AffectBlind | AffectInvisible | AffectHide)
+		With(AffectBlind, AffectInvisible, AffectHide)
 
 	if !l.CanSee(watcher, watcher) {
 		t.Error("a blind invisible hiding character could not see themselves")
@@ -38,7 +38,7 @@ func TestDarknessStopsYouSeeingPeople(t *testing.T) {
 		t.Error("saw somebody in a pitch dark room")
 	}
 
-	watcher.Record.AffectFlags = watcher.Record.AffectFlags.Set(AffectInfravision)
+	watcher.Record.AffectFlags = watcher.Record.AffectFlags.With(AffectInfravision)
 	if !l.CanSee(watcher, target) {
 		t.Error("infravision did not show somebody in the dark")
 	}
@@ -65,13 +65,13 @@ func TestBlindnessStopsYouSeeingInDaylight(t *testing.T) {
 	if !l.CanSee(watcher, target) {
 		t.Fatal("could not see somebody in a lit room")
 	}
-	watcher.Record.AffectFlags = watcher.Record.AffectFlags.Set(AffectBlind)
+	watcher.Record.AffectFlags = watcher.Record.AffectFlags.With(AffectBlind)
 	if l.CanSee(watcher, target) {
 		t.Error("a blind character could see")
 	}
 	// Infravision is no help against blindness: LIGHT_OK tests AFF_BLIND
 	// first and returns.
-	watcher.Record.AffectFlags = watcher.Record.AffectFlags.Set(AffectInfravision)
+	watcher.Record.AffectFlags = watcher.Record.AffectFlags.With(AffectInfravision)
 	if l.CanSee(watcher, target) {
 		t.Error("infravision cured blindness")
 	}
@@ -81,11 +81,11 @@ func TestBlindnessStopsYouSeeingInDaylight(t *testing.T) {
 func TestInvisibilityAndItsCounter(t *testing.T) {
 	l, watcher, target := seePair(t, 3001)
 
-	target.Record.AffectFlags = target.Record.AffectFlags.Set(AffectInvisible)
+	target.Record.AffectFlags = target.Record.AffectFlags.With(AffectInvisible)
 	if l.CanSee(watcher, target) {
 		t.Error("saw an invisible character")
 	}
-	watcher.Record.AffectFlags = watcher.Record.AffectFlags.Set(AffectDetectInvis)
+	watcher.Record.AffectFlags = watcher.Record.AffectFlags.With(AffectDetectInvis)
 	if !l.CanSee(watcher, target) {
 		t.Error("detect invisible did not defeat invisibility")
 	}
@@ -96,17 +96,17 @@ func TestInvisibilityAndItsCounter(t *testing.T) {
 func TestHidingAndItsCounter(t *testing.T) {
 	l, watcher, target := seePair(t, 3001)
 
-	target.Record.AffectFlags = target.Record.AffectFlags.Set(AffectHide)
+	target.Record.AffectFlags = target.Record.AffectFlags.With(AffectHide)
 	if l.CanSee(watcher, target) {
 		t.Error("saw a hidden character")
 	}
 
-	watcher.Record.AffectFlags = watcher.Record.AffectFlags.Set(AffectDetectInvis)
+	watcher.Record.AffectFlags = watcher.Record.AffectFlags.With(AffectDetectInvis)
 	if l.CanSee(watcher, target) {
 		t.Error("detect invisible found a hidden character; sense life is what does that")
 	}
 
-	watcher.Record.AffectFlags = watcher.Record.AffectFlags.Set(AffectSenseLife)
+	watcher.Record.AffectFlags = watcher.Record.AffectFlags.With(AffectSenseLife)
 	if !l.CanSee(watcher, target) {
 		t.Error("sense life did not find a hidden character")
 	}
@@ -118,7 +118,7 @@ func TestHidingAndItsCounter(t *testing.T) {
 func TestSneakingDoesNotConcealYou(t *testing.T) {
 	l, watcher, target := seePair(t, 3001)
 
-	target.Record.AffectFlags = target.Record.AffectFlags.Set(AffectSneak)
+	target.Record.AffectFlags = target.Record.AffectFlags.With(AffectSneak)
 	if !l.CanSee(watcher, target) {
 		t.Error("a sneaking character was invisible standing still")
 	}
@@ -129,7 +129,7 @@ func TestSneakingDoesNotConcealYou(t *testing.T) {
 // than inside it.
 func TestHolylightSeesEverything(t *testing.T) {
 	l, watcher, target := seePair(t, 3003)
-	target.Record.AffectFlags = target.Record.AffectFlags.Set(AffectInvisible | AffectHide)
+	target.Record.AffectFlags = target.Record.AffectFlags.With(AffectInvisible, AffectHide)
 
 	if l.CanSee(watcher, target) {
 		t.Fatal("saw an invisible hidden character in the dark")
@@ -199,7 +199,7 @@ func TestPers(t *testing.T) {
 	if got := l.Pers(target, watcher); got != "Target" {
 		t.Errorf("Pers = %q, want %q", got, "Target")
 	}
-	target.Record.AffectFlags = target.Record.AffectFlags.Set(AffectInvisible)
+	target.Record.AffectFlags = target.Record.AffectFlags.With(AffectInvisible)
 	if got := l.Pers(target, watcher); got != "someone" {
 		t.Errorf("Pers of an invisible character = %q, want %q", got, "someone")
 	}
@@ -220,7 +220,7 @@ func TestAnObjectHeldBySomebodyUnseenIsUnseen(t *testing.T) {
 		t.Fatal("could not see an ordinary sword in somebody's hands")
 	}
 
-	target.Record.AffectFlags = target.Record.AffectFlags.Set(AffectInvisible)
+	target.Record.AffectFlags = target.Record.AffectFlags.With(AffectInvisible)
 	if l.CanSeeObj(watcher, sword) {
 		t.Error("an invisible character's sword was still visible")
 	}
@@ -243,7 +243,7 @@ func TestAnInvisibleObject(t *testing.T) {
 	if l.CanSeeObj(watcher, sword) {
 		t.Error("saw an invisible object")
 	}
-	watcher.Record.AffectFlags = watcher.Record.AffectFlags.Set(AffectDetectInvis)
+	watcher.Record.AffectFlags = watcher.Record.AffectFlags.With(AffectDetectInvis)
 	if !l.CanSeeObj(watcher, sword) {
 		t.Error("detect invisible did not reveal an invisible object")
 	}

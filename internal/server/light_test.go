@@ -81,7 +81,7 @@ func TestInfravisionSeesInTheDark(t *testing.T) {
 
 	ch := putInCellar(t, srv, "Zod")
 	if err := srv.engine.DoSync(context.Background(), func(_ *game.Live) {
-		ch.Record.AffectFlags = ch.Record.AffectFlags.Set(game.AffectInfravision)
+		ch.Record.AffectFlags = ch.Record.AffectFlags.With(game.AffectInfravision)
 	}); err != nil {
 		t.Fatal(err)
 	}

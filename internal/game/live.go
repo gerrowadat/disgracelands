@@ -361,7 +361,7 @@ func (c *Character) RealLevel() int32 {
 //
 // A character with no record has none: a mobile made outside the world for a
 // test has no affects rather than all of them.
-func (c *Character) HasAffect(flag Flags) bool {
+func (c *Character) HasAffect(flag AffectFlag) bool {
 	return c != nil && c.Record != nil && c.Record.AffectFlags.Has(flag)
 }
 

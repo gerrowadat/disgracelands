@@ -75,7 +75,7 @@ func TestACharmedCasterWillNotCastAtTheirMaster(t *testing.T) {
 	inWorld(t, srv, func(w *game.Live) {
 		charmed, leader := w.Find("Welmar"), w.Find("Zod")
 		w.AddFollower(charmed, leader)
-		charmed.Record.AffectFlags = charmed.Record.AffectFlags.Set(game.AffectCharm)
+		charmed.Record.AffectFlags = charmed.Record.AffectFlags.With(game.AffectCharm)
 		// A level-1 mage knows nothing; blindness is what is being cast
 		// because it is TAR_NOT_SELF and so cannot be confused with the
 		// self-cast refusals next door.

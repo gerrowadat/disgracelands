@@ -358,7 +358,7 @@ type Object struct {
 	// PermAffect are the AFF_* bits wearing it confers — sanctuary from a
 	// cloak, infravision from a helm. The C calls this
 	// obj->obj_flags.bitvector and reads it with GET_OBJ_AFFECT.
-	PermAffect Flags
+	PermAffect AffectFlags
 
 	// Timer counts down for objects that decay. A corpse is the only thing
 	// that uses it in the stock game.
@@ -394,7 +394,7 @@ func NewObject(id uint64, def *ObjDef) *Object {
 		o.Weight = def.Weight
 		o.Cost = def.Cost
 		o.Affects = append([]ObjAffect(nil), def.Affects...)
-		o.PermAffect = Flags(uint32(def.PermAffect)) //nolint:gosec // a bitfield, read as written
+		o.PermAffect = SetFromRaw[AffectFlag](uint64(uint32(def.PermAffect))) //nolint:gosec // a bitfield, read as written
 	}
 	return o
 }

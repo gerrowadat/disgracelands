@@ -94,7 +94,7 @@ func TestWhoPrintsItsAnnotations(t *testing.T) {
 			r.PlayerFlags = r.PlayerFlags.Set(game.PlayerMailing)
 		}, " (mailing)"},
 		{"invis", func(r *game.PlayerRecord) {
-			r.AffectFlags = r.AffectFlags.Set(game.AffectInvisible)
+			r.AffectFlags = r.AffectFlags.With(game.AffectInvisible)
 		}, " (invis)"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -108,7 +108,7 @@ func TestWhoPrintsItsAnnotations(t *testing.T) {
 			setRecord(t, srv, "Bystander", func(r *game.PlayerRecord) {
 				r.Preferences = 0
 				r.PlayerFlags = 0
-				r.AffectFlags = 0
+				r.AffectFlags = game.AffectFlags{}
 			})
 			if line := whoLineFor(t, mortal, "Bystander"); strings.Contains(line, tc.want) {
 				t.Errorf("who-list line still carries %q with the flag cleared: %q", tc.want, line)

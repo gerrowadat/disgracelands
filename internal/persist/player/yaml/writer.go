@@ -28,7 +28,7 @@ func docFromRecord(rec *game.PlayerRecord) playerDoc {
 	class := game.NameOrNumber(rec.Class, game.YamlClassNames())
 	remort, remortRaw := game.NameBits(uint64(uint32(rec.RemortVector)), game.YamlClassNames()) //nolint:gosec // a small per-class bitmask, reinterpreted not truncated
 	act, actRaw := game.NameBits(uint64(rec.PlayerFlags), game.YamlPlayerFlagNames())
-	aff, affRaw := game.NameBits(uint64(rec.AffectFlags), game.YamlAffectFlagNames())
+	aff, affRaw := game.NameBits(rec.AffectFlags.Raw(), game.YamlAffectFlagNames())
 	prefs, prefsRaw := game.NameBits(uint64(rec.Preferences), game.YamlPreferenceNames())
 
 	doc := playerDoc{
@@ -127,7 +127,7 @@ func affectsDocFrom(affects []game.Affect) []affectDoc {
 	}
 	out := make([]affectDoc, 0, len(affects))
 	for _, a := range affects {
-		sets, setsRaw := game.NameBits(uint64(a.Bits), game.YamlAffectFlagNames())
+		sets, setsRaw := game.NameBits(a.Bits.Raw(), game.YamlAffectFlagNames())
 		location := game.NameOrNumber(a.Location, game.YamlApplyTypeNames())
 		out = append(out, affectDoc{
 			Spell: game.SpellNameOrNumber(a.Type), Duration: a.Duration, Modifier: a.Modifier,
@@ -188,7 +188,7 @@ func applyRentFile(doc *playerDoc, f *player.RentFile) {
 
 func ObjInstanceDocFrom(st player.StoredObject) ObjInstanceDoc {
 	extra, extraRaw := game.NameBits(st.ExtraFlags.Raw(), game.YamlItemExtraFlagNames())
-	perm, permRaw := game.NameBits(uint64(st.PermAffect), game.YamlAffectFlagNames())
+	perm, permRaw := game.NameBits(st.PermAffect.Raw(), game.YamlAffectFlagNames())
 
 	od := ObjInstanceDoc{
 		Vnum:   int32(st.Vnum),

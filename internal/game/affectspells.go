@@ -82,14 +82,14 @@ func AffectsOfSpell(spell int32, caster, victim *PlayerRecord, victimIsNPC bool,
 
 	// Also local, and the reason do_cast has a silence check at the top.
 	case SpellSilence:
-		add(Affect{Bits: AffectSilence, Duration: 2})
+		add(Affect{Bits: NewSet(AffectSilence), Duration: 2})
 
 	case SpellBlindness:
 		if victimFlags.Has(MobNoBlind) || savedThrow {
 			return AffectSpell{Refused: true, RefusalToCaster: "You fail.\r\n"}
 		}
-		add(Affect{Location: ApplyHitRoll, Modifier: -4, Duration: 2, Bits: AffectBlind})
-		add(Affect{Location: ApplyAC, Modifier: 40, Duration: 2, Bits: AffectBlind})
+		add(Affect{Location: ApplyHitRoll, Modifier: -4, Duration: 2, Bits: NewSet(AffectBlind)})
+		add(Affect{Location: ApplyAC, Modifier: 40, Duration: 2, Bits: NewSet(AffectBlind)})
 		out.ToRoom = "%s seems to be blinded!"
 		out.ToVictim = "You have been blinded!"
 
@@ -98,29 +98,29 @@ func AffectsOfSpell(spell int32, caster, victim *PlayerRecord, victimIsNPC bool,
 			return AffectSpell{Refused: true, RefusalToCaster: NoEffect}
 		}
 		duration := 1 + caster.Level/2
-		add(Affect{Location: ApplyHitRoll, Modifier: -1, Duration: duration, Bits: AffectCurse})
-		add(Affect{Location: ApplyDamRoll, Modifier: -1, Duration: duration, Bits: AffectCurse})
+		add(Affect{Location: ApplyHitRoll, Modifier: -1, Duration: duration, Bits: NewSet(AffectCurse)})
+		add(Affect{Location: ApplyDamRoll, Modifier: -1, Duration: duration, Bits: NewSet(AffectCurse)})
 		out.AccumDuration, out.AccumModifier = true, true
 		out.ToRoom = "%s briefly glows red!"
 		out.ToVictim = "You feel very uncomfortable."
 
 	case SpellDetectAlign:
-		add(Affect{Bits: AffectDetectAlign, Duration: 12 + level})
+		add(Affect{Bits: NewSet(AffectDetectAlign), Duration: 12 + level})
 		out.AccumDuration = true
 		out.ToVictim = "Your eyes tingle."
 
 	case SpellDetectInvis:
-		add(Affect{Bits: AffectDetectInvis, Duration: 12 + level})
+		add(Affect{Bits: NewSet(AffectDetectInvis), Duration: 12 + level})
 		out.AccumDuration = true
 		out.ToVictim = "Your eyes tingle."
 
 	case SpellDetectMagic:
-		add(Affect{Bits: AffectDetectMagic, Duration: 12 + level})
+		add(Affect{Bits: NewSet(AffectDetectMagic), Duration: 12 + level})
 		out.AccumDuration = true
 		out.ToVictim = "Your eyes tingle."
 
 	case SpellInfravision:
-		add(Affect{Bits: AffectInfravision, Duration: 12 + level})
+		add(Affect{Bits: NewSet(AffectInfravision), Duration: 12 + level})
 		out.AccumDuration = true
 		out.ToVictim = "Your eyes glow red."
 		out.ToRoom = "%s's eyes glow red."
@@ -128,7 +128,7 @@ func AffectsOfSpell(spell int32, caster, victim *PlayerRecord, victimIsNPC bool,
 	case SpellInvisible:
 		add(Affect{
 			Location: ApplyAC, Modifier: -40,
-			Duration: 12 + caster.Level/4, Bits: AffectInvisible,
+			Duration: 12 + caster.Level/4, Bits: NewSet(AffectInvisible),
 		})
 		out.AccumDuration = true
 		out.ToVictim = "You vanish."
@@ -140,24 +140,24 @@ func AffectsOfSpell(spell int32, caster, victim *PlayerRecord, victimIsNPC bool,
 		}
 		add(Affect{
 			Location: ApplyStr, Modifier: -2,
-			Duration: caster.Level, Bits: AffectPoison,
+			Duration: caster.Level, Bits: NewSet(AffectPoison),
 		})
 		out.ToVictim = "You feel very sick."
 		out.ToRoom = "%s gets violently ill!"
 
 	case SpellProtFromEvil:
-		add(Affect{Bits: AffectProtectEvil, Duration: 24})
+		add(Affect{Bits: NewSet(AffectProtectEvil), Duration: 24})
 		out.AccumDuration = true
 		out.ToVictim = "You feel invulnerable!"
 
 	// Local: what turns an evil mobile away, per mobile_activity.
 	case SpellHolyShield:
-		add(Affect{Bits: AffectHolyShield, Duration: 4})
+		add(Affect{Bits: NewSet(AffectHolyShield), Duration: 4})
 		out.AccumDuration = true
 		out.ToVictim = "You feel yourself protected by righteousness!"
 
 	case SpellSanctuary:
-		add(Affect{Bits: AffectSanctuary, Duration: 4})
+		add(Affect{Bits: NewSet(AffectSanctuary), Duration: 4})
 		out.AccumDuration = true
 		out.ToVictim = "A white aura momentarily surrounds you."
 		out.ToRoom = "%s is surrounded by a white aura."
@@ -169,7 +169,7 @@ func AffectsOfSpell(spell int32, caster, victim *PlayerRecord, victimIsNPC bool,
 		if victimFlags.Has(MobNoSleep) || savedThrow {
 			return AffectSpell{Refused: true}
 		}
-		add(Affect{Bits: AffectSleep, Duration: 4 + caster.Level/4})
+		add(Affect{Bits: NewSet(AffectSleep), Duration: 4 + caster.Level/4})
 		out.SleepsVictim = true
 
 	case SpellStrength:
@@ -192,12 +192,12 @@ func AffectsOfSpell(spell int32, caster, victim *PlayerRecord, victimIsNPC bool,
 		out.ToVictim = "You feel stronger!"
 
 	case SpellSenseLife:
-		add(Affect{Bits: AffectSenseLife, Duration: caster.Level})
+		add(Affect{Bits: NewSet(AffectSenseLife), Duration: caster.Level})
 		out.AccumDuration = true
 		out.ToVictim = "Your feel your awareness improve."
 
 	case SpellWaterwalk:
-		add(Affect{Bits: AffectWaterwalk, Duration: 24})
+		add(Affect{Bits: NewSet(AffectWaterwalk), Duration: 24})
 		out.AccumDuration = true
 		out.ToVictim = "You feel webbing between your toes."
 
@@ -218,7 +218,7 @@ func AffectsOfSpell(spell int32, caster, victim *PlayerRecord, victimIsNPC bool,
 func CanAffect(spell AffectSpell, target *PlayerRecord, targetIsNPC bool, spellNumber int32) bool {
 	if targetIsNPC && !AffectedBySpell(target, spellNumber) {
 		for _, a := range spell.Affects {
-			if a.Bits != 0 && target.AffectFlags.HasAny(a.Bits) {
+			if !a.Bits.Empty() && target.AffectFlags.Overlaps(a.Bits) {
 				return false
 			}
 		}
@@ -238,7 +238,7 @@ func CanAffect(spell AffectSpell, target *PlayerRecord, targetIsNPC bool, spellN
 // one behind.
 func ApplyAffectSpell(spell AffectSpell, target *PlayerRecord) {
 	for _, a := range spell.Affects {
-		if a.Bits == 0 && a.Location == ApplyNone {
+		if a.Bits.Empty() && a.Location == ApplyNone {
 			continue
 		}
 		JoinAffect(target, a, spell.AccumDuration, spell.AccumModifier)

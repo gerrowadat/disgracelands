@@ -94,7 +94,7 @@ func (c *Context) eat(taste bool) error {
 		game.JoinAffect(rec, game.Affect{
 			Type:     game.SpellPoison,
 			Duration: amount * 2,
-			Bits:     game.AffectPoison,
+			Bits:     game.NewSet(game.AffectPoison),
 		}, false, false)
 	}
 
@@ -211,7 +211,7 @@ func (c *Context) drink(sip bool) error {
 		game.JoinAffect(rec, game.Affect{
 			Type:     game.SpellPoison,
 			Duration: amount * 3,
-			Bits:     game.AffectPoison,
+			Bits:     game.NewSet(game.AffectPoison),
 		}, false, false)
 	}
 

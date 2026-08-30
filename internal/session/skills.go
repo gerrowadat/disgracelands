@@ -331,7 +331,7 @@ func doSneak(c *Context) error {
 	game.AddAffect(rec, game.Affect{
 		Type:     game.SkillSneak,
 		Duration: rec.Level,
-		Bits:     game.AffectSneak,
+		Bits:     game.NewSet(game.AffectSneak),
 	})
 	return nil
 }

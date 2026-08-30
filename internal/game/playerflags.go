@@ -131,27 +131,37 @@ const (
 // AFF_HOLY_SHIELD and AFF_SILENCE are local additions; the comment beside
 // the first of them in the C still says "Room for future expansion", which is
 // what the slot was before somebody used it.
+//
+// AffectFlag is one of them and AffectFlags is a character's or an
+// object's set. Bit indices, not masks: docs/proposals/idiomatic-go.md
+// §4.1, with §4.1.1 and §4.1.2 for the three ways that bites.
+// affected_bits[] in constants.c is the name table.
+type AffectFlag int
+
+// AffectFlags is a set of AffectFlag.
+type AffectFlags = Set[AffectFlag]
+
 const (
-	AffectBlind       Flags = 1 << 0
-	AffectInvisible   Flags = 1 << 1
-	AffectDetectAlign Flags = 1 << 2
-	AffectDetectInvis Flags = 1 << 3
-	AffectDetectMagic Flags = 1 << 4
-	AffectSenseLife   Flags = 1 << 5
-	AffectWaterwalk   Flags = 1 << 6
-	AffectSanctuary   Flags = 1 << 7
-	AffectGroup       Flags = 1 << 8
-	AffectCurse       Flags = 1 << 9
-	AffectInfravision Flags = 1 << 10
-	AffectPoison      Flags = 1 << 11
-	AffectProtectEvil Flags = 1 << 12
-	AffectProtectGood Flags = 1 << 13
-	AffectSleep       Flags = 1 << 14
-	AffectNoTrack     Flags = 1 << 15
-	AffectUnused16    Flags = 1 << 16
-	AffectHolyShield  Flags = 1 << 17
-	AffectSneak       Flags = 1 << 18
-	AffectHide        Flags = 1 << 19
-	AffectSilence     Flags = 1 << 20
-	AffectCharm       Flags = 1 << 21
+	AffectBlind       AffectFlag = 0
+	AffectInvisible   AffectFlag = 1
+	AffectDetectAlign AffectFlag = 2
+	AffectDetectInvis AffectFlag = 3
+	AffectDetectMagic AffectFlag = 4
+	AffectSenseLife   AffectFlag = 5
+	AffectWaterwalk   AffectFlag = 6
+	AffectSanctuary   AffectFlag = 7
+	AffectGroup       AffectFlag = 8
+	AffectCurse       AffectFlag = 9
+	AffectInfravision AffectFlag = 10
+	AffectPoison      AffectFlag = 11
+	AffectProtectEvil AffectFlag = 12
+	AffectProtectGood AffectFlag = 13
+	AffectSleep       AffectFlag = 14
+	AffectNoTrack     AffectFlag = 15
+	AffectUnused16    AffectFlag = 16
+	AffectHolyShield  AffectFlag = 17
+	AffectSneak       AffectFlag = 18
+	AffectHide        AffectFlag = 19
+	AffectSilence     AffectFlag = 20
+	AffectCharm       AffectFlag = 21
 )

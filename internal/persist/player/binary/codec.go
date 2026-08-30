@@ -86,13 +86,13 @@ func (c *codec) i32(rec []byte, name string) int32 {
 // unchanged -- so the package's own byte-for-byte round-trip test could
 // not see it either. What sees it is comparing the decoded record against
 // what another format decoded, which is `dlctl verify --against`.
-func (c *codec) varBits(rec []byte, name string) game.Flags {
+func (c *codec) varBits(rec []byte, name string) uint64 {
 	p := c.layout.at(name)
 	switch p.Size {
 	case 4:
-		return game.Flags(byteOrder.Uint32(rec[p.Offset:]))
+		return uint64(byteOrder.Uint32(rec[p.Offset:]))
 	case 8:
-		return game.Flags(byteOrder.Uint64(rec[p.Offset:]))
+		return byteOrder.Uint64(rec[p.Offset:])
 	}
 	panic(fmt.Sprintf("binary: %s has unexpected width %d", name, p.Size))
 }
@@ -175,9 +175,9 @@ func (c *codec) decode(rec []byte) (*game.PlayerRecord, error) {
 		Alignment: c.i32(rec, "cs.alignment"),
 		IDNum:     c.varInt(rec, "cs.idnum"),
 
-		PlayerFlags: c.varBits(rec, "cs.act"),
-		AffectFlags: c.varBits(rec, "cs.affected_by"),
-		Preferences: c.varBits(rec, "ps.pref"),
+		PlayerFlags: game.Flags(c.varBits(rec, "cs.act")),
+		AffectFlags: game.SetFromRaw[game.AffectFlag](c.varBits(rec, "cs.affected_by")),
+		Preferences: game.Flags(c.varBits(rec, "ps.pref")),
 
 		WimpLevel:     c.i32(rec, "ps.wimp_level"),
 		FreezeLevel:   c.i8(rec, "ps.freeze_level"),
@@ -262,7 +262,7 @@ func (c *codec) decode(rec []byte) (*game.PlayerRecord, error) {
 			Duration: widen16(byteOrder.Uint16(rec[base+2:])),
 			Modifier: widen8(rec[base+4]),
 			Location: int32(rec[base+5]),
-			Bits:     game.Flags(bits),
+			Bits:     game.SetFromRaw[game.AffectFlag](bits),
 		})
 	}
 
@@ -351,10 +351,10 @@ func narrow16(v int32) uint16 { return uint16(int16(v)) } //nolint:gosec // trun
 
 func narrow32(v int32) uint32 { return uint32(v) } //nolint:gosec // truncation is the format
 
-func narrowFlags32(f game.Flags) uint32 { return uint32(f) } //nolint:gosec // truncation is the format
+func narrowFlags32(bits uint64) uint32 { return uint32(bits) } //nolint:gosec // truncation is the format
 
 // storedFlags reinterprets a flag set as the signed type putVar takes.
-func storedFlags(f game.Flags) int64 { return int64(f) } //nolint:gosec // reinterpretation, not truncation
+func storedFlags(bits uint64) int64 { return int64(bits) } //nolint:gosec // reinterpretation, not truncation
 
 func narrowVar32(v int64) uint32 { return uint32(int32(v)) } //nolint:gosec // truncation is the format
 
@@ -405,9 +405,9 @@ func (c *codec) encode(p *game.PlayerRecord) ([]byte, error) {
 
 	c.putI32(rec, "cs.alignment", p.Alignment)
 	c.putVar(rec, "cs.idnum", p.IDNum)
-	c.putVar(rec, "cs.act", storedFlags(p.PlayerFlags))
-	c.putVar(rec, "cs.affected_by", storedFlags(p.AffectFlags))
-	c.putVar(rec, "ps.pref", storedFlags(p.Preferences))
+	c.putVar(rec, "cs.act", storedFlags(uint64(p.PlayerFlags)))
+	c.putVar(rec, "cs.affected_by", storedFlags(p.AffectFlags.Raw()))
+	c.putVar(rec, "ps.pref", storedFlags(uint64(p.Preferences)))
 
 	c.putI32(rec, "ps.wimp_level", p.WimpLevel)
 	c.putI8(rec, "ps.freeze_level", p.FreezeLevel)
@@ -473,9 +473,9 @@ func (c *codec) encode(p *game.PlayerRecord) ([]byte, error) {
 		rec[base+4] = narrow8(a.Modifier)
 		rec[base+5] = narrowU8(a.Location)
 		if bitsSize == 4 {
-			byteOrder.PutUint32(rec[base+bitsOff:], narrowFlags32(a.Bits))
+			byteOrder.PutUint32(rec[base+bitsOff:], narrowFlags32(a.Bits.Raw()))
 		} else {
-			byteOrder.PutUint64(rec[base+bitsOff:], uint64(a.Bits))
+			byteOrder.PutUint64(rec[base+bitsOff:], a.Bits.Raw())
 		}
 	}
 
