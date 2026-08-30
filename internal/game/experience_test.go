@@ -43,7 +43,7 @@ func TestLevelExperienceMatchesTheCSource(t *testing.T) {
 	}
 }
 
-func parseLevelExp(t *testing.T, src string) map[int32]map[int32]int32 {
+func parseLevelExp(t *testing.T, src string) map[Class]map[int32]int32 {
 	t.Helper()
 
 	start := strings.Index(src, "int level_exp(int chclass, int level)\n{")
@@ -55,7 +55,7 @@ func parseLevelExp(t *testing.T, src string) map[int32]map[int32]int32 {
 		body = body[:end]
 	}
 
-	classes := map[string]int32{
+	classes := map[string]Class{
 		"CLASS_MAGIC_USER": ClassMagicUser,
 		"CLASS_CLERIC":     ClassCleric,
 		"CLASS_THIEF":      ClassThief,
@@ -66,8 +66,8 @@ func parseLevelExp(t *testing.T, src string) map[int32]map[int32]int32 {
 	classCase := regexp.MustCompile(`^\s*case (CLASS_\w+):\s*$`)
 	levelCase := regexp.MustCompile(`^\s*case\s+(\w+):\s*return (\d+);\s*$`)
 
-	out := map[int32]map[int32]int32{}
-	current := int32(-1)
+	out := map[Class]map[int32]int32{}
+	current := Class(-1)
 
 	for _, line := range strings.Split(body, "\n") {
 		if m := classCase.FindStringSubmatch(line); m != nil {
@@ -106,7 +106,7 @@ func parseLevelExp(t *testing.T, src string) map[int32]map[int32]int32 {
 // row-by-row comparison against a C table with the same mistake in it would
 // not notice.
 func TestExperienceTablesRiseMonotonically(t *testing.T) {
-	for _, class := range []int32{ClassMagicUser, ClassCleric, ClassThief, ClassWarrior, ClassPaladin} {
+	for _, class := range []Class{ClassMagicUser, ClassCleric, ClassThief, ClassWarrior, ClassPaladin} {
 		previous := int32(-1)
 		for level := int32(0); level <= LevelImplementor; level++ {
 			exp := LevelExperience(class, level)

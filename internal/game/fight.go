@@ -39,7 +39,7 @@ type Fighter interface {
 // class's table — unreachable, since every level in range is covered, but the
 // reason this returns a flat 100 instead is that falling through to a
 // different class's numbers is not behaviour worth reproducing.
-func THAC0(class, level int32) int32 {
+func THAC0(class Class, level int32) int32 {
 	table, ok := thacoTable[class]
 	if !ok || level < 0 || int(level) >= len(table) {
 		return 100
@@ -183,7 +183,7 @@ func ApplyDamage(dam int32, victim *PlayerRecord, vf Fighter) int32 {
 	return max(0, min(dam, maxDamagePerBlow))
 }
 
-var thacoTable = map[int32][]int32{
+var thacoTable = map[Class][]int32{
 	ClassMagicUser: {
 		100, 20, 20, 20, 19, // 0-4
 		19, 19, 18, 18, 18, // 5-9

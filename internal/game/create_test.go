@@ -20,7 +20,7 @@ func newRNG() *rng.Rand { return rng.NewRand(rng.NewCircle(20)) }
 // stored in the record, one is a Flags constant — so nothing but this stops
 // them drifting apart.
 func TestRemortMasksMatchTheFlagConstants(t *testing.T) {
-	for class, want := range map[int32]Flags{
+	for class, want := range map[Class]Flags{
 		ClassMagicUser: RemortMagicUser,
 		ClassCleric:    RemortCleric,
 		ClassThief:     RemortThief,

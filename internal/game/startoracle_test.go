@@ -52,7 +52,7 @@ func TestCharacterCreationMatchesTheCOracle(t *testing.T) {
 
 	classes := []struct {
 		name string
-		id   int32
+		id   Class
 	}{
 		{"magic-user", ClassMagicUser},
 		{"cleric", ClassCleric},
@@ -122,7 +122,7 @@ func buildStartOracle(t *testing.T) string {
 	return bin
 }
 
-func runStartOracle(t *testing.T, bin string, seed uint64, class int32, count int) []startedCharacter {
+func runStartOracle(t *testing.T, bin string, seed uint64, class Class, count int) []startedCharacter {
 	t.Helper()
 
 	out, err := exec.Command(bin,

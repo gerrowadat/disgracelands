@@ -64,7 +64,7 @@ func TestTitlesMatchTheCSource(t *testing.T) {
 // functions, returning class -> level -> title. Levels covered by the class's
 // `default:` are filled in for every level the switch does not name, which is
 // how the uneven tables get checked as well as the even ones.
-func parseTitleFunction(t *testing.T, src, function string) map[int32]map[int32]string {
+func parseTitleFunction(t *testing.T, src, function string) map[Class]map[int32]string {
 	t.Helper()
 
 	start := strings.Index(src, "const char *"+function+"(int chclass, int level)\n{")
@@ -76,7 +76,7 @@ func parseTitleFunction(t *testing.T, src, function string) map[int32]map[int32]
 		body = body[:end]
 	}
 
-	classes := map[string]int32{
+	classes := map[string]Class{
 		"CLASS_MAGIC_USER": ClassMagicUser,
 		"CLASS_CLERIC":     ClassCleric,
 		"CLASS_THIEF":      ClassThief,
@@ -96,9 +96,9 @@ func parseTitleFunction(t *testing.T, src, function string) map[int32]map[int32]
 		defaultCase = regexp.MustCompile(`^\s*default:\s*return "(.*)";\s*$`)
 	)
 
-	out := map[int32]map[int32]string{}
-	defaults := map[int32]string{}
-	current := int32(-1)
+	out := map[Class]map[int32]string{}
+	defaults := map[Class]string{}
+	current := Class(-1)
 
 	for _, line := range strings.Split(body, "\n") {
 		if m := classCase.FindStringSubmatch(line); m != nil {
@@ -161,7 +161,7 @@ func TestImplementorsAndOddLevelsBypassTheClassTables(t *testing.T) {
 		{-1, SexMale, "the Man"},
 		{LevelImplementor + 1, SexFemale, "the Woman"},
 	} {
-		for _, class := range []int32{ClassMagicUser, ClassCleric, ClassThief, ClassWarrior, ClassPaladin} {
+		for _, class := range []Class{ClassMagicUser, ClassCleric, ClassThief, ClassWarrior, ClassPaladin} {
 			if got := Title(class, tc.level, tc.sex); got != tc.want {
 				t.Errorf("Title(%d, %d, %d) = %q, want %q", class, tc.level, tc.sex, got, tc.want)
 			}

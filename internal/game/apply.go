@@ -84,7 +84,7 @@ func IsWarrior(rec *PlayerRecord) bool { return isClass(rec, ClassWarrior, Remor
 // no bit of its own — so it is the plain class check the C would have made.
 func IsPaladin(rec *PlayerRecord) bool { return rec != nil && rec.Class == ClassPaladin }
 
-func isClass(rec *PlayerRecord, class int32, bit Flags) bool {
+func isClass(rec *PlayerRecord, class Class, bit Flags) bool {
 	if rec == nil {
 		return false
 	}
@@ -298,7 +298,7 @@ var intApplyLearn = [26]int32{
 // `remort` as normal, and what it does *not* do is gate abilities the way the
 // other four do. That is a fact about how paladin powers are checked, not
 // about whether the vector remembers somebody was one: it does.
-func RemortMask(class int32) Flags {
+func RemortMask(class Class) Flags {
 	if mask, ok := classRemortMasks[class]; ok {
 		return remortFlags(mask)
 	}

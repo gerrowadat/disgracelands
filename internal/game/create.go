@@ -171,7 +171,7 @@ func RemortCount(rec *PlayerRecord) int {
 // The values are the record's own int32, not Flags, because that is what they
 // are assigned to; a test checks each one against the matching Remort*
 // constant so the two cannot drift.
-var classRemortMasks = map[int32]int32{
+var classRemortMasks = map[Class]int32{
 	ClassMagicUser: 1,
 	ClassCleric:    2,
 	ClassThief:     4,

@@ -35,7 +35,7 @@ type PlayerRecord struct {
 	Description string
 
 	Sex   int32
-	Class int32
+	Class Class
 	Race  int32
 	Level int32
 

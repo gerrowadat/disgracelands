@@ -162,7 +162,7 @@ func (c *codec) decode(rec []byte) (*game.PlayerRecord, error) {
 		Host:        c.str(rec, "host"),
 
 		Sex:      c.i8(rec, "sex"),
-		Class:    c.i8(rec, "chclass"),
+		Class:    game.Class(c.i8(rec, "chclass")),
 		Level:    c.i8(rec, "level"),
 		Hometown: c.i16(rec, "hometown"),
 		Weight:   c.u8(rec, "weight"),
@@ -389,7 +389,7 @@ func (c *codec) encode(p *game.PlayerRecord) ([]byte, error) {
 	}
 
 	c.putI8(rec, "sex", p.Sex)
-	c.putI8(rec, "chclass", p.Class)
+	c.putI8(rec, "chclass", p.Class.Number())
 	c.putI8(rec, "level", p.Level)
 	c.putI16(rec, "hometown", p.Hometown)
 	c.putU8(rec, "weight", p.Weight)

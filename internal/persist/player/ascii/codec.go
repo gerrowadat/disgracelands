@@ -389,7 +389,7 @@ func assign(p *game.PlayerRecord, tag, value string, next func() (string, bool),
 	case "Sex":
 		p.Sex = num32()
 	case "Clas":
-		p.Class = num32()
+		p.Class = game.Class(num32())
 	case "Race":
 		p.Race = num32()
 	case "Levl":

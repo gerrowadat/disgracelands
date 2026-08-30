@@ -162,7 +162,7 @@ func TestSpellLevelsMatchTheCSource(t *testing.T) {
 		t.Fatalf("reading class.c: %v", err)
 	}
 
-	classes := map[string]int32{
+	classes := map[string]Class{
 		"CLASS_MAGIC_USER": ClassMagicUser,
 		"CLASS_CLERIC":     ClassCleric,
 		"CLASS_THIEF":      ClassThief,

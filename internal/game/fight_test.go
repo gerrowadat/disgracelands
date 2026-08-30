@@ -59,7 +59,7 @@ func TestComputeTHAC0MatchesTheC(t *testing.T) {
 		}
 
 		rec := &PlayerRecord{
-			Class: n[0], Level: n[1],
+			Class: Class(n[0]), Level: n[1],
 			Abilities: Abilities{
 				Strength: n[2], StrengthPercentile: n[3],
 				Intelligence: n[5], Wisdom: n[6],
@@ -100,7 +100,7 @@ func TestTheAbilityAdjustmentsTruncateSeparately(t *testing.T) {
 		got := ComputeTHAC0(rec, fighter{pos: PosStanding})
 
 		want := runFightOracle(t, oracle, "compute",
-			itoa(ClassWarrior), "10", "12", "0", "0", itoa(tc.intel), itoa(tc.wis), "0")
+			itoa(int32(ClassWarrior)), "10", "12", "0", "0", itoa(tc.intel), itoa(tc.wis), "0")
 
 		if got != want {
 			t.Errorf("int %d, wis %d: got %d, the C gives %d", tc.intel, tc.wis, got, want)
@@ -112,9 +112,9 @@ func TestTheAbilityAdjustmentsTruncateSeparately(t *testing.T) {
 func TestTHAC0TableMatchesTheC(t *testing.T) {
 	oracle := buildFightOracle(t)
 
-	for _, class := range []int32{ClassMagicUser, ClassCleric, ClassThief, ClassWarrior, ClassPaladin} {
+	for _, class := range []Class{ClassMagicUser, ClassCleric, ClassThief, ClassWarrior, ClassPaladin} {
 		for level := int32(0); level <= LevelImplementor; level++ {
-			want := runFightOracle(t, oracle, "thaco", itoa(class), itoa(level))
+			want := runFightOracle(t, oracle, "thaco", itoa(int32(class)), itoa(level))
 			if got := THAC0(class, level); got != want {
 				t.Errorf("THAC0(%d, %d) = %d, the C gives %d", class, level, got, want)
 			}

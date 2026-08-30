@@ -64,7 +64,7 @@ func TestSavingThrowsMatchTheCSource(t *testing.T) {
 
 	body := stripCComments(strings.Join(lines[start:end+1], "\n"))
 
-	classes := map[string]int32{
+	classes := map[string]Class{
 		"CLASS_MAGIC_USER": ClassMagicUser,
 		"CLASS_CLERIC":     ClassCleric,
 		"CLASS_THIEF":      ClassThief,
@@ -84,7 +84,7 @@ func TestSavingThrowsMatchTheCSource(t *testing.T) {
 		breakLine = regexp.MustCompile(`^\s*break;\s*$`)
 	)
 
-	var current []int32
+	var current []Class
 	save := SaveType(-1)
 	checked := 0
 
@@ -201,7 +201,7 @@ func TestAPerfectSaveIsNotAutomatic(t *testing.T) {
 
 func TestPracticeParameters(t *testing.T) {
 	for _, tc := range []struct {
-		class   int32
+		class   Class
 		learned int32
 		noun    string
 	}{

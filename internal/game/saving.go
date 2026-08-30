@@ -39,7 +39,7 @@ const (
 // A level past the end of the table returns the last entry rather than the
 // C's SYSERR-and-zero: zero means "always saves", and handing a free save to
 // anyone off the end of a table is not a failure mode worth reproducing.
-func SavingThrow(class int32, save SaveType, level int32) int32 {
+func SavingThrow(class Class, save SaveType, level int32) int32 {
 	if save < 0 || save >= NumSaveTypes {
 		return 0
 	}
@@ -87,7 +87,7 @@ func MakesSavingThrow(rec *PlayerRecord, isNPC bool, save SaveType, modifier int
 	return max(1, target) < r.Number(0, 99)
 }
 
-var savingThrowTable = map[int32][NumSaveTypes][]int32{
+var savingThrowTable = map[Class][NumSaveTypes][]int32{
 	ClassMagicUser: {
 		SaveParalyse: {
 			90, 70, 69, 68, 67, 66, 65, 63, 61, 60, // 0-9

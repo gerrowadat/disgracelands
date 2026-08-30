@@ -88,7 +88,7 @@ func wantRecord(i int) *game.PlayerRecord {
 		Credential:  game.Credential{Scheme: game.SchemeLegacyDES, Hash: "ab" + pad6(i)},
 
 		Sex:      int32(i % 3),
-		Class:    int32(i % 4),
+		Class:    game.Class(i % 4),
 		Level:    int32(i%34 + 1),
 		Hometown: int32(3000 + i),
 		Weight:   int32(100 + i%100),

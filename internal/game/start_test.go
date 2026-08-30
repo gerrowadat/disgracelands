@@ -16,7 +16,7 @@ import (
 // record by hand and never ran do_start.
 func TestStartGivesEveryClassSomethingToLiveOn(t *testing.T) {
 	r := rng.NewRand(rng.NewCircle(3))
-	for _, class := range []int32{ClassMagicUser, ClassCleric, ClassThief, ClassWarrior, ClassPaladin} {
+	for _, class := range []Class{ClassMagicUser, ClassCleric, ClassThief, ClassWarrior, ClassPaladin} {
 		rec := &PlayerRecord{Name: "Test", Class: class}
 		Start(rec, r)
 
@@ -52,7 +52,7 @@ func TestStartGivesEveryClassSomethingToLiveOn(t *testing.T) {
 // the constitution bonus from con_app[] and the MAX(1, ...) floors.
 func TestFirstLevelGainsMatchTheCsRanges(t *testing.T) {
 	for _, tc := range []struct {
-		class            int32
+		class            Class
 		name             string
 		lowHit, highHit  int32
 		lowMove, highMov int32
@@ -160,7 +160,7 @@ func TestPracticesFollowTheRemortAwareClassTest(t *testing.T) {
 // TestThievesStartWithTheirSkills and nobody else does.
 func TestThievesStartWithTheirSkills(t *testing.T) {
 	r := rng.NewRand(rng.NewCircle(5))
-	for _, class := range []int32{ClassMagicUser, ClassCleric, ClassWarrior, ClassPaladin} {
+	for _, class := range []Class{ClassMagicUser, ClassCleric, ClassWarrior, ClassPaladin} {
 		rec := &PlayerRecord{Class: class}
 		Start(rec, r)
 		if len(rec.Skills) != 0 {
