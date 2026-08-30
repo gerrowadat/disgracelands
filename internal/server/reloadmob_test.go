@@ -58,7 +58,7 @@ func TestReloadMobCommandEndToEnd(t *testing.T) {
 		Vnum: testDogVnum, Keywords: "dog", ShortDesc: "the reloaded dog",
 		LongDesc: "A reloaded dog sits here.\r\n", Level: 5,
 		HitDice:  game.Dice{Number: 1, Size: 1, Bonus: 200},
-		Position: int32(game.PosStanding), DefaultPosition: int32(game.PosStanding),
+		Position: game.PosStanding, DefaultPosition: game.PosStanding,
 	})
 	srv.worldDir = dir
 
@@ -104,7 +104,7 @@ func TestReloadMobCommandRefusesWhileFighting(t *testing.T) {
 		Vnum: testDogVnum, Keywords: "dog", ShortDesc: "the reloaded dog",
 		LongDesc: "A reloaded dog sits here.\r\n", Level: 5,
 		HitDice:  game.Dice{Number: 1, Size: 1, Bonus: 200},
-		Position: int32(game.PosStanding), DefaultPosition: int32(game.PosStanding),
+		Position: game.PosStanding, DefaultPosition: game.PosStanding,
 	})
 	srv.worldDir = dir
 

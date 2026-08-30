@@ -123,8 +123,8 @@ func (l *loader) parseSimpleMob(r *reader, mob *game.MobDef) error {
 	if err != nil {
 		return fmt.Errorf("%s: %w", r.where(what), err)
 	}
-	mob.Position = trip[0]
-	mob.DefaultPosition = trip[1]
+	mob.Position = game.Position(trip[0])
+	mob.DefaultPosition = game.Position(trip[1])
 	mob.Sex = game.Sex(trip[2])
 
 	return nil

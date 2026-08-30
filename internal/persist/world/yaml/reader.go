@@ -163,12 +163,12 @@ func (l *loader) mobFromDoc(path string, md mobDoc) *game.MobDef {
 	}
 
 	if pos, ok := game.ValueByNameOrNumber(md.Position, game.YamlPositionNames()); ok {
-		mob.Position = pos
+		mob.Position = game.Position(pos)
 	} else {
 		l.errorf("%s: mob #%d: unknown position %q", path, md.Vnum, md.Position)
 	}
 	if pos, ok := game.ValueByNameOrNumber(md.DefaultPosition, game.YamlPositionNames()); ok {
-		mob.DefaultPosition = pos
+		mob.DefaultPosition = game.Position(pos)
 	} else {
 		l.errorf("%s: mob #%d: unknown default_position %q", path, md.Vnum, md.DefaultPosition)
 	}

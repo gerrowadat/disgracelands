@@ -258,8 +258,8 @@ func mobDocFrom(m *game.MobDef) mobDoc {
 		Damage:          diceDocString(m.DamageDice),
 		Gold:            m.Gold,
 		Exp:             m.Exp,
-		Position:        valueName(m.Position, game.YamlPositionNames()),
-		DefaultPosition: valueName(m.DefaultPosition, game.YamlPositionNames()),
+		Position:        valueName(int32(m.Position), game.YamlPositionNames()),
+		DefaultPosition: valueName(int32(m.DefaultPosition), game.YamlPositionNames()),
 		Sex:             valueName(m.Sex.Number(), game.YamlSexNames()),
 	}
 	if m.Enhanced {

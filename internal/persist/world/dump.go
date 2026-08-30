@@ -294,7 +294,7 @@ func BuildDumpWithOptions(w *game.World, opts Options) *Dump {
 			ArmorClass: m.ArmorClass, ArmorScaled: m.ArmorClassScaled(),
 			HitDice: diceString(m.HitDice), DamageDice: diceString(m.DamageDice),
 			Gold: m.Gold, Exp: m.Exp,
-			Position: m.Position, DefaultPos: m.DefaultPosition, Sex: m.Sex.Number(),
+			Position: int32(m.Position), DefaultPos: int32(m.DefaultPosition), Sex: m.Sex.Number(),
 			Especs: especs,
 		})
 	}
