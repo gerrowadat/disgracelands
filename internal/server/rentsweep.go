@@ -11,6 +11,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/gerrowadat/disgracelands/internal/game"
 	"github.com/gerrowadat/disgracelands/internal/persist/player"
 )
 
@@ -23,6 +24,34 @@ import (
 // BootReset does not check anything about how it was invoked either.
 func (s *Server) SweepRentFiles(ctx context.Context) {
 	if s.objects == nil {
+		return
+	}
+	// Nothing expires while rent is free, which is a deliberate difference
+	// from the C: update_obj_file runs unconditionally there, whatever
+	// free_rent is set to (db.c:456).
+	//
+	// The argument is that the sweep is the enforcement half of a charge
+	// that is not being made. A rent file times out because its owner
+	// stopped paying for the room it is in — but nobody on this server ever
+	// paid: free_rent is YES (config.c:133), so the receptionist refuses to
+	// price a stay at all, do_quit stores Crash_rentsave(ch, 0), and every
+	// rent file in the archive carries a per-day cost of zero
+	// (game/shopstate.go's own note says the same). Deleting somebody's
+	// possessions for falling behind on a bill of nothing is a rule with
+	// its reason removed.
+	//
+	// It also removes the failure #294 was filed for, which is what makes
+	// this worth the deviation rather than merely defensible: convert an
+	// archived lib/, boot on it, and the first sweep deleted the stored
+	// possessions of every character who had not played for thirty days —
+	// which, for an archive, is all of them. The conversion's whole purpose
+	// is to preserve what was there, and the very next step destroyed a
+	// large part of it, silently and with nothing to undo it.
+	//
+	// An operator who turns rent charging on gets the C's behaviour back
+	// unchanged, timeouts and all, because then the charge exists and so
+	// does the reason.
+	if game.Tuning().FreeRent {
 		return
 	}
 	now := time.Now()
@@ -83,6 +112,34 @@ func (s *Server) cleanOneRentFile(ctx context.Context, name string, now time.Tim
 	default:
 		return
 	}
+	// A rent file that does not say when it was written is never swept.
+	//
+	// The C cannot reach this: `rent.time` is an int32 in a struct that is
+	// always fully present, so there is no "missing" to have an opinion
+	// about. The yaml format can — `written:` is `omitempty`, and a file
+	// that lacks it (hand-edited, truncated, or written by something that
+	// had no timestamp to give) reads back as the zero time. Every one of
+	// those was then `now.Sub(zero)`, about two thousand years, and every
+	// one of them was deleted on the next boot.
+	//
+	// IsZero is the right test and not an approximation, which is the part
+	// worth being careful about: a rent file that genuinely says
+	// 1970-01-01 reads back as time.Unix(0, 0) — an ordinary instant, not
+	// the zero Time, whose year is 1. So this distinguishes "the file did
+	// not tell us" from "the file said the epoch", and a real archived
+	// timestamp of 0 is still swept exactly as the C sweeps it.
+	//
+	// Refusing to act is the only safe direction. Deleting somebody's
+	// possessions is not undoable, and doing it on the strength of a value
+	// we failed to read is the worst of the available outcomes. Part of
+	// #294; the rest of that issue is about rent files whose timestamps
+	// are real and simply old, which is a policy question and not this.
+	if f.Written.IsZero() {
+		s.logger.Warn("a rent file has no timestamp, so it will not be swept",
+			"character", name, "kind", kind)
+		return
+	}
+
 	// Strictly older than the timeout, matching the C's own
 	// `rent.time < time(0) - timeout` exactly: a file exactly at the
 	// boundary survives one more sweep, not zero.
