@@ -408,9 +408,25 @@ mistake stops compiling. `Raw`/`Unknown` are what the persistence layer
 uses and nothing else does, which is also where the remaining G115
 suppressions belong.
 
-Whether this is one generic type or eleven hand-written ones is §10's
-first open question. The generic version is smaller and the concrete
-version reads better in a stack trace.
+**One generic type, not eleven hand-written ones — settled here rather
+than left to the first PR, because it is the most consequential API
+decision in the plan and it wants deciding once.** Eleven concrete types
+(`RoomFlags`, `PlayerFlags`, `AffectFlags`, …) would read better at a call
+site and in a panic, and would match a codebase that has stayed almost
+entirely generics-free. They would also be roughly sixty-six
+near-identical methods to keep in agreement, which is the duplication
+§3.5 complains about, reinvented.
+
+**Know what is being bet, though: this would be the tree's first generic
+type.** There is exactly one generic *function* in 127,000 lines —
+`emptyIfNil[T any]` (`internal/persist/world/dump.go:356`) — and no
+generic types at all. `Set[T]` would not be a quiet addition in a corner;
+it would appear in every flag-bearing signature in `internal/game` and
+`internal/session`, and in every stack trace through them. That is a real
+change to how this codebase reads, taken deliberately. The fallback if it
+reads badly in practice is the hybrid — an unexported generic core with
+eleven thin named wrappers — and step 1's first PR is where that would
+become obvious, on one domain, before the other ten follow it.
 
 ### 4.2 Enumerations get types, `String`, and a text marshaller
 
@@ -547,16 +563,27 @@ Two corollaries:
 
 Every step in §7 answers all of these, and the first three are the ones
 that make the "no gameplay change" claim in §2.2 real rather than
-asserted:
+asserted. Note that they do *not* all run at the same cadence: the point
+of the split below is that an expensive check asked for too often is an
+expensive check that gets skipped.
 
-1. **`make parity` is green, run locally before pushing.** The session
-   parity suite is release-only, and a data-model change is precisely the
-   carve-out `CLAUDE.md` describes for `make ci` and `-race`: run the
-   broader check directly and locally when the change genuinely needs it.
-   Do not add it to `go.yml`.
-2. **`make play` is green, likewise.** It is the only thing in the tree
-   that boots the real server off disk; it found six bugs before it was
-   finished being written.
+1. **`make play` is green, on every pull request.** It is the only thing
+   in the tree that boots the real server off disk — reading the world,
+   resetting zones, attaching specials, parsing a flag — and it found six
+   bugs before it was finished being written. It is cheap enough to pay
+   per PR, and it is the check most likely to catch a step that broke
+   boot rather than arithmetic.
+2. **`make parity` is green, once per *domain* rather than once per pull
+   request.** The session parity suite builds a C tree, and steps 1 and 2
+   are something like twenty PRs between them; asking for it on every one
+   is asking for it to be skipped. Run it when a flag domain or an enum
+   domain is finished — a boundary where a transcript difference is still
+   easy to bisect, and where there is one anyway.
+
+   Both are release-only suites, and running them directly and locally is
+   exactly the carve-out `CLAUDE.md` describes for `make ci` and `-race`:
+   reach for the broader check when the change genuinely needs it. **Do
+   not add either to `go.yml`.**
 3. **The example worlds are byte-identical.** `dlctl import` over
    `examples/stock/binary` and `examples/mini/binary` reproduces the
    checked-in yaml exactly, and `examples/torture` imports unchanged.
@@ -659,11 +686,13 @@ started rather than spreading them over months.
 
 ## 10. Open questions
 
-**One generic `Set[T]` or eleven concrete flag types?** The generic is
-less code and gives `Set[RoomFlag]` in error messages; eleven concrete
-types give `RoomFlags` and read better at a call site and in a panic. Step
-1's first PR decides it for the other ten; pick deliberately, and pick
-once.
+**~~One generic `Set[T]` or eleven concrete flag types?~~ Settled: one
+generic `Set[T]`.** §4.1 carries the reasoning and, more usefully, what
+the decision costs — it makes this the tree's first generic type, in a
+codebase with one generic function and no generic types. Left here struck
+through rather than deleted, because the reason it was a question is the
+reason to revisit it if `Set[RoomFlag]` turns out to read badly across a
+few hundred call sites.
 
 **Does `PlayerRecord` keep its name?** If step 7 happens, the saved struct
 and the rules entity both want it. Probably `player.Saved` in the
