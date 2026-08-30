@@ -19,7 +19,7 @@ service (flags, env vars, structured logs, containers) rather than a
 > `proposals/` should hold work somebody could start on Monday. Phase 7
 > is not that, and leaving it there kept implying it was.
 >
-> The forward plan is **`docs/proposals/idiomatic-go.md`**, which starts
+> The forward plan is **`docs/design/idiomatic-go.md`**, which starts
 > from §0's "Fidelity, phase two" below — the row that freed
 > implementation from the C — and applies it to the data model this port
 > built while it was still bound by the row above it.

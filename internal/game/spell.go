@@ -24,7 +24,7 @@ import (
 // TargetFlags is a spell's set of them. Two of them are checks rather than
 // targets — TargetSelfOnly and TargetNotSelf qualify one of the others.
 //
-// Bit indices, not masks: docs/proposals/idiomatic-go.md §4.1, and §4.1.1
+// Bit indices, not masks: docs/design/idiomatic-go.md §4.1, and §4.1.1
 // for the trap. spell_test.go re-parses spells.h and compares every
 // entry's raw bits, which is what keeps these numbers the C's (§5).
 type TargetFlag int
@@ -79,7 +79,7 @@ const (
 // The numbers are stored in every player record -- as the keys of
 // PlayerRecord.Skills, and in a wand or staff's object values -- so they
 // are the file format as much as they are an enumeration
-// (docs/proposals/idiomatic-go.md §2.1). They are not contiguous: the
+// (docs/design/idiomatic-go.md §2.1). They are not contiguous: the
 // spells run 0-58, the skills 131-140 with 136 unused, and the breath
 // weapons 201-206.
 //

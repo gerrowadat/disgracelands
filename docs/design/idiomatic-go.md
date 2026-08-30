@@ -18,41 +18,60 @@ fence, and it is drawn carefully, because "implementation only" is very
 easy to say and this is a change that could break the game in ways no test
 would notice if the fence were drawn casually.
 
-> **Status, 2026-08-30: in progress.** §7's step table is the tracker;
-> each row is struck through as it lands. `go-port-plan.md` and
-> `yaml-only.md` both moved to `docs/design/` on the day this was written;
-> neither is extended with new work.
+> **Status, 2026-08-30: finished.** Seven of the nine steps are built,
+> and the two the step table always allowed to end otherwise did:
+> **step 7 (`PlayerRecord` split) is deferred** and **step 8 (width) is
+> declined**, both with their reasoning in §7's rows and §10. §7 is the
+> tracker; every row is struck through or says why it is not.
 >
-> - **Step 0, the resave fixture — done.** It found something on its
->   first run: see §7's row.
-> - **Step 2, a type per enumeration — done.** Class first, because it is
->   what retires `Flags`. `Class.Number()` is the narrowing point, the
->   same job `Set.Raw` does for a flag domain — and every enumeration
->   after it grew the same accessor, which is §3.8's width question
->   arriving six steps early: widening an enumeration does not remove its
->   conversions to the format's width, it *concentrates* them. **`game.
->   Flags` is gone** as of the remort vector becoming `Set[Class]`; what
->   is left in `flags.go` is the letter *encoding* over raw bits, which is
->   all thirteen domains ever had in common.
+> This document is a *record* now, in `docs/design/` alongside
+> `go-port-plan.md` and `yaml-only.md`, and like them it is corrected when
+> it turns out to be wrong about what landed and is never extended with
+> new plans.
 >
->   Four of the nine were not what §3.2 had them down as.
->   **Race** enumerates nothing at all — no name table in Go or in the C,
->   never read by `internal/game`, absent from `char_file_u` entirely — so
->   its type exists to say that in one place and to stop it being
->   interchangeable with `Level`. **SpellID** is one domain for spells and
->   skills both, and gave the step its only real finding: its spells.h
->   oracle had gone stale, checking 19 of 79 constants, and now derives
->   its list from the type. **Sector** and **Liquid** were both
->   *deliberately partial* enumerations whose comments said as much, with
->   three of ten and two of sixteen values named; all of them are now.
-> - **Step 1, a type per flag domain — done.** `Set[T]` and the
->   raw-bits helper boundary landed with the first domain, room flags.
->   Read §4.1.1, the OR trap, before converting another one. Done so far:
->   **room**, **exit/door**, **container**, **shop**, **paladin spec**,
->   **spell targeting**, **spell routines**, **item wear**, **item extra**,
->   **mob act**, **affect**, **player**, **preference**. Only the remort
->   class vector still uses the untyped `Flags`, and it becomes
->   `Set[Class]` in step 2 rather than getting a flag type of its own.
+> **What it was wrong about, since that is the useful part of a record:**
+>
+> - §4.3 and `values.go` both said a corpse is a container whose fourth
+>   value is `-1`. It is **1** (`make_corpse`, fight.c:319). The rule
+>   turned on "not zero" so no code was wrong, but `!= -1` written from
+>   that sentence would have typed every corpse.
+> - §3.2's table of nine enumerations missed two: `DamageType` (a
+>   weapon's 0-14 damage kind) and the TypeHit-scaled *union* of that
+>   with `SpellID` that the message tables are keyed by. Step 3 found
+>   both because `WeaponValues` needed a field type.
+> - §3.4 framed six sentinels as removable. Exactly one was
+>   (`guildAnyClass`); four reach disk and could only be named; two were
+>   §4.5's. Reading the removable one against the C turned up a negative
+>   array index and a comment that means the opposite of what it looks
+>   like — `docs/weirdnumbers.md`.
+> - §4.5 said "everything already goes through `Put`/`Take`, which is
+>   what makes it tractable". Almost: `shopstate.go` writes a placement
+>   directly in two places, because `slide_obj` splices into `Carrying`
+>   at a chosen index.
+> - §7's step 8 row said the width change would retire "most of the 129
+>   G115 suppressions". Counting them after steps 1-6 is what declined
+>   the step.
+>
+> **And what it was right about that mattered most:** §5, the safety net.
+> Step 6 did merge two name tables into one and it did *not* eat either
+> test, but only because §5 said to check — and checking meant breaking
+> each on purpose to watch it fail. Step 3 landed a rule change no test
+> covered (a god eating a sword) and `make test-fast`, `make play` and
+> `make parity` were all green on it; only reading the C's guard caught
+> it. The document's own biggest risk was correctly identified.
+>
+> Two findings are worth carrying forward more than any of the types:
+>
+> - **`TestSpellNumbersMatchTheHeader` had gone stale.** It re-parsed
+>   `spells.h` and compared against a hand-written list of nineteen
+>   constants under the comment "the ones this package names". The
+>   package named seventy-nine. Sixty spell and skill numbers — the kind
+>   that silently write one skill into another's slot — were checked by
+>   nothing. It now derives its list from the `SpellID` type, which is
+>   the type earning its keep better than any call site does.
+> - **Two deliberately partial enumerations.** `Sector` named three of
+>   ten and `Liquid` two of sixteen, each with a comment explaining that
+>   the rest "stay numbers". Both are complete now.
 
 ---
 
@@ -773,8 +792,8 @@ so that the riskiest step is last and separable.
 | **4** | ~~**Absence over sentinels**~~ **Done.** | §4.4, in the places §3.4 lists, excluding the vnum sentinels that reach disk. | Medium. Each one is a small semantic argument; do not batch them. **Outcome: one sentinel removed, four named, two deferred to §4.5.** Only `guildAnyClass` (-999) was a genuine in-memory sentinel and it is gone, replaced by a `BlocksEveryone bool` — and reading it against the C found that its `/* all */` comment means the opposite of what it looks like (weirdnumbers.md). The rest — `Conditions`' -1, `Affect.Duration`'s -1, a light's -1 hours, an exit's -1 key — all reach disk, so they are §4.4's third case and get names (`CondNotApplicable`, `AffectPermanent`, `LightEternal`) rather than removal. `Object.WornAt` and an exit's `NoRoom` are §4.5's, as §4.4 says. |
 | **5** | ~~**The object placement union**~~ **Done.** | §4.5. Five fields to one. | Medium. Everything already goes through `Put`/`Take`, which is what makes it tractable — almost: `shopstate.go` writes the placement in two places because `slide_obj` splices into `Carrying` at a chosen index. The field is unexported, so those two are the only ones that can, and they say why. `Object.WornAt`'s -1 (§4.4's deferral) is gone with it: `WornBy` cannot exist without a position. |
 | **6** | ~~**Deduplicate the name tables**~~ **Done.** | §3.5. One source of truth for a bit's C name and its yaml name, still checked against `constants.c`. | Medium, and the one most likely to eat its own test. Read §5 twice. **Done: `names.go` holds fifteen `[]nameEntry` tables**, one per domain, and `bitnames.go`/`yamlnames.go` project them at init — so the two spellings cannot be different lengths and cannot drift. Neither test was eaten: the `constants.c` re-parse compares against the same package-level `[]string` it always did, and the pairing check still has something to check, because `{"DARK", ""}` — named for players, unnameable in a file — is still representable. Both were verified to *fail* on a deliberate break before this landed. |
-| **7** | **`PlayerRecord` split** | §4.6. Saved state and rules entity become different types. | High, and not mechanical. May be deferred indefinitely; nothing else here depends on it. |
-| **8** | **Width** | §4.7. `int32` → `int` in the rules layer only. Retires most of the 129 G115 suppressions. | **Highest.** §2.2's third hazard. Gated on the oracles, not the type checker. May end as "declined" — see §10. |
+| **7** | **`PlayerRecord` split** — **deferred** | §4.6. Saved state and rules entity become different types. | High, and not mechanical. May be deferred indefinitely; nothing else here depends on it — and it is deferred, on the terms this row already allowed. The concrete complaint in §3.6 is `Worn` and `Mobile`, two fields that are never saved; the cheap version of removing them is to pass them instead, and `RecomputeAffects` has **20 callers**, over half of which hold only a `*PlayerRecord` — so the cheap version pushes the same two facts into twenty signatures and is worse than the back-pointer it replaces. The value is all in the full split, and §10 is itself unsure of the target shape ("that makes `game.Character` large, which is the shape the split was trying to escape"). Doing it half-way is the one outcome that is clearly wrong. |
+| **8** | **Width** — **declined** | §4.7. `int32` → `int` in the rules layer only. Retires most of the 129 G115 suppressions. | **Highest.** §2.2's third hazard. Gated on the oracles, not the type checker. **Declined**, and recorded in `docs/deviations.md` as §10 requires. The premise did not survive measurement: of 51 rules-layer `nolint:gosec` after steps 1–6, 15 are not numeric conversions at all, 17 are format-boundary narrowings that steps 1–3 *created* and step 8 would create more of, and 18 are width candidates — four of which say in their own comment that the truncation or the wraparound is the ported behaviour, including the two shop prices whose oracle is built `-m32 -mfpmath=387` precisely because the answer depends on the width. The prize is fourteen suppressions; the bar §10 set is a 57-finding oracle sweep. |
 | **9** | ~~**Package shape**~~ **Done.** | §3.9, and only the parts §9 does not exclude. | Low, low value. Last for a reason. **Done, narrowly, as §9 defines it: `commands.go` 2,147 → 1,296 lines.** `look`, `move` and `who` moved into the `look.go`, `movement.go` and `informational.go` that already existed and were already about exactly those things. Pure motion — 85 function declarations before and 85 after, net +18 lines, all of them three "moved here" notes and four imports. The dispatcher, the `Context` type and the command table stay together, because the table's order is `Command.CLine` and §3.10 says do not touch it. `Live`'s ten maps are §9's excluded "general package reorganisation" and are not touched. |
 
 Steps 1 and 2 are the bulk of the benefit and nearly all of the volume.
@@ -849,27 +868,35 @@ through rather than deleted, because the reason it was a question is the
 reason to revisit it if `Set[RoomFlag]` turns out to read badly across a
 few hundred call sites.
 
-**Does `PlayerRecord` keep its name?** If step 7 happens, the saved struct
-and the rules entity both want it. Probably `player.Saved` in the
-persistence layer and `game.Character` absorbing the rest — but that makes
-`game.Character` large, which is the shape the split was trying to escape.
+**Does `PlayerRecord` keep its name?** *Still open, because step 7 was
+deferred.* If it happens, the saved struct and the rules entity both want
+it. Probably `player.Saved` in the persistence layer and `game.Character`
+absorbing the rest — but that makes `game.Character` large, which is the
+shape the split was trying to escape. That unease is part of why step 7
+was deferred rather than attempted: the target shape is not settled, and
+a half-done split is worse than none.
 
-**How far does the value taxonomy go?** §4.3 says mirror the format: five
-types typed, the other eighteen raw. That is right for step 3 and
-probably wrong forever. Extending it means extending `data-format.md`
+**How far does the value taxonomy go?** *Still open.* §4.3 says mirror the
+format: five types typed, the other eighteen raw. That is right for step 3
+and probably wrong forever. Step 3 held the line and found two reasons to
+be glad of it — a scroll's three spells genuinely do not fit the
+single-spell shape a wand has, and `do_eat` and `do_backstab` read a value
+slot without checking the item's type at all, so a typed accessor is
+*stronger* than the game and cannot be used at those two sites. Extending it means extending `data-format.md`
 §4.3 *first*, on disk, and only then inward — the opposite order to
 everything else here.
 
-**Does step 8 (width) happen at all?** The honest answer is "not until
-somebody has demonstrated it is safe", and the demonstration is expensive:
-it means an oracle sweep over every arithmetic path `docs/weirdnumbers.md`
-touches, at both widths, showing the answers agree. That is a real piece
-of work and it is worth it only if the 129 suppressions are actually
-costing something. They may not be. **Declining step 8 and keeping
-`int32` in the rules layer is a legitimate outcome**, and if it is taken,
-it belongs in `docs/deviations.md` — not because it is a deviation, but
-because "we kept the C's widths on purpose, here is why" is exactly the
-kind of thing that gets re-litigated from memory in two years.
+**~~Does step 8 (width) happen at all?~~ Settled: no.** The answer this
+section guessed at turned out to be the right one, for the reason it
+guessed — "it is worth it only if the 129 suppressions are actually
+costing something. They may not be." They do not. Counting them after
+steps 1–6 rather than before found that a third of the rules layer's
+suppressions are not numeric conversions at all, another third are
+format-boundary narrowings that steps 1–3 *created* and step 8 would
+create more of, and of the eighteen genuine width candidates four say in
+their own comments that the truncation is the ported behaviour. The
+reasoning is in `docs/deviations.md`, "The rules layer keeps the C's
+`int32` widths, on purpose", exactly where this paragraph asked for it.
 
 **Where does the `Set` type live?** `internal/game` has no sub-packages
 today and adding one for a bitset is a small architectural decision with

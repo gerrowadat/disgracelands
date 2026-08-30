@@ -664,7 +664,7 @@ func doSave(c *Context) error {
 }
 
 // Everything below this line moved here from commands.go in step 9 of
-// docs/proposals/idiomatic-go.md — `who` and the annotations it prints.
+// docs/design/idiomatic-go.md — `who` and the annotations it prints.
 // Code motion only: not a line changed.
 
 func doWho(c *Context) error {

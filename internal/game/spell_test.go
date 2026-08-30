@@ -240,7 +240,7 @@ func TestSpellTableMatchesTheCSource(t *testing.T) {
 		// Raw(), not a re-derivation: row.targets is the bit vector this
 		// test parsed out of spells.h, so comparing the set's own bits is
 		// what keeps the C the authority for these numbers rather than
-		// the Go constants (docs/proposals/idiomatic-go.md §5).
+		// the Go constants (docs/design/idiomatic-go.md §5).
 		if got.Targets.Raw() != row.targets {
 			t.Errorf("%s: targets are %d, want %d", name, got.Targets.Raw(), row.targets)
 		}

@@ -471,6 +471,61 @@ behaviour in every case is to keep going until the machine stops.
 These change no behaviour a player can observe. They are recorded because
 someone reading the two servers side by side will notice them.
 
+### The rules layer keeps the C's `int32` widths, on purpose
+
+Not a deviation — the opposite of one, and recorded here because
+`docs/design/idiomatic-go.md` §10 asked for it in exactly these words:
+*"'we kept the C's widths on purpose, here is why' is exactly the kind of
+thing that gets re-litigated from memory in two years."*
+
+That document's step 8 proposed `int32` → `int` throughout
+`internal/game`, `internal/session` and `internal/server`, keeping
+explicit widths only at the persistence boundary, and estimated it would
+retire "most of the 129 G115 suppressions". Every other step in it
+landed. **This one is declined**, and the argument is a measurement
+rather than a shrug.
+
+Counting `//nolint:gosec` in the three rules-layer packages after steps
+1–6 (2026-08-30, 51 in total):
+
+| | |
+| --- | --- |
+| Not a numeric conversion at all | **15** — file paths (G304), a game seed (G404), a TLS setting (G402), a prompt label mistaken for a credential (G101). Step 8 cannot touch these. |
+| Format-boundary and bit-pattern conversions | **17** — `Class.Number()`, `Sector.Number()`, `SpellID.Number()` and their kin, plus the container flag field's `uint32`↔`int32` reinterpretations. |
+| Arithmetic-width candidates | **18** (plus one G404 that a keyword match caught) — of which **3** are in test files. |
+
+The middle row is the interesting one, because it is *created* by the
+direction step 8 wanted to go. Steps 1–3 made ten enumerations `int`, and
+every one of them grew a `Number()` accessor whose entire job is the
+narrowing to the format's width — with the suppression concentrated in
+one place instead of spread over its call sites, which is a real
+improvement and is not what step 8 was counting. Widening the rest of the
+rules layer would add more of these, not fewer.
+
+Four of the remaining candidates say in their own comments why they
+cannot move:
+
+    shopstate.go:431  int32(float64(obj.Cost) * float64(shop.ProfitBuy))
+    shopstate.go:440  int32(float64(obj.Cost) * float64(shop.ProfitSell))
+    rent.go:77        int32(float64(f.CostPerDay) * days)
+    editor.go:882     uint32(n)   // the wraparound is the ported behaviour
+
+The first two are the shop prices, which have their own entry in
+`docs/weirdnumbers.md` and their own oracle built `-m32 -mfpmath=387`,
+because *the answer depends on the width the multiplication happens at*.
+That is the whole of the argument: in this tree an integer width is not
+an implementation detail, it is sometimes the computation. The remaining
+fourteen are small-value conversions where a suppression costs one
+comment and a width change buys nothing.
+
+`idiomatic-go.md` §10 set the bar for accepting step 8 as "an oracle
+sweep over every arithmetic path `docs/weirdnumbers.md` touches, at both
+widths, showing the answers agree" — 57 findings' worth of sweep. Nobody
+has done it, the measurement above says the prize is fourteen
+suppressions, and `go-port-plan.md` §4 already had this argument once and
+settled it the other way. If somebody wants to reopen it, do the sweep
+first; the suppressions are not the reason to.
+
 ### The random number generator, and one thing it does not reproduce
 
 The C's generator (random.c) is ported exactly and verified against it —

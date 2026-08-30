@@ -85,7 +85,7 @@ func (o *Object) ObjSpec() string {
 // BlocksEveryone carries that, rather than a -999 in the Class field. The
 // C's number is not preserved because it never reaches disk and never
 // meant a class: it is a flag written in the class column, which is what
-// docs/proposals/idiomatic-go.md §3.4 is about. The table ends at a -1
+// docs/design/idiomatic-go.md §3.4 is about. The table ends at a -1
 // sentinel in the C, which a Go slice does not need.
 var guildInfo = []struct {
 	// Class is the class whose guild this is. Meaningless, and unread,

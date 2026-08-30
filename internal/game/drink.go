@@ -29,7 +29,7 @@ import "strings"
 // Two of the sixteen are named in the rules -- water, which create water
 // makes, and slime, which it makes instead when it goes wrong. The other
 // fourteen were bare numbers until this became a type, which is what
-// docs/proposals/idiomatic-go.md §3.2 objects to: a reader who needs
+// docs/design/idiomatic-go.md §3.2 objects to: a reader who needs
 // liquid 7 has to count entries in drinks[] to find out it is a
 // firebreather.
 type Liquid int

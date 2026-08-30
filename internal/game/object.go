@@ -23,7 +23,7 @@ import "strings"
 
 // ItemType is what an object *is*, from structs.h:326, and it decides what
 // the four value slots mean — which is why step 3's typed accessors
-// (docs/proposals/idiomatic-go.md §4.3) need this type before they can
+// (docs/design/idiomatic-go.md §4.3) need this type before they can
 // exist. The numbers are the world file's.
 //
 // The zero value is not a member: the C numbers types from 1, and index 0
@@ -107,7 +107,7 @@ func ItemTypeByName(s string) (typ int32, rest string, ok bool) {
 // all — it is a Disgracelands local mod, marked in the C by a `/*humbug*/`
 // comment on either side of it, and it hides an object from `locate object`.
 // ExtraFlag is one of them, and ExtraFlagSet is an object's set. Bit
-// indices, not masks: docs/proposals/idiomatic-go.md §4.1, and §4.1.1 for
+// indices, not masks: docs/design/idiomatic-go.md §4.1, and §4.1.1 for
 // the trap. extra_bits[] in constants.c is the name table.
 //
 // Named ExtraFlagSet rather than ExtraFlags because ObjDef.ExtraFlags is
@@ -144,7 +144,7 @@ const (
 // a place to wear something, it is whether the object can be picked up at
 // all.
 // WearFlag is one of them, and WearFlagSet is an object's set. Bit
-// indices, not masks: docs/proposals/idiomatic-go.md §4.1, and §4.1.1 for
+// indices, not masks: docs/design/idiomatic-go.md §4.1, and §4.1.1 for
 // the trap. wear_bits[] in constants.c is the name table and
 // bitnames_test.go is what keeps these numbers the C's.
 //
@@ -331,7 +331,7 @@ func (o *Object) MinLevel() int32 {
 //
 // This replaces five fields (a Location enum plus Room, Holder, WornAt and
 // Container) whose invariant was "exactly one of these is meaningful, and
-// which one depends on the enum". docs/proposals/idiomatic-go.md §4.5: the
+// which one depends on the enum". docs/design/idiomatic-go.md §4.5: the
 // invariant is now unrepresentable otherwise, and Placement is unexported
 // so ObjectToRoom/ObjectToChar/ObjectToObject/EquipChar and detach are the
 // only things that can write it.

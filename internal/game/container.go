@@ -24,7 +24,7 @@ import "strings"
 // container's "closed" bit and its "glowing" bit are stored in completely
 // different places — and why this domain is a set over an int32 *value
 // slot* rather than over a field of its own. Bit indices, not masks:
-// docs/proposals/idiomatic-go.md §4.1, and §4.1.1 for the trap.
+// docs/design/idiomatic-go.md §4.1, and §4.1.1 for the trap.
 type ContainerFlag int
 
 // ContainerFlagSet is a set of ContainerFlag.

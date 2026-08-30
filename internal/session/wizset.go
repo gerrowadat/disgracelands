@@ -69,7 +69,7 @@ type setContext struct {
 // for a BINARY field because the parse refuses anything else.
 // A free function rather than a method on setContext because it serves two
 // flag domains with two different set types, and Go has no generic methods.
-// docs/proposals/idiomatic-go.md §4.1.
+// docs/design/idiomatic-go.md §4.1.
 func setOrRemove[T ~int](s *setContext, flags *game.Set[T], bits ...T) {
 	switch {
 	case s.on:

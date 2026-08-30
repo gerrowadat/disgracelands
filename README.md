@@ -90,7 +90,7 @@ still recorded in `docs/deviations.md`, exactly as every deliberate
 difference has been from the start.
 
 The first thing planned under that freedom is
-`docs/proposals/idiomatic-go.md`: retiring the C's data model from the Go
+`docs/design/idiomatic-go.md`: retiring the C's data model from the Go
 server's memory — the bit vectors, the `int32`s standing in for
 enumerations, the four-slot value arrays — the same way `yaml-only.md`
 retired the C's file formats from its disk. Proposed, nothing built.
@@ -108,7 +108,8 @@ records — and `scripts/world-parity.sh` checks that at every release (`.github
 - **Working on the Go port**: `docs/developer.md` (and `make` for the dev
   targets it describes)
 - **The port's design and phasing**: `docs/design/go-port-plan.md`
-- **What is planned next**: `docs/proposals/` — one document at a time
+- **What is planned next**: `docs/proposals/` — one document at a time,
+  and empty right now
 - **Design decisions that have actually landed**: `docs/design/`, starting
   with the `yaml` data format
 - **The C server**: `reference/moderncserver/README.md`

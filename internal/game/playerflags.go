@@ -15,7 +15,7 @@ package game
 // C server can still read.
 
 // PlayerFlag is one of the PLR_* bits and PlayerFlags is a character's set
-// of them. Bit indices, not masks: docs/proposals/idiomatic-go.md §4.1,
+// of them. Bit indices, not masks: docs/design/idiomatic-go.md §4.1,
 // with §4.1.1 and §4.1.2 for the three ways that bites. player_bits[] in
 // constants.c is the name table.
 type PlayerFlag int
@@ -46,7 +46,7 @@ const (
 )
 
 // PrefFlag is one of the PRF_* bits and Preferences is a character's set of
-// them. Bit indices, not masks: docs/proposals/idiomatic-go.md §4.1.
+// them. Bit indices, not masks: docs/design/idiomatic-go.md §4.1.
 // preference_bits[] in constants.c is the name table.
 //
 // The set alias is Preferences, not PrefFlags, because that is what the
@@ -106,7 +106,7 @@ const (
 // room's set of them.
 //
 // The first domain to get its own type, in
-// docs/proposals/idiomatic-go.md's step 1. The constants below are bit
+// docs/design/idiomatic-go.md's step 1. The constants below are bit
 // *indices* rather than masks — RoomDark is 0 and not 1<<0 — which is the
 // only change to how they are declared and no change at all to what is
 // stored: bit 0 is still bit 0 on disk, is still what `asciiflag_conv`'s
@@ -152,7 +152,7 @@ const (
 // what the slot was before somebody used it.
 //
 // AffectFlag is one of them and AffectFlags is a character's or an
-// object's set. Bit indices, not masks: docs/proposals/idiomatic-go.md
+// object's set. Bit indices, not masks: docs/design/idiomatic-go.md
 // §4.1, with §4.1.1 and §4.1.2 for the three ways that bites.
 // affected_bits[] in constants.c is the name table.
 type AffectFlag int

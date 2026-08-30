@@ -72,7 +72,7 @@ func (l *loader) loadZoneFile(path string, w *game.World) error {
 // raw bit vector, reporting any name the table does not carry.
 //
 // Raw bits rather than any flag type: this one method serves six domains
-// with six different destination types, and docs/proposals/idiomatic-go.md
+// with six different destination types, and docs/design/idiomatic-go.md
 // step 1 gives each of them its own. Bits are the one thing they have in
 // common, and the loader is the persistence boundary Set.Raw/SetFromRaw
 // exist for (§4.1).

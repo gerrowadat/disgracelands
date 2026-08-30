@@ -11,7 +11,7 @@ package game
 // needed, and an invented one is a different mobile.
 //
 // MobFlag is one of them and MobFlags is a mobile's set. Bit indices, not
-// masks: docs/proposals/idiomatic-go.md §4.1, §4.1.1 and §4.1.2 for the
+// masks: docs/design/idiomatic-go.md §4.1, §4.1.1 and §4.1.2 for the
 // three ways that bites. action_bits[] in constants.c is the name table.
 type MobFlag int
 

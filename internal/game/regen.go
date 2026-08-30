@@ -86,7 +86,7 @@ const MaxCondition int32 = 24
 //
 // It is the C's bare -1 (limits.c:380's `if (GET_COND(ch, condition) == -1)
 // return;`) and it stays -1, because it is written to every player file
-// ever saved: docs/proposals/idiomatic-go.md §4.4's third case, a sentinel
+// ever saved: docs/design/idiomatic-go.md §4.4's third case, a sentinel
 // that has to survive to disk. What it gets is a name, so that a reader of
 // `Conditions[CondFull] == -1` does not have to guess whether it means
 // "starving" -- which is what 0 means, and is the opposite.

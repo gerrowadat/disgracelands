@@ -8,7 +8,7 @@ package game
 
 // One table per domain, holding both names a bit or a value has.
 //
-// Step 6 of docs/proposals/idiomatic-go.md. §3.5's complaint was that
+// Step 6 of docs/design/idiomatic-go.md. §3.5's complaint was that
 // `bitnames.go` and `yamlnames.go` held two parallel []string tables per
 // domain which had to agree slot for slot, plus the constants.c the first
 // is derived from -- three copies of one fact. Two of those three are now

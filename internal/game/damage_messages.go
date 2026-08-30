@@ -258,7 +258,7 @@ func AttackTypeName(attackType int32) string {
 	// Below TypeHit the number is a SpellID; at or above it, it is a
 	// weapon attack type. AttackType is a union of two domains rather than
 	// one enumeration, which is why it stays an int32 and converts here --
-	// see docs/proposals/idiomatic-go.md §4.5.
+	// see docs/design/idiomatic-go.md §4.5.
 	return SpellNameOrNumber(SpellID(attackType))
 }
 

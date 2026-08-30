@@ -13,7 +13,7 @@ import (
 
 // Set is a set of flags drawn from one domain — room flags, player flags,
 // affects, item extras, and the eight others the game keeps as bit
-// vectors. docs/proposals/idiomatic-go.md §4.1.
+// vectors. docs/design/idiomatic-go.md §4.1.
 //
 // The C keeps every one of those in a single `bitvector_t` (structs.h:599),
 // and so did this port: one `Flags` type for eleven unrelated domains,
@@ -30,7 +30,7 @@ import (
 // how they are declared; index 7 is still bit 7, is still what
 // `asciiflag_conv`'s letters decode to, is still what `flags_raw` carries,
 // and is still what bitnames_test.go proves against constants.c.
-// docs/proposals/idiomatic-go.md §2.1.
+// docs/design/idiomatic-go.md §2.1.
 //
 // One generic type rather than eleven hand-written ones, settled in §4.1:
 // eleven concrete types would read better at a call site and would be
@@ -106,7 +106,7 @@ func (s Set[T]) Contains(o Set[T]) bool { return s.bits&o.bits == o.bits }
 //
 // Bit order rather than any other, deliberately: iteration order is
 // player-visible wherever a set is printed, and
-// docs/proposals/idiomatic-go.md §2.2 rules out anything with a
+// docs/design/idiomatic-go.md §2.2 rules out anything with a
 // non-deterministic order on a path that can roll dice. A map would have
 // been the other obvious representation and is exactly the thing that rule
 // forbids.

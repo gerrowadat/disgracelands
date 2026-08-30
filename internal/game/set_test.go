@@ -58,7 +58,7 @@ func TestSetBasics(t *testing.T) {
 	}
 }
 
-// TestSetIteratesInBitOrder is docs/proposals/idiomatic-go.md §2.2's second
+// TestSetIteratesInBitOrder is docs/design/idiomatic-go.md §2.2's second
 // hazard, asserted rather than assumed: iteration order is player-visible
 // wherever a set is printed, and the whole reason Set is a bit vector
 // rather than a map is that a map's order is not an order at all.
@@ -133,7 +133,7 @@ func TestSetRawRoundTrip(t *testing.T) {
 // domain's conversion, and one of the two would have shipped.
 //
 // A domain's constants are bit *indices* now, not masks
-// (docs/proposals/idiomatic-go.md §4.1). So the C-shaped idiom the port
+// (docs/design/idiomatic-go.md §4.1). So the C-shaped idiom the port
 // was full of —
 //
 //	room.Flags.HasAny(RoomNoMob | RoomDeathTrap)
@@ -167,7 +167,7 @@ func TestNoFlagConstantIsCombinedWithAnOperator(t *testing.T) {
 	t.Logf("watching %d flag constants across %d converted domain(s)", len(names), countDomains(names))
 
 	// Every Go package in the tree that can name them. reference/ is C and
-	// is out of scope by rule (docs/proposals/idiomatic-go.md §5).
+	// is out of scope by rule (docs/design/idiomatic-go.md §5).
 	for _, root := range []string{"..", "../../cmd", "../../test"} {
 		scanForFlagArithmetic(t, root, names)
 	}
