@@ -297,13 +297,38 @@ jobs:
           fi
           grep -- "matched the system libcrypt" crypt.txt
 
+      # --player-format and --world-format used to be in this list and are
+      # not any more: yaml-only.md §7 row 4 deleted all seven --*-format
+      # flags, because the server reads one on-disk format. --player-dir
+      # and --world-dir cover what they were here to cover -- where the
+      # data comes from -- and the two removed names are asserted *absent*
+      # below, so a flag whose whole point was to be gone cannot drift
+      # back in unnoticed.
+      #
+      # This step failed the first v1.0.0 attempt (2026-08-30) for exactly
+      # the reason a release-only check goes wrong: it had not run since
+      # v0.1.3, which predates the flag removal, so it spent that whole
+      # window asserting something the tree had deliberately stopped being
+      # true. Nothing was tagged -- publish is needs:-gated on this job --
+      # but the failure was in the workflow rather than in what it was
+      # checking.
       - name: Phase 0 acceptance - dlmud --help lists the full option set
         run: |
           go run ./cmd/dlmud --help > help.txt 2>&1 || true
-          for opt in lib-dir player-format world-format listen-telnet listen-telnets \
+          for opt in lib-dir player-dir world-dir listen-telnet listen-telnets \
                      listen-ws tls-cert pulse-interval log-format metrics-addr \
                      allow-legacy-passwords; do
             grep -q -- "-$opt" help.txt || { echo "missing --$opt in --help"; exit 1; }
+          done
+          # `if` rather than the `&&` the line above it mirrors: a bare
+          # `grep && { exit 1; }` as a loop body's last statement is the
+          # classic `set -e` trap, and while bash happens to exempt it,
+          # that is not a thing to make the next reader work out.
+          for gone in player-format world-format; do
+            if grep -q -- "-$gone" help.txt; then
+              echo "--$gone is back in --help; yaml-only.md §7 row 4 removed it"
+              exit 1
+            fi
           done
           grep -q 'DL_LIB_DIR' help.txt || { echo "--help does not document env vars"; exit 1; }
 
