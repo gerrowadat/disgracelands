@@ -80,7 +80,7 @@ type ShopDef struct {
 // ShopBuyType is one entry in a shop's buy list: an item type, and optionally
 // a keyword that further restricts what it will take.
 type ShopBuyType struct {
-	Type    int32
+	Type    ItemType
 	Keyword string
 }
 

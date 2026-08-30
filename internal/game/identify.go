@@ -28,7 +28,7 @@ func IdentifyObject(obj *Object) string {
 	var out strings.Builder
 	fmt.Fprintf(&out, "You feel informed:\r\n")
 	fmt.Fprintf(&out, "Object '%s', Item type: %s\r\n",
-		obj.Name(), SprintType(obj.Type, ItemTypeNames))
+		obj.Name(), SprintType(obj.Type.Number(), ItemTypeNames))
 
 	if !obj.PermAffect.Empty() {
 		fmt.Fprintf(&out, "Item will give you following abilities:  %s\r\n",
@@ -40,7 +40,7 @@ func IdentifyObject(obj *Object) string {
 
 	switch obj.Type {
 	case ItemScroll, ItemPotion:
-		fmt.Fprintf(&out, "This %s casts: ", SprintType(obj.Type, ItemTypeNames))
+		fmt.Fprintf(&out, "This %s casts: ", SprintType(obj.Type.Number(), ItemTypeNames))
 		// Values 1, 2 and 3 are up to three spells, and a scroll with none of
 		// them prints the line with nothing after it.
 		for _, value := range obj.Values[1:] {
@@ -52,7 +52,7 @@ func IdentifyObject(obj *Object) string {
 
 	case ItemWand, ItemStaff:
 		fmt.Fprintf(&out, "This %s casts:  %s\r\n",
-			SprintType(obj.Type, ItemTypeNames), SpellName(obj.Values[3]))
+			SprintType(obj.Type.Number(), ItemTypeNames), SpellName(obj.Values[3]))
 		fmt.Fprintf(&out, "It has %d maximum charge%s and %d remaining.\r\n",
 			obj.Values[1], plural(obj.Values[1]), obj.Values[2])
 

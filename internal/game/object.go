@@ -21,31 +21,49 @@ import "strings"
 // obj_to_*/obj_from_* functions, and a leak — an object on two lists, or on
 // none — is how items get duplicated.
 
+// ItemType is what an object *is*, from structs.h:326, and it decides what
+// the four value slots mean — which is why step 3's typed accessors
+// (docs/proposals/idiomatic-go.md §4.3) need this type before they can
+// exist. The numbers are the world file's.
+//
+// The zero value is not a member: the C numbers types from 1, and index 0
+// of item_types[] is "UNDEFINED". So a zero-valued ItemType is genuinely
+// undefined rather than quietly being the first type, which is the
+// opposite of Class and worth noticing.
+type ItemType int
+
+// ItemTypeUndefined is index 0 of item_types[]: not a type any object has.
+const ItemTypeUndefined ItemType = 0
+
+// Number is the type's stored number, for the world files and the
+// value-indexed name tables. The narrowing point, as Class.Number is.
+func (t ItemType) Number() int32 { return int32(t) } //nolint:gosec // twenty-three types; the format's width
+
 // ItemType values, from structs.h:326.
 const (
-	ItemLight      int32 = 1
-	ItemScroll     int32 = 2
-	ItemWand       int32 = 3
-	ItemStaff      int32 = 4
-	ItemWeapon     int32 = 5
-	ItemFireWeapon int32 = 6 // unimplemented in the C too
-	ItemMissile    int32 = 7 // unimplemented in the C too
-	ItemTreasure   int32 = 8
-	ItemArmor      int32 = 9
-	ItemPotion     int32 = 10
-	ItemWorn       int32 = 11 // unimplemented in the C too
-	ItemOther      int32 = 12
-	ItemTrash      int32 = 13
-	ItemTrap       int32 = 14 // unimplemented in the C too
-	ItemContainer  int32 = 15
-	ItemNote       int32 = 16
-	ItemDrinkCon   int32 = 17
-	ItemKey        int32 = 18
-	ItemFood       int32 = 19
-	ItemMoney      int32 = 20
-	ItemPen        int32 = 21
-	ItemBoat       int32 = 22
-	ItemFountain   int32 = 23
+	ItemLight      ItemType = 1
+	ItemScroll     ItemType = 2
+	ItemWand       ItemType = 3
+	ItemStaff      ItemType = 4
+	ItemWeapon     ItemType = 5
+	ItemFireWeapon ItemType = 6 // unimplemented in the C too
+	ItemMissile    ItemType = 7 // unimplemented in the C too
+	ItemTreasure   ItemType = 8
+	ItemArmor      ItemType = 9
+	ItemPotion     ItemType = 10
+	ItemWorn       ItemType = 11 // unimplemented in the C too
+	ItemOther      ItemType = 12
+	ItemTrash      ItemType = 13
+	ItemTrap       ItemType = 14 // unimplemented in the C too
+	ItemContainer  ItemType = 15
+	ItemNote       ItemType = 16
+	ItemDrinkCon   ItemType = 17
+	ItemKey        ItemType = 18
+	ItemFood       ItemType = 19
+	ItemMoney      ItemType = 20
+	ItemPen        ItemType = 21
+	ItemBoat       ItemType = 22
+	ItemFountain   ItemType = 23
 )
 
 // ItemTypeNames is constants.c's item_types[], indexed by type number. Index
@@ -344,7 +362,7 @@ type Object struct {
 	// *this* note and not on every note of its kind.
 	ActionDesc string
 
-	Type       int32
+	Type       ItemType
 	ExtraFlags ExtraFlagSet
 	WearFlags  WearFlagSet
 	Values     [NumObjValues]int32

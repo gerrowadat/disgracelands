@@ -160,7 +160,7 @@ func TestSprintBit(t *testing.T) {
 
 // TestSprintTypeMatchesTheTables, including the out-of-range answer.
 func TestSprintTypeMatchesTheTables(t *testing.T) {
-	if got := SprintType(ItemWeapon, ItemTypeNames); got != "WEAPON" {
+	if got := SprintType(ItemWeapon.Number(), ItemTypeNames); got != "WEAPON" {
 		t.Errorf("item type 5 is %q", got)
 	}
 	if got := SprintType(ApplyHitRoll, ApplyTypeNames()); got != "HITROLL" {

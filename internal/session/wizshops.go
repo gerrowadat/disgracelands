@@ -155,7 +155,7 @@ func (c *Context) listDetailedShop(shop *game.ShopDef, index int) {
 			if bt.Keyword != "" {
 				word = fmt.Sprintf("[%s]", bt.Keyword)
 			}
-			items[i] = fmt.Sprintf("%s (#%d) %s", game.SprintType(bt.Type, game.ItemTypeNames), bt.Type, word)
+			items[i] = fmt.Sprintf("%s (#%d) %s", game.SprintType(bt.Type.Number(), game.ItemTypeNames), bt.Type, word)
 		}
 		c.Send("Buys:       %s\r\n", strings.Join(items, ", "))
 	}

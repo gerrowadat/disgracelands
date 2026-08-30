@@ -301,7 +301,7 @@ func objDocFrom(o *game.ObjDef) objDoc {
 		Short:         Text(o.ShortDesc),
 		Desc:          Text(ToStored(o.Description)),
 		ActionDesc:    Text(ToStored(o.ActionDesc)),
-		Type:          valueName(o.Type, game.YamlItemTypeNames()),
+		Type:          valueName(o.Type.Number(), game.YamlItemTypeNames()),
 		Wear:          wearNames,
 		WearRaw:       wearRaw,
 		Flags:         flagNames,
@@ -366,7 +366,7 @@ func shopDocFrom(sh *game.ShopDef) shopDoc {
 	}
 	for _, b := range sh.BuyTypes {
 		sd.Buys = append(sd.Buys, shopBuyDoc{
-			Type:    valueName(b.Type, game.YamlItemTypeNames()),
+			Type:    valueName(b.Type.Number(), game.YamlItemTypeNames()),
 			Keyword: b.Keyword,
 		})
 	}

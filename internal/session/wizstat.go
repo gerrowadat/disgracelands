@@ -284,7 +284,7 @@ func (c *Context) statObject(obj *game.Object) {
 	// (act.wizard.c:612-746).
 	fmt.Fprintf(&b, "Name: '{{yellow}}%s{{/}}', Aliases: %s\r\n", orNone(obj.Name()), obj.Keywords)
 	fmt.Fprintf(&b, "VNum: [{{green}}%5d{{/}}], RNum: [%5d], Type: %s, SpecProc: %s\r\n",
-		vnum, vnum, game.SprintType(obj.Type, game.ItemTypeNames),
+		vnum, vnum, game.SprintType(obj.Type.Number(), game.ItemTypeNames),
 		existsOrNone(obj.ObjSpec() != ""))
 	fmt.Fprintf(&b, "L-Des: %s\r\n", orNone(obj.Description))
 

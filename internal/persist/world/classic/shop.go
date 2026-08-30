@@ -258,7 +258,7 @@ func (l *loader) readTradeList(r *reader, what string, newFormat bool) ([]game.S
 		}
 		out := make([]game.ShopBuyType, 0, len(vals))
 		for _, v := range vals {
-			out = append(out, game.ShopBuyType{Type: v})
+			out = append(out, game.ShopBuyType{Type: game.ItemType(v)})
 		}
 		return out, nil
 	}
@@ -304,7 +304,7 @@ func (l *loader) readTradeList(r *reader, what string, newFormat bool) ([]game.S
 			l.warnf("%s: trade list has more than %d entries; the rest are dropped", r.where(what), maxShopObj)
 			continue
 		}
-		out = append(out, game.ShopBuyType{Type: typ, Keyword: keyword})
+		out = append(out, game.ShopBuyType{Type: game.ItemType(typ), Keyword: keyword})
 	}
 }
 

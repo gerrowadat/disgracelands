@@ -167,7 +167,7 @@ type ObjDef struct {
 	// ActionDesc is shown when the object is used; often empty.
 	ActionDesc string
 
-	Type       int32
+	Type       ItemType
 	ExtraFlags ExtraFlagSet
 	WearFlags  WearFlagSet
 	// PermAffect is the bitvector of affects worn objects confer. Read as a
