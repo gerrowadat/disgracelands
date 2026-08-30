@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/gerrowadat/disgracelands/internal/buildinfo"
+	"github.com/gerrowadat/disgracelands/internal/colour"
 	"github.com/gerrowadat/disgracelands/internal/game"
 )
 
@@ -660,4 +661,178 @@ func doSave(c *Context) error {
 		c.Save(c.Character)
 	}
 	return nil
+}
+
+// Everything below this line moved here from commands.go in step 9 of
+// docs/proposals/idiomatic-go.md — `who` and the annotations it prints.
+// Code motion only: not a line changed.
+
+func doWho(c *Context) error {
+	// CAN_SEE, as do_who does (act.informative.c:1086) — so an `invis` god is
+	// off the list for anyone below their level, and an invisible player is
+	// off it for anyone without detect invisible.
+	//
+	// Worth knowing what else this drags in: CAN_SEE asks LIGHT_OK, and
+	// LIGHT_OK asks about the *viewer's* room. **A mortal standing in an
+	// unlit room sees nobody at all on the who-list.** That is the C's, it is
+	// invisible in Midgaard because every room there is lit, and it is
+	// startling the first time it happens in a cave. See
+	// docs/weirdnumbers.md.
+	var shown []*game.Character
+	for _, p := range c.World.Players() {
+		if c.World.CanSee(c.Character, p) {
+			shown = append(shown, p)
+		}
+	}
+
+	c.Send("Players\r\n-------\r\n")
+	for _, p := range shown {
+		// `[%s %2d] %s %s` — CLASS_ABBR, level, name, title
+		// (act.informative.c:1163). The class abbreviation was missing here,
+		// so every line read "[ 34]" where the real server said "[Wa 34]".
+		// The space before the title is unconditional in the C, so somebody
+		// with no title gets a trailing one.
+		//
+		// The colour in front of it is a `<DoC>` local addition
+		// (act.informative.c:1108-1161) and is the one piece of colour in the
+		// game that is *not* conditional: it is written as raw escapes rather
+		// than through the CC macros, so it arrives whatever the reader has
+		// set `color` to. See docs/weirdnumbers.md. colour.Off is how that is
+		// spelled here — a threshold nobody can be below.
+		c.SendAt(colour.Off, "%s[%s %2d] %s %s%s{{/}}\r\n",
+			whoColour(p), classAbbrev(p), p.Level(), p.Name, p.Title(),
+			whoAnnotations(p))
+	}
+	// The C counts in words below two and in digits above it
+	// (act.informative.c:1212-1216).
+	switch len(shown) {
+	case 0:
+		c.Send("\r\nNo-one at all!\r\n")
+	case 1:
+		c.Send("\r\nOne lonely character displayed.\r\n")
+	default:
+		c.Send("\r\n%d characters displayed.\r\n", len(shown))
+	}
+	return nil
+}
+
+// whoColour is do_who's per-line colour (act.informative.c:1108-1161), a
+// `<DoC>` local addition: the who-list says how many times somebody has
+// remorted by what colour their line is.
+//
+// Immortals bright blue; nobody who has never remorted gets any colour at
+// all; then green, bright green, yellow and bright yellow as the count goes
+// up. Note the count itself: it adds a bit for every class in the remort
+// vector and then subtracts one, "Don't count current class, which will be
+// in the remort vector" — but only `if (prevclasses > 0)`, so somebody with
+// an empty vector stays at zero rather than going to -1 and colouring
+// themselves like a god.
+// whoAnnotations is the run of parenthesised flags do_who hangs off the end of
+// each line (act.informative.c:1169-1201), between the title and the KNRM that
+// closes the colour.
+//
+// Two of these pairs are `else if` in the C and are reproduced that way,
+// because in one of them the difference is observable:
+//
+//   - An invis level wins over AFF_INVISIBLE, so a god at `invis 50` reads
+//     "(i50)" rather than "(invis)". Anyone who could see both would only ever
+//     be told the more specific one.
+//   - **`(mailing)` is tested before `(writing)`, and do_mail sets both bits**
+//     — so `do_who`'s "(writing)" arm can never fire for a letter, and the
+//     who-list says "(mailing)" for the whole of it. `wiznet @` tests the same
+//     two bits the other way round (act.wizard.c:1907-1911) and so has the
+//     opposite dead arm, never saying "(Writing mail)". Both are the C's, both
+//     are in docs/weirdnumbers.md, and the order is reproduced rather than
+//     tidied: making either consistent would change what a player sees.
+//
+// The rest are independent tests, in the C's order. `list_one_char`'s own
+// "(writing)" in the room listing is a separate site and unaffected.
+func whoAnnotations(who *game.Character) string {
+	rec := who.Record
+	if rec == nil {
+		return ""
+	}
+
+	var b strings.Builder
+
+	if rec.InvisLevel > 0 {
+		fmt.Fprintf(&b, " (i%d)", rec.InvisLevel)
+	} else if who.HasAffect(game.AffectInvisible) {
+		b.WriteString(" (invis)")
+	}
+
+	if rec.PlayerFlags.Has(game.PlayerMailing) {
+		b.WriteString(" (mailing)")
+	} else if rec.PlayerFlags.Has(game.PlayerWriting) {
+		b.WriteString(" (writing)")
+	}
+
+	for _, a := range []struct {
+		flag game.PrefFlag
+		text string
+	}{
+		{game.PrefDeaf, " (deaf)"},
+		{game.PrefNoTell, " (notell)"},
+		{game.PrefNoGoss, " (nogossip)"},
+		{game.PrefQuest, " (quest)"},
+	} {
+		if rec.Preferences.Has(a.flag) {
+			b.WriteString(a.text)
+		}
+	}
+
+	if rec.PlayerFlags.Has(game.PlayerThief) {
+		b.WriteString(" (THIEF)")
+	}
+	if rec.PlayerFlags.Has(game.PlayerKiller) {
+		b.WriteString(" (KILLER)")
+	}
+
+	// The `<DoC>` local addition: a paladin's standing, and only a paladin's.
+	// The class test is the C's own, so a non-paladin carrying the bits from
+	// a remort shows nothing.
+	if game.IsPaladin(rec) {
+		spec := game.SpecFlagsOf(rec)
+		if spec.Has(game.PaladinUnworthy) {
+			b.WriteString(" (UNWORTHY)")
+		}
+		if spec.Has(game.PaladinFallen) {
+			b.WriteString(" (FALLEN)")
+		}
+	}
+
+	return b.String()
+}
+
+func whoColour(who *game.Character) string {
+	if who.Level() >= game.LevelImmortal {
+		return "{{bright-blue}}"
+	}
+	switch game.RemortCount(who.Record) {
+	case 1:
+		return "{{green}}"
+	case 2:
+		return "{{bright-green}}"
+	case 3:
+		return "{{yellow}}"
+	case 4:
+		return "{{bright-yellow}}"
+	}
+	return ""
+}
+
+// classAbbrev is the CLASS_ABBR macro (utils.h:488), which answers "--" for a
+// mobile rather than indexing class_abbrevs with whatever a mobile's class
+// field happens to hold.
+func classAbbrev(who *game.Character) string {
+	if who.IsNPC() {
+		return "--"
+	}
+	if who.Record == nil {
+		return "--"
+	}
+	if abbrev, ok := game.ClassAbbrevs[who.Record.Class]; ok {
+		return abbrev
+	}
+	return "--"
 }
