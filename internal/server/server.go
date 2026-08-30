@@ -342,6 +342,32 @@ func (s *Server) Authenticate(ctx context.Context, name, password string) (*game
 		}
 	}
 
+	// store_to_char's max_mana floor, applied to every character on the way
+	// in from disk (db.c:2254-2255):
+	//
+	//	if (ch->points.max_mana < 100)
+	//	  ch->points.max_mana = 100;
+	//
+	// It is not a display clamp. It runs *before* the affects go back on,
+	// so it raises the base every affect modifier is applied to, and
+	// char_to_store writes that base straight back out -- so a character
+	// who somehow ended up under 100 comes back with 100 and keeps it.
+	// That is why both the live figure and the Real one move together
+	// here: RealMaxMana is what RecomputeAffects resets the live value
+	// from, so raising only one of them would last exactly until the first
+	// spell landed.
+	//
+	// 100 is the same flat figure init_char gives everybody
+	// (docs/weirdnumbers.md, "No mana at level one"), which is what makes
+	// the floor almost invisible in practice: the only characters below it
+	// are ones something else has taken mana away from. Ported anyway,
+	// because "almost never fires" is not "never fires" and the C does it
+	// unconditionally (#295).
+	if rec.Points.MaxMana < game.MinMaxMana {
+		rec.Points.MaxMana = game.MinMaxMana
+		rec.RealMaxMana = game.MinMaxMana
+	}
+
 	// store_to_char's tail: every stored affect goes back on
 	// (`affect_to_char(ch, &st->affected[i])`, db.c:2270-2273), and
 	// affect_to_char ends in affect_total. Load has already snapshotted the
@@ -364,6 +390,41 @@ func (s *Server) Authenticate(ctx context.Context, name, password string) (*game
 	// instead.
 	if len(rec.Affects) > 0 {
 		game.RecomputeAffects(rec)
+	}
+
+	// The last thing store_to_char does (db.c:2276-2287):
+	//
+	//	if (!AFF_FLAGGED(ch, AFF_POISON) &&
+	//	      time(0) - st->last_logon >= SECS_PER_REAL_HOUR) {
+	//	  GET_HIT(ch) = GET_MAX_HIT(ch);
+	//	  GET_MOVE(ch) = GET_MAX_MOVE(ch);
+	//	  GET_MANA(ch) = GET_MAX_MANA(ch);
+	//	}
+	//
+	// A player who logs off hurt and comes back the next day comes back
+	// whole. Without it they came back exactly as hurt as they left, which
+	// is a real difference to anyone who played the archived server (#295).
+	//
+	// Three details, each of which the ordering here depends on:
+	//
+	//   - It reads the *stored* last logon. rec.LastLogon is not touched
+	//     until Enter (server.go's Enter, `c.Record.LastLogon = time.Now()`),
+	//     which runs after this, exactly as the C reads st->last_logon
+	//     rather than the ch->player.time.logon it has just overwritten with
+	//     time(0).
+	//   - It runs *after* the affects, so the maxima it fills to are the
+	//     affected ones -- a character logging in wearing a ring of +20 hit
+	//     points comes back with those twenty too.
+	//   - The poison exemption reads the flags as they are after the
+	//     affects, which is the only way it can mean anything: poison is an
+	//     affect, so before affect_to_char nobody is poisoned.
+	//
+	// A zero LastLogon takes this branch, and so does the C: time(0) - 0 is
+	// comfortably over an hour.
+	if !rec.AffectFlags.Has(game.AffectPoison) && time.Since(rec.LastLogon) >= game.AwayLongEnoughToHeal {
+		rec.Points.Hit = rec.Points.MaxHit
+		rec.Points.Mana = rec.Points.MaxMana
+		rec.Points.Move = rec.Points.MaxMove
 	}
 
 	return &game.Character{Name: rec.Name, Record: rec}, nil
