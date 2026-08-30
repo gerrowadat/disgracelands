@@ -76,6 +76,14 @@ type Live struct {
 	// mobiles is every mobile instance in the world, which is what the zone
 	// population caps are counted against.
 	mobiles map[*Character]bool
+
+	// mobCounts and objCounts are how many instances of each prototype
+	// exist, maintained alongside mobiles and objects so that a zone
+	// reset's population check is a lookup rather than a scan of the
+	// whole world. addMobile/dropMobile and track/untrack are the only
+	// things that write any of the four; see mobileCount (#322).
+	mobCounts map[MobVnum]int32
+	objCounts map[ObjVnum]int32
 }
 
 // Weather is the current barometer and sky.
@@ -172,8 +180,10 @@ func NewLive(defs *World) *Live {
 		objectDefs:  make(map[ObjVnum]*ObjDef, len(defs.Objects)),
 		mobileDefs:  make(map[MobVnum]*MobDef, len(defs.Mobiles)),
 		mobiles:     make(map[*Character]bool),
+		mobCounts:   make(map[MobVnum]int32, len(defs.Mobiles)),
 		booted:      time.Now(),
 		objects:     make(map[uint64]*Object),
+		objCounts:   make(map[ObjVnum]int32, len(defs.Objects)),
 		roomObjects: make(map[RoomVnum][]*Object),
 	}
 	for _, r := range defs.Rooms {
