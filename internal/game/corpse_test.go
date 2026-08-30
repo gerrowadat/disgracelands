@@ -85,8 +85,8 @@ func TestMakingACorpse(t *testing.T) {
 
 	// And the corpse is on the floor where they fell.
 	assertOnePlace(t, l, corpse)
-	if corpse.Location != InRoom || corpse.Room != 3001 {
-		t.Errorf("the corpse is %v in room %d", corpse.Location, corpse.Room)
+	if p, ok := corpse.Placement().(InRoom); !ok || p.Room != 3001 {
+		t.Errorf("the corpse is placed as %T, want InRoom{3001}", corpse.Placement())
 	}
 }
 

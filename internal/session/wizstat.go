@@ -296,12 +296,11 @@ func (c *Context) statObject(obj *game.Object) {
 		obj.Weight, obj.Cost, obj.RentPerDay(), obj.Timer, obj.MinLevel())
 
 	where := "Nowhere"
-	if obj.Location == game.InRoom {
-		where = fmt.Sprintf("%d", obj.Room)
+	if room, ok := obj.RoomOf(); ok {
+		where = fmt.Sprintf("%d", room)
 	}
 	fmt.Fprintf(&b, "In room: %s, In object: %s, Carried by: %s, Worn by: %s\r\n",
-		where, nameOrNone(obj.Container), holderName(obj, game.CarriedBy),
-		holderName(obj, game.WornBy))
+		where, nameOrNone(obj.ContainerOf()), carrierName(obj), wearerName(obj))
 
 	b.WriteString(objectValues(obj) + "\r\n")
 
@@ -666,11 +665,19 @@ func nameOrAngleNone(k *game.Character) string {
 	return k.Name
 }
 
-// holderName answers "Carried by" and "Worn by", which are two different
-// questions about the same pointer in the C.
-func holderName(obj *game.Object, want game.Location) string {
-	if obj.Holder != nil && obj.Location == want {
-		return obj.Holder.Name
+// carrierName and wearerName answer "Carried by" and "Worn by", which are
+// two different questions about the same pointer in the C and are now two
+// different placements.
+func carrierName(obj *game.Object) string {
+	if p, ok := obj.Placement().(game.CarriedBy); ok && p.Holder != nil {
+		return p.Holder.Name
+	}
+	return "Nobody"
+}
+
+func wearerName(obj *game.Object) string {
+	if p, ok := obj.Placement().(game.WornBy); ok && p.Holder != nil {
+		return p.Holder.Name
 	}
 	return "Nobody"
 }

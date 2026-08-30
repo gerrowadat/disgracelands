@@ -325,20 +325,42 @@ func (o *Object) MinLevel() int32 {
 
 // Location says where an object is. Exactly one of these is true at a time,
 // which is the invariant the whole file exists to keep.
-type Location int
+// Placement is where an object is: exactly one of the four shapes below,
+// or nil for nowhere at all -- newly created, or extracted and not yet
+// discarded.
+//
+// This replaces five fields (a Location enum plus Room, Holder, WornAt and
+// Container) whose invariant was "exactly one of these is meaningful, and
+// which one depends on the enum". docs/proposals/idiomatic-go.md §4.5: the
+// invariant is now unrepresentable otherwise, and Placement is unexported
+// so ObjectToRoom/ObjectToChar/ObjectToObject/EquipChar and detach are the
+// only things that can write it.
+//
+// The shapes are values rather than pointers, so a type switch reads
+// `case InRoom:` and there is no nil case inside a non-nil placement. Each
+// assignment boxes and allocates; objects move rarely, and §4.5 counted
+// that cost before proposing this.
+type Placement interface{ placement() }
 
-const (
-	// InNowhere: newly created, or extracted and not yet discarded.
-	InNowhere Location = iota
-	// InRoom: lying on the floor.
-	InRoom
-	// CarriedBy: in somebody's inventory.
-	CarriedBy
-	// WornBy: equipped.
-	WornBy
-	// InObject: inside a container.
-	InObject
-)
+// InRoom is an object lying on the floor.
+type InRoom struct{ Room RoomVnum }
+
+// CarriedBy is an object in somebody's inventory.
+type CarriedBy struct{ Holder *Character }
+
+// WornBy is an object somebody has equipped, in the position they wear it.
+type WornBy struct {
+	Holder *Character
+	At     WearPosition
+}
+
+// InContainer is an object inside another object.
+type InContainer struct{ Container *Object }
+
+func (InRoom) placement()      {}
+func (CarriedBy) placement()   {}
+func (WornBy) placement()      {}
+func (InContainer) placement() {}
 
 // Object is one object that exists in the world.
 type Object struct {
@@ -382,12 +404,10 @@ type Object struct {
 	// that uses it in the stock game.
 	Timer int32
 
-	// Where the object is. Set only through the Put/Take functions below.
-	Location  Location
-	Room      RoomVnum
-	Holder    *Character
-	WornAt    WearPosition
-	Container *Object
+	// placement is where the object is; nil is nowhere. Unexported so that
+	// the Put/Take functions are the only way to change it -- see
+	// Placement.
+	placement Placement
 
 	// Contents is what is inside this object, if it is a container.
 	Contents []*Object
@@ -395,12 +415,7 @@ type Object struct {
 
 // NewObject instantiates a prototype, porting read_object (db.c).
 func NewObject(id uint64, def *ObjDef) *Object {
-	o := &Object{
-		ID:       id,
-		Def:      def,
-		Location: InNowhere,
-		WornAt:   -1,
-	}
+	o := &Object{ID: id, Def: def}
 	if def != nil {
 		o.Keywords = def.Keywords
 		o.ShortDesc = def.ShortDesc
@@ -415,6 +430,58 @@ func NewObject(id uint64, def *ObjDef) *Object {
 		o.PermAffect = SetFromRaw[AffectFlag](uint64(uint32(def.PermAffect))) //nolint:gosec // a bitfield, read as written
 	}
 	return o
+}
+
+// Placement is where the object is, or nil for nowhere.
+func (o *Object) Placement() Placement {
+	if o == nil {
+		return nil
+	}
+	return o.placement
+}
+
+// RoomOf is the room an object is lying in, and whether it is lying in one
+// at all. An object in a bag in a room is *not* in the room: the C's
+// obj_to_room and obj_to_obj are separate lists and this answers the same
+// way, which is why `IN_ROOM` is only ever asked of a loose object.
+func (o *Object) RoomOf() (RoomVnum, bool) {
+	if p, ok := o.Placement().(InRoom); ok {
+		return p.Room, true
+	}
+	return NoRoom, false
+}
+
+// HolderOf is the character carrying or wearing an object, or nil.
+func (o *Object) HolderOf() *Character {
+	switch p := o.Placement().(type) {
+	case CarriedBy:
+		return p.Holder
+	case WornBy:
+		return p.Holder
+	}
+	return nil
+}
+
+// WornAt is the position an object is worn in, and whether it is worn at
+// all. Carried is not worn: the C keeps carrying and equipment in separate
+// lists and so does this.
+func (o *Object) WornAt() (WearPosition, bool) {
+	if p, ok := o.Placement().(WornBy); ok {
+		return p.At, true
+	}
+	return 0, false
+}
+
+// ContainerOf is the object an object is inside, or nil.
+//
+// Named for the relation rather than as `Container()`, because Object
+// already has a Contents field and a Container *type*; the pair reads
+// `inner.ContainerOf().Contents`.
+func (o *Object) ContainerOf() *Object {
+	if p, ok := o.Placement().(InContainer); ok {
+		return p.Container
+	}
+	return nil
 }
 
 // Vnum returns the prototype's number, or NoVnum for a runtime-built object.

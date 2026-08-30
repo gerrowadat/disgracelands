@@ -95,11 +95,11 @@ func (c *Context) findObjectAnywhere(name string) *game.Object {
 // objectRoom is where an object effectively is: the room it lies in, or the
 // room whoever holds it is standing in.
 func objectRoom(obj *game.Object) game.RoomVnum {
-	switch {
-	case obj.Location == game.InRoom:
-		return obj.Room
-	case obj.Holder != nil:
-		return obj.Holder.Room
+	if room, ok := obj.RoomOf(); ok {
+		return room
+	}
+	if holder := obj.HolderOf(); holder != nil {
+		return holder.Room
 	}
 	return game.NoRoom
 }

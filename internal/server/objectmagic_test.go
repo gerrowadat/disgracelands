@@ -38,8 +38,8 @@ func TestQuaffingAPotion(t *testing.T) {
 		if got := w.Find("Zod").Record.Points.Hit; got <= 100 {
 			t.Errorf("still on %d hit points after a healing potion", got)
 		}
-		if potion.Location != game.InNowhere {
-			t.Errorf("the potion is %v, want gone", potion.Location)
+		if potion.Placement() != nil {
+			t.Errorf("the potion is %T, want gone", potion.Placement())
 		}
 	})
 
@@ -67,7 +67,7 @@ func TestRecitingAScroll(t *testing.T) {
 		if !game.AffectedBySpell(rec, game.SpellBless) {
 			t.Error("the scroll's second spell did not land")
 		}
-		if scroll.Location != game.InNowhere {
+		if scroll.Placement() != nil {
 			t.Error("the scroll survived being read")
 		}
 	})
@@ -202,7 +202,7 @@ func TestJunkingSomethingPaysALittle(t *testing.T) {
 		if got := w.Find("Zod").Record.Points.Gold; got != before+20 {
 			t.Errorf("paid %d for junking, want 20", got-before)
 		}
-		if sword.Location != game.InNowhere {
+		if sword.Placement() != nil {
 			t.Error("the junked sword still exists")
 		}
 	})
@@ -234,7 +234,10 @@ func TestDonatingSendsItToTheDonationRoom(t *testing.T) {
 		c.settle()
 
 		var arrived bool
-		inWorld(t, srv, func(_ *game.Live) { arrived = sword.Room == 3063 })
+		inWorld(t, srv, func(_ *game.Live) {
+			room, ok := sword.RoomOf()
+			arrived = ok && room == 3063
+		})
 		if arrived {
 			return
 		}

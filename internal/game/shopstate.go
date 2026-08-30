@@ -654,7 +654,12 @@ func (l *Live) SortShopObjects(shop *ShopDef, keeper *Character) {
 		if l.ShopProduces(shop, obj) && !hasSameObject(keeper.Carrying, obj) {
 			// obj_to_char, which is to say the head (shop.c:695).
 			keeper.Carrying = prependObject(keeper.Carrying, obj)
-			obj.Location, obj.Holder = CarriedBy, keeper
+			// Not ObjectToChar: the list has already been built in the
+			// order shop.c wants, and calling it would detach and prepend
+			// again. Writing the placement directly is only possible from
+			// inside this package, which is the point of it being
+			// unexported.
+			obj.placement = CarriedBy{Holder: keeper}
 			st.Sorted++
 			continue
 		}
@@ -680,7 +685,10 @@ func (l *Live) SlideShopObject(shop *ShopDef, keeper *Character, obj *Object) {
 	st := l.shopState(shop)
 	st.Sorted++
 	l.detach(obj)
-	obj.Location, obj.Holder = CarriedBy, keeper
+	// As in sortShopStock: slide_obj splices into Carrying at a chosen
+	// index below, so it does the detach/track pair itself rather than
+	// going through ObjectToChar and losing the position.
+	obj.placement = CarriedBy{Holder: keeper}
 	l.track(obj)
 
 	for i, held := range keeper.Carrying {

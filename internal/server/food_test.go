@@ -78,8 +78,8 @@ func TestEatingFillsYouUp(t *testing.T) {
 		if got := w.Find("Zod").Record.Conditions[game.CondFull]; got != 8 {
 			t.Errorf("fullness is %d, want 8", got)
 		}
-		if food.Location != game.InNowhere {
-			t.Errorf("the bread is still %v", food.Location)
+		if food.Placement() != nil {
+			t.Errorf("the bread is still %T", food.Placement())
 		}
 	})
 }

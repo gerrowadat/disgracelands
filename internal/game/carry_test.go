@@ -53,8 +53,8 @@ func assertOnePlace(t *testing.T, l *Live, o *Object) {
 		for _, candidate := range list {
 			if candidate == o {
 				places++
-				if o.Location != InRoom {
-					t.Errorf("%s is in a room list but says it is %v", o.Name(), o.Location)
+				if _, ok := o.Placement().(InRoom); !ok {
+					t.Errorf("%s is in a room list but says it is %T", o.Name(), o.Placement())
 				}
 			}
 		}
@@ -63,7 +63,7 @@ func assertOnePlace(t *testing.T, l *Live, o *Object) {
 		for _, candidate := range c.Carrying {
 			if candidate == o {
 				places++
-				if o.Location != CarriedBy || o.Holder != c {
+				if p, ok := o.Placement().(CarriedBy); !ok || p.Holder != c {
 					t.Errorf("%s is in %s's inventory but says otherwise", o.Name(), c.Name)
 				}
 			}
@@ -71,7 +71,7 @@ func assertOnePlace(t *testing.T, l *Live, o *Object) {
 		for pos, candidate := range c.Equipment {
 			if candidate == o {
 				places++
-				if o.Location != WornBy || o.Holder != c || int(o.WornAt) != pos {
+				if p, ok := o.Placement().(WornBy); !ok || p.Holder != c || int(p.At) != pos {
 					t.Errorf("%s is worn by %s but says otherwise", o.Name(), c.Name)
 				}
 			}
@@ -81,7 +81,7 @@ func assertOnePlace(t *testing.T, l *Live, o *Object) {
 		for _, candidate := range container.Contents {
 			if candidate == o {
 				places++
-				if o.Location != InObject || o.Container != container {
+				if p, ok := o.Placement().(InContainer); !ok || p.Container != container {
 					t.Errorf("%s is inside %s but says otherwise", o.Name(), container.Name())
 				}
 			}
@@ -89,7 +89,7 @@ func assertOnePlace(t *testing.T, l *Live, o *Object) {
 	}
 
 	if places != 1 {
-		t.Errorf("%s is in %d places, want exactly 1 (it says %v)", o.Name(), places, o.Location)
+		t.Errorf("%s is in %d places, want exactly 1 (it says %T)", o.Name(), places, o.Placement())
 	}
 }
 
@@ -191,8 +191,8 @@ func TestAnOccupiedSlotRefusesASecondObject(t *testing.T) {
 	}
 	// And the refusal left the second where it was rather than losing it.
 	assertOnePlace(t, l, second)
-	if second.Location != CarriedBy {
-		t.Errorf("the refused sword is %v, want still carried", second.Location)
+	if _, ok := second.Placement().(CarriedBy); !ok {
+		t.Errorf("the refused sword is %T, want still carried", second.Placement())
 	}
 }
 
@@ -326,5 +326,92 @@ func TestTotalWeightIncludesContents(t *testing.T) {
 
 	if got := welmar.CarriedWeight(); got != 17 {
 		t.Errorf("carried weight is %d, want 17", got)
+	}
+}
+
+// TestAPlacementCarriesExactlyItsOwnFields is what the union bought, as a
+// test rather than as a claim.
+//
+// Before step 5 an Object had five fields — a Location enum plus Room,
+// Holder, WornAt and Container — and "exactly one of these is meaningful,
+// and which one the enum says" was an invariant maintained by convention.
+// The states that convention could not rule out were reachable: a Location
+// of InRoom with a stale Holder still set, a WornBy with WornAt of -1, a
+// CarriedBy whose Room was some room the object was dropped in three moves
+// ago. Nothing tested for them because there was nothing to test — every
+// combination compiled.
+//
+// Now there is nothing to go stale: the placement *is* the fields, and
+// asking for the wrong ones does not compile. What is left to check is that
+// each shape answers only its own questions.
+func TestAPlacementCarriesExactlyItsOwnFields(t *testing.T) {
+	l := objectWorld()
+	c := newCharacter("Welmar")
+	if err := l.Enter(c, 3001); err != nil {
+		t.Fatal(err)
+	}
+	sword := l.NewObject(100)
+	bag := l.NewObject(101)
+	if sword == nil || bag == nil {
+		t.Fatal("could not instantiate the prototypes")
+	}
+
+	l.ObjectToRoom(sword, 3001)
+	if _, ok := sword.RoomOf(); !ok {
+		t.Error("a sword on the floor is in no room")
+	}
+	if sword.HolderOf() != nil || sword.ContainerOf() != nil {
+		t.Error("a sword on the floor has a holder or a container")
+	}
+	if _, ok := sword.WornAt(); ok {
+		t.Error("a sword on the floor is worn somewhere")
+	}
+
+	l.ObjectToChar(sword, c)
+	if sword.HolderOf() != c {
+		t.Error("a carried sword has no holder")
+	}
+	if room, ok := sword.RoomOf(); ok {
+		t.Errorf("a carried sword is also in room %d; carrying is not lying on the floor", room)
+	}
+	if _, ok := sword.WornAt(); ok {
+		t.Error("a carried sword is worn; carrying is not wearing")
+	}
+
+	if !l.Equip(sword, c, WearWield) {
+		t.Fatal("could not wield the sword")
+	}
+	if at, ok := sword.WornAt(); !ok || at != WearWield {
+		t.Errorf("a wielded sword is worn at %v (%v), want the wield slot", at, ok)
+	}
+	if sword.HolderOf() != c {
+		t.Error("a wielded sword has no holder; WornBy carries one too")
+	}
+
+	l.ObjectToRoom(bag, 3001)
+	if !l.ObjectToObject(sword, bag) {
+		t.Fatal("could not put the sword in the bag")
+	}
+	if sword.ContainerOf() != bag {
+		t.Error("a sword in a bag is in no container")
+	}
+	if _, ok := sword.RoomOf(); ok {
+		t.Error("a sword in a bag in a room is also in the room; the C keeps two lists and so does this")
+	}
+	if sword.HolderOf() != nil {
+		t.Error("a sword in a bag has a holder")
+	}
+
+	l.detach(sword)
+	if sword.Placement() != nil {
+		t.Errorf("a detached sword is %T, want nowhere", sword.Placement())
+	}
+
+	// And nowhere answers nothing rather than a stale anything.
+	if sword.HolderOf() != nil || sword.ContainerOf() != nil {
+		t.Error("a detached sword still points at a holder or container")
+	}
+	if room, ok := sword.RoomOf(); ok || room != NoRoom {
+		t.Errorf("a detached sword is in room %d (%v), want NoRoom and false", room, ok)
 	}
 }

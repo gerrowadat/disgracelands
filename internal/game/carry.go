@@ -29,40 +29,39 @@ func (l *Live) detach(o *Object) {
 		return
 	}
 
-	switch o.Location {
+	switch p := o.placement.(type) {
 	case InRoom:
-		l.roomObjects[o.Room] = removeObject(l.roomObjects[o.Room], o)
-		if len(l.roomObjects[o.Room]) == 0 {
-			delete(l.roomObjects, o.Room)
+		l.roomObjects[p.Room] = removeObject(l.roomObjects[p.Room], o)
+		if len(l.roomObjects[p.Room]) == 0 {
+			delete(l.roomObjects, p.Room)
 		}
 		// obj_from_room dirties a house too (handler.c:711): picking
 		// something up out of one changes what has to be saved just as much
 		// as dropping something in it.
-		l.MarkHouseChanged(o.Room)
+		l.MarkHouseChanged(p.Room)
 
 	case CarriedBy:
-		if o.Holder != nil {
-			o.Holder.Carrying = removeObject(o.Holder.Carrying, o)
+		if p.Holder != nil {
+			p.Holder.Carrying = removeObject(p.Holder.Carrying, o)
 		}
 
 	case WornBy:
-		if o.Holder != nil && o.WornAt >= 0 && o.WornAt < NumWears {
-			if o.Holder.Equipment[o.WornAt] == o {
-				o.Holder.Equipment[o.WornAt] = nil
+		// The range check is what the union removed: WornBy cannot exist
+		// without a position, so only the bounds are left, and those are
+		// still worth having because WearPosition comes off a world file.
+		if p.Holder != nil && p.At >= 0 && p.At < NumWears {
+			if p.Holder.Equipment[p.At] == o {
+				p.Holder.Equipment[p.At] = nil
 			}
 		}
 
-	case InObject:
-		if o.Container != nil {
-			o.Container.Contents = removeObject(o.Container.Contents, o)
+	case InContainer:
+		if p.Container != nil {
+			p.Container.Contents = removeObject(p.Container.Contents, o)
 		}
 	}
 
-	o.Location = InNowhere
-	o.Room = NoRoom
-	o.Holder = nil
-	o.Container = nil
-	o.WornAt = -1
+	o.placement = nil
 }
 
 // prependObject puts an object at the head of a list, which is what every one
@@ -100,8 +99,7 @@ func (l *Live) ObjectToRoom(o *Object, room RoomVnum) {
 	}
 	l.detach(o)
 
-	o.Location = InRoom
-	o.Room = room
+	o.placement = InRoom{Room: room}
 	if l.roomObjects == nil {
 		l.roomObjects = map[RoomVnum][]*Object{}
 	}
@@ -123,8 +121,7 @@ func (l *Live) ObjectToChar(o *Object, c *Character) {
 	}
 	l.detach(o)
 
-	o.Location = CarriedBy
-	o.Holder = c
+	o.placement = CarriedBy{Holder: c}
 	c.Carrying = prependObject(c.Carrying, o)
 	l.track(o)
 }
@@ -138,15 +135,14 @@ func (l *Live) ObjectToObject(o, container *Object) bool {
 	if o == nil || container == nil || o == container {
 		return false
 	}
-	for above := container; above != nil; above = above.Container {
+	for above := container; above != nil; above = above.ContainerOf() {
 		if above == o {
 			return false
 		}
 	}
 
 	l.detach(o)
-	o.Location = InObject
-	o.Container = container
+	o.placement = InContainer{Container: container}
 	container.Contents = prependObject(container.Contents, o)
 	l.track(o)
 	return true
@@ -171,9 +167,7 @@ func (l *Live) Equip(o *Object, c *Character, pos WearPosition) bool {
 	}
 
 	l.detach(o)
-	o.Location = WornBy
-	o.Holder = c
-	o.WornAt = pos
+	o.placement = WornBy{Holder: c, At: pos}
 	c.Equipment[pos] = o
 	l.track(o)
 
@@ -230,13 +224,15 @@ func (l *Live) ExtractObject(o *Object) {
 	o.Contents = nil
 
 	for _, inside := range contents {
-		switch o.Location {
+		switch p := o.placement.(type) {
 		case InRoom:
-			l.ObjectToRoom(inside, o.Room)
-		case CarriedBy, WornBy:
-			l.ObjectToChar(inside, o.Holder)
-		case InObject:
-			l.ObjectToObject(inside, o.Container)
+			l.ObjectToRoom(inside, p.Room)
+		case CarriedBy:
+			l.ObjectToChar(inside, p.Holder)
+		case WornBy:
+			l.ObjectToChar(inside, p.Holder)
+		case InContainer:
+			l.ObjectToObject(inside, p.Container)
 		default:
 			l.ExtractObject(inside)
 		}
