@@ -89,14 +89,14 @@ func castOutcomeOfPort(typed string) castOutcome {
 	return castOutcome{verdict: "cast", spell: number, target: target}
 }
 
-// castQueries is every arrangement of quotes and spaces worth asking
+// castQueries is every arrangement of quotes and whitespace worth asking
 // about, plus real spell names in real positions.
 //
 // The interesting ones are the degenerate arrangements, because those are
-// where "skip leading delimiters" and "take everything before the first
-// quote" stop agreeing — over a well-formed `cast 'magic missile' fido`
-// the wrong rule and the right one cannot disagree, which is exactly the
-// trap docs/design/data-format.md §11.1 records one level up.
+// where "skip a run of leading delimiters" and "take everything before the
+// first quote" stop agreeing — over a well-formed `cast 'magic missile'
+// fido` the wrong rule and the right one cannot disagree, which is exactly
+// the trap docs/design/data-format.md §11.1 records one level up.
 func castQueries() []string {
 	// Written out in full, command word included, rather than assembled
 	// from a prefix and an argument. The space between `cast` and what
@@ -109,10 +109,12 @@ func castQueries() []string {
 	// sweep proved nothing. Same failure as building a keyword corpus out
 	// of letters and spaces (#277), one layer up.
 	//
-	// No tabs: the oracle's output is tab-separated and echoes the query
-	// back, so a tab in one would be indistinguishable from a field break.
-	// Spaces cover the same ground — what is tested is "whitespace where a
-	// spell name should be", not which whitespace.
+	// Tabs are in it, because the oracle escapes what it echoes (putesc).
+	// An earlier version excluded them on the grounds that a tab would be
+	// indistinguishable from a field break — true, and the wrong fix. A
+	// tab is whitespace to any_one_arg's isspace(), so it is a case worth
+	// sweeping, and designing it out of the corpus is precisely how #355's
+	// own sweep came to agree with a C it was not testing (#365).
 	return []string{
 		// Well-formed. These are the ones over which the right rule and
 		// the wrong one cannot disagree, which is why the rest are here.
@@ -128,6 +130,8 @@ func castQueries() []string {
 		"cast",
 		"cast ",
 		"cast   ",
+		"cast\t",
+		"cast \t ",
 
 		// Quotes and nothing else, in every arrangement up to four.
 		"cast '",
@@ -135,13 +139,18 @@ func castQueries() []string {
 		"cast '''",
 		"cast ''''",
 
-		// Whitespace between the quotes: the one shape the C and this
-		// port deliberately disagree about.
+		// Whitespace between the quotes. These reach find_skill_num with
+		// a name that has no words, which matches the *first entry in the
+		// table* — armor, at level one, for free (#365). Only the quote is
+		// a delimiter, so the spaces survive strtok, and any_one_arg
+		// tokenises them away inside find_skill_num.
 		"cast ' '",
 		"cast '  '",
 		"cast '   '",
 		"cast ' ' fido",
 		"cast '   ' fido",
+		"cast '\t'",
+		"cast ' \t ' fido",
 
 		// An empty name with a target after it.
 		"cast '' fido",
@@ -210,17 +219,18 @@ func TestCastArgumentAgainstC(t *testing.T) {
 		t.Fatalf("the oracle answered %d lines, asked %d queries", len(lines), len(queries))
 	}
 
-	// Known and deliberate: the C casts the lowest-numbered spell in the
-	// table for a name made only of whitespace, because find_skill_num's
-	// word loop never runs and its verdict is `ok && !*first2`. This port
-	// refuses. See docs/deviations.md.
-	deviations := map[string]bool{}
+	// One documented difference remains, and it is the interpreter's
+	// rather than this function's — see the note where it is counted.
 	trimmingDifferences := map[string]bool{}
 
 	for i, line := range lines {
+		// The oracle escapes the query it echoes and the target it
+		// reports (putesc, nameoracle.c's convention), so a tab inside
+		// either cannot be mistaken for a field break. That is what lets
+		// the corpus above contain them at all.
 		fields := strings.Split(line, "\t")
-		if fields[0] != queries[i] {
-			t.Fatalf("the oracle answered %q where %q was asked", fields[0], queries[i])
+		if echoed := unescape(fields[0]); echoed != queries[i] {
+			t.Fatalf("the oracle answered %q where %q was asked", echoed, queries[i])
 		}
 
 		var want castOutcome
@@ -232,23 +242,13 @@ func TestCastArgumentAgainstC(t *testing.T) {
 			if convErr != nil || len(fields) < 3 {
 				t.Fatalf("query %q: unparseable oracle line %q", queries[i], line)
 			}
-			want = castOutcome{verdict: "cast", spell: SpellID(n), target: strings.TrimSpace(fields[2])}
+			want = castOutcome{verdict: "cast", spell: SpellID(n), target: strings.TrimSpace(unescape(fields[2]))}
 		}
 
 		got := castOutcomeOfPort(queries[i])
 		got.target = strings.TrimSpace(got.target)
 
 		if got == want {
-			continue
-		}
-		if isWhitespaceOnlySpellName(queries[i]) {
-			deviations[queries[i]] = true
-			// The deviation is specific: the C casts *something*, this
-			// refuses. It must not be that the two cast different spells.
-			if got.verdict == "cast" {
-				t.Errorf("%q: the C casts %d and this casts %d; the documented deviation is that this refuses",
-					queries[i], want.spell, got.spell)
-			}
 			continue
 		}
 		if portArgument(queries[i]) == "" && want.verdict == "unenclosed" {
@@ -266,22 +266,18 @@ func TestCastArgumentAgainstC(t *testing.T) {
 		t.Errorf("%q: this gives %+v, the C gives %+v", queries[i], got, want)
 	}
 
-	// A sweep whose hard cases all turned out to be deviations is a sweep
-	// that proved nothing, so require that the corpus contains the
-	// degenerate shapes *and* that most of it agreed outright.
-	if len(deviations) == 0 {
-		t.Error("no whitespace-only spell name in the corpus; the deviation is untested")
-	}
-	if len(deviations) > len(queries)/4 {
-		t.Errorf("%d of %d queries were excused as deviations; the corpus is mostly exceptions",
-			len(deviations), len(queries))
-	}
+	// A sweep whose hard cases are all excused is a sweep that proved
+	// nothing, so require that the one remaining exception is both present
+	// and rare.
 	if len(trimmingDifferences) == 0 {
 		t.Error("no whitespace-only argument in the corpus; the trimming difference is untested")
 	}
-	t.Logf("%d typed lines: %d agreed outright, %d the whitespace-name deviation, %d the argument-trimming one",
-		len(queries), len(queries)-len(deviations)-len(trimmingDifferences),
-		len(deviations), len(trimmingDifferences))
+	if len(trimmingDifferences) > len(queries)/4 {
+		t.Errorf("%d of %d queries were excused; the corpus is mostly exceptions",
+			len(trimmingDifferences), len(queries))
+	}
+	t.Logf("%d typed lines: %d agreed outright, %d the argument-trimming difference",
+		len(queries), len(queries)-len(trimmingDifferences), len(trimmingDifferences))
 }
 
 // portArgument is what this port's interpreter hands a command, for a line
@@ -296,19 +292,4 @@ func portArgument(typed string) string {
 	line := strings.TrimSpace(typed)
 	_, arg, _ := strings.Cut(line, " ")
 	return strings.TrimSpace(arg)
-}
-
-// isWhitespaceOnlySpellName reports whether the typed line's quoted
-// section contains nothing but whitespace, which is one of the two shapes
-// the C and this port disagree about.
-func isWhitespaceOnlySpellName(typed string) bool {
-	_, rest, ok := strtokQuote(" " + portArgument(typed))
-	if !ok {
-		return false
-	}
-	name, _, ok := strtokQuote(rest)
-	if !ok {
-		return false
-	}
-	return name != "" && strings.TrimSpace(name) == ""
 }

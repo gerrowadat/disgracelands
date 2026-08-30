@@ -211,16 +211,16 @@ func ParseCastArgument(arg string) (spell, target string, err string) {
 
 	// strtok(NULL, "\0"): everything left, delimiters and all.
 	//
-	// TrimSpace on both halves is this port's own. On the target it is
-	// invisible — the C's `t` keeps the leading space any_one_arg left on
-	// it, and every consumer trims it anyway. On the *spell name* it is a
-	// deliberate deviation with a reachable consequence, and
-	// docs/deviations.md has it: `cast '   '` reaches find_skill_num with
-	// three spaces, which has no words, so the C's word loop never runs,
-	// `ok && !*first2` holds on the first entry of spell_info[], and the C
-	// casts whichever spell sits lowest in the table. This trims to "" and
-	// SpellNumberByName refuses it.
-	return strings.TrimSpace(name), strings.TrimSpace(after), ""
+	// The target is trimmed and the spell name is not. The C trims the
+	// target a few lines later (`one_argument(strcpy(arg, t), t)` and a
+	// skip_spaces), so that is the same string by the time anything reads
+	// it. The name is handed to find_skill_num exactly as strtok left it,
+	// and it matters that this does the same: "  " and "" are different
+	// arguments to a function that treats them alike only by accident —
+	// any_one_arg tokenises the spaces away inside it. Trimming here would
+	// be reaching the right answer for the wrong reason, and would hide
+	// the reason from the next person (#365).
+	return name, strings.TrimSpace(after), ""
 }
 
 // strtokQuote is one `strtok(s, "'")` call: skip the quotes it starts on,

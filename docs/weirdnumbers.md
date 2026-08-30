@@ -1010,6 +1010,71 @@ narrows back to letters and spaces.
 
 *Source*: `handler.c:56`.
 
+### `find_skill_num` answers an empty spell name, and `cast '  '` reaches it
+
+Two functions conspiring, neither of them obviously wrong on its own.
+
+**`find_skill_num` returns the first spell for an empty name.** Its first
+rule is `is_abbrev(name, ...)`, which rejects an empty `arg1`; its second
+walks both strings a word at a time and does not run at all when the typed
+string has no words, leaving `ok` TRUE and `first2` empty — so
+`ok && !*first2` holds on the very first table entry. `find_skill_num("")`
+is 1, which is armor.
+
+**`do_cast` hands it whitespace.** The spell name comes from
+`strtok(argument, "'")` and then `strtok(NULL, "'")`, and two properties of
+strtok decide what arrives: it skips a **run** of delimiters rather than
+one, and **only the quote is a delimiter** — a space is not. So:
+
+```
+cast ''             -> "Spell names must be enclosed..."   the run collapses
+cast '  '           -> find_skill_num("  ")   ->  armor
+cast ' '            -> find_skill_num(" ")    ->  armor
+cast '' fido        -> find_skill_num(" fido")   the target becomes the spell
+cast 'magic missile -> works; the closing quote is optional
+```
+
+`any_one_arg` then tokenises `"  "` away before either rule looks at it, so
+find_skill_num cannot tell it from `""`. **`cast '  '` casts armor**, at
+level one, for free.
+
+This port refused the empty name in `SpellNumberByName` and found the quotes
+by index in `ParseCastArgument`, which got all five of those lines wrong
+(#358, #365). Both are now *reproduced*, and the refusal moved rather than
+being deleted: `SpellNumberFromNameOrNumber` — the **format** lookup, which
+the yaml readers call for a player's skills, a wand's charge spell and a
+damage message's subject — refuses an empty name itself, so a blank
+`spell:` in a file stays an error instead of silently becoming armor.
+
+That split is the part worth keeping. One "what does this name mean"
+function serves both a player's typing and a file's contents, and the right
+answer differs: be the C where somebody is typing, refuse where something is
+being parsed.
+
+It is also the **opposite** call to the one made for `isname`'s own
+empty-string case a few entries above, where this port refuses and the C
+matches anything. The difference is reachability. Every `isname` caller
+checks for an empty argument first, so refusing there costs nothing;
+`find_skill_num`'s callers do not all check — `SPECIAL(guild)` and
+`do_skillset` guard, `do_cast` does not.
+
+Verified against `reference/tools/skilloracle.c` (1,745 queries) and
+`reference/tools/castoracle.c` (41 typed lines, do_cast's three strtok
+calls over every shape of quoting a player can type). Neither corpus could
+express the case before this: the skill sweep had no empty or whitespace
+query in it, and the cast sweep excluded tabs outright because the oracles
+echoed the query unescaped. Both escape now, and both ask.
+
+The earlier reasoning — that strtok skipping leading delimiters made an
+empty name unreachable — is right about `cast ''` and wrong about
+`cast '  '`, and it was reached by reading the function rather than running
+it. It was then written into a comment twice, in opposite directions, before
+anybody compiled the thing.
+
+*Source*: `spell_parser.c`'s `find_skill_num` and `do_cast` (:604),
+`interpreter.c:1057`'s `is_abbrev`. See
+`docs/investigations/partial-matching.md` §4.5.
+
 ### `get_number` rewrites the argument before it decides the prefix was a number
 
 ```c
