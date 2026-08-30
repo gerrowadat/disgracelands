@@ -131,7 +131,14 @@ func (s *Source) LoadWithWarnings(ctx context.Context) (*game.World, []Warning, 
 
 	l.assignRoomZones(w)
 	l.resolveShopReferences(w)
-	l.checkReferences(w)
+	// The cross-reference pass is world.CheckReferences rather than a method
+	// here, because what it finds is true of a *world* rather than of the
+	// files it was read from -- so the yaml loader runs the identical pass
+	// and `dlctl lint` says the same things about a converted directory as
+	// about the one it was converted from (#286). What stays in this file is
+	// the other kind of finding: the ones describing what this reader
+	// *changed* on the way in, which the world it hands back no longer has.
+	l.warnings = append(l.warnings, world.CheckReferences(w)...)
 	l.checkEncoding(w)
 
 	return w, l.warnings, nil
@@ -387,106 +394,5 @@ func (l *loader) checkEncoding(w *game.World) {
 			"The server works in UTF-8; convert the directory once with "+
 			"`dlctl convert` rather than leaving it to be decoded per connection",
 			bad.records, bad.example)
-	}
-}
-
-// checkReferences reports vnums pointed at by something but never defined.
-// The C loader resolves these into real numbers in renum_world() and
-// renum_zone_table() and silently drops the ones that do not resolve.
-func (l *loader) checkReferences(w *game.World) {
-	rooms := make(map[game.RoomVnum]bool, len(w.Rooms))
-	for _, r := range w.Rooms {
-		if rooms[r.Vnum] {
-			l.warnf("room #%d is defined more than once; the later definition is a separate room with the same vnum", r.Vnum)
-		}
-		rooms[r.Vnum] = true
-	}
-	mobs := make(map[game.MobVnum]bool, len(w.Mobiles))
-	for _, m := range w.Mobiles {
-		if mobs[m.Vnum] {
-			l.warnf("mob #%d is defined more than once", m.Vnum)
-		}
-		mobs[m.Vnum] = true
-	}
-	objs := make(map[game.ObjVnum]bool, len(w.Objects))
-	for _, o := range w.Objects {
-		if objs[o.Vnum] {
-			l.warnf("object #%d is defined more than once", o.Vnum)
-		}
-		objs[o.Vnum] = true
-	}
-
-	for _, room := range w.Rooms {
-		for dir, exit := range room.Exits {
-			if exit == nil {
-				continue
-			}
-			if exit.ToRoom != game.NoRoom && !rooms[exit.ToRoom] {
-				l.warnf("room #%d's %s exit leads to room #%d, which does not exist; the exit will be unusable",
-					room.Vnum, game.Direction(dir), exit.ToRoom)
-			}
-			if exit.Key > 0 && !objs[exit.Key] {
-				l.warnf("room #%d's %s exit is locked by object #%d, which does not exist",
-					room.Vnum, game.Direction(dir), exit.Key)
-			}
-		}
-	}
-
-	for _, zone := range w.Zones {
-		for _, cmd := range zone.Commands {
-			l.checkResetCommand(zone, cmd, rooms, mobs, objs)
-		}
-	}
-}
-
-// checkResetCommand validates the vnums one reset command refers to. Which
-// argument means what depends on the opcode; see reset_zone() in db.c.
-func (l *loader) checkResetCommand(zone *game.ZoneDef, cmd game.ResetCommand,
-	rooms map[game.RoomVnum]bool, mobs map[game.MobVnum]bool, objs map[game.ObjVnum]bool) {
-
-	where := fmt.Sprintf("zone #%d line %d: command %q", zone.Vnum, cmd.Line, string(cmd.Command))
-
-	switch cmd.Command {
-	case 'M': // load mobile Arg1 into room Arg3, max Arg2 in the world
-		if !mobs[game.MobVnum(cmd.Arg1)] {
-			l.warnf("%s loads mob #%d, which does not exist", where, cmd.Arg1)
-		}
-		if !rooms[game.RoomVnum(cmd.Arg3)] {
-			l.warnf("%s loads into room #%d, which does not exist", where, cmd.Arg3)
-		}
-	case 'O': // load object Arg1 into room Arg3
-		if !objs[game.ObjVnum(cmd.Arg1)] {
-			l.warnf("%s loads object #%d, which does not exist", where, cmd.Arg1)
-		}
-		if !rooms[game.RoomVnum(cmd.Arg3)] {
-			l.warnf("%s loads into room #%d, which does not exist", where, cmd.Arg3)
-		}
-	case 'G', 'E': // give/equip object Arg1 to the last-loaded mob
-		if !objs[game.ObjVnum(cmd.Arg1)] {
-			l.warnf("%s gives object #%d, which does not exist", where, cmd.Arg1)
-		}
-	case 'P': // put object Arg1 into object Arg3
-		if !objs[game.ObjVnum(cmd.Arg1)] {
-			l.warnf("%s puts object #%d, which does not exist", where, cmd.Arg1)
-		}
-		if !objs[game.ObjVnum(cmd.Arg3)] {
-			l.warnf("%s puts into container #%d, which does not exist", where, cmd.Arg3)
-		}
-	case 'D': // set door state in room Arg1, direction Arg2
-		if !rooms[game.RoomVnum(cmd.Arg1)] {
-			l.warnf("%s sets a door in room #%d, which does not exist", where, cmd.Arg1)
-		}
-		if _, ok := game.DirectionFromInt(cmd.Arg2); !ok {
-			l.warnf("%s sets a door in direction %d, which is not a direction", where, cmd.Arg2)
-		}
-	case 'R': // remove object Arg2 from room Arg1
-		if !rooms[game.RoomVnum(cmd.Arg1)] {
-			l.warnf("%s removes from room #%d, which does not exist", where, cmd.Arg1)
-		}
-		if !objs[game.ObjVnum(cmd.Arg2)] {
-			l.warnf("%s removes object #%d, which does not exist", where, cmd.Arg2)
-		}
-	default:
-		l.warnf("%s is not a reset command the server understands", where)
 	}
 }
