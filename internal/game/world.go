@@ -39,7 +39,7 @@ type ExitDef struct {
 
 	// Key is the vnum of the key object, or NoObject for none. It is
 	// written to the world file, so the sentinel stays what it is and only
-	// gets a name (docs/proposals/idiomatic-go.md §4.4); doors.go already
+	// gets a name (docs/design/idiomatic-go.md §4.4); doors.go already
 	// compares against NoObject rather than -1.
 	Key ObjVnum
 	// ToRoom is the destination vnum, or NoRoom.
@@ -109,7 +109,7 @@ type MobDef struct {
 	// Position is where the mobile stands when it is loaded, and
 	// DefaultPosition where it returns to. game.Position is a defined type
 	// and these were the same domain held as int32 -- exactly the split
-	// docs/proposals/idiomatic-go.md §3.2 calls out by name.
+	// docs/design/idiomatic-go.md §3.2 calls out by name.
 	Position        Position
 	DefaultPosition Position
 	Sex             Sex

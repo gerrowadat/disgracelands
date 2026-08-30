@@ -150,7 +150,7 @@ func (c *objCodec) decode(b []byte) (*player.RentFile, error) {
 			// the yaml writer records them in flags_raw. That is visible in
 			// examples/torture (flags_raw: 18446744073709289472), which makes
 			// it part of the checked-in format rather than an implementation
-			// detail — docs/proposals/idiomatic-go.md §2.1. Zero-extending
+			// detail — docs/design/idiomatic-go.md §2.1. Zero-extending
 			// here was caught by TestImportMatchesTheCheckedInExamples.
 			ExtraFlags: game.SetFromRaw[game.ExtraFlag](uint64(int64(e.i32(rec, "extra_flags")))), //nolint:gosec // reinterpretation: the field is a bitvector
 			Weight:     e.i32(rec, "weight"),

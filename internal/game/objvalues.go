@@ -11,7 +11,7 @@ package game
 // An object's four value slots mean something different for every item type
 // and the C reads them through GET_OBJ_VAL(obj, N) at every use, so nothing
 // anywhere states what slot 1 of a wand is. This file states it once, which
-// is step 3 of docs/proposals/idiomatic-go.md.
+// is step 3 of docs/design/idiomatic-go.md.
 //
 // container.go has done this for containers since the port, and §3.3 calls
 // it "the exception that shows the rule". This is that exception applied to
@@ -131,7 +131,7 @@ type ArmorValues struct {
 // through both and the light stays lit forever (handler.c:823). oedit's own
 // prompt says so — "Number of hours (0 = burnt, -1 is infinite)". A world
 // file's number, so it stays -1 and only gains a name
-// (docs/proposals/idiomatic-go.md §4.4).
+// (docs/design/idiomatic-go.md §4.4).
 const LightEternal int32 = -1
 
 // LightValues is how long a light has left.

@@ -202,7 +202,7 @@ func isLetter(b byte) bool {
 }
 
 // Everything below this line moved here from commands.go in step 9 of
-// docs/proposals/idiomatic-go.md — `look` and the room description it
+// docs/design/idiomatic-go.md — `look` and the room description it
 // builds, which had been sitting in the dispatcher's file since the first
 // commands were written. Code motion only: not a line changed.
 

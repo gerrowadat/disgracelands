@@ -51,7 +51,7 @@ const (
 )
 
 // ShopFlag is one of the shop bitvector's bits, and ShopFlags is a shop's
-// set of them. Bit indices, not masks: docs/proposals/idiomatic-go.md
+// set of them. Bit indices, not masks: docs/design/idiomatic-go.md
 // §4.1, and §4.1.1 for the trap. shop_bits[] (shop.c:110) is the name
 // table, and the numbers are the file format's.
 type ShopFlag int

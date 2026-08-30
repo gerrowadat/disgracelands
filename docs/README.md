@@ -50,30 +50,20 @@ both the C tree and the Go tree.
 What is going to happen. One document at a time, and it is empty between
 plans rather than accumulating them.
 
-**Where the next thing starts, as of 2026-08-30.** Both of the documents
-that used to live here have moved to `docs/design/`: `yaml-only.md`
-because every row of its §7 landed, ending with **v1.0.0, cut on
-2026-08-30**, and `go-port-plan.md` because Phases 0–6 are built and what
-is left of its Phase 7 is two deployment *decisions* rather than work —
-they are in `TODO.md`'s "Still open", which is where a decision belongs.
-The forward plan is the one document here.
+**It is empty, as of 2026-08-30.** All three documents that lived here
+have moved to `docs/design/`: `go-port-plan.md` because Phases 0–6 are
+built and what is left of its Phase 7 is two deployment *decisions*
+rather than work; `yaml-only.md` because every row of its §7 landed,
+ending with **v1.0.0**; and `idiomatic-go.md` because seven of its nine
+steps are built and the two the plan itself allowed to end otherwise did
+— step 7 deferred, step 8 declined, both with reasons recorded.
 
-- **[idiomatic-go.md](proposals/idiomatic-go.md)** — retiring the C's data
-  model from the Go server's memory, the way `yaml-only.md` retired its
-  file formats from the server's disk: one bit-vector type standing in for
-  eleven unrelated flag domains, `int32` standing in for a dozen
-  enumerations, `Values[4]` whose slots mean something different depending
-  on slot zero, and `-1` meaning "absent". Licensed by the port plan's §0
-  "Fidelity, phase two", and fenced by it: the on-disk format does not
-  move, the game does not move, and the C-derived tests that would prove
-  both may not be tidied away — which is the document's central risk and
-  its longest section. **Proposed 2026-08-30; nothing built.**
-
-The day-to-day work in front of that plan is not in it: it is the **open
+So there is no forward plan right now, and that is a real state rather
+than a gap. The work in front of anyone picking this up is the **open
 GitHub issues**, and `deviations.md`'s "Not deviations — gaps still to
-fill" and "What the session-parity suite found", which is where issues get
-filed from. Read those as the todo list; read the proposal for what the
-work is *for*.
+fill" and "What the session-parity suite found", which is where issues
+get filed from. Read those as the todo list. The next thing to live here
+is whatever somebody argues for next.
 
 ## `docs/design/` — decisions that landed
 
@@ -109,6 +99,19 @@ hide that it started as a proposal.
   is drawn against. Its §7 table is worth reading for what each row turned
   out to be about; several were about something other than what they were
   written to be about, and the bugs they found are listed there.
+- **[idiomatic-go.md](design/idiomatic-go.md)** — retiring the C's data
+  model from the server's *memory*, the way `yaml-only.md` retired its
+  formats from the server's disk: one bit-vector type standing in for
+  thirteen unrelated flag domains, `int32` standing in for ten
+  enumerations, `Values[4]` whose slots mean something different depending
+  on slot zero, `-1` meaning "absent", and an object's five where-is-it
+  fields. Seven of nine steps built; **step 7 deferred and step 8
+  declined**, both on the terms the plan itself set. Its §5 — the rule
+  that no step may weaken a C-derived test — is the half worth reading
+  first, and the half that earned its place: step 6 merged two name
+  tables and step 3 landed a rule change that every suite passed. Its
+  status block lists what the document turned out to be wrong about,
+  which is the point of keeping it.
 - **[data-format.md](design/data-format.md)** — a single yaml format for
   everything a lib-dir holds: the world, players, boards, mail, houses and
   the game tuning that used to be compiled into `config.c`. Replaces the

@@ -455,7 +455,7 @@ func transcodeStateStrings(s *stateState, enc *charmap.Charmap) {
 //
 // It is deliberately *not* part of stateState, and that is the whole
 // judgement in this file. `verify --against`'s claim is that a server
-// running on either directory behaves identically (docs/proposals/
+// running on either directory behaves identically (docs/design/
 // yaml-only.md §4.1), and no server ever reads an orphaned contents file:
 // every reader — House_boot, this port's own loadHouseObjects — starts
 // from the control array and asks for that house's objects by vnum. A

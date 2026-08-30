@@ -152,7 +152,7 @@ func RemortCount(rec *PlayerRecord) int {
 	// because the two disagree on a vector with bits the C never set. The C
 	// only ever inspects the five masks in its own table, so 0x7fffffff —
 	// which examples/torture holds — counts as five classes and not
-	// thirty-one. docs/proposals/idiomatic-go.md §2.2: a refactor may not
+	// thirty-one. docs/design/idiomatic-go.md §2.2: a refactor may not
 	// change what the arithmetic does.
 	remaining, n := rec.RemortVector.Raw(), 0
 	for class := ClassPaladin; class >= 0; class-- {

@@ -15,7 +15,7 @@ import (
 // The C's bitvector_t encoding, and nothing else.
 //
 // There was a `Flags uint64` here — one type for eleven unrelated flag
-// domains, which is what docs/proposals/idiomatic-go.md §3.1 was written
+// domains, which is what docs/design/idiomatic-go.md §3.1 was written
 // about. Step 1 gave each domain its own `Set[T]` and step 2's Class
 // retired the last user, the remort vector, by making it a `Set[Class]`.
 // What is left is the *encoding*: `asciiflag_conv`'s letters in and
@@ -91,7 +91,7 @@ func ParseFlagLetters(s string) (bits uint64, unknown []rune) {
 //
 // It takes a `uint64` rather than any flag type, and that is the shape the
 // whole name-and-letter layer takes as of
-// docs/proposals/idiomatic-go.md's step 1. Once every domain has its own
+// docs/design/idiomatic-go.md's step 1. Once every domain has its own
 // `Set[T]` there is no single Go type left to write these signatures in —
 // `Set[RoomFlag]` and `Set[PlayerFlag]` are unrelated types — and the two
 // alternatives are both worse than a raw bit vector: making each helper

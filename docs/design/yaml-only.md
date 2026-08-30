@@ -13,7 +13,7 @@
 > contract in §5 and §6, which is the live half** — every new field, every
 > new format test and every claim that a conversion is exact is still held
 > to it, and the current forward plan
-> (`docs/proposals/idiomatic-go.md`) is fenced by it explicitly. §10's
+> (`docs/design/idiomatic-go.md`) is fenced by it explicitly. §10's
 > last open question — what becomes of this file — is answered in place,
 > at the question itself.
 
@@ -746,7 +746,7 @@ this document.
   what it invalidated and rewrote. What is left of Phase 7 is a set of
   deployment preconditions gated on a decision nobody has made, not build
   work — see its own header.
-- `docs/proposals/idiomatic-go.md` — the forward plan now: retiring the
+- `docs/design/idiomatic-go.md` — the forward plan now: retiring the
   C's data model from the Go server's *memory*, having retired its file
   formats from the server's disk here. The two are the same argument one
   layer apart, and §5 and §6 of this document are the fence that keeps

@@ -553,7 +553,7 @@ func treeBytes(t *testing.T, dir string) map[string][]byte {
 }
 
 // TestFmtLeavesTheCheckedInCorporaAlone is the load-and-resave check
-// docs/proposals/idiomatic-go.md §6 asks for as its step 0, and the one
+// docs/design/idiomatic-go.md §6 asks for as its step 0, and the one
 // direction this repository's compatibility suite did not cover.
 //
 // Every other format check in the tree runs *binary → yaml*:

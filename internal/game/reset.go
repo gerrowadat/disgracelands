@@ -47,7 +47,7 @@ const (
 // ExitFlag is one of the EX_* bits from structs.h — a door's runtime
 // state, the C's exit_info — and ExitFlags is an exit's set of them.
 //
-// Bit indices, not masks: docs/proposals/idiomatic-go.md §4.1, and §4.1.1
+// Bit indices, not masks: docs/design/idiomatic-go.md §4.1, and §4.1.1
 // for why `ExitIsDoor | ExitClosed` is a mistake the compiler will not
 // catch. The numbers are unchanged and are the file format's, which
 // exit_bits[] in constants.c and bitnames_test.go between them keep so.

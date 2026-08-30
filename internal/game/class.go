@@ -14,7 +14,7 @@ import (
 
 // Class is a player class, matching structs.h:122. The numbers are stored
 // in every player record ever written, so they are the format as much as
-// they are an enum — docs/proposals/idiomatic-go.md §4.2 and §2.1.
+// they are an enum — docs/design/idiomatic-go.md §4.2 and §2.1.
 //
 // Note that the zero value is ClassMagicUser rather than ClassUndefined,
 // which is the C's numbering and is unchanged by this type: a zero-valued
@@ -43,7 +43,7 @@ type RemortClasses = Set[Class]
 //
 // It exists so the narrowing happens in one place with one reasoning,
 // which is the same job Set.Raw does for the flag domains
-// (docs/proposals/idiomatic-go.md §4.1). Class is an `int` and the
+// (docs/design/idiomatic-go.md §4.1). Class is an `int` and the
 // formats are 8- and 32-bit, so without it every boundary would carry its
 // own G115 suppression; with it there is one, here, and it is trivially
 // true — there are five classes.
@@ -238,7 +238,7 @@ func randN(r *rng.Rand, n int32) int32 { return r.Number(0, n-1) }
 
 // Sex is a character's sex, matching structs.h. Like Class, the numbers are
 // in every player record and every mob file, so they are the format as well
-// as an enumeration — docs/proposals/idiomatic-go.md §4.2.
+// as an enumeration — docs/design/idiomatic-go.md §4.2.
 type Sex int
 
 // Sexes, matching structs.h.
@@ -284,7 +284,7 @@ func ParseSex(arg byte) Sex {
 // The archived binary format has no race at all -- structs.h:972's
 // char_file_u goes name, description, title, sex, chclass, level -- so a
 // character saved through it never had one to lose. See
-// docs/proposals/idiomatic-go.md §4.2.
+// docs/design/idiomatic-go.md §4.2.
 type Race int
 
 // Number is the race's stored number, for the player formats. There is no

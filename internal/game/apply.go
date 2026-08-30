@@ -58,7 +58,7 @@ func abilityIndex(score int32) int {
 // utils.h:505's REMORT_* bits are `1 << class` for every class — mage 1,
 // cleric 2, thief 4, warrior 8, paladin 16 — so the bit *is* the class
 // number and the set is exactly "the classes this character has been".
-// docs/proposals/idiomatic-go.md §4.2 asks for this directly, and
+// docs/design/idiomatic-go.md §4.2 asks for this directly, and
 // create_test.go's TestRemortMasksMatchTheFlagConstants is what keeps the
 // correspondence honest against class.c's own table.
 //

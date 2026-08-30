@@ -15,7 +15,7 @@ package game
 // room_is_dark tests and the one do_simple_move demands a boat for — with
 // the rest left as bare numbers because nothing asked about them by name.
 // A partial enumeration is exactly what
-// docs/proposals/idiomatic-go.md §3.2 objects to: it invites somebody to
+// docs/design/idiomatic-go.md §3.2 objects to: it invites somebody to
 // invent the next value rather than look it up, and a named constant costs
 // nothing. sectorNames and yamlSectorNames are both ten entries long and
 // bitnames_test.go checks the first against constants.c, so the order here

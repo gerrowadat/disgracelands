@@ -19,7 +19,7 @@ import "strings"
 // own — a paladin whose alignment drops loses their magic, and if it drops
 // far enough they lose it permanently.
 // PaladinFlag is one of them, and PaladinFlags is a paladin's set.
-// Bit indices, not masks: docs/proposals/idiomatic-go.md §4.1, and §4.1.1
+// Bit indices, not masks: docs/design/idiomatic-go.md §4.1, and §4.1.1
 // for the trap. The numbers are the player file's, in the spare long
 // SpecFlags lives in.
 type PaladinFlag int

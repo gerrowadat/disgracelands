@@ -212,7 +212,7 @@ func upperASCII(b byte) byte {
 // parseFlagField decodes a bitfield and reports anything questionable about
 // it, so the same warnings appear wherever flags are read.
 // Raw bits rather than any flag type: it serves several domains with
-// different destination types now (docs/proposals/idiomatic-go.md step 1),
+// different destination types now (docs/design/idiomatic-go.md step 1),
 // and bits are the one thing they have in common. The loader is the
 // persistence boundary SetFromRaw exists for.
 func (l *loader) parseFlagField(r *reader, what, field, raw string) uint64 {

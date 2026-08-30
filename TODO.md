@@ -15,12 +15,14 @@ nothing answers to yet: seven OasisOLC editors and `slowns`, both
 declined rather than pending; see `docs/deviations.md`.
 
 Three other places carry work this file does not. **`docs/proposals/`**
-holds the forward plan — one document at a time, currently
-`idiomatic-go.md`. **Open GitHub issues** are where a bug or a gap in the
+holds the forward plan — one document at a time, and it is **empty as of
+2026-08-30**, `idiomatic-go.md` having joined the other two records in
+`docs/design/`. **Open GitHub issues** are where a bug or a gap in the
 Go server lives now (the C server stopped being the thing anyone plays,
 so a doc entry alone stopped being enough), and
 `docs/deviations.md`'s "Not deviations — gaps still to fill" is the
-standing list those get filed from.
+standing list those get filed from — and with no forward plan, those two
+are the whole of the todo list.
 
 This file is for the things that are neither: work on the C server in
 `reference/moderncserver/`, and decisions that are still open.

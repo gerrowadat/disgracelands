@@ -82,7 +82,7 @@ func TestDecodeARealFile(t *testing.T) {
 
 	// The %T is not decoration. This helper compares through `any`, so a
 	// `got` and a `want` of different *types* are unequal however they
-	// print — and while docs/proposals/idiomatic-go.md's step 2 gives the
+	// print — and while docs/design/idiomatic-go.md's step 2 gives the
 	// enumerations their own types, that is exactly what keeps happening.
 	// Three separate conversions have failed here with messages of the form
 	// "Class = 1, want 1", which reads as a value mismatch and is not one.

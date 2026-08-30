@@ -229,7 +229,7 @@ func deepWater(room *game.RoomDef) bool {
 }
 
 // Everything below this line moved here from commands.go in step 9 of
-// docs/proposals/idiomatic-go.md — `move` and the checks a step goes
+// docs/design/idiomatic-go.md — `move` and the checks a step goes
 // through, which is what the rest of this file is already about. Code
 // motion only: not a line changed.
 

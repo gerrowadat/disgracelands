@@ -4,6 +4,8 @@ Notes for anyone — human or agent — picking this up cold. The authoritative
 documents are `docs/design/go-port-plan.md` (how the port got here and the
 architecture it built), `docs/design/yaml-only.md` (why the server reads
 one on-disk format, and the compatibility contract that came with it),
+`docs/design/idiomatic-go.md` (why the server's *memory* is no longer
+C-shaped, and the two things it declined to change),
 `docs/deviations.md` (every deliberate difference from the C) and
 `docs/weirdnumbers.md` (every surprising constant, with its C citation).
 This file is the working practice around them.
@@ -16,19 +18,32 @@ reads yaml and nothing else. `go-port-plan.md`'s Phase 7 never started and
 what is left of it is two deployment *decisions*, carried in `TODO.md`'s
 "Still open", not work anybody can pick up.
 
-The forward plan is **`docs/proposals/idiomatic-go.md`**: retiring the C's
-data model from the server's memory — the bit vectors, the `int32`s
-standing in for enumerations, the four-slot value arrays, the `-1`s
-meaning "absent" — the way yaml-only retired the C's formats from its
-disk. Proposed, nothing built. Read its §2 (the fence) and §5 (the
-C-derived tests it may not tidy away) before touching anything in
-`internal/game`'s type declarations.
+**`docs/design/idiomatic-go.md` is a record now too**, and it is the third
+and last of them. It retired the C's data model from the server's *memory*
+the way yaml-only retired its formats from the server's disk: the bit
+vectors, the `int32`s standing in for enumerations, the four-slot value
+arrays, the `-1`s meaning "absent", and an object's five where-is-it
+fields. Seven of its nine steps are built; step 7 (the `PlayerRecord`
+split) is deferred and step 8 (width) is declined, both on terms the plan
+itself set, and the width decision is in `docs/deviations.md` so it is not
+re-litigated from memory.
 
-The day-to-day work in front of that plan is not in it: it is the **open
-GitHub issues**, and `docs/deviations.md`'s "Not deviations — gaps still
-to fill" and "What the session-parity suite found", which is where issues
-get filed from. Read those as the todo list and the proposals for what the
-work is for.
+Two things in it are still live for anyone editing `internal/game`:
+
+- **§2, the fence.** Compatibility and gameplay did not move and must not.
+- **§5, the safety net.** No change may weaken a test that derives its
+  expectation from the C. That rule earned its place twice over: step 6
+  merged two name tables and had to prove both tests still failed on a
+  deliberate break, and step 3 landed a rule change that `make test-fast`,
+  `make play` and `make parity` were all green on — a god eating a sword —
+  which only reading the C's guard caught.
+
+**`docs/proposals/` is empty, and that is a real state rather than a gap.**
+There is no forward plan. The work in front of anyone picking this up is
+the **open GitHub issues**, and `docs/deviations.md`'s "Not deviations —
+gaps still to fill" and "What the session-parity suite found", which is
+where issues get filed from. Read those as the todo list. The next
+document in `docs/proposals/` is whatever somebody argues for next.
 
 ## What this project is
 
@@ -456,12 +471,14 @@ the day-to-day/release split being reversible piecemeal.**
   the reasoning if there is any. See "The Go server is canonical now"
   below; the issues are the todo list.
 - Status of work still to come → the one document in `docs/proposals/`,
-  currently `idiomatic-go.md`. That directory holds one plan at a time and
-  is empty between them; a document moves to `docs/design/` when the thing
-  it describes is built rather than planned. The two that have already
-  moved (`go-port-plan.md`, `yaml-only.md`) are still corrected when they
-  turn out to be wrong about what landed, and are never extended with new
-  plans.
+  which is **empty right now**. That directory holds one plan at a time
+  and is empty between them; a document moves to `docs/design/` when the
+  thing it describes is built rather than planned. All three that have
+  moved (`go-port-plan.md`, `yaml-only.md`, `idiomatic-go.md`) are still
+  corrected when they turn out to be wrong about what landed, and are
+  never extended with new plans. A step a plan *declines* is not a
+  correction: it goes in `docs/deviations.md` with its reasoning, which
+  is what happened to `idiomatic-go.md`'s step 8.
 - The on-disk format's own compatibility contract — what a new yaml field
   owes, what "the conversion is exactly dead on" means and how it is
   proved → `docs/design/yaml-only.md` §5 and §6, until somebody moves
