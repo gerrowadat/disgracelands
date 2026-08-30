@@ -597,13 +597,20 @@ change it was checking.
   server leaves behind — so `release.yml`'s example-regeneration check
   would have failed the release, and regenerating would not have fixed
   it, because the file could not be committed. #313.
-- **§8's upgrade instruction for `ascii` users does not work.** "Same
-  command, `--from-format=ascii`" is wrong: the one-pass import discards
-  `--from-format` (`cmd/dlctl/import.go:227`), reads the `binary` roster
-  out of `etc/`, imports zero characters and exits 0. For the group this
-  document identified as having the least warning, that is a silent
-  empty roster. #314, and the v1.0.0 notes carry the two-pass
-  workaround.
+- **§8's upgrade instruction for `ascii` users did not work.** "Same
+  command, `--from-format=ascii`" was wrong: the one-pass import
+  discarded `--from-format`, read the `binary` roster out of `etc/`,
+  imported zero characters and exited 0 — and its own verify pass
+  agreed that an empty roster matched an empty roster. For the group
+  this document identified as having the least warning, that was a
+  silent empty roster. **Fixed in #314**: `import` now works the format
+  out from the layout when no `--from-format` is given, honours it for
+  the roster step when one is, says so out loud when it finds no roster
+  at all, and refuses a tree holding both rather than choosing which
+  half of somebody's players to lose. §8's instruction stands as
+  written, and passing the flag is now optional rather than
+  ineffective. The v1.0.0 notes' two-pass workaround is no longer
+  needed, and remains correct.
 - **`release.yml` itself was stale, and failed the first attempt.** Its
   Phase 0 acceptance step still required `--player-format` and
   `--world-format` in `dlmud --help` — two of the seven flags row 4
@@ -623,9 +630,13 @@ change it was checking.
 directory is untouched. Rent files, boards, mail, houses, aliases and the
 roster all come across.
 
-**Anyone running on `ascii`.** Same command, `--from-format=ascii`. This is
-the group with the least warning, since `ascii` is today's default, and the
-upgrade note should lead with it rather than with `binary`.
+**Anyone running on `ascii`.** Same command. `--from-format=ascii` is
+accepted and is worth passing if you want to be explicit, but is no longer
+required: an `ascii` tree keeps its roster in `pfiles/plr_index` and a
+`binary` one in `etc/players`, so the layout says which it is and `import`
+reads it (#314). This is the group with the least warning, since `ascii`
+is today's default, and the upgrade note should lead with it rather than
+with `binary`.
 
 **The Phase 7 rollback story, which this invalidates.**
 `go-port-plan.md:2186-2189` currently says: "the C server tree is still
