@@ -1,22 +1,24 @@
 # yaml only: retiring the legacy formats from the server
 
-> **Status, 2026-08-30: done, release and all.** Every row of §7 has
-> landed, including row 7 — **v1.0.0 was cut on 2026-08-30**, which is
-> also what made a `.dlversion` of `1.0.0` exist. **Work is no longer
-> planned from this document.** The forward plan is `go-port-plan.md`
-> §10's Phase 7 (cutover), which this change was standing in front of;
-> the day-to-day work in front of *that* is `docs/deviations.md`'s "Not
-> deviations — gaps still to fill" and whatever `test/parity` finds,
-> filed as issues.
+> **Status, 2026-08-30: done, release and all — and this file has moved
+> to `docs/design/` accordingly.** Every row of §7 has landed, including
+> row 7 — **v1.0.0 was cut on 2026-08-30**, which is also what made a
+> `.dlversion` of `1.0.0` exist. **Work is no longer planned from this
+> document**, which is why it is no longer in `docs/proposals/`: by this
+> repo's convention a design document moves here once the thing it
+> describes is built rather than planned, and this one is built.
 >
-> What this document is for now: the reasoning behind a shipped shape, in
-> the same way `docs/design/` documents are, plus the compatibility
-> contract in §5 and §6 that new format work is held to. §10's last open
-> question — what becomes of this file — is answered by that, and by
-> nobody having moved it yet.
+> What it is for now: the reasoning behind a shipped shape, in the same
+> way its neighbours in this directory are, plus **the compatibility
+> contract in §5 and §6, which is the live half** — every new field, every
+> new format test and every claim that a conversion is exact is still held
+> to it, and the current forward plan
+> (`docs/proposals/idiomatic-go.md`) is fenced by it explicitly. §10's
+> last open question — what becomes of this file — is answered in place,
+> at the question itself.
 
 **This was the plan work was planned from.** It superseded
-`docs/proposals/go-port-plan.md` as the forward-looking document: that plan
+`docs/design/go-port-plan.md` as the forward-looking document: that plan
 took the port from nothing to a playable server across Phases 0–6 and stays
 authoritative as the record of how, and as the design reference for the
 architecture it describes. Its Phase 7 (cutover) was not cancelled — it
@@ -714,30 +716,41 @@ simplify `cmd/dlmud` further — but it would bake "one player, one file" into
 the interface, which is a format decision an interface should not be making.
 Left alone deliberately; noted because a reader will ask.
 
-**What happens to `docs/proposals/` when this lands? — decided by
-default, and worth confirming.** By this repo's own convention a design
-document moves to `docs/design/` once the thing it describes is built.
-This one describes a removal, so what it leaves behind is mostly the test
-architecture in §5 and the field-addition rules in §6. The likely outcome
-was that those move into `data-format.md` as the format's own
-compatibility contract and this file stays in `proposals/` as the record
-of the decision; what has actually happened, as of 2026-08-29, is that
-nothing moved and this file is still the place both live. That is fine
-while it is the only reference for them, and stops being fine the moment
-someone looks for the format's contract in the design document and does
-not find it.
+**What happens to `docs/proposals/` when this lands? — answered on
+2026-08-30: this file moved to `docs/design/`, contract and all.** By this
+repo's own convention a design document moves here once the thing it
+describes is built. This one describes a removal, so what it leaves behind
+is mostly the test architecture in §5 and the field-addition rules in §6.
+The outcome originally guessed at was that those move into
+`data-format.md` as the format's own compatibility contract and this file
+stays in `proposals/` as the record of the decision. That is not what
+happened, and the reason is worth keeping: **§5 and §6 are the live half
+of this document, and splitting them from the argument that produced them
+would leave the contract without its reasoning.** So the whole file moved
+and the contract moved with it. The risk the old wording named is real and
+unchanged — somebody looking for the format's contract will look in
+`data-format.md` first — so `data-format.md` §10 points here for the
+field-addition rules, which is the cheap half of the fix. Moving §5 and §6
+there for real is still open, and is now the *only* thing left open about
+this document.
 
 ---
 
 ## Related documents
 
-- `docs/proposals/go-port-plan.md` — the port itself, Phases 0–6. This
-  document superseded it as the forward plan and, now that its build is
-  done, hands that role back: **Phase 7 (cutover) is the forward plan
-  again**, and its preconditions are the map of what is left. That plan
-  stays authoritative as the record and the architecture reference; §5 and
-  §6 (the pluggable seams) are what this change collected on, and §10
-  Phase 7's rollback paragraph is what it invalidated and rewrote.
+- `docs/design/go-port-plan.md` — the port itself, Phases 0–6. This
+  document superseded it as the forward plan; both have since stopped
+  being one, and both now live here as records. That plan stays
+  authoritative for the architecture; §5 and §6 (the pluggable seams) are
+  what this change collected on, and §10 Phase 7's rollback paragraph is
+  what it invalidated and rewrote. What is left of Phase 7 is a set of
+  deployment preconditions gated on a decision nobody has made, not build
+  work — see its own header.
+- `docs/proposals/idiomatic-go.md` — the forward plan now: retiring the
+  C's data model from the Go server's *memory*, having retired its file
+  formats from the server's disk here. The two are the same argument one
+  layer apart, and §5 and §6 of this document are the fence that keeps
+  the second from disturbing the first.
 - `docs/design/data-format.md` — the yaml format. This proposal is its §11
   steps 4 and 7; its §12 is where the text-transform findings in §4.2 live.
 - `docs/design/data-format-versioning.md` — `.dlversion` and what a

@@ -98,7 +98,7 @@ const CreationMenu = "\r\nSelect a class:\r\n" +
 // ParseCreationClass interprets a class letter typed at character creation.
 //
 // **This is a deliberate deviation from the C, recorded in
-// docs/proposals/go-port-plan.md.** The C's parse_class (class.c:117) accepts
+// docs/design/go-port-plan.md.** The C's parse_class (class.c:117) accepts
 // 'p' and returns CLASS_PALADIN, and character creation calls that same
 // function — so typing the unadvertised letter at the creation prompt made a
 // Paladin without remorting. The menu never offered it and the class exists

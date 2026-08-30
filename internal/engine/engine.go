@@ -10,7 +10,7 @@
 // here as a function to run, and runs in turn — so nothing in internal/game
 // needs a lock, and the C code's habit of passing pointers between rooms,
 // characters and objects ports across intact. See
-// docs/proposals/go-port-plan.md §3.1 for why this and not an
+// docs/design/go-port-plan.md §3.1 for why this and not an
 // actor-per-entity design.
 //
 // The loop pulses at a fixed interval, 100ms by default, matching the C

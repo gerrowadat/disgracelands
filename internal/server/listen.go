@@ -50,7 +50,7 @@ func ListenTLS(addr string, cfg *tls.Config) (*Listener, error) {
 //
 // Every transport goes through here and therefore through session.Serve,
 // which is what sends the greeting — a licence requirement that no transport
-// may skip (docs/proposals/go-port-plan.md §12). Adding a listener that does
+// may skip (docs/design/go-port-plan.md §12). Adding a listener that does
 // not use this function would be the way to break that, which is why there
 // is a test asserting each one does.
 func (s *Server) Accept(ctx context.Context, ln *Listener, limits Limits) error {

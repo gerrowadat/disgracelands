@@ -153,7 +153,7 @@ func repoRoot() string {
 //
 // There is one of them now (see mini below), and it needs no flags: the
 // seven --*-format flags are gone and the server reads one format
-// (docs/proposals/yaml-only.md §3.1). The type stays a type because a
+// (docs/design/yaml-only.md §3.1). The type stays a type because a
 // source directory is still what every start() needs to be told, and
 // because a second entry — a bigger world, a different fixture — is a
 // thing somebody will want.
@@ -171,7 +171,7 @@ type lib struct {
 // the same on either. That was exactly right while the server ran on
 // both, and became half-wasted work the moment it did not: those runs
 // were verifying that a scenario behaves the same on a format the server
-// will no longer boot (docs/proposals/yaml-only.md §5.4).
+// will no longer boot (docs/design/yaml-only.md §5.4).
 //
 // Losing that coverage is the point rather than a cost. What replaces it
 // is the differential layer one level down — `dlctl verify --against`

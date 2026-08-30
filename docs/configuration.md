@@ -21,14 +21,14 @@ every flag appears here, but it cannot check that the prose is accurate.
 > was decided against, in favour of `reloadmob`/`reloadzone`/`reloadobj`/
 > `reloadshop` — edit the world files in your `--lib-dir` directly and
 > reload them into the running server without a restart; see
-> `docs/proposals/go-port-plan.md`'s own
+> `docs/design/go-port-plan.md`'s own
 > Phase 6 write-up. Phase 7 (cutover) has not started. Settings marked
 > *(inert)* are accepted and
 > validated but do not yet affect anything, for reasons of their own —
 > `--tls-acme-*` needs an ACME client — not because a phase is unfinished.
 > They are here
 > because the configuration surface was built first, deliberately — see
-> `docs/proposals/go-port-plan.md` §10.
+> `docs/design/go-port-plan.md` §10.
 
 ## Data locations
 
@@ -135,7 +135,7 @@ legacy directory in place, leaving the formats as they were; nothing runs
 on that output now, so it points at `import` instead.
 
 See `docs/investigations/ascii-pfile-format.md` for what the ascii format
-contains, and `docs/proposals/yaml-only.md` for why there is one format.
+contains, and `docs/design/yaml-only.md` for why there is one format.
 
 ### The yaml format's own version
 

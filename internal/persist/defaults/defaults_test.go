@@ -5,7 +5,7 @@
 // and DikuMUD licenses; see LICENSE. Non-commercial use only.
 
 // Package defaults_test is the "minimal document" suite
-// docs/proposals/yaml-only.md §6 asks for: one document per subsystem
+// docs/design/yaml-only.md §6 asks for: one document per subsystem
 // holding only its required fields, loaded, with every optional field
 // asserted against the value it is supposed to default to.
 //

@@ -21,7 +21,7 @@ import (
 //
 // It is not safe for concurrent use, deliberately. One goroutine owns it and
 // everything that touches it arrives as a command on that goroutine's queue —
-// see internal/engine and docs/proposals/go-port-plan.md §3.1. That is what
+// see internal/engine and docs/design/go-port-plan.md §3.1. That is what
 // lets rooms, characters and objects reference each other directly without a
 // lock on every field, and it is the reason a faithful port of the C code's
 // structure is tractable at all.

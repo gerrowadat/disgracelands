@@ -17,7 +17,7 @@ import (
 //
 // It used to pin nineteen subsystem/format *pairs*, because Dir answered
 // differently depending on whether the answer was 2002 or now. There is
-// one layout now (docs/proposals/yaml-only.md §1); the legacy half of the
+// one layout now (docs/design/yaml-only.md §1); the legacy half of the
 // table moved to cmd/dlctl, along with the code, and is pinned there.
 func TestSubsystemDir(t *testing.T) {
 	base := filepath.FromSlash("/srv/dl")

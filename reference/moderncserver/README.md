@@ -25,7 +25,7 @@ This tree has two active jobs, and it will keep both for a long time:
    definition — it is the one that ran the game. Every parser in the Go
    port was written by reading the corresponding function here.
    (Implementation choices that aren't gameplay- or compatibility-shaped are
-   a different question now — `docs/proposals/go-port-plan.md` §0's
+   a different question now — `docs/design/go-port-plan.md` §0's
    "Fidelity, phase two" — and this tree doesn't settle those.)
 2. **It is the parity oracle.** `scripts/world-parity.sh` builds this server,
    has it dump the world it loaded, and diffs that against the Go server's
@@ -117,7 +117,7 @@ currently agree on every field of all 3,202 records of what ships
 (`examples/stock/binary`: 1878 rooms, 569 mobiles, 679 objects, 30 zones, 46
 shops). The Disgracelands world itself is 5,248 records and also agreed,
 back when `data/` held it, before this repo switched to shipping stock
-CircleMUD's `lib/` — `docs/proposals/go-port-plan.md` §10's Phase 1
+CircleMUD's `lib/` — `docs/design/go-port-plan.md` §10's Phase 1
 write-up keeps both counts.
 
 If you change a parser here, that check will tell you whether the Go port
@@ -146,7 +146,7 @@ Where the port does fix one, that is a deviation and gets recorded
   database is a raw `fwrite()` of a struct whose `long` fields changed width
   when the world moved to 64-bit; see
   `docs/investigations/pfile-conversion.md` and
-  `docs/proposals/go-port-plan.md` §4.
+  `docs/design/go-port-plan.md` §4.
 - **`crypt(3)` password hashing**, DES, salted with the character's own name
   and truncated to ten stored characters — so only the first eight characters
   of a password ever mattered.
@@ -169,5 +169,5 @@ agree byte for byte.
 committed — `make all` depends on it, and without it the build runs
 `licheck`, which waits for a keypress.
 
-See `docs/proposals/go-port-plan.md` §12 for what the licence requires in
+See `docs/design/go-port-plan.md` §12 for what the licence requires in
 practice.

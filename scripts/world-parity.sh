@@ -11,7 +11,7 @@
 # Builds both servers, has each dump the world it loaded as canonical JSON,
 # and diffs the two. Exits non-zero on any difference.
 #
-# This is Phase 1's acceptance criterion from docs/proposals/go-port-plan.md,
+# This is Phase 1's acceptance criterion from docs/design/go-port-plan.md,
 # made runnable: without it, "the Go loader reproduces the C loader's view
 # exactly" is an argument rather than a test.
 #

@@ -64,7 +64,7 @@ func TestDefaultsAreValid(t *testing.T) {
 }
 
 func TestPlaintextTelnetIsOffByDefault(t *testing.T) {
-	// docs/proposals/go-port-plan.md §0: implemented, but never on unless asked for.
+	// docs/design/go-port-plan.md §0: implemented, but never on unless asked for.
 	if got := Default().TelnetAddr; got != "" {
 		t.Errorf("Default().TelnetAddr = %q, want empty", got)
 	}
@@ -168,7 +168,7 @@ func TestValidation(t *testing.T) {
 		want string
 	}{
 		{"no listeners", []string{"--listen-telnets="}, "no listeners enabled"},
-		// The seven --*-format flags are gone (docs/proposals/yaml-only.md
+		// The seven --*-format flags are gone (docs/design/yaml-only.md
 		// §3.1), so what used to be four "unknown format" cases is now one
 		// property: passing one at all is an unknown flag.
 		{"player-format no longer exists", append(minimal, "--player-format=ascii"), "not defined"},
@@ -228,7 +228,7 @@ func TestPathDerivation(t *testing.T) {
 // environment variable too, because internal/config derives one from the
 // other — and does it silently. A container with DLMUD_WORLD_FORMAT=classic
 // in its unit file since 2026 quietly ignoring it is the most likely
-// failure of this release (docs/proposals/yaml-only.md §3.1).
+// failure of this release (docs/design/yaml-only.md §3.1).
 func TestRemovedFormatEnvIsRefusedByName(t *testing.T) {
 	for _, name := range removedFormatFlags {
 		env := EnvName(name)

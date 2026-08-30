@@ -9,7 +9,7 @@
 // It exists to hold one policy in one place: the 2001–2008 roster's passwords
 // are DES crypt(3) hashes, they must keep working so those characters can log
 // in, and every successful login replaces one with something from this
-// century. Nothing forces a reset — see docs/proposals/go-port-plan.md §13.
+// century. Nothing forces a reset — see docs/design/go-port-plan.md §13.
 package auth
 
 import (
@@ -38,7 +38,7 @@ var ErrLegacyRefused = errors.New("auth: this character still has a legacy passw
 // thirteen-character hash and `:1462` compares the same ten. Comparing all
 // thirteen here would reject every correct password on the archived roster
 // while reporting nothing but "wrong password" — see
-// docs/proposals/go-port-plan.md §5.3.1.
+// docs/design/go-port-plan.md §5.3.1.
 const legacyPrefixLength = 10
 
 // The fixed halves of the argon2 parameters. The salt and digest lengths are

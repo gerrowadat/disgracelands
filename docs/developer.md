@@ -233,7 +233,7 @@ out. It is best-effort: a machine with no C compiler gets a note and the
 rest of the check.
 
 `-race` is not optional in the test target. The port keeps the C server's
-single game goroutine (`docs/proposals/go-port-plan.md` §3.1), and the whole
+single game goroutine (`docs/design/go-port-plan.md` §3.1), and the whole
 safety argument for that design rests on nothing else touching world state —
 which only the race detector can actually check.
 
@@ -416,7 +416,7 @@ Some things worth knowing before adding to it:
   cheap net that catches it anyway.
 - **The suite runs on `examples/mini/yaml` only.** It used to run every
   scenario on `examples/mini/binary` as well, through a `bothFormats`
-  helper; that went with yaml-only (`docs/proposals/yaml-only.md` §5.4),
+  helper; that went with yaml-only (`docs/design/yaml-only.md` §5.4),
   because a scenario proved on a format the server will not run proves
   nothing. What replaced it is one level down: `dlctl verify --against`
   and the differential tests over `stock`, `mini` and `torture`.
@@ -1009,6 +1009,6 @@ testdata/parity/    the session scripts test/parity types at both servers
 config/             game.yaml, the commented example for --config
 examples/           runtime data: stock world, text, and (never committed) players
 reference/          the C server and other lineage codebases, for comparison
-docs/proposals/go-port-plan.md   the design and the phase order
+docs/design/go-port-plan.md   the design and the phase order
 docs/design/                     design decisions that have actually landed
 ```

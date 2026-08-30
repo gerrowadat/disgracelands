@@ -10,7 +10,7 @@
 // Implementations are compiled in and selected by name at runtime, not loaded
 // through Go's plugin package — plugins cannot be combined with the
 // CGO_ENABLED=0 static build the container image needs. See
-// docs/proposals/go-port-plan.md §5.1.
+// docs/design/go-port-plan.md §5.1.
 package world
 
 import (

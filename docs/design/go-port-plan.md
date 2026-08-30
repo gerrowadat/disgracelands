@@ -5,11 +5,31 @@ pluggable player- and world-file formats, and packaged as a normal modern
 service (flags, env vars, structured logs, containers) rather than a
 2002-era autoconf tree driven by `autorun`.
 
+> **This document moved from `docs/proposals/` to `docs/design/` on
+> 2026-08-30, and the move is a claim worth checking rather than a
+> tidy-up.** The convention here is that a document moves once the thing
+> it describes is built rather than planned. Phases 0–6 plainly qualify.
+> **Phase 7 does not, and it is not being declared finished** — what the
+> move asserts is narrower and, read carefully, is what §10's own Phase 7
+> text already says: *what is left of it is not build work.* Its six
+> preconditions are one still-passing check, two things done, one
+> already-met release, and two that are a hosting decision and a
+> roster decision — neither of which this document can answer, and both
+> of which are tracked in `TODO.md`'s "Still open". A directory called
+> `proposals/` should hold work somebody could start on Monday. Phase 7
+> is not that, and leaving it there kept implying it was.
+>
+> The forward plan is **`docs/proposals/idiomatic-go.md`**, which starts
+> from §0's "Fidelity, phase two" below — the row that freed
+> implementation from the C — and applies it to the data model this port
+> built while it was still bound by the row above it.
+
 This is a design/sequencing document. **Phases 0–5 (§10) are built** — every
 slice of Phase 5 included — with a tail of small commands outside the slices
 listed under it. **Phase 6 was decided against** and §10 says what got built
 in its place; **Phase 7 (cutover) has not started**, and is the one part of
-this document that is still a plan rather than a record.
+this document that is not a record of something built — see the note above
+for why it is nonetheless here rather than in `proposals/`.
 Each built phase carries a retrospective in §10 saying what actually landed
 and where it diverged from what was planned. See `BUILDING.md` for how to
 build and run what exists.
@@ -25,17 +45,15 @@ work that starts from here.
 is now finished.** That document retired `classic`/`ascii`/`binary` from
 the server so it understands only `yaml`, along with the compatibility
 testing that had to be true first; every row of its §7 has landed,
-including the last one — **v1.0.0 was cut on 2026-08-30**. **So Phase 7
-(cutover) is the forward plan again** — it was downstream of the
-yaml-only work and no longer is. Read §10's Phase 7 preconditions as the
-map of what is left.
+including the last one — **v1.0.0 was cut on 2026-08-30**. It sits beside
+this file now, for the same reason and by the same convention.
 
 This document is not retired and is not extended with new plans: it stays
 authoritative as the record of Phases 0–6 and as the reference for the
-architecture they built, and §5, §6 and §11 are exactly what the newer plan
-collected on. One specific interaction worth knowing about before reading
-on: **Phase 7's rollback paragraph was rewritten by yaml-only** — see the
-note at that paragraph, and `yaml-only.md` §8.
+architecture they built, and §5, §6 and §11 are exactly what the newer
+plans collect on. One specific interaction worth knowing about before
+reading on: **Phase 7's rollback paragraph was rewritten by yaml-only** —
+see the note at that paragraph, and `yaml-only.md` §8.
 
 ---
 
@@ -121,7 +139,7 @@ internal/
 pkg/                Only if something genuinely wants an external consumer.
 build/
   Dockerfile  docker-compose.yml
-docs/proposals/go-port-plan.md    (this file)
+docs/design/go-port-plan.md    (this file)
 ```
 
 `reference/moderncserver/src/`, `data/`, `reference/moderncserver/doc/`,
@@ -2126,7 +2144,19 @@ fields its own format actually carries (see `docs/design/data-format.md`
 §11.1 for the full field-by-field account) — `TODO.md`'s own entry for
 this moved from "still open" to "superseded" accordingly.
 
-**Phase 7 — Cutover. Not started.** The one honest complication this
+**Phase 7 — Cutover. Not started, and no longer filed as a plan.** When
+this document moved to `docs/design/` (2026-08-30) the header made a claim
+about this phase specifically, and here is where to check it: read the six
+preconditions below and count how many are *engineering*. One is a check
+that already passes and must keep passing; two are done; one is a release
+that has been cut. The two that are open — hosting and exposure
+(precondition 5), and whether the archived roster comes back (precondition
+4) — are decisions, and both are already carried in `TODO.md`'s "Still
+open" (§4 and §1), which is where a decision belongs. Nothing below is
+work waiting for someone to pick it up, which is what leaving it in
+`docs/proposals/` implied for two months.
+
+The one honest complication this
 section's original two sentences skipped over: "cutover" ordinarily means
 swapping a *running* service, and there is not one. Disgracelands stopped
 being played in 2008; neither the C tree nor the Go port has taken a real

@@ -21,7 +21,7 @@ import (
 // TestTheGreetingNamesTheCreators is a licence test before it is a feature
 // test. The CircleMUD licence requires the login sequence -- everything
 // between connecting and playing -- to name both sets of creators
-// (docs/proposals/go-port-plan.md §12). scripts/license-check.sh checks the
+// (docs/design/go-port-plan.md §12). scripts/license-check.sh checks the
 // file says so; this checks a connecting player is actually shown it.
 func TestTheGreetingNamesTheCreators(t *testing.T) {
 	m := start(t, mini)

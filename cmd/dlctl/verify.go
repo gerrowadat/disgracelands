@@ -40,7 +40,7 @@ var verifyTypes = append(append([]dirType{}, allTypes...), typeCopied)
 //     than the first.
 //
 // The second is the operator-facing form of the compatibility testing
-// docs/proposals/yaml-only.md §5 describes: the thing you run against
+// docs/design/yaml-only.md §5 describes: the thing you run against
 // *your* archive, which this repository's own fixtures cannot cover
 // because the real data is private. It is also what makes §5.2's tests
 // cheap — they are this command, invoked from a test.

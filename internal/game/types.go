@@ -12,7 +12,7 @@
 // Every field that is ever serialized has an explicit width. The C code this
 // is ported from uses `int`, `long`, `sh_int` and `byte` interchangeably, and
 // the widths of those changed underneath it when the world moved from 32-bit
-// to 64-bit; see docs/proposals/go-port-plan.md §4. `int` appears here only
+// to 64-bit; see docs/design/go-port-plan.md §4. `int` appears here only
 // for values that exist purely in memory.
 package game
 

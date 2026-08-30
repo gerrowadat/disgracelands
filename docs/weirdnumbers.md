@@ -994,7 +994,7 @@ sweeps, and a corpus of `"sword long"`, `"dragon fractal puff"` and
 `"guard cityguard"` is a corpus with the hard case designed out of it — the
 same shape as the transcoding gap that sat inert against every fixture in
 the repo (`docs/design/data-format.md` §11.1) and as the fixtures
-`docs/proposals/yaml-only.md` §5.1 was written about. It is reachable in the
+`docs/design/yaml-only.md` §5.1 was written about. It is reachable in the
 shipped data, not theoretical: stock CircleMUD's newbie zone has an extra
 description keyed `staircase stair 606 rs`, so on the real server `look 6`
 matches it and here it did not.

@@ -33,7 +33,7 @@ import (
 // returns int32 rather than int64. That is not a detail: a scanner returning
 // int64 would put a narrowing conversion at every one of the thirty-odd call
 // sites, and one of those getting it wrong is precisely the failure
-// docs/proposals/go-port-plan.md §4 is about. Doing the range check once, in
+// docs/design/go-port-plan.md §4 is about. Doing the range check once, in
 // the scanner, means the call sites cannot get it wrong.
 
 // splitFields splits a line on whitespace, dropping empty fields. This is

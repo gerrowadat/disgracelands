@@ -1,4 +1,4 @@
-# Multi-stage build for the Go server. See docs/proposals/go-port-plan.md §9.3.
+# Multi-stage build for the Go server. See docs/design/go-port-plan.md §9.3.
 #
 # Build from the repository root:
 #   docker build -f build/Dockerfile -t disgracelands .
@@ -39,7 +39,7 @@ ARG TARGETARCH
 
 # CGO_ENABLED=0 for a static binary: it is what lets the runtime image be
 # distroless/static, and it is also why the pluggable formats are a compiled-in
-# registry rather than Go plugins (see docs/proposals/go-port-plan.md §5.1).
+# registry rather than Go plugins (see docs/design/go-port-plan.md §5.1).
 ENV CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH}
 RUN go build -trimpath \
       -ldflags="-s -w \
@@ -58,7 +58,7 @@ RUN go build -trimpath \
 FROM gcr.io/distroless/static-debian12:nonroot
 
 # The CircleMUD and DikuMUD licenses travel with any distribution of the
-# server, including container images (docs/proposals/go-port-plan.md §12, requirement 1).
+# server, including container images (docs/design/go-port-plan.md §12, requirement 1).
 COPY --from=build /src/LICENSE /LICENSE
 
 COPY --from=build /out/dlmud /out/dlctl /usr/local/bin/

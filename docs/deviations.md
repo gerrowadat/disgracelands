@@ -1,6 +1,6 @@
 # Deviations from the C server
 
-The fidelity decision in [the port plan](proposals/go-port-plan.md) §0 says the
+The fidelity decision in [the port plan](design/go-port-plan.md) §0 says the
 patched C server wins wherever it and modern design disagree. This file is
 where the exceptions are written down.
 
@@ -398,7 +398,7 @@ gated on `Core.Supports`. See `internal/telnet/gmcp.go`.
 ### The web interface (`--listen-ws`) is a terminal emulator with extra steps, not the GMCP client the section above was written for
 
 Not in the C at all, and not a port of anything — a new capability, free to
-add under "fidelity, phase two" (`docs/proposals/go-port-plan.md`) without a
+add under "fidelity, phase two" (`docs/design/go-port-plan.md`) without a
 reason recorded, except that the reason is worth recording anyway: it is
 the narrower of two things §0 could have meant by "web front end", and the
 gap between them is real.
@@ -714,7 +714,7 @@ What changed is that `dlctl` is the only thing that reads them, and the
 server reads one format. A legacy decoder is not merely refused by the
 server; it is not linked into it (there is a test).
 
-Why, in one sentence each, from `docs/proposals/yaml-only.md` §1: the
+Why, in one sentence each, from `docs/design/yaml-only.md` §1: the
 whole directory layout was a function of a format name; the canonical,
 format-neutral player model carried `char_file_u`'s reserved padding; the
 rent files were not pluggable and the server knew it, which is why real
@@ -730,7 +730,7 @@ dlctl import --from-dir=/srv/lib --to-dir=/srv/data
 ```
 
 See `docs/operations.md` and `docs/configuration.md`. (Proposed and
-argued in full in `docs/proposals/yaml-only.md`.)
+argued in full in `docs/design/yaml-only.md`.)
 
 ### The server runs only on the ascii format or better
 
@@ -757,7 +757,7 @@ the string editor writes CRLF — so this is reachable only from a
 hand-edited file or a corrupt record.
 
 This is recorded as **settled rather than outstanding**
-(`docs/proposals/yaml-only.md` §4.2 argues why at length), and it is
+(`docs/design/yaml-only.md` §4.2 argues why at length), and it is
 pinned by a test rather than left to be rediscovered:
 `TestBareLineFeedComesBackAsCRLF` in `internal/persist/player/yaml`.
 `cmd/dlctl`'s `FuzzBinaryRecordRoundTrip` skips an input whose free text
@@ -2106,7 +2106,7 @@ Listed here so they are not mistaken for deliberate differences.
   Every field still *defaults* to the archive's own `config.c` value, so an
   unconfigured server is unchanged. Everything else in `config.c`
   (`pk_allowed`, the room vnums, autowiz, ...) was considered and left a
-  constant on purpose; see `docs/proposals/go-port-plan.md` §9.1 for the
+  constant on purpose; see `docs/design/go-port-plan.md` §9.1 for the
   full survey.
 
   The one that mattered most while it was fixed: `free_rent` defaults YES,

@@ -1976,7 +1976,7 @@ func classAbbrev(who *game.Character) string {
 //
 // This is licence compliance, not a feature. The CircleMUD licence requires
 // that the text in the credits file be preserved and displayed when the
-// `credits` command is used (docs/proposals/go-port-plan.md §12). It is in
+// `credits` command is used (docs/design/go-port-plan.md §12). It is in
 // the first set of commands implemented for exactly that reason.
 func doCredits(c *Context) error {
 	c.SendPaged("%s", ensureNewline(c.Text.Credits()))
@@ -1987,7 +1987,7 @@ func doCredits(c *Context) error {
 // help table, or the bare-`help` screen with no argument.
 //
 // `help circlemud` (also `help credits`, `help circle`) is a licence
-// requirement (docs/proposals/go-port-plan.md §12) and needs no special
+// requirement (docs/design/go-port-plan.md §12) and needs no special
 // case to satisfy it: CIRCLE CIRCLEMUD CREDITS is a real keyword in the
 // real archived help data (data/text/help/info.hlp), reached by the same
 // lookup as anything else, once the table is loaded. The `credits`

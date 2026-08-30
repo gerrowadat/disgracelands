@@ -10,7 +10,7 @@
 // Same shape as internal/persist/world: implementations are compiled in and
 // selected by name, not loaded through Go's plugin package, which cannot be
 // combined with the static container build. See
-// docs/proposals/go-port-plan.md §5.
+// docs/design/go-port-plan.md §5.
 package player
 
 import (
@@ -76,7 +76,7 @@ type IndexEntry struct {
 	// the record's own stored case, and yaml returned the document's. It
 	// was invisible while the server only ever ran on ascii, and became a
 	// wrong mail header the moment internal/server's tests moved onto
-	// yaml (docs/proposals/yaml-only.md §5.4).
+	// yaml (docs/design/yaml-only.md §5.4).
 	Name  string
 	IDNum int64
 	Level int32

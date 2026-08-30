@@ -176,7 +176,7 @@ dlmud --lib-dir=examples/mini/yaml --listen-telnet=:4000
 
 `binary/` is a conversion source, not something the server runs on:
 pointing `--lib-dir` at it is refused at boot with the `dlctl import`
-line for it (`docs/proposals/yaml-only.md`). There is no roster in either,
+line for it (`docs/design/yaml-only.md`). There is no roster in either,
 so the first character created is promoted to Implementor the same way
 `examples/stock/`'s is (`db.c`'s "if this is our first player --- he be
 God").

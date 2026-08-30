@@ -21,7 +21,7 @@ language, since 2008. What the C tree is for is being *right*: where it and
 the port disagree about gameplay or compatibility, the C wins by
 definition, because it is the one that was played — that's narrower than it
 used to be, though, see "From here, the two servers are allowed to differ"
-below. Phase 7 (`docs/proposals/go-port-plan.md` §10) is what would have to
+below. Phase 7 (`docs/design/go-port-plan.md` §10) is what would have to
 be true before anything took real connections again, and it hasn't started.
 
 **The data in this repo is stock.** `examples/stock/binary/` is CircleMUD
@@ -37,7 +37,7 @@ a converted copy to run the real thing (`dlctl import`, see
 `docs/operations.md`). Everything in `docs/investigations/` describes that
 archive rather than what ships.
 
-**Phases 0–5 of `docs/proposals/go-port-plan.md` are done**, every slice of
+**Phases 0–5 of `docs/design/go-port-plan.md` are done**, every slice of
 Phase 5 included. It loads the world, listens on TLS or plaintext telnet,
 negotiates telnet properly (hidden passwords, CHARSET, GMCP), logs in an
 archived character or creates a new one through the full C creation flow,
@@ -75,11 +75,11 @@ in the message. The `classic`/`ascii`/`binary` decoders are not deleted
 and never will be — they are how `dlctl` reads an archive and how the
 parity harnesses read the C server's own data — but they are not in the
 server binary at all. See `docs/operations.md` and
-`docs/proposals/yaml-only.md`.
+`docs/design/yaml-only.md`.
 
 **From here, the two servers are allowed to differ.** Reaching playable was
 the point at which strict fidelity stopped being the right default for
-everything: `docs/proposals/go-port-plan.md` §0 ("Fidelity, phase two") now
+everything: `docs/design/go-port-plan.md` §0 ("Fidelity, phase two") now
 lets new work modernise the implementation — architecture, dependencies,
 protocols, tooling, roughly a decade and a half of how server software has
 moved on since this stack was designed — freely, holding only two things
@@ -88,6 +88,12 @@ port already reads and writes) and **gameplay** (the mechanics and balance a
 returning player would recognise). Anything that touches either of those is
 still recorded in `docs/deviations.md`, exactly as every deliberate
 difference has been from the start.
+
+The first thing planned under that freedom is
+`docs/proposals/idiomatic-go.md`: retiring the C's data model from the Go
+server's memory — the bit vectors, the `int32`s standing in for
+enumerations, the four-slot value arrays — the same way `yaml-only.md`
+retired the C's file formats from its disk. Proposed, nothing built.
 
 The two servers load the world identically — every field of all 3,202
 records — and `scripts/world-parity.sh` checks that at every release (`.github/workflows/release.yml`).
@@ -101,7 +107,8 @@ records — and `scripts/world-parity.sh` checks that at every release (`.github
   `docs/operations.md`
 - **Working on the Go port**: `docs/developer.md` (and `make` for the dev
   targets it describes)
-- **The port's design and phasing**: `docs/proposals/go-port-plan.md`
+- **The port's design and phasing**: `docs/design/go-port-plan.md`
+- **What is planned next**: `docs/proposals/` — one document at a time
 - **Design decisions that have actually landed**: `docs/design/`, starting
   with the `yaml` data format
 - **The C server**: `reference/moderncserver/README.md`
@@ -196,7 +203,7 @@ someone edits `LICENSE`, the credits or the greeting.
 (`.github/workflows/go.yml` and `release.yml`; `docs/developer.md`'s "What
 runs when" has the split and why.) `make check` runs the full five locally.
 
-See `docs/proposals/go-port-plan.md` §12 for the reasoning and for what
+See `docs/design/go-port-plan.md` §12 for the reasoning and for what
 compliance still requires of the unwritten parts of the port.
 
 ## A Note on LLM Usage

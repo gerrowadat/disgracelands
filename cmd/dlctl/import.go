@@ -152,7 +152,7 @@ func cmdImport(args []string) error {
 // verifyImport is `dlctl verify --against` run on what `import` has just
 // written, and it is **on by default**.
 //
-// docs/proposals/yaml-only.md §3.4 asks for that, and the reason it is
+// docs/design/yaml-only.md §3.4 asks for that, and the reason it is
 // the default rather than a flag somebody remembers is the release this
 // is for: after it, `dlctl import` is the only path from an archived
 // lib/ to a running server, run once, by an operator who has no way to
@@ -556,7 +556,7 @@ func importWorld(o importOptions) error {
 // anything else — "a typo in it currently does nothing at all", so an
 // unrecognised key has never had a gameplay effect to lose. What was
 // wrong was doing it in silence. This is the conversion boundary where a
-// value stops existing, and docs/proposals/yaml-only.md §6 rule 2 says an
+// value stops existing, and docs/design/yaml-only.md §6 rule 2 says an
 // importer names what it could not carry across.
 //
 // import is the only place this can arise: `fmt` reads a directory that

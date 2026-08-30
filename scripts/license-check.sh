@@ -10,7 +10,7 @@
 #
 # The CircleMUD and DikuMUD licenses are not a formality here: they are the
 # terms this whole repository, Go port included, may be used under at all
-# (docs/proposals/go-port-plan.md §12). Their requirements are mechanical
+# (docs/design/go-port-plan.md §12). Their requirements are mechanical
 # enough to test, and a compliance claim nobody runs is the kind that quietly
 # stops being true. So this checks the five things that can be checked from
 # the tree:
@@ -77,7 +77,7 @@ case "${1-}" in
 		echo "==> Every file carries its notice"
 		exit 0
 	fi
-	echo "==> NOT compliant - see docs/proposals/go-port-plan.md §12"
+	echo "==> NOT compliant - see docs/design/go-port-plan.md §12"
 	exit 1
 	;;
 *)
@@ -182,5 +182,5 @@ if [ "$fail" -eq 0 ]; then
 	echo "==> Compliant"
 	exit 0
 fi
-echo "==> NOT compliant - see docs/proposals/go-port-plan.md §12"
+echo "==> NOT compliant - see docs/design/go-port-plan.md §12"
 exit 1

@@ -241,7 +241,7 @@ func (s *Store) Delete(ctx context.Context, name string) error {
 // separate binary.ObjectStore held the rent files, because the two had
 // separate locks. It became one the moment a server ran on yaml, where one
 // store is both — which is what moving internal/server's harness onto yaml
-// (docs/proposals/yaml-only.md §5.4) turned up, as a rent sweep that hung
+// (docs/design/yaml-only.md §5.4) turned up, as a rent sweep that hung
 // the server for good the first time it had a file to delete.
 //
 // What the narrower locking gives up is a consistent snapshot: a character

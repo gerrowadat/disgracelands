@@ -16,7 +16,7 @@ import (
 
 // `reloadobj` — reloadmob's own object counterpart: hot-reloads an object
 // prototype from disk without a restart. New capability, not a C port;
-// see docs/deviations.md and docs/proposals/go-port-plan.md.
+// see docs/deviations.md and docs/design/go-port-plan.md.
 
 // ReloadObject implements session.ObjectReloader: re-reads vnum's
 // definition from the world data this server booted with, and applies

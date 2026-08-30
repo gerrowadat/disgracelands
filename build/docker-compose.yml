@@ -2,7 +2,7 @@
 #   docker compose -f build/docker-compose.yml up --build
 #
 # It boots the whole game -- Phases 0-5 are done -- on the stock CircleMUD
-# world this repository ships. See docs/proposals/go-port-plan.md §10 for
+# world this repository ships. See docs/design/go-port-plan.md §10 for
 # what is and is not built.
 
 services:
@@ -14,7 +14,7 @@ services:
         VERSION: dev
     # Plaintext telnet only, because a local dev stack has no certificate.
     # Anything reachable by anyone else needs --listen-telnets and a real cert;
-    # see docs/proposals/go-port-plan.md §7.
+    # see docs/design/go-port-plan.md §7.
     command:
       - --lib-dir=/data
       - --listen-telnet=:4000

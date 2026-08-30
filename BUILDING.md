@@ -47,7 +47,7 @@ Nothing in the tree uses cgo, so every one of those cross-compiles from
 any host with nothing installed but Go — no cross toolchain, no
 emulation, no `apt`. That is also why the container image can be
 distroless/static and why the pluggable formats are a compiled-in
-registry rather than Go plugins (`docs/proposals/go-port-plan.md` §5.1).
+registry rather than Go plugins (`docs/design/go-port-plan.md` §5.1).
 
 ```sh
 make dist          # all three, into out/dist, with checksums
@@ -130,7 +130,7 @@ left — seven OasisOLC editors and `slowns` — is declined rather than pending
 Phase 6 was decided against, in favour of editing the world files in your
 `--lib-dir` directly and reloading them into the running server without a
 restart (`reloadmob`/`reloadzone`/`reloadobj`/`reloadshop`) — see
-`docs/proposals/go-port-plan.md` §10 for the eight, and its own Phase 6
+`docs/design/go-port-plan.md` §10 for the eight, and its own Phase 6
 write-up for what it became instead. Phase 7 (cutover) has not started.
 
 It needs at least one listener, and the TLS listener (on by default) needs a

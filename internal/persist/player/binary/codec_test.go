@@ -170,7 +170,7 @@ func wantRecord(i int) *game.PlayerRecord {
 // reserved slots with, for record i.
 //
 // They moved off game.PlayerRecord and into this package
-// (docs/proposals/yaml-only.md §1): they are padding, nothing in the game
+// (docs/design/yaml-only.md §1): they are padding, nothing in the game
 // reads or sets one, and carrying them in the canonical format-neutral
 // model was exactly the sort of leak that model exists to prevent. They
 // still have to survive a decode and re-encode of a record, which is what

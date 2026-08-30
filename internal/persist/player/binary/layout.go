@@ -19,7 +19,7 @@
 // the same alignment rules the System V ABI gives compilers. That makes the
 // difference between the 32-bit format the real data is in and the 64-bit
 // format a modern rebuild would produce a *parameter* rather than an
-// assumption — which is the whole of docs/proposals/go-port-plan.md §4 in one
+// assumption — which is the whole of docs/design/go-port-plan.md §4 in one
 // place.
 //
 // The engine is checked against gcc: reference/tools/pfilelayout.c prints the

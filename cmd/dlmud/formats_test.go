@@ -21,7 +21,7 @@ import (
 )
 
 // TestOnlyTheYamlFormatIsRegistered asserts the property
-// docs/proposals/yaml-only.md §3.2 asks to be tested for: **a legacy
+// docs/design/yaml-only.md §3.2 asks to be tested for: **a legacy
 // format is not merely rejected by the server, it is absent from it.**
 //
 // The registries stay — `dlctl` opens classic, binary and ascii by name
@@ -86,7 +86,7 @@ func TestTheLegacyDecodersAreNotLinkedIn(t *testing.T) {
 	for _, pkg := range forbidden {
 		if strings.Contains(deps, "disgracelands/"+pkg) {
 			t.Errorf("cmd/dlmud depends on %s; the server reads one format and the legacy "+
-				"decoders belong to dlctl (docs/proposals/yaml-only.md §3.2)", pkg)
+				"decoders belong to dlctl (docs/design/yaml-only.md §3.2)", pkg)
 		}
 	}
 }

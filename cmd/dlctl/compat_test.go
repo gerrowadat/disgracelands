@@ -17,7 +17,7 @@ import (
 	"github.com/gerrowadat/disgracelands/internal/persist/convert"
 )
 
-// The compatibility suite docs/proposals/yaml-only.md §5.2 asks for:
+// The compatibility suite docs/design/yaml-only.md §5.2 asks for:
 // differential, idempotence and stability, over all three corpora.
 //
 // Stability — a fresh import equals the checked-in yaml, byte for byte —

@@ -48,7 +48,7 @@ func TestCheckNotLegacyAcceptsAConvertedDirectory(t *testing.T) {
 // who mistypes --lib-dir, or points at a directory they have not created
 // yet, should get the ordinary "no world data" error the server has
 // always given rather than a confident instruction to convert an archive
-// that is not there (docs/proposals/yaml-only.md §3.3).
+// that is not there (docs/design/yaml-only.md §3.3).
 func TestCheckNotLegacyIgnoresAnEmptyDirectory(t *testing.T) {
 	if err := CheckNotLegacy(t.TempDir()); err != nil {
 		t.Errorf("CheckNotLegacy refused an empty directory: %v", err)

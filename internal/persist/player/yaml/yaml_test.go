@@ -415,7 +415,7 @@ func TestSavedDescriptionHoldsNoCarriageReturns(t *testing.T) {
 }
 
 // TestBareLineFeedComesBackAsCRLF pins the one text transform
-// docs/proposals/yaml-only.md §4.2 calls genuinely unavoidable and
+// docs/design/yaml-only.md §4.2 calls genuinely unavoidable and
 // genuinely not lossy, so that it cannot change without somebody
 // deciding to.
 //

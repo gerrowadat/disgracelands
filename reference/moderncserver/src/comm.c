@@ -391,7 +391,7 @@ int main(int argc, char **argv)
      * renum_zone_table(), whose effects are the interesting part - then
      * writes it as JSON and exits without opening a socket or touching
      * player data. See src/worlddump.c and
-     * docs/proposals/go-port-plan.md §11.
+     * docs/design/go-port-plan.md §11.
      */
     FILE *dumpfl;
 

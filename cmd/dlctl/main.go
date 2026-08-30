@@ -10,7 +10,7 @@
 //
 // Every subcommand listed here is implemented. The structure keeps room for
 // ones that are not: a command declared ahead of the layer it needs reports
-// which phase of docs/proposals/go-port-plan.md implements it rather than
+// which phase of docs/design/go-port-plan.md implements it rather than
 // pretending to work.
 package main
 
@@ -135,7 +135,7 @@ func run(args []string) error {
 		}
 		rest := args[len(strings.Fields(c.name)):]
 		if c.run == nil {
-			return fmt.Errorf("%q is not implemented yet: it lands in Phase %d, see docs/proposals/go-port-plan.md §10", c.name, c.phase)
+			return fmt.Errorf("%q is not implemented yet: it lands in Phase %d, see docs/design/go-port-plan.md §10", c.name, c.phase)
 		}
 		return c.run(rest)
 	}

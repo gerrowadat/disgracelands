@@ -10,7 +10,7 @@
 //
 //	go run ./internal/fixtures/torture --out=examples/torture/binary
 //
-// Why this exists, from docs/proposals/yaml-only.md §5.1: there is no
+// Why this exists, from docs/design/yaml-only.md §5.1: there is no
 // player file, no rent file, no board, no mail file and no ban list in any
 // other checked-in fixture in this repository, and stock CircleMUD's text
 // is pure ASCII throughout. So the entire binary/ascii-to-yaml player and

@@ -18,7 +18,7 @@ import (
 	"github.com/gerrowadat/disgracelands/internal/persist/player/binary"
 )
 
-// The two cross-format fuzz targets docs/proposals/yaml-only.md §5.3 asks
+// The two cross-format fuzz targets docs/design/yaml-only.md §5.3 asks
 // for, beside internal/persist/world/yaml's two text ones.
 //
 // The property is the same in both, and it is the one this release rests
@@ -178,7 +178,7 @@ func FuzzBinaryRecordRoundTrip(f *testing.F) {
 			// The one transform that is genuinely unavoidable and
 			// genuinely settled: yaml stores LF and re-derives CRLF on
 			// load, so a string holding a bare LF comes back with a CR in
-			// front of it. docs/proposals/yaml-only.md §4.2 argues why
+			// front of it. docs/design/yaml-only.md §4.2 argues why
 			// that is the same relationship classic's own bytes already
 			// have to their own in-memory form rather than a loss, and
 			// internal/persist/player/yaml has a test pinning the

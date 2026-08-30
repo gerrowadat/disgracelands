@@ -13,7 +13,7 @@ source see `BUILDING.md`.
 > reloading them live (`reloadmob`/`reloadzone`/`reloadobj`/`reloadshop`);
 > Phase 7 (cutover)
 > has not started. What is left of Phase 5 itself is a handful of small,
-> named commands, listed one by one in `docs/proposals/go-port-plan.md`
+> named commands, listed one by one in `docs/design/go-port-plan.md`
 > §10. Everything below about process management, health checking,
 > logging and player data is real and works.
 
@@ -687,7 +687,7 @@ one running on the original", and bytes are a lossy proxy for that in both
 directions: two `classic` files differing only in whitespace load
 identically, and two identical loads can be written back differently by
 any writer that does not reproduce 1990s formatting quirks exactly. See
-`docs/proposals/yaml-only.md` §4.1.
+`docs/design/yaml-only.md` §4.1.
 
 There is one exception, and it is reported as an eighth line called
 **`copied`**: `text/`'s plain prose (`motd`, `news`, `policies`, ...),
@@ -782,7 +782,7 @@ old password hashes. The sane posture for now, and for a while yet:
 
 Most of §7 is built: per-address connection limits, a login grace period, a
 handshake timeout, `--max-players` (checked at accept time, a soft cap —
-see its own entry in `docs/proposals/go-port-plan.md`'s Phase 6 write-up
+see its own entry in `docs/design/go-port-plan.md`'s Phase 6 write-up
 for the one race it does not close), and the ban list honoured at the
 name prompt with `ban`/`unban` to maintain it in-game. Still missing: a
 login-attempt rate limiter — the grace period and the per-address cap are

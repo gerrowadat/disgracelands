@@ -10,7 +10,7 @@
 // Two goroutines per connection, neither of which touches the world. They
 // hand parsed input to the engine and receive output on a buffered channel;
 // everything about rooms and characters happens on the engine's goroutine.
-// See docs/proposals/go-port-plan.md §3.1.
+// See docs/design/go-port-plan.md §3.1.
 package session
 
 import (
@@ -369,7 +369,7 @@ type Deps struct {
 //
 // The greeting and the credits are not decoration: the CircleMUD licence
 // requires the login sequence to name the DikuMUD and CircleMUD creators and
-// the credits to be displayed intact (docs/proposals/go-port-plan.md §12).
+// the credits to be displayed intact (docs/design/go-port-plan.md §12).
 // They are a dependency of the session rather than a detail inside it so
 // that no transport can be added which forgets them.
 type TextFiles interface {

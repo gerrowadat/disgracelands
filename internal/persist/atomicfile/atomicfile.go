@@ -17,7 +17,7 @@
 // which then failed with "no such file or directory" and logged an error
 // about a file it had in fact just written correctly.
 //
-// It was found by moving test/play onto yaml (docs/proposals/yaml-only.md
+// It was found by moving test/play onto yaml (docs/design/yaml-only.md
 // §5.4) — a real server, booted on a real directory, playing a real
 // scenario, which is the only kind of test that could have found it, and
 // exactly what CLAUDE.md says that suite is for.

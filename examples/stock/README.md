@@ -15,7 +15,7 @@ which is the only shape the server runs on.
   (sha256 `1cd2cf0268c27dd6e6ae4d996a620bbd56da2552beb434bf372b4c01cd8bb415`),
   — see PR #29 for why what ships here is stock rather than the archive's
   own world. It used to be `dlmud`'s default `--lib-dir`; it cannot be one
-  now, since the server reads one format (`docs/proposals/yaml-only.md`).
+  now, since the server reads one format (`docs/design/yaml-only.md`).
   (It used to live at `data/` in the repository root, which several older
   documents still call it; there is no `data/` directory now.) With one
   addition CircleMUD never had: `config/game.yaml`, the game tuning

@@ -15,7 +15,7 @@ import (
 // Flags is a bitfield. The C code calls this bitvector_t and defines it as
 // `unsigned long` (structs.h:599), which was 32 bits on the platform this game
 // was written for and is 64 on modern Linux — exactly the kind of silent width
-// change docs/proposals/go-port-plan.md §4 exists to eliminate. Here it is
+// change docs/design/go-port-plan.md §4 exists to eliminate. Here it is
 // always 64 bits, and the places that must round-trip through a 32-bit
 // representation say so explicitly.
 type Flags uint64
