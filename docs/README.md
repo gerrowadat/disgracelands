@@ -171,6 +171,15 @@ the port progresses.
   against the *stock* `lib/` and a partial survey; §9 says which parts
   should reach the Go server's data directory and corrects where that
   document guessed wrong.
+- **[partial-matching.md](investigations/partial-matching.md)** — what a
+  typed word actually matches. "Partial keyword matching" is five
+  different rules in four functions, and two of them are not prefix
+  matches: `isname` is whole-word, and `find_skill_num` is two kinds of
+  prefix at once. Written to answer "does it still work the way the C
+  did" — yes for keywords, no for spells, and §4 has the sweep that says
+  so. Unlike its neighbours it describes the *port's* state as well as the
+  original's; that half is pinned to a commit in its header and goes stale
+  as issues close.
 
 ## Not this directory
 

@@ -93,6 +93,27 @@ wrong. Every oracle written so far has caught at least one real mistake.
   test fails if it ever narrows back. An oracle is only as good as what it is
   swept over: when adding one, spend the effort on the inputs.
 
+- **`skilloracle.c`** — `find_skill_num` from `spell_parser.c`, with
+  `is_abbrev` and `any_one_arg` from `interpreter.c`. This is the other half
+  of "what does a typed word mean": `nameoracle` covers what names a *thing*
+  in the world, this covers what names a *spell*, and they are different
+  rules — `isname` is whole-word, `find_skill_num` is two kinds of prefix at
+  once.
+
+  Two kinds, and the second is the one that gets missed. `is_abbrev(name,
+  spell_info[index].name)` matches the whole typed string against the whole
+  name, so `magic mis` works; then a second pass walks both a word at a time
+  and requires each typed word to abbreviate the name-word in the same
+  position, so `mag mis` and `b h` work too. This port had only the first
+  branch, and refused 1,145 of the 1,549 per-word abbreviations of the game's
+  own 71 spell names — including `cast 'mag mis'`, which is about as common
+  a thing to type as this game has (#355). Found by writing this file;
+  `docs/investigations/partial-matching.md` has the sweep.
+
+  Its name table comes in on stdin rather than being compiled in, so the Go
+  test can feed it the port's own spell table and the two cannot drift apart
+  the way they would if the names were duplicated here.
+
 If you are about to port anything with a division, a cast, or a comment
 describing numbers in it, the next file in this directory is probably the one
 you are about to write. `docs/developer.md` has the pattern.
