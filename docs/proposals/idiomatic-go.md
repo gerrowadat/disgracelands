@@ -614,8 +614,12 @@ func (o *Object) RawValues() [4]int32   // still the truth; still what saves
 `values.go` types five of the game's twenty-three item types and
 deliberately leaves the rest raw; it emits the typed form only when every
 slot the type does not use is genuinely zero, because a corpse is a
-container whose fourth value is `-1` and rounding that to zero would lose
-it. A game-side
+container whose fourth value is not zero and rounding it away would lose
+it. (This paragraph said `-1` until step 3 checked: `make_corpse` sets
+`GET_OBJ_VAL(corpse, 3) = 1` — `fight.c:319`, and `corpse.go`'s
+`corpseIdentifier` has always had it right. The rule is unaffected, since
+what it turns on is "not zero", but a reader who wrote `!= -1` from this
+sentence would have typed every corpse.) A game-side
 model that typed more types, or typed them differently, would be a second
 authority disagreeing with the first — which is the `bitnames.go`/
 `yamlnames.go` duplication (§3.5) repeated in a place where it would cost
@@ -765,7 +769,7 @@ so that the riskiest step is last and separable.
 | **0** | ~~**The resave fixture**~~ **Done.** | §6's load-and-resave test, over all three corpora and all seven subsystems: `cmd/dlctl`'s `TestFmtLeavesTheCheckedInCorporaAlone`. It failed the first time it ran — `dlctl fmt --type=state` was the only caller in the tree that could bring a `state/bans.yaml` into existence, so formatting a converted directory added a file the conversion had deliberately not written. Fixed in `bans/yaml`'s `Rewrite`, not in the corpus. | None. Do this first; everything after it leans on it. |
 | **1** | **A type per flag domain** — **under way** | §4.1. `Flags` → `Set[RoomFlag]`, `Set[AffectFlag]`, `Set[PlayerFlag]`, … One domain per PR, eleven or so PRs. `Raw()`/`SetFromRaw` at the persistence boundary only. **Done: room flags** (with `Set[T]` itself and the raw-bits helper boundary), **exit/door flags**, **container flags**, **shop flags**, **paladin spec flags**, **spell targeting and routine flags**, **item wear flags**, **item extra flags**, **mob act flags**, **affect flags**, **player flags and preferences**. | Low, high volume, *and one real hazard*: §4.1.1's OR trap, which the first domain hit twice. The compiler finds every site; it does not find that one. `bitnames_test.go` must still re-parse `constants.c`. |
 | **2** | ~~**A type per enumeration**~~ **Done.** | §4.2. Class, Sex, Race, ItemType, Apply, SpellID, Sector, Liquid, and `MobDef.Position` onto the existing `game.Position`. `RemortVector` becomes `Set[Class]`. **Done: Class** (and the remort vector, which retired `Flags`), **Sex**, **ItemType**, **Apply**, **Sector**, **Race** (which turned out to enumerate nothing — see its doc comment), **SpellID** (spells and skills are one domain; it also retired five dead `SpellType*` constants and made `TestSpellNumbersMatchTheHeader` derive its list, which had gone from covering 19 of 19 constants to 19 of 79), **Liquid**, **`MobDef.Position`** onto the existing `game.Position`. **Step 2 is done.** | Low, high volume. Watch the table-indexed tests (§5). |
-| **3** | **Typed object values** | §4.3. Lift `values.go`'s taxonomy into `game`, typed accessors, raw kept as the stored truth. 84 positional accesses go. | Medium. The five-types-only rule is a constraint, not a starting point to improve on. |
+| **3** | **Typed object values** — **under way** | §4.3. Lift `values.go`'s taxonomy into `game`, typed accessors, raw kept as the stored truth. 84 positional accesses go. | Medium. The five-types-only rule is a constraint, not a starting point to improve on. **Done: the taxonomy** — `game/objvalues.go` holds the slot layout, `values.go` is written on top of it, and `TestValueSlotsMatchOedit` re-parses `oedit_disp_valN_menu` so the layout is derived from the C rather than asserted. Call sites still read `Values[n]`. |
 | **4** | **Absence over sentinels** | §4.4, in the places §3.4 lists, excluding the vnum sentinels that reach disk. | Medium. Each one is a small semantic argument; do not batch them. |
 | **5** | **The object placement union** | §4.5. Five fields to one. | Medium. Everything already goes through `Put`/`Take`, which is what makes it tractable. |
 | **6** | **Deduplicate the name tables** | §3.5. One source of truth for a bit's C name and its yaml name, still checked against `constants.c`. | Medium, and the one most likely to eat its own test. Read §5 twice. |
