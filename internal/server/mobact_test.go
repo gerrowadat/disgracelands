@@ -103,7 +103,7 @@ func TestAClosedDoorStopsAMobile(t *testing.T) {
 
 	if err := srv.engine.DoSync(context.Background(), func(w *game.Live) {
 		exit := w.Room(MortalStartRoom).Exits[game.North]
-		exit.State = exit.State.Set(game.ExitIsDoor | game.ExitClosed)
+		exit.State = exit.State.With(game.ExitIsDoor, game.ExitClosed)
 	}); err != nil {
 		t.Fatal(err)
 	}

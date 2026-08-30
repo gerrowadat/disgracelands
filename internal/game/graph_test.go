@@ -127,7 +127,7 @@ func TestClosedDoorsDependOnTheSetting(t *testing.T) {
 	for col := 0; col < 4; col++ {
 		r := w.Room(RoomVnum(100 + col))
 		if e := r.Exits[South]; e != nil {
-			e.State = e.State.Set(ExitClosed)
+			e.State = e.State.With(ExitClosed)
 		}
 	}
 

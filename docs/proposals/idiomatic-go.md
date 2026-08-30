@@ -27,7 +27,8 @@ would notice if the fence were drawn casually.
 >   first run: see §7's row.
 > - **Step 1, a type per flag domain — under way.** `Set[T]` and the
 >   raw-bits helper boundary landed with the first domain, room flags.
->   Read §4.1's "the OR trap" before converting another one.
+>   Read §4.1.1, the OR trap, before converting another one. Done so far:
+>   **room**, **exit/door**.
 
 ---
 
@@ -490,6 +491,36 @@ domain a later step converts is covered the moment it lands**, with
 nothing to remember. Run it before pushing a conversion; it is part of
 `go test ./...`.
 
+**Where the compiler does catch it, and where it does not.** Learned on
+the second domain, and it is the single most useful thing to know when
+converting the remaining nine, because it says where to look.
+
+An `A | B` is an ordinary value of the domain type. So it fails to
+compile wherever the surrounding code wants a *set* — a return value, a
+struct field, a function parameter — since `Set[ExitFlag]` and
+`ExitFlag` are unrelated types:
+
+```go
+func DoorState(doorFlag int32) ExitFlags {
+    case 2: return ExitIsDoor | ExitPickproof   // does not compile
+```
+
+and it compiles perfectly wherever the surrounding code wants a
+*variadic* `...T` — `Has`, `HasAny`, `HasAll`, `With`, `Without`,
+`Toggle`, `NewSet`:
+
+```go
+exit.State.Clear(ExitClosed | ExitLocked)       // compiles. index 3.
+```
+
+Both conversions so far split along exactly that line without anybody
+noticing it *was* a line: room flags produced two silent ones and both
+were `HasAny` calls; exit flags produced seven, of which three were the
+compiler's and four were not. **A clean build is not evidence.** The
+variadic call sites are the whole of the risk surface, and they are easy
+to enumerate — grep the domain's constants for the seven method names
+above before trusting the build.
+
 ### 4.2 Enumerations get types, `String`, and a text marshaller
 
 ```go
@@ -674,7 +705,7 @@ so that the riskiest step is last and separable.
 | | Step | What it is | Risk |
 | --- | --- | --- | --- |
 | **0** | ~~**The resave fixture**~~ **Done.** | §6's load-and-resave test, over all three corpora and all seven subsystems: `cmd/dlctl`'s `TestFmtLeavesTheCheckedInCorporaAlone`. It failed the first time it ran — `dlctl fmt --type=state` was the only caller in the tree that could bring a `state/bans.yaml` into existence, so formatting a converted directory added a file the conversion had deliberately not written. Fixed in `bans/yaml`'s `Rewrite`, not in the corpus. | None. Do this first; everything after it leans on it. |
-| **1** | **A type per flag domain** — **under way** | §4.1. `Flags` → `Set[RoomFlag]`, `Set[AffectFlag]`, `Set[PlayerFlag]`, … One domain per PR, eleven or so PRs. `Raw()`/`SetFromRaw` at the persistence boundary only. **Done: room flags** (with `Set[T]` itself and the raw-bits helper boundary). | Low, high volume, *and one real hazard*: §4.1.1's OR trap, which the first domain hit twice. The compiler finds every site; it does not find that one. `bitnames_test.go` must still re-parse `constants.c`. |
+| **1** | **A type per flag domain** — **under way** | §4.1. `Flags` → `Set[RoomFlag]`, `Set[AffectFlag]`, `Set[PlayerFlag]`, … One domain per PR, eleven or so PRs. `Raw()`/`SetFromRaw` at the persistence boundary only. **Done: room flags** (with `Set[T]` itself and the raw-bits helper boundary), **exit/door flags**. | Low, high volume, *and one real hazard*: §4.1.1's OR trap, which the first domain hit twice. The compiler finds every site; it does not find that one. `bitnames_test.go` must still re-parse `constants.c`. |
 | **2** | **A type per enumeration** | §4.2. Class, Sex, Race, ItemType, Apply, SpellID, Sector, Liquid, and `MobDef.Position` onto the existing `game.Position`. `RemortVector` becomes `Set[Class]`. | Low, high volume. Watch the table-indexed tests (§5). |
 | **3** | **Typed object values** | §4.3. Lift `values.go`'s taxonomy into `game`, typed accessors, raw kept as the stored truth. 84 positional accesses go. | Medium. The five-types-only rule is a constraint, not a starting point to improve on. |
 | **4** | **Absence over sentinels** | §4.4, in the places §3.4 lists, excluding the vnum sentinels that reach disk. | Medium. Each one is a small semantic argument; do not batch them. |

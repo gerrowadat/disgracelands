@@ -251,7 +251,7 @@ func (c *Context) statRoom() {
 		}
 		fmt.Fprintf(&b, "Exit {{cyan}}%-5s{{/}}:  To: [%s], Key: [%5d], Keywrd: %s, Type: %s\r\n ",
 			dir, to, exit.Key, keyword,
-			game.SprintBit(uint64(exit.State), game.ExitBitNames()))
+			game.SprintBit(exit.State.Raw(), game.ExitBitNames()))
 		if exit.Description != "" {
 			b.WriteString(ensureNewline(exit.Description))
 		} else {
