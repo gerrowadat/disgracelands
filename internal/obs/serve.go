@@ -45,6 +45,16 @@ type Metrics struct {
 	// interval, because that is the point at which the world starts lagging.
 	PulseDuration prometheus.Histogram
 
+	// PulsesMissed counts pulses that went by with the game loop too busy
+	// to take them.
+	//
+	// Separate from PulseDuration, and not derivable from it: a histogram
+	// of how long the pulses that *ran* took says nothing about the ones
+	// that did not happen at all. This is the number that says the world
+	// is behind real time rather than merely working hard, and any value
+	// above zero is worth looking at. See engine.tick and #321.
+	PulsesMissed prometheus.Counter
+
 	// BuildInfo is the conventional always-1 gauge carrying version labels.
 	BuildInfo *prometheus.GaugeVec
 }
@@ -73,13 +83,18 @@ func NewMetrics(pulseInterval time.Duration) *Metrics {
 				budget / 2, budget, budget * 2, budget * 10,
 			},
 		}),
+		PulsesMissed: prometheus.NewCounter(prometheus.CounterOpts{
+			Namespace: "dlmud",
+			Name:      "pulses_missed_total",
+			Help:      "Pulses the game loop was too busy to take, so the world fell behind real time.",
+		}),
 		BuildInfo: prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Namespace: "dlmud",
 			Name:      "build_info",
 			Help:      "Build information; always 1, carried by its labels.",
 		}, []string{"version", "commit", "go_version"}),
 	}
-	reg.MustRegister(m.PulseDuration, m.BuildInfo)
+	reg.MustRegister(m.PulseDuration, m.PulsesMissed, m.BuildInfo)
 	return m
 }
 

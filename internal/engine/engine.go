@@ -44,7 +44,18 @@ type Engine struct {
 
 	// pulse counts elapsed ticks. Everything periodic is scheduled against
 	// it, the way the C server's PULSE_* constants are.
+	//
+	// It counts *elapsed* ticks and not received ones, which is the whole
+	// of the difference #321 was about — see tick.
 	pulse atomic.Uint64
+
+	// started is when Run began, and is what pulse is measured from. Owned
+	// by the loop goroutine and written before it starts ticking.
+	started time.Time
+
+	// missed counts pulses that went by without the loop being there to
+	// take them. Read by Missed, for a caller reporting it.
+	missed atomic.Uint64
 }
 
 // Options configure an Engine.
@@ -148,53 +159,104 @@ func (e *Engine) DoSync(ctx context.Context, t Task) error {
 // Pulse returns how many ticks have elapsed.
 func (e *Engine) Pulse() uint64 { return e.pulse.Load() }
 
+// Missed returns how many pulses have gone by with the loop too busy to
+// take them. Anything above zero means the world has been running behind
+// real time; it is a count of pulses, not of occasions.
+func (e *Engine) Missed() uint64 { return e.missed.Load() }
+
 // Run drives the loop until ctx is cancelled. It must be called on exactly
 // one goroutine; that goroutine is the one that owns the world.
 func (e *Engine) Run(ctx context.Context) {
 	ticker := time.NewTicker(e.interval)
 	defer ticker.Stop()
 
+	e.started = time.Now()
 	e.logger.Info("game loop started", "interval", e.interval)
 
 	for {
 		select {
 		case <-ctx.Done():
 			e.drain()
-			e.logger.Info("game loop stopped", "pulses", e.pulse.Load())
+			e.logger.Info("game loop stopped",
+				"pulses", e.pulse.Load(), "missed", e.missed.Load())
 			return
 
 		case t := <-e.tasks:
 			e.runTask(t)
 
 		case <-ticker.C:
-			e.tick()
+			e.tick(time.Now())
 		}
 	}
 }
 
-// tick runs one pulse: everything queued, then the periodic work.
-func (e *Engine) tick() {
+// tick runs one pulse: everything that was queued, then the periodic work
+// that has fallen due since the last one.
+//
+// now is the moment the tick fired, and the pulse count is derived from it
+// rather than incremented. That is deliberate and is #321.
+// [time.Ticker]'s channel holds one tick and *drops* the rest, so under a
+// ticker an overrunning pulse does not make the next one late — it makes
+// the next one not happen. Counting received ticks therefore lost time,
+// silently and cumulatively, and the loop had no way to know.
+//
+// It mattered because the game has two clocks and only one of them was on
+// the pulse. Everything periodic is scheduled on the pulse count, but the
+// mud calendar is derived from real elapsed time (game.Live.MudTime), and
+// point-update reads the hour out of the calendar to decide what to
+// announce (server/tick.go's weatherAndTime, whose comment asserts that
+// "the pulse is one mud hour long by construction" — true only if no tick
+// is ever dropped). Once the two had drifted 75 seconds apart, two mud
+// hours passed between consecutive point-updates, and a sunrise is a
+// switch on four exact hours: the hour skipped is an announcement nobody
+// ever sees, and a mud hour of regeneration, hunger and affect ageing
+// nobody ever gets.
+//
+// Work that fell due during a gap runs **once**, however many times it was
+// due. Catching up would be running six mud hours of regeneration in one
+// pulse on a server that has just proved it cannot keep up with one, which
+// is a way of turning a hiccup into a stall.
+func (e *Engine) tick(now time.Time) {
 	start := time.Now()
-	e.pulse.Add(1)
+
+	previous := e.pulse.Load()
+	pulse := previous + 1
+	if elapsed := uint64(now.Sub(e.started) / e.interval); elapsed > pulse { //nolint:gosec // elapsed is a count of intervals since Run began
+		e.missed.Add(elapsed - pulse)
+		pulse = elapsed
+	}
+	e.pulse.Store(pulse)
 
 	// Drain what is waiting before doing periodic work, so a burst of player
 	// input is handled in the pulse it arrived in rather than trickling out
 	// one command per tick.
-	for {
+	//
+	// Bounded by what was queued when the pulse began, rather than draining
+	// until the queue is empty. Tasks queue tasks — Server.echoWizVis calls
+	// Do from the world goroutine for every wizvis-tagged log line — so an
+	// unbounded drain has no ceiling on how long one pulse can take, which
+	// is the mechanism that loses the pulses above. Anything queued *during*
+	// the pulse is picked up by Run's own select as soon as this returns,
+	// which is sooner than the next tick.
+	waiting := len(e.tasks)
+	for i := 0; i < waiting; i++ {
 		select {
 		case t := <-e.tasks:
 			e.runTask(t)
-			continue
 		default:
+			// Somebody else took the last one; nothing to wait for.
+			i = waiting
 		}
-		break
 	}
 
 	// Then the periodic work, on the same goroutine and with the same panic
 	// containment as anything else.
-	pulse := e.pulse.Load()
+	//
+	// "Due since the last pulse" rather than "due on this pulse": with no
+	// gap the two are the same test written differently, and with one this
+	// is what stops a skipped pulse skipping the work that was on it.
 	for _, p := range e.periodic {
-		if p.Every == 0 || pulse%p.Every != 0 {
+		if p.Every == 0 || pulse/p.Every == previous/p.Every {
 			continue
 		}
 		began := time.Now()
@@ -207,6 +269,17 @@ func (e *Engine) tick() {
 
 	if e.metrics != nil {
 		e.metrics.PulseDuration.Observe(time.Since(start).Seconds())
+		if missed := pulse - previous - 1; missed > 0 {
+			e.metrics.PulsesMissed.Add(float64(missed))
+		}
+	}
+
+	if missed := pulse - previous - 1; missed > 0 {
+		// Louder than the overrun warning below, because this is the
+		// consequence rather than the cause: the world has just skipped
+		// that many pulses of real time for everybody at once.
+		e.logger.Warn("the game loop fell behind real time",
+			"pulses_missed", missed, "pulse", pulse, "budget", e.interval)
 	}
 
 	// A pulse that overruns its budget means the world is falling behind
@@ -214,7 +287,7 @@ func (e *Engine) tick() {
 	// a MUD can complain about.
 	if took := time.Since(start); took > e.interval {
 		e.logger.Warn("pulse overran its budget",
-			"took", took, "budget", e.interval, "pulse", e.pulse.Load())
+			"took", took, "budget", e.interval, "pulse", pulse)
 	}
 }
 
