@@ -29,7 +29,7 @@ would notice if the fence were drawn casually.
 >   raw-bits helper boundary landed with the first domain, room flags.
 >   Read §4.1.1, the OR trap, before converting another one. Done so far:
 >   **room**, **exit/door**, **container**, **shop**, **paladin spec**,
->   **spell targeting**, **spell routines**, **item wear**.
+>   **spell targeting**, **spell routines**, **item wear**, **item extra**.
 
 ---
 
@@ -527,6 +527,35 @@ were about the wrong flag.
 of the risk surface, and they are easy to enumerate — grep the domain's
 constants for the seven method names above before trusting the build.
 
+### 4.1.2 Two hazards the scan does not look for
+
+The OR trap is the one with a check. These two have none, and both were
+found by reading and by tests rather than by tooling.
+
+**A zero literal changes meaning.** Under masks, `0` is "no flags" and
+`Has(0)` is trivially true; under indices, `0` is the domain's *first
+flag*. `object.go`'s `wearFlagFor` had `WearLight: 0` — "anything can be
+a light" — which a naive conversion would have turned into "the light
+slot requires ITEM_WEAR_TAKE", compiling cleanly. The answer is an
+element type that can express emptiness: the table is
+`[NumWears]WearFlagSet` and the entry is `{}`, with `Set.Contains`
+(whose empty case is the C's `IS_SET(x, 0)`) doing the test.
+
+**A `1 << i` shift over a name table stops being a mask.** Where a table
+is indexed by bit position, the old idiom was
+`flags.Has(1 << uint(i))` — and `1 << uint(i)` is still assignable to the
+new flag type, so it keeps compiling and asks about bit *i+1*'s worth of
+value. `shopstate.go`'s `matchesShopWord` had exactly this; the fix is
+`Has(ExtraFlag(i))`, because when the table and the domain are both
+indexed by bit position the index *is* the flag. A shop that would not
+buy a glowing sword is what caught it.
+
+Both shapes share a cause with the OR trap — an integer expression that
+was arithmetic on masks and is now a value in a small enum — and neither
+is detectable by the same scan, because neither involves two constants of
+the domain. **When converting a domain, grep it for `0` and for `1 <<`
+as well as for the variadic methods.**
+
 ### 4.2 Enumerations get types, `String`, and a text marshaller
 
 ```go
@@ -711,7 +740,7 @@ so that the riskiest step is last and separable.
 | | Step | What it is | Risk |
 | --- | --- | --- | --- |
 | **0** | ~~**The resave fixture**~~ **Done.** | §6's load-and-resave test, over all three corpora and all seven subsystems: `cmd/dlctl`'s `TestFmtLeavesTheCheckedInCorporaAlone`. It failed the first time it ran — `dlctl fmt --type=state` was the only caller in the tree that could bring a `state/bans.yaml` into existence, so formatting a converted directory added a file the conversion had deliberately not written. Fixed in `bans/yaml`'s `Rewrite`, not in the corpus. | None. Do this first; everything after it leans on it. |
-| **1** | **A type per flag domain** — **under way** | §4.1. `Flags` → `Set[RoomFlag]`, `Set[AffectFlag]`, `Set[PlayerFlag]`, … One domain per PR, eleven or so PRs. `Raw()`/`SetFromRaw` at the persistence boundary only. **Done: room flags** (with `Set[T]` itself and the raw-bits helper boundary), **exit/door flags**, **container flags**, **shop flags**, **paladin spec flags**, **spell targeting and routine flags**, **item wear flags**. | Low, high volume, *and one real hazard*: §4.1.1's OR trap, which the first domain hit twice. The compiler finds every site; it does not find that one. `bitnames_test.go` must still re-parse `constants.c`. |
+| **1** | **A type per flag domain** — **under way** | §4.1. `Flags` → `Set[RoomFlag]`, `Set[AffectFlag]`, `Set[PlayerFlag]`, … One domain per PR, eleven or so PRs. `Raw()`/`SetFromRaw` at the persistence boundary only. **Done: room flags** (with `Set[T]` itself and the raw-bits helper boundary), **exit/door flags**, **container flags**, **shop flags**, **paladin spec flags**, **spell targeting and routine flags**, **item wear flags**, **item extra flags**. | Low, high volume, *and one real hazard*: §4.1.1's OR trap, which the first domain hit twice. The compiler finds every site; it does not find that one. `bitnames_test.go` must still re-parse `constants.c`. |
 | **2** | **A type per enumeration** | §4.2. Class, Sex, Race, ItemType, Apply, SpellID, Sector, Liquid, and `MobDef.Position` onto the existing `game.Position`. `RemortVector` becomes `Set[Class]`. | Low, high volume. Watch the table-indexed tests (§5). |
 | **3** | **Typed object values** | §4.3. Lift `values.go`'s taxonomy into `game`, typed accessors, raw kept as the stored truth. 84 positional accesses go. | Medium. The five-types-only rule is a constraint, not a starting point to improve on. |
 | **4** | **Absence over sentinels** | §4.4, in the places §3.4 lists, excluding the vnum sentinels that reach disk. | Medium. Each one is a small semantic argument; do not batch them. |

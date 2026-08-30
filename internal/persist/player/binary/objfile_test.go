@@ -78,7 +78,7 @@ func sampleRentFile() *player.RentFile {
 	for i := range 3 {
 		obj := player.StoredObject{
 			Vnum:       game.ObjVnum(3000 + i),
-			ExtraFlags: game.Flags(1 << uint(i)),
+			ExtraFlags: game.SetFromRaw[game.ExtraFlag](1 << uint(i)),
 			Weight:     int32(10 + i),
 			Timer:      int32(-1 - i),
 			PermAffect: game.Flags(1 << uint(i+8)),

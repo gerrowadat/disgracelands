@@ -317,7 +317,7 @@ func rentedWithNestedContainers() *player.RentFile {
 	extremes := player.StoredObject{
 		Vnum:       5000,
 		Values:     [game.NumObjValues]int32{2147483647, -2147483648, 2147483647, -2147483648},
-		ExtraFlags: game.Flags(0xffffffff),
+		ExtraFlags: game.SetFromRaw[game.ExtraFlag](0xffffffff),
 		Weight:     2147483647,
 		Timer:      -2147483648,
 		PermAffect: game.Flags(0xffffffff),

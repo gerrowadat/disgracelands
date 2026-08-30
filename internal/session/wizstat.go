@@ -290,7 +290,7 @@ func (c *Context) statObject(obj *game.Object) {
 
 	fmt.Fprintf(&b, "Can be worn on: %s\r\n", game.SprintBit(obj.WearFlags.Raw(), game.WearBitNames()))
 	fmt.Fprintf(&b, "Set char bits : %s\r\n", game.SprintBit(uint64(obj.PermAffect), game.AffectBitNames()))
-	fmt.Fprintf(&b, "Extra flags   : %s\r\n", game.SprintBit(uint64(obj.ExtraFlags), game.ExtraBitNames()))
+	fmt.Fprintf(&b, "Extra flags   : %s\r\n", game.SprintBit(obj.ExtraFlags.Raw(), game.ExtraBitNames()))
 
 	fmt.Fprintf(&b, "Weight: %d, Value: %d, Cost/day: %d, Timer: %d, Min Level: %d\r\n",
 		obj.Weight, obj.Cost, obj.RentPerDay(), obj.Timer, obj.MinLevel())

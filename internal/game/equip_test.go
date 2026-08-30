@@ -138,9 +138,9 @@ func TestZappingObjects(t *testing.T) {
 	evil := &PlayerRecord{Alignment: -500, Class: ClassThief}
 	neutral := &PlayerRecord{Alignment: 0, Class: ClassWarrior}
 
-	antiGood := &Object{ExtraFlags: ItemAntiGood}
-	antiEvil := &Object{ExtraFlags: ItemAntiEvil}
-	antiNeutral := &Object{ExtraFlags: ItemAntiNeutral}
+	antiGood := &Object{ExtraFlags: NewSet(ItemAntiGood)}
+	antiEvil := &Object{ExtraFlags: NewSet(ItemAntiEvil)}
+	antiNeutral := &Object{ExtraFlags: NewSet(ItemAntiNeutral)}
 
 	for _, tc := range []struct {
 		name string
@@ -153,8 +153,8 @@ func TestZappingObjects(t *testing.T) {
 		{"an evil thief and an anti-evil sword", evil, antiEvil, true},
 		{"a neutral warrior and an anti-neutral sword", neutral, antiNeutral, true},
 		{"a neutral warrior and an anti-good sword", neutral, antiGood, false},
-		{"a cleric and an anti-cleric sword", good, &Object{ExtraFlags: ItemAntiCleric}, true},
-		{"a cleric and an anti-thief sword", good, &Object{ExtraFlags: ItemAntiThief}, false},
+		{"a cleric and an anti-cleric sword", good, &Object{ExtraFlags: NewSet(ItemAntiCleric)}, true},
+		{"a cleric and an anti-thief sword", good, &Object{ExtraFlags: NewSet(ItemAntiThief)}, false},
 	} {
 		if got := Zaps(tc.rec, tc.obj); got != tc.want {
 			t.Errorf("%s: zaps = %v, want %v", tc.name, got, tc.want)
@@ -164,7 +164,7 @@ func TestZappingObjects(t *testing.T) {
 	// The class test is remort-aware, because it uses the IS_<CLASS> macros:
 	// a warrior who was once a thief is still zapped by anti-thief kit.
 	exThief := &PlayerRecord{Class: ClassWarrior, RemortVector: int32(RemortThief)}
-	if !Zaps(exThief, &Object{ExtraFlags: ItemAntiThief}) {
+	if !Zaps(exThief, &Object{ExtraFlags: NewSet(ItemAntiThief)}) {
 		t.Error("an ex-thief was not zapped by an anti-thief object")
 	}
 }

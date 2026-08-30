@@ -307,7 +307,7 @@ func BuildDumpWithOptions(w *game.World, opts Options) *Dump {
 		d.Objects = append(d.Objects, DumpObj{
 			Vnum: o.Vnum, Keywords: Text(o.Keywords), ShortDesc: Text(o.ShortDesc),
 			Desc: Text(o.Description), ActionDesc: Text(o.ActionDesc), Type: o.Type,
-			ExtraFlags: o.ExtraFlags.String(), ExtraBits: uint64(o.ExtraFlags),
+			ExtraFlags: o.ExtraFlags.String(), ExtraBits: o.ExtraFlags.Raw(),
 			WearFlags: o.WearFlags.String(), WearBits: o.WearFlags.Raw(),
 			PermAffect: o.PermAffect, Values: o.Values,
 			Weight: o.Weight, Cost: o.Cost, RentPerDay: o.RentPerDay,

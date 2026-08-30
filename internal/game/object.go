@@ -88,27 +88,38 @@ func ItemTypeByName(s string) (typ int32, rest string, ok bool) {
 // object refuse to leave your hands. ItemNoLocate is not stock CircleMUD at
 // all — it is a Disgracelands local mod, marked in the C by a `/*humbug*/`
 // comment on either side of it, and it hides an object from `locate object`.
+// ExtraFlag is one of them, and ExtraFlagSet is an object's set. Bit
+// indices, not masks: docs/proposals/idiomatic-go.md §4.1, and §4.1.1 for
+// the trap. extra_bits[] in constants.c is the name table.
+//
+// Named ExtraFlagSet rather than ExtraFlags because ObjDef.ExtraFlags is
+// the field — the same call WearFlagSet and ContainerFlagSet made.
+type ExtraFlag int
+
+// ExtraFlagSet is a set of ExtraFlag.
+type ExtraFlagSet = Set[ExtraFlag]
+
 const (
-	ItemGlow          Flags = 1 << 0
-	ItemHum           Flags = 1 << 1
-	ItemNoRent        Flags = 1 << 2
-	ItemNoDonate      Flags = 1 << 3
-	ItemNoInvis       Flags = 1 << 4
-	ItemInvisible     Flags = 1 << 5
-	ItemMagic         Flags = 1 << 6
-	ItemNoDrop        Flags = 1 << 7
-	ItemBless         Flags = 1 << 8
-	ItemAntiGood      Flags = 1 << 9
-	ItemAntiEvil      Flags = 1 << 10
-	ItemAntiNeutral   Flags = 1 << 11
-	ItemAntiMagicUser Flags = 1 << 12
-	ItemAntiCleric    Flags = 1 << 13
-	ItemAntiThief     Flags = 1 << 14
-	ItemAntiWarrior   Flags = 1 << 15
-	ItemNoSell        Flags = 1 << 16
+	ItemGlow          ExtraFlag = 0
+	ItemHum           ExtraFlag = 1
+	ItemNoRent        ExtraFlag = 2
+	ItemNoDonate      ExtraFlag = 3
+	ItemNoInvis       ExtraFlag = 4
+	ItemInvisible     ExtraFlag = 5
+	ItemMagic         ExtraFlag = 6
+	ItemNoDrop        ExtraFlag = 7
+	ItemBless         ExtraFlag = 8
+	ItemAntiGood      ExtraFlag = 9
+	ItemAntiEvil      ExtraFlag = 10
+	ItemAntiNeutral   ExtraFlag = 11
+	ItemAntiMagicUser ExtraFlag = 12
+	ItemAntiCleric    ExtraFlag = 13
+	ItemAntiThief     ExtraFlag = 14
+	ItemAntiWarrior   ExtraFlag = 15
+	ItemNoSell        ExtraFlag = 16
 	// ItemNoLocate is local: structs.h:388, between the two /*humbug*/
 	// markers.
-	ItemNoLocate Flags = 1 << 17
+	ItemNoLocate ExtraFlag = 17
 )
 
 // Wear flags, from structs.h:352. ItemWearTake is the odd one out: it is not
@@ -334,7 +345,7 @@ type Object struct {
 	ActionDesc string
 
 	Type       int32
-	ExtraFlags Flags
+	ExtraFlags ExtraFlagSet
 	WearFlags  WearFlagSet
 	Values     [NumObjValues]int32
 	Weight     int32

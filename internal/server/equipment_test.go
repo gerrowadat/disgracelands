@@ -99,7 +99,7 @@ func TestAnObjectThatZapsYou(t *testing.T) {
 
 	// A new character is neutral, so anti-neutral kit rejects them.
 	inWorld(t, srv, func(_ *game.Live) {
-		plate.ExtraFlags = plate.ExtraFlags.Set(game.ItemAntiNeutral)
+		plate.ExtraFlags = plate.ExtraFlags.With(game.ItemAntiNeutral)
 	})
 
 	c.send("wear plate")

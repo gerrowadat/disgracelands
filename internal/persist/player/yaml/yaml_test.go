@@ -200,7 +200,7 @@ func nestedRentFile() *player.RentFile {
 				Vnum: 3032, Weight: 5, Affects: affectSlots(),
 				Contains: []player.StoredObject{
 					{Vnum: 3009, Weight: 1, Affects: affectSlots()},
-					{Vnum: 3010, Weight: 2, ExtraFlags: game.ItemGlow,
+					{Vnum: 3010, Weight: 2, ExtraFlags: game.NewSet(game.ItemGlow),
 						Affects: affectSlots(game.ObjAffect{Location: 1, Modifier: 3})},
 				},
 			},

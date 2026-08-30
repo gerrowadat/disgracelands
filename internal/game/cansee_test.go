@@ -238,7 +238,7 @@ func TestAnInvisibleObject(t *testing.T) {
 
 	sword := l.NewObject(3043)
 	l.ObjectToRoom(sword, 3001)
-	sword.ExtraFlags = sword.ExtraFlags.Set(ItemInvisible)
+	sword.ExtraFlags = sword.ExtraFlags.With(ItemInvisible)
 
 	if l.CanSeeObj(watcher, sword) {
 		t.Error("saw an invisible object")
@@ -258,7 +258,7 @@ func TestObjsSubstitution(t *testing.T) {
 	if got := l.Objs(sword, watcher); got != "a sword" {
 		t.Errorf("Objs = %q, want %q", got, "a sword")
 	}
-	sword.ExtraFlags = sword.ExtraFlags.Set(ItemInvisible)
+	sword.ExtraFlags = sword.ExtraFlags.With(ItemInvisible)
 	if got := l.Objs(sword, watcher); got != "something" {
 		t.Errorf("Objs of an invisible object = %q, want %q", got, "something")
 	}

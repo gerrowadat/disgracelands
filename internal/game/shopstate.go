@@ -592,7 +592,12 @@ func evaluateShopOperation(ops *[]int, vals *[]bool) {
 func matchesShopWord(obj *Object, word string) bool {
 	for i, name := range extraBitNames {
 		if strings.EqualFold(word, name) {
-			return obj.ExtraFlags.Has(1 << uint(i)) //nolint:gosec // a bit index from a fixed table
+			// ExtraFlag(i), not 1<<i: the table is indexed by bit
+			// position and so is the domain, so the index *is* the flag.
+			// This used to shift because the flags were masks, and the
+			// shift kept compiling when they stopped being — silently
+			// asking about bit 1 for the table's entry 0.
+			return obj.ExtraFlags.Has(ExtraFlag(i))
 		}
 	}
 	return obj.Matches(word)

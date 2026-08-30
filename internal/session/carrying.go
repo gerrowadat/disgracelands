@@ -537,7 +537,7 @@ func (c *Context) putObject(obj, cont *game.Object) {
 	c.announce("%s puts %s in %s.\r\n", c.Character.Name, obj.Name(), cont.Name())
 
 	if obj.ExtraFlags.Has(game.ItemNoDrop) && !cont.ExtraFlags.Has(game.ItemNoDrop) {
-		cont.ExtraFlags = cont.ExtraFlags.Set(game.ItemNoDrop)
+		cont.ExtraFlags = cont.ExtraFlags.With(game.ItemNoDrop)
 		c.Send("You get a strange feeling as you put %s in %s.\r\n", obj.Name(), cont.Name())
 		return
 	}

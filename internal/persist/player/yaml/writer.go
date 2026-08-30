@@ -187,7 +187,7 @@ func applyRentFile(doc *playerDoc, f *player.RentFile) {
 }
 
 func ObjInstanceDocFrom(st player.StoredObject) ObjInstanceDoc {
-	extra, extraRaw := game.NameBits(uint64(st.ExtraFlags), game.YamlItemExtraFlagNames())
+	extra, extraRaw := game.NameBits(st.ExtraFlags.Raw(), game.YamlItemExtraFlagNames())
 	perm, permRaw := game.NameBits(uint64(st.PermAffect), game.YamlAffectFlagNames())
 
 	od := ObjInstanceDoc{

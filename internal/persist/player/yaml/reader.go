@@ -276,7 +276,7 @@ func StoredObjectFromDoc(od ObjInstanceDoc) (player.StoredObject, []string) {
 
 	st := player.StoredObject{
 		Vnum: game.ObjVnum(od.Vnum), Weight: od.Weight, Timer: od.Timer,
-		ExtraFlags: game.Flags(extra), PermAffect: game.Flags(perm),
+		ExtraFlags: game.SetFromRaw[game.ExtraFlag](extra), PermAffect: game.Flags(perm),
 	}
 	copy(st.Values[:], od.Values)
 

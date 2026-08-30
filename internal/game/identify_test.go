@@ -24,7 +24,7 @@ func TestIdentifyingAWeapon(t *testing.T) {
 		Type:       ItemWeapon,
 		Weight:     10,
 		Cost:       350,
-		ExtraFlags: ItemMagic | ItemBless,
+		ExtraFlags: NewSet(ItemMagic, ItemBless),
 		PermAffect: AffectDetectInvis,
 		Values:     [NumObjValues]int32{0, 2, 6, 3},
 		Affects: []ObjAffect{
@@ -136,19 +136,23 @@ func TestIdentifyingAPerson(t *testing.T) {
 // TestSprintBit, which has three behaviours worth pinning: the trailing
 // space, NOBITS, and what happens above the end of the table.
 func TestSprintBit(t *testing.T) {
+	// Raw bit positions rather than the ExtraFlag constants, on purpose:
+	// SprintBit maps a *bit position* to a name, so a table written in the
+	// domain's own constants would agree with itself whatever those
+	// constants were. What is under test is that bit 0 prints GLOW.
 	for _, tc := range []struct {
-		flags Flags
+		flags uint64
 		want  string
 	}{
 		{0, "NOBITS "},
-		{ItemGlow, "GLOW "},
-		{ItemGlow | ItemHum, "GLOW HUM "},
-		{ItemNoDrop, "NO_DROP "},
+		{1 << 0, "GLOW "},
+		{1<<0 | 1<<1, "GLOW HUM "},
+		{1 << 7, "NO_DROP "},
 		// Bit 18 is past the end of the eighteen-entry table.
 		{1 << 18, "UNDEFINED "},
-		{ItemGlow | 1<<18, "GLOW UNDEFINED "},
+		{1<<0 | 1<<18, "GLOW UNDEFINED "},
 	} {
-		if got := SprintBit(uint64(tc.flags), ExtraBitNames()); got != tc.want {
+		if got := SprintBit(tc.flags, ExtraBitNames()); got != tc.want {
 			t.Errorf("SprintBit(%d) = %q, want %q", tc.flags, got, tc.want)
 		}
 	}
