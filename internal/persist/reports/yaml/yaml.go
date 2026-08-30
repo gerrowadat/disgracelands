@@ -145,6 +145,27 @@ func (s *Store) Append(r reports.Report) (bool, error) {
 	return true, s.save()
 }
 
+// Replace writes rs as the whole contents of the file, dropping whatever
+// was there, and writes it once rather than once per report.
+//
+// Same reasoning as mail/yaml's Replace, and the same bug: `dlctl import`
+// converts a source into a destination, but reports had only Append — the
+// live `bug`/`idea`/`typo` command's call — so a second import into the
+// same directory appended the whole backlog again (#293). Reports and mail
+// were the only two subsystems that behaved that way, because they were
+// the only two whose stores had no operation for "these are the contents".
+func (s *Store) Replace(rs []reports.Report) error {
+	if s.readOnly {
+		return fmt.Errorf("reports: the data directory is open read-only")
+	}
+
+	s.mu.Lock()
+	s.reports = append([]reports.Report(nil), rs...)
+	s.mu.Unlock()
+
+	return s.save()
+}
+
 // All implements reports.Store.
 func (s *Store) All() ([]reports.Report, error) {
 	s.mu.RLock()

@@ -81,6 +81,72 @@ func TestEveryCorpusConvertsWithNoLoss(t *testing.T) {
 	}
 }
 
+// TestImportIsIdempotent is the other idempotence claim, and the one that
+// was missing: `dlctl import` run twice into the same --to-dir must leave
+// exactly what running it once did.
+//
+// §5.2's idempotence check was TestFmtIsIdempotent alone, and `import`'s
+// own checks all convert into a `t.TempDir()` — a destination that is
+// empty by construction. So the case where the destination already has
+// content was designed out of the suite, in the same shape as
+// examples/stock being pure ASCII (data-format.md §11.1) and
+// examples/torture having one zone (#285): every input was one over which
+// the right behaviour and the wrong one cannot disagree.
+//
+// They disagreed as soon as anything asked. Mail and reports were stored
+// through Send and Append — the *game's* "one more has arrived" calls,
+// which is all their stores offered — so a second import appended the
+// whole lot again, silently, while the other five subsystems replaced
+// theirs (#293). examples/torture/README.md's own "Reproducing it"
+// instructions run exactly this sequence against the checked-in corpus,
+// so following them committed every message and every report twice.
+//
+// Three rounds rather than two: doubling shows up in the second, but an
+// off-by-one that only appears once a list is non-empty on entry would
+// not, and the second round is the first one whose destination is not
+// empty.
+func TestImportIsIdempotent(t *testing.T) {
+	for _, fx := range corpora {
+		t.Run(fx.name, func(t *testing.T) {
+			dir := t.TempDir()
+
+			if err := run([]string{"import", "--from-dir", fx.binaryDir, "--to-dir", dir}); err != nil {
+				t.Fatalf("first import: %v", err)
+			}
+			first := treeBytes(t, dir)
+
+			for round := 2; round <= 3; round++ {
+				// A round that is not idempotent usually fails here
+				// rather than below: `import --verify` compares the
+				// source against what is now in --to-dir, so a doubled
+				// list is a difference it already knows how to see. It
+				// reports through errQuiet, whose message is empty by
+				// design (main.go) because the command has already
+				// printed the detail to stdout.
+				if err := run([]string{"import", "--from-dir", fx.binaryDir, "--to-dir", dir}); err != nil {
+					t.Fatalf("import round %d failed; see its own output above for what differs (%v)", round, err)
+				}
+				again := treeBytes(t, dir)
+
+				for path, want := range first {
+					got, ok := again[path]
+					switch {
+					case !ok:
+						t.Errorf("round %d removed %s", round, path)
+					case !bytes.Equal(got, want):
+						t.Errorf("round %d changed %s (%d bytes vs %d)", round, path, len(got), len(want))
+					}
+				}
+				for path := range again {
+					if _, ok := first[path]; !ok {
+						t.Errorf("round %d created %s", round, path)
+					}
+				}
+			}
+		})
+	}
+}
+
 // TestFmtIsIdempotent is the idempotence half: `dlctl fmt` on an
 // already-canonical directory must not change a byte.
 //

@@ -108,3 +108,50 @@ func TestAReadOnlyStoreRefusesToWrite(t *testing.T) {
 		t.Error("a read-only store wrote a report")
 	}
 }
+
+// Replace is what `dlctl import` writes through: the whole backlog, not
+// more of it. Importing twice into the same directory used to append the
+// lot again, because Append — the live bug/idea/typo command's call — was
+// the only way in (#293).
+func TestReplaceIsTheWholeBacklog(t *testing.T) {
+	s, dir := newStore(t)
+	if _, err := s.Append(reports.Report{Kind: reports.KindBug, Reporter: "Zod", Room: 1, Body: "already here"}); err != nil {
+		t.Fatalf("Append: %v", err)
+	}
+
+	want := []reports.Report{
+		{Kind: reports.KindIdea, Reporter: "Al", Room: 3001, Body: "a shop here"},
+		{Kind: reports.KindTypo, Reporter: "Al", Room: 3002, Body: "teh"},
+	}
+	if err := s.Replace(want); err != nil {
+		t.Fatalf("Replace: %v", err)
+	}
+
+	// From disk, not from memory.
+	again, err := New(reports.Config{Dir: dir})
+	if err != nil {
+		t.Fatalf("reopening: %v", err)
+	}
+	got, err := again.All()
+	if err != nil {
+		t.Fatalf("All: %v", err)
+	}
+	if len(got) != len(want) {
+		t.Fatalf("got %d report(s), want %d — the old backlog is still there", len(got), len(want))
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Errorf("report %d: got %+v, want %+v", i, got[i], want[i])
+		}
+	}
+}
+
+func TestReplaceOnAReadOnlyStoreRefuses(t *testing.T) {
+	s, err := New(reports.Config{Dir: t.TempDir(), ReadOnly: true})
+	if err != nil {
+		t.Fatalf("opening: %v", err)
+	}
+	if err := s.Replace([]reports.Report{{Kind: reports.KindBug, Reporter: "Zod", Body: "x"}}); err == nil {
+		t.Error("a read-only store replaced its reports")
+	}
+}
