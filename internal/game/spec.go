@@ -72,26 +72,40 @@ func (o *Object) ObjSpec() string {
 // guildInfo is guild_info[][3] (class.c:196): which class may pass which
 // guild door, by room and direction.
 //
-// The class of -999 means "everybody", which is how the Brass Dragon's guard
-// and the one at 14279 let anybody through — they are doors that need a guard
-// for some other reason. The table ends at a -1 sentinel in the C.
+// Two of its rows carry a class of -999, commented `/* all */` in the C
+// (class.c:205, :207) — stock CircleMUD's way of saying "everybody may
+// pass", since `GET_CLASS(ch) != -999` is false for nobody and its test is
+// `!=`. **The local rewrite inverted that.** Disgracelands' guild_guard
+// tests the remort vector instead, by indexing
+// `pc_class_remort_masks[guild_info[i][0]]` — so -999 is a *negative array
+// index*, undefined behaviour, and whatever comes back the guard blocks
+// rather than admits. See docs/weirdnumbers.md; this comment said the
+// opposite until step 4 read the two together.
+//
+// BlocksEveryone carries that, rather than a -999 in the Class field. The
+// C's number is not preserved because it never reaches disk and never
+// meant a class: it is a flag written in the class column, which is what
+// docs/proposals/idiomatic-go.md §3.4 is about. The table ends at a -1
+// sentinel in the C, which a Go slice does not need.
 var guildInfo = []struct {
+	// Class is the class whose guild this is. Meaningless, and unread,
+	// when BlocksEveryone is set.
 	Class Class
-	Room  RoomVnum
-	Dir   Direction
+	// BlocksEveryone marks a door that turns away every mortal whatever
+	// they are or were: the C's -999 rows.
+	BlocksEveryone bool
+	Room           RoomVnum
+	Dir            Direction
 }{
 	// Midgaard.
-	{ClassMagicUser, 3017, South},
-	{ClassCleric, 3004, North},
-	{ClassThief, 3027, East},
-	{ClassWarrior, 3021, East},
+	{Class: ClassMagicUser, Room: 3017, Dir: South},
+	{Class: ClassCleric, Room: 3004, Dir: North},
+	{Class: ClassThief, Room: 3027, Dir: East},
+	{Class: ClassWarrior, Room: 3021, Dir: East},
 	// Brass Dragon, and one local addition.
-	{guildAnyClass, 5065, West},
-	{guildAnyClass, 14279, Up},
+	{BlocksEveryone: true, Room: 5065, Dir: West},
+	{BlocksEveryone: true, Room: 14279, Dir: Up},
 }
-
-// guildAnyClass is the C's -999.
-const guildAnyClass Class = -999
 
 // GuildBars reports whether a guild guard should block this character from
 // leaving this room in this direction, porting the loop in
@@ -109,10 +123,7 @@ func GuildBars(rec *PlayerRecord, room RoomVnum, dir Direction) bool {
 		if g.Room != room || g.Dir != dir {
 			continue
 		}
-		if g.Class == guildAnyClass {
-			// Nobody's remort vector holds this bit, so the C's test —
-			// "vector does not contain the class's mask" — is always true and
-			// the guard blocks everyone.
+		if g.BlocksEveryone {
 			return true
 		}
 		if _, ok := classRemortMasks[g.Class]; !ok {

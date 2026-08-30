@@ -37,7 +37,10 @@ type ExitDef struct {
 	// raw value is kept so a writer can round-trip it exactly.
 	DoorFlag int32
 
-	// Key is the vnum of the key object, or -1 for none.
+	// Key is the vnum of the key object, or NoObject for none. It is
+	// written to the world file, so the sentinel stays what it is and only
+	// gets a name (docs/proposals/idiomatic-go.md §4.4); doors.go already
+	// compares against NoObject rather than -1.
 	Key ObjVnum
 	// ToRoom is the destination vnum, or NoRoom.
 	ToRoom RoomVnum

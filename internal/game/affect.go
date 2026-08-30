@@ -301,8 +301,7 @@ func AgeAffects(rec *PlayerRecord) []ExpiredAffect {
 		case a.Duration >= 1:
 			a.Duration--
 			kept = append(kept, a)
-		case a.Duration == -1:
-			// Permanent.
+		case a.Duration == AffectPermanent:
 			kept = append(kept, a)
 		default:
 			// The wear-off message is only sent for the last affect of a

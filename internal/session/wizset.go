@@ -375,9 +375,7 @@ func setPractices(s *setContext) { s.rec.SpellsToLearn = s.rangeOf(0, 100) }
 func setCondition(which game.Condition) func(*setContext) {
 	return func(s *setContext) {
 		if strings.EqualFold(s.arg, "off") {
-			// -1 is "not tracked at all", which is what an immortal's
-			// conditions are set to on the way up.
-			s.rec.Conditions[which] = -1
+			s.rec.Conditions[which] = game.CondNotApplicable
 			s.output = s.victim.Name + "'s " + s.fieldName + " now off."
 			return
 		}

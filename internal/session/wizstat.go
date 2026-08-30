@@ -342,10 +342,11 @@ func objectValues(obj *game.Object) string {
 	v := obj.Values
 	switch obj.Type {
 	case game.ItemLight:
-		if v[2] == -1 {
+		light, _ := obj.LightValues()
+		if light.Hours == game.LightEternal {
 			return "Hours left: Infinite"
 		}
-		return fmt.Sprintf("Hours left: [%d]", v[2])
+		return fmt.Sprintf("Hours left: [%d]", light.Hours)
 	case game.ItemScroll, game.ItemPotion:
 		return fmt.Sprintf("Spells: (Level %d) %s, %s, %s", v[0],
 			game.SpellName(game.SpellID(v[1])), game.SpellName(game.SpellID(v[2])),
