@@ -160,11 +160,25 @@ While it runs:
 make health         # /healthz, /readyz and the dlmud_ metrics
 ```
 
-`dlmud_pulse_duration_seconds` is the one that matters: the game loop's
+`dlmud_pulse_duration_seconds` is the first one to look at: the game loop's
 budget is `--pulse-interval` (100ms), and pulses that routinely exceed it
 mean the world is lagging behind real time for everyone at once. If you have
 just written something that runs per pulse, look at it here before assuming
 it is free.
+
+The rest of the set answers the questions that one raises, in the order you
+end up asking them:
+
+| Metric | The question it answers |
+|---|---|
+| `dlmud_pulses_missed_total` | Did the loop actually *lose* time? Above zero means pulses went by with nobody there to take them. Not derivable from the duration histogram — that only describes the pulses that ran. |
+| `dlmud_periodic_duration_seconds{name}` | *Which* of `violence`, `mobile-activity`, `zone-update` and `point-update` accounts for a slow pulse. Same budget-relative buckets as the pulse histogram, so the two read against each other. |
+| `dlmud_task_queue_depth` | Was the loop slow because it had a lot to do? Depth is what was waiting when the pulse began. |
+| `dlmud_tasks_drained_per_pulse` | With the depth, this separates "busy and keeping up" from "falling behind": forty tasks a pulse at depth zero is fine, forty at depth two hundred is not. |
+| `dlmud_tasks_rejected_total` | Work refused outright because the queue was full. `engine.Do` returns `ErrBusy` rather than blocking, and its most frequent caller (the wizvis log echo) discards that error — so any value here at all is worth knowing about. |
+
+For the cost of a change rather than the health of a server, `make bench`
+is the other half; see below.
 
 Signals work the same locally as they do in a container, and two of them
 are worth knowing while developing:
@@ -310,6 +324,46 @@ answer:
   just the notices — and only once all of that is green does it tag the
   commit, create the GitHub release, attach the archives to it and push
   the image. See "Cutting a release" below.
+
+### Benchmarking the game loop
+
+```sh
+make bench                 # examples/stock, every loop benchmark
+```
+
+`internal/server/bench_test.go` boots the **real** world —
+`examples/stock`, 2,981 rooms and 944 mobiles and 1,199 objects, which is
+the size of the archived one — resets it, and times the four things that
+run on the pulse plus the boot reset. `internal/server`'s ordinary tests
+build a twelve-room world in Go, which is what makes them fast and what
+makes them blind to anything that scales with the size of the world.
+
+**It runs nowhere automatically, and that is deliberate.** `go.yml` is
+correctness and lint only (see CLAUDE.md's scope rule), and benchmark
+timings on a shared GitHub runner are far too noisy to gate anything on.
+This is the thing to run when you are about to change something that
+happens on the pulse, or when a server is missing its checkpoints and you
+want to know which part.
+
+Writing exactly these, ad hoc, is what found #322: `mobileCount` counted a
+zone's population by walking every mobile in the world, once per `M`
+command, and a profile put **97% of a 3.5ms zone reset inside it**.
+Indexing the counts made it 451× faster. None of that was visible from
+reading the code.
+
+The counterpart is worth knowing too. #326 was filed off the same
+afternoon's reading — "the world accessors allocate a snapshot per call
+and `Players()` sorts on every log line" — and was closed after these
+benchmarks put a number on it: 623ns at ten players, 4µs at fifty, against
+a 100ms budget. Three orders of magnitude below mattering, and the
+snapshots turned out to be load-bearing (each collection is mutated during
+the iteration it feeds). **The difference between a path that is hot and a
+path that looks hot is a number.** Get one before optimising, and get one
+before filing.
+
+Reading the output: `ns/op` against the 100ms pulse budget is the ratio
+that matters, and `B/op` matters mostly where it scales with world size
+rather than with players online.
 
 ### Fuzzing
 

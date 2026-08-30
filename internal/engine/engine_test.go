@@ -13,7 +13,10 @@ import (
 	"testing"
 	"time"
 
+	dto "github.com/prometheus/client_model/go"
+
 	"github.com/gerrowadat/disgracelands/internal/game"
+	"github.com/gerrowadat/disgracelands/internal/obs"
 )
 
 // The pulse is what everything in the game is timed off, so what the loop
@@ -240,4 +243,110 @@ func TestDoRefusesRatherThanBlocking(t *testing.T) {
 	if err := e.Do(func(*game.Live) {}); err != ErrBusy {
 		t.Errorf("a full queue returned %v, want ErrBusy", err)
 	}
+}
+
+// TestTheLoopReportsWhereAPulseWent covers the metrics side of #323. The
+// point of them is not that they exist: it is that "a pulse overran" and
+// "which of the four things on it overran" are different questions, and
+// only the first was answerable. So this drives one pulse with real work
+// on it and requires every one of the five to have moved.
+func TestTheLoopReportsWhereAPulseWent(t *testing.T) {
+	const interval = 50 * time.Millisecond
+
+	metrics := obs.NewMetrics(interval)
+	e := New(Options{
+		World:      &game.Live{},
+		Interval:   interval,
+		QueueDepth: 2,
+		Logger:     slog.New(slog.NewTextHandler(io.Discard, nil)),
+		Metrics:    metrics,
+		Periodic: []Periodic{
+			{Name: "quick", Every: 1, Run: func(*game.Live) {}},
+			// Longer than the budget, so it is the one a reader is
+			// looking for after a pulse overran.
+			{Name: "slow", Every: 1, Run: func(*game.Live) { time.Sleep(2 * interval) }},
+		},
+	})
+	e.started = time.Now()
+
+	// Fill the queue, then overfill it: one rejection.
+	for i := 0; i < 2; i++ {
+		if err := e.Do(func(*game.Live) {}); err != nil {
+			t.Fatalf("queueing task %d: %v", i, err)
+		}
+	}
+	if err := e.Do(func(*game.Live) {}); err == nil {
+		t.Fatal("a full queue accepted a third task")
+	}
+
+	// A gap, so pulses_missed_total has something to say too.
+	fireAt(e, 5*interval)
+
+	if got := counterValue(t, metrics, "dlmud_tasks_rejected_total"); got != 1 {
+		t.Errorf("tasks_rejected_total = %v, want 1", got)
+	}
+	if got := counterValue(t, metrics, "dlmud_pulses_missed_total"); got != 4 {
+		t.Errorf("pulses_missed_total = %v, want 4", got)
+	}
+	if got := gaugeValue(t, metrics, "dlmud_task_queue_depth"); got != 2 {
+		t.Errorf("task_queue_depth = %v, want 2", got)
+	}
+	if got := histogramSum(t, metrics, "dlmud_tasks_drained_per_pulse", ""); got != 2 {
+		t.Errorf("tasks_drained_per_pulse summed to %v, want 2", got)
+	}
+
+	// The whole point: the slow entry is attributable by name, and the
+	// quick one is not blamed for it.
+	slow := histogramSum(t, metrics, "dlmud_periodic_duration_seconds", "slow")
+	quick := histogramSum(t, metrics, "dlmud_periodic_duration_seconds", "quick")
+	if slow < 2*interval.Seconds() {
+		t.Errorf("the slow entry recorded %vs, want at least %vs", slow, 2*interval.Seconds())
+	}
+	if quick >= interval.Seconds() {
+		t.Errorf("the quick entry was charged %vs, which is the slow one's time", quick)
+	}
+}
+
+// metricNamed pulls one metric out of the registry, optionally by its
+// `name` label — which is what makes PeriodicDuration worth having.
+func metricNamed(t *testing.T, m *obs.Metrics, family, label string) *dto.Metric {
+	t.Helper()
+
+	families, err := m.Registry.Gather()
+	if err != nil {
+		t.Fatalf("gathering: %v", err)
+	}
+	for _, f := range families {
+		if f.GetName() != family {
+			continue
+		}
+		for _, metric := range f.GetMetric() {
+			if label == "" {
+				return metric
+			}
+			for _, pair := range metric.GetLabel() {
+				if pair.GetName() == "name" && pair.GetValue() == label {
+					return metric
+				}
+			}
+		}
+		t.Fatalf("%s has no metric labelled %q", family, label)
+	}
+	t.Fatalf("%s is not registered", family)
+	return nil
+}
+
+func counterValue(t *testing.T, m *obs.Metrics, name string) float64 {
+	t.Helper()
+	return metricNamed(t, m, name, "").GetCounter().GetValue()
+}
+
+func gaugeValue(t *testing.T, m *obs.Metrics, name string) float64 {
+	t.Helper()
+	return metricNamed(t, m, name, "").GetGauge().GetValue()
+}
+
+func histogramSum(t *testing.T, m *obs.Metrics, name, label string) float64 {
+	t.Helper()
+	return metricNamed(t, m, name, label).GetHistogram().GetSampleSum()
 }
