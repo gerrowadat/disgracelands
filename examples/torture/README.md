@@ -25,8 +25,9 @@ one and `mini` the fast one.
 
 ## What it found
 
-Three bugs in the first conversion ever run against it, and eight more
-once `dlctl verify --against` and the fuzz targets went looking. They are
+Three bugs in the first conversion ever run against it, and nine more
+once `dlctl verify --against`, the fuzz targets and the compatibility
+suite went looking. They are
 listed here rather than only in commit messages because the *kind* of bug
 is the point: every one was silent, every one lost data or hung, and not
 one could be reproduced with any other fixture in the tree.
@@ -93,6 +94,18 @@ own converted copy, and from the four fuzz targets seeded off it:
   name table was written as nothing (and read back as zero) or as
   `unknown-104` (which the reader cannot resolve either). Now `#104`, the
   convention `SpellNameOrNumber` already used.
+- **`dlctl import` was not idempotent, and this file's own instructions
+  are what ran into it** (#293). "Reproducing it" below says to import
+  into `yaml/`, which already exists — and mail and reports were stored
+  through `Send` and `Append`, the live game's "one more has arrived"
+  calls, because their stores had no operation for "these are the
+  contents". Every other subsystem replaced. So following the
+  instructions committed every message and every report twice. `import
+  --verify` did fail on the second run; what was missing was anything
+  that ever ran one. This is the only corpus with mail or reports in it,
+  so it is the only one that could have. Fixed with `Replace` on both
+  yaml stores, and `TestImportIsIdempotent` now imports three times over
+  all three corpora.
 
 ## What is in it, and why each thing is there
 

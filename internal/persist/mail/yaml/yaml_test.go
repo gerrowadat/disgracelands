@@ -144,3 +144,80 @@ func TestAReadOnlyStoreRefusesToWrite(t *testing.T) {
 		t.Error("a read-only store wrote mail")
 	}
 }
+
+// Replace is what `dlctl import` writes through, and the property that
+// matters is that it is the *whole* contents rather than more of them: a
+// second import into a directory that already had mail in it used to store
+// every message twice, because Send was the only way in (#293).
+func TestReplaceIsTheWholeContents(t *testing.T) {
+	dir := t.TempDir()
+	s, err := New(mail.Config{Path: dir})
+	if err != nil {
+		t.Fatalf("opening: %v", err)
+	}
+	send(t, s, 7, 3, "The message that was already here.\r\n")
+	send(t, s, 8, 3, "And another.\r\n")
+
+	batch := []mail.Message{
+		{To: 1, From: 2, Sent: time.Unix(1_700_000_000, 0), Text: "One.\r\n"},
+		{To: 1, From: 2, Sent: time.Unix(1_700_000_001, 0), Text: "Two.\r\n"},
+	}
+	if err := s.Replace(batch); err != nil {
+		t.Fatalf("replacing: %v", err)
+	}
+
+	// Re-opened, not read back from memory: the point is what is on disk.
+	again, err := New(mail.Config{Path: dir})
+	if err != nil {
+		t.Fatalf("reopening: %v", err)
+	}
+	got := again.All()
+	if len(got) != len(batch) {
+		t.Fatalf("got %d message(s), want %d — the old contents are still there", len(got), len(batch))
+	}
+	for i := range batch {
+		if got[i].To != batch[i].To || got[i].Text != batch[i].Text {
+			t.Errorf("message %d: got to=%d %q, want to=%d %q", i, got[i].To, got[i].Text, batch[i].To, batch[i].Text)
+		}
+	}
+	if again.HasMail(7) || again.HasMail(8) {
+		t.Error("a recipient replaced away still has mail")
+	}
+
+	// Replacing with nothing is emptying, which removes the file the same
+	// way draining the last message does.
+	if err := again.Replace(nil); err != nil {
+		t.Fatalf("replacing with nothing: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(dir, fileName)); !os.IsNotExist(err) {
+		t.Errorf("%s survives an empty Replace: %v", fileName, err)
+	}
+}
+
+// Replace applies Send's own rule to every message before storing any of
+// them, so a batch cannot smuggle in one that sending would have refused —
+// and a refused batch leaves what was there alone.
+func TestReplaceRefusesWhatSendWouldRefuse(t *testing.T) {
+	dir := t.TempDir()
+	s, err := New(mail.Config{Path: dir})
+	if err != nil {
+		t.Fatalf("opening: %v", err)
+	}
+	send(t, s, 7, 3, "Still here afterwards.\r\n")
+
+	bad := []mail.Message{
+		{To: 1, From: 2, Text: "Fine.\r\n"},
+		{To: 1, From: 2, Text: ""}, // an empty body: store_mail refuses one
+	}
+	if err := s.Replace(bad); err == nil {
+		t.Fatal("Replace accepted a message with no text, want an error")
+	}
+
+	again, err := New(mail.Config{Path: dir})
+	if err != nil {
+		t.Fatalf("reopening: %v", err)
+	}
+	if got := len(again.All()); got != 1 {
+		t.Errorf("got %d message(s) after a refused Replace, want the original 1", got)
+	}
+}

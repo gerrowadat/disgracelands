@@ -180,17 +180,21 @@ func importMail(fromDir, toDir string, enc *charmap.Charmap, encName string, out
 	}
 	defer func() { _ = dst.Close() }()
 
-	n, transcoded := 0, 0
-	for _, m := range src.All() {
-		if transcodeString(&m.Text, enc) {
+	// Replace, not Send per message: --to-dir is meant to end up holding
+	// the source, and a directory that already had mail in it used to end
+	// up holding both (#293). src.All returns its own copy, so transcoding
+	// in place here touches nothing the source still owns.
+	msgs := src.All()
+	transcoded := 0
+	for i := range msgs {
+		if transcodeString(&msgs[i].Text, enc) {
 			transcoded++
 		}
-		if err := dst.Send(m); err != nil {
-			return err
-		}
-		n++
 	}
-	_, _ = fmt.Fprintf(out, "mail: imported %d message(s)\n", n)
+	if err := dst.Replace(msgs); err != nil {
+		return err
+	}
+	_, _ = fmt.Fprintf(out, "mail: imported %d message(s)\n", len(msgs))
 	if transcoded > 0 {
 		_, _ = fmt.Fprintf(out, "mail: transcoded %d message(s) from %s to UTF-8\n", transcoded, encName)
 	}
@@ -336,14 +340,17 @@ func importReports(fromMiscDir, toDir string, enc *charmap.Charmap, encName stri
 	if err != nil {
 		return err
 	}
+	// Replace, not Append per report, for the same reason as mail above:
+	// the second import into a directory used to double its backlog
+	// (#293). src.All returns its own copy.
 	transcoded := 0
-	for _, r := range all {
-		if transcodeString(&r.Body, enc) {
+	for i := range all {
+		if transcodeString(&all[i].Body, enc) {
 			transcoded++
 		}
-		if _, err := dst.Append(r); err != nil {
-			return err
-		}
+	}
+	if err := dst.Replace(all); err != nil {
+		return err
 	}
 	_, _ = fmt.Fprintf(out, "reports: imported %d\n", len(all))
 	if transcoded > 0 {

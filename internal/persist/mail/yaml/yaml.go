@@ -152,6 +152,36 @@ func (s *Store) All() []mail.Message {
 // neither is the right shape for "no changes, just rewrite."
 func (s *Store) Rewrite() error { return s.save() }
 
+// Replace writes msgs as the whole contents of the file, dropping whatever
+// was there, and writes it once rather than once per message.
+//
+// It exists because `dlctl import` is a conversion and not a merge:
+// --to-dir is meant to end up holding the source, converted, and every
+// other subsystem the importer writes already works that way — boards/yaml
+// and houses/yaml Save outright, the world and player writers are keyed by
+// vnum and by name, and bans.Add refuses a site already listed. Mail had no
+// such operation, so the importer reached for Send, which is the *game's*
+// "one more message has arrived" call, and importing twice into the same
+// directory therefore stored every message twice (#293). The shape of the
+// API decided that; nobody did.
+//
+// Every message is checked against the same rule Send applies before any
+// of them is stored, so a batch cannot smuggle in a message sending one
+// would have refused.
+func (s *Store) Replace(msgs []mail.Message) error {
+	for _, m := range msgs {
+		if m.From < 0 || m.To < 0 || m.Text == "" {
+			return fmt.Errorf("mail: refusing to store a message from %d to %d", m.From, m.To)
+		}
+	}
+
+	s.mu.Lock()
+	s.mail = append([]mail.Message(nil), msgs...)
+	s.mu.Unlock()
+
+	return s.save()
+}
+
 // Send implements mail.Store.
 func (s *Store) Send(m mail.Message) error {
 	if m.From < 0 || m.To < 0 || m.Text == "" {
