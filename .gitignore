@@ -66,15 +66,18 @@ examples/stock/binary/.acme/
 # and the clock, boards, mail, bans, houses and reports under state/. None
 # of that belongs in git.
 #
-# state/ is *not* ignored wholesale — clock.yaml and houses.yaml are
-# checked in as part of the example (an empty houses file is what a server
-# with no houses looks like, not a missing one), and the files a running
-# server adds beside them are listed individually.
+# state/ is *not* ignored wholesale — clock.yaml, houses.yaml and
+# reports.yaml are checked in as part of the example (an empty houses file
+# is what a server with no houses looks like, not a missing one, and the
+# same goes for a world nobody has filed a bug against), and the files a
+# running server adds beside them are listed individually. The dividing
+# line is `dlctl import`: what it emits is world data and is checked in,
+# and the release drift check compares the two directly, so ignoring
+# something import writes makes that check permanently red.
 examples/stock/yaml/players/
 examples/stock/yaml/state/boards.yaml
 examples/stock/yaml/state/mail.yaml
 examples/stock/yaml/state/bans.yaml
-examples/stock/yaml/state/reports.yaml
 examples/stock/yaml/.acme/
 
 # examples/mini/ is the tutorial world. test/play copies it to a temp directory
