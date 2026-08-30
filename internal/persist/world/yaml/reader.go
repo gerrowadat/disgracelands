@@ -94,7 +94,7 @@ func (l *loader) roomFromDoc(path string, rd roomDoc) *game.RoomDef {
 	if !ok {
 		l.errorf("%s: room #%d: unknown sector %q", path, rd.Vnum, rd.Sector)
 	}
-	room.SectorType = sector
+	room.SectorType = game.Sector(sector)
 	room.Flags = game.SetFromRaw[game.RoomFlag](l.flags(path, rd.Flags, game.YamlRoomFlagNames(), "room flag", rd.Vnum) | rd.FlagsRaw)
 
 	if rd.Exits != nil {
