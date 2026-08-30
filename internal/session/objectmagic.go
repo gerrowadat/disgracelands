@@ -122,7 +122,8 @@ func (c *Context) useStaff(obj *game.Object) {
 	if level == 0 {
 		level = defaultStaffLevel
 	}
-	number := obj.Values[3]
+	// Step 3 types the value slots; until then the conversion is here.
+	number := game.SpellID(obj.Values[3])
 
 	info, ok := game.Spell(number)
 	if !ok {
@@ -150,7 +151,7 @@ func (c *Context) useStaff(obj *game.Object) {
 
 // useWand, porting the ITEM_WAND case: one target, pointed at.
 func (c *Context) useWand(obj *game.Object, arg string, victim *game.Character, target *game.Object) {
-	info, ok := game.Spell(obj.Values[3])
+	info, ok := game.Spell(game.SpellID(obj.Values[3]))
 	if !ok {
 		return
 	}
@@ -190,7 +191,7 @@ func (c *Context) useWand(obj *game.Object, arg string, victim *game.Character, 
 	if level == 0 {
 		level = defaultWandLevel
 	}
-	c.castAtLevel(info, obj.Values[3], victim, target, level, game.SaveRod)
+	c.castAtLevel(info, game.SpellID(obj.Values[3]), victim, target, level, game.SaveRod)
 }
 
 // reciteScroll, porting the ITEM_SCROLL case: up to three spells, and the
@@ -215,7 +216,7 @@ func (c *Context) reciteScroll(obj *game.Object, arg string, victim *game.Charac
 	// Values 1, 2 and 3 are up to three spells, cast in order and stopping at
 	// the first that does nothing.
 	for _, number := range obj.Values[1:] {
-		if !c.castFromItem(number, victim, target, obj.Values[0], game.SaveRod) {
+		if !c.castFromItem(game.SpellID(number), victim, target, obj.Values[0], game.SaveRod) {
 			break
 		}
 	}
@@ -233,7 +234,7 @@ func (c *Context) quaffPotion(obj *game.Object) {
 	c.Character.Wait(1, c.roundLength())
 
 	for _, number := range obj.Values[1:] {
-		if !c.castFromItem(number, c.Character, nil, obj.Values[0], game.SaveRod) {
+		if !c.castFromItem(game.SpellID(number), c.Character, nil, obj.Values[0], game.SaveRod) {
 			break
 		}
 	}
@@ -242,7 +243,7 @@ func (c *Context) quaffPotion(obj *game.Object) {
 
 // castFromItem runs one spell out of an item, returning false when there was
 // no spell there — which is what stops a scroll with one spell casting three.
-func (c *Context) castFromItem(number int32, victim *game.Character, target *game.Object,
+func (c *Context) castFromItem(number game.SpellID, victim *game.Character, target *game.Object,
 	level int32, save game.SaveType,
 ) bool {
 	if number < 1 {
@@ -257,7 +258,7 @@ func (c *Context) castFromItem(number int32, victim *game.Character, target *gam
 
 // castAtLevel is call_magic for an item: no mana, no skill roll, and the
 // level is the *item's* rather than the reader's.
-func (c *Context) castAtLevel(info game.SpellInfo, number int32, victim *game.Character,
+func (c *Context) castAtLevel(info game.SpellInfo, number game.SpellID, victim *game.Character,
 	target *game.Object, level int32, save game.SaveType,
 ) bool {
 	rec := c.Character.Record

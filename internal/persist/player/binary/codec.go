@@ -234,9 +234,9 @@ func (c *codec) decode(rec []byte) (*game.PlayerRecord, error) {
 	for i := 0; i < skills.Size; i++ {
 		if v := widen8(rec[skills.Offset+i]); v != 0 {
 			if p.Skills == nil {
-				p.Skills = make(map[int32]int32)
+				p.Skills = make(map[game.SpellID]int32)
 			}
-			p.Skills[int32(i)] = v
+			p.Skills[game.SpellID(i)] = v
 		}
 	}
 
@@ -258,7 +258,7 @@ func (c *codec) decode(rec []byte) (*game.PlayerRecord, error) {
 			bits = byteOrder.Uint64(rec[base+bitsOff:])
 		}
 		p.Affects = append(p.Affects, game.Affect{
-			Type:     typ,
+			Type:     game.SpellID(typ),
 			Duration: widen16(byteOrder.Uint16(rec[base+2:])),
 			Modifier: widen8(rec[base+4]),
 			Location: game.Apply(rec[base+5]),
@@ -468,7 +468,7 @@ func (c *codec) encode(p *game.PlayerRecord) ([]byte, error) {
 	bitsSize := c.layout.at("affected.bitvector").Size
 	for i, a := range p.Affects {
 		base := aff.Offset + i*aff.Stride
-		byteOrder.PutUint16(rec[base:], narrow16(a.Type))
+		byteOrder.PutUint16(rec[base:], narrow16(a.Type.Number()))
 		byteOrder.PutUint16(rec[base+2:], narrow16(a.Duration))
 		rec[base+4] = narrow8(a.Modifier)
 		rec[base+5] = narrowU8(a.Location.Number())

@@ -259,7 +259,7 @@ func (c *Context) announceExcept(victim *game.Character, format string, args ...
 // than a capacity — so a character who knew six skills was reported as
 // knowing nothing about skill 139. The tests missed it because they set every
 // skill to zero rather than deleting them, which left the map large.
-func skillOf(who *game.Character, skill int32) int32 {
+func skillOf(who *game.Character, skill game.SpellID) int32 {
 	if who == nil || who.Record == nil {
 		return 0
 	}

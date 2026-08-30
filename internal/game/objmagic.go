@@ -22,7 +22,7 @@ import "fmt"
 // It returns the message to print, with the object already named, or "" if
 // nothing happened. The C prints the same line to the caster and to the room,
 // which is why there is only one.
-func AlterObject(spell int32, obj *Object, casterLevel int32) string {
+func AlterObject(spell SpellID, obj *Object, casterLevel int32) string {
 	if obj == nil {
 		return ""
 	}

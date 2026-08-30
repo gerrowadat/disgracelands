@@ -253,5 +253,12 @@ func parseDice(s string) (num, size int32, ok bool) {
 // wrappers rather than replaced at every call site, and shared (not
 // duplicated) with internal/persist/player/yaml, which needs exactly the
 // same name<->number rule for a player's skills.
-func parseSpellNumber(s string) (int32, bool) { return game.SpellNumberFromNameOrNumber(s) }
-func formatSpellNumber(n int32) string        { return game.SpellNameOrNumber(n) }
+//
+// They return and take the stored int32 rather than a game.SpellID, because
+// their callers are object value slots -- a wand's spell lives in
+// Values[3] -- and those are still [4]int32 until step 3 types them.
+func parseSpellNumber(s string) (int32, bool) {
+	n, ok := game.SpellNumberFromNameOrNumber(s)
+	return n.Number(), ok
+}
+func formatSpellNumber(n int32) string { return game.SpellNameOrNumber(game.SpellID(n)) }

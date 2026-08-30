@@ -133,7 +133,7 @@ func GuildBars(rec *PlayerRecord, room RoomVnum, dir Direction) bool {
 // fireball and its cases start at 4, which means levels 0 to 3 reach the
 // default too. Reproduced: below four it is fireball, which is almost
 // certainly not what anyone intended and is what the code does.
-func MobileAttackSpell(level int32) int32 {
+func MobileAttackSpell(level int32) SpellID {
 	switch level {
 	case 4, 5:
 		return SpellMagicMissile

@@ -225,7 +225,7 @@ func (s *Server) Damage(w *game.Live, attacker, victim *game.Character, amount i
 // path" rule the ordinary weapon swing already follows: do_kick/do_bash/
 // do_backstab all call damage(ch, vict, 0, SKILL_*) for one
 // (act.offensive.c), not a bespoke miss branch of their own.
-func (s *Server) SkillDamage(w *game.Live, attacker, victim *game.Character, amount, skillType int32) int32 {
+func (s *Server) SkillDamage(w *game.Live, attacker, victim *game.Character, amount int32, skillType game.SpellID) int32 {
 	if victim == nil || victim.Record == nil || s.refusesDamage(w, attacker, victim) {
 		return 0
 	}
@@ -236,7 +236,12 @@ func (s *Server) SkillDamage(w *game.Live, attacker, victim *game.Character, amo
 		// whatever the attacker happens to be wielding, regardless of
 		// whether this particular attack used it — a kick with a sword in
 		// hand still carries the sword as $o/$p if a message uses it.
-		s.sendSkillMessage(w, attacker, victim, combatant{attacker}.Wielded(), dam, skillType)
+		// skillType narrows here rather than in sendSkillMessage: that
+		// function's own domain is the union of spell/skill numbers and
+		// TypeHit-scaled weapon types (its doc comment above), because
+		// sendCombatMessage reaches it with the second. SkillDamage only
+		// ever has the first.
+		s.sendSkillMessage(w, attacker, victim, combatant{attacker}.Wielded(), dam, skillType.Number())
 	})
 	return dam
 }

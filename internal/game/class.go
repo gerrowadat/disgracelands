@@ -306,29 +306,25 @@ const baseMaxHit int32 = 10
 // spells.h, which put them on top of bash, kick and steal respectively. Read
 // the header, not the comment.
 const (
-	SkillBackstab int32 = 131
-	SkillBash     int32 = 132
-	SkillHide     int32 = 133
-	SkillKick     int32 = 134
-	SkillPickLock int32 = 135
+	SkillBackstab SpellID = 131
+	SkillBash     SpellID = 132
+	SkillHide     SpellID = 133
+	SkillKick     SpellID = 134
+	SkillPickLock SpellID = 135
 	// 136 is undefined in the C, and left so here.
-	SkillRescue int32 = 137
-	SkillSneak  int32 = 138
-	SkillSteal  int32 = 139
-	SkillTrack  int32 = 140
+	SkillRescue SpellID = 137
+	SkillSneak  SpellID = 138
+	SkillSteal  SpellID = 139
+	SkillTrack  SpellID = 140
 )
 
 // StartingSkills are the skills a class begins knowing, from do_start.
 // Only the thief has any; the numbers are the C's.
-func StartingSkills(class Class) map[int32]int32 {
+func StartingSkills(class Class) map[SpellID]int32 {
 	if class != ClassThief {
 		return nil
 	}
-	// Skill numbers from spells.h: SNEAK, HIDE, STEAL, BACKSTAB, PICK_LOCK,
-	// TRACK. Named constants arrive with the skill tables in Phase 4; until
-	// then the numbers carry their names in this comment rather than being
-	// invented elsewhere.
-	return map[int32]int32{
+	return map[SpellID]int32{
 		SkillSneak:    10,
 		SkillHide:     5,
 		SkillSteal:    15,
@@ -460,7 +456,7 @@ func Start(rec *PlayerRecord, r *rng.Rand) {
 	// was silently the second of those.
 	for num, pct := range StartingSkills(rec.Class) {
 		if rec.Skills == nil {
-			rec.Skills = make(map[int32]int32, 6)
+			rec.Skills = make(map[SpellID]int32, 6)
 		}
 		if rec.Skills[num] < pct {
 			rec.Skills[num] = pct

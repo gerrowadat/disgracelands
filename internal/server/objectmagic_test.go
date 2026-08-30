@@ -168,7 +168,7 @@ func TestIdentifyFromAScroll(t *testing.T) {
 
 	scroll := carry(t, srv, c, testScrollVnum, "scroll", "a scroll of protection")
 	inWorld(t, srv, func(_ *game.Live) {
-		scroll.Values[1] = game.SpellIdentify
+		scroll.Values[1] = game.SpellIdentify.Number()
 		scroll.Values[2] = 0
 	})
 	carry(t, srv, c, testSwordVnum, "sword", "a long sword")

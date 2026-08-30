@@ -36,7 +36,7 @@ func asMortal(t *testing.T, srv *Server, name string) {
 }
 
 // withSkill gives a character a skill at a percentage.
-func withSkill(t *testing.T, srv *Server, name string, skill, percent int32) {
+func withSkill(t *testing.T, srv *Server, name string, skill game.SpellID, percent int32) {
 	t.Helper()
 	inWorld(t, srv, func(w *game.Live) {
 		who := w.Find(name)

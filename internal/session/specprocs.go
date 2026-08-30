@@ -624,7 +624,7 @@ func (sc *SpecialCall) dropForDump() []*game.Object {
 // cast throws a spell from a mobile, porting cast_spell's use by the mobile
 // specials — which skips do_cast's checks entirely: no mana, no skill roll,
 // no position test beyond the special's own.
-func (sc *SpecialCall) cast(number int32, victim *game.Character, obj *game.Object) {
+func (sc *SpecialCall) cast(number game.SpellID, victim *game.Character, obj *game.Object) {
 	info, ok := game.Spell(number)
 	if !ok {
 		return

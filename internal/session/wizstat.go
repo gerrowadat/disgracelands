@@ -348,10 +348,11 @@ func objectValues(obj *game.Object) string {
 		return fmt.Sprintf("Hours left: [%d]", v[2])
 	case game.ItemScroll, game.ItemPotion:
 		return fmt.Sprintf("Spells: (Level %d) %s, %s, %s", v[0],
-			game.SpellName(v[1]), game.SpellName(v[2]), game.SpellName(v[3]))
+			game.SpellName(game.SpellID(v[1])), game.SpellName(game.SpellID(v[2])),
+			game.SpellName(game.SpellID(v[3])))
 	case game.ItemWand, game.ItemStaff:
 		return fmt.Sprintf("Spell: %s at level %d, %d (of %d) charges remaining",
-			game.SpellName(v[3]), v[0], v[2], v[1])
+			game.SpellName(game.SpellID(v[3])), v[0], v[2], v[1])
 	case game.ItemWeapon:
 		return fmt.Sprintf("Todam: %dd%d, Message type: %d", v[1], v[2], v[3])
 	case game.ItemArmor:

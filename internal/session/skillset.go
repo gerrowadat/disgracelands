@@ -87,7 +87,7 @@ func doSkillset(c *Context) error {
 	}
 
 	if victim.Record.Skills == nil {
-		victim.Record.Skills = map[int32]int32{}
+		victim.Record.Skills = map[game.SpellID]int32{}
 	}
 	// mudlog(buf2, BRF, -1, TRUE) (modify.c:342-344), before the skill is
 	// actually set. The level is **-1**, not an LVL_ constant: the only
@@ -114,7 +114,7 @@ func skillList() string {
 	b.WriteString("Skill being one of the following:\r\n")
 
 	shown := 0
-	for i := int32(1); i <= game.MaxSkills; i++ {
+	for i := game.SpellID(1); i <= game.MaxSkills; i++ {
 		name := game.SpellName(i)
 		if name == "!UNUSED!" {
 			continue

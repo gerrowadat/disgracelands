@@ -126,7 +126,7 @@ func TestGuildGuardsUseTheRemortVector(t *testing.T) {
 
 // TestMobileAttackSpellLadder, including the level below the bottom of it.
 func TestMobileAttackSpellLadder(t *testing.T) {
-	for level, want := range map[int32]int32{
+	for level, want := range map[int32]SpellID{
 		4: SpellMagicMissile, 5: SpellMagicMissile,
 		6: SpellChillTouch, 7: SpellChillTouch,
 		8: SpellBurningHands, 9: SpellBurningHands,

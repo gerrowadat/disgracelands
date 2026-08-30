@@ -34,7 +34,7 @@ func sampleRecord(name string) *game.PlayerRecord {
 		Level:      30,
 		IDNum:      7,
 		Credential: game.Credential{Scheme: game.SchemeLegacyDES, Hash: "abXYZ12345"},
-		Skills:     map[int32]int32{1: 95},
+		Skills:     map[game.SpellID]int32{1: 95},
 		Points:     game.Points{Hit: 100, MaxHit: 100, Gold: 500},
 	}
 }

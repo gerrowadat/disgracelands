@@ -86,7 +86,7 @@ func TestAGroupSpellOutsideAGroupIsRefusedAndCostsNothing(t *testing.T) {
 		caster = w.Find("Welmar")
 		caster.Record.Level = 30
 		if caster.Record.Skills == nil {
-			caster.Record.Skills = map[int32]int32{}
+			caster.Record.Skills = map[game.SpellID]int32{}
 		}
 		caster.Record.Skills[game.SpellGroupHeal] = 100
 		caster.Record.Points.MaxMana, caster.Record.RealMaxMana = 200, 200

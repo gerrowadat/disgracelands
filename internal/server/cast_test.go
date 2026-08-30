@@ -69,7 +69,7 @@ func TestCastingCostsMana(t *testing.T) {
 		caster = w.Find("Welmar")
 		caster.Record.Level = 10
 		if caster.Record.Skills == nil {
-			caster.Record.Skills = map[int32]int32{}
+			caster.Record.Skills = map[game.SpellID]int32{}
 		}
 		caster.Record.Skills[game.SpellMagicMissile] = 100
 	}); err != nil {

@@ -81,7 +81,7 @@ func TestACharmedCasterWillNotCastAtTheirMaster(t *testing.T) {
 		// self-cast refusals next door.
 		charmed.Record.Level = 30
 		if charmed.Record.Skills == nil {
-			charmed.Record.Skills = map[int32]int32{}
+			charmed.Record.Skills = map[game.SpellID]int32{}
 		}
 		charmed.Record.Skills[game.SpellBlindness] = 100
 	})

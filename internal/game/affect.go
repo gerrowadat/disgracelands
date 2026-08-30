@@ -67,7 +67,7 @@ const (
 const MaxSpellAffects = 2
 
 // AffectedBySpell reports whether a character is already under a spell.
-func AffectedBySpell(rec *PlayerRecord, spell int32) bool {
+func AffectedBySpell(rec *PlayerRecord, spell SpellID) bool {
 	for _, a := range rec.Affects {
 		if a.Type == spell {
 			return true
@@ -103,7 +103,7 @@ func RemoveAllAffects(rec *PlayerRecord) {
 
 // RemoveAffectsOf takes off every affect a spell put on, porting
 // affect_from_char.
-func RemoveAffectsOf(rec *PlayerRecord, spell int32) bool {
+func RemoveAffectsOf(rec *PlayerRecord, spell SpellID) bool {
 	kept := rec.Affects[:0]
 	var removed bool
 	for _, a := range rec.Affects {
@@ -282,7 +282,7 @@ func applyModifier(rec *PlayerRecord, location Apply, modifier int32) {
 
 // ExpiredAffect is one affect that ran out, so the caller can say so.
 type ExpiredAffect struct {
-	Spell int32
+	Spell SpellID
 	// Message is the spell's wear-off text, or "".
 	Message string
 }
@@ -324,7 +324,7 @@ func AgeAffects(rec *PlayerRecord) []ExpiredAffect {
 	return expired
 }
 
-func countAffects(list []Affect, spell int32) int {
+func countAffects(list []Affect, spell SpellID) int {
 	n := 0
 	for _, a := range list {
 		if a.Type == spell {

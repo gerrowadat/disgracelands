@@ -82,7 +82,7 @@ func TestIdentifyingAnUnremarkableObject(t *testing.T) {
 func TestIdentifyingAWand(t *testing.T) {
 	wand := &Object{
 		Keywords: "wand", ShortDesc: "a wand", Type: ItemWand,
-		Values: [NumObjValues]int32{10, 3, 1, SpellMagicMissile},
+		Values: [NumObjValues]int32{10, 3, 1, SpellMagicMissile.Number()},
 	}
 
 	got := IdentifyObject(wand)

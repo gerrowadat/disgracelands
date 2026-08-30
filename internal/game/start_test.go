@@ -172,7 +172,7 @@ func TestThievesStartWithTheirSkills(t *testing.T) {
 	Start(rec, r)
 	// Named rather than numbered, deliberately: writing the numbers out here
 	// is what let three of them be wrong in both the code and the test.
-	for skill, want := range map[int32]int32{
+	for skill, want := range map[SpellID]int32{
 		SkillBackstab: 10,
 		SkillSneak:    10,
 		SkillHide:     5,

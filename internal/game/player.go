@@ -121,7 +121,7 @@ type PlayerRecord struct {
 	// Skills maps a skill or spell number to its learned percentage. A map
 	// rather than an array because the format's fixed 201 slots are the
 	// format's business, and most characters know a handful.
-	Skills map[int32]int32
+	Skills map[SpellID]int32
 
 	// Affects are the spells currently on the character.
 	Affects []Affect
@@ -208,7 +208,7 @@ type Points struct {
 // Affect is one spell or effect currently on a character.
 type Affect struct {
 	// Type is the spell number that caused it.
-	Type int32
+	Type SpellID
 	// Duration is how many ticks remain.
 	Duration int32
 	// Modifier is added to whatever Location names.

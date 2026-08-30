@@ -354,7 +354,7 @@ func (c *Context) broadcastAt(tier game.Announcement, want colour.Level, format 
 // anything says so rather than silently doing nothing and charging for it — a
 // player who cannot tell "this spell has no effect" from "this spell is not
 // written yet" cannot report a bug.
-func (c *Context) castSpell(info game.SpellInfo, number int32, victim *game.Character, object *game.Object, save game.SaveType) bool {
+func (c *Context) castSpell(info game.SpellInfo, number game.SpellID, victim *game.Character, object *game.Object, save game.SaveType) bool {
 	rec := c.Character.Record
 	level := rec.Level
 
@@ -443,7 +443,7 @@ func (c *Context) castSpell(info game.SpellInfo, number int32, victim *game.Char
 }
 
 // applyPoints heals or drains, porting mag_points.
-func (c *Context) applyPoints(number int32, victim *game.Character, level int32) {
+func (c *Context) applyPoints(number game.SpellID, victim *game.Character, level int32) {
 	healing := game.SpellHealing(number, victim.Record, level, c.RNG)
 	if victim.Record != nil {
 		victim.Record.Points.Hit = min(
@@ -457,7 +457,7 @@ func (c *Context) applyPoints(number int32, victim *game.Character, level int32)
 }
 
 // spellAffect applies an affect spell, porting the tail of mag_affects.
-func (c *Context) spellAffect(number int32, victim *game.Character, save game.SaveType) {
+func (c *Context) spellAffect(number game.SpellID, victim *game.Character, save game.SaveType) {
 	rec := c.Character.Record
 
 	// One saving throw per casting, rolled here so every spell that consults
@@ -518,7 +518,7 @@ func (c *Context) spellAffect(number int32, victim *game.Character, save game.Sa
 // The messages come with the mapping because in the C they are part of the
 // same switch: "Your vision returns!" and a room line, not one "You feel
 // better." for all three.
-func (c *Context) spellUnaffect(number int32, victim *game.Character) {
+func (c *Context) spellUnaffect(number game.SpellID, victim *game.Character) {
 	cure, ok := game.UnaffectionOf(number)
 	if !ok {
 		// The C logs a SYSERR and returns. `full heal` reaches this on
@@ -547,7 +547,7 @@ func (c *Context) spellUnaffect(number int32, victim *game.Character) {
 
 // spellDamage applies a damage spell, including the two dispels that can turn
 // on the caster.
-func (c *Context) spellDamage(info game.SpellInfo, number int32, victim *game.Character, level int32) {
+func (c *Context) spellDamage(info game.SpellInfo, number game.SpellID, victim *game.Character, level int32) {
 	rec := c.Character.Record
 
 	target := victim

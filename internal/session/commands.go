@@ -154,7 +154,7 @@ type Violence interface {
 	// dam_message table, which only ever answers for a weapon attack.
 	// amount 0 is a miss, the same "not a separate code path" rule the
 	// ordinary weapon swing follows.
-	SkillDamage(w *game.Live, attacker, victim *game.Character, amount, skillType int32) int32
+	SkillDamage(w *game.Live, attacker, victim *game.Character, amount int32, skillType game.SpellID) int32
 	// Swing is one weapon attack, taken now rather than on the next round.
 	Swing(w *game.Live, attacker, victim *game.Character)
 	// RawKill is raw_kill (fight.c:381): death without damage. It is not

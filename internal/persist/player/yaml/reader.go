@@ -165,12 +165,12 @@ func durationFromSeconds(s string) (time.Duration, error) {
 	return time.Duration(n) * time.Second, nil
 }
 
-func skillsFromDoc(doc map[string]int32) (map[int32]int32, []string) {
+func skillsFromDoc(doc map[string]int32) (map[game.SpellID]int32, []string) {
 	if len(doc) == 0 {
 		return nil, nil
 	}
 	var unknown []string
-	skills := make(map[int32]int32, len(doc))
+	skills := make(map[game.SpellID]int32, len(doc))
 	for name, pct := range doc {
 		n, ok := game.SpellNumberFromNameOrNumber(name)
 		if !ok {

@@ -110,7 +110,7 @@ func savesDocFrom(saves [5]int32) savesDoc {
 	return savesDoc{Paralyze: saves[0], Rod: saves[1], Petrify: saves[2], Breath: saves[3], Spell: saves[4]}
 }
 
-func skillsDocFrom(skills map[int32]int32) map[string]int32 {
+func skillsDocFrom(skills map[game.SpellID]int32) map[string]int32 {
 	if len(skills) == 0 {
 		return nil
 	}

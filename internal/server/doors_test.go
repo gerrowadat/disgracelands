@@ -214,12 +214,12 @@ func TestPickingALock(t *testing.T) {
 }
 
 // setSkill sets one skill on a character already in the world.
-func setSkill(t *testing.T, srv *Server, name string, skill, percent int32) {
+func setSkill(t *testing.T, srv *Server, name string, skill game.SpellID, percent int32) {
 	t.Helper()
 	if err := srv.engine.DoSync(context.Background(), func(w *game.Live) {
 		rec := w.Find(name).Record
 		if rec.Skills == nil {
-			rec.Skills = map[int32]int32{}
+			rec.Skills = map[game.SpellID]int32{}
 		}
 		rec.Skills[skill] = percent
 	}); err != nil {
