@@ -11,7 +11,7 @@
 // replaced with a modern one. Nothing here should ever be used to create a
 // credential: DES crypt uses only the first eight characters of a password,
 // its salt is twelve bits, and a single DES round-trip on modern hardware is
-// trivially brute-forced. See docs/proposals/go-port-plan.md §5.3.1.
+// trivially brute-forced. See docs/design/go-port-plan.md §5.3.1.
 //
 // # Why this is implemented rather than imported
 //

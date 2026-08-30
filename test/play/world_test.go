@@ -40,7 +40,7 @@ func (m *mud) find(msg string) (logLine, bool) {
 // the two "world loaded" log lines. That question is answered far better
 // one level down now: `dlctl verify --against` compares every field of
 // every record of every subsystem across all three corpora, on every push
-// (docs/proposals/yaml-only.md §5.4), where this compared five counts
+// (docs/design/yaml-only.md §5.4), where this compared five counts
 // across two boots and only at release time.
 //
 // What is left is the half that suite alone can answer: that a server
@@ -134,7 +134,7 @@ func TestAZoneResetPutsEverythingBack(t *testing.T) {
 
 // TestTheHelpDatabaseIsReadable. `help` is loaded off disk at boot from a
 // real indexed database, and `help circlemud` in particular is a licence
-// obligation (docs/proposals/go-port-plan.md §12) that only means anything if
+// obligation (docs/design/go-port-plan.md §12) that only means anything if
 // a player can actually reach it.
 func TestTheHelpDatabaseIsReadable(t *testing.T) {
 	m := start(t, mini)

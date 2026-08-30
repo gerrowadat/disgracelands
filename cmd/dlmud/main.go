@@ -10,7 +10,7 @@
 // and health, then the world, the player store, the engine and the listeners,
 // then wait for a signal and shut down. Everything between "ready" and
 // "shutting down" belongs to the packages it starts, and each phase of
-// docs/proposals/go-port-plan.md adds another layer in there — the rules core
+// docs/design/go-port-plan.md adds another layer in there — the rules core
 // (Phase 4 onwards) is not built yet, so a player can log in and move around a
 // world with nothing in it.
 package main
@@ -56,7 +56,7 @@ import (
 	// linked into the server binary at all, which is a stronger statement
 	// than refusing them at startup would be: a legacy format is absent
 	// from this program rather than merely rejected by it
-	// (docs/proposals/yaml-only.md §3.2). There is a test for that
+	// (docs/design/yaml-only.md §3.2). There is a test for that
 	// property, because it is the kind of thing a stray import undoes
 	// silently.
 	_ "github.com/gerrowadat/disgracelands/internal/persist/bans/yaml"
@@ -205,7 +205,7 @@ func run(args []string) (int, error) {
 
 	// A legacy lib/ is refused before anything is opened, with the
 	// command to convert it — rather than getting three subsystems in and
-	// failing on a missing file (docs/proposals/yaml-only.md §3.3).
+	// failing on a missing file (docs/design/yaml-only.md §3.3).
 	if err := config.CheckNotLegacy(cfg.LibDir); err != nil {
 		return exitFailed, err
 	}
@@ -326,7 +326,7 @@ func run(args []string) (int, error) {
 	// ObjectStore — which meant a server running on ascii wrote its rent
 	// files as 2001 struct dumps, and is why real container nesting had to
 	// be format-gated as a deviation rather than simply implemented
-	// (docs/proposals/yaml-only.md §1). There is one roster format now, it
+	// (docs/design/yaml-only.md §1). There is one roster format now, it
 	// implements both, and the fallback (and the only reason this command
 	// imported the binary package at all) is gone. Still an assertion
 	// rather than a wider interface: player.Store and player.ObjectStore

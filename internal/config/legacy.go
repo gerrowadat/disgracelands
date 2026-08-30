@@ -21,7 +21,7 @@ import (
 // genuinely empty directory, or one where somebody mistyped `--lib-dir`,
 // gets the ordinary "no world data" error it has always got, and only a
 // directory that really is an archive gets told to convert it
-// (docs/proposals/yaml-only.md §3.3).
+// (docs/design/yaml-only.md §3.3).
 var legacyMarkers = []struct {
 	path string
 	what string

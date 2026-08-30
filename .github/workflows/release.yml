@@ -378,7 +378,7 @@ jobs:
       # until this step, nothing in any workflow had ever generated an
       # input nobody had already thought of.
       #
-      # Release-only for the reason docs/proposals/yaml-only.md §10 gives:
+      # Release-only for the reason docs/design/yaml-only.md §10 gives:
       # "a short budget in go test is nearly worthless; a long one belongs
       # in release.yml or nowhere."
       #

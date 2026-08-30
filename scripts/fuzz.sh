@@ -11,7 +11,7 @@
 # `go test -fuzz` takes exactly one target per invocation -- the regexp has
 # to match one function in one package, because a fuzzing run owns the
 # process -- so "run the fuzzers" is a loop rather than a flag, and this is
-# that loop. It is the half of the fuzz budget docs/proposals/yaml-only.md
+# that loop. It is the half of the fuzz budget docs/design/yaml-only.md
 # §10 proposed and nobody built: the seed corpora already replay on every
 # push, because the targets are ordinary Go tests and `go test ./...` runs
 # their seeds, but until this nothing had ever generated an input the seeds

@@ -5,7 +5,7 @@ one. This is the *hostile* one: a legacy CircleMUD `lib/` directory in
 which every file contains something that has already gone wrong once in
 this project, or is one line from a case that did.
 
-It exists because of a hole `docs/proposals/yaml-only.md` §5.1 found and
+It exists because of a hole `docs/design/yaml-only.md` §5.1 found and
 which is not obvious until you look. Before this directory:
 
 > There is no player file, no rent file, no board, no mail file and no ban

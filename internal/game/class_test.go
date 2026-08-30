@@ -18,7 +18,7 @@ import (
 //
 // The C's parse_class accepts 'p' and creation calls it, so typing the
 // unadvertised letter made a Paladin without remorting. The menu never
-// offered it. See docs/proposals/go-port-plan.md.
+// offered it. See docs/design/go-port-plan.md.
 func TestPaladinIsNotSelectableAtCreation(t *testing.T) {
 	for _, arg := range []byte{'p', 'P'} {
 		if got := ParseCreationClass(arg); got != ClassUndefined {

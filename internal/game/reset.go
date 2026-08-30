@@ -421,7 +421,7 @@ type ReloadZoneResult struct {
 // ReloadZone is ReloadMobile's zone-wide extension: applies a
 // freshly-parsed zone, plus every room and mobile whose vnum falls in
 // its range, to the running world, in place. New capability, not a C
-// port — see docs/deviations.md and docs/proposals/go-port-plan.md.
+// port — see docs/deviations.md and docs/design/go-port-plan.md.
 //
 // Refuses outright (ok=false, nothing touched) if a player is anywhere
 // in the zone (ZoneIsEmpty) or any live mobile instance whose vnum falls

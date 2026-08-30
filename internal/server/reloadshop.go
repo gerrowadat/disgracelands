@@ -16,7 +16,7 @@ import (
 
 // `reloadshop` — reloadmob's own shop counterpart: hot-reloads a shop's
 // configuration from disk without a restart. New capability, not a C
-// port; see docs/deviations.md and docs/proposals/go-port-plan.md.
+// port; see docs/deviations.md and docs/design/go-port-plan.md.
 
 // ReloadShop implements session.ShopReloader: re-reads vnum's
 // configuration from the world data this server booted with, and

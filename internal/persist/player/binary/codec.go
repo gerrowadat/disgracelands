@@ -81,7 +81,7 @@ func (c *codec) i32(rec []byte, name string) int32 {
 // the value had been through int32 before flagsOf ever saw it.
 //
 // It was invisible because no fixture had a flag above bit 30 in it until
-// examples/torture (docs/proposals/yaml-only.md §5.1), and because it is
+// examples/torture (docs/design/yaml-only.md §5.1), and because it is
 // symmetric on write -- the value round-trips through this package
 // unchanged -- so the package's own byte-for-byte round-trip test could
 // not see it either. What sees it is comparing the decoded record against
@@ -287,7 +287,7 @@ func (c *codec) decode(rec []byte) (*game.PlayerRecord, error) {
 // It used to live on game.PlayerRecord as a LegacySpares field — literally
 // char_file_u's padding, in the canonical, format-neutral model whose
 // entire reason for existing is that no format's idiosyncrasy leaks into
-// it (docs/proposals/yaml-only.md §1). It is here now, and Store.Save
+// it (docs/design/yaml-only.md §1). It is here now, and Store.Save
 // carries the bytes across from the record it is replacing, which is both
 // simpler and more honest: the spares belong to the file.
 var spareFields = struct{ bytes, ints, longs []string }{

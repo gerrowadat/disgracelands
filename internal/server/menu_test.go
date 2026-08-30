@@ -155,7 +155,7 @@ func TestTheDescriptionEditor(t *testing.T) {
 	// saying that is how *the ascii format* stores multi-line text. It
 	// was true and it was a fact about ascii's normalisation rather than
 	// about the editor: yaml round-trips the description unchanged, so
-	// moving this harness onto it (docs/proposals/yaml-only.md §5.4) is
+	// moving this harness onto it (docs/design/yaml-only.md §5.4) is
 	// what showed what the editor had been writing all along.
 	want := "A short, angry man.\r\nHe is holding a clipboard.\r\n"
 	if rec.Description != want {

@@ -137,7 +137,7 @@ func maximumCharacter() *game.PlayerRecord {
 	// char_file_u's reserved padding is not set here, and cannot be: the
 	// slots stopped being a field on game.PlayerRecord when they moved
 	// into internal/persist/player/binary, where they belong
-	// (docs/proposals/yaml-only.md §1). They are a property of the stored
+	// (docs/design/yaml-only.md §1). They are a property of the stored
 	// record rather than of a character — nothing in the game reads or
 	// sets one — and binary's Store.Save carries them across from the
 	// record it is replacing, which is the behaviour worth having and the
@@ -162,7 +162,7 @@ func nameOneShortOfTheLimit() *game.PlayerRecord {
 // levelZeroCharacter is a record with nothing in it: level 0, no password,
 // no skills, no affects, no title, zero timestamps. Every optional field
 // at its zero value is as much a corner as every field at its maximum, and
-// it is the one a "minimal document" test (docs/proposals/yaml-only.md §6)
+// it is the one a "minimal document" test (docs/design/yaml-only.md §6)
 // is about.
 func levelZeroCharacter() *game.PlayerRecord {
 	return &game.PlayerRecord{Name: "Nobody", IDNum: 4, Level: 0}
@@ -202,7 +202,7 @@ func plainCharacter(name string, idnum int64, level int32) *game.PlayerRecord {
 // The cut is not a convenience. crypt(3) returns thirteen characters and
 // MAX_PWD_LENGTH is 10, so what the archived roster contains is the first
 // ten of a thirteen-character hash — every password in it is verified
-// against a prefix, which is what docs/proposals/go-port-plan.md §5.3.1
+// against a prefix, which is what docs/design/go-port-plan.md §5.3.1
 // means by the truncation. This port's own writer refuses a thirteen-byte
 // value outright rather than silently cutting it (the field is eleven
 // bytes and it says so), so the truncation has to happen here, where it

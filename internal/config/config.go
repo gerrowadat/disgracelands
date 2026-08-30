@@ -6,7 +6,7 @@
 
 // Package config resolves the server's runtime settings.
 //
-// Precedence is flags > environment > defaults, per docs/proposals/go-port-plan.md §9.1.
+// Precedence is flags > environment > defaults, per docs/design/go-port-plan.md §9.1.
 // Every setting is declared exactly once, in [register]; the environment
 // variable name is derived from the flag name rather than written out
 // separately, so the two cannot drift apart.
@@ -179,14 +179,14 @@ func (c *Config) GameConfigPath() string {
 //
 // There used to be seven more lists beside it, one per pluggable data
 // format. The server reads exactly one on-disk format now
-// (docs/proposals/yaml-only.md §0), so there is nothing to select and
+// (docs/design/yaml-only.md §0), so there is nothing to select and
 // nothing to validate. `dlctl` still reads every archived format there
 // ever was and keeps its own --from-format for saying which.
 var knownLogFormats = []string{"text", "json"}
 
 // Default returns the configuration used when nothing is specified. Every
 // default reproduces the C server's behaviour where one exists, with the
-// documented exception of TelnetAddr (see docs/proposals/go-port-plan.md §0: plaintext
+// documented exception of TelnetAddr (see docs/design/go-port-plan.md §0: plaintext
 // telnet is implemented but off unless asked for).
 func Default() Config {
 	return Config{
@@ -449,7 +449,7 @@ func Load(args []string, lookupEnv func(string) (string, bool), out io.Writer) (
 	return &cfg, nil
 }
 
-// removedFormatFlags are the flags docs/proposals/yaml-only.md deleted,
+// removedFormatFlags are the flags docs/design/yaml-only.md deleted,
 // kept only so that their environment variables can be refused by name.
 //
 // Not "rejected values that are not yaml" — removed. A flag whose only

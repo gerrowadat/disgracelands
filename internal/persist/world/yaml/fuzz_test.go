@@ -14,7 +14,7 @@ import (
 	"github.com/goccy/go-yaml"
 )
 
-// FuzzTextRoundTrip is the first of docs/proposals/yaml-only.md §5.3's
+// FuzzTextRoundTrip is the first of docs/design/yaml-only.md §5.3's
 // three fuzz targets, and the one with the strongest claim on existing.
 //
 // Every text-transform finding in docs/design/data-format.md §12 was found

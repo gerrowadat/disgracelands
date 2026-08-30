@@ -1,25 +1,34 @@
 # Working on Disgracelands
 
 Notes for anyone — human or agent — picking this up cold. The authoritative
-documents are `docs/proposals/go-port-plan.md` (how the port got here, the
-architecture it built, and — in its §10 Phase 7 — what is left),
-`docs/proposals/yaml-only.md` (why the server reads one on-disk format, and
-the compatibility contract that came with it), `docs/deviations.md` (every
-deliberate difference from the C) and `docs/weirdnumbers.md` (every
-surprising constant, with its C citation). This file is the working
-practice around them.
+documents are `docs/design/go-port-plan.md` (how the port got here and the
+architecture it built), `docs/design/yaml-only.md` (why the server reads
+one on-disk format, and the compatibility contract that came with it),
+`docs/deviations.md` (every deliberate difference from the C) and
+`docs/weirdnumbers.md` (every surprising constant, with its C citation).
+This file is the working practice around them.
 
-**Where the next thing starts, as of 2026-08-30.** `yaml-only.md` was the
-forward plan and it is finished: every row of its §7 has landed, the last
-of them being **v1.0.0, cut on 2026-08-30** — the first release whose
-server reads yaml and nothing else. So the forward plan is
-`go-port-plan.md` §10's **Phase 7 (cutover)** — it was downstream of the
-yaml-only work and no longer is — and its preconditions are the map. The
-day-to-day work in front of that is not in either document: it is the
-**open GitHub issues**, and `docs/deviations.md`'s "Not deviations — gaps
-still to fill" and "What the session-parity suite found", which is where
-issues get filed from. Read those as the todo list and the proposals for
-what the work is for.
+**Where the next thing starts, as of 2026-08-30.** Both of those first two
+documents are *records* now, in `docs/design/`, and neither is extended
+with new plans. `yaml-only.md` finished — every row of its §7 landed, the
+last being **v1.0.0, cut on 2026-08-30**, the first release whose server
+reads yaml and nothing else. `go-port-plan.md`'s Phase 7 never started and
+what is left of it is two deployment *decisions*, carried in `TODO.md`'s
+"Still open", not work anybody can pick up.
+
+The forward plan is **`docs/proposals/idiomatic-go.md`**: retiring the C's
+data model from the server's memory — the bit vectors, the `int32`s
+standing in for enumerations, the four-slot value arrays, the `-1`s
+meaning "absent" — the way yaml-only retired the C's formats from its
+disk. Proposed, nothing built. Read its §2 (the fence) and §5 (the
+C-derived tests it may not tidy away) before touching anything in
+`internal/game`'s type declarations.
+
+The day-to-day work in front of that plan is not in it: it is the **open
+GitHub issues**, and `docs/deviations.md`'s "Not deviations — gaps still
+to fill" and "What the session-parity suite found", which is where issues
+get filed from. Read those as the todo list and the proposals for what the
+work is for.
 
 ## What this project is
 
@@ -446,13 +455,16 @@ the day-to-day/release split being reversible piecemeal.**
 - A bug or a gap in the Go server → a GitHub issue, plus a doc entry for
   the reasoning if there is any. See "The Go server is canonical now"
   below; the issues are the todo list.
-- Status of work still to come → `docs/proposals/go-port-plan.md` §10's
-  Phase 7 preconditions, which is the forward plan again now that
-  `yaml-only.md`'s build is done. Correct both when they turn out to be
-  wrong about what landed; neither is extended with new plans.
+- Status of work still to come → the one document in `docs/proposals/`,
+  currently `idiomatic-go.md`. That directory holds one plan at a time and
+  is empty between them; a document moves to `docs/design/` when the thing
+  it describes is built rather than planned. The two that have already
+  moved (`go-port-plan.md`, `yaml-only.md`) are still corrected when they
+  turn out to be wrong about what landed, and are never extended with new
+  plans.
 - The on-disk format's own compatibility contract — what a new yaml field
   owes, what "the conversion is exactly dead on" means and how it is
-  proved → `docs/proposals/yaml-only.md` §5 and §6, until somebody moves
+  proved → `docs/design/yaml-only.md` §5 and §6, until somebody moves
   them into `data-format.md` where they belong.
 
 **The Go server is canonical now, not the C.** Through Phase 5 a place

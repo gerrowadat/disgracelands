@@ -26,7 +26,7 @@ import (
 // question with a bool, and the bool is not the useful part.
 //
 // The comparison is over *loaded state*, which is the claim
-// docs/proposals/yaml-only.md §4.1 argues for: not "the bytes round-trip"
+// docs/design/yaml-only.md §4.1 argues for: not "the bytes round-trip"
 // (they cannot, and should not have to) but "a server running on the
 // converted data behaves identically to one running on the original".
 func diffValues(want, got any) []string {

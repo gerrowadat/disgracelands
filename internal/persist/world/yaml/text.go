@@ -169,7 +169,7 @@ func quotedScalar(s string) []byte { return []byte(strconv.Quote(s) + "\n") }
 //     TrimSpace over the string rather than over each line.
 //
 //     Found by FuzzTextRoundTrip, on its *seed* corpus, within seconds of
-//     the target first existing. docs/proposals/yaml-only.md §5.3
+//     the target first existing. docs/design/yaml-only.md §5.3
 //     predicted exactly that: "this is the gap most likely to be hiding
 //     the next one".
 //

@@ -117,10 +117,10 @@ for script in $SCRIPTS; do
 	# The Go side plays on a yaml conversion of its staged directory; the
 	# C side keeps the classic one, because it is the only thing it reads.
 	#
-	# This is docs/proposals/yaml-only.md §5.4's third change, and it is
+	# This is docs/design/yaml-only.md §5.4's third change, and it is
 	# what makes this harness compare the *shipping* Go configuration
 	# against the C for the first time -- which is what
-	# docs/proposals/go-port-plan.md §11 wanted from it. Until now both
+	# docs/design/go-port-plan.md §11 wanted from it. Until now both
 	# sides booted on the same classic directory, so the one Go
 	# configuration a player will ever meet was the one thing the parity
 	# suite never exercised.

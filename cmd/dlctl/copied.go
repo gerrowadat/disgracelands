@@ -18,7 +18,7 @@ import (
 // than converts, and the one place in this comparison where *bytes* are
 // the right question.
 //
-// docs/proposals/yaml-only.md §4.1 argues at length for comparing loaded
+// docs/design/yaml-only.md §4.1 argues at length for comparing loaded
 // state everywhere else, and that argument holds — a byte comparison is a
 // lossy proxy for "a server running on the converted data behaves
 // identically", in both directions. It does not apply here, because

@@ -110,7 +110,7 @@ func unescape(s string) string {
 // pairings could pass while the port had isname's keyword terminator as
 // "whitespace" instead of the C's "not a letter": over an alphabetic
 // namelist the two rules never disagree. Issue #277, and the same lesson as
-// docs/proposals/yaml-only.md §5.1 one level up — the corpus did not contain
+// docs/design/yaml-only.md §5.1 one level up — the corpus did not contain
 // the hard case, so the oracle could not either.
 //
 // The sweep now includes digits, punctuation, an apostrophe, a hyphen,

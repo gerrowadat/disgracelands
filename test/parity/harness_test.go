@@ -199,7 +199,7 @@ func startPair(t *testing.T) *pair {
 
 	// The Go side plays on a yaml conversion of its staged directory; the
 	// C side keeps the classic one, because it is the only thing it reads.
-	// docs/proposals/yaml-only.md §5.4 — until this, both sides booted on
+	// docs/design/yaml-only.md §5.4 — until this, both sides booted on
 	// the same classic directory, so the one Go configuration a player
 	// will ever meet was the one thing this suite never exercised.
 	gYaml := filepath.Join(scratch, "gyaml")

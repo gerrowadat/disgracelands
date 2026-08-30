@@ -29,7 +29,7 @@ var convertTypes = []dirType{typePfile}
 // It used to have a second shape: with no --type it modernised a whole
 // legacy lib directory in place — text re-encoded to UTF-8, roster
 // reformatted, formats otherwise left as classic and ascii. That output
-// is not runnable by anything now (docs/proposals/yaml-only.md §1), so it
+// is not runnable by anything now (docs/design/yaml-only.md §1), so it
 // is retired rather than left to produce a directory the server refuses.
 // `dlctl import` is what turns a legacy directory into one that runs; it
 // does the transcoding too.

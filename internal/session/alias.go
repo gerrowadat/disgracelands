@@ -18,7 +18,7 @@ import (
 // No archived character has ever defined an alias — data/ has no plralias
 // directory at all, so this is a new feature riding along with the yaml
 // player format rather than a port of existing player data (see
-// docs/proposals/go-port-plan.md's players section). The C's own behaviour
+// docs/design/go-port-plan.md's players section). The C's own behaviour
 // is still the specification, byte for byte, including the two quirks that
 // are easy to miss reading it once: a simple alias's replacement keeps
 // whatever leading space any_one_arg left between the alias name and the

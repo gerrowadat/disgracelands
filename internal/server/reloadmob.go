@@ -19,7 +19,7 @@ import (
 // `reloadmob` — hot-reloading a mobile's definition from disk without a
 // restart. This is new capability, not a port of anything in
 // reference/moderncserver: interpreter.c has no equivalent command. See
-// docs/deviations.md and docs/proposals/go-port-plan.md for why it exists
+// docs/deviations.md and docs/design/go-port-plan.md for why it exists
 // and where OasisOLC's in-game editors were decided against instead.
 
 // ErrWorldReloadNotConfigured is returned when worldDir is empty — the

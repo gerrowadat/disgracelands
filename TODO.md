@@ -1,23 +1,28 @@
 # Things to do next
 
-The project is a Go port of the Disgracelands server. What to do next is
-mostly "the next phase", and that lives in
-`docs/proposals/go-port-plan.md` §10 — Phases 0–4 are done and **every slice of
-Phase 5 is built**. Phase 6 (OasisOLC) was decided against, in favour of
-`reloadmob`/`reloadzone`/`reloadobj`/`reloadshop`; Phase 7 (cutover) has not
-started, and is the forward plan again now that
-`docs/proposals/yaml-only.md` has landed everything but its release. Its
-§10 also lists, command by command, the 8 of the C's 318
-commands that nothing answers to yet — seven OasisOLC editors and
-`slowns`, both declined rather than pending; see `docs/deviations.md`.
+The project is a Go port of the Disgracelands server. For a long time
+"what to do next" meant "the next phase" and lived in
+`docs/design/go-port-plan.md` §10. It no longer does: Phases 0–5 are
+built, every slice of Phase 5 included; Phase 6 (OasisOLC) was decided
+against, in favour of `reloadmob`/`reloadzone`/`reloadobj`/`reloadshop`;
+`docs/design/yaml-only.md` landed every row of its plan, **v1.0.0
+included, cut on 2026-08-30**; and both documents have moved to
+`docs/design/` as records. Phase 7 (cutover) never started, and what is
+left of it is two of the decisions on this page — §1 (the roster) and §4
+(hosting and exposure) — rather than engineering. `go-port-plan.md` §10
+still lists, command by command, the 8 of the C's 318 commands that
+nothing answers to yet: seven OasisOLC editors and `slowns`, both
+declined rather than pending; see `docs/deviations.md`.
 
-Two other places carry work this file does not: **open GitHub issues** are
-where a bug or a gap in the Go server lives now (the C server stopped
-being the thing anyone plays, so a doc entry alone stopped being enough),
-and `docs/deviations.md`'s "Not deviations — gaps still to fill" is the
+Three other places carry work this file does not. **`docs/proposals/`**
+holds the forward plan — one document at a time, currently
+`idiomatic-go.md`. **Open GitHub issues** are where a bug or a gap in the
+Go server lives now (the C server stopped being the thing anyone plays,
+so a doc entry alone stopped being enough), and
+`docs/deviations.md`'s "Not deviations — gaps still to fill" is the
 standing list those get filed from.
 
-This file is for the things that are not phases: work on the C server in
+This file is for the things that are neither: work on the C server in
 `reference/moderncserver/`, and decisions that are still open.
 
 ## Still open
@@ -91,15 +96,15 @@ notes — a different world, and a different set of findings
 Nothing here has been hardened for 2026. The Go port now takes logins, so
 there is something to expose and a reason not to yet:
 `docs/operations.md` has the current posture and
-`docs/proposals/go-port-plan.md` §7 covers what the network layer will do
+`docs/design/go-port-plan.md` §7 covers what the network layer will do
 about it.
 
 ## C server only (`reference/moderncserver/`)
 
 Nothing is running the game — not that tree, not the Go port, and nothing
-has since 2008. Phase 7 (`docs/proposals/go-port-plan.md` §10) is about
+has since 2008. Phase 7 (`docs/design/go-port-plan.md` §10) was about
 what would have to be true before anything did again, not about swapping a
-live service. So the C tree has no operational stake at all: its two jobs
+live service; what survives of it is §1 and §4 above. So the C tree has no operational stake at all: its two jobs
 are being the reference implementation and being the parity oracle. A
 problem in it is worth writing down if it would mislead the port, not
 because anyone could reach it. See its `README.md`.

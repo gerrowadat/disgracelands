@@ -152,7 +152,7 @@ type Server struct {
 // DataFormat is the one on-disk format the server reads and writes.
 //
 // It is a constant rather than a configured string because there is
-// nothing to configure: docs/proposals/yaml-only.md §0 settles that the
+// nothing to configure: docs/design/yaml-only.md §0 settles that the
 // server understands exactly one format, and every `--*-format` flag is
 // gone. The registries in internal/persist stay — `dlctl` opens `classic`,
 // `binary` and `ascii` by name and always will, and a Source backed by a
@@ -307,7 +307,7 @@ func (s *Server) Exists(ctx context.Context, name string) (bool, error) {
 // On a correct legacy password the credential is upgraded and saved before
 // the character is returned. That is the only moment the plaintext is known,
 // so it is the only moment the upgrade can happen — see
-// docs/proposals/go-port-plan.md §5.3.1.
+// docs/design/go-port-plan.md §5.3.1.
 func (s *Server) Authenticate(ctx context.Context, name, password string) (*game.Character, error) {
 	rec, err := s.players.Load(ctx, name)
 	if errors.Is(err, player.ErrNotFound) {

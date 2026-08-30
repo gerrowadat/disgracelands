@@ -292,7 +292,7 @@ func joinVnums(vnums []int32) string {
 // Dropping them is right — no server ever reads one, since every reader
 // starts from the control array — but doing it in silence is not. This is
 // the conversion boundary where a value stops existing, and
-// docs/proposals/yaml-only.md §6 rule 2 says an importer names what it
+// docs/design/yaml-only.md §6 rule 2 says an importer names what it
 // could not carry across. It went unnamed until #239, and `verify
 // --against` could not see it either, because both sides of that
 // comparison enumerated houses from the control records too.

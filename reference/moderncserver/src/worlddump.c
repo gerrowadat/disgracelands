@@ -3,7 +3,7 @@
 *  Usage: Dump the loaded world as canonical JSON, then exit.             *
 *                                                                         *
 *  Not part of stock CircleMUD. Written for the Go port (see              *
-*  docs/proposals/go-port-plan.md) so that "the Go loader agrees with the  *
+*  docs/design/go-port-plan.md) so that "the Go loader agrees with the     *
 *  C loader" is a thing you can run rather than a thing you assert:        *
 *  both servers dump the same format and the two files are diffed.        *
 *                                                                         *

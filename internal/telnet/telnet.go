@@ -14,7 +14,7 @@
 // size gets its NAWS bytes treated as a command.
 //
 // So this package parses the stream properly, which also buys the things a
-// modern client expects and docs/proposals/go-port-plan.md §0 asks for —
+// modern client expects and docs/design/go-port-plan.md §0 asks for —
 // CHARSET, so the server can say it speaks UTF-8, and GMCP, so a browser
 // front end can be a real client rather than a screen-scraper.
 package telnet

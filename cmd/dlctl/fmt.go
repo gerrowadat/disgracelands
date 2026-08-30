@@ -123,7 +123,7 @@ func fmtPfile(dir string) error {
 	//
 	// Nothing found it because until examples/torture there was no
 	// checked-in fixture in this repository with a roster in it at all
-	// (docs/proposals/yaml-only.md §5.1) — a hang needs a character to
+	// (docs/design/yaml-only.md §5.1) — a hang needs a character to
 	// hang on, and every corpus had zero.
 	var names []string
 	for entry, err := range s.List(ctx) {

@@ -16,7 +16,7 @@ import (
 
 // CHARSET negotiation, RFC 2066.
 //
-// The server's output is UTF-8 (docs/proposals/go-port-plan.md §0). A client
+// The server's output is UTF-8 (docs/design/go-port-plan.md §0). A client
 // that cannot read it says so here, and gets its own encoding instead. That
 // is a per-connection concern and this is the right place for it — as against
 // decoding the world files on every read, which is what `dlctl convert`

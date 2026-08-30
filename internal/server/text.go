@@ -24,7 +24,7 @@ import (
 //
 // Two of these are licence obligations rather than content: the greeting must
 // name the DikuMUD and CircleMUD creators, and the credits must be shown
-// intact by the `credits` command (docs/proposals/go-port-plan.md §12). They
+// intact by the `credits` command (docs/design/go-port-plan.md §12). They
 // are loaded at boot and their absence is a startup failure, not a warning —
 // a server that cannot meet the licence should not begin serving.
 type Text struct {
@@ -163,7 +163,7 @@ func LoadText(dir string) (*Text, error) {
 	} {
 		b, err := os.ReadFile(filepath.Join(dir, f.path)) //nolint:gosec // operator-configured data directory
 		if err != nil {
-			return nil, fmt.Errorf("reading %s: %w (required: %s — see docs/proposals/go-port-plan.md §12)",
+			return nil, fmt.Errorf("reading %s: %w (required: %s — see docs/design/go-port-plan.md §12)",
 				f.path, err, f.why)
 		}
 		if strings.TrimSpace(string(b)) == "" {

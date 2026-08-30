@@ -258,7 +258,7 @@ func (s *Store) Save(ctx context.Context, rec *game.PlayerRecord) error {
 		// game reads or sets what is left. They are a property of the
 		// stored record rather than of the character, which is why they
 		// live in this package and not on the model
-		// (docs/proposals/yaml-only.md §1). Rewriting a record must not
+		// (docs/design/yaml-only.md §1). Rewriting a record must not
 		// quietly discard whatever a future version of the C server put in
 		// them, and this is what stops it.
 		//

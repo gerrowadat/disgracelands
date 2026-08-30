@@ -41,52 +41,39 @@ both the C tree and the Go tree.
 > houses, the immortal commands and remorting. 310 of the C's 318 commands
 > answer, and the plan's §10 lists the other 8 one by one — seven OasisOLC
 > editors and `slowns`, both declined rather than pending (Phase 6's own
-> write-up in `proposals/go-port-plan.md` covers what got built instead).
+> write-up in `design/go-port-plan.md` covers what got built instead).
 > `configuration.md` and `operations.md` mark the handful of settings
 > still *(inert)* for reasons of their own, unrelated to phase status.
 
 ## `docs/proposals/` — the plan, still moving
 
-What is going to happen, and the record of how the port got to where it is.
+What is going to happen. One document at a time, and it is empty between
+plans rather than accumulating them.
 
-**Where the next thing starts, as of 2026-08-29.** `yaml-only.md` was the
-forward plan and its build is finished: rows 1–6 have all landed, and the
-one row left is cutting the v1.0.0 release, which is a decision rather
-than a task. So **the forward plan is `go-port-plan.md` §10's Phase 7
-(cutover) again** — not because anything reverted, but because yaml-only
-was the thing standing in front of it and no longer is. Phase 7's
-preconditions are the actual map of what is left, and the two of them
-still open are the release (its precondition 6, now partly met: tagged
-releases exist, a *1.0* one does not) and a decision nobody has made about
-whether the archived roster comes back (precondition 4).
+**Where the next thing starts, as of 2026-08-30.** Both of the documents
+that used to live here have moved to `docs/design/`: `yaml-only.md`
+because every row of its §7 landed, ending with **v1.0.0, cut on
+2026-08-30**, and `go-port-plan.md` because Phases 0–6 are built and what
+is left of its Phase 7 is two deployment *decisions* rather than work —
+they are in `TODO.md`'s "Still open", which is where a decision belongs.
+The forward plan is the one document here.
 
-The day-to-day work in front of that is not in either proposal: it is
-`deviations.md`'s "Not deviations — gaps still to fill" list and whatever
-`test/parity` finds, filed as GitHub issues. Read those two as the todo
-list; read the proposals for what the work is *for*.
+- **[idiomatic-go.md](proposals/idiomatic-go.md)** — retiring the C's data
+  model from the Go server's memory, the way `yaml-only.md` retired its
+  file formats from the server's disk: one bit-vector type standing in for
+  eleven unrelated flag domains, `int32` standing in for a dozen
+  enumerations, `Values[4]` whose slots mean something different depending
+  on slot zero, and `-1` meaning "absent". Licensed by the port plan's §0
+  "Fidelity, phase two", and fenced by it: the on-disk format does not
+  move, the game does not move, and the C-derived tests that would prove
+  both may not be tidied away — which is the document's central risk and
+  its longest section. **Proposed 2026-08-30; nothing built.**
 
-- **[go-port-plan.md](proposals/go-port-plan.md)** — the design and phasing
-  for reimplementing the engine in Go: 64-bit safety, pluggable player- and
-  world-file formats, the concurrency model, licensing constraints, and the
-  phase-by-phase sequence. Phases 0–5 are built and marked done with what
-  each one did and did not contain, Phase 5's own slices and gaps listed
-  command by command; Phase 6 (OasisOLC) was decided against, in favour of
-  reloading edited world data into a running server without a restart —
-  its own write-up covers what that became instead. **Phase 7 (cutover) has
-  not started and is the forward plan again**, now that yaml-only has
-  landed — including one paragraph of it, on rollback, that yaml-only
-  rewrote. It is still authoritative for the architecture and for what each
-  phase did and did not contain, and is not extended with new plans.
-- **[yaml-only.md](proposals/yaml-only.md)** — retiring `classic`, `ascii`
-  and `binary` from the server, so it understands only `yaml`: what leaked,
-  what "the conversion is exactly dead on" has to mean and how it got
-  proved, the compatibility corpus and fuzz targets it built, and the rule
-  for yaml fields the legacy formats cannot source. Breaking, and proposed
-  as v1.0.0: the only route from a CircleMUD `lib/` to a running server is
-  `dlctl import`. **Rows 1–6 have landed**; row 7, cutting the release, has
-  not. Read its §7 table for what each row turned out to be about — several
-  were about something other than what they were written to be about, and
-  the bugs they found are listed there.
+The day-to-day work in front of that plan is not in it: it is the **open
+GitHub issues**, and `deviations.md`'s "Not deviations — gaps still to
+fill" and "What the session-parity suite found", which is where issues get
+filed from. Read those as the todo list; read the proposal for what the
+work is *for*.
 
 ## `docs/design/` — decisions that landed
 
@@ -97,23 +84,48 @@ just how to run it. Still corrected when reading the C or building the next
 piece finds something the original document got wrong; not rewritten to
 hide that it started as a proposal.
 
+- **[go-port-plan.md](design/go-port-plan.md)** — the design and phasing
+  for reimplementing the engine in Go: 64-bit safety, pluggable player-
+  and world-file formats, the concurrency model, licensing constraints,
+  and the phase-by-phase sequence. Phases 0–5 are built and marked done
+  with what each one did and did not contain, Phase 5's own slices and
+  gaps listed command by command; Phase 6 (OasisOLC) was decided against,
+  in favour of reloading edited world data into a running server without a
+  restart. **Phase 7 (cutover) never started and is not going to start as
+  written**: its remaining preconditions are a hosting decision and a
+  roster decision, both carried in `TODO.md`. Authoritative for the
+  architecture and for what each phase did and did not contain; not
+  extended with new plans. Moved here 2026-08-30 — its header says what
+  that move does and does not claim.
+- **[yaml-only.md](design/yaml-only.md)** — retiring `classic`, `ascii`
+  and `binary` from the server, so it understands only `yaml`: what
+  leaked, what "the conversion is exactly dead on" has to mean and how it
+  got proved, the compatibility corpus and fuzz targets it built, and the
+  rule for yaml fields the legacy formats cannot source. Breaking, and
+  released as v1.0.0: the only route from a CircleMUD `lib/` to a running
+  server is `dlctl import`. Every row of its §7 has landed. **§5 and §6
+  are the live half** — the compatibility contract every new field and
+  every new format test is still held to, and the fence `idiomatic-go.md`
+  is drawn against. Its §7 table is worth reading for what each row turned
+  out to be about; several were about something other than what they were
+  written to be about, and the bugs they found are listed there.
 - **[data-format.md](design/data-format.md)** — a single yaml format for
   everything a lib-dir holds: the world, players, boards, mail, houses and
   the game tuning that used to be compiled into `config.c`. Replaces the
-  eight unrelated formats a CircleMUD `lib/` carries, and is a superset of all of them. YAML
-  over a JSON data model, one file per zone, one file per player, vnums
-  unchanged. It is the *only* format the server reads now (§11 step 7).
-  One piece of the document is not built, and is declined rather than
-  pending: the `classic` export writer (`yaml-only.md` §0.3). §11 tracks
-  the rest.
+  eight unrelated formats a CircleMUD `lib/` carries, and is a superset of
+  all of them. YAML over a JSON data model, one file per zone, one file
+  per player, vnums unchanged. It is the *only* format the server reads
+  now (§11 step 7). One piece of the document is not built, and is
+  declined rather than pending: the `classic` export writer
+  (`yaml-only.md` §0.3). §11 tracks the rest.
 - **[data-format-versioning.md](design/data-format-versioning.md)** — the
   `.dlversion` stamp a data directory carries: the `major.minor.patch`
   release of the `dlctl` that wrote it. A *differing* major refuses to
   boot in either direction, a differing minor is "own risk" and `dlctl
-  data version` reports it, a differing patch is silent by construction. Layered on top of
-  data-format.md §10.1's own per-file `schema: dl/<kind>@<major>` tag,
-  which says what shape one file is in rather than what release the whole
-  directory was last written by.
+  data version` reports it, a differing patch is silent by construction.
+  Layered on top of data-format.md §10.1's own per-file
+  `schema: dl/<kind>@<major>` tag, which says what shape one file is in
+  rather than what release the whole directory was last written by.
 - **[signal-handling.md](design/signal-handling.md)** — what each signal
   does and why: `SIGTERM`/`SIGINT` shutdown and its ordering contract,
   `SIGHUP` as a reload rather than the C's "die", `SIGUSR1`/`SIGUSR2` from

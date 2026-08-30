@@ -18,7 +18,7 @@ import (
 // `reloadzone` — reloadmob's own zone-wide extension: re-reads a zone's
 // definition plus every room and mobile in its vnum range from disk, and
 // applies them to the running world without a restart. New capability,
-// not a C port; see docs/deviations.md and docs/proposals/go-port-plan.md.
+// not a C port; see docs/deviations.md and docs/design/go-port-plan.md.
 
 // ReloadZone implements session.ZoneReloader: re-reads vnum's zone,
 // rooms and mobiles from the world data this server booted with. Runs

@@ -129,7 +129,7 @@ health: ## Print /healthz, /readyz and the server's own metrics from a running s
 # failure rather than an empty roster.
 #
 # Two directories where there were seven: one on-disk layout now
-# (docs/proposals/yaml-only.md §1).
+# (docs/design/yaml-only.md §1).
 $(SCRATCH):
 	@echo "==> Building a scratch data directory in $(SCRATCH) from $(LIB)"
 	@rm -rf $(SCRATCH)
@@ -208,7 +208,7 @@ play-fast: ## The play suite without the race detector, for a quicker answer
 	$(GO) test -tags=play -count=1 -timeout 30m ./test/play/...
 
 # Fuzzing, the half of the budget that was proposed and never built
-# (docs/proposals/yaml-only.md §10). The seed corpora already replay on
+# (docs/design/yaml-only.md §10). The seed corpora already replay on
 # every push -- the targets are ordinary Go tests, so `go test ./...` runs
 # their seeds -- and that is regression testing, not coverage. This is the
 # part that generates inputs nobody thought of.

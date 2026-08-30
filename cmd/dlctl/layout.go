@@ -92,7 +92,7 @@ func subsystem(t dirType) (config.Subsystem, error) {
 //
 // internal/config.Dir used to carry both layouts and pick between them from
 // a format name. It carries one now — the server reads one format
-// (docs/proposals/yaml-only.md §1) — and this is the other half, moved to
+// (docs/design/yaml-only.md §1) — and this is the other half, moved to
 // the one command that still has to find it. Reading the old layout is
 // `dlctl`'s whole job; it is no longer anybody else's.
 //

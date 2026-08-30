@@ -87,7 +87,7 @@ func testText(t *testing.T) *Text {
 	// synthetic stand-in.
 	//
 	// Both come from examples/stock/**yaml**, not from binary/. That is
-	// the change docs/proposals/yaml-only.md §5.4 asks for: this harness
+	// the change docs/design/yaml-only.md §5.4 asks for: this harness
 	// is what every integration test in this package runs on, and it was
 	// running on the formats the server is about to stop supporting. It
 	// now proves the format the server ships on.
@@ -722,7 +722,7 @@ func newLegacyTestServer(t *testing.T) (*Server, player.Store) {
 //
 // banStore, boardStore, mailStore and houseStore override the default yaml
 // ones when non-nil — see docs/design/data-format.md §9 step 6a. Those
-// defaults were classic until docs/proposals/yaml-only.md §5.4; they are
+// defaults were classic until docs/design/yaml-only.md §5.4; they are
 // yaml now, for the reason newTestServer's own comment gives.
 func newTestServerWith(t *testing.T, store player.Store, objects player.ObjectStore, banStore bans.Store, boardStore boards.Store, mailStore mail.Store, houseStore houses.Store) (*Server, player.Store) {
 	t.Helper()
@@ -843,7 +843,7 @@ func serveOn(t *testing.T, srv *Server, ln *Listener) {
 // TestEveryTransportSendsTheGreeting is a licence test, not a feature test.
 //
 // The CircleMUD licence requires the login sequence to name the DikuMUD and
-// CircleMUD creators (docs/proposals/go-port-plan.md §12), and the greeting
+// CircleMUD creators (docs/design/go-port-plan.md §12), and the greeting
 // file is where that happens. A transport that renders its own splash screen
 // and skips it would be a violation. Every transport goes through
 // Server.Accept, so a new one is covered by adding a case here — and if
@@ -1378,7 +1378,7 @@ func TestASplitLineEndingIsStillOneLine(t *testing.T) {
 }
 
 // TestCreditsAndHelpCircleMUD are licence obligations rather than features
-// (docs/proposals/go-port-plan.md §12), so they are tested as such.
+// (docs/design/go-port-plan.md §12), so they are tested as such.
 func TestCreditsAndHelpCircleMUD(t *testing.T) {
 	srv, _ := newTestServer(t)
 	c := dialClient(t, listening(t, srv))
