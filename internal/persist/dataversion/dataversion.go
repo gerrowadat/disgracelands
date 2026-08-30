@@ -87,11 +87,19 @@ func Parse(s string) (Version, error) {
 // versioning.md §6 for why that hole is deliberate rather than an
 // oversight.
 func Current() (v Version, ok bool) {
-	return parseBuild(buildinfo.Get().Version)
+	return ParseRelease(buildinfo.Get().Version)
 }
 
-// parseBuild reduces a `git describe` string to the release it names.
-func parseBuild(s string) (Version, bool) {
+// ParseRelease reduces a `git describe` string to the release it names:
+// "v1.2.3", "1.2.3", "v1.2.3-4-gabc1234" and "v1.2.3-dirty" are all
+// release 1.2.3, and "devel" is no release at all.
+//
+// Current uses it on this build's own version string. It is exported
+// because `dlctl import --stamp-version` takes the same shape from an
+// operator, and taking anything narrower would mean rejecting the string
+// `git describe --tags` just printed at them — while taking anything wider
+// would let a stamp name a version no build could ever have.
+func ParseRelease(s string) (Version, bool) {
 	s = strings.TrimPrefix(s, "v")
 	// "-4-gabc1234", "-dirty", and semver's own "+build" metadata all
 	// describe *this* build, not the release it descends from.

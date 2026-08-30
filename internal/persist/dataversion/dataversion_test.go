@@ -53,13 +53,13 @@ func TestParseBuildReducesDescribeOutputToItsRelease(t *testing.T) {
 		"v0.1.2-dirty",            // on the tag, with uncommitted changes
 		"v0.1.2+somebuildmeta",    // semver build metadata, if it ever appears
 	} {
-		got, ok := parseBuild(s)
+		got, ok := ParseRelease(s)
 		if !ok {
-			t.Errorf("parseBuild(%q) found no version, want %s", s, want)
+			t.Errorf("ParseRelease(%q) found no version, want %s", s, want)
 			continue
 		}
 		if got != want {
-			t.Errorf("parseBuild(%q) = %s, want %s", s, got, want)
+			t.Errorf("ParseRelease(%q) = %s, want %s", s, got, want)
 		}
 	}
 }
@@ -68,8 +68,8 @@ func TestParseBuildRejectsWhatIsNotARelease(t *testing.T) {
 	// "devel" is buildinfo's own fallback with no -ldflags; a bare hash is
 	// what `git describe --always` produces in a repo with no tags at all.
 	for _, s := range []string{"devel", "", "abc1234", "unknown", "v1.2"} {
-		if got, ok := parseBuild(s); ok {
-			t.Errorf("parseBuild(%q) = %s, want no version", s, got)
+		if got, ok := ParseRelease(s); ok {
+			t.Errorf("ParseRelease(%q) = %s, want no version", s, got)
 		}
 	}
 }

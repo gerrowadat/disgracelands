@@ -57,6 +57,11 @@ type importOptions struct {
 	// verify runs the comparison in verifyImport once the conversion is
 	// done, and is on by default.
 	verify bool
+	// stampVersion overrides the release --to-dir is stamped with when the
+	// conversion qualifies for a stamp at all. Zero means "this build's
+	// own", which is the ordinary case; see cmdImport's --stamp-version.
+	stampVersion    dataversion.Version
+	stampVersionSet bool
 }
 
 // cmdImport converts a classic (or, for pfile, binary/ascii) directory into
@@ -70,7 +75,8 @@ type importOptions struct {
 // and config/game.yaml, the game tuning, for the same reason and a
 // stronger one (see copyGameConfig), and, once everything has actually
 // succeeded, stamping --to-dir with this
-// build's own data-format version (docs/design/data-format-versioning.md).
+// build's own data-format version (docs/design/data-format-versioning.md),
+// or with --stamp-version's if the operator gave one.
 // This is what used to be the separate `dlctl lib import` command; folding
 // it into `import` with --type omitted means one flag surface serves both
 // "convert everything" and "convert one subsystem" rather than two
@@ -99,6 +105,8 @@ func cmdImport(args []string) error {
 		"(--type=pfile only; default: beside or inside --from-dir, whichever exists)")
 	verify := fs.Bool("verify", true, "After importing, load both directories and check they agree "+
 		"(`dlctl verify --against`); --verify=false to skip it")
+	stampVersion := fs.String("stamp-version", "", "Stamp --to-dir as written by this release "+
+		"instead of the one this build reports (--type-less import only; the conversion still has to earn a stamp)")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
@@ -108,6 +116,24 @@ func cmdImport(args []string) error {
 		fromHouseDir: *fromHouseDir, fromMiscDir: *fromMiscDir,
 		fromObjsDir: *fromObjsDir, fromAliasDir: *fromAliasDir,
 		verify: *verify,
+	}
+
+	// Parsed here rather than at stamping time, which is after every
+	// subsystem has converted and been verified: a typo in a version
+	// number should cost a message, not a whole import.
+	if *stampVersion != "" {
+		// The --type conflict first: with one given, the flag cannot be
+		// used at all, so what its value says is beside the point.
+		if *typeRaw != "" {
+			return fmt.Errorf("--stamp-version needs a --type-less import: a single subsystem is not a complete " +
+				"data directory, so `import --type` writes no stamp for it to override")
+		}
+		v, ok := dataversion.ParseRelease(*stampVersion)
+		if !ok {
+			return fmt.Errorf("--stamp-version %q is not a release version: want major.minor.patch, "+
+				"optionally `v`-prefixed and with a `git describe` suffix (v1.0.0, 1.0.0, v1.0.0-4-gabc1234)", *stampVersion)
+		}
+		o.stampVersion, o.stampVersionSet = v, true
 	}
 
 	if *typeRaw == "" {
@@ -258,15 +284,39 @@ func cmdImportAll(o importOptions) error {
 	fmt.Println()
 
 	current, ok := dataversion.Current()
-	if !ok {
+	switch {
+	case o.stampVersionSet:
+		// --stamp-version overrides the *number*, never the qualification:
+		// everything above this point — seven importers, the text and
+		// config copies, and verifyImport — still has to have succeeded,
+		// and a failure returns before here whatever was asked for.
+		//
+		// Where it earns its keep is a directory built by a dlctl that is
+		// not itself the release the data is for. An unreleased build
+		// (`go run`, or a `go build` with no -ldflags) has no version to
+		// name and so stamps nothing at all, which leaves the server it
+		// was converted for with nothing to check; and a release being
+		// prepared is converted, in practice, by whatever dlctl is to
+		// hand rather than by a binary of the release it is for. Both are
+		// "the operator knows the answer and the build does not".
+		note := fmt.Sprintf("this build reports %s", buildinfo.Get().Version)
+		if ok && current == o.stampVersion {
+			note = "the same version this build reports"
+		}
+		if err := dataversion.Write(o.toDir, o.stampVersion); err != nil {
+			return fmt.Errorf("stamping %s: %w", o.toDir, err)
+		}
+		fmt.Printf("%s is a complete yaml directory, stamped as written by release %s (--stamp-version; %s).\n",
+			o.toDir, o.stampVersion, note)
+	case !ok:
 		fmt.Printf("%s is a complete yaml directory. This build (%s) has no release version, so it was not stamped with one.\n",
 			o.toDir, buildinfo.Get().Version)
-		return nil
+	default:
+		if err := dataversion.Write(o.toDir, current); err != nil {
+			return fmt.Errorf("stamping %s: %w", o.toDir, err)
+		}
+		fmt.Printf("%s is a complete yaml directory, written by release %s.\n", o.toDir, current)
 	}
-	if err := dataversion.Write(o.toDir, current); err != nil {
-		return fmt.Errorf("stamping %s: %w", o.toDir, err)
-	}
-	fmt.Printf("%s is a complete yaml directory, written by release %s.\n", o.toDir, current)
 	return nil
 }
 

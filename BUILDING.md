@@ -172,3 +172,17 @@ test and compare both servers, which is what the tree needs it for. The
 Disgracelands world and text are archive material and are not in this
 repo; `dlctl import` turns a copy of the archive into a directory the Go
 server runs on, and `--lib-dir` points at that.
+
+A converted directory records which release wrote it, in `.dlversion`,
+and the server checks that at boot
+(`docs/design/data-format-versioning.md`). The version stamped is the
+*converting build's* own, so a `dlctl` built with `go run` or a bare `go
+build` has none to write and leaves the directory unstamped. If you are
+converting an archive for a particular release, name it:
+
+```sh
+dlctl import --from-dir=/path/to/lib --to-dir=/srv/disgracelands/data --stamp-version=1.0.0
+```
+
+That sets the number and nothing else — a conversion that fails, or whose
+`verify` reports a difference, is still refused a stamp.

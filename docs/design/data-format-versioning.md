@@ -181,6 +181,14 @@ Built:
   (a half-converted directory should not claim to be a release's output)
   and nothing if this build has no release version (§6), saying so in
   both cases.
+- `dlctl import --stamp-version=X` writes `X` instead of `Current`. It
+  overrides the *number* and never the qualification: a failed step or a
+  failed `verify` still refuses the stamp, exactly as without it. It takes
+  anything `git describe --tags` prints — `v1.0.0`, `1.0.0`,
+  `v1.0.0-4-gabc1234` all name release 1.0.0, via
+  `dataversion.ParseRelease` — and refuses anything else *before* the
+  conversion runs, so a typo costs a message rather than an import. See
+  §6 for what it is for.
 - `test/play` builds its server with `-ldflags` for this reason
   specifically, so that its child process *has* a release version and
   actually performs the check. `test/play/dataversion_test.go` is the
@@ -255,6 +263,39 @@ unreleased build guessing at a version and enforcing it — turns a
 development convenience into data corruption's plausible cover story, and
 because the enforcement matters where operators are, which is on released
 binaries.
+
+### 6.1 `--stamp-version`, for when the operator knows and the build does not
+
+The one place that reasoning does not reach is preparing the data
+directory *for* a release. An archived `lib/` is converted once, by
+whatever `dlctl` is to hand — realistically `go run ./cmd/dlctl`, or a
+`go build` from a working tree — and the result is the directory a
+released server will boot on. The build has no version; the operator
+knows precisely which one they mean.
+
+`dlctl import --stamp-version=1.0.0` is that, and only that. Every
+argument above still holds — nothing is *guessed*, nothing is inferred
+from a build that cannot know, and the number is not enforced by the
+build that wrote it. What has changed is who is answering: an operator
+naming a release on the command line is a different act from a binary
+inventing one, and the second is the thing §6 refuses.
+
+Two properties keep it from becoming the hole it is patching:
+
+- **It cannot manufacture a qualification.** It sets the version written
+  at the end of a conversion that has already succeeded and verified. A
+  failed subsystem, or a `verify --against` that reports a difference,
+  refuses the stamp with the flag exactly as without it — an operator who
+  most wants a stamp is the one who most needs not to get one.
+- **It cannot name something no release could be.** The value goes
+  through the same reduction `Current` applies to `git describe` output,
+  so `1.0` or `latest` is refused rather than stored.
+
+`dlctl data version --write` deliberately does *not* have the same
+override, and the asymmetry is the point: it restamps an existing
+directory, where a wrong number rewrites a claim somebody may already be
+relying on, whereas `import` stamps a directory it has just built from
+scratch and verified in the same breath.
 
 ## 7. Relationship to the rest of the format's versioning
 

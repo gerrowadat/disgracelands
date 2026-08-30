@@ -300,3 +300,79 @@ func TestImportCarriesTheMiniWorldAcross(t *testing.T) {
 		})
 	}
 }
+
+// --stamp-version is the escape hatch for the hole
+// docs/design/data-format-versioning.md §6 leaves open on purpose: the
+// version a directory is stamped with is the *build's* release, so a
+// dlctl that has none — `go run`, `go test`, a plain `go build`, which is
+// what a release is realistically prepared with — converts an archive and
+// then leaves it unstamped, and the server it was converted for has
+// nothing to check.
+//
+// This test binary is exactly such a build (TestImportConvertsEndToEnd
+// asserts the unstamped half), which is what makes it able to test the
+// override at all.
+func TestImportStampVersionOverridesTheBuildsOwn(t *testing.T) {
+	if _, released := dataversion.Current(); released {
+		t.Skip("this build has a release version of its own; the override still applies, but the interesting case is a build with none")
+	}
+
+	to := t.TempDir()
+	// `git describe` output, not a bare semver, because that is the string
+	// an operator has to hand and would otherwise have to trim by eye.
+	if err := run([]string{"import", "--from-dir", "../../examples/torture/binary", "--to-dir", to,
+		"--stamp-version", "v1.2.3-4-gabc1234"}); err != nil {
+		t.Fatalf("run([import --stamp-version]): %v", err)
+	}
+
+	got, ok, err := dataversion.Read(to)
+	if err != nil {
+		t.Fatalf("reading the stamp: %v", err)
+	}
+	if !ok {
+		t.Fatal("no stamp was written, want 1.2.3")
+	}
+	if want := (dataversion.Version{Major: 1, Minor: 2, Patch: 3}); got != want {
+		t.Errorf("stamped %s, want %s", got, want)
+	}
+}
+
+// The flag overrides the number, never whether the conversion earned one.
+// A subsystem that failed to convert is the case that matters: it is the
+// one where an operator who asked for a stamp most wants not to get one.
+func TestImportStampVersionDoesNotStampAFailedConversion(t *testing.T) {
+	to := t.TempDir()
+	// An empty source directory: nothing to read, so the importers fail.
+	err := run([]string{"import", "--from-dir", t.TempDir(), "--to-dir", to, "--stamp-version", "1.0.0"})
+	if err == nil {
+		t.Fatal("importing an empty directory succeeded, want an error")
+	}
+	if _, ok, rerr := dataversion.Read(to); rerr != nil || ok {
+		t.Errorf("a failed conversion was stamped anyway (err %v)", rerr)
+	}
+}
+
+func TestImportStampVersionRejectsWhatItCannotUse(t *testing.T) {
+	// Rejected before anything is converted, so a typo costs a message
+	// rather than a whole import: --to-dir is left untouched.
+	t.Run("not a release version", func(t *testing.T) {
+		to := filepath.Join(t.TempDir(), "out")
+		if err := run([]string{"import", "--from-dir", "../../examples/torture/binary", "--to-dir", to,
+			"--stamp-version", "1.0"}); err == nil {
+			t.Fatal("--stamp-version 1.0 succeeded, want an error")
+		}
+		if _, err := os.Stat(to); !os.IsNotExist(err) {
+			t.Errorf("--to-dir was written despite the flag being refused: %v", err)
+		}
+	})
+
+	// `import --type` writes no stamp for any version to override — a
+	// single subsystem is not a data directory — so asking is a mistake
+	// worth naming rather than a flag to ignore.
+	t.Run("with --type", func(t *testing.T) {
+		if err := run([]string{"import", "--type", "world", "--from-dir", "../../examples/torture/binary",
+			"--to-dir", t.TempDir(), "--stamp-version", "1.0.0"}); err == nil {
+			t.Fatal("--stamp-version with --type succeeded, want an error")
+		}
+	})
+}
