@@ -523,7 +523,18 @@ func (o *Object) TotalWeight() int32 {
 func (o *Object) Takeable() bool { return o != nil && o.WearFlags.Has(ItemWearTake) }
 
 // Matches reports whether a typed word names this object, as the C's
-// isname() does: any whitespace-separated keyword the word is a prefix of.
+// isname() does — which is a **whole-word** match against a keyword list
+// whose keywords end at any non-alphabetic byte. `get sword` picks up a
+// long sword; `get swo` does not.
+//
+// This comment used to say "any whitespace-separated keyword the word is a
+// prefix of", which is wrong twice over and was the description of two
+// separate bugs: the prefix match this port had for four phases, and the
+// whitespace-separated one it had for a year after that (#277). The
+// function was fixed both times and the comment was not. See
+// matchesKeywords for the rule and reference/tools/nameoracle.c for what
+// settles it; docs/investigations/partial-matching.md §7 for why a stale
+// comment here is worth more than a nit.
 func (o *Object) Matches(word string) bool {
 	if o == nil || word == "" {
 		return false
