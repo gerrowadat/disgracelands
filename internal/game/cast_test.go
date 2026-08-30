@@ -23,9 +23,23 @@ func TestParseCastArgument(t *testing.T) {
 		{in: "'armor'", spell: "armor"},
 		{in: "  'cure light'  welmar  ", spell: "cure light", target: "welmar"},
 		{in: "", err: "Cast what where?\r\n"},
-		{in: "   ", err: "Cast what where?\r\n"},
+		// Whitespace and no quotes is "unenclosed", not "blank": strtok's
+		// first call has a token to return (the spaces) and its second
+		// does not. This asserted "Cast what where?" until
+		// TestCastArgumentAgainstC compared it with the compiled C.
+		{in: "   ", err: "Spell names must be enclosed in the Holy Magic Symbols: '\r\n"},
+		// Empty quotes likewise: strtok skips the delimiters it starts on,
+		// so the second call finds nothing left and refuses here rather
+		// than handing an empty name on to be refused a step later.
+		{in: " ''", err: "Spell names must be enclosed in the Holy Magic Symbols: '\r\n"},
 		{in: "magic missile", err: "Spell names must be enclosed in the Holy Magic Symbols: '\r\n"},
-		{in: "'magic missile", err: "Spell names must be enclosed in the Holy Magic Symbols: '\r\n"},
+		// An *unterminated* quote is not an error: strtok's second call
+		// runs to the end of the string when it finds no closing
+		// delimiter, so `cast 'armor` casts armor on the real server.
+		// This asserted a refusal until TestCastArgumentAgainstC compared
+		// it with the compiled C.
+		{in: "'magic missile", spell: "magic missile"},
+		{in: "'armor", spell: "armor"},
 	} {
 		spell, target, err := ParseCastArgument(tc.in)
 		if err != tc.err {

@@ -154,30 +154,92 @@ func KnowsSpell(rec *PlayerRecord, info SpellInfo) bool {
 	return false
 }
 
-// ParseCastArgument splits `'spell name' target` as do_cast's strtok calls do.
+// ParseCastArgument splits `'spell name' target` as do_cast's three strtok
+// calls do (spell_parser.c:603-611).
 //
 // The quotes are not decoration: the C splits on them, so a spell name must
 // be enclosed and everything after the closing quote is the target. The error
 // for a missing quote is one of the game's better lines.
+//
+// **arg is what the interpreter passes, leading space and all**, and that
+// is load-bearing rather than incidental. command_interpreter does
+// `line = any_one_arg(argument, arg)` (interpreter.c:1019), and any_one_arg
+// skips spaces at the *start* and returns a pointer to the character after
+// the word it copied — which is the space before the rest. So do_cast is
+// handed " 'magic missile' fido"; and because strtok skips leading
+// *delimiters*, the first call returns that space (do_cast's own comment
+// calls it "blank") and the second returns the spell name.
+//
+// Read with the wrong idea of the input — no leading space — the same
+// function appears to return the spell name from the first call and the
+// target from the second, i.e. to cast the target. That prediction is
+// obviously false and is still easy to argue away; it was read that way
+// twice here. reference/tools/castoracle.c is the C, compiled, and
+// castoracle_test.go sweeps it, which is why the version below is right
+// and the readings were not.
 func ParseCastArgument(arg string) (spell, target string, err string) {
-	if strings.TrimSpace(arg) == "" {
+	// An empty argument is do_cast's own first refusal: strtok returns
+	// NULL when there is nothing to tokenise at all.
+	if arg == "" {
 		return "", "", "Cast what where?\r\n"
 	}
 
-	// strtok(argument, "'") takes everything before the first quote, which
-	// the C then discards; the second call takes the spell name.
-	first := strings.Index(arg, "'")
-	if first < 0 {
+	// **The space is put back.** The C's `argument` keeps the space after
+	// the command word, and strtok's first call is defined in terms of it:
+	// with the space, that call returns the space (do_cast calls it
+	// "blank") and the second returns the spell name. This port's
+	// interpreter trims the argument (session.split), so without this the
+	// first call would consume the *spell name* as the blank and the
+	// second would return the target — which is the very confusion the
+	// header above describes, arrived at from the other direction.
+	//
+	// Any leading whitespace does equally well, because the first call
+	// discards whatever it returns. What matters is only that there is
+	// something before the opening quote that is not itself a quote.
+	_, rest, _ := strtokQuote(" " + arg)
+
+	// strtok(NULL, "'"): the spell name. NULL when there is no closing
+	// quote — or, and this is the case a plain `strings.Index` port gets
+	// wrong, when what is between the quotes is nothing at all, because
+	// strtok skips the delimiters it starts on. So `cast ''` is refused
+	// here with "Spell names must be enclosed", rather than handed on as
+	// an empty spell name to be refused a step later with "Cast what?!?".
+	name, after, ok := strtokQuote(rest)
+	if !ok {
 		return "", "", "Spell names must be enclosed in the Holy Magic Symbols: '\r\n"
 	}
-	rest := arg[first+1:]
 
-	second := strings.Index(rest, "'")
-	if second < 0 {
-		return "", "", "Spell names must be enclosed in the Holy Magic Symbols: '\r\n"
+	// strtok(NULL, "\0"): everything left, delimiters and all.
+	//
+	// TrimSpace on both halves is this port's own. On the target it is
+	// invisible — the C's `t` keeps the leading space any_one_arg left on
+	// it, and every consumer trims it anyway. On the *spell name* it is a
+	// deliberate deviation with a reachable consequence, and
+	// docs/deviations.md has it: `cast '   '` reaches find_skill_num with
+	// three spaces, which has no words, so the C's word loop never runs,
+	// `ok && !*first2` holds on the first entry of spell_info[], and the C
+	// casts whichever spell sits lowest in the table. This trims to "" and
+	// SpellNumberByName refuses it.
+	return strings.TrimSpace(name), strings.TrimSpace(after), ""
+}
+
+// strtokQuote is one `strtok(s, "'")` call: skip the quotes it starts on,
+// take everything up to the next one, and report what is left after it.
+// ok is false where strtok returns NULL, which is when nothing but quotes
+// remains.
+//
+// It threads the remainder through the return rather than keeping a
+// position, because the C's strtok keeps that position in a static and
+// reproducing a global here would buy nothing.
+func strtokQuote(s string) (token, rest string, ok bool) {
+	s = strings.TrimLeft(s, "'")
+	if s == "" {
+		return "", "", false
 	}
-
-	return strings.TrimSpace(rest[:second]), strings.TrimSpace(rest[second+1:]), ""
+	if end := strings.Index(s, "'"); end >= 0 {
+		return s[:end], s[end+1:], true
+	}
+	return s, "", true
 }
 
 // TargetQuestion is what to ask when a spell needs a target and none was
