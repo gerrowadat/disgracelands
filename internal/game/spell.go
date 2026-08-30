@@ -20,38 +20,55 @@ import (
 // functions and compares every field of every entry, so the transcription is
 // checked rather than trusted.
 
-// Targeting flags, from spells.h:167. Two of them are checks rather than
+// TargetFlag is one of the TAR_* targeting flags, from spells.h:167, and
+// TargetFlags is a spell's set of them. Two of them are checks rather than
 // targets — TargetSelfOnly and TargetNotSelf qualify one of the others.
+//
+// Bit indices, not masks: docs/proposals/idiomatic-go.md §4.1, and §4.1.1
+// for the trap. spell_test.go re-parses spells.h and compares every
+// entry's raw bits, which is what keeps these numbers the C's (§5).
+type TargetFlag int
+
+// TargetFlags is a set of TargetFlag.
+type TargetFlags = Set[TargetFlag]
+
 const (
-	TargetIgnore    Flags = 1 << 0
-	TargetCharRoom  Flags = 1 << 1
-	TargetCharWorld Flags = 1 << 2
-	TargetFightSelf Flags = 1 << 3
-	TargetFightVict Flags = 1 << 4
-	TargetSelfOnly  Flags = 1 << 5
-	TargetNotSelf   Flags = 1 << 6
-	TargetObjInv    Flags = 1 << 7
-	TargetObjRoom   Flags = 1 << 8
-	TargetObjWorld  Flags = 1 << 9
-	TargetObjEquip  Flags = 1 << 10
+	TargetIgnore    TargetFlag = 0
+	TargetCharRoom  TargetFlag = 1
+	TargetCharWorld TargetFlag = 2
+	TargetFightSelf TargetFlag = 3
+	TargetFightVict TargetFlag = 4
+	TargetSelfOnly  TargetFlag = 5
+	TargetNotSelf   TargetFlag = 6
+	TargetObjInv    TargetFlag = 7
+	TargetObjRoom   TargetFlag = 8
+	TargetObjWorld  TargetFlag = 9
+	TargetObjEquip  TargetFlag = 10
 )
 
 // Spell routines, from spells.h:21. A spell may have several — heal both
 // restores points and removes blindness — and the C runs each in turn.
+// RoutineFlag is one of the MAG_* routines, and RoutineFlags is a spell's
+// set of them.
+type RoutineFlag int
+
+// RoutineFlags is a set of RoutineFlag.
+type RoutineFlags = Set[RoutineFlag]
+
 const (
-	MagDamage    Flags = 1 << 0
-	MagAffects   Flags = 1 << 1
-	MagUnaffects Flags = 1 << 2
-	MagPoints    Flags = 1 << 3
-	MagAlterObjs Flags = 1 << 4
-	MagGroups    Flags = 1 << 5
-	MagMasses    Flags = 1 << 6
-	MagAreas     Flags = 1 << 7
-	MagSummons   Flags = 1 << 8
-	MagCreations Flags = 1 << 9
+	MagDamage    RoutineFlag = 0
+	MagAffects   RoutineFlag = 1
+	MagUnaffects RoutineFlag = 2
+	MagPoints    RoutineFlag = 3
+	MagAlterObjs RoutineFlag = 4
+	MagGroups    RoutineFlag = 5
+	MagMasses    RoutineFlag = 6
+	MagAreas     RoutineFlag = 7
+	MagSummons   RoutineFlag = 8
+	MagCreations RoutineFlag = 9
 	// MagManual means the spell has a function of its own rather than being
 	// assembled from the routines above.
-	MagManual Flags = 1 << 10
+	MagManual RoutineFlag = 10
 )
 
 // SpellInfo is one row of the C's spell_info[].
@@ -68,11 +85,11 @@ type SpellInfo struct {
 	// MinPosition is the lowest position from which it can be cast.
 	MinPosition Position
 	// Targets is what it may be aimed at.
-	Targets Flags
+	Targets TargetFlags
 	// Violent marks a spell that starts a fight.
 	Violent bool
 	// Routines is what it actually does.
-	Routines Flags
+	Routines RoutineFlags
 	// WearOff is what the victim is told when an affect expires.
 	WearOff string
 
@@ -325,17 +342,17 @@ var spellTable = map[int32]SpellInfo{
 		Name:    "animate dead",
 		ManaMax: 35, ManaMin: 10, ManaChange: 3,
 		MinPosition: PosStanding,
-		Targets:     TargetObjRoom,
+		Targets:     NewSet(TargetObjRoom),
 		Violent:     false,
-		Routines:    MagSummons,
+		Routines:    NewSet(MagSummons),
 	},
 	SpellArmor: {
 		Name:    "armor",
 		ManaMax: 30, ManaMin: 15, ManaChange: 3,
 		MinPosition: PosFighting,
-		Targets:     TargetCharRoom,
+		Targets:     NewSet(TargetCharRoom),
 		Violent:     false,
-		Routines:    MagAffects,
+		Routines:    NewSet(MagAffects),
 		WearOff:     "You feel less protected.",
 		MinLevel: map[int32]int32{
 			ClassCleric:    1,
@@ -347,9 +364,9 @@ var spellTable = map[int32]SpellInfo{
 		Name:    "bless",
 		ManaMax: 35, ManaMin: 5, ManaChange: 3,
 		MinPosition: PosStanding,
-		Targets:     TargetCharRoom | TargetObjInv,
+		Targets:     NewSet(TargetCharRoom, TargetObjInv),
 		Violent:     false,
-		Routines:    MagAffects | MagAlterObjs,
+		Routines:    NewSet(MagAffects, MagAlterObjs),
 		WearOff:     "You feel less righteous.",
 		MinLevel: map[int32]int32{
 			ClassCleric:  5,
@@ -360,9 +377,9 @@ var spellTable = map[int32]SpellInfo{
 		Name:    "blindness",
 		ManaMax: 35, ManaMin: 25, ManaChange: 1,
 		MinPosition: PosStanding,
-		Targets:     TargetCharRoom | TargetNotSelf,
+		Targets:     NewSet(TargetCharRoom, TargetNotSelf),
 		Violent:     false,
-		Routines:    MagAffects,
+		Routines:    NewSet(MagAffects),
 		WearOff:     "You feel a cloak of blindness dissolve.",
 		MinLevel: map[int32]int32{
 			ClassCleric:    6,
@@ -373,9 +390,9 @@ var spellTable = map[int32]SpellInfo{
 		Name:    "burning hands",
 		ManaMax: 30, ManaMin: 10, ManaChange: 3,
 		MinPosition: PosFighting,
-		Targets:     TargetCharRoom | TargetFightVict,
+		Targets:     NewSet(TargetCharRoom, TargetFightVict),
 		Violent:     true,
-		Routines:    MagDamage,
+		Routines:    NewSet(MagDamage),
 		MinLevel: map[int32]int32{
 			ClassMagicUser: 5,
 		},
@@ -384,9 +401,9 @@ var spellTable = map[int32]SpellInfo{
 		Name:    "call lightning",
 		ManaMax: 40, ManaMin: 25, ManaChange: 3,
 		MinPosition: PosFighting,
-		Targets:     TargetCharRoom | TargetFightVict,
+		Targets:     NewSet(TargetCharRoom, TargetFightVict),
 		Violent:     true,
-		Routines:    MagDamage,
+		Routines:    NewSet(MagDamage),
 		MinLevel: map[int32]int32{
 			ClassCleric: 15,
 		},
@@ -395,9 +412,9 @@ var spellTable = map[int32]SpellInfo{
 		Name:    "charm person",
 		ManaMax: 75, ManaMin: 50, ManaChange: 2,
 		MinPosition: PosFighting,
-		Targets:     TargetCharRoom | TargetNotSelf,
+		Targets:     NewSet(TargetCharRoom, TargetNotSelf),
 		Violent:     true,
-		Routines:    MagManual,
+		Routines:    NewSet(MagManual),
 		WearOff:     "You feel more self-confident.",
 		MinLevel: map[int32]int32{
 			ClassMagicUser: 16,
@@ -407,9 +424,9 @@ var spellTable = map[int32]SpellInfo{
 		Name:    "chill touch",
 		ManaMax: 30, ManaMin: 10, ManaChange: 3,
 		MinPosition: PosFighting,
-		Targets:     TargetCharRoom | TargetFightVict,
+		Targets:     NewSet(TargetCharRoom, TargetFightVict),
 		Violent:     true,
-		Routines:    MagDamage | MagAffects,
+		Routines:    NewSet(MagDamage, MagAffects),
 		WearOff:     "You feel your strength return.",
 		MinLevel: map[int32]int32{
 			ClassMagicUser: 3,
@@ -419,9 +436,9 @@ var spellTable = map[int32]SpellInfo{
 		Name:    "clone",
 		ManaMax: 80, ManaMin: 65, ManaChange: 5,
 		MinPosition: PosStanding,
-		Targets:     TargetSelfOnly,
+		Targets:     NewSet(TargetSelfOnly),
 		Violent:     false,
-		Routines:    MagSummons,
+		Routines:    NewSet(MagSummons),
 		MinLevel: map[int32]int32{
 			ClassMagicUser: 30,
 		},
@@ -430,9 +447,9 @@ var spellTable = map[int32]SpellInfo{
 		Name:    "color spray",
 		ManaMax: 30, ManaMin: 15, ManaChange: 3,
 		MinPosition: PosFighting,
-		Targets:     TargetCharRoom | TargetFightVict,
+		Targets:     NewSet(TargetCharRoom, TargetFightVict),
 		Violent:     true,
-		Routines:    MagDamage,
+		Routines:    NewSet(MagDamage),
 		MinLevel: map[int32]int32{
 			ClassMagicUser: 11,
 		},
@@ -441,9 +458,9 @@ var spellTable = map[int32]SpellInfo{
 		Name:    "control weather",
 		ManaMax: 75, ManaMin: 25, ManaChange: 5,
 		MinPosition: PosStanding,
-		Targets:     TargetIgnore,
+		Targets:     NewSet(TargetIgnore),
 		Violent:     false,
-		Routines:    MagManual,
+		Routines:    NewSet(MagManual),
 		MinLevel: map[int32]int32{
 			ClassCleric: 17,
 		},
@@ -452,9 +469,9 @@ var spellTable = map[int32]SpellInfo{
 		Name:    "create food",
 		ManaMax: 30, ManaMin: 5, ManaChange: 4,
 		MinPosition: PosStanding,
-		Targets:     TargetIgnore,
+		Targets:     NewSet(TargetIgnore),
 		Violent:     false,
-		Routines:    MagCreations,
+		Routines:    NewSet(MagCreations),
 		MinLevel: map[int32]int32{
 			ClassCleric:  2,
 			ClassPaladin: 15,
@@ -464,9 +481,9 @@ var spellTable = map[int32]SpellInfo{
 		Name:    "create water",
 		ManaMax: 30, ManaMin: 5, ManaChange: 4,
 		MinPosition: PosStanding,
-		Targets:     TargetObjInv | TargetObjEquip,
+		Targets:     NewSet(TargetObjInv, TargetObjEquip),
 		Violent:     false,
-		Routines:    MagManual,
+		Routines:    NewSet(MagManual),
 		MinLevel: map[int32]int32{
 			ClassCleric:  2,
 			ClassPaladin: 15,
@@ -476,9 +493,9 @@ var spellTable = map[int32]SpellInfo{
 		Name:    "cure blind",
 		ManaMax: 30, ManaMin: 5, ManaChange: 2,
 		MinPosition: PosStanding,
-		Targets:     TargetCharRoom,
+		Targets:     NewSet(TargetCharRoom),
 		Violent:     false,
-		Routines:    MagUnaffects,
+		Routines:    NewSet(MagUnaffects),
 		MinLevel: map[int32]int32{
 			ClassCleric:  4,
 			ClassPaladin: 13,
@@ -488,9 +505,9 @@ var spellTable = map[int32]SpellInfo{
 		Name:    "cure critic",
 		ManaMax: 30, ManaMin: 10, ManaChange: 2,
 		MinPosition: PosFighting,
-		Targets:     TargetCharRoom,
+		Targets:     NewSet(TargetCharRoom),
 		Violent:     false,
-		Routines:    MagPoints,
+		Routines:    NewSet(MagPoints),
 		MinLevel: map[int32]int32{
 			ClassCleric: 9,
 		},
@@ -499,9 +516,9 @@ var spellTable = map[int32]SpellInfo{
 		Name:    "cure light",
 		ManaMax: 30, ManaMin: 10, ManaChange: 2,
 		MinPosition: PosFighting,
-		Targets:     TargetCharRoom,
+		Targets:     NewSet(TargetCharRoom),
 		Violent:     false,
-		Routines:    MagPoints,
+		Routines:    NewSet(MagPoints),
 		MinLevel: map[int32]int32{
 			ClassCleric:  1,
 			ClassPaladin: 9,
@@ -511,9 +528,9 @@ var spellTable = map[int32]SpellInfo{
 		Name:    "curse",
 		ManaMax: 80, ManaMin: 50, ManaChange: 2,
 		MinPosition: PosStanding,
-		Targets:     TargetCharRoom | TargetObjInv,
+		Targets:     NewSet(TargetCharRoom, TargetObjInv),
 		Violent:     true,
-		Routines:    MagAffects | MagAlterObjs,
+		Routines:    NewSet(MagAffects, MagAlterObjs),
 		WearOff:     "You feel more optimistic.",
 		MinLevel: map[int32]int32{
 			ClassMagicUser: 14,
@@ -523,9 +540,9 @@ var spellTable = map[int32]SpellInfo{
 		Name:    "detect alignment",
 		ManaMax: 20, ManaMin: 10, ManaChange: 2,
 		MinPosition: PosStanding,
-		Targets:     TargetCharRoom | TargetSelfOnly,
+		Targets:     NewSet(TargetCharRoom, TargetSelfOnly),
 		Violent:     false,
-		Routines:    MagAffects,
+		Routines:    NewSet(MagAffects),
 		WearOff:     "You feel less aware.",
 		MinLevel: map[int32]int32{
 			ClassCleric:  4,
@@ -536,9 +553,9 @@ var spellTable = map[int32]SpellInfo{
 		Name:    "detect invisibility",
 		ManaMax: 20, ManaMin: 10, ManaChange: 2,
 		MinPosition: PosStanding,
-		Targets:     TargetCharRoom | TargetSelfOnly,
+		Targets:     NewSet(TargetCharRoom, TargetSelfOnly),
 		Violent:     false,
-		Routines:    MagAffects,
+		Routines:    NewSet(MagAffects),
 		WearOff:     "Your eyes stop tingling.",
 		MinLevel: map[int32]int32{
 			ClassCleric:    6,
@@ -549,9 +566,9 @@ var spellTable = map[int32]SpellInfo{
 		Name:    "detect magic",
 		ManaMax: 20, ManaMin: 10, ManaChange: 2,
 		MinPosition: PosStanding,
-		Targets:     TargetCharRoom | TargetSelfOnly,
+		Targets:     NewSet(TargetCharRoom, TargetSelfOnly),
 		Violent:     false,
-		Routines:    MagAffects,
+		Routines:    NewSet(MagAffects),
 		WearOff:     "The detect magic wears off.",
 		MinLevel: map[int32]int32{
 			ClassMagicUser: 2,
@@ -561,9 +578,9 @@ var spellTable = map[int32]SpellInfo{
 		Name:    "detect poison",
 		ManaMax: 15, ManaMin: 5, ManaChange: 1,
 		MinPosition: PosStanding,
-		Targets:     TargetCharRoom | TargetObjInv | TargetObjRoom,
+		Targets:     NewSet(TargetCharRoom, TargetObjInv, TargetObjRoom),
 		Violent:     false,
-		Routines:    MagManual,
+		Routines:    NewSet(MagManual),
 		WearOff:     "The detect poison wears off.",
 		MinLevel: map[int32]int32{
 			ClassCleric:    3,
@@ -574,9 +591,9 @@ var spellTable = map[int32]SpellInfo{
 		Name:    "dispel evil",
 		ManaMax: 40, ManaMin: 25, ManaChange: 3,
 		MinPosition: PosFighting,
-		Targets:     TargetCharRoom | TargetFightVict,
+		Targets:     NewSet(TargetCharRoom, TargetFightVict),
 		Violent:     true,
-		Routines:    MagDamage,
+		Routines:    NewSet(MagDamage),
 		MinLevel: map[int32]int32{
 			ClassCleric:  14,
 			ClassPaladin: 20,
@@ -586,9 +603,9 @@ var spellTable = map[int32]SpellInfo{
 		Name:    "dispel good",
 		ManaMax: 40, ManaMin: 25, ManaChange: 3,
 		MinPosition: PosFighting,
-		Targets:     TargetCharRoom | TargetFightVict,
+		Targets:     NewSet(TargetCharRoom, TargetFightVict),
 		Violent:     true,
-		Routines:    MagDamage,
+		Routines:    NewSet(MagDamage),
 		MinLevel: map[int32]int32{
 			ClassCleric: 14,
 		},
@@ -597,17 +614,17 @@ var spellTable = map[int32]SpellInfo{
 		Name:    "dispel magic",
 		ManaMax: 100, ManaMin: 70, ManaChange: 3,
 		MinPosition: PosStanding,
-		Targets:     TargetCharRoom | TargetFightVict,
+		Targets:     NewSet(TargetCharRoom, TargetFightVict),
 		Violent:     false,
-		Routines:    MagManual,
+		Routines:    NewSet(MagManual),
 	},
 	SpellEarthquake: {
 		Name:    "earthquake",
 		ManaMax: 40, ManaMin: 25, ManaChange: 3,
 		MinPosition: PosFighting,
-		Targets:     TargetIgnore,
+		Targets:     NewSet(TargetIgnore),
 		Violent:     true,
-		Routines:    MagAreas,
+		Routines:    NewSet(MagAreas),
 		MinLevel: map[int32]int32{
 			ClassCleric: 12,
 		},
@@ -616,9 +633,9 @@ var spellTable = map[int32]SpellInfo{
 		Name:    "enchant weapon",
 		ManaMax: 150, ManaMin: 100, ManaChange: 10,
 		MinPosition: PosStanding,
-		Targets:     TargetObjInv,
+		Targets:     NewSet(TargetObjInv),
 		Violent:     false,
-		Routines:    MagManual,
+		Routines:    NewSet(MagManual),
 		MinLevel: map[int32]int32{
 			ClassMagicUser: 26,
 		},
@@ -627,9 +644,9 @@ var spellTable = map[int32]SpellInfo{
 		Name:    "energy drain",
 		ManaMax: 40, ManaMin: 25, ManaChange: 1,
 		MinPosition: PosFighting,
-		Targets:     TargetCharRoom | TargetFightVict,
+		Targets:     NewSet(TargetCharRoom, TargetFightVict),
 		Violent:     true,
-		Routines:    MagDamage | MagManual,
+		Routines:    NewSet(MagDamage, MagManual),
 		MinLevel: map[int32]int32{
 			ClassMagicUser: 13,
 		},
@@ -638,9 +655,9 @@ var spellTable = map[int32]SpellInfo{
 		Name:    "group armor",
 		ManaMax: 50, ManaMin: 30, ManaChange: 2,
 		MinPosition: PosStanding,
-		Targets:     TargetIgnore,
+		Targets:     NewSet(TargetIgnore),
 		Violent:     false,
-		Routines:    MagGroups,
+		Routines:    NewSet(MagGroups),
 		MinLevel: map[int32]int32{
 			ClassCleric: 9,
 		},
@@ -649,9 +666,9 @@ var spellTable = map[int32]SpellInfo{
 		Name:    "fireball",
 		ManaMax: 40, ManaMin: 30, ManaChange: 2,
 		MinPosition: PosFighting,
-		Targets:     TargetCharRoom | TargetFightVict,
+		Targets:     NewSet(TargetCharRoom, TargetFightVict),
 		Violent:     true,
-		Routines:    MagDamage,
+		Routines:    NewSet(MagDamage),
 		MinLevel: map[int32]int32{
 			ClassMagicUser: 15,
 		},
@@ -660,25 +677,25 @@ var spellTable = map[int32]SpellInfo{
 		Name:    "ouchie",
 		ManaMax: 40, ManaMin: 30, ManaChange: 2,
 		MinPosition: PosFighting,
-		Targets:     TargetCharRoom | TargetFightVict,
+		Targets:     NewSet(TargetCharRoom, TargetFightVict),
 		Violent:     true,
-		Routines:    MagDamage,
+		Routines:    NewSet(MagDamage),
 	},
 	SpellImmolate: {
 		Name:    "immolate",
 		ManaMax: 40, ManaMin: 30, ManaChange: 2,
 		MinPosition: PosFighting,
-		Targets:     TargetCharRoom | TargetFightVict,
+		Targets:     NewSet(TargetCharRoom, TargetFightVict),
 		Violent:     true,
-		Routines:    MagDamage,
+		Routines:    NewSet(MagDamage),
 	},
 	SpellGroupHeal: {
 		Name:    "group heal",
 		ManaMax: 80, ManaMin: 60, ManaChange: 5,
 		MinPosition: PosStanding,
-		Targets:     TargetIgnore,
+		Targets:     NewSet(TargetIgnore),
 		Violent:     false,
-		Routines:    MagGroups,
+		Routines:    NewSet(MagGroups),
 		MinLevel: map[int32]int32{
 			ClassCleric: 22,
 		},
@@ -687,9 +704,9 @@ var spellTable = map[int32]SpellInfo{
 		Name:    "harm",
 		ManaMax: 75, ManaMin: 45, ManaChange: 3,
 		MinPosition: PosFighting,
-		Targets:     TargetCharRoom | TargetFightVict,
+		Targets:     NewSet(TargetCharRoom, TargetFightVict),
 		Violent:     true,
-		Routines:    MagDamage,
+		Routines:    NewSet(MagDamage),
 		MinLevel: map[int32]int32{
 			ClassCleric: 19,
 		},
@@ -698,9 +715,9 @@ var spellTable = map[int32]SpellInfo{
 		Name:    "heal",
 		ManaMax: 60, ManaMin: 40, ManaChange: 3,
 		MinPosition: PosFighting,
-		Targets:     TargetCharRoom,
+		Targets:     NewSet(TargetCharRoom),
 		Violent:     false,
-		Routines:    MagPoints | MagUnaffects,
+		Routines:    NewSet(MagPoints, MagUnaffects),
 		MinLevel: map[int32]int32{
 			ClassCleric: 16,
 		},
@@ -709,17 +726,17 @@ var spellTable = map[int32]SpellInfo{
 		Name:    "full heal",
 		ManaMax: 200, ManaMin: 100, ManaChange: 5,
 		MinPosition: PosFighting,
-		Targets:     TargetCharRoom,
+		Targets:     NewSet(TargetCharRoom),
 		Violent:     false,
-		Routines:    MagPoints | MagUnaffects,
+		Routines:    NewSet(MagPoints, MagUnaffects),
 	},
 	SpellHolyShield: {
 		Name:    "holy shield",
 		ManaMax: 80, ManaMin: 40, ManaChange: 2,
 		MinPosition: PosStanding,
-		Targets:     TargetCharRoom | TargetSelfOnly,
+		Targets:     NewSet(TargetCharRoom, TargetSelfOnly),
 		Violent:     false,
-		Routines:    MagAffects,
+		Routines:    NewSet(MagAffects),
 		WearOff:     "You feel your holy protection fade.",
 		MinLevel: map[int32]int32{
 			ClassPaladin: 5,
@@ -729,9 +746,9 @@ var spellTable = map[int32]SpellInfo{
 		Name:    "holy smite",
 		ManaMax: 80, ManaMin: 40, ManaChange: 2,
 		MinPosition: PosStanding,
-		Targets:     TargetCharRoom | TargetSelfOnly,
+		Targets:     NewSet(TargetCharRoom, TargetSelfOnly),
 		Violent:     false,
-		Routines:    MagAffects,
+		Routines:    NewSet(MagAffects),
 		WearOff:     "You feel less smitey.",
 		MinLevel: map[int32]int32{
 			ClassPaladin: 26,
@@ -741,9 +758,9 @@ var spellTable = map[int32]SpellInfo{
 		Name:    "infravision",
 		ManaMax: 25, ManaMin: 10, ManaChange: 1,
 		MinPosition: PosStanding,
-		Targets:     TargetCharRoom | TargetSelfOnly,
+		Targets:     NewSet(TargetCharRoom, TargetSelfOnly),
 		Violent:     false,
-		Routines:    MagAffects,
+		Routines:    NewSet(MagAffects),
 		WearOff:     "Your night vision seems to fade.",
 		MinLevel: map[int32]int32{
 			ClassCleric:    7,
@@ -754,9 +771,9 @@ var spellTable = map[int32]SpellInfo{
 		Name:    "invisibility",
 		ManaMax: 35, ManaMin: 25, ManaChange: 1,
 		MinPosition: PosStanding,
-		Targets:     TargetCharRoom | TargetObjInv | TargetObjRoom,
+		Targets:     NewSet(TargetCharRoom, TargetObjInv, TargetObjRoom),
 		Violent:     false,
-		Routines:    MagAffects | MagAlterObjs,
+		Routines:    NewSet(MagAffects, MagAlterObjs),
 		WearOff:     "You feel yourself exposed.",
 		MinLevel: map[int32]int32{
 			ClassMagicUser: 4,
@@ -766,9 +783,9 @@ var spellTable = map[int32]SpellInfo{
 		Name:    "lightning bolt",
 		ManaMax: 30, ManaMin: 15, ManaChange: 1,
 		MinPosition: PosFighting,
-		Targets:     TargetCharRoom | TargetFightVict,
+		Targets:     NewSet(TargetCharRoom, TargetFightVict),
 		Violent:     true,
-		Routines:    MagDamage,
+		Routines:    NewSet(MagDamage),
 		MinLevel: map[int32]int32{
 			ClassMagicUser: 9,
 		},
@@ -777,9 +794,9 @@ var spellTable = map[int32]SpellInfo{
 		Name:    "locate object",
 		ManaMax: 25, ManaMin: 20, ManaChange: 1,
 		MinPosition: PosStanding,
-		Targets:     TargetObjWorld,
+		Targets:     NewSet(TargetObjWorld),
 		Violent:     false,
-		Routines:    MagManual,
+		Routines:    NewSet(MagManual),
 		MinLevel: map[int32]int32{
 			ClassMagicUser: 6,
 		},
@@ -788,9 +805,9 @@ var spellTable = map[int32]SpellInfo{
 		Name:    "magic missile",
 		ManaMax: 25, ManaMin: 10, ManaChange: 3,
 		MinPosition: PosFighting,
-		Targets:     TargetCharRoom | TargetFightVict,
+		Targets:     NewSet(TargetCharRoom, TargetFightVict),
 		Violent:     true,
-		Routines:    MagDamage,
+		Routines:    NewSet(MagDamage),
 		MinLevel: map[int32]int32{
 			ClassMagicUser: 1,
 		},
@@ -799,9 +816,9 @@ var spellTable = map[int32]SpellInfo{
 		Name:    "poison",
 		ManaMax: 50, ManaMin: 20, ManaChange: 3,
 		MinPosition: PosStanding,
-		Targets:     TargetCharRoom | TargetNotSelf | TargetObjInv,
+		Targets:     NewSet(TargetCharRoom, TargetNotSelf, TargetObjInv),
 		Violent:     true,
-		Routines:    MagAffects | MagAlterObjs,
+		Routines:    NewSet(MagAffects, MagAlterObjs),
 		WearOff:     "You feel less sick.",
 		MinLevel: map[int32]int32{
 			ClassCleric:    8,
@@ -812,9 +829,9 @@ var spellTable = map[int32]SpellInfo{
 		Name:    "protection from evil",
 		ManaMax: 40, ManaMin: 10, ManaChange: 3,
 		MinPosition: PosStanding,
-		Targets:     TargetCharRoom | TargetSelfOnly,
+		Targets:     NewSet(TargetCharRoom, TargetSelfOnly),
 		Violent:     false,
-		Routines:    MagAffects,
+		Routines:    NewSet(MagAffects),
 		WearOff:     "You feel less protected.",
 		MinLevel: map[int32]int32{
 			ClassCleric: 8,
@@ -824,9 +841,9 @@ var spellTable = map[int32]SpellInfo{
 		Name:    "remove curse",
 		ManaMax: 45, ManaMin: 25, ManaChange: 5,
 		MinPosition: PosStanding,
-		Targets:     TargetCharRoom | TargetObjInv | TargetObjEquip,
+		Targets:     NewSet(TargetCharRoom, TargetObjInv, TargetObjEquip),
 		Violent:     false,
-		Routines:    MagUnaffects | MagAlterObjs,
+		Routines:    NewSet(MagUnaffects, MagAlterObjs),
 		MinLevel: map[int32]int32{
 			ClassCleric: 26,
 		},
@@ -835,9 +852,9 @@ var spellTable = map[int32]SpellInfo{
 		Name:    "remove poison",
 		ManaMax: 40, ManaMin: 8, ManaChange: 4,
 		MinPosition: PosStanding,
-		Targets:     TargetCharRoom | TargetObjInv | TargetObjRoom,
+		Targets:     NewSet(TargetCharRoom, TargetObjInv, TargetObjRoom),
 		Violent:     false,
-		Routines:    MagUnaffects | MagAlterObjs,
+		Routines:    NewSet(MagUnaffects, MagAlterObjs),
 		MinLevel: map[int32]int32{
 			ClassCleric:  10,
 			ClassPaladin: 13,
@@ -847,9 +864,9 @@ var spellTable = map[int32]SpellInfo{
 		Name:    "sanctuary",
 		ManaMax: 110, ManaMin: 85, ManaChange: 5,
 		MinPosition: PosStanding,
-		Targets:     TargetCharRoom,
+		Targets:     NewSet(TargetCharRoom),
 		Violent:     false,
-		Routines:    MagAffects,
+		Routines:    NewSet(MagAffects),
 		WearOff:     "The white aura around your body fades.",
 		MinLevel: map[int32]int32{
 			ClassCleric:  15,
@@ -860,9 +877,9 @@ var spellTable = map[int32]SpellInfo{
 		Name:    "sense life",
 		ManaMax: 20, ManaMin: 10, ManaChange: 2,
 		MinPosition: PosStanding,
-		Targets:     TargetCharRoom | TargetSelfOnly,
+		Targets:     NewSet(TargetCharRoom, TargetSelfOnly),
 		Violent:     false,
-		Routines:    MagAffects,
+		Routines:    NewSet(MagAffects),
 		WearOff:     "You feel less aware of your surroundings.",
 		MinLevel: map[int32]int32{
 			ClassMagicUser: 17,
@@ -872,9 +889,9 @@ var spellTable = map[int32]SpellInfo{
 		Name:    "shocking grasp",
 		ManaMax: 30, ManaMin: 15, ManaChange: 3,
 		MinPosition: PosFighting,
-		Targets:     TargetCharRoom | TargetFightVict,
+		Targets:     NewSet(TargetCharRoom, TargetFightVict),
 		Violent:     true,
-		Routines:    MagDamage,
+		Routines:    NewSet(MagDamage),
 		MinLevel: map[int32]int32{
 			ClassMagicUser: 7,
 		},
@@ -883,18 +900,18 @@ var spellTable = map[int32]SpellInfo{
 		Name:    "silence",
 		ManaMax: 100, ManaMin: 70, ManaChange: 3,
 		MinPosition: PosFighting,
-		Targets:     TargetCharRoom,
+		Targets:     NewSet(TargetCharRoom),
 		Violent:     false,
-		Routines:    MagAffects,
+		Routines:    NewSet(MagAffects),
 		WearOff:     "Outside noises return to you once more.",
 	},
 	SpellSleep: {
 		Name:    "sleep",
 		ManaMax: 40, ManaMin: 25, ManaChange: 5,
 		MinPosition: PosStanding,
-		Targets:     TargetCharRoom,
+		Targets:     NewSet(TargetCharRoom),
 		Violent:     true,
-		Routines:    MagAffects,
+		Routines:    NewSet(MagAffects),
 		WearOff:     "You feel less tired.",
 		MinLevel: map[int32]int32{
 			ClassMagicUser: 8,
@@ -904,9 +921,9 @@ var spellTable = map[int32]SpellInfo{
 		Name:    "strength",
 		ManaMax: 35, ManaMin: 30, ManaChange: 1,
 		MinPosition: PosStanding,
-		Targets:     TargetCharRoom,
+		Targets:     NewSet(TargetCharRoom),
 		Violent:     false,
-		Routines:    MagAffects,
+		Routines:    NewSet(MagAffects),
 		WearOff:     "You feel weaker.",
 		MinLevel: map[int32]int32{
 			ClassMagicUser: 6,
@@ -916,9 +933,9 @@ var spellTable = map[int32]SpellInfo{
 		Name:    "summon",
 		ManaMax: 75, ManaMin: 50, ManaChange: 3,
 		MinPosition: PosStanding,
-		Targets:     TargetCharWorld | TargetNotSelf,
+		Targets:     NewSet(TargetCharWorld, TargetNotSelf),
 		Violent:     false,
-		Routines:    MagManual,
+		Routines:    NewSet(MagManual),
 		MinLevel: map[int32]int32{
 			ClassCleric: 10,
 		},
@@ -927,26 +944,26 @@ var spellTable = map[int32]SpellInfo{
 		Name:    "teleport",
 		ManaMax: 75, ManaMin: 50, ManaChange: 3,
 		MinPosition: PosStanding,
-		Targets:     TargetCharRoom,
+		Targets:     NewSet(TargetCharRoom),
 		Violent:     false,
-		Routines:    MagManual,
+		Routines:    NewSet(MagManual),
 	},
 	SpellWaterwalk: {
 		Name:    "waterwalk",
 		ManaMax: 40, ManaMin: 20, ManaChange: 2,
 		MinPosition: PosStanding,
-		Targets:     TargetCharRoom,
+		Targets:     NewSet(TargetCharRoom),
 		Violent:     false,
-		Routines:    MagAffects,
+		Routines:    NewSet(MagAffects),
 		WearOff:     "Your feet seem less buoyant.",
 	},
 	SpellWordOfRecall: {
 		Name:    "word of recall",
 		ManaMax: 20, ManaMin: 10, ManaChange: 2,
 		MinPosition: PosFighting,
-		Targets:     TargetCharRoom,
+		Targets:     NewSet(TargetCharRoom),
 		Violent:     false,
-		Routines:    MagManual,
+		Routines:    NewSet(MagManual),
 		MinLevel: map[int32]int32{
 			ClassCleric:  12,
 			ClassPaladin: 24,
@@ -956,49 +973,49 @@ var spellTable = map[int32]SpellInfo{
 		Name:    "identify",
 		ManaMax: 0, ManaMin: 0, ManaChange: 0,
 		MinPosition: PosDead,
-		Targets:     TargetCharRoom | TargetObjInv | TargetObjRoom,
+		Targets:     NewSet(TargetCharRoom, TargetObjInv, TargetObjRoom),
 		Violent:     false,
-		Routines:    MagManual,
+		Routines:    NewSet(MagManual),
 	},
 	SpellFireBreath: {
 		Name:    "fire breath",
 		ManaMax: 0, ManaMin: 0, ManaChange: 0,
 		MinPosition: PosSitting,
-		Targets:     TargetIgnore,
+		Targets:     NewSet(TargetIgnore),
 		Violent:     true,
-		Routines:    0,
+		Routines:    RoutineFlags{},
 	},
 	SpellGasBreath: {
 		Name:    "gas breath",
 		ManaMax: 0, ManaMin: 0, ManaChange: 0,
 		MinPosition: PosSitting,
-		Targets:     TargetIgnore,
+		Targets:     NewSet(TargetIgnore),
 		Violent:     true,
-		Routines:    0,
+		Routines:    RoutineFlags{},
 	},
 	SpellFrostBreath: {
 		Name:    "frost breath",
 		ManaMax: 0, ManaMin: 0, ManaChange: 0,
 		MinPosition: PosSitting,
-		Targets:     TargetIgnore,
+		Targets:     NewSet(TargetIgnore),
 		Violent:     true,
-		Routines:    0,
+		Routines:    RoutineFlags{},
 	},
 	SpellAcidBreath: {
 		Name:    "acid breath",
 		ManaMax: 0, ManaMin: 0, ManaChange: 0,
 		MinPosition: PosSitting,
-		Targets:     TargetIgnore,
+		Targets:     NewSet(TargetIgnore),
 		Violent:     true,
-		Routines:    0,
+		Routines:    RoutineFlags{},
 	},
 	SpellLightningBreath: {
 		Name:    "lightning breath",
 		ManaMax: 0, ManaMin: 0, ManaChange: 0,
 		MinPosition: PosSitting,
-		Targets:     TargetIgnore,
+		Targets:     NewSet(TargetIgnore),
 		Violent:     true,
-		Routines:    0,
+		Routines:    RoutineFlags{},
 	},
 }
 

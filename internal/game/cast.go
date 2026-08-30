@@ -184,7 +184,7 @@ func ParseCastArgument(arg string) (spell, target string, err string) {
 // TargetQuestion is what to ask when a spell needs a target and none was
 // given: "who" for a spell aimed at people, "what" for one aimed at objects.
 func TargetQuestion(info SpellInfo) string {
-	if info.Targets.HasAny(TargetObjRoom | TargetObjInv | TargetObjWorld | TargetObjEquip) {
+	if info.Targets.HasAny(TargetObjRoom, TargetObjInv, TargetObjWorld, TargetObjEquip) {
 		return "Upon what should the spell be cast?\r\n"
 	}
 	return "Upon who should the spell be cast?\r\n"
