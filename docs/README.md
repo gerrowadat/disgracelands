@@ -47,23 +47,42 @@ both the C tree and the Go tree.
 
 ## `docs/proposals/` — the plan, still moving
 
-What is going to happen. One document at a time, and it is empty between
-plans rather than accumulating them.
+What is going to happen. **More than one document can live here at a
+time**: a proposal is an argument for work, and two people may reasonably
+be arguing for different work at once. One leaves for `docs/design/` when
+the thing it argues for is built — or when it is decided against and the
+reasoning is worth keeping.
 
-**It is empty, as of 2026-08-30.** All three documents that lived here
-have moved to `docs/design/`: `go-port-plan.md` because Phases 0–6 are
-built and what is left of its Phase 7 is two deployment *decisions*
-rather than work; `yaml-only.md` because every row of its §7 landed,
-ending with **v1.0.0**; and `idiomatic-go.md` because seven of its nine
-steps are built and the two the plan itself allowed to end otherwise did
-— step 7 deferred, step 8 declined, both with reasons recorded.
+**The three that used to be the forward plan have all left, as of
+2026-08-30.** `go-port-plan.md` because Phases 0–6 are built and what is
+left of its Phase 7 is two deployment *decisions* rather than work;
+`yaml-only.md` because every row of its §7 landed, ending with **v1.0.0**;
+and `idiomatic-go.md` because seven of its nine steps are built and the
+two the plan itself allowed to end otherwise did — step 7 deferred, step 8
+declined, both with reasons recorded.
 
-So there is no forward plan right now, and that is a real state rather
-than a gap. The work in front of anyone picking this up is the **open
-GitHub issues**, and `deviations.md`'s "Not deviations — gaps still to
-fill" and "What the session-parity suite found", which is where issues
-get filed from. Read those as the todo list. The next thing to live here
-is whatever somebody argues for next.
+So there is no *forward plan* right now — nothing here says what the next
+sequence of work is — and that is a real state rather than a gap. What is
+here is narrower than that.
+
+- **[automation-and-abuse.md](proposals/automation-and-abuse.md)** — bots,
+  floods and brigading: what to do about somebody pointing an LLM at the
+  game, and how to survive a crowd that means harm. It argues that "detect
+  the bot" is the wrong goal — a comprehension puzzle passes an LLM and
+  blocks a macro script, which is backwards — and that what is left is
+  cost, evidence, and acting on scale rather than on individuals. Its §6.1
+  is worth reading even if the rest is rejected: the world is one
+  goroutine, so a command flood from a single socket is the entire
+  denial-of-service surface, and per-session pacing is an availability
+  control before it is an anti-bot measure. Downstream of `TODO.md`'s
+  hosting decision: none of it is worth building until somebody intends to
+  expose the server, and all of it is worth having decided before they do.
+  **Proposed 2026-08-30; nothing built.**
+
+The day-to-day work is in none of this: it is the **open GitHub issues**,
+and `deviations.md`'s "Not deviations — gaps still to fill" and "What the
+session-parity suite found", which is where issues get filed from. Read
+those as the todo list.
 
 ## `docs/design/` — decisions that landed
 
