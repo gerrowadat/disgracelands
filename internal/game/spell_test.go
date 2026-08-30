@@ -321,11 +321,28 @@ func TestAClassThatNeverLearnsASpellCannotCastIt(t *testing.T) {
 }
 
 func TestSpellNumberByName(t *testing.T) {
+	// The first four are find_skill_num's first rule — the whole typed
+	// string against the whole spell name. The rest are its second, which
+	// abbreviates the *first* word and which this port did not have until
+	// #355; TestFindSkillNumAgainstC is what actually proves them, and
+	// these are here so the shapes a player types are readable in one
+	// place. Note that the first rule alone passes every one of the
+	// original four, which is why they noticed nothing for years.
 	for name, want := range map[string]SpellID{
 		"magic missile": SpellMagicMissile,
 		"magic mis":     SpellMagicMissile,
 		"armor":         SpellArmor,
 		"heal":          SpellHeal,
+
+		"mag mis":  SpellMagicMissile,
+		"m mis":    SpellMagicMissile,
+		"det inv":  SpellDetectInvis,
+		"det ali":  SpellDetectAlign,
+		"bur han":  SpellBurningHands,
+		"b h":      SpellBurningHands,
+		"cure cri": SpellCureCritic,
+		"c b":      SpellCureBlind,
+		"rem poi":  SpellRemovePoison,
 	} {
 		got, ok := SpellNumberByName(name)
 		if !ok || got != want {

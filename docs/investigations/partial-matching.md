@@ -110,10 +110,18 @@ port.
 
 ---
 
-## 4. Rule 4 — `find_skill_num` has two branches and the port has one
+## 4. Rule 4 — `find_skill_num` has two branches and the port had one
 
-**This is the finding.** `cast 'mag mis'` worked on the real server. It
-does not work here.
+**This is the finding.** `cast 'mag mis'` worked on the real server. It did
+not work here.
+
+> **Fixed**, #355. `SpellNumberByName` now carries both branches, and
+> `internal/game/skilloracle_test.go` compares it against `skilloracle.c`
+> over 1,729 per-word abbreviations of the port's own table — the table
+> being fed to the oracle from the package itself, so the two cannot
+> drift. The section below is left in the past tense it was written in;
+> what it describes is the state before that change, and the measurement
+> in §4.1 is what the fix was verified against.
 
 ```c
 for (index = 1; index <= TOP_SPELL_DEFINE; index++) {
@@ -145,8 +153,8 @@ position. That is what makes `mag mis` work, and `b h` for *burning hands*,
 and `det inv` for *detect invisibility*. It is how anybody who played this
 game actually cast a spell.
 
-`internal/game/spell.go`'s `SpellNumberByName` is `strings.HasPrefix(info.Name, name)`
-— the first branch and nothing else.
+`internal/game/spell.go`'s `SpellNumberByName` was
+`strings.HasPrefix(info.Name, name)` — the first branch and nothing else.
 
 ### 4.1 How wrong, measured
 
@@ -167,8 +175,12 @@ returns nothing where the C returns something. That is the best shape this
 kind of bug can have, and it means fixing it cannot break a query that
 works today.
 
-A sample of what is refused: `mag mis`, `det inv`, `b h`, `a br` (*acid
-breath*), `bur han`, `cure ser`, `rem poi`, `det ali`.
+A sample of what was refused: `mag mis`, `det inv`, `b h`, `a br` (*acid
+breath*), `bur han`, `cure cri`, `rem poi`, `det ali`.
+
+(An earlier draft listed `cure ser` here. There is no *cure serious* in this
+table — the cures are *cure blind*, *cure critic* and *cure light* — so the
+C refuses it too, and the oracle agrees. Corrected with the fix.)
 
 ### 4.2 What it affects
 
@@ -195,12 +207,17 @@ both are in `skilloracle.c`'s header:
 ### 4.4 One difference that is *not* a bug
 
 `SpellNumberByName` prefers an exact name outright, then the lowest-numbered
-prefix match; the C takes the first match in table order with no exact-match
-preference. These disagree only where one spell's full name is a strict
-prefix of another's. **No such pair exists** in the 71-name table — checked
-— so the difference is unreachable. Worth leaving as it is: it makes
-`SpellNameOrNumber`'s round trip exact by construction, which the yaml
-format depends on.
+match; the C takes the first match in table order with no exact-match
+preference. These disagree only where one spell's whole name is reachable
+from another by either of the two rules. **No such pair exists** in the
+71-name table. That was checked by hand when this was written and is now
+checked by `TestSkillNamesAreNotReachableFromEachOther`, because with the
+second branch in place the condition is much broader than "a strict prefix"
+and it is a property of the data rather than of the code — the table can
+change and the assumption would go with it silently.
+
+Worth leaving as it is: it makes `SpellNameOrNumber`'s round trip exact by
+construction, which the yaml format depends on.
 
 ---
 
