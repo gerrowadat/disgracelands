@@ -337,7 +337,7 @@ func objDocFrom(o *game.ObjDef) objDoc {
 
 	for _, a := range o.Affects {
 		od.Affects = append(od.Affects, objAffectDoc{
-			Location: valueName(a.Location, game.YamlApplyTypeNames()),
+			Location: valueName(a.Location.Number(), game.YamlApplyTypeNames()),
 			Modifier: a.Modifier,
 		})
 	}

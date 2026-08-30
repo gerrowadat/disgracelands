@@ -576,7 +576,7 @@ func readAffects(next func() (string, bool)) []game.Affect {
 		}
 		affects = append(affects, game.Affect{
 			Type: typ, Duration: dur, Modifier: mod,
-			Location: loc, Bits: game.SetFromRaw[game.AffectFlag](bits),
+			Location: game.Apply(loc), Bits: game.SetFromRaw[game.AffectFlag](bits),
 		})
 	}
 }

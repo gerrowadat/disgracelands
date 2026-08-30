@@ -90,7 +90,7 @@ func sampleRentFile() *player.RentFile {
 		for j := range obj.Affects {
 			// A negative modifier in every other slot: `modifier` is an sbyte
 			// and a cursed item is how that gets exercised.
-			obj.Affects[j] = game.ObjAffect{Location: int32(j + 1), Modifier: int32(j * -3)}
+			obj.Affects[j] = game.ObjAffect{Location: game.Apply(j + 1), Modifier: int32(j * -3)}
 		}
 		f.Objects = append(f.Objects, obj)
 	}

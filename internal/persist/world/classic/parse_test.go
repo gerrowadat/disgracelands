@@ -248,7 +248,7 @@ A
 	if obj.Weight != 5 || obj.Cost != 500 || obj.RentPerDay != 10 {
 		t.Errorf("Weight/Cost/Rent = %d/%d/%d, want 5/500/10", obj.Weight, obj.Cost, obj.RentPerDay)
 	}
-	if len(obj.Affects) != 1 || obj.Affects[0] != (game.ObjAffect{Location: 17, Modifier: 2}) {
+	if len(obj.Affects) != 1 || obj.Affects[0] != (game.ObjAffect{Location: game.Apply(17), Modifier: 2}) {
 		t.Errorf("Affects = %+v, want one {17, 2}", obj.Affects)
 	}
 

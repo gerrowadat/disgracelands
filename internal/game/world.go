@@ -191,7 +191,7 @@ type ObjDef struct {
 
 // ObjAffect is one `A` line: an apply location and its modifier.
 type ObjAffect struct {
-	Location int32
+	Location Apply
 	Modifier int32
 }
 

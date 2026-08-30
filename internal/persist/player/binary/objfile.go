@@ -170,7 +170,7 @@ func (c *objCodec) decode(b []byte) (*player.RentFile, error) {
 				// `location` is a `byte` (unsigned) and `modifier` an
 				// `sbyte`. An apply of 200 is not a thing, but reading the
 				// two the way the struct declares them is free.
-				Location: int32(rec[base+loc.Offset-affects.Offset]),
+				Location: game.Apply(rec[base+loc.Offset-affects.Offset]),
 				Modifier: widen8(rec[base+mod.Offset-affects.Offset]),
 			}
 		}
@@ -213,7 +213,7 @@ func (c *objCodec) encode(f *player.RentFile) ([]byte, error) {
 				a = obj.Affects[j]
 			}
 			base := affects.Offset + j*affects.Stride
-			rec[base+loc.Offset-affects.Offset] = narrowU8(a.Location)
+			rec[base+loc.Offset-affects.Offset] = narrowU8(a.Location.Number())
 			rec[base+mod.Offset-affects.Offset] = narrow8(a.Modifier)
 		}
 	}

@@ -128,7 +128,7 @@ func affectsDocFrom(affects []game.Affect) []affectDoc {
 	out := make([]affectDoc, 0, len(affects))
 	for _, a := range affects {
 		sets, setsRaw := game.NameBits(a.Bits.Raw(), game.YamlAffectFlagNames())
-		location := game.NameOrNumber(a.Location, game.YamlApplyTypeNames())
+		location := game.NameOrNumber(a.Location.Number(), game.YamlApplyTypeNames())
 		out = append(out, affectDoc{
 			Spell: game.SpellNameOrNumber(a.Type), Duration: a.Duration, Modifier: a.Modifier,
 			Location: location, Sets: sets, SetsRaw: setsRaw,
@@ -203,7 +203,7 @@ func ObjInstanceDocFrom(st player.StoredObject) ObjInstanceDoc {
 			// the vast majority of those slots are unused on any real item.
 			continue
 		}
-		location := game.NameOrNumber(a.Location, game.YamlApplyTypeNames())
+		location := game.NameOrNumber(a.Location.Number(), game.YamlApplyTypeNames())
 		od.Affects = append(od.Affects, ObjAffectDoc{Location: location, Modifier: a.Modifier})
 	}
 	for _, inner := range st.Contains {

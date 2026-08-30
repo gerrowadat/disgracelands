@@ -261,7 +261,7 @@ func (c *codec) decode(rec []byte) (*game.PlayerRecord, error) {
 			Type:     typ,
 			Duration: widen16(byteOrder.Uint16(rec[base+2:])),
 			Modifier: widen8(rec[base+4]),
-			Location: int32(rec[base+5]),
+			Location: game.Apply(rec[base+5]),
 			Bits:     game.SetFromRaw[game.AffectFlag](bits),
 		})
 	}
@@ -471,7 +471,7 @@ func (c *codec) encode(p *game.PlayerRecord) ([]byte, error) {
 		byteOrder.PutUint16(rec[base:], narrow16(a.Type))
 		byteOrder.PutUint16(rec[base+2:], narrow16(a.Duration))
 		rec[base+4] = narrow8(a.Modifier)
-		rec[base+5] = narrowU8(a.Location)
+		rec[base+5] = narrowU8(a.Location.Number())
 		if bitsSize == 4 {
 			byteOrder.PutUint32(rec[base+bitsOff:], narrowFlags32(a.Bits.Raw()))
 		} else {

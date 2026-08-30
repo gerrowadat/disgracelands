@@ -78,7 +78,7 @@ func IdentifyObject(obj *Object) string {
 			found = true
 		}
 		fmt.Fprintf(&out, "   Affects: %s By %d\r\n",
-			SprintType(a.Location, applyTypeNames), a.Modifier)
+			SprintType(a.Location.Number(), applyTypeNames), a.Modifier)
 	}
 	return out.String()
 }

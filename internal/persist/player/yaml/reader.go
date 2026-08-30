@@ -203,7 +203,7 @@ func affectsFromDoc(doc []affectDoc) ([]game.Affect, []string) {
 		}
 		bits |= ad.SetsRaw
 		affects = append(affects, game.Affect{
-			Type: spell, Duration: ad.Duration, Modifier: ad.Modifier, Location: location, Bits: game.SetFromRaw[game.AffectFlag](bits),
+			Type: spell, Duration: ad.Duration, Modifier: ad.Modifier, Location: game.Apply(location), Bits: game.SetFromRaw[game.AffectFlag](bits),
 		})
 	}
 	return affects, unknown
@@ -285,7 +285,7 @@ func StoredObjectFromDoc(od ObjInstanceDoc) (player.StoredObject, []string) {
 		if ad.Location != "" && !ok {
 			unknown = append(unknown, fmt.Sprintf("inventory: object #%d: unknown affect location %q", od.Vnum, ad.Location))
 		}
-		st.Affects = append(st.Affects, game.ObjAffect{Location: location, Modifier: ad.Modifier})
+		st.Affects = append(st.Affects, game.ObjAffect{Location: game.Apply(location), Modifier: ad.Modifier})
 	}
 	// Pad back to the fixed slot count. The writer drops empty slots
 	// because storing five zeroes per object to say nothing is not worth

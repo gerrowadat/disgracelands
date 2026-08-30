@@ -129,7 +129,7 @@ func maximumCharacter() *game.PlayerRecord {
 			Type:     int32(1 + i),
 			Duration: int32(100 + i),
 			Modifier: int32(i - 16),
-			Location: int32(i % 25),
+			Location: game.Apply(i % 25),
 			Bits:     game.SetFromRaw[game.AffectFlag](1 << uint(i%32)),
 		})
 	}
