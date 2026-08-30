@@ -298,7 +298,7 @@ func (l *loader) shopFromDoc(path string, sd shopDoc) *game.ShopDef {
 			shop.Open2, shop.Close2 = h[0], h[1]
 		}
 	}
-	shop.Flags = game.Flags(l.flags(path, sd.Flags, game.YamlShopFlagNames(), "shop flag", sd.Vnum))
+	shop.Flags = game.SetFromRaw[game.ShopFlag](l.flags(path, sd.Flags, game.YamlShopFlagNames(), "shop flag", sd.Vnum))
 	trade, unknown := game.ParseBitNames(sd.Refuses, game.YamlShopTradeNames())
 	if len(unknown) > 0 {
 		l.errorf("%s: shop #%d: unknown refuses name(s): %s", path, sd.Vnum, strings.Join(unknown, ", "))

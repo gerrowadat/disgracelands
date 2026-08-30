@@ -166,7 +166,7 @@ func (c *Context) listDetailedShop(shop *game.ShopDef, index int) {
 	c.Send("Buy at:     [%4.2f], Sell at: [%4.2f], Open: [%d-%d, %d-%d]\r\n",
 		shop.ProfitSell, shop.ProfitBuy, shop.Open1, shop.Close1, shop.Open2, shop.Close2)
 
-	c.Send("Bits:       %s\r\n", game.SprintBit(uint64(shop.Flags), shopBitNames))
+	c.Send("Bits:       %s\r\n", game.SprintBit(shop.Flags.Raw(), shopBitNames))
 }
 
 // capsYesNo is YESNO (utils.h:124) — all-caps, unlike this file's own

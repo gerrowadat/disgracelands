@@ -376,7 +376,7 @@ func shopDocFrom(sh *game.ShopDef) shopDoc {
 			sd.Hours = append(sd.Hours, [2]int32{sh.Open2, sh.Close2})
 		}
 	}
-	flagNames, _ := game.NameBits(uint64(sh.Flags), game.YamlShopFlagNames())
+	flagNames, _ := game.NameBits(sh.Flags.Raw(), game.YamlShopFlagNames())
 	sd.Flags = flagNames
 	refuseNames, _ := game.NameBits(uint64(sh.TradeWith), game.YamlShopTradeNames()) //nolint:gosec // seven bits
 	sd.Refuses = refuseNames

@@ -127,7 +127,7 @@ func (l *loader) parseShop(r *reader, vnum game.ShopVnum, newFormat bool) (*game
 	// The C field is bitvector_t, which is unsigned; a negative value in the
 	// file therefore becomes a large positive bitmask rather than an error.
 	// Reproduce that rather than sign-extending it into the high 32 bits.
-	shop.Flags = game.Flags(uint32(flags)) //nolint:gosec // deliberate reinterpretation, see above
+	shop.Flags = game.SetFromRaw[game.ShopFlag](uint64(uint32(flags))) //nolint:gosec // deliberate reinterpretation, see above
 
 	keeper, err := l.readInt(r, what, "shopkeeper vnum")
 	if err != nil {

@@ -310,7 +310,7 @@ func TestAShopkeeperWithWillFightCanBeHurt(t *testing.T) {
 
 	inWorld(t, srv, func(w *game.Live) {
 		for _, shop := range w.Shops() {
-			shop.Flags = shop.Flags.Set(game.ShopWillFight)
+			shop.Flags = shop.Flags.With(game.ShopWillFight)
 		}
 	})
 
