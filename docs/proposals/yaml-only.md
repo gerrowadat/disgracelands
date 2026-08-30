@@ -1,11 +1,11 @@
 # yaml only: retiring the legacy formats from the server
 
-> **Status, 2026-08-29: built, except for the release.** Rows 1–6 of §7
-> have landed; row 7 — cutting v1.0.0 — has not, and is a decision rather
-> than a task. **Work is no longer planned from this document.** With the
-> build done, the forward plan is `go-port-plan.md` §10's Phase 7
-> (cutover) again, which this change was standing in front of; the
-> day-to-day work in front of *that* is `docs/deviations.md`'s "Not
+> **Status, 2026-08-30: done, release and all.** Every row of §7 has
+> landed, including row 7 — **v1.0.0 was cut on 2026-08-30**, which is
+> also what made a `.dlversion` of `1.0.0` exist. **Work is no longer
+> planned from this document.** The forward plan is `go-port-plan.md`
+> §10's Phase 7 (cutover), which this change was standing in front of;
+> the day-to-day work in front of *that* is `docs/deviations.md`'s "Not
 > deviations — gaps still to fill" and whatever `test/parity` finds,
 > filed as issues.
 >
@@ -557,9 +557,9 @@ Each row is its own branch and PR. Rows 1–2 are prerequisites and are
 independently shippable before the breaking change; rows 3–6 are the break;
 row 7 is the release.
 
-**Status: rows 1–6 have landed; row 7 has not.** Each row below carries
-what actually happened, since several of them turned out to be about
-something other than what they were written to be about.
+**Status: every row has landed.** Each row below carries what actually
+happened, since several of them turned out to be about something other
+than what they were written to be about.
 
 | # | What lands | Done when |
 |---|---|---|
@@ -569,23 +569,48 @@ something other than what they were written to be about.
 | **4 ✅** | Delete the seven `--*-format` flags and their env vars; reject a removed `DLMUD_*` variable by name (§3.1); strip `config.Dir`'s format parameter; delete the `ObjectStore` fallback and `cmd/dlmud`'s legacy blank imports (§3.2); move `LegacySpares` out of `internal/game` into `persist/player/binary` (§1); retire `dlctl convert`'s no-`--type` mode (§3.4). | `dlmud --help` mentions no format; a test asserts the legacy decoder packages are not reachable from `cmd/dlmud`; `DL_WORLD_FORMAT=classic` fails loudly with the migration command; `Config`'s default `LibDir` moves from `examples/stock/binary` to `examples/stock/yaml`. |
 | **5 ✅** | Legacy-layout detection and refusal at boot (§3.3). | Pointing `dlmud` at `examples/stock/binary` exits non-zero printing the exact working `dlctl import` line for it — asserted by running that line and booting the result. |
 | **6 ✅** | The defaults rule, its per-subsystem tables and minimal-document tests (§6); the `docs/deviations.md` entry this change owes under "Fidelity, phase two" (header above), plus the settled CRLF transform and the removed rent-containment format gate; `data-format.md` §11 rows 4 and 7 marked done; `docs/operations.md`'s getting-started rewritten around the mandatory import; `docs/configuration.md` for the removed flags; `go-port-plan.md`'s Phase 7 rollback paragraph (§8). | The docs describe the shipped server. `make check` green. |
-| **7 — the only one left** | `make release BUMP=v1.0.0`, with an upgrade note. | `release.yml` green, including the ILP32 checks, world parity, the session-parity suite, the licence check and the example-regeneration checks. |
+| **7 ✅** | v1.0.0, with an upgrade note. Cut 2026-08-30, by hand rather than by `make release BUMP=v1.0.0` — see below. | `release.yml` green, including the ILP32 checks, world parity, the session-parity suite, the licence check and the example-regeneration checks. |
 
 Rows 1–2 were worth landing even if the rest slipped: they make the
 conversion demonstrably exact, which is valuable whether or not the legacy
 formats are retired.
 
-**What row 7 actually asks of somebody.** Nothing technical is waiting on
-it: `main` is the shipped shape, `release.yml` runs the full suite, and
-`scripts/release.sh` does the sequencing (it does not tag — `release.yml`'s
-`publish` job does, gated on that suite, so a failed release leaves no tag
-behind and the version number stays free). What is waiting is the decision
-that this on-disk contract is the one to call 1.0, since
+**What row 7 turned out to ask of somebody.** Nothing technical was
+waiting on it, as expected: `main` was already the shipped shape, and
+`release.yml` did the sequencing and the gating (it tags in its `publish`
+job, after the suite, so a failed release would have left no tag behind
+and the version number free). What was waiting was the decision that this
+on-disk contract is the one to call 1.0 — taken 2026-08-30 — since
 `dataversion.Current()` derives the data-format stamp from the release
-version and cutting v1.0.0 is therefore also what makes a `.dlversion` of
-`1.0.0` exist. The upgrade note is the other half, and §8 is its content:
-lead with `ascii`, because that was the default and its users get the least
-warning.
+version, so cutting v1.0.0 is also what made a `.dlversion` of `1.0.0`
+exist.
+
+Three things came out of actually doing it, none of them the decision,
+and all three the same shape: a check that had not run since before the
+change it was checking.
+
+- **The example worlds were stale and structurally could not be
+  un-stale.** `dlctl import` had emitted `state/reports.yaml` for every
+  world since #296, and `.gitignore` listed that path as runtime state a
+  server leaves behind — so `release.yml`'s example-regeneration check
+  would have failed the release, and regenerating would not have fixed
+  it, because the file could not be committed. #313.
+- **§8's upgrade instruction for `ascii` users does not work.** "Same
+  command, `--from-format=ascii`" is wrong: the one-pass import discards
+  `--from-format` (`cmd/dlctl/import.go:227`), reads the `binary` roster
+  out of `etc/`, imports zero characters and exits 0. For the group this
+  document identified as having the least warning, that is a silent
+  empty roster. #314, and the v1.0.0 notes carry the two-pass
+  workaround.
+- **`release.yml` itself was stale, and failed the first attempt.** Its
+  Phase 0 acceptance step still required `--player-format` and
+  `--world-format` in `dlmud --help` — two of the seven flags row 4
+  deleted. That step had not run since v0.1.3, which predates row 4, so
+  it spent the whole window asserting the opposite of what this plan had
+  deliberately made true, and the release it blocked was the first thing
+  to notice. Nothing was published — `publish` and `image` are
+  `needs:`-gated on the suite, so there was no tag to retract and the
+  version number stayed free — and the second attempt went green. #315.
 
 ---
 
