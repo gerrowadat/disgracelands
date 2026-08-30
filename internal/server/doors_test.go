@@ -15,7 +15,7 @@ import (
 
 // makeDoor turns the link between the two test rooms into a door, on both
 // sides, and returns them.
-func makeDoor(t *testing.T, srv *Server, state game.Flags, key game.ObjVnum) (near, far *game.ExitDef) {
+func makeDoor(t *testing.T, srv *Server, state game.ExitFlags, key game.ObjVnum) (near, far *game.ExitDef) {
 	t.Helper()
 
 	if err := srv.engine.DoSync(context.Background(), func(w *game.Live) {
@@ -25,7 +25,7 @@ func makeDoor(t *testing.T, srv *Server, state game.Flags, key game.ObjVnum) (ne
 		for _, e := range []*game.ExitDef{near, far} {
 			e.Keywords = "gate"
 			e.Key = key
-			e.State = game.ExitIsDoor | state
+			e.State = state.With(game.ExitIsDoor)
 		}
 	}); err != nil {
 		t.Fatal(err)
@@ -40,7 +40,7 @@ func TestOpeningAndClosingADoorMovesBothSides(t *testing.T) {
 	c := dialClient(t, listening(t, srv))
 	c.create("Zod", "swordfish", "m", "w")
 
-	near, far := makeDoor(t, srv, game.ExitClosed, game.NoObject)
+	near, far := makeDoor(t, srv, game.NewSet(game.ExitClosed), game.NoObject)
 
 	c.send("open gate")
 	c.expect("Okay.")
@@ -65,7 +65,7 @@ func TestTheRoomBeyondIsTold(t *testing.T) {
 	c.create("Zod", "swordfish", "m", "w")
 
 	_, watcherClient := place(t, srv, fighterRecord("Welmar", 10, 100), MortalStartRoom)
-	makeDoor(t, srv, game.ExitClosed, testKeyVnum)
+	makeDoor(t, srv, game.NewSet(game.ExitClosed), testKeyVnum)
 
 	c.send("open gate")
 	c.expect("Okay.")
@@ -92,20 +92,20 @@ func TestTheRoomBeyondIsTold(t *testing.T) {
 func TestTheDoorPreconditions(t *testing.T) {
 	for _, tc := range []struct {
 		name    string
-		state   game.Flags
+		state   game.ExitFlags
 		command string
 		expect  string
 	}{
-		{"opening an open door", 0, "open gate", "But it's currently open!"},
-		{"closing a closed door", game.ExitClosed, "close gate", "But it's already closed!"},
-		{"opening a locked door", game.ExitClosed | game.ExitLocked, "open gate", "It seems to be locked."},
-		{"locking an open door", 0, "lock gate", "But it's currently open!"},
-		{"unlocking an unlocked door", game.ExitClosed, "unlock gate", "Oh.. it wasn't locked, after all.."},
+		{"opening an open door", game.ExitFlags{}, "open gate", "But it's currently open!"},
+		{"closing a closed door", game.NewSet(game.ExitClosed), "close gate", "But it's already closed!"},
+		{"opening a locked door", game.NewSet(game.ExitClosed, game.ExitLocked), "open gate", "It seems to be locked."},
+		{"locking an open door", game.ExitFlags{}, "lock gate", "But it's currently open!"},
+		{"unlocking an unlocked door", game.NewSet(game.ExitClosed), "unlock gate", "Oh.. it wasn't locked, after all.."},
 		// Locking an already-locked door reports it as locked, not as
 		// unlocked: `lock` needs UNLOCKED, so it is the unlocked
 		// precondition that fails.
-		{"locking a locked door", game.ExitClosed | game.ExitLocked, "lock gate", "It seems to be locked."},
-		{"picking an unlocked door", game.ExitClosed, "pick gate", "Oh.. it wasn't locked, after all.."},
+		{"locking a locked door", game.NewSet(game.ExitClosed, game.ExitLocked), "lock gate", "It seems to be locked."},
+		{"picking an unlocked door", game.NewSet(game.ExitClosed), "pick gate", "Oh.. it wasn't locked, after all.."},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			srv, _ := newTestServer(t)
@@ -144,7 +144,7 @@ func TestLockingNeedsTheKey(t *testing.T) {
 		} {
 			e.Keywords = "gate"
 			e.Key = testKeyVnum
-			e.State = game.ExitIsDoor | game.ExitClosed
+			e.State = game.NewSet(game.ExitIsDoor, game.ExitClosed)
 		}
 	}); err != nil {
 		t.Fatal(err)
@@ -167,7 +167,7 @@ func TestAnImmortalNeedsNoKey(t *testing.T) {
 	c := dialClient(t, listening(t, srv))
 	c.create("Zod", "swordfish", "m", "w")
 
-	makeDoor(t, srv, game.ExitClosed, testKeyVnum)
+	makeDoor(t, srv, game.NewSet(game.ExitClosed), testKeyVnum)
 
 	c.send("lock gate")
 	c.expect("*Click*")
@@ -181,12 +181,12 @@ func TestPickingALock(t *testing.T) {
 	c.create("Zod", "swordfish", "m", "w")
 
 	// Pickproof.
-	makeDoor(t, srv, game.ExitClosed|game.ExitLocked|game.ExitPickproof, testKeyVnum)
+	makeDoor(t, srv, game.NewSet(game.ExitClosed, game.ExitLocked, game.ExitPickproof), testKeyVnum)
 	c.send("pick gate")
 	c.expect("It resists your attempts to pick it.")
 
 	// No keyhole.
-	makeDoor(t, srv, game.ExitClosed|game.ExitLocked, game.NoObject)
+	makeDoor(t, srv, game.NewSet(game.ExitClosed, game.ExitLocked), game.NoObject)
 	c.send("pick gate")
 	c.expect("Odd - you can't seem to find a keyhole.")
 
@@ -194,7 +194,7 @@ func TestPickingALock(t *testing.T) {
 	// roster is the Implementor, and init_char gives an Implementor every
 	// skill at 100%. The roll is 1..101 against zero, so it always fails.
 	setSkill(t, srv, "Zod", game.SkillPickLock, 0)
-	makeDoor(t, srv, game.ExitClosed|game.ExitLocked, testKeyVnum)
+	makeDoor(t, srv, game.NewSet(game.ExitClosed, game.ExitLocked), testKeyVnum)
 	c.send("pick gate")
 	c.expect("You failed to pick the lock.")
 
@@ -234,7 +234,7 @@ func TestAClosedDoorStopsAPlayer(t *testing.T) {
 	c := dialClient(t, listening(t, srv))
 	c.create("Zod", "swordfish", "m", "w")
 
-	makeDoor(t, srv, game.ExitClosed, game.NoObject)
+	makeDoor(t, srv, game.NewSet(game.ExitClosed), game.NoObject)
 
 	c.send("south")
 	c.expect("The gate seems to be closed.")
@@ -254,7 +254,7 @@ func TestANamelessDoorIsJustADoor(t *testing.T) {
 	if err := srv.engine.DoSync(context.Background(), func(w *game.Live) {
 		e := w.Room(ImmortStartRoom).Exits[game.South]
 		e.Keywords = ""
-		e.State = game.ExitIsDoor | game.ExitClosed
+		e.State = game.NewSet(game.ExitIsDoor, game.ExitClosed)
 	}); err != nil {
 		t.Fatal(err)
 	}
@@ -297,11 +297,11 @@ func TestAOneWayDoorHasOneSide(t *testing.T) {
 	if err := srv.engine.DoSync(context.Background(), func(w *game.Live) {
 		near := w.Room(ImmortStartRoom).Exits[game.South]
 		near.Keywords = "gate"
-		near.State = game.ExitIsDoor | game.ExitClosed
+		near.State = game.NewSet(game.ExitIsDoor, game.ExitClosed)
 
 		far = w.Room(MortalStartRoom).Exits[game.North]
 		far.Keywords = "gate"
-		far.State = game.ExitIsDoor | game.ExitClosed
+		far.State = game.NewSet(game.ExitIsDoor, game.ExitClosed)
 		// Points somewhere else, so it is not the same door.
 		far.ToRoom = MortalStartRoom
 	}); err != nil {

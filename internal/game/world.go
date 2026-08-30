@@ -47,19 +47,19 @@ type ExitDef struct {
 	// closed by a player stays closed until a zone reset opens it. Derived
 	// from DoorFlag at load; changed thereafter by play and by 'D' reset
 	// commands.
-	State Flags
+	State ExitFlags
 }
 
 // DoorState returns the initial exit_info for a raw DoorFlag, porting the
 // mapping the C loader does at load time: 1 is a door, 2 a pickproof one.
-func DoorState(doorFlag int32) Flags {
+func DoorState(doorFlag int32) ExitFlags {
 	switch doorFlag {
 	case 1:
-		return ExitIsDoor
+		return NewSet(ExitIsDoor)
 	case 2:
-		return ExitIsDoor | ExitPickproof
+		return NewSet(ExitIsDoor, ExitPickproof)
 	}
-	return 0
+	return ExitFlags{}
 }
 
 // IsDoor reports whether this exit has a door.

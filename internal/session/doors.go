@@ -202,13 +202,13 @@ func (c *Context) applyDoor(dir game.Direction, exit *game.ExitDef, action doorA
 	set := func(e *game.ExitDef) {
 		switch action {
 		case doorOpen:
-			e.State = e.State.Clear(game.ExitClosed)
+			e.State = e.State.Without(game.ExitClosed)
 		case doorClose:
-			e.State = e.State.Set(game.ExitClosed)
+			e.State = e.State.With(game.ExitClosed)
 		case doorLock:
-			e.State = e.State.Set(game.ExitLocked)
+			e.State = e.State.With(game.ExitLocked)
 		case doorUnlock, doorPick:
-			e.State = e.State.Clear(game.ExitLocked)
+			e.State = e.State.Without(game.ExitLocked)
 		}
 	}
 

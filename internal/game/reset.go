@@ -44,12 +44,23 @@ const (
 	DoorLocked int32 = 2
 )
 
-// Exit flags, from structs.h.
+// ExitFlag is one of the EX_* bits from structs.h — a door's runtime
+// state, the C's exit_info — and ExitFlags is an exit's set of them.
+//
+// Bit indices, not masks: docs/proposals/idiomatic-go.md §4.1, and §4.1.1
+// for why `ExitIsDoor | ExitClosed` is a mistake the compiler will not
+// catch. The numbers are unchanged and are the file format's, which
+// exit_bits[] in constants.c and bitnames_test.go between them keep so.
+type ExitFlag int
+
+// ExitFlags is a set of ExitFlag.
+type ExitFlags = Set[ExitFlag]
+
 const (
-	ExitIsDoor    Flags = 1 << 0
-	ExitClosed    Flags = 1 << 1
-	ExitLocked    Flags = 1 << 2
-	ExitPickproof Flags = 1 << 3
+	ExitIsDoor    ExitFlag = 0
+	ExitClosed    ExitFlag = 1
+	ExitLocked    ExitFlag = 2
+	ExitPickproof ExitFlag = 3
 )
 
 // ResetReport is what one zone reset did, for logs and tests.
@@ -224,11 +235,11 @@ func (l *Live) ResetZone(zone *ZoneDef, r *rng.Rand) ResetReport {
 			exit := room.Exits[dir]
 			switch cmd.Arg3 {
 			case DoorOpen:
-				exit.State = exit.State.Clear(ExitClosed | ExitLocked)
+				exit.State = exit.State.Without(ExitClosed, ExitLocked)
 			case DoorClosed:
-				exit.State = exit.State.Set(ExitClosed).Clear(ExitLocked)
+				exit.State = exit.State.With(ExitClosed).Without(ExitLocked)
 			case DoorLocked:
-				exit.State = exit.State.Set(ExitClosed | ExitLocked)
+				exit.State = exit.State.With(ExitClosed, ExitLocked)
 			}
 			lastSucceeded = true
 		}
