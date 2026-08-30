@@ -201,7 +201,7 @@ func (l *loader) objFromDoc(path string, od objDoc) *game.ObjDef {
 	if !ok {
 		l.errorf("%s: object #%d: unknown type %q", path, od.Vnum, od.Type)
 	}
-	obj.Type = typ
+	obj.Type = game.ItemType(typ)
 	obj.WearFlags = game.SetFromRaw[game.WearFlag](l.flags(path, od.Wear, game.YamlWearFlagNames(), "wear flag", od.Vnum) | od.WearRaw)
 	obj.ExtraFlags = game.SetFromRaw[game.ExtraFlag](l.flags(path, od.Flags, game.YamlItemExtraFlagNames(), "item flag", od.Vnum) | od.FlagsRaw)
 	permAffect, unknown := game.ParseBitNames(od.PermAffect, game.YamlAffectFlagNames())
@@ -288,7 +288,7 @@ func (l *loader) shopFromDoc(path string, sd shopDoc) *game.ShopDef {
 		if !ok {
 			l.errorf("%s: shop #%d: unknown buy type %q", path, sd.Vnum, b.Type)
 		}
-		shop.BuyTypes = append(shop.BuyTypes, game.ShopBuyType{Type: typ, Keyword: b.Keyword})
+		shop.BuyTypes = append(shop.BuyTypes, game.ShopBuyType{Type: game.ItemType(typ), Keyword: b.Keyword})
 	}
 	for i, h := range sd.Hours {
 		switch i {

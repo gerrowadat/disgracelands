@@ -94,7 +94,7 @@ type ArmorValues struct {
 // supports, or reports ok=false when a slot the type does not use is
 // nonzero — the "junk in the unused slot" case §4.3 says must fall back to
 // the raw form rather than silently discard what is there.
-func TypedValues(objType int32, values [game.NumObjValues]int32) (typed any, unusedNonzero bool, ok bool) {
+func TypedValues(objType game.ItemType, values [game.NumObjValues]int32) (typed any, unusedNonzero bool, ok bool) {
 	switch objType {
 	case game.ItemWeapon:
 		if values[0] != 0 {

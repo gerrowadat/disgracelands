@@ -306,7 +306,7 @@ func BuildDumpWithOptions(w *game.World, opts Options) *Dump {
 		}
 		d.Objects = append(d.Objects, DumpObj{
 			Vnum: o.Vnum, Keywords: Text(o.Keywords), ShortDesc: Text(o.ShortDesc),
-			Desc: Text(o.Description), ActionDesc: Text(o.ActionDesc), Type: o.Type,
+			Desc: Text(o.Description), ActionDesc: Text(o.ActionDesc), Type: o.Type.Number(),
 			ExtraFlags: o.ExtraFlags.String(), ExtraBits: o.ExtraFlags.Raw(),
 			WearFlags: o.WearFlags.String(), WearBits: o.WearFlags.Raw(),
 			PermAffect: o.PermAffect, Values: o.Values,
@@ -340,7 +340,7 @@ func BuildDumpWithOptions(w *game.World, opts Options) *Dump {
 			Close2:     s.Close2,
 		}
 		for _, b := range s.BuyTypes {
-			ds.BuyTypes = append(ds.BuyTypes, DumpShopBuy{Type: b.Type, Keyword: Text(b.Keyword)})
+			ds.BuyTypes = append(ds.BuyTypes, DumpShopBuy{Type: b.Type.Number(), Keyword: Text(b.Keyword)})
 		}
 		for i, m := range s.Messages {
 			ds.Messages[i] = Text(m)
