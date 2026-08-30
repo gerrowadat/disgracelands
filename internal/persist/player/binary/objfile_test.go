@@ -9,7 +9,9 @@ package binary
 import (
 	"context"
 	"errors"
+	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -192,6 +194,71 @@ func TestRentFilesLandInTheBucketTheCWouldPutThemIn(t *testing.T) {
 		if _, err := s.pathFor(bad); err == nil {
 			t.Errorf("pathFor(%q) succeeded, want a refusal", bad)
 		}
+	}
+}
+
+// TestListingSeparatesFilesTheCWouldReadFromEverythingElse pins the
+// question ObjectFiles/AliasFiles exist to answer: of everything in a
+// plrobjs/ directory, which paths would the C ever open?
+//
+// The three that would not are all real archive shapes rather than
+// invented ones. `00` is a sixty-byte file that sits in every bucket of
+// the archived Disgracelands plrobjs/, and the purge scripts sit at the
+// top of it; `9lives.objs` is a name _parse_name would have refused; and
+// a legal name in the wrong bucket is what a hand-sorted or
+// hand-recovered directory produces. None of them can be reported as a
+// character, because a caller subtracts this list from the roster to find
+// what it dropped (#287) -- calling a misfiled file a character would
+// turn a file nothing reads into a character nothing has.
+func TestListingSeparatesFilesTheCWouldReadFromEverythingElse(t *testing.T) {
+	dir := t.TempDir()
+	for _, rel := range []string{
+		"A-E/eve.objs",
+		"P-T/tanis.objs",
+		"A-E/00",
+		"purgeobjs",
+		"A-E/9lives.objs",
+		"A-E/tanis.objs", // legal name, bucket the C would never look in
+	} {
+		path := filepath.Join(dir, filepath.FromSlash(rel))
+		if err := os.MkdirAll(filepath.Dir(path), 0o750); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(path, []byte("x"), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	s, err := NewObjectStore(player.Config{Dir: "unused", ObjectsDir: dir})
+	if err != nil {
+		t.Fatalf("opening: %v", err)
+	}
+	files, err := s.ObjectFiles()
+	if err != nil {
+		t.Fatalf("listing: %v", err)
+	}
+	if got, want := strings.Join(files.Names, ","), "eve,tanis"; got != want {
+		t.Errorf("Names = %q, want %q", got, want)
+	}
+	if got, want := strings.Join(files.Others, ","), "A-E/00,A-E/9lives.objs,A-E/tanis.objs,purgeobjs"; got != want {
+		t.Errorf("Others = %q, want %q", got, want)
+	}
+}
+
+// A directory that was never created is not an error: an archive with no
+// rent files in it never had a plrobjs/ either, and the caller's question
+// ("what is in here that nobody reads") has the answer "nothing".
+func TestListingAMissingDirectoryIsNotAnError(t *testing.T) {
+	s, err := NewObjectStore(player.Config{Dir: filepath.Join(t.TempDir(), "nope")})
+	if err != nil {
+		t.Fatalf("opening: %v", err)
+	}
+	files, err := s.ObjectFiles()
+	if err != nil {
+		t.Fatalf("listing: %v", err)
+	}
+	if len(files.Names) != 0 || len(files.Others) != 0 {
+		t.Errorf("ObjectFiles() = %+v, want empty", files)
 	}
 }
 

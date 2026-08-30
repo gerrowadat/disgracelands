@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -310,6 +311,86 @@ func bucketedPath(dir, name, suffix, what string) (string, error) {
 		bucket = "U-Z"
 	}
 	return filepath.Join(dir, bucket, name+"."+suffix), nil
+}
+
+// Files is what a per-character directory actually holds, as opposed to what
+// its roster says it should: the character names it has a file for, and every
+// path in it that is not one.
+//
+// The importer drives its loop from the roster and asks for each character's
+// file by name, so a file belonging to nobody is never opened, never
+// converted and never mentioned -- which is #287, and the same shape as the
+// orphaned house contents #239 settled. Dropping such a file is right; no
+// server reads one either, since Crash_load is only ever reached for a
+// character the pfile has already loaded (objsave.c:1074, via
+// enter_player_game). Dropping it in silence is what is not.
+//
+// Others holds three cases a caller need not distinguish, because none of
+// them is a file any server would read:
+//
+//   - a file that is not a per-character file at all: an archived plrobjs/
+//     from a server that ran the purge scripts also has a 60-byte `00` in
+//     each bucket, and the purgeobjs/purgedir scripts themselves at the top;
+//   - a name that is not a legal character name, which _parse_name would
+//     have refused;
+//   - a legal name filed in the wrong bucket, which get_filename would never
+//     look in.
+type Files struct {
+	// Names are the lower-cased stems of files sitting where the C would
+	// look for them, sorted.
+	Names []string
+	// Others are paths relative to the directory, sorted.
+	Others []string
+}
+
+// ObjectFiles lists what plrobjs/ holds. A directory that is not there at all
+// is not an error: an archive with no rent files never had one.
+func (s *ObjectStore) ObjectFiles() (Files, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return listBucketed(s.dir, objsSuffix)
+}
+
+// AliasFiles lists what plralias/ holds, on the same terms as ObjectFiles.
+func (s *AliasStore) AliasFiles() (Files, error) {
+	return listBucketed(s.dir, aliasSuffix)
+}
+
+// listBucketed walks one of the C's letter-bucketed per-character
+// directories. It lives beside bucketedPath deliberately: deciding whether a
+// file is one the C would read is the same question as deciding where to
+// write it, and the answer is checked by round-tripping through that function
+// rather than by re-deriving the bucket rule here -- which is the mistake
+// that would let a misfiled file be reported as a character.
+func listBucketed(dir, suffix string) (Files, error) {
+	var f Files
+	err := filepath.WalkDir(dir, func(path string, d os.DirEntry, err error) error {
+		switch {
+		case err != nil:
+			return err
+		case d.IsDir():
+			return nil
+		}
+		rel, err := filepath.Rel(dir, path)
+		if err != nil {
+			return err
+		}
+		rel = filepath.ToSlash(rel)
+		stem := strings.TrimSuffix(filepath.Base(path), "."+suffix)
+		want, perr := bucketedPath(dir, stem, suffix, "file")
+		if perr != nil || want != path {
+			f.Others = append(f.Others, rel)
+			return nil
+		}
+		f.Names = append(f.Names, strings.ToLower(stem))
+		return nil
+	})
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		return Files{}, fmt.Errorf("binary: listing %s: %w", dir, err)
+	}
+	sort.Strings(f.Names)
+	sort.Strings(f.Others)
+	return f, nil
 }
 
 // LoadObjects implements player.ObjectStore.

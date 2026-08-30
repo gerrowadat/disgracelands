@@ -239,6 +239,68 @@ func TestAnOrphanedHouseContentsFileIsNamedAndNoted(t *testing.T) {
 	}
 }
 
+// TestOrphanedRentAndAliasFilesAreNamedAndNoted is #287 on the corpus built
+// to have the case: examples/torture holds plrobjs/F-J/ghost.objs and
+// plralias/F-J/ghost.alias for a Ghost who is not on the roster, and a
+// sixty-byte plrobjs/F-J/00 that is not a per-character file at all.
+//
+// Before this, import carried none of them across and said nothing: its
+// loop is driven by the roster and asks for each character's files by
+// name, so a file belonging to nobody was never opened, and the summary
+// line counted what it found rather than what was there. `verify
+// --against` was blind for the same reason, enumerating characters from
+// the roster on both sides exactly like the importer it exists to check.
+// Both halves are asserted here, because either alone would leave the
+// other blind -- the same argument as the house-contents test above.
+func TestOrphanedRentAndAliasFilesAreNamedAndNoted(t *testing.T) {
+	const torture = "../../examples/torture"
+	to := t.TempDir()
+
+	var report bytes.Buffer
+	if err := importPfile(importOptions{
+		fromDir: torture + "/binary", toDir: to, encName: convert.DefaultEncoding,
+	}, &report); err != nil {
+		t.Fatalf("import: %v\n%s", err, report.String())
+	}
+
+	got := report.String()
+	for _, want := range []string{
+		"plrobjs: dropped 1 rent file(s)",
+		"plralias: dropped 1 alias file(s)",
+		"ghost",
+		"F-J/00",
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("import did not name what it could not carry across (%q missing):\n%s", want, got)
+		}
+	}
+
+	// And the comparison says so too, beside the verdict rather than in
+	// it: nothing reads an orphan, so the two directories do load to the
+	// same state, and making it a difference would stop import -- which
+	// verifies itself -- converting any archive that has one.
+	enc := convert.Encodings[convert.DefaultEncoding]
+	var note bytes.Buffer
+	noteOut := bufio.NewWriter(&note)
+	reportOrphanPlayerFiles(noteOut,
+		loadOptions{base: torture + "/binary", format: defaultFormat(typePfile, ""), enc: enc},
+		loadOptions{base: to, format: "yaml", enc: enc})
+	if err := noteOut.Flush(); err != nil {
+		t.Fatal(err)
+	}
+	if got := note.String(); !strings.Contains(got, "ghost.alias, ghost.objs") {
+		t.Errorf("verify said nothing about the orphaned rent/alias files:\n%s", got)
+	}
+	if got := note.String(); !strings.Contains(got, "F-J/00") {
+		t.Errorf("verify said nothing about the file that is not a per-character file:\n%s", got)
+	}
+	// The converted directory has none of its own, and cannot: a
+	// character's rent file and aliases are fields of their own document.
+	if got := note.String(); strings.Contains(got, to) {
+		t.Errorf("the yaml side was reported as holding an orphan, which it cannot:\n%s", got)
+	}
+}
+
 // TestADuplicateHouseRecordIsCollapsedAndCounted is #240: two control
 // records for the same room used to collapse in silence, and the summary
 // line reported the number of records *read* rather than the number

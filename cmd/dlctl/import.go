@@ -196,7 +196,7 @@ func runImport(t dirType, o importOptions) error {
 	case typeWorld:
 		return importWorld(o)
 	case typePfile:
-		return importPfile(o)
+		return importPfile(o, os.Stdout)
 	case typeState:
 		return importState(o)
 	case typeNames:
@@ -592,7 +592,7 @@ func reportDroppedEspecs(out *bufio.Writer, w *game.World) {
 // (the C resolves LIB_PLROBJS/LIB_PLRALIAS against its own cwd, lib/, so
 // an archived tree has them beside etc/ rather than inside it) —
 // --from-objs-dir/--from-alias-dir override either guess.
-func importPfile(o importOptions) error {
+func importPfile(o importOptions, w io.Writer) error {
 	fromFormat := o.fromFormat
 	if fromFormat == "" {
 		fromFormat = binary.FormatName
@@ -638,7 +638,7 @@ func importPfile(o importOptions) error {
 	}
 	defer func() { _ = dst.Close() }()
 
-	out := bufio.NewWriter(os.Stdout)
+	out := bufio.NewWriter(w)
 	defer func() { _ = out.Flush() }()
 	for _, note := range []string{objsNote, aliasNote} {
 		if note != "" {
@@ -648,6 +648,7 @@ func importPfile(o importOptions) error {
 
 	ctx := context.Background()
 	characters, withObjects, withAliases, transcoded := 0, 0, 0, 0
+	roster := map[string]bool{}
 	for entry, err := range src.List(ctx) {
 		if err != nil {
 			_, _ = fmt.Fprintf(out, "listing: %v\n", err)
@@ -677,6 +678,7 @@ func importPfile(o importOptions) error {
 			continue
 		}
 		characters++
+		roster[strings.ToLower(strings.TrimSpace(entry.Name))] = true
 
 		f, err := objSrc.LoadObjects(ctx, entry.Name)
 		switch {
@@ -694,12 +696,89 @@ func importPfile(o importOptions) error {
 		}
 	}
 
+	// Every file in the two directories that the roster loop above could not
+	// have reached, named rather than dropped in silence. See
+	// reportUnreadablePlayerFiles.
+	if err := reportUnreadablePlayerFiles(out, roster, objSrc, aliasSrc); err != nil {
+		return err
+	}
+
 	_, _ = fmt.Fprintf(out, "\nimported %d character(s), %d with a rent/crash file, %d with aliases\n",
 		characters, withObjects, withAliases)
 	if transcoded > 0 {
 		_, _ = fmt.Fprintf(out, "transcoded %d string(s) from %s to UTF-8\n", transcoded, o.encName)
 	}
 	return out.Flush()
+}
+
+// reportUnreadablePlayerFiles names every file in plrobjs/ and plralias/
+// that the import above could not have carried across, because the loop
+// that carries them is driven by the roster.
+//
+// A `.objs` or `.alias` file whose character has no `etc/players` entry is
+// never opened, never converted and never mentioned, and the summary line
+// counts what was found rather than what was there -- so "imported 4
+// character(s), 1 with aliases" reads like a fact about the archive and is
+// a fact about the roster. That is #287, and it is the same thing #239
+// settled for house contents: dropping the file is right, doing it in
+// silence is not, and yaml-only.md §6 rule 2 makes naming what could not be
+// carried across the importer's job.
+//
+// Dropping it really is right. A character with no pfile entry cannot log
+// in, and no server reads either file except on the way in: both
+// read_aliases and Crash_load are called from nanny's CON_MENU case '1'
+// (interpreter.c:1646, :1673), for a character the pfile has already
+// loaded and put in a room. The C never
+// removes either file when a character is deleted, so an archive whose
+// operator did not run plrobjs/purgeobjs by hand accumulates them --
+// Disgracelands' own did run it, which is why its 79 .objs and 20 .alias
+// files all have roster entries and why this is latent there rather than
+// observed.
+//
+// The second line is the same report from the other end: a bucket directory
+// in that archive also holds a 60-byte file called `00`, and the top of
+// plrobjs/ holds the purge scripts themselves. The C would not read those
+// either, so ignoring them is right -- but "what is in this directory that
+// no server will read" is one question, and answering half of it would be
+// the same silence in a smaller place.
+func reportUnreadablePlayerFiles(out *bufio.Writer, roster map[string]bool, objSrc *binary.ObjectStore, aliasSrc *binary.AliasStore) error {
+	objs, err := objSrc.ObjectFiles()
+	if err != nil {
+		return err
+	}
+	aliases, err := aliasSrc.AliasFiles()
+	if err != nil {
+		return err
+	}
+	for _, d := range []struct {
+		dir   string
+		what  string
+		cite  string
+		files binary.Files
+	}{
+		{"plrobjs", "rent file", "Crash_load (interpreter.c:1673)", objs},
+		{"plralias", "alias file", "read_aliases (interpreter.c:1646)", aliases},
+	} {
+		var orphans []string
+		for _, name := range d.files.Names {
+			if !roster[name] {
+				orphans = append(orphans, name)
+			}
+		}
+		if len(orphans) > 0 {
+			_, _ = fmt.Fprintf(out, "%s: dropped %d %s(s) for character(s) with no roster entry — "+
+				"nothing reads one, since %s runs from nanny's menu for a character the "+
+				"pfile has already loaded: %s\n",
+				d.dir, len(orphans), d.what, d.cite, strings.Join(orphans, ", "))
+		}
+		if len(d.files.Others) > 0 {
+			_, _ = fmt.Fprintf(out, "%s: ignored %d file(s) that are not %ss the C would read — "+
+				"not a per-character file, an illegal character name, or filed in a bucket "+
+				"get_filename would not look in (utils.c:518): %s\n",
+				d.dir, len(d.files.Others), d.what, strings.Join(d.files.Others, ", "))
+		}
+	}
+	return nil
 }
 
 // resolveSubdir finds a per-character subdirectory (plrobjs/, plralias/)

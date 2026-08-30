@@ -1,0 +1,20 @@
+2
+gc
+14
+get all corpse
+0
+2
+bs
+17
+backstab $1; flee
+1
+10
+everything
+6
+say $*
+1
+2
+gc
+48
+an earlier, shadowed definition of the same name
+0

@@ -260,7 +260,41 @@ func writeRoster(base string) error {
 	if err != nil {
 		return err
 	}
-	return aliases.SaveAliases("Torturer", torturedAliases())
+	if err := aliases.SaveAliases("Torturer", torturedAliases()); err != nil {
+		return err
+	}
+
+	// A rent file and an alias file for a character who is not on the
+	// roster, and a file in a bucket that is not a per-character file at
+	// all -- the three things a plrobjs/ or plralias/ holds that no server
+	// will ever read.
+	//
+	// The C never removes either file when a character is deleted:
+	// do_delete_char writes the roster and nothing else, so every archive
+	// whose operator did not run plrobjs/purgeobjs by hand has these.
+	// Disgracelands' own archive did run it, which is why all 79 of its
+	// .objs and all 20 of its .alias files have roster entries -- so the
+	// case that broke the importer is one no real fixture here had, which
+	// is the same "corpus assembled from what the thing obviously does"
+	// failure as examples/stock being pure ASCII (data-format.md §11.1).
+	//
+	// import used to carry these across in silence, because its loop is
+	// driven by the roster and asks for each character's files by name, so
+	// a file belonging to nobody was never opened and never mentioned
+	// (#287). It now names them, and `verify --against` notes them beside
+	// the verdict -- both halves, for the reason #239 needed both.
+	if err := objs.SaveObjects(ctx, "Ghost", crashFileLostToRent()); err != nil {
+		return err
+	}
+	if err := aliases.SaveAliases("Ghost", torturedAliases()); err != nil {
+		return err
+	}
+	// The 60-byte `00` that sits in each bucket of the archived plrobjs/.
+	// Nothing in the C writes it and nothing reads it; it is what a
+	// directory this old accumulates, and it is exactly what a report of
+	// "files no server reads" has to be able to say without calling it a
+	// character.
+	return writeFile(filepath.Join(base, "plrobjs", "F-J", "00"), strings.Repeat("\x00", 60))
 }
 
 // rentedWithNestedContainers is a rent file holding a container inside a

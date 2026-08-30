@@ -124,7 +124,9 @@ world is itself the documentation.
 
 ### `etc/players`, `plrobjs/`, `plralias/`
 
-The roster is four characters, and `plrobjs/`/`plralias/` are **siblings**
+The roster is four characters — plus three files in `plrobjs/` and
+`plralias/` that belong to no character, listed after them — and
+`plrobjs/`/`plralias/` are **siblings**
 of `etc/` rather than children of it — the C's own layout, because it
 resolves `LIB_PLROBJS` and `LIB_PLRALIAS` against its own cwd. This port
 uses the other layout, and `dlctl import --type=pfile` guesses between
@@ -153,6 +155,29 @@ them; exercising the archived one is the point.
 - **`Nobody`** — level 0, no password, no skills, no affects, no title,
   zero timestamps. A crash file with the "lost to rent" header state and
   no objects, which is a different thing from having no file at all.
+
+Three files in those directories belong to no character at all, which is
+the whole of what they are for:
+
+- **`plrobjs/F-J/ghost.objs`** and **`plralias/F-J/ghost.alias`** — a rent
+  file and an alias file for a `Ghost` who is not on the roster. The C
+  never removes either when a character is deleted (`do_delete_char`
+  rewrites the roster and nothing else), so every archive whose operator
+  did not run `plrobjs/purgeobjs` by hand has some. Disgracelands' own
+  archive *did* run it — all 79 of its `.objs` and all 20 of its `.alias`
+  files have roster entries — so this was the case no fixture here had,
+  and `import` carried it across in silence: its loop is driven by the
+  roster and asks for each character's files by name, so a file belonging
+  to nobody was never opened and never mentioned (#287). Dropping them is
+  right, because nothing reads either except for a character the pfile has
+  already loaded (`read_aliases` and `Crash_load`, both from `nanny`'s
+  `CON_MENU` case `'1'`, `interpreter.c:1646` and `:1673`). Saying nothing
+  about it was not.
+- **`plrobjs/F-J/00`** — sixty bytes, no extension. Every bucket of the
+  archived `plrobjs/` has one; nothing in the C writes it and nothing
+  reads it. It is here so that "what is in this directory that no server
+  will read" can be answered without calling it a character — the same
+  report from the other end.
 
 Two things this deliberately does *not* contain, because the format
 cannot hold them and pretending otherwise would be misleading rather than
