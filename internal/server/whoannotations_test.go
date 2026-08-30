@@ -70,28 +70,28 @@ func TestWhoPrintsItsAnnotations(t *testing.T) {
 		want string
 	}{
 		{"deaf", func(r *game.PlayerRecord) {
-			r.Preferences = r.Preferences.Set(game.PrefDeaf)
+			r.Preferences = r.Preferences.With(game.PrefDeaf)
 		}, " (deaf)"},
 		{"notell", func(r *game.PlayerRecord) {
-			r.Preferences = r.Preferences.Set(game.PrefNoTell)
+			r.Preferences = r.Preferences.With(game.PrefNoTell)
 		}, " (notell)"},
 		{"nogossip", func(r *game.PlayerRecord) {
-			r.Preferences = r.Preferences.Set(game.PrefNoGoss)
+			r.Preferences = r.Preferences.With(game.PrefNoGoss)
 		}, " (nogossip)"},
 		{"quest", func(r *game.PlayerRecord) {
-			r.Preferences = r.Preferences.Set(game.PrefQuest)
+			r.Preferences = r.Preferences.With(game.PrefQuest)
 		}, " (quest)"},
 		{"thief", func(r *game.PlayerRecord) {
-			r.PlayerFlags = r.PlayerFlags.Set(game.PlayerThief)
+			r.PlayerFlags = r.PlayerFlags.With(game.PlayerThief)
 		}, " (THIEF)"},
 		{"killer", func(r *game.PlayerRecord) {
-			r.PlayerFlags = r.PlayerFlags.Set(game.PlayerKiller)
+			r.PlayerFlags = r.PlayerFlags.With(game.PlayerKiller)
 		}, " (KILLER)"},
 		{"writing", func(r *game.PlayerRecord) {
-			r.PlayerFlags = r.PlayerFlags.Set(game.PlayerWriting)
+			r.PlayerFlags = r.PlayerFlags.With(game.PlayerWriting)
 		}, " (writing)"},
 		{"mailing", func(r *game.PlayerRecord) {
-			r.PlayerFlags = r.PlayerFlags.Set(game.PlayerMailing)
+			r.PlayerFlags = r.PlayerFlags.With(game.PlayerMailing)
 		}, " (mailing)"},
 		{"invis", func(r *game.PlayerRecord) {
 			r.AffectFlags = r.AffectFlags.With(game.AffectInvisible)
@@ -106,8 +106,8 @@ func TestWhoPrintsItsAnnotations(t *testing.T) {
 
 			// Back to a clean character for the next case.
 			setRecord(t, srv, "Bystander", func(r *game.PlayerRecord) {
-				r.Preferences = 0
-				r.PlayerFlags = 0
+				r.Preferences = game.Preferences{}
+				r.PlayerFlags = game.PlayerFlags{}
 				r.AffectFlags = game.AffectFlags{}
 			})
 			if line := whoLineFor(t, mortal, "Bystander"); strings.Contains(line, tc.want) {
@@ -131,7 +131,7 @@ func TestWhoSaysMailingRatherThanWriting(t *testing.T) {
 	_, mortal := twoInARoom(t, srv, addr)
 
 	setRecord(t, srv, "Bystander", func(r *game.PlayerRecord) {
-		r.PlayerFlags = r.PlayerFlags.Set(game.PlayerWriting).Set(game.PlayerMailing)
+		r.PlayerFlags = r.PlayerFlags.With(game.PlayerWriting).With(game.PlayerMailing)
 	})
 
 	line := whoLineFor(t, mortal, "Bystander")

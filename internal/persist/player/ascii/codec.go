@@ -186,13 +186,13 @@ func Encode(w io.Writer, p *game.PlayerRecord) error {
 
 	// The three bitfields use the letter encoding, with "0" for empty —
 	// an empty value would misalign the reader.
-	if p.PlayerFlags != 0 {
+	if !p.PlayerFlags.Empty() {
 		put(tagAct, p.PlayerFlags.String())
 	}
 	if !p.AffectFlags.Empty() {
 		put(tagAff, p.AffectFlags.String())
 	}
-	if p.Preferences != 0 {
+	if !p.Preferences.Empty() {
 		put(tagPref, p.Preferences.String())
 	}
 
@@ -442,12 +442,14 @@ func assign(p *game.PlayerRecord, tag, value string, next func() (string, bool),
 	case "Id":
 		p.IDNum = num()
 	case "Act":
-		p.PlayerFlags, _ = game.ParseFlags(value)
+		actBits, _ := game.ParseFlagLetters(value)
+		p.PlayerFlags = game.SetFromRaw[game.PlayerFlag](actBits)
 	case "Aff":
 		affBits, _ := game.ParseFlagLetters(value)
 		p.AffectFlags = game.SetFromRaw[game.AffectFlag](affBits)
 	case "Pref":
-		p.Preferences, _ = game.ParseFlags(value)
+		prefBits, _ := game.ParseFlagLetters(value)
+		p.Preferences = game.SetFromRaw[game.PrefFlag](prefBits)
 	case "Thr1", "Thr2", "Thr3", "Thr4", "Thr5":
 		p.SavingThrows[tag[3]-'1'] = num32()
 	case "Wimp":

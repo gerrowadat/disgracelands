@@ -42,12 +42,12 @@ func doColour(c *Context) error {
 	}
 
 	one, two := colour.Bits(level)
-	rec.Preferences = rec.Preferences.Clear(game.PrefColour1 | game.PrefColour2)
+	rec.Preferences = rec.Preferences.Without(game.PrefColour1, game.PrefColour2)
 	if one {
-		rec.Preferences = rec.Preferences.Set(game.PrefColour1)
+		rec.Preferences = rec.Preferences.With(game.PrefColour1)
 	}
 	if two {
-		rec.Preferences = rec.Preferences.Set(game.PrefColour2)
+		rec.Preferences = rec.Preferences.With(game.PrefColour2)
 	}
 
 	// The confirmation colours the word "color" itself, at C_SPR — so it is

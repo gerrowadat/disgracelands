@@ -1472,7 +1472,7 @@ func isBlind(ch *game.Character) bool {
 // hasPref reports whether a player has a PRF_ bit set. A mobile has none: the
 // C guards every one of these with !IS_NPC, because player_specials is not
 // allocated for a mobile and reading it would be a null dereference.
-func hasPref(ch *game.Character, flag game.Flags) bool {
+func hasPref(ch *game.Character, flag game.PrefFlag) bool {
 	return ch != nil && !ch.IsNPC() && ch.Record != nil && ch.Record.Preferences.Has(flag)
 }
 
@@ -1903,7 +1903,7 @@ func whoAnnotations(who *game.Character) string {
 	}
 
 	for _, a := range []struct {
-		flag game.Flags
+		flag game.PrefFlag
 		text string
 	}{
 		{game.PrefDeaf, " (deaf)"},

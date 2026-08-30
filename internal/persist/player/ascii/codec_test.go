@@ -112,13 +112,14 @@ func TestDecodeARealFile(t *testing.T) {
 
 	// "Act : 128" is the decimal form; the reader accepts it and the letter
 	// form alike, which is the branch the format document calls load-bearing.
-	check("PlayerFlags", rec.PlayerFlags, game.Flags(128))
+	check("PlayerFlags", rec.PlayerFlags, game.SetFromRaw[game.PlayerFlag](128))
 
 	// "efghmnoqv" is bits 4,5,6,7,12,13,14,16,21 per the format document.
-	var wantPref game.Flags
+	var wantPrefBits uint64
 	for _, bit := range []uint{4, 5, 6, 7, 12, 13, 14, 16, 21} {
-		wantPref |= 1 << bit
+		wantPrefBits |= 1 << bit
 	}
+	wantPref := game.SetFromRaw[game.PrefFlag](wantPrefBits)
 	check("Preferences", rec.Preferences, wantPref)
 
 	// Saving throws are one tag each, and absent ones stay zero.
@@ -146,8 +147,8 @@ func TestBothFlagEncodingsAreAccepted(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Decode with Act=%q: %v", form, err)
 		}
-		if rec.PlayerFlags != 128 {
-			t.Errorf("Act %q decoded to %d, want 128", form, rec.PlayerFlags)
+		if rec.PlayerFlags.Raw() != 128 {
+			t.Errorf("Act %q decoded to %d, want 128", form, rec.PlayerFlags.Raw())
 		}
 	}
 }
@@ -173,9 +174,9 @@ func TestRoundTrip(t *testing.T) {
 		Points:       game.Points{Hit: 500, MaxHit: 600, Mana: 100, MaxMana: 110, Move: 82, MaxMove: 90, Armor: -100, Gold: 12345, BankGold: 67890, Exp: 9999999, HitRoll: 5, DamRoll: 6},
 		Alignment:    1000,
 		IDNum:        2,
-		PlayerFlags:  128,
+		PlayerFlags:  game.SetFromRaw[game.PlayerFlag](128),
 		AffectFlags:  game.SetFromRaw[game.AffectFlag](1 << 3),
-		Preferences:  1<<4 | 1<<21,
+		Preferences:  game.SetFromRaw[game.PrefFlag](1<<4 | 1<<21),
 		SavingThrows: [5]int32{-10, -20, -30, -40, -50},
 		Skills:       map[int32]int32{1: 100, 2: 85, 200: 42},
 		Affects: []game.Affect{

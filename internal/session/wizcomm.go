@@ -192,12 +192,12 @@ func doSyslog(c *Context) error {
 
 	// Two bits making one number, which is why the C's assignment looks like
 	// arithmetic: `PRF_LOG1 * (tp & 1) | PRF_LOG2 * (tp & 2) >> 1`.
-	rec.Preferences = rec.Preferences.Clear(game.PrefLog1 | game.PrefLog2)
+	rec.Preferences = rec.Preferences.Without(game.PrefLog1, game.PrefLog2)
 	if level&1 != 0 {
-		rec.Preferences = rec.Preferences.Set(game.PrefLog1)
+		rec.Preferences = rec.Preferences.With(game.PrefLog1)
 	}
 	if level&2 != 0 {
-		rec.Preferences = rec.Preferences.Set(game.PrefLog2)
+		rec.Preferences = rec.Preferences.With(game.PrefLog2)
 	}
 	c.Send("Your syslog is now %s.\r\n", logTypes[level])
 	return nil
@@ -298,7 +298,7 @@ func doWiznet(c *Context) error {
 		// (act.wizard.c:1960): a god in the line editor is left alone,
 		// the same courtesy do_gen_comm's channels extend. Live as of
 		// #214 — nothing set either bit before that.
-		if who.Record.PlayerFlags.HasAny(game.PlayerWriting | game.PlayerMailing) {
+		if who.Record.PlayerFlags.HasAny(game.PlayerWriting, game.PlayerMailing) {
 			continue
 		}
 		if who == c.Character && c.noRepeat() {

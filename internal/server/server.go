@@ -717,7 +717,7 @@ func (s *Server) DupeCheck(ctx context.Context, sess *session.Session, c *game.C
 		// per-character idle counter at all (docs/deviations.md), so there
 		// is nothing here to zero.
 		if rec := target.Record; rec != nil {
-			rec.PlayerFlags = rec.PlayerFlags.Clear(game.PlayerMailing | game.PlayerWriting)
+			rec.PlayerFlags = rec.PlayerFlags.Without(game.PlayerMailing, game.PlayerWriting)
 			rec.BaseAffectFlags = rec.BaseAffectFlags.Without(game.AffectGroup)
 			rec.AffectFlags = rec.AffectFlags.Without(game.AffectGroup)
 		}
@@ -1222,12 +1222,12 @@ func (s *Server) Delete(ctx context.Context, c *game.Character) error {
 	if c.Record.Level >= game.LevelGreaterGod {
 		s.logger.Warn("refusing to delete a character of greater-god level or above",
 			"character", c.Name, "level", c.Record.Level)
-		c.Record.PlayerFlags = c.Record.PlayerFlags.Clear(game.PlayerDeleted)
+		c.Record.PlayerFlags = c.Record.PlayerFlags.Without(game.PlayerDeleted)
 		return s.saveLive(ctx, c.Record)
 	}
 
 	// Recorded on the way out as well as removed, so a restored backup of the
 	// roster does not quietly bring them back without anyone knowing why.
-	c.Record.PlayerFlags = c.Record.PlayerFlags.Set(game.PlayerDeleted)
+	c.Record.PlayerFlags = c.Record.PlayerFlags.With(game.PlayerDeleted)
 	return s.players.Delete(ctx, c.Record.Name)
 }

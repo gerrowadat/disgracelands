@@ -150,7 +150,7 @@ func TestNewCharacterDefaultsAreTheLocalOnes(t *testing.T) {
 		t.Error("a new cleric does not test as one")
 	}
 
-	for name, bit := range map[string]Flags{
+	for name, bit := range map[string]PrefFlag{
 		"colour (low)":  PrefColour1,
 		"colour (high)": PrefColour2,
 		"display hp":    PrefDisplayHP,

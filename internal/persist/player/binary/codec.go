@@ -175,9 +175,9 @@ func (c *codec) decode(rec []byte) (*game.PlayerRecord, error) {
 		Alignment: c.i32(rec, "cs.alignment"),
 		IDNum:     c.varInt(rec, "cs.idnum"),
 
-		PlayerFlags: game.Flags(c.varBits(rec, "cs.act")),
+		PlayerFlags: game.SetFromRaw[game.PlayerFlag](c.varBits(rec, "cs.act")),
 		AffectFlags: game.SetFromRaw[game.AffectFlag](c.varBits(rec, "cs.affected_by")),
-		Preferences: game.Flags(c.varBits(rec, "ps.pref")),
+		Preferences: game.SetFromRaw[game.PrefFlag](c.varBits(rec, "ps.pref")),
 
 		WimpLevel:     c.i32(rec, "ps.wimp_level"),
 		FreezeLevel:   c.i8(rec, "ps.freeze_level"),
@@ -405,9 +405,9 @@ func (c *codec) encode(p *game.PlayerRecord) ([]byte, error) {
 
 	c.putI32(rec, "cs.alignment", p.Alignment)
 	c.putVar(rec, "cs.idnum", p.IDNum)
-	c.putVar(rec, "cs.act", storedFlags(uint64(p.PlayerFlags)))
+	c.putVar(rec, "cs.act", storedFlags(p.PlayerFlags.Raw()))
 	c.putVar(rec, "cs.affected_by", storedFlags(p.AffectFlags.Raw()))
-	c.putVar(rec, "ps.pref", storedFlags(uint64(p.Preferences)))
+	c.putVar(rec, "ps.pref", storedFlags(p.Preferences.Raw()))
 
 	c.putI32(rec, "ps.wimp_level", p.WimpLevel)
 	c.putI8(rec, "ps.freeze_level", p.FreezeLevel)

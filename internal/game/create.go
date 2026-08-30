@@ -195,9 +195,7 @@ func ApplyNewCharacterDefaults(rec *PlayerRecord) {
 	if mask, ok := classRemortMasks[rec.Class]; ok {
 		rec.RemortVector = mask
 	}
-	rec.Preferences = rec.Preferences.Set(
-		PrefColour1 | PrefColour2 |
-			PrefDisplayHP | PrefDisplayMana | PrefDisplayMove |
-			PrefAutoExit)
-	rec.PlayerFlags = rec.PlayerFlags.Set(PlayerSiteOK)
+	rec.Preferences = rec.Preferences.With(
+		PrefColour1, PrefColour2, PrefDisplayHP, PrefDisplayMana, PrefDisplayMove, PrefAutoExit)
+	rec.PlayerFlags = rec.PlayerFlags.With(PlayerSiteOK)
 }

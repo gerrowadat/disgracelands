@@ -50,7 +50,7 @@ func TestNoRepeatOnEcho(t *testing.T) {
 
 	inWorld(t, srv, func(w *game.Live) {
 		if who := w.Find("Quiet"); who != nil && who.Record != nil {
-			who.Record.Preferences = who.Record.Preferences.Set(game.PrefNoRepeat)
+			who.Record.Preferences = who.Record.Preferences.With(game.PrefNoRepeat)
 		}
 	})
 
@@ -251,7 +251,7 @@ func TestWiznetOffline(t *testing.T) {
 	setLevel(t, srv, "Silent", game.LevelImmortal)
 	inWorld(t, srv, func(w *game.Live) {
 		if who := w.Find("Silent"); who != nil && who.Record != nil {
-			who.Record.Preferences = who.Record.Preferences.Set(game.PrefNoWiz)
+			who.Record.Preferences = who.Record.Preferences.With(game.PrefNoWiz)
 		}
 	})
 

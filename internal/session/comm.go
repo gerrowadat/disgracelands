@@ -282,7 +282,7 @@ type channel struct {
 	off string
 	// mute is the preference that switches it off, or 0 for a channel that
 	// cannot be switched off at all.
-	mute game.Flags
+	mute game.PrefFlag
 	// sameZone limits it to the speaker's zone, which only shout does.
 	sameZone bool
 	// costsMovement is holler, and only holler.
@@ -509,7 +509,7 @@ func doPage(c *Context) error {
 
 // prefers reports whether a preference is set. False for a mobile, which has
 // no preferences at all.
-func (c *Context) prefers(flag game.Flags) bool {
+func (c *Context) prefers(flag game.PrefFlag) bool {
 	return c.Character.Record != nil && c.Character.Record.Preferences.Has(flag)
 }
 

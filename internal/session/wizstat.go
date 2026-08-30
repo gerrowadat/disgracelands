@@ -466,9 +466,9 @@ func (c *Context) statCharacter(k *game.Character) {
 			game.SprintBit(mobFlagsOf(k).Raw(), game.ActionBitNames()))
 	} else {
 		fmt.Fprintf(&b, "PLR: {{cyan}}%s{{/}}\r\n",
-			game.SprintBit(uint64(rec.PlayerFlags), game.PlayerBitNames()))
+			game.SprintBit(rec.PlayerFlags.Raw(), game.PlayerBitNames()))
 		fmt.Fprintf(&b, "PRF: {{green}}%s{{/}}\r\n",
-			game.SprintBit(uint64(rec.Preferences), game.PreferenceBitNames()))
+			game.SprintBit(rec.Preferences.Raw(), game.PreferenceBitNames()))
 	}
 
 	if k.IsNPC() && k.MobDef != nil {

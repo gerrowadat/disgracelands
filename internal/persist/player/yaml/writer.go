@@ -27,9 +27,9 @@ func docFromRecord(rec *game.PlayerRecord) playerDoc {
 	sex := game.NameOrNumber(rec.Sex, game.YamlSexNames())
 	class := game.NameOrNumber(rec.Class, game.YamlClassNames())
 	remort, remortRaw := game.NameBits(uint64(uint32(rec.RemortVector)), game.YamlClassNames()) //nolint:gosec // a small per-class bitmask, reinterpreted not truncated
-	act, actRaw := game.NameBits(uint64(rec.PlayerFlags), game.YamlPlayerFlagNames())
+	act, actRaw := game.NameBits(rec.PlayerFlags.Raw(), game.YamlPlayerFlagNames())
 	aff, affRaw := game.NameBits(rec.AffectFlags.Raw(), game.YamlAffectFlagNames())
-	prefs, prefsRaw := game.NameBits(uint64(rec.Preferences), game.YamlPreferenceNames())
+	prefs, prefsRaw := game.NameBits(rec.Preferences.Raw(), game.YamlPreferenceNames())
 
 	doc := playerDoc{
 		Schema:     playerSchema,

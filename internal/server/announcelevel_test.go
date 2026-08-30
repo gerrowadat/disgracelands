@@ -33,13 +33,13 @@ func TestAnnouncementsDefaultToAll(t *testing.T) {
 
 	// And the record says so with no bits set at all, which is the property
 	// that matters for an archived pfile rather than a freshly made one.
-	var pref game.Flags
+	var pref game.Preferences
 	inWorld(t, srv, func(w *game.Live) {
 		if who := w.Find("Zod"); who != nil && who.Record != nil {
 			pref = who.Record.Preferences
 		}
 	})
-	if pref.HasAny(game.PrefNoAnnounce1 | game.PrefNoAnnounce2) {
+	if pref.HasAny(game.PrefNoAnnounce1, game.PrefNoAnnounce2) {
 		t.Errorf("a new character has announcement-suppression bits set: %#x", pref)
 	}
 }

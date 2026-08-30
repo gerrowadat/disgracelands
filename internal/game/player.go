@@ -109,11 +109,11 @@ type PlayerRecord struct {
 	IDNum int64
 
 	// PlayerFlags are the PLR_* bits: killer, thief, frozen, deleted.
-	PlayerFlags Flags
+	PlayerFlags PlayerFlags
 	// AffectFlags are the AFF_* bits: the spells currently on them.
 	AffectFlags AffectFlags
 	// Preferences are the PRF_* bits: brief mode, autoexit, colour.
-	Preferences Flags
+	Preferences Preferences
 
 	// SavingThrows are the five saving-throw bonuses.
 	SavingThrows [5]int32

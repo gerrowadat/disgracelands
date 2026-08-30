@@ -363,7 +363,7 @@ func AdvanceLevel(rec *PlayerRecord, r *rng.Rand) {
 	if rec.Level >= LevelImmortal {
 		// Immortals do not eat, drink or get drunk, and they see in the dark.
 		rec.Conditions = [3]int32{-1, -1, -1}
-		rec.Preferences = rec.Preferences.Set(PrefHolylight)
+		rec.Preferences = rec.Preferences.With(PrefHolylight)
 	}
 }
 

@@ -277,7 +277,7 @@ func (s *Store) List(ctx context.Context) iter.Seq2[player.IndexEntry, error] {
 			// Lower-cased: see player.IndexEntry.Name.
 			entry := player.IndexEntry{
 				Name: strings.ToLower(doc.Name), IDNum: doc.ID,
-				Level: doc.Identity.Level, Flags: game.Flags(act),
+				Level: doc.Identity.Level, Flags: game.SetFromRaw[game.PlayerFlag](act),
 			}
 			if !yield(entry, nil) {
 				return

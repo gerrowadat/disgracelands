@@ -121,7 +121,7 @@ func postmasterSendMail(sc *SpecialCall) {
 	// Safe from here: a special procedure runs inside the command that
 	// triggered it, on the world goroutine.
 	if who.Record != nil && !who.IsNPC() {
-		who.Record.PlayerFlags = who.Record.PlayerFlags.Set(game.PlayerMailing)
+		who.Record.PlayerFlags = who.Record.PlayerFlags.With(game.PlayerMailing)
 	}
 
 	from := int64(-1)

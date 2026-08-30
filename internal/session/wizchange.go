@@ -301,8 +301,8 @@ func doAdvance(c *Context) error {
 	// Somebody dropped out of immortality loses the flags that only make
 	// sense up there.
 	if newLevel < game.LevelImmortal {
-		rec.Preferences = rec.Preferences.Clear(
-			game.PrefLog1 | game.PrefLog2 | game.PrefNoHassle | game.PrefHolylight)
+		rec.Preferences = rec.Preferences.Without(
+			game.PrefLog1, game.PrefLog2, game.PrefNoHassle, game.PrefHolylight)
 	}
 
 	// The level is set by the experience, not the other way round: the C
@@ -383,11 +383,11 @@ func doPardon(c *Context) error {
 		return nil
 	}
 	rec := victim.Record
-	if !rec.PlayerFlags.HasAny(game.PlayerThief | game.PlayerKiller) {
+	if !rec.PlayerFlags.HasAny(game.PlayerThief, game.PlayerKiller) {
 		c.Send("Your victim is not flagged.\r\n")
 		return nil
 	}
-	rec.PlayerFlags = rec.PlayerFlags.Clear(game.PlayerThief | game.PlayerKiller)
+	rec.PlayerFlags = rec.PlayerFlags.Without(game.PlayerThief, game.PlayerKiller)
 	c.Send("Pardoned.\r\n")
 	victim.Tell("You have been pardoned by the Gods!\r\n")
 	// mudlog(buf, BRF, MAX(LVL_GOD, GET_INVIS_LEV(ch)), TRUE)
@@ -415,7 +415,7 @@ func doSquelch(c *Context) error {
 // (act.wizard.c:2074, 2082). Everything else about them is identical, down
 // to the C building one string and using it for both the log line and the
 // reply — which is why the reply here starts with "(GC) " too.
-func (c *Context) togglePlayerFlag(flag game.Flags, label string, typ int) error {
+func (c *Context) togglePlayerFlag(flag game.PlayerFlag, label string, typ int) error {
 	victim := c.wizutilTarget()
 	if victim == nil {
 		return nil
@@ -449,7 +449,7 @@ func doFreeze(c *Context) error {
 		return nil
 	}
 
-	rec.PlayerFlags = rec.PlayerFlags.Set(game.PlayerFrozen)
+	rec.PlayerFlags = rec.PlayerFlags.With(game.PlayerFrozen)
 	// The level of whoever did it, so a lesser god cannot undo it.
 	rec.FreezeLevel = levelOf(c.Character)
 
@@ -488,7 +488,7 @@ func doThaw(c *Context) error {
 	// — the one place in do_wizutil it logs ahead of acting.
 	c.wizlogInvis(obs.LogBrief, game.LevelGod, c.Character,
 		"(GC) %s un-frozen by %s.", victim.Name, c.Character.Name)
-	rec.PlayerFlags = rec.PlayerFlags.Clear(game.PlayerFrozen)
+	rec.PlayerFlags = rec.PlayerFlags.Without(game.PlayerFrozen)
 	victim.Tell("A fireball suddenly explodes in front of you, melting the ice!\r\n" +
 		"You feel thawed.\r\n")
 	c.Send("Thawed.\r\n")

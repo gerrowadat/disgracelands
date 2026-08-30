@@ -861,7 +861,7 @@ var spellbook = map[int32]spellCase{
 		bob, _ := place(t, srv, fighterRecord("Bob", 10, 200), MortalStartRoom)
 		inWorld(t, srv, func(_ *game.Live) {
 			// Summon protection is on by default and is a flat refusal.
-			bob.Record.Preferences = bob.Record.Preferences.Set(game.PrefSummonable)
+			bob.Record.Preferences = bob.Record.Preferences.With(game.PrefSummonable)
 		})
 
 		castOn(c, "summon", "bob")

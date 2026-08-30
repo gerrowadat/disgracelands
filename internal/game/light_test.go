@@ -236,7 +236,7 @@ func TestCanSeeInDark(t *testing.T) {
 	}
 
 	god := inRoom(t, l, "Odin", 3003)
-	god.Record.Preferences = god.Record.Preferences.Set(PrefHolylight)
+	god.Record.Preferences = god.Record.Preferences.With(PrefHolylight)
 	if !CanSeeInDark(god) {
 		t.Error("holylight did not let a god see in the dark")
 	}

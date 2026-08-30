@@ -67,12 +67,15 @@ type setContext struct {
 // setOrRemove is the C's SET_OR_REMOVE macro: set on `on`, clear on `off`,
 // and — worth noticing — do nothing at all if neither, which cannot happen
 // for a BINARY field because the parse refuses anything else.
-func (s *setContext) setOrRemove(flags *game.Flags, bits game.Flags) {
+// A free function rather than a method on setContext because it serves two
+// flag domains with two different set types, and Go has no generic methods.
+// docs/proposals/idiomatic-go.md §4.1.
+func setOrRemove[T ~int](s *setContext, flags *game.Set[T], bits ...T) {
 	switch {
 	case s.on:
-		*flags = flags.Set(bits)
+		*flags = flags.With(bits...)
 	case s.off:
-		*flags = flags.Clear(bits)
+		*flags = flags.Without(bits...)
 	}
 }
 
@@ -111,10 +114,10 @@ type setField struct {
 // what `set <name> h` means.
 var setFields = []setField{
 	{"brief", game.LevelGod, setPC, setBinary, func(s *setContext) {
-		s.setOrRemove(&s.rec.Preferences, game.PrefBrief)
+		setOrRemove(s, &s.rec.Preferences, game.PrefBrief)
 	}},
 	{"invstart", game.LevelGod, setPC, setBinary, func(s *setContext) {
-		s.setOrRemove(&s.rec.PlayerFlags, game.PlayerInvisStart)
+		setOrRemove(s, &s.rec.PlayerFlags, game.PlayerInvisStart)
 	}},
 	{"title", game.LevelGod, setPC, setMisc, func(s *setContext) {
 		s.rec.Title = s.arg
@@ -123,7 +126,7 @@ var setFields = []setField{
 	{"nosummon", game.LevelGreaterGod, setPC, setBinary, func(s *setContext) {
 		// The flag is SUMMONABLE and the field is NOSUMMON, so the sense is
 		// inverted — and the C's acknowledgement says ONOFF(!on) to match.
-		s.setOrRemove(&s.rec.Preferences, game.PrefSummonable)
+		setOrRemove(s, &s.rec.Preferences, game.PrefSummonable)
 		s.output = "Nosummon " + onOff(!s.on) + " for " + s.victim.Name + "."
 	}},
 	{"maxhit", game.LevelGreaterGod, setBoth, setNumber, func(s *setContext) {
@@ -203,14 +206,14 @@ var setFields = []setField{
 		if !s.selfOrImplementor() {
 			return
 		}
-		s.setOrRemove(&s.rec.Preferences, game.PrefNoHassle)
+		setOrRemove(s, &s.rec.Preferences, game.PrefNoHassle)
 	}},
 	{"frozen", game.LevelGreaterGod, setPC, setBinary, func(s *setContext) {
 		if s.victim == s.c.Character && s.on {
 			s.refuse("Better not -- could be a long winter!\r\n")
 			return
 		}
-		s.setOrRemove(&s.rec.PlayerFlags, game.PlayerFrozen)
+		setOrRemove(s, &s.rec.PlayerFlags, game.PlayerFrozen)
 	}},
 	// `practices` and `lessons` are the same field under two names: the C
 	// falls through from one case to the other.
@@ -220,10 +223,10 @@ var setFields = []setField{
 	{"hunger", game.LevelGreaterGod, setBoth, setMisc, setCondition(game.CondFull)},
 	{"thirst", game.LevelGreaterGod, setBoth, setMisc, setCondition(game.CondThirst)},
 	{"killer", game.LevelGod, setPC, setBinary, func(s *setContext) {
-		s.setOrRemove(&s.rec.PlayerFlags, game.PlayerKiller)
+		setOrRemove(s, &s.rec.PlayerFlags, game.PlayerKiller)
 	}},
 	{"thief", game.LevelGod, setPC, setBinary, func(s *setContext) {
-		s.setOrRemove(&s.rec.PlayerFlags, game.PlayerThief)
+		setOrRemove(s, &s.rec.PlayerFlags, game.PlayerThief)
 	}},
 	{"level", game.LevelImplementor, setBoth, setNumber, func(s *setContext) {
 		if s.value > levelOf(s.c.Character) || s.value > game.LevelImplementor {
@@ -243,13 +246,13 @@ var setFields = []setField{
 		}
 	}},
 	{"roomflag", game.LevelGreaterGod, setPC, setBinary, func(s *setContext) {
-		s.setOrRemove(&s.rec.Preferences, game.PrefRoomFlags)
+		setOrRemove(s, &s.rec.Preferences, game.PrefRoomFlags)
 	}},
 	{"siteok", game.LevelGreaterGod, setPC, setBinary, func(s *setContext) {
-		s.setOrRemove(&s.rec.PlayerFlags, game.PlayerSiteOK)
+		setOrRemove(s, &s.rec.PlayerFlags, game.PlayerSiteOK)
 	}},
 	{"deleted", game.LevelImplementor, setPC, setBinary, func(s *setContext) {
-		s.setOrRemove(&s.rec.PlayerFlags, game.PlayerDeleted)
+		setOrRemove(s, &s.rec.PlayerFlags, game.PlayerDeleted)
 	}},
 	{"class", game.LevelGreaterGod, setBoth, setMisc, func(s *setContext) {
 		// parse_class takes a *character*, not a word: `set x class m` is a
@@ -267,14 +270,14 @@ var setFields = []setField{
 		s.rec.Class = class
 	}},
 	{"nowizlist", game.LevelGod, setPC, setBinary, func(s *setContext) {
-		s.setOrRemove(&s.rec.PlayerFlags, game.PlayerNoWizList)
+		setOrRemove(s, &s.rec.PlayerFlags, game.PlayerNoWizList)
 	}},
 	{"quest", game.LevelGod, setPC, setBinary, func(s *setContext) {
-		s.setOrRemove(&s.rec.Preferences, game.PrefQuest)
+		setOrRemove(s, &s.rec.Preferences, game.PrefQuest)
 	}},
 	{"loadroom", game.LevelGreaterGod, setPC, setMisc, func(s *setContext) {
 		if strings.EqualFold(s.arg, "off") {
-			s.rec.PlayerFlags = s.rec.PlayerFlags.Clear(game.PlayerLoadRoom)
+			s.rec.PlayerFlags = s.rec.PlayerFlags.Without(game.PlayerLoadRoom)
 			return
 		}
 		if !isNumber(s.arg) {
@@ -286,12 +289,12 @@ var setFields = []setField{
 			s.refuse("That room does not exist!\r\n")
 			return
 		}
-		s.rec.PlayerFlags = s.rec.PlayerFlags.Set(game.PlayerLoadRoom)
+		s.rec.PlayerFlags = s.rec.PlayerFlags.With(game.PlayerLoadRoom)
 		s.rec.LoadRoom = room
 		s.output = s.victim.Name + " will enter at room #" + strconv.FormatInt(int64(room), 10) + "."
 	}},
 	{"color", game.LevelGod, setPC, setBinary, func(s *setContext) {
-		s.setOrRemove(&s.rec.Preferences, game.PrefColour1|game.PrefColour2)
+		setOrRemove(s, &s.rec.Preferences, game.PrefColour1, game.PrefColour2)
 	}},
 	{"idnum", game.LevelImplementor, setPC, setNumber, func(s *setContext) {
 		// Character number one only, and only on a *mobile* — which, since
@@ -326,7 +329,7 @@ var setFields = []setField{
 		s.output = "Password changed."
 	}},
 	{"nodelete", game.LevelGod, setPC, setBinary, func(s *setContext) {
-		s.setOrRemove(&s.rec.PlayerFlags, game.PlayerNoDelete)
+		setOrRemove(s, &s.rec.PlayerFlags, game.PlayerNoDelete)
 	}},
 	{"sex", game.LevelGreaterGod, setBoth, setMisc, func(s *setContext) {
 		sex := -1

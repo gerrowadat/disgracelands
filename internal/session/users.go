@@ -229,7 +229,7 @@ func (c *Context) matchesUserFilter(who *game.Character, s *Session, f userFilte
 	if !c.World.CanSee(c.Character, who) || rec.Level < f.low || rec.Level > f.high {
 		return false
 	}
-	if f.outlaws && !rec.PlayerFlags.HasAny(game.PlayerKiller|game.PlayerThief) {
+	if f.outlaws && !rec.PlayerFlags.HasAny(game.PlayerKiller, game.PlayerThief) {
 		return false
 	}
 	if f.classes != 0 && !f.classes.Has(1<<rec.Class) {

@@ -134,7 +134,7 @@ func TestHolylightSeesEverything(t *testing.T) {
 	if l.CanSee(watcher, target) {
 		t.Fatal("saw an invisible hidden character in the dark")
 	}
-	watcher.Record.Preferences = watcher.Record.Preferences.Set(PrefHolylight)
+	watcher.Record.Preferences = watcher.Record.Preferences.With(PrefHolylight)
 	if !l.CanSee(watcher, target) {
 		t.Error("holylight did not see through darkness, invisibility and hiding")
 	}
@@ -145,7 +145,7 @@ func TestHolylightSeesEverything(t *testing.T) {
 // holylight never reaches it.
 func TestHolylightDoesNotDefeatInvisLevel(t *testing.T) {
 	l, watcher, target := seePair(t, 3001)
-	watcher.Record.Preferences = watcher.Record.Preferences.Set(PrefHolylight)
+	watcher.Record.Preferences = watcher.Record.Preferences.With(PrefHolylight)
 	watcher.Record.Level = 32
 	target.Record.Level = 34
 	target.Record.InvisLevel = 34
