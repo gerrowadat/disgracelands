@@ -2,8 +2,9 @@
 
 How to work on the Go server day to day: how to get one running in front of
 you, how to poke at it by hand, and what to run before pushing (`make
-lint` and `go test -race ./...`; the workflows themselves run on GitHub,
-not locally — see "Running CI itself, locally" for when that flips).
+lint` and `make test-fast`; the race detector and the workflows themselves
+run on GitHub, not locally — see "Running CI itself, locally" for when that
+flips).
 
 For building from source see `BUILDING.md`; for running one for real,
 `docs/operations.md`; for the settings, `docs/configuration.md`.
@@ -673,8 +674,11 @@ stops, which is how to exercise the workflow without cutting a release.
 ## Running CI itself, locally
 
 **Not the normal route any more.** Since 2026-08-29 the day-to-day answer
-comes from GitHub: run `make lint` and `go test -race -count=1 ./...`,
-push the branch, and let `go.yml` run there. It runs on every push and
+comes from GitHub: run `make lint` and `make test-fast`, push the branch,
+and let `go.yml` run there. (The pre-push pair lost its `-race` on
+2026-08-30, for the same reasons and with the numbers in `CLAUDE.md`'s
+"CI" section: the local race sweep is 7m01 against about 3m06 for the
+whole of `go.yml`.) It runs on every push and
 every pull request regardless, its `test` and `lint` jobs go in parallel
 on cold runners and come back in about three minutes, and both are
 required status checks on `main`, so nothing merges past a red one.
@@ -966,7 +970,7 @@ one thing, and the mistakes it catches all look right.
 | Target | |
 |---|---|
 | `make build` | Both binaries into `out/`, version-stamped like the container build. |
-| `make test` / `make test-fast` | With and without `-race`. `PKG=./internal/server/...` narrows it. |
+| `make test` / `make test-fast` | With and without `-race`. `test-fast` is the pre-push check; `test` is what `go.yml` runs. `PKG=./internal/server/...` narrows it. |
 | `make cover` | Coverage, opened in a browser. |
 | `make fmt` / `make vet` / `make lint` / `make tidy` | The individual checks. |
 | `make world-dump` | The loaded world as canonical JSON, in `out/world.json`. |

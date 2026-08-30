@@ -142,10 +142,11 @@ are not doing one of these three things, expect to be wrong.
 ## Concurrency
 
 The world is owned by a single goroutine. Everything that touches it goes
-through `engine.DoSync`. `-race` is mandatory and its findings are never
-flaky-until-proven — a race that reproduces one run in ten is still a race,
-and at least one such was a genuine bug in the test suite rather than the
-server.
+through `engine.DoSync`. `-race` is mandatory — in `go.yml`, on every push
+and every pull request, which is where it runs rather than in the pre-push
+loop (see "CI") — and its findings are never flaky-until-proven: a race
+that reproduces one run in ten is still a race, and at least one such was a
+genuine bug in the test suite rather than the server.
 
 Saves are pushed off the world goroutine on purpose so a slow disk cannot
 stall the game.
@@ -237,9 +238,12 @@ formats have no trailing period.
   the traps above are all in commit messages first.
 - Run before pushing:
   ```
-  make lint                       # must be 0 issues
-  go test -race -count=1 ./...    # must be green, and re-run if a race appears
+  make lint         # must be 0 issues
+  make test-fast    # `go test ./...`, without -race; must be green
   ```
+  **Not `go test -race ./...`.** The race detector is GitHub's job and is
+  faster there than here — see "CI" below for the numbers, and for the one
+  kind of change that still wants it locally.
 - Push the branch, open the PR, and let GitHub run `go.yml`. Wait for it
   green, then squash-merge and delete the branch.
 
@@ -276,9 +280,58 @@ is. Four things it did not weigh:
   that is actually being merged rather than the working tree `act` copied
   in.
 
-What is still worth doing locally is the fast, targeted part — `make lint`
-and `go test -race ./...` above, which answer in seconds to a couple of
-minutes and catch nearly everything, without containers.
+What is still worth doing locally is the fast part — `make lint` and
+`make test-fast`, which answer in about ten seconds and about two minutes
+and catch nearly everything, without containers.
+
+**`go test -race ./...` is not part of that, as of 2026-08-30**, and this
+reverses the line that stood here before it. Measured on one checkout of
+this tree, on the machine this is developed on:
+
+| | wall-clock |
+| --- | --- |
+| `make lint` | 11s |
+| `make test-fast` (`go test ./...`) | 1m54 |
+| `go test -race -count=1 ./...` | **7m01** |
+| `go.yml`, `test` and `lint` in parallel on GitHub | ~3m06 |
+
+The local race sweep is more than twice the entire GitHub run it
+duplicates, and the four things that moved `act` off the critical path all
+apply to it as well: `go.yml` runs `go test -race -count=1 ./...` on every
+push and every pull request whatever anyone did locally; `test` is a
+required status check on `main`, so a race blocks the squash-merge rather
+than relying on somebody having looked; the repo is public, so the runners
+are free and unmetered; and the local copy is the slower half.
+
+What the plain run gives up is races and nothing else — and *races are not
+what a local run catches*. Across the four pull requests written the day
+this changed, everything that failed locally was an assertion, a missing
+test-world prototype or a helper name that already existed; not one was a
+race, and every one of them fails under `make test-fast` just as it did
+under `-race`. That is not luck. `-race` is a runtime detector: it reports
+only races that actually execute concurrently in that run, so the packages
+where it can find anything at all are `internal/server` and
+`internal/session` — which are also by far the slowest, and are the whole
+of the difference between 1m54 and 7m01.
+
+**Run `go test -race ./internal/server/` locally when the change is
+*about* concurrency**: `Server.background`, `WaitForWrites`,
+`engine.DoSync`, the world goroutine, a session's output queue, or a test
+that reads live state from outside `inWorld`. Two hundred seconds is worth
+paying when you are going to iterate on the answer, and a race is
+miserable to diagnose from a CI log. Same carve-out `make ci` has below,
+for the same reason.
+
+**Do not narrow it by package instead.** Racing only the package you edited
+is the tempting middle road and is the wrong one: `internal/game` has no
+goroutines of its own, so a data race introduced there is only ever
+*observed* by `internal/server`'s harness driving it on the world
+goroutine. Narrow while iterating, never as the pre-push check.
+
+None of this softens the rule in "Concurrency" above: **a `-race` finding
+is never flaky-until-proven**, wherever it turns up. Learning about it from
+a three-minute GitHub run instead of a seven-minute local one is a change
+to when you find out, not to what it means.
 
 **`make ci` stays, for the cases where pushing genuinely cannot answer**:
 a change to a workflow file itself, where the loop of push-and-watch is
