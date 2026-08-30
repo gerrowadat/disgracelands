@@ -234,7 +234,7 @@ func doRedeem(c *Context) error {
 		return nil
 	}
 
-	game.SetSpecFlags(rec, game.SpecFlagsOf(rec).Clear(game.PaladinFallen))
+	game.SetSpecFlags(rec, game.SpecFlagsOf(rec).Without(game.PaladinFallen))
 	c.Send("Redeemed.\r\n")
 	victim.Tell("You feel your paladinly powers restored! Rejoice! You live again in God's glory!\r\n")
 	// mudlog(buf, BRF, MAX(LVL_GOD, GET_INVIS_LEV(ch)), TRUE)

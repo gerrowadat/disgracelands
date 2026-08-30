@@ -18,13 +18,22 @@ import "strings"
 // The paladin's standing, from the PSF_* flags. These are Disgracelands'
 // own — a paladin whose alignment drops loses their magic, and if it drops
 // far enough they lose it permanently.
+// PaladinFlag is one of them, and PaladinFlags is a paladin's set.
+// Bit indices, not masks: docs/proposals/idiomatic-go.md §4.1, and §4.1.1
+// for the trap. The numbers are the player file's, in the spare long
+// SpecFlags lives in.
+type PaladinFlag int
+
+// PaladinFlags is a set of PaladinFlag.
+type PaladinFlags = Set[PaladinFlag]
+
 const (
 	// PaladinFallen: cast out. Never casts again, whatever their alignment
 	// does afterwards.
-	PaladinFallen Flags = 1 << 0
+	PaladinFallen PaladinFlag = 0
 	// PaladinUnworthy: suspended. Recovered by getting alignment back above
 	// 600.
-	PaladinUnworthy Flags = 1 << 1
+	PaladinUnworthy PaladinFlag = 1
 )
 
 // Paladin alignment thresholds, from do_cast.
@@ -42,12 +51,12 @@ const (
 // bitfield. The record holds it as an int32 because that is its width in the
 // player file; the conversions are bit-pattern reinterpretations, done in one
 // named place for the same reason the remort vector's are.
-func specFlags(v int32) Flags {
-	return Flags(uint32(v)) //nolint:gosec // a bit pattern, not an arithmetic conversion
+func specFlags(v int32) PaladinFlags {
+	return SetFromRaw[PaladinFlag](uint64(uint32(v))) //nolint:gosec // a bit pattern, not an arithmetic conversion
 }
 
-func specFlagsValue(f Flags) int32 {
-	return int32(uint32(f)) //nolint:gosec // as above; only the low bits are ever set
+func specFlagsValue(f PaladinFlags) int32 {
+	return int32(uint32(f.Raw())) //nolint:gosec // as above; only the low bits are ever set
 }
 
 // PaladinVerdict is what the paladin rules decided.
@@ -92,7 +101,7 @@ func JudgePaladin(rec *PlayerRecord) PaladinVerdict {
 	if rec.Alignment < 0 {
 		switch {
 		case rec.Alignment < paladinDamnation && !flags.Has(PaladinFallen):
-			rec.SpecFlags = specFlagsValue(flags.Set(PaladinFallen).Clear(PaladinUnworthy))
+			rec.SpecFlags = specFlagsValue(flags.With(PaladinFallen).Without(PaladinUnworthy))
 			return PaladinVerdict{
 				Message: "Alas! Your evil has been your downfall! You may never again " +
 					"bear the holy name of Paladin! Begone, sinner!\r\n",
@@ -100,7 +109,7 @@ func JudgePaladin(rec *PlayerRecord) PaladinVerdict {
 					rec.Name + " has been cast out!'",
 			}
 		case rec.Alignment > paladinDamnation && !flags.Has(PaladinUnworthy):
-			rec.SpecFlags = specFlagsValue(flags.Set(PaladinUnworthy))
+			rec.SpecFlags = specFlagsValue(flags.With(PaladinUnworthy))
 			return PaladinVerdict{
 				Message: "You are unworthy of using that spell. Repent your sins, " +
 					"lest you be judged by the boot of God himself!\r\n",
@@ -109,7 +118,7 @@ func JudgePaladin(rec *PlayerRecord) PaladinVerdict {
 	}
 
 	if rec.Alignment > paladinRedemption && flags.Has(PaladinUnworthy) {
-		rec.SpecFlags = specFlagsValue(flags.Clear(PaladinUnworthy))
+		rec.SpecFlags = specFlagsValue(flags.Without(PaladinUnworthy))
 		return PaladinVerdict{
 			Allowed: true,
 			Message: "Welcome back, friend! May your sword and its might bear " +
@@ -184,15 +193,15 @@ func TargetQuestion(info SpellInfo) string {
 // SpecFlagsOf and SetSpecFlags read and write the paladin state bits, which
 // live in another of the player file's spare longs. `redeem` is the only thing
 // outside this file that touches them.
-func SpecFlagsOf(rec *PlayerRecord) Flags {
+func SpecFlagsOf(rec *PlayerRecord) PaladinFlags {
 	if rec == nil {
-		return 0
+		return PaladinFlags{}
 	}
 	return specFlags(rec.SpecFlags)
 }
 
 // SetSpecFlags writes them back.
-func SetSpecFlags(rec *PlayerRecord, f Flags) {
+func SetSpecFlags(rec *PlayerRecord, f PaladinFlags) {
 	if rec != nil {
 		rec.SpecFlags = specFlagsValue(f)
 	}
