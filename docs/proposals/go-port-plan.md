@@ -22,13 +22,13 @@ was reached and stay accurate as history; they are not a live constraint on
 work that starts from here.
 
 **[`yaml-only.md`](yaml-only.md) superseded this as the forward plan, and
-has now itself been built out.** That document retired
-`classic`/`ascii`/`binary` from the server so it understands only `yaml`,
-along with the compatibility testing that had to be true first; rows 1–6 of
-its §7 have landed and the only one left is cutting the v1.0.0 release,
-which is a decision rather than a task. **So Phase 7 (cutover) is the
-forward plan again** — it was downstream of the yaml-only work and no
-longer is. Read §10's Phase 7 preconditions as the map of what is left.
+is now finished.** That document retired `classic`/`ascii`/`binary` from
+the server so it understands only `yaml`, along with the compatibility
+testing that had to be true first; every row of its §7 has landed,
+including the last one — **v1.0.0 was cut on 2026-08-30**. **So Phase 7
+(cutover) is the forward plan again** — it was downstream of the
+yaml-only work and no longer is. Read §10's Phase 7 preconditions as the
+map of what is left.
 
 This document is not retired and is not extended with new plans: it stays
 authoritative as the record of Phases 0–6 and as the reference for the
@@ -2218,17 +2218,16 @@ sense to start:
    for whatever `--lib-dir` the deployment uses — `docs/operations.md`'s
    own "Backups" section says what that means, `cron` and off-host
    storage are not built here.
-6. **At least one tagged release exists.** *Met, and superseded by a
-   bigger one that is not.* `make release` (§9.1's config work,
-   `scripts/release.sh`) is what makes "deploy the Go server" mean
-   something concrete rather than "deploy whatever `main` happens to
-   be", and v0.1.3 is the most recent. What is outstanding is
-   **v1.0.0**, which `yaml-only.md` §7 row 7 proposes and which is the
-   one row of that plan not yet done: one data format, a stable on-disk
-   contract, and — because `dataversion.Current()` derives the
-   data-format stamp from the build's own release version — the event
-   that makes a `.dlversion` of `1.0.0` exist at all. It is a decision
-   rather than a task; nothing technical is waiting on it.
+6. **At least one tagged release exists.** *Met, including the big
+   one.* `make release` (§9.1's config work, `scripts/release.sh`) is
+   what makes "deploy the Go server" mean something concrete rather than
+   "deploy whatever `main` happens to be". **v1.0.0 was cut on
+   2026-08-30** — `yaml-only.md` §7 row 7, the last row of that plan:
+   one data format, a stable on-disk contract, and — because
+   `dataversion.Current()` derives the data-format stamp from the
+   build's own release version — the event that made a `.dlversion` of
+   `1.0.0` exist at all. Nothing technical had been waiting on it; it
+   was the decision that this on-disk contract is the one to call 1.0.
 
 The cutover itself, once the preconditions hold:
 

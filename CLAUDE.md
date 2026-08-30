@@ -9,16 +9,17 @@ deliberate difference from the C) and `docs/weirdnumbers.md` (every
 surprising constant, with its C citation). This file is the working
 practice around them.
 
-**Where the next thing starts, as of 2026-08-29.** `yaml-only.md` was the
-forward plan and its build is finished: rows 1–6 of its §7 have landed, and
-the row left is cutting the v1.0.0 release, which is a decision rather than
-a task. So the forward plan is `go-port-plan.md` §10's **Phase 7
-(cutover)** again — it was downstream of the yaml-only work and no longer
-is — and its preconditions are the map. The day-to-day work in front of
-that is not in either document: it is the **open GitHub issues**, and
-`docs/deviations.md`'s "Not deviations — gaps still to fill" and "What the
-session-parity suite found", which is where issues get filed from. Read
-those as the todo list and the proposals for what the work is for.
+**Where the next thing starts, as of 2026-08-30.** `yaml-only.md` was the
+forward plan and it is finished: every row of its §7 has landed, the last
+of them being **v1.0.0, cut on 2026-08-30** — the first release whose
+server reads yaml and nothing else. So the forward plan is
+`go-port-plan.md` §10's **Phase 7 (cutover)** — it was downstream of the
+yaml-only work and no longer is — and its preconditions are the map. The
+day-to-day work in front of that is not in either document: it is the
+**open GitHub issues**, and `docs/deviations.md`'s "Not deviations — gaps
+still to fill" and "What the session-parity suite found", which is where
+issues get filed from. Read those as the todo list and the proposals for
+what the work is for.
 
 ## What this project is
 
