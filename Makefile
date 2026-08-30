@@ -207,6 +207,17 @@ play: ## Run the play regression suite against examples/mini (slow; release-only
 play-fast: ## The play suite without the race detector, for a quicker answer
 	$(GO) test -tags=play -count=1 -timeout 30m ./test/play/...
 
+# What the game loop costs, on examples/stock rather than the twelve-room
+# world internal/server's tests build. Deliberately not in any workflow:
+# `go.yml` is correctness and lint only (see CLAUDE.md), and benchmark
+# timings on a shared runner are too noisy to gate anything on. This is
+# the thing to run when you are about to change something on the pulse,
+# or when a server is missing its checkpoints and you want to know which
+# part -- which is exactly how #322 was found.
+.PHONY: bench
+bench: ## Benchmark the game loop against examples/stock (not run by CI)
+	$(GO) test -run XXX -bench . -benchmem -benchtime 50x ./internal/server/
+
 # Fuzzing, the half of the budget that was proposed and never built
 # (docs/design/yaml-only.md §10). The seed corpora already replay on
 # every push -- the targets are ordinary Go tests, so `go test ./...` runs

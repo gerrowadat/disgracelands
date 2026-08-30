@@ -55,8 +55,50 @@ type Metrics struct {
 	// above zero is worth looking at. See engine.tick and #321.
 	PulsesMissed prometheus.Counter
 
+	// PeriodicDuration is how long each named piece of periodic work takes.
+	//
+	// PulseDuration says a pulse overran; this says which of the four things
+	// on it did. The game loop already logs a warning naming the overrunning
+	// entry, but a warning line is not something anyone can look at a week
+	// later and say "zone-update's p99 tripled when the world grew" — which
+	// is the question that actually gets asked. Labelled by
+	// engine.Periodic.Name, which is why those entries are named at all.
+	PeriodicDuration *prometheus.HistogramVec
+
+	// TasksDrained is how many queued tasks each pulse ran, and QueueDepth
+	// is how many were still waiting when it started.
+	//
+	// The pair is what distinguishes "busy" from "falling behind": a server
+	// draining forty tasks a pulse with a queue depth of zero is working and
+	// keeping up, and one draining forty with a depth of two hundred is not.
+	// Neither is visible from PulseDuration.
+	TasksDrained prometheus.Histogram
+	QueueDepth   prometheus.Gauge
+
+	// TasksRejected counts work refused because the queue was full.
+	//
+	// engine.Do returns ErrBusy rather than blocking, and its most frequent
+	// caller — Server.echoWizVis, once per wizvis-tagged log line —
+	// discards the error, which is the right call for a syslog echo and
+	// means a loaded server silently stops telling immortals things. Any
+	// value here at all is worth knowing about.
+	TasksRejected prometheus.Counter
+
 	// BuildInfo is the conventional always-1 gauge carrying version labels.
 	BuildInfo *prometheus.GaugeVec
+}
+
+// budgetBuckets are histogram buckets around the configured pulse interval
+// rather than at fixed wall-clock values: what matters is the ratio of a
+// duration to the budget, and the budget is configurable. Shared by
+// PulseDuration and PeriodicDuration so the two can be read against each
+// other — an entry in the second that lands a bucket below the first is
+// the entry that accounts for the pulse.
+func budgetBuckets(budget float64) []float64 {
+	return []float64{
+		budget / 100, budget / 20, budget / 10, budget / 4,
+		budget / 2, budget, budget * 2, budget * 10,
+	}
 }
 
 // NewMetrics creates a registry with the Go runtime and process collectors
@@ -68,9 +110,6 @@ func NewMetrics(pulseInterval time.Duration) *Metrics {
 		collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}),
 	)
 
-	// Bucket around the configured pulse interval rather than at fixed
-	// wall-clock values: what matters is the ratio of pulse duration to the
-	// budget, and the budget is configurable.
 	budget := pulseInterval.Seconds()
 	m := &Metrics{
 		Registry: reg,
@@ -78,15 +117,37 @@ func NewMetrics(pulseInterval time.Duration) *Metrics {
 			Namespace: "dlmud",
 			Name:      "pulse_duration_seconds",
 			Help:      "Time taken by each game loop pulse.",
-			Buckets: []float64{
-				budget / 100, budget / 20, budget / 10, budget / 4,
-				budget / 2, budget, budget * 2, budget * 10,
-			},
+			Buckets:   budgetBuckets(budget),
 		}),
 		PulsesMissed: prometheus.NewCounter(prometheus.CounterOpts{
 			Namespace: "dlmud",
 			Name:      "pulses_missed_total",
 			Help:      "Pulses the game loop was too busy to take, so the world fell behind real time.",
+		}),
+		PeriodicDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
+			Namespace: "dlmud",
+			Name:      "periodic_duration_seconds",
+			Help:      "Time taken by each named piece of periodic game-loop work.",
+			// The same budget-relative buckets PulseDuration uses, for the
+			// same reason: what matters is the ratio to the pulse budget,
+			// and one entry taking the whole of it is the thing to see.
+			Buckets: budgetBuckets(budget),
+		}, []string{"name"}),
+		TasksDrained: prometheus.NewHistogram(prometheus.HistogramOpts{
+			Namespace: "dlmud",
+			Name:      "tasks_drained_per_pulse",
+			Help:      "Queued tasks run by each game loop pulse.",
+			Buckets:   []float64{0, 1, 2, 5, 10, 25, 50, 100, 250, 1000},
+		}),
+		QueueDepth: prometheus.NewGauge(prometheus.GaugeOpts{
+			Namespace: "dlmud",
+			Name:      "task_queue_depth",
+			Help:      "Tasks waiting for the world goroutine when a pulse began.",
+		}),
+		TasksRejected: prometheus.NewCounter(prometheus.CounterOpts{
+			Namespace: "dlmud",
+			Name:      "tasks_rejected_total",
+			Help:      "Tasks refused because the world goroutine's queue was full.",
 		}),
 		BuildInfo: prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Namespace: "dlmud",
@@ -94,7 +155,8 @@ func NewMetrics(pulseInterval time.Duration) *Metrics {
 			Help:      "Build information; always 1, carried by its labels.",
 		}, []string{"version", "commit", "go_version"}),
 	}
-	reg.MustRegister(m.PulseDuration, m.PulsesMissed, m.BuildInfo)
+	reg.MustRegister(m.PulseDuration, m.PulsesMissed, m.PeriodicDuration,
+		m.TasksDrained, m.QueueDepth, m.TasksRejected, m.BuildInfo)
 	return m
 }
 

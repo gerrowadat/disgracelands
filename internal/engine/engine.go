@@ -131,6 +131,9 @@ func (e *Engine) Do(t Task) error {
 	case e.tasks <- t:
 		return nil
 	default:
+		if e.metrics != nil {
+			e.metrics.TasksRejected.Inc()
+		}
 		return ErrBusy
 	}
 }
@@ -239,10 +242,15 @@ func (e *Engine) tick(now time.Time) {
 	// the pulse is picked up by Run's own select as soon as this returns,
 	// which is sooner than the next tick.
 	waiting := len(e.tasks)
+	if e.metrics != nil {
+		e.metrics.QueueDepth.Set(float64(waiting))
+	}
+	drained := 0
 	for i := 0; i < waiting; i++ {
 		select {
 		case t := <-e.tasks:
 			e.runTask(t)
+			drained++
 		default:
 			// Somebody else took the last one; nothing to wait for.
 			i = waiting
@@ -261,7 +269,11 @@ func (e *Engine) tick(now time.Time) {
 		}
 		began := time.Now()
 		e.runTask(p.Run)
-		if took := time.Since(began); took > e.interval {
+		took := time.Since(began)
+		if e.metrics != nil {
+			e.metrics.PeriodicDuration.WithLabelValues(p.Name).Observe(took.Seconds())
+		}
+		if took > e.interval {
 			e.logger.Warn("periodic work overran a pulse",
 				"name", p.Name, "took", took, "budget", e.interval)
 		}
@@ -269,6 +281,7 @@ func (e *Engine) tick(now time.Time) {
 
 	if e.metrics != nil {
 		e.metrics.PulseDuration.Observe(time.Since(start).Seconds())
+		e.metrics.TasksDrained.Observe(float64(drained))
 		if missed := pulse - previous - 1; missed > 0 {
 			e.metrics.PulsesMissed.Add(float64(missed))
 		}
