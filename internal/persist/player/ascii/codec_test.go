@@ -80,14 +80,20 @@ func TestDecodeARealFile(t *testing.T) {
 		t.Errorf("unrecognised fields in a genuine file: %v", unknown)
 	}
 
+	// The %T is not decoration. This helper compares through `any`, so a
+	// `got` and a `want` of different *types* are unequal however they
+	// print — and while docs/proposals/idiomatic-go.md's step 2 gives the
+	// enumerations their own types, that is exactly what keeps happening.
+	// Three separate conversions have failed here with messages of the form
+	// "Class = 1, want 1", which reads as a value mismatch and is not one.
 	check := func(what string, got, want any) {
 		if got != want {
-			t.Errorf("%s = %v, want %v", what, got, want)
+			t.Errorf("%s = %v (%T), want %v (%T)", what, got, got, want, want)
 		}
 	}
 	check("Name", rec.Name, "Zod")
 	check("Title", rec.Title, "the Implementor")
-	check("Sex", rec.Sex, int32(1))
+	check("Sex", rec.Sex, game.SexMale)
 	check("Class", rec.Class, game.ClassCleric)
 	check("Level", rec.Level, int32(54))
 	check("Hometown", rec.Hometown, int32(3001))

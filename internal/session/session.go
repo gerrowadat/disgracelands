@@ -215,7 +215,7 @@ type Session struct {
 	// pending holds what has been gathered so far during creation.
 	pendingName     string
 	pendingPassword string
-	pendingSex      int32
+	pendingSex      game.Sex
 
 	// badPasswords is the C's `d->bad_pws` (structs.h:1019): wrong passwords
 	// typed on *this connection*, which is what GameTuning.MaxBadPws is
@@ -1154,7 +1154,7 @@ func isDisconnect(err error) bool {
 type CreateRequest struct {
 	Name     string
 	Password string
-	Sex      int32
+	Sex      game.Sex
 	Class    game.Class
 }
 

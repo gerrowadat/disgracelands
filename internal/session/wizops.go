@@ -74,7 +74,7 @@ type RentListing struct {
 // PlayerSummary is what `show player` reports.
 type PlayerSummary struct {
 	Name      string
-	Sex       int32
+	Sex       game.Sex
 	Level     int32
 	Class     game.Class
 	Gold      int32

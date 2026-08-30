@@ -144,7 +144,7 @@ func TestOnlyWarriorsRollExceptionalStrength(t *testing.T) {
 }
 
 func TestParseSex(t *testing.T) {
-	for arg, want := range map[byte]int32{
+	for arg, want := range map[byte]Sex{
 		'm': SexMale, 'M': SexMale,
 		'f': SexFemale, 'F': SexFemale,
 		'x': -1,

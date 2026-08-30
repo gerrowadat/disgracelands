@@ -89,7 +89,7 @@ func recordFromDoc(doc *playerDoc) (*game.PlayerRecord, []string, error) {
 		Credential:  parseCredentialString(doc.Credential),
 		Title:       doc.Identity.Title,
 		Description: worldtext.FromStored(string(doc.Identity.Description)),
-		Sex:         sex,
+		Sex:         game.Sex(sex),
 		Class:       game.Class(class),
 		Race:        doc.Identity.Race,
 		Level:       doc.Identity.Level,

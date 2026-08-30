@@ -34,7 +34,7 @@ type PlayerRecord struct {
 	// Description is what other players see on `look`.
 	Description string
 
-	Sex   int32
+	Sex   Sex
 	Class Class
 	Race  int32
 	Level int32

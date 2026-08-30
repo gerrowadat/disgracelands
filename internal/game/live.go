@@ -367,7 +367,7 @@ func (c *Character) HasAffect(flag AffectFlag) bool {
 
 // Sex is the character's sex, defaulting to neuter for anything without a
 // record — which is what the C's pronoun macros assume of an unset field.
-func (c *Character) Sex() int32 {
+func (c *Character) Sex() Sex {
 	if c == nil || c.Record == nil {
 		return SexNeutral
 	}

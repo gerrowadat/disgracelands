@@ -296,7 +296,7 @@ func (c *Context) showPlayer(name string) {
 	}
 
 	c.Send("Player: %-12s (%s) [%2d %s]\r\n", entry.Name,
-		game.SprintType(entry.Sex, game.GenderNames()), entry.Level,
+		game.SprintType(entry.Sex.Number(), game.GenderNames()), entry.Level,
 		game.ClassAbbrevs[entry.Class])
 	c.Send("Au: %-8d  Bal: %-8d  Exp: %-8d  Align: %-5d  Lessons: %-3d\r\n",
 		entry.Gold, entry.Bank, entry.Exp, entry.Alignment, entry.Lessons)

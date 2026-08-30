@@ -260,7 +260,7 @@ func mobDocFrom(m *game.MobDef) mobDoc {
 		Exp:             m.Exp,
 		Position:        valueName(m.Position, game.YamlPositionNames()),
 		DefaultPosition: valueName(m.DefaultPosition, game.YamlPositionNames()),
-		Sex:             valueName(m.Sex, game.YamlSexNames()),
+		Sex:             valueName(m.Sex.Number(), game.YamlSexNames()),
 	}
 	if m.Enhanced {
 		abilities, _ := AbilitiesFromEspecs(m.Especs)
