@@ -926,9 +926,39 @@ var spellbook = map[int32]spellCase{
 		}
 	}},
 
-	game.SpellControlWeather: {
-		skip: "control weather has no case in castManual and reports itself unimplemented (#300)",
-	},
+	// The one spell whose "does it work" answer is "it does what it did":
+	// there is no spell_control_weather in the archived server, in stock
+	// bpl20 or in WipeMud, and call_magic's MAG_MANUAL switch has no case
+	// for it and no default. A cleric who cast it paid the mana and the
+	// weather did not change. So what is asserted is that it is *not*
+	// reported as unimplemented and that it costs what a cast costs --
+	// there is no state for it to have changed. #300.
+	game.SpellControlWeather: {run: func(t *testing.T) {
+		srv, c := spellbookServer(t)
+
+		var before int32
+		inWorld(t, srv, func(w *game.Live) {
+			caster := w.Find("Zod")
+			caster.Record.Level = 30
+			before = caster.Record.Points.Mana
+		})
+
+		c.send("cast 'control weather'")
+		c.settle()
+
+		if c.seen("not implemented") {
+			t.Errorf("control weather reported itself unimplemented:\n%s", c.transcript())
+		}
+		if c.seen(game.NoEffect) {
+			t.Errorf("control weather said nothing happened; the C says nothing at all:\n%s",
+				c.transcript())
+		}
+		inWorld(t, srv, func(w *game.Live) {
+			if got := w.Find("Zod").Record.Points.Mana; got >= before {
+				t.Errorf("mana is %d, was %d: the cast was not charged for", got, before)
+			}
+		})
+	}},
 
 	// -- the skills ----------------------------------------------------
 
