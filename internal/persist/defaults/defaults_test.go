@@ -142,7 +142,7 @@ objects:
 			len(w.Rooms), len(w.Mobiles), len(w.Objects))
 	}
 	room := w.Rooms[0]
-	check(t, "room.Flags", room.Flags, game.Flags(0))
+	check(t, "room.Flags", room.Flags, game.RoomFlags{})
 	check(t, "room.SectorType", room.SectorType, int32(0))
 	check(t, "room.ExtraDescs", len(room.ExtraDescs), 0)
 	for dir, exit := range room.Exits {

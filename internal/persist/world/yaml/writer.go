@@ -184,13 +184,13 @@ func resetModeName(mode int32) string {
 }
 
 func roomDocFrom(r *game.RoomDef) roomDoc {
-	names, raw := game.NameBits(r.Flags, game.YamlRoomFlagNames())
+	names, raw := game.NameBits(r.Flags.Raw(), game.YamlRoomFlagNames())
 	rd := roomDoc{
 		Vnum:     int32(r.Vnum),
 		Name:     Text(r.Name),
 		Sector:   sectorName(r.SectorType),
 		Flags:    names,
-		FlagsRaw: uint64(raw),
+		FlagsRaw: raw,
 		Desc:     Text(ToStored(r.Description)),
 	}
 
@@ -237,8 +237,8 @@ func doorName(flag int32) string {
 
 func mobDocFrom(m *game.MobDef) mobDoc {
 	actFlags := m.ActionFlags.Clear(game.MobIsNPC) // never written; the reader force-sets it
-	actNames, actRaw := game.NameBits(actFlags, game.YamlMobActFlagNames())
-	affNames, affRaw := game.NameBits(m.AffectionFlags, game.YamlAffectFlagNames())
+	actNames, actRaw := game.NameBits(uint64(actFlags), game.YamlMobActFlagNames())
+	affNames, affRaw := game.NameBits(uint64(m.AffectionFlags), game.YamlAffectFlagNames())
 
 	md := mobDoc{
 		Vnum:            int32(m.Vnum),
@@ -247,9 +247,9 @@ func mobDocFrom(m *game.MobDef) mobDoc {
 		Long:            Text(ToStored(m.LongDesc)),
 		Desc:            Text(ToStored(m.Description)),
 		Act:             actNames,
-		ActRaw:          uint64(actRaw),
+		ActRaw:          actRaw,
 		Affected:        affNames,
-		AffectedRaw:     uint64(affRaw),
+		AffectedRaw:     affRaw,
 		Alignment:       m.Alignment,
 		Level:           m.Level,
 		Thac0:           m.Thac0,
@@ -291,9 +291,9 @@ func diceDocString(d game.Dice) string {
 }
 
 func objDocFrom(o *game.ObjDef) objDoc {
-	wearNames, wearRaw := game.NameBits(o.WearFlags, game.YamlWearFlagNames())
-	flagNames, flagRaw := game.NameBits(o.ExtraFlags, game.YamlItemExtraFlagNames())
-	permNames, permRaw := game.NameBits(game.Flags(o.PermAffect), game.YamlAffectFlagNames()) //nolint:gosec // affect bits fit comfortably
+	wearNames, wearRaw := game.NameBits(uint64(o.WearFlags), game.YamlWearFlagNames())
+	flagNames, flagRaw := game.NameBits(uint64(o.ExtraFlags), game.YamlItemExtraFlagNames())
+	permNames, permRaw := game.NameBits(uint64(o.PermAffect), game.YamlAffectFlagNames()) //nolint:gosec // affect bits fit comfortably
 
 	od := objDoc{
 		Vnum:          int32(o.Vnum),
@@ -303,11 +303,11 @@ func objDocFrom(o *game.ObjDef) objDoc {
 		ActionDesc:    Text(ToStored(o.ActionDesc)),
 		Type:          valueName(o.Type, game.YamlItemTypeNames()),
 		Wear:          wearNames,
-		WearRaw:       uint64(wearRaw),
+		WearRaw:       wearRaw,
 		Flags:         flagNames,
-		FlagsRaw:      uint64(flagRaw),
+		FlagsRaw:      flagRaw,
 		PermAffect:    permNames,
-		PermAffectRaw: uint64(permRaw),
+		PermAffectRaw: permRaw,
 		Weight:        o.Weight,
 		Cost:          o.Cost,
 		Rent:          o.RentPerDay,
@@ -376,9 +376,9 @@ func shopDocFrom(sh *game.ShopDef) shopDoc {
 			sd.Hours = append(sd.Hours, [2]int32{sh.Open2, sh.Close2})
 		}
 	}
-	flagNames, _ := game.NameBits(sh.Flags, game.YamlShopFlagNames())
+	flagNames, _ := game.NameBits(uint64(sh.Flags), game.YamlShopFlagNames())
 	sd.Flags = flagNames
-	refuseNames, _ := game.NameBits(game.Flags(sh.TradeWith), game.YamlShopTradeNames()) //nolint:gosec // seven bits
+	refuseNames, _ := game.NameBits(uint64(sh.TradeWith), game.YamlShopTradeNames()) //nolint:gosec // seven bits
 	sd.Refuses = refuseNames
 
 	if sh.Messages != [game.NumShopMessages]string{} {

@@ -148,7 +148,7 @@ func TestSprintBit(t *testing.T) {
 		{1 << 18, "UNDEFINED "},
 		{ItemGlow | 1<<18, "GLOW UNDEFINED "},
 	} {
-		if got := SprintBit(tc.flags, ExtraBitNames()); got != tc.want {
+		if got := SprintBit(uint64(tc.flags), ExtraBitNames()); got != tc.want {
 			t.Errorf("SprintBit(%d) = %q, want %q", tc.flags, got, tc.want)
 		}
 	}

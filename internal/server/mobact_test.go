@@ -83,7 +83,7 @@ func TestAMobileWillNotWalkIntoANoMobRoom(t *testing.T) {
 	srv, _ := newTestServer(t)
 
 	if err := srv.engine.DoSync(context.Background(), func(w *game.Live) {
-		w.Room(ImmortStartRoom).Flags = game.RoomNoMob
+		w.Room(ImmortStartRoom).Flags = game.NewSet(game.RoomNoMob)
 	}); err != nil {
 		t.Fatal(err)
 	}

@@ -38,12 +38,12 @@ func (l *loader) parseRoom(r *reader, vnum game.RoomVnum) (*game.RoomDef, error)
 	if len(fields) < 3 {
 		return nil, fmt.Errorf("%s: malformed flags/sector line %q, want '<zone> <flags> <sector>'", r.where(what), line)
 	}
-	flags, unknown := game.ParseFlags(fields[1])
-	room.Flags = flags
+	flags, unknown := game.ParseFlagLetters(fields[1])
+	room.Flags = game.SetFromRaw[game.RoomFlag](flags)
 	if len(unknown) > 0 {
 		l.warnf("%s: room flags %q contain characters that are neither letters nor digits (%q); the C loader ignores them", r.where(what), fields[1], string(unknown))
 	}
-	if flags.ExceedsCRange() {
+	if room.Flags.ExceedsCRange() {
 		l.warnf("%s: room flags %q use bits above %d, which the C server cannot represent", r.where(what), fields[1], game.CFlagLimit)
 	}
 	sector, ok := scanInt(fields[2])

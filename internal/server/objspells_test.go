@@ -363,14 +363,14 @@ func TestMagicDoesNotWorkEverywhere(t *testing.T) {
 	spawnDog(t, srv, ImmortStartRoom)
 
 	inWorld(t, srv, func(w *game.Live) {
-		w.Room(ImmortStartRoom).Flags = w.Room(ImmortStartRoom).Flags.Set(game.RoomNoMagic)
+		w.Room(ImmortStartRoom).Flags = w.Room(ImmortStartRoom).Flags.With(game.RoomNoMagic)
 	})
 	c.send("cast 'magic missile' dog")
 	c.expect("Your magic fizzles out and dies.")
 
 	inWorld(t, srv, func(w *game.Live) {
 		room := w.Room(ImmortStartRoom)
-		room.Flags = room.Flags.Clear(game.RoomNoMagic).Set(game.RoomPeaceful)
+		room.Flags = room.Flags.Without(game.RoomNoMagic).With(game.RoomPeaceful)
 	})
 	c.send("cast 'magic missile' dog")
 	c.expect("A flash of white light fills the room, dispelling your violent magic!")

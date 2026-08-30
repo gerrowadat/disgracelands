@@ -66,6 +66,13 @@ func (f Flags) ExceedsCRange() bool { return f>>CFlagLimit != 0 }
 // because real world files rely on the reader being forgiving, but the
 // unrecognised runes are reported so the linter can complain about them.
 func ParseFlags(s string) (flags Flags, unknown []rune) {
+	bits, unknown := ParseFlagLetters(s)
+	return Flags(bits), unknown
+}
+
+// ParseFlagLetters is ParseFlags over a raw bit vector, and is the actual
+// implementation — see FlagLetters for why the pair is shaped this way.
+func ParseFlagLetters(s string) (bits uint64, unknown []rune) {
 	if s == "" {
 		return 0, nil
 	}
@@ -74,9 +81,9 @@ func ParseFlags(s string) (flags Flags, unknown []rune) {
 	for _, r := range s {
 		switch {
 		case r >= 'a' && r <= 'z':
-			flags |= 1 << uint(r-'a')
+			bits |= 1 << uint(r-'a')
 		case r >= 'A' && r <= 'Z':
-			flags |= 1 << uint(26+(r-'A'))
+			bits |= 1 << uint(26+(r-'A'))
 		default:
 			unknown = append(unknown, r)
 		}
@@ -91,24 +98,41 @@ func ParseFlags(s string) (flags Flags, unknown []rune) {
 		// linter flags anything that gets near it.
 		n, err := strconv.ParseUint(s, 10, 64)
 		if err != nil {
-			return ^Flags(0), nil
+			return ^uint64(0), nil
 		}
-		return Flags(n), nil
+		return n, nil
 	}
 
-	return flags, unknown
+	return bits, unknown
 }
 
-// String renders f in the letter encoding the C writer (sprintbits) produces:
-// one letter per set bit in bit order, or the literal "0" when no bits are
-// set, since an empty field would break the reader.
-func (f Flags) String() string {
-	if f == 0 {
+// String renders f in the letter encoding the C writer (sprintbits) produces.
+func (f Flags) String() string { return FlagLetters(uint64(f)) }
+
+// FlagLetters renders a raw bit vector in the letter encoding the C writer
+// (sprintbits) produces: one letter per set bit in bit order, or the literal
+// "0" when no bits are set, since an empty field would break the reader.
+//
+// It takes a `uint64` rather than any flag type, and that is the shape the
+// whole name-and-letter layer takes as of
+// docs/proposals/idiomatic-go.md's step 1. Once every domain has its own
+// `Set[T]` there is no single Go type left to write these signatures in —
+// `Set[RoomFlag]` and `Set[PlayerFlag]` are unrelated types — and the two
+// alternatives are both worse than a raw bit vector: making each helper
+// generic buys nothing, because none of them can do anything with T that
+// it cannot do with the bits, and it would force the domain to be named at
+// every call site for no benefit; keeping eleven copies is the duplication
+// §3.5 already complains about. So the letter encoding and the name tables
+// operate on bits, `Set.Raw`/`SetFromRaw` are the conversion, and the
+// domain type is what everything *above* this layer is written in. That is
+// also exactly where §4.1 says the remaining G115 suppressions belong.
+func FlagLetters(bits uint64) string {
+	if bits == 0 {
 		return "0"
 	}
 	var b strings.Builder
 	for bit := 0; bit < 64; bit++ {
-		if f&(1<<uint(bit)) == 0 {
+		if bits&(1<<uint(bit)) == 0 {
 			continue
 		}
 		switch {

@@ -868,7 +868,7 @@ func (l *Live) MoveMobile(mob *Character, dir Direction) bool {
 		return false
 	}
 	destination := l.Room(exit.ToRoom)
-	if destination == nil || destination.Flags.HasAny(RoomNoMob|RoomDeathTrap) {
+	if destination == nil || destination.Flags.HasAny(RoomNoMob, RoomDeathTrap) {
 		return false
 	}
 	if mob.HasMobFlag(MobStayZone) {

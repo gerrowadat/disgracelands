@@ -163,7 +163,7 @@ func TestSanctionedPkillInAPKillRoom(t *testing.T) {
 	var message string
 	inWorld(t, srv, func(w *game.Live) {
 		room := w.Room(MortalStartRoom)
-		room.Flags = room.Flags.Set(game.RoomPKill)
+		room.Flags = room.Flags.With(game.RoomPKill)
 		_, message = w.SetFighting(attacker, victim)
 	})
 
@@ -195,7 +195,7 @@ func TestSanctionedPkillDoesNotMudlogAMobile(t *testing.T) {
 	var message string
 	inWorld(t, srv, func(w *game.Live) {
 		room := w.Room(MortalStartRoom)
-		room.Flags = room.Flags.Set(game.RoomPKill)
+		room.Flags = room.Flags.With(game.RoomPKill)
 		_, message = w.SetFighting(attacker, victim)
 	})
 

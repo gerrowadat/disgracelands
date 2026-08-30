@@ -174,7 +174,7 @@ func TestAPeacefulRoomStopsEveryKindOfViolence(t *testing.T) {
 	dog := spawnDog(t, srv, ImmortStartRoom)
 	inWorld(t, srv, func(w *game.Live) {
 		room := w.Room(ImmortStartRoom)
-		room.Flags = room.Flags.Set(game.RoomPeaceful)
+		room.Flags = room.Flags.With(game.RoomPeaceful)
 	})
 
 	var before int32

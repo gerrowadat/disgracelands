@@ -13,7 +13,7 @@ type RoomDef struct {
 	Zone        ZoneVnum // the zone whose vnum range contains Vnum
 	Name        string
 	Description string
-	Flags       Flags
+	Flags       RoomFlags
 	SectorType  int32
 
 	// Exits is indexed by Direction. A nil entry means no exit that way.

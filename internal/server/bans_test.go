@@ -384,7 +384,7 @@ func TestShowRoomLists(t *testing.T) {
 
 	inWorld(t, srv, func(w *game.Live) {
 		if room := w.Room(MageGuildRoom); room != nil {
-			room.Flags = room.Flags.Set(game.RoomDeathTrap | game.RoomGodRoom)
+			room.Flags = room.Flags.With(game.RoomDeathTrap, game.RoomGodRoom)
 		}
 	})
 

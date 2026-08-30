@@ -240,7 +240,7 @@ func TestTimeAndWeather(t *testing.T) {
 
 	// Indoors there is no weather to speak of.
 	inWorld(t, srv, func(w *game.Live) {
-		w.Room(ImmortStartRoom).Flags = w.Room(ImmortStartRoom).Flags.Set(game.RoomIndoors)
+		w.Room(ImmortStartRoom).Flags = w.Room(ImmortStartRoom).Flags.With(game.RoomIndoors)
 	})
 	c.send("weather")
 	c.expect("You have no feeling about the weather at all.")

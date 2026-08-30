@@ -254,7 +254,7 @@ func BuildDumpWithOptions(w *game.World, opts Options) *Dump {
 	for _, r := range w.Rooms {
 		dr := DumpRoom{
 			Vnum: r.Vnum, Zone: r.Zone, Name: Text(r.Name), Desc: Text(r.Description),
-			Flags: r.Flags.String(), FlagBits: uint64(r.Flags),
+			Flags: r.Flags.String(), FlagBits: r.Flags.Raw(),
 			Sector:     r.SectorType,
 			Exits:      make([]*DumpExit, game.NumDirections),
 			ExtraDescs: dumpExtras(r.ExtraDescs),

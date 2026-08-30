@@ -68,7 +68,15 @@ func (l *loader) loadZoneFile(path string, w *game.World) error {
 	return nil
 }
 
-func (l *loader) flags(path string, names []string, table []string, kind string, vnum int32) game.Flags {
+// flags resolves a list of yaml flag names against table and returns the
+// raw bit vector, reporting any name the table does not carry.
+//
+// Raw bits rather than any flag type: this one method serves six domains
+// with six different destination types, and docs/proposals/idiomatic-go.md
+// step 1 gives each of them its own. Bits are the one thing they have in
+// common, and the loader is the persistence boundary Set.Raw/SetFromRaw
+// exist for (§4.1).
+func (l *loader) flags(path string, names []string, table []string, kind string, vnum int32) uint64 {
 	f, unknown := game.ParseBitNames(names, table)
 	if len(unknown) > 0 {
 		l.errorf("%s: %s #%d: unknown %s name(s): %s", path, kind, vnum, kind, strings.Join(unknown, ", "))
@@ -87,7 +95,7 @@ func (l *loader) roomFromDoc(path string, rd roomDoc) *game.RoomDef {
 		l.errorf("%s: room #%d: unknown sector %q", path, rd.Vnum, rd.Sector)
 	}
 	room.SectorType = sector
-	room.Flags = l.flags(path, rd.Flags, game.YamlRoomFlagNames(), "room flag", rd.Vnum).Set(game.Flags(rd.FlagsRaw))
+	room.Flags = game.SetFromRaw[game.RoomFlag](l.flags(path, rd.Flags, game.YamlRoomFlagNames(), "room flag", rd.Vnum) | rd.FlagsRaw)
 
 	if rd.Exits != nil {
 		slots := rd.Exits.slots()
@@ -140,8 +148,8 @@ func (l *loader) mobFromDoc(path string, md mobDoc) *game.MobDef {
 		Gold:        md.Gold,
 		Exp:         md.Exp,
 	}
-	mob.ActionFlags = l.flags(path, md.Act, game.YamlMobActFlagNames(), "mob act flag", md.Vnum).Set(game.Flags(md.ActRaw)).Set(game.MobIsNPC)
-	mob.AffectionFlags = l.flags(path, md.Affected, game.YamlAffectFlagNames(), "affect flag", md.Vnum).Set(game.Flags(md.AffectedRaw))
+	mob.ActionFlags = game.Flags(l.flags(path, md.Act, game.YamlMobActFlagNames(), "mob act flag", md.Vnum) | md.ActRaw).Set(game.MobIsNPC)
+	mob.AffectionFlags = game.Flags(l.flags(path, md.Affected, game.YamlAffectFlagNames(), "affect flag", md.Vnum) | md.AffectedRaw)
 
 	if hp, ok := parseDiceString(md.HP); ok {
 		mob.HitDice = hp
@@ -194,13 +202,13 @@ func (l *loader) objFromDoc(path string, od objDoc) *game.ObjDef {
 		l.errorf("%s: object #%d: unknown type %q", path, od.Vnum, od.Type)
 	}
 	obj.Type = typ
-	obj.WearFlags = l.flags(path, od.Wear, game.YamlWearFlagNames(), "wear flag", od.Vnum).Set(game.Flags(od.WearRaw))
-	obj.ExtraFlags = l.flags(path, od.Flags, game.YamlItemExtraFlagNames(), "item flag", od.Vnum).Set(game.Flags(od.FlagsRaw))
+	obj.WearFlags = game.Flags(l.flags(path, od.Wear, game.YamlWearFlagNames(), "wear flag", od.Vnum) | od.WearRaw)
+	obj.ExtraFlags = game.Flags(l.flags(path, od.Flags, game.YamlItemExtraFlagNames(), "item flag", od.Vnum) | od.FlagsRaw)
 	permAffect, unknown := game.ParseBitNames(od.PermAffect, game.YamlAffectFlagNames())
 	if len(unknown) > 0 {
 		l.errorf("%s: object #%d: unknown perm_affect name(s): %s", path, od.Vnum, strings.Join(unknown, ", "))
 	}
-	obj.PermAffect = int32(permAffect.Set(game.Flags(od.PermAffectRaw))) //nolint:gosec // affect bits fit comfortably
+	obj.PermAffect = int32(permAffect | od.PermAffectRaw) //nolint:gosec // affect bits fit comfortably
 
 	obj.Values = l.objValues(path, od)
 
@@ -290,7 +298,7 @@ func (l *loader) shopFromDoc(path string, sd shopDoc) *game.ShopDef {
 			shop.Open2, shop.Close2 = h[0], h[1]
 		}
 	}
-	shop.Flags = l.flags(path, sd.Flags, game.YamlShopFlagNames(), "shop flag", sd.Vnum)
+	shop.Flags = game.Flags(l.flags(path, sd.Flags, game.YamlShopFlagNames(), "shop flag", sd.Vnum))
 	trade, unknown := game.ParseBitNames(sd.Refuses, game.YamlShopTradeNames())
 	if len(unknown) > 0 {
 		l.errorf("%s: shop #%d: unknown refuses name(s): %s", path, sd.Vnum, strings.Join(unknown, ", "))

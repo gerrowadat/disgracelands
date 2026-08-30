@@ -25,6 +25,9 @@ would notice if the fence were drawn casually.
 >
 > - **Step 0, the resave fixture — done.** It found something on its
 >   first run: see §7's row.
+> - **Step 1, a type per flag domain — under way.** `Set[T]` and the
+>   raw-bits helper boundary landed with the first domain, room flags.
+>   Read §4.1's "the OR trap" before converting another one.
 
 ---
 
@@ -384,16 +387,28 @@ Sketches, not specifications. Each step in §7 settles its own details.
 ### 4.1 Flags → a generic set over a per-domain enum
 
 ```go
-// internal/game/bitset (or in game itself)
+// internal/game/set.go, as built
 type Set[T ~int] struct{ bits uint64 }
 
+func NewSet[T ~int](vs ...T) Set[T]
+func SetFromRaw[T ~int](bits uint64) Set[T] // the format boundary, and only there
+func (s Set[T]) Raw() uint64                // ditto, in the other direction
 func (s Set[T]) Has(v T) bool
-func (s Set[T]) With(v ...T) Set[T]
-func (s Set[T]) Without(v ...T) Set[T]
-func (s Set[T]) All() iter.Seq[T]     // ordered by bit, so deterministic
-func (s Set[T]) Raw() uint64          // the format boundary, and only there
-func (s Set[T]) Unknown() uint64      // bits with no name — the flags_raw case
+func (s Set[T]) HasAny(vs ...T) bool
+func (s Set[T]) HasAll(vs ...T) bool
+func (s Set[T]) With(vs ...T) Set[T]
+func (s Set[T]) Without(vs ...T) Set[T]
+func (s Set[T]) Toggle(vs ...T) Set[T]
+func (s Set[T]) Union/Intersect/Minus(o Set[T]) Set[T]
+func (s Set[T]) Overlaps(o Set[T]) bool
+func (s Set[T]) All() iter.Seq[T]           // ordered by bit, so deterministic
+func (s Set[T]) Members() []T
 ```
+
+The sketch had an `Unknown() uint64` for the `flags_raw` case; there is
+none, because it would need a name table and every caller that has one is
+already calling `NameBits`, which returns the unnamed remainder as its
+second result. That is the same fact in the place that can compute it.
 
 with domains declared as bit *indices* rather than masks:
 
@@ -431,6 +446,49 @@ change to how this codebase reads, taken deliberately. The fallback if it
 reads badly in practice is the hybrid — an unexported generic core with
 eleven thin named wrappers — and step 1's first PR is where that would
 become obvious, on one domain, before the other ten follow it.
+
+**The name tables and the letter encoding take raw `uint64`, not any flag
+type.** Settled by building it: once every domain has its own set type
+there is no single Go type left to write `SprintBit`, `NameBits`,
+`ParseBitNames` or the `asciiflag_conv` letter codec in. Making each of
+them generic buys nothing — none can do anything with `T` it cannot do
+with the bits, and it would force the domain to be named at every call
+site — and keeping eleven copies is §3.5's duplication reinvented. So
+those four operate on bits, `Set.Raw`/`SetFromRaw` are the only
+conversion, and every layer above them is written in the domain type.
+That is also exactly where §4.1 puts the surviving G115 suppressions.
+
+### 4.1.1 The OR trap
+
+**A domain's constants are bit indices, so the C-shaped idiom still
+compiles and means something else.**
+
+```go
+room.Flags.HasAny(RoomNoMob | RoomDeathTrap)   // compiles. asks about RoomIndoors.
+room.Flags.HasAny(RoomNoMob, RoomDeathTrap)    // what was meant
+```
+
+`2 | 1` is `3`, which is a perfectly good `RoomFlag`. The types are
+right, the arity is right, and the answer is silently about a different
+flag — which is the same "no diagnostic anywhere in the toolchain" shape
+§3.1 complains about in the model being retired, so trading one for the
+other would be a poor bargain.
+
+It is not hypothetical: converting the *first* domain produced two of
+them, in `internal/game/live.go` (a mobile walking into a NOMOB room) and
+`internal/session/spells.go` (summon into a private, death-trap or god
+room). The first was caught by a test somebody wrote years ago. Nothing
+at all was watching the second.
+
+Go cannot make this a type rule — any `~int` supports `|`, and the OR of
+two valid indices is another valid index — so it is a source scan:
+`internal/game`'s `TestNoFlagConstantIsCombinedWithAnOperator` parses
+every Go file in the tree and rejects `|`, `&`, `&^` or `^` between two
+constants of the same converted domain. It derives the constant list from
+the `const` declarations rather than a hand-maintained list, so **each
+domain a later step converts is covered the moment it lands**, with
+nothing to remember. Run it before pushing a conversion; it is part of
+`go test ./...`.
 
 ### 4.2 Enumerations get types, `String`, and a text marshaller
 
@@ -616,7 +674,7 @@ so that the riskiest step is last and separable.
 | | Step | What it is | Risk |
 | --- | --- | --- | --- |
 | **0** | ~~**The resave fixture**~~ **Done.** | §6's load-and-resave test, over all three corpora and all seven subsystems: `cmd/dlctl`'s `TestFmtLeavesTheCheckedInCorporaAlone`. It failed the first time it ran — `dlctl fmt --type=state` was the only caller in the tree that could bring a `state/bans.yaml` into existence, so formatting a converted directory added a file the conversion had deliberately not written. Fixed in `bans/yaml`'s `Rewrite`, not in the corpus. | None. Do this first; everything after it leans on it. |
-| **1** | **A type per flag domain** | §4.1. `Flags` → `Set[RoomFlag]`, `Set[AffectFlag]`, `Set[PlayerFlag]`, … One domain per PR, eleven or so PRs. `Raw()`/`Unknown()` at the persistence boundary only. | Low, high volume. The compiler finds every site. `bitnames_test.go` must still re-parse `constants.c`. |
+| **1** | **A type per flag domain** — **under way** | §4.1. `Flags` → `Set[RoomFlag]`, `Set[AffectFlag]`, `Set[PlayerFlag]`, … One domain per PR, eleven or so PRs. `Raw()`/`SetFromRaw` at the persistence boundary only. **Done: room flags** (with `Set[T]` itself and the raw-bits helper boundary). | Low, high volume, *and one real hazard*: §4.1.1's OR trap, which the first domain hit twice. The compiler finds every site; it does not find that one. `bitnames_test.go` must still re-parse `constants.c`. |
 | **2** | **A type per enumeration** | §4.2. Class, Sex, Race, ItemType, Apply, SpellID, Sector, Liquid, and `MobDef.Position` onto the existing `game.Position`. `RemortVector` becomes `Set[Class]`. | Low, high volume. Watch the table-indexed tests (§5). |
 | **3** | **Typed object values** | §4.3. Lift `values.go`'s taxonomy into `game`, typed accessors, raw kept as the stored truth. 84 positional accesses go. | Medium. The five-types-only rule is a constraint, not a starting point to improve on. |
 | **4** | **Absence over sentinels** | §4.4, in the places §3.4 lists, excluding the vnum sentinels that reach disk. | Medium. Each one is a small semantic argument; do not batch them. |
