@@ -410,6 +410,27 @@ func (c *Context) castManual(number int32, victim *game.Character, obj *game.Obj
 			"%s disappears.\r\n", "%s appears in the middle of the room.\r\n")
 		return true
 
+	case game.SpellControlWeather:
+		// Nothing, on purpose, and this is the port of what the C does
+		// rather than a stub standing in for it.
+		//
+		// `control weather` is in the spell table as TAR_IGNORE |
+		// MAG_MANUAL (spell_parser.c:908-910) and cleric 17
+		// (class.c:2054), and there is no spell_control_weather anywhere:
+		// not in the archived server, not in stock CircleMUD 3.0 bpl20,
+		// not in WipeMud. call_magic's MAG_MANUAL switch has ten cases and
+		// this is not one of them (spell_parser.c:294-306), and the switch
+		// has no default, so the spell falls straight out of it and
+		// call_magic returns 1 anyway.
+		//
+		// So on the real server a cleric who learned control weather could
+		// cast it, was charged the mana, and the weather did not change.
+		// Returning true is what reproduces that: the caster pays, and
+		// castSpell does not reach the "not implemented yet" line, which
+		// would be this server admitting to a gap that is not one (#300).
+		// docs/weirdnumbers.md has it.
+		return true
+
 	case game.SpellTeleport:
 		if victim == nil || victim.IsNPC() {
 			return true

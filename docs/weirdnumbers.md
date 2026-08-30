@@ -499,6 +499,32 @@ routines. A skill is therefore a spell with no cost, no target and nothing to
 do — the table is a table of *things you can practise*, and the spells just
 happen to be the ones with behaviour attached.
 
+### `control weather` is a spell nobody ever wrote
+
+```c
+spello(SPELL_CONTROL_WEATHER, "control weather", 75, 25, 5, POS_STANDING,
+	TAR_IGNORE, FALSE, MAG_MANUAL,
+	NULL);
+```
+
+It is in the spell table (spell_parser.c:908-910), it is cleric 17
+(class.c:2054), it has a name, a mana cost and a minimum position — and there
+is no `spell_control_weather` function anywhere. Not in the archived server,
+not in stock CircleMUD 3.0 bpl20, not in WipeMud. `call_magic`'s `MAG_MANUAL`
+switch has ten cases and this is not one of them (spell_parser.c:294-306),
+and the switch has no `default`, so the spell falls out of it and
+`call_magic` returns 1 regardless.
+
+A cleric who reached level 17 could therefore learn control weather, cast
+it, be charged the twenty-five mana, and watch the weather do exactly what
+it was going to do anyway. For seven years.
+
+Worth writing down because the port's own honesty makes it easy to get
+wrong in the other direction: `castSpell` says "Nothing seems to happen. (X
+is not implemented yet.)" for a spell nothing handled, which is a good thing
+to say about a gap here and the wrong thing to say about this one. The gap
+is upstream, in 1993. #300.
+
 ### `identify` is spell 201, and cannot be cast
 
 `do_cast` refuses any spell number above `MAX_SPELLS` (130), and
