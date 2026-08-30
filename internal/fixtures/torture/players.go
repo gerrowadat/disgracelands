@@ -82,7 +82,7 @@ func maximumCharacter() *game.PlayerRecord {
 		IDNum:      1,
 
 		PlayerFlags: game.Flags(0xffffffff),
-		AffectFlags: game.Flags(0xffffffff),
+		AffectFlags: game.SetFromRaw[game.AffectFlag](0xffffffff),
 		Preferences: game.Flags(0xffffffff),
 
 		Conditions:    [3]int32{24, 24, 24},
@@ -130,7 +130,7 @@ func maximumCharacter() *game.PlayerRecord {
 			Duration: int32(100 + i),
 			Modifier: int32(i - 16),
 			Location: int32(i % 25),
-			Bits:     game.Flags(1) << uint(i%32),
+			Bits:     game.SetFromRaw[game.AffectFlag](1 << uint(i%32)),
 		})
 	}
 
@@ -320,7 +320,7 @@ func rentedWithNestedContainers() *player.RentFile {
 		ExtraFlags: game.SetFromRaw[game.ExtraFlag](0xffffffff),
 		Weight:     2147483647,
 		Timer:      -2147483648,
-		PermAffect: game.Flags(0xffffffff),
+		PermAffect: game.SetFromRaw[game.AffectFlag](0xffffffff),
 		Affects: []game.ObjAffect{
 			{Location: 1, Modifier: 127},
 			{Location: 18, Modifier: -128},

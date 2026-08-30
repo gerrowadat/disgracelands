@@ -94,7 +94,7 @@ func TestAnObjectsAppliesAreRecomputedRatherThanAccumulated(t *testing.T) {
 			{Location: ApplyHitRoll, Modifier: 3},
 			{Location: ApplyDamRoll, Modifier: 2},
 		},
-		PermAffect: AffectDetectInvis,
+		PermAffect: NewSet(AffectDetectInvis),
 	}
 	l.track(ring)
 	l.ObjectToChar(ring, welmar)

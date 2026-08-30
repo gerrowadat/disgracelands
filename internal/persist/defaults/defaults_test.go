@@ -156,7 +156,7 @@ objects:
 	// formats, exactly as parse_mobile does — so the default here is not
 	// zero, and that is the point of asserting it.
 	check(t, "mob.ActionFlags", mob.ActionFlags, game.NewSet(game.MobIsNPC))
-	check(t, "mob.AffectionFlags", mob.AffectionFlags, game.Flags(0))
+	check(t, "mob.AffectionFlags", mob.AffectionFlags, game.AffectFlags{})
 	check(t, "mob.Enhanced", mob.Enhanced, false)
 	check(t, "mob.Especs", len(mob.Especs), 0)
 
@@ -209,7 +209,7 @@ flags: {}
 	check(t, "Credential.Scheme", rec.Credential.Scheme, game.SchemeNone)
 	check(t, "Level", rec.Level, int32(0))
 	check(t, "PlayerFlags", rec.PlayerFlags, game.Flags(0))
-	check(t, "AffectFlags", rec.AffectFlags, game.Flags(0))
+	check(t, "AffectFlags", rec.AffectFlags, game.AffectFlags{})
 	check(t, "Preferences", rec.Preferences, game.Flags(0))
 	check(t, "Skills", len(rec.Skills), 0)
 	check(t, "Affects", len(rec.Affects), 0)

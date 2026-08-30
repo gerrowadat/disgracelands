@@ -30,9 +30,9 @@ func IdentifyObject(obj *Object) string {
 	fmt.Fprintf(&out, "Object '%s', Item type: %s\r\n",
 		obj.Name(), SprintType(obj.Type, ItemTypeNames))
 
-	if obj.PermAffect != 0 {
+	if !obj.PermAffect.Empty() {
 		fmt.Fprintf(&out, "Item will give you following abilities:  %s\r\n",
-			SprintBit(uint64(obj.PermAffect), affectBitNames))
+			SprintBit(obj.PermAffect.Raw(), affectBitNames))
 	}
 	fmt.Fprintf(&out, "Item is: %s\r\n", SprintBit(obj.ExtraFlags.Raw(), extraBitNames))
 	fmt.Fprintf(&out, "Weight: %d, Value: %d, Rent: %d, Min Level: %d\r\n",

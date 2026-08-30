@@ -154,7 +154,7 @@ func TestOrderingACharmedFollower(t *testing.T) {
 			return
 		}
 		w.AddFollower(dog, who)
-		dog.Record.AffectFlags = dog.Record.AffectFlags.Set(game.AffectCharm)
+		dog.Record.AffectFlags = dog.Record.AffectFlags.With(game.AffectCharm)
 	})
 
 	c.send("order dog smile")
@@ -182,7 +182,7 @@ func TestOrderingFollowers(t *testing.T) {
 			return
 		}
 		w.AddFollower(dog, who)
-		dog.Record.AffectFlags = dog.Record.AffectFlags.Set(game.AffectCharm)
+		dog.Record.AffectFlags = dog.Record.AffectFlags.With(game.AffectCharm)
 	})
 
 	c.send("order followers smile")
@@ -202,7 +202,7 @@ func TestACharmedCharacterCannotGiveOrders(t *testing.T) {
 	aMobile(t, srv, "Puppet")
 	inWorld(t, srv, func(w *game.Live) {
 		if who := w.Find("Puppet"); who != nil && who.Record != nil {
-			who.Record.AffectFlags = who.Record.AffectFlags.Set(game.AffectCharm)
+			who.Record.AffectFlags = who.Record.AffectFlags.With(game.AffectCharm)
 		}
 	})
 

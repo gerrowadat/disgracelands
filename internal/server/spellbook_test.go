@@ -281,7 +281,7 @@ func damages(spell string) spellCase {
 
 // affectsSelf is mag_affects aimed at the caster: the flag arrives and the
 // caster is told.
-func affectsSelf(spell string, flag game.Flags, told string) spellCase {
+func affectsSelf(spell string, flag game.AffectFlag, told string) spellCase {
 	return spellCase{run: func(t *testing.T) {
 		srv, c := spellbookServer(t)
 
@@ -297,7 +297,7 @@ func affectsSelf(spell string, flag game.Flags, told string) spellCase {
 }
 
 // affectsPrey is mag_affects aimed at a mobile that cannot save.
-func affectsPrey(spell string, flag game.Flags) spellCase {
+func affectsPrey(spell string, flag game.AffectFlag) spellCase {
 	return spellCase{run: func(t *testing.T) {
 		srv, c := spellbookServer(t)
 		dog := prey(t, srv, ImmortStartRoom)
@@ -443,7 +443,7 @@ var spellbook = map[int32]spellCase{
 		castOn(c, "sleep", "dog")
 
 		var position game.Position
-		var flags game.Flags
+		var flags game.AffectFlags
 		inWorld(t, srv, func(_ *game.Live) {
 			position, flags = dog.Position, dog.Record.AffectFlags
 		})

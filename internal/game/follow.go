@@ -97,9 +97,9 @@ func (l *Live) StopFollowing(c *Character) {
 	// Charm is an affect and comes off with the affect; group is a bare flag.
 	if c.Record != nil {
 		RemoveAffectsOf(c.Record, SpellCharm)
-		c.Record.BaseAffectFlags = c.Record.BaseAffectFlags.Clear(AffectCharm | AffectGroup)
+		c.Record.BaseAffectFlags = c.Record.BaseAffectFlags.Without(AffectCharm, AffectGroup)
 		RecomputeAffects(c.Record)
-		c.Record.AffectFlags = c.Record.AffectFlags.Clear(AffectCharm | AffectGroup)
+		c.Record.AffectFlags = c.Record.AffectFlags.Without(AffectCharm, AffectGroup)
 	}
 }
 
@@ -140,12 +140,12 @@ func (c *Character) SetGrouped(in bool) {
 		return
 	}
 	if in {
-		c.Record.BaseAffectFlags = c.Record.BaseAffectFlags.Set(AffectGroup)
-		c.Record.AffectFlags = c.Record.AffectFlags.Set(AffectGroup)
+		c.Record.BaseAffectFlags = c.Record.BaseAffectFlags.With(AffectGroup)
+		c.Record.AffectFlags = c.Record.AffectFlags.With(AffectGroup)
 		return
 	}
-	c.Record.BaseAffectFlags = c.Record.BaseAffectFlags.Clear(AffectGroup)
-	c.Record.AffectFlags = c.Record.AffectFlags.Clear(AffectGroup)
+	c.Record.BaseAffectFlags = c.Record.BaseAffectFlags.Without(AffectGroup)
+	c.Record.AffectFlags = c.Record.AffectFlags.Without(AffectGroup)
 }
 
 // GroupLeader is whoever heads a character's group: their master, or
@@ -211,10 +211,10 @@ func (c *Character) SetHidden(hidden bool) {
 		return
 	}
 	if hidden {
-		c.Record.BaseAffectFlags = c.Record.BaseAffectFlags.Set(AffectHide)
-		c.Record.AffectFlags = c.Record.AffectFlags.Set(AffectHide)
+		c.Record.BaseAffectFlags = c.Record.BaseAffectFlags.With(AffectHide)
+		c.Record.AffectFlags = c.Record.AffectFlags.With(AffectHide)
 		return
 	}
-	c.Record.BaseAffectFlags = c.Record.BaseAffectFlags.Clear(AffectHide)
-	c.Record.AffectFlags = c.Record.AffectFlags.Clear(AffectHide)
+	c.Record.BaseAffectFlags = c.Record.BaseAffectFlags.Without(AffectHide)
+	c.Record.AffectFlags = c.Record.AffectFlags.Without(AffectHide)
 }

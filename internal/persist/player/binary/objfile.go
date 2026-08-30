@@ -155,7 +155,7 @@ func (c *objCodec) decode(b []byte) (*player.RentFile, error) {
 			ExtraFlags: game.SetFromRaw[game.ExtraFlag](uint64(int64(e.i32(rec, "extra_flags")))), //nolint:gosec // reinterpretation: the field is a bitvector
 			Weight:     e.i32(rec, "weight"),
 			Timer:      e.i32(rec, "timer"),
-			PermAffect: game.Flags(e.varInt(rec, "bitvector")), //nolint:gosec // ditto
+			PermAffect: game.SetFromRaw[game.AffectFlag](uint64(e.varInt(rec, "bitvector"))), //nolint:gosec // ditto
 			Affects:    make([]game.ObjAffect, game.MaxObjAffects),
 		}
 		values := c.elem.at("value")
@@ -200,7 +200,7 @@ func (c *objCodec) encode(f *player.RentFile) ([]byte, error) {
 		e.putI32(rec, "extra_flags", int32(uint32(obj.ExtraFlags.Raw()))) //nolint:gosec // reinterpretation: the field is a bitvector
 		e.putI32(rec, "weight", obj.Weight)
 		e.putI32(rec, "timer", obj.Timer)
-		e.putVar(rec, "bitvector", int64(obj.PermAffect)) //nolint:gosec // reinterpretation: the field is a bitvector
+		e.putVar(rec, "bitvector", int64(obj.PermAffect.Raw())) //nolint:gosec // reinterpretation: the field is a bitvector
 		values := c.elem.at("value")
 		for j := range obj.Values {
 			byteOrder.PutUint32(rec[values.Offset+j*values.Stride:], narrow32(obj.Values[j]))

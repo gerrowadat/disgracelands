@@ -189,7 +189,7 @@ func Encode(w io.Writer, p *game.PlayerRecord) error {
 	if p.PlayerFlags != 0 {
 		put(tagAct, p.PlayerFlags.String())
 	}
-	if p.AffectFlags != 0 {
+	if !p.AffectFlags.Empty() {
 		put(tagAff, p.AffectFlags.String())
 	}
 	if p.Preferences != 0 {
@@ -239,7 +239,7 @@ func Encode(w io.Writer, p *game.PlayerRecord) error {
 	if len(p.Affects) > 0 {
 		_, _ = fmt.Fprintf(bw, "%s:\n", tagAffs)
 		for _, a := range p.Affects {
-			_, _ = fmt.Fprintf(bw, "%d %d %d %d %d\n", a.Type, a.Duration, a.Modifier, a.Location, uint64(a.Bits))
+			_, _ = fmt.Fprintf(bw, "%d %d %d %d %d\n", a.Type, a.Duration, a.Modifier, a.Location, a.Bits.Raw())
 		}
 		_, _ = fmt.Fprint(bw, "0 0 0 0 0\n")
 	}
@@ -444,7 +444,8 @@ func assign(p *game.PlayerRecord, tag, value string, next func() (string, bool),
 	case "Act":
 		p.PlayerFlags, _ = game.ParseFlags(value)
 	case "Aff":
-		p.AffectFlags, _ = game.ParseFlags(value)
+		affBits, _ := game.ParseFlagLetters(value)
+		p.AffectFlags = game.SetFromRaw[game.AffectFlag](affBits)
 	case "Pref":
 		p.Preferences, _ = game.ParseFlags(value)
 	case "Thr1", "Thr2", "Thr3", "Thr4", "Thr5":
@@ -573,7 +574,7 @@ func readAffects(next func() (string, bool)) []game.Affect {
 		}
 		affects = append(affects, game.Affect{
 			Type: typ, Duration: dur, Modifier: mod,
-			Location: loc, Bits: game.Flags(bits),
+			Location: loc, Bits: game.SetFromRaw[game.AffectFlag](bits),
 		})
 	}
 }

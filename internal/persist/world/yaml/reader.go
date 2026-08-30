@@ -149,7 +149,7 @@ func (l *loader) mobFromDoc(path string, md mobDoc) *game.MobDef {
 		Exp:         md.Exp,
 	}
 	mob.ActionFlags = game.SetFromRaw[game.MobFlag](l.flags(path, md.Act, game.YamlMobActFlagNames(), "mob act flag", md.Vnum) | md.ActRaw).With(game.MobIsNPC)
-	mob.AffectionFlags = game.Flags(l.flags(path, md.Affected, game.YamlAffectFlagNames(), "affect flag", md.Vnum) | md.AffectedRaw)
+	mob.AffectionFlags = game.SetFromRaw[game.AffectFlag](l.flags(path, md.Affected, game.YamlAffectFlagNames(), "affect flag", md.Vnum) | md.AffectedRaw)
 
 	if hp, ok := parseDiceString(md.HP); ok {
 		mob.HitDice = hp

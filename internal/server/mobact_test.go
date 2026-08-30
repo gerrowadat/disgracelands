@@ -237,7 +237,7 @@ func TestAHolyShieldTurnsAwayEvil(t *testing.T) {
 	mob.Record.Alignment = -1000
 
 	rec := fighterRecord("Welmar", 5, 200)
-	rec.AffectFlags = rec.AffectFlags.Set(game.AffectHolyShield)
+	rec.AffectFlags = rec.AffectFlags.With(game.AffectHolyShield)
 	place(t, srv, rec, MortalStartRoom)
 
 	for i := 0; i < 20; i++ {

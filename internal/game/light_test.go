@@ -230,7 +230,7 @@ func TestCanSeeInDark(t *testing.T) {
 		t.Error("an ordinary mortal could see in the dark")
 	}
 
-	mortal.Record.AffectFlags = mortal.Record.AffectFlags.Set(AffectInfravision)
+	mortal.Record.AffectFlags = mortal.Record.AffectFlags.With(AffectInfravision)
 	if !CanSeeInDark(mortal) {
 		t.Error("infravision did not let them see in the dark")
 	}

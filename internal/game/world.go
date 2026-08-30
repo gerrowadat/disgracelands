@@ -82,7 +82,7 @@ type MobDef struct {
 	Description string
 
 	ActionFlags    MobFlags
-	AffectionFlags Flags
+	AffectionFlags AffectFlags
 	Alignment      int32
 
 	// Enhanced is true for the 'E' mob format, which carries a trailing block

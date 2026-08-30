@@ -335,7 +335,7 @@ func TestUnaffect(t *testing.T) {
 			return
 		}
 		who.Record.Affects = append(who.Record.Affects, game.Affect{
-			Type: game.SpellSanctuary, Duration: 10, Bits: game.AffectSanctuary,
+			Type: game.SpellSanctuary, Duration: 10, Bits: game.NewSet(game.AffectSanctuary),
 		})
 		game.RecomputeAffects(who.Record)
 	})

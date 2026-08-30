@@ -268,7 +268,7 @@ func TestSomebodyWithNoTrackCannotBeFound(t *testing.T) {
 	hidden.create("Ghost", "notfoundhere", "m", "w")
 	inWorld(t, srv, func(w *game.Live) {
 		if who := w.Find("Ghost"); who != nil && who.Record != nil {
-			who.Record.AffectFlags = who.Record.AffectFlags.Set(game.AffectNoTrack)
+			who.Record.AffectFlags = who.Record.AffectFlags.With(game.AffectNoTrack)
 		}
 	})
 

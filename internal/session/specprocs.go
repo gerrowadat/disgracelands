@@ -436,8 +436,8 @@ func specPetShop(sc *SpecialCall) bool {
 		// both here directly (the same shape follow.go's own AffectGroup/
 		// AffectHide toggles use) is permanent until StopFollowing clears
 		// it, exactly as letting a pet go should.
-		bought.Record.BaseAffectFlags = bought.Record.BaseAffectFlags.Set(game.AffectCharm)
-		bought.Record.AffectFlags = bought.Record.AffectFlags.Set(game.AffectCharm)
+		bought.Record.BaseAffectFlags = bought.Record.BaseAffectFlags.With(game.AffectCharm)
+		bought.Record.AffectFlags = bought.Record.AffectFlags.With(game.AffectCharm)
 
 		if petName != "" {
 			// The C appends to the mob's own name field, which is the

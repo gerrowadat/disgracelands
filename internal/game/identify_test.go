@@ -25,7 +25,7 @@ func TestIdentifyingAWeapon(t *testing.T) {
 		Weight:     10,
 		Cost:       350,
 		ExtraFlags: NewSet(ItemMagic, ItemBless),
-		PermAffect: AffectDetectInvis,
+		PermAffect: NewSet(AffectDetectInvis),
 		Values:     [NumObjValues]int32{0, 2, 6, 3},
 		Affects: []ObjAffect{
 			{Location: ApplyHitRoll, Modifier: 2},

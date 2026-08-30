@@ -111,7 +111,7 @@ func InitChar(rec *PlayerRecord, r *rng.Rand, first bool) {
 		}
 	}
 
-	rec.AffectFlags = 0
+	rec.AffectFlags = AffectFlags{}
 	rec.SavingThrows = [5]int32{}
 
 	// Every statistic starts at 25 and is overwritten by do_start's roll.

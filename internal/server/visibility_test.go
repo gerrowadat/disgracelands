@@ -17,7 +17,7 @@ import (
 // CAN_SEE at the display sites, through real sockets.
 
 // affect sets an AFF_* bit on a logged-in character.
-func affect(t *testing.T, srv *Server, name string, flag game.Flags) {
+func affect(t *testing.T, srv *Server, name string, flag game.AffectFlag) {
 	t.Helper()
 	if err := srv.engine.DoSync(context.Background(), func(w *game.Live) {
 		ch := w.Find(name)
@@ -25,7 +25,7 @@ func affect(t *testing.T, srv *Server, name string, flag game.Flags) {
 			t.Errorf("no character called %s", name)
 			return
 		}
-		ch.Record.AffectFlags = ch.Record.AffectFlags.Set(flag)
+		ch.Record.AffectFlags = ch.Record.AffectFlags.With(flag)
 	}); err != nil {
 		t.Fatal(err)
 	}
@@ -270,7 +270,7 @@ func TestGlowingRedEyes(t *testing.T) {
 			}
 		}
 		zod := w.Find("Zod")
-		zod.Record.AffectFlags = zod.Record.AffectFlags.Set(game.AffectInfravision)
+		zod.Record.AffectFlags = zod.Record.AffectFlags.With(game.AffectInfravision)
 	}); err != nil {
 		t.Fatal(err)
 	}

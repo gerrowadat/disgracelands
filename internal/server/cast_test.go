@@ -120,7 +120,7 @@ func TestSilenceStopsCasting(t *testing.T) {
 
 	if err := srv.engine.DoSync(context.Background(), func(w *game.Live) {
 		rec := w.Find("Zod").Record
-		rec.AffectFlags = rec.AffectFlags.Set(game.AffectSilence)
+		rec.AffectFlags = rec.AffectFlags.With(game.AffectSilence)
 	}); err != nil {
 		t.Fatal(err)
 	}

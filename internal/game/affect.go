@@ -172,7 +172,7 @@ func RecomputeAffects(rec *PlayerRecord) {
 			if obj == nil {
 				continue
 			}
-			flags = flags.Set(obj.PermAffect)
+			flags = flags.Union(obj.PermAffect)
 			for _, a := range obj.Affects {
 				applyModifier(rec, a.Location, a.Modifier)
 			}
@@ -180,7 +180,7 @@ func RecomputeAffects(rec *PlayerRecord) {
 	}
 
 	for _, a := range rec.Affects {
-		flags = flags.Set(a.Bits)
+		flags = flags.Union(a.Bits)
 		applyModifier(rec, a.Location, a.Modifier)
 	}
 

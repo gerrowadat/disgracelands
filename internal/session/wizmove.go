@@ -388,7 +388,7 @@ func (c *Context) becomeVisible() {
 func (c *Context) appear() {
 	if rec := c.Character.Record; rec != nil {
 		game.RemoveAffectsOf(rec, game.SpellInvisible)
-		rec.BaseAffectFlags = rec.BaseAffectFlags.Clear(game.AffectInvisible)
+		rec.BaseAffectFlags = rec.BaseAffectFlags.Without(game.AffectInvisible)
 		game.RecomputeAffects(rec)
 	}
 	// The AFF_HIDE half of the C's one REMOVE_BIT. SetHidden clears it on

@@ -61,7 +61,7 @@ func TestAnAffectAppliesAndReverses(t *testing.T) {
 func TestFlagsComeAndGoWithTheirAffects(t *testing.T) {
 	rec := affectedCharacter()
 
-	AddAffect(rec, Affect{Type: SpellSanctuary, Bits: AffectSanctuary, Duration: 4})
+	AddAffect(rec, Affect{Type: SpellSanctuary, Bits: NewSet(AffectSanctuary), Duration: 4})
 	if !rec.AffectFlags.Has(AffectSanctuary) {
 		t.Error("sanctuary did not set its flag")
 	}
@@ -76,17 +76,17 @@ func TestFlagsComeAndGoWithTheirAffects(t *testing.T) {
 // exploit: otherwise a player could sanctuary a sanctuary-carrying mobile and
 // wait for it to fade, stripping it of what its file said it always had.
 func TestAMobilesOwnFlagsSurviveASpellWearingOff(t *testing.T) {
-	rec := &PlayerRecord{Level: 20, AffectFlags: AffectSanctuary}
+	rec := &PlayerRecord{Level: 20, AffectFlags: NewSet(AffectSanctuary)}
 	SnapshotReal(rec)
 
 	// A spell cannot be laid on top of a prototype flag at all.
-	spell := AffectSpell{Affects: []Affect{{Type: SpellSanctuary, Bits: AffectSanctuary, Duration: 4}}}
+	spell := AffectSpell{Affects: []Affect{{Type: SpellSanctuary, Bits: NewSet(AffectSanctuary), Duration: 4}}}
 	if CanAffect(spell, rec, true, SpellSanctuary) {
 		t.Error("a mobile that already has sanctuary could be sanctuaried")
 	}
 
 	// And if one somehow got on and wore off, the mobile keeps its own.
-	AddAffect(rec, Affect{Type: SpellSanctuary, Bits: AffectSanctuary, Duration: 1})
+	AddAffect(rec, Affect{Type: SpellSanctuary, Bits: NewSet(AffectSanctuary), Duration: 1})
 	AgeAffects(rec)
 	AgeAffects(rec)
 	if !rec.AffectFlags.Has(AffectSanctuary) {
@@ -123,7 +123,7 @@ func TestAffectsExpireOnTheTick(t *testing.T) {
 // TestAPermanentAffectDoesNotAge.
 func TestAPermanentAffectDoesNotAge(t *testing.T) {
 	rec := affectedCharacter()
-	AddAffect(rec, Affect{Type: SpellSanctuary, Bits: AffectSanctuary, Duration: -1})
+	AddAffect(rec, Affect{Type: SpellSanctuary, Bits: NewSet(AffectSanctuary), Duration: -1})
 
 	for i := 0; i < 50; i++ {
 		if expired := AgeAffects(rec); len(expired) != 0 {
