@@ -7,6 +7,7 @@
 package session
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/gerrowadat/disgracelands/internal/game"
@@ -198,4 +199,418 @@ func fname(namelist string) string {
 
 func isLetter(b byte) bool {
 	return (b >= 'a' && b <= 'z') || (b >= 'A' && b <= 'Z')
+}
+
+// Everything below this line moved here from commands.go in step 9 of
+// docs/proposals/idiomatic-go.md — `look` and the room description it
+// builds, which had been sitting in the dispatcher's file since the first
+// commands were written. Code motion only: not a line changed.
+
+func doLook(c *Context) error {
+	// do_look has a gate of its own (act.informative.c:662), and it is *not*
+	// look_at_room's: different words, and the two tests the other way round.
+	// Typing `look` while blind says "you're blind"; walking into a dark room
+	// while blind says it is pitch black, because there the darkness is asked
+	// first. Both are reachable and they disagree on purpose — or at least
+	// they disagree, and there is no sign anybody meant them to.
+	//
+	// The C's first branch, `GET_POS(ch) < POS_SLEEPING` → "You can't see
+	// anything but stars!", is **unreachable**: `look` and `read` are both
+	// POS_RESTING in the command table (interpreter.c:355, :427), so the
+	// interpreter has already refused anything below that. Not ported, and
+	// recorded in docs/weirdnumbers.md with the other four of its kind.
+	if isBlind(c.Character) {
+		c.Send("You can't see a damned thing, you're blind!\r\n")
+		return nil
+	}
+	if c.World.RoomIsDark(c.Character.Room) && !game.CanSeeInDark(c.Character) {
+		c.Send("It is pitch black...\r\n")
+		// And the one thing you *can* see in the dark. The C's comment on this
+		// line is just "glowing red eyes", which is the only clue that
+		// list_char_to_char has a second branch at all.
+		if room := c.World.Room(c.Character.Room); room != nil {
+			c.Send("%s", listCharToChar(c.World, room, c.Character))
+		}
+		return nil
+	}
+
+	// From here do_look is a dispatcher rather than a command: four different
+	// functions answer to it (act.informative.c:679-690), and the order they
+	// are tried in is what decides what an ambiguous word means.
+	arg, rest := halfChop(c.Arg)
+
+	switch {
+	case arg == "":
+		// `look` typed on purpose ignores brief mode, which is what the C's
+		// ignore_brief argument is for. Everywhere else in the whole tree
+		// passes 0: act.informative.c:680 is the only caller that passes 1.
+		return lookAtRoom(c, true)
+
+	case isPrefixOf(arg, "in"):
+		// Before the direction check, so `look i` is "look in what?" rather
+		// than a direction — nothing abbreviates to a direction from "i", but
+		// the ordering is the C's and is what makes that answerable.
+		return c.lookInObject(rest)
+
+	case direction(arg):
+		// `look north`. Ahead of `at`, so a direction beats an extra
+		// description of the same name.
+		dir, _ := game.ParseDirection(arg)
+		return c.lookInDirection(dir)
+
+	case isPrefixOf(arg, "at"):
+		return c.lookAtTarget(rest)
+
+	default:
+		// `look sword`, with no preposition at all.
+		return c.lookAtTarget(arg)
+	}
+}
+
+// direction reports whether a word names one, which do_look asks with
+// search_block(arg, dirs, FALSE) — abbreviations allowed.
+func direction(word string) bool {
+	_, ok := game.ParseDirection(word)
+	return ok
+}
+
+// lookAtRoom shows the character the room they are in.
+func lookAtRoom(c *Context, ignoreBrief bool) error {
+	room := c.World.Room(c.Character.Room)
+	if room == nil {
+		c.Send("You are nowhere at all. That should not be possible.\r\n")
+		return nil
+	}
+
+	sendRoomInfo(c.Session, room)
+	c.Send("%s", roomDescription(c.World, room, c.Character, ignoreBrief))
+	return nil
+}
+
+// roomDescription is look_at_room (act.informative.c:413): the name, the
+// description, the way out, what is lying about and who is here.
+//
+// It takes the viewer so it can leave them out of the list of people, consult
+// their preferences and work out whether they can see at all, and it returns a
+// string rather than sending, because a spell can move somebody else into a
+// room and has to show it to them rather than to the caster.
+//
+// ignoreBrief is the C's argument of the same name: `look` typed by hand shows
+// the description whatever PRF_BRIEF says, and the automatic look on arriving
+// somewhere does not.
+func roomDescription(w *game.Live, room *game.RoomDef, viewer *game.Character, ignoreBrief bool) string {
+	// Darkness first, and blindness after it — the C's order, which decides
+	// which message a blind character standing in the dark gets. They are told
+	// it is pitch black, not that they are blind.
+	//
+	// Note this asks CAN_SEE_IN_DARK, so holylight counts directly here. It is
+	// a different question from LIGHT_OK's, which takes infravision alone.
+	if w.RoomIsDark(room.Vnum) && !game.CanSeeInDark(viewer) {
+		return "It is pitch black...\r\n"
+	}
+	if isBlind(viewer) {
+		return "You see nothing but infinite darkness...\r\n"
+	}
+
+	var b strings.Builder
+
+	// An immortal with `roomflags` on gets the vnum and the flags in the
+	// title line.
+	// Cyan, as look_at_room does (act.informative.c:425). The colour markup
+	// is resolved at the socket against the reader's preference — see
+	// internal/colour — so this string is written once for everybody.
+	if hasPref(viewer, game.PrefRoomFlags) {
+		fmt.Fprintf(&b, "{{cyan}}[%5d] %s [ %s]{{/}}\r\n",
+			room.Vnum, room.Name, game.SprintBit(room.Flags.Raw(), game.RoomBitNames()))
+	} else {
+		fmt.Fprintf(&b, "{{cyan}}%s{{/}}\r\n", room.Name)
+	}
+
+	// Brief mode drops the description — but never in a DEATH room, because
+	// that description is the only warning you get.
+	if room.Description != "" &&
+		(ignoreBrief || !hasPref(viewer, game.PrefBrief) || room.Flags.Has(game.RoomDeathTrap)) {
+		b.WriteString(ensureNewline(room.Description))
+	}
+
+	if hasPref(viewer, game.PrefAutoExit) {
+		fmt.Fprintf(&b, "{{cyan}}[ Exits: %s]{{/}}\r\n", autoExits(room))
+	}
+
+	// The two local additions, both `<DoC>` (act.informative.c:444, :452),
+	// and both coloured at C_NRM. The player-killer line changes colour
+	// three times in one sentence — yellow, red for the bracketed words,
+	// yellow again — because the C sends it as seven separate writes.
+	if room.Flags.Has(game.RoomGoodRegen) {
+		b.WriteString("{{blue}}You feel a soft, warm feeling in your bones.{{/}}\r\n")
+	}
+	if room.Flags.Has(game.RoomPKill) {
+		b.WriteString("{{yellow}}You have entered a {{/}}{{red}}[Player Killer]{{/}}" +
+			"{{yellow}} room. Beware!{{/}}\r\n")
+	}
+
+	// Green for what is lying about and yellow for who is here, which is the
+	// C switching colour around each list rather than colouring the lines
+	// themselves (act.informative.c:469-473). The reset goes after the whole
+	// list, not after each line.
+	// list_obj_to_char (act.informative.c:165). An object you cannot see is
+	// simply not there, with no marker: the C's `show` argument produces
+	// " Nothing." for an empty *inventory*, never for an empty floor.
+	var objects strings.Builder
+	for _, obj := range w.RoomObjects(room.Vnum) {
+		if !w.CanSeeObj(viewer, obj) {
+			continue
+		}
+		if obj.Description != "" {
+			fmt.Fprintf(&objects, "%s\r\n", obj.Description)
+			continue
+		}
+		fmt.Fprintf(&objects, "%s is lying here.\r\n", capitaliseFirst(obj.Name()))
+	}
+	// Unconditionally, and with one reset for both lists rather than one each.
+	// The C sends the colour codes as bare writes around the two calls
+	// (act.informative.c:469-473):
+	//
+	//	send_to_char(CCGRN(ch, C_NRM), ch);
+	//	list_obj_to_char(...);
+	//	send_to_char(CCYEL(ch, C_NRM), ch);
+	//	list_char_to_char(...);
+	//	send_to_char(CCNRM(ch, C_NRM), ch);
+	//
+	// So an empty room still gets a green, a yellow and a reset with nothing
+	// between them — visible in a transcript, invisible on a terminal, and
+	// reproduced because the session-parity harness compares transcripts.
+	fmt.Fprintf(&b, "{{green}}%s{{yellow}}%s{{/}}",
+		objects.String(), listCharToChar(w, room, viewer))
+	return b.String()
+}
+
+// listCharToChar is list_char_to_char (act.informative.c:343).
+//
+// The `else if` is the interesting half and is easy to skip past: somebody you
+// *cannot* see is not always silent. If the room is dark, you cannot see in the
+// dark, and **they** have infravision, you get a pair of glowing red eyes
+// instead of nothing. Note whose infravision it is — theirs, not yours — so it
+// is the creature's own night vision that gives it away.
+func listCharToChar(w *game.Live, room *game.RoomDef, viewer *game.Character) string {
+	var b strings.Builder
+	dark := w.RoomIsDark(room.Vnum) && !game.CanSeeInDark(viewer)
+
+	for _, other := range w.Occupants(room.Vnum) {
+		if other == viewer {
+			continue
+		}
+		if w.CanSee(viewer, other) {
+			b.WriteString(listOneChar(w, other, viewer))
+			continue
+		}
+		if dark && other.HasAffect(game.AffectInfravision) {
+			b.WriteString("You see a pair of glowing red eyes looking your way.\r\n")
+		}
+	}
+	return b.String()
+}
+
+// charPositions are list_one_char's positions[] (act.informative.c:261),
+// indexed by position. POS_FIGHTING's slot is never used — the code branches
+// before reaching it — and the C's placeholder is left here for the same
+// reason it is there: so the indices line up with the position constants.
+var charPositions = [...]string{
+	" is lying here, dead.",
+	" is lying here, mortally wounded.",
+	" is lying here, incapacitated.",
+	" is lying here, stunned.",
+	" is sleeping here.",
+	" is resting here.",
+	" is sitting here.",
+	"!FIGHTING!",
+	" is standing here.",
+}
+
+// listOneChar is list_one_char (act.informative.c:259): one line describing
+// somebody the viewer can see.
+//
+// Two shapes, and which one you get is not about being a mobile. A mobile
+// standing in its *default* position uses the long description the builder
+// wrote for it; the same mobile sitting down, or fighting, or dead, falls
+// through to the constructed line — which is why a corpse-to-be says "the
+// cityguard is lying here, mortally wounded" rather than the long description
+// that has it standing at attention.
+func listOneChar(w *game.Live, who, viewer *game.Character) string {
+	if who.MobDef != nil && who.MobDef.LongDesc != "" &&
+		who.Position == who.MobDef.Position {
+		var b strings.Builder
+		// A `*` in front of a long description means invisible. You only ever
+		// see it with detect invisible on, since otherwise the mobile is not
+		// listed at all.
+		if who.HasAffect(game.AffectInvisible) {
+			b.WriteString("*")
+		}
+		b.WriteString(auraPrefix(who, viewer))
+		b.WriteString(ensureNewline(who.MobDef.LongDesc))
+		b.WriteString(glowLines(w, who, viewer))
+		return b.String()
+	}
+
+	var b strings.Builder
+	if who.IsNPC() {
+		b.WriteString(capitaliseFirst(who.Name))
+	} else {
+		fmt.Fprintf(&b, "%s %s", who.Name, title(who))
+	}
+
+	if who.HasAffect(game.AffectInvisible) {
+		b.WriteString(" (invisible)")
+	}
+	if who.HasAffect(game.AffectHide) {
+		b.WriteString(" (hidden)")
+	}
+	if !who.IsNPC() && who.Client == nil {
+		b.WriteString(" (linkless)")
+	}
+	if !who.IsNPC() && who.Record != nil && who.Record.PlayerFlags.Has(game.PlayerWriting) {
+		b.WriteString(" (writing)")
+	}
+
+	if who.Position != game.PosFighting {
+		b.WriteString(charPositions[who.Position])
+	} else if who.Fighting == nil {
+		// The C's comment is "NIL fighting pointer", and it happens: a
+		// position of FIGHTING outlives the opponent by however long it takes
+		// something to clear it.
+		b.WriteString(" is here struggling with thin air.")
+	} else {
+		b.WriteString(" is here, fighting ")
+		switch {
+		case who.Fighting == viewer:
+			b.WriteString("YOU!")
+		case who.Fighting.Room != who.Room:
+			b.WriteString("someone who has already left!")
+		default:
+			// PERS, so an invisible opponent is "someone" even here.
+			fmt.Fprintf(&b, "%s!", w.Pers(who.Fighting, viewer))
+		}
+	}
+
+	b.WriteString(auraSuffix(who, viewer))
+	b.WriteString("\r\n")
+	b.WriteString(glowLines(w, who, viewer))
+	return b.String()
+}
+
+// title is the player's title, which follows their name in the room list. A
+// mobile has none.
+func title(who *game.Character) string {
+	if who.Record == nil {
+		return ""
+	}
+	return who.Record.Title
+}
+
+// auraPrefix and auraSuffix are the same two tests written twice in the C, in
+// the two branches of list_one_char, and they differ: the long-description
+// branch puts "(Red Aura) " *before* with a trailing space, the constructed one
+// puts " (Red Aura)" *after*. Reproduced rather than unified, because the
+// difference is visible.
+func auraPrefix(who, viewer *game.Character) string {
+	switch {
+	case !viewer.HasAffect(game.AffectDetectAlign) || who.Record == nil:
+		return ""
+	case game.IsEvil(who.Record):
+		return "(Red Aura) "
+	case game.IsGood(who.Record):
+		return "(Blue Aura) "
+	}
+	return ""
+}
+
+func auraSuffix(who, viewer *game.Character) string {
+	switch {
+	case !viewer.HasAffect(game.AffectDetectAlign) || who.Record == nil:
+		return ""
+	case game.IsEvil(who.Record):
+		return " (Red Aura)"
+	case game.IsGood(who.Record):
+		return " (Blue Aura)"
+	}
+	return ""
+}
+
+// glowLines are the act() messages list_one_char sends after the line itself.
+// Both branches send the sanctuary one; only the long-description branch sends
+// the blindness one, which is the C's and looks like an oversight rather than
+// a decision — a blind *player* is never reported as groping around.
+func glowLines(w *game.Live, who, viewer *game.Character) string {
+	var b strings.Builder
+	if who.HasAffect(game.AffectSanctuary) {
+		b.WriteString(w.Act("...$e glows with a bright light!", game.ActArgs{Actor: who}, viewer))
+	}
+	if who.MobDef != nil && who.MobDef.LongDesc != "" && who.HasAffect(game.AffectBlind) {
+		b.WriteString(w.Act("...$e is groping around blindly!", game.ActArgs{Actor: who}, viewer))
+	}
+	return b.String()
+}
+
+// isBlind reports whether AFF_BLIND is set.
+func isBlind(ch *game.Character) bool {
+	return ch != nil && ch.Record != nil && ch.Record.AffectFlags.Has(game.AffectBlind)
+}
+
+// hasPref reports whether a player has a PRF_ bit set. A mobile has none: the
+// C guards every one of these with !IS_NPC, because player_specials is not
+// allocated for a mobile and reading it would be a null dereference.
+func hasPref(ch *game.Character, flag game.PrefFlag) bool {
+	return ch != nil && !ch.IsNPC() && ch.Record != nil && ch.Record.Preferences.Has(flag)
+}
+
+// autoExits is do_auto_exits' list (act.informative.c:358).
+//
+// Two details that are easy to miss and both player-visible: a **closed** exit
+// is not listed, so a shut door hides the way it leads; and a room with no way
+// out at all says "None! " rather than nothing. Each letter is written with a
+// trailing space, which is where the space before the closing bracket comes
+// from.
+func autoExits(room *game.RoomDef) string {
+	var b strings.Builder
+	for dir, e := range room.Exits {
+		if e == nil || e.ToRoom == game.NoRoom || e.State.Has(game.ExitClosed) {
+			continue
+		}
+		fmt.Fprintf(&b, "%c ", game.Direction(dir).String()[0])
+	}
+	if b.Len() == 0 {
+		return "None! "
+	}
+	return b.String()
+}
+
+// exitNames lists the room's exits, truncated to width characters each.
+//
+// This feeds GMCP rather than the `[ Exits: ]` line, and unlike that line it
+// reports closed exits too: a client drawing a map wants to know the door is
+// there.
+func exitNames(room *game.RoomDef, width int) []string {
+	var out []string
+	for dir, e := range room.Exits {
+		if e == nil || e.ToRoom == game.NoRoom {
+			continue
+		}
+		name := game.Direction(dir).String()
+		if width > 0 && width < len(name) {
+			name = name[:width]
+		}
+		out = append(out, name)
+	}
+	return out
+}
+
+// sendRoomInfo publishes the room out of band, so a web client can draw a map
+// instead of parsing the description.
+func sendRoomInfo(s *Session, room *game.RoomDef) {
+	s.SendGMCP("Room.Info", RoomInfo{
+		Vnum:  int32(room.Vnum),
+		Name:  room.Name,
+		Desc:  room.Description,
+		Exits: exitNames(room, 0),
+	})
 }
