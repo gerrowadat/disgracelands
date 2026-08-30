@@ -2296,6 +2296,55 @@ that can never appear.
 
 ---
 
+## The guild guard's `-999` is a negative array index
+
+`guild_info[][3]` (`class.c:196`) is a table of "which class may pass this
+guild door", and two of its six rows are
+
+```c
+  {-999 /* all */ ,	5065,	SCMD_WEST},
+  {-999 /* all */ ,     14279,  SCMD_UP},
+```
+
+Even in **stock CircleMUD** the comment does not say what it looks like it
+says. `guild_guard` blocks when `GET_CLASS(ch) != guild_info[counter][0]`,
+and no character's class is -999, so the test is true for everybody and the
+guard turns everybody away. `/* all */` means "this row applies to all
+classes", not "all classes may pass"; it reads as the second.
+
+**Disgracelands rewrote the test and made it worse.** The local
+`guild_guard` (`spec_procs.c:769-802`) checks the remort vector instead, so
+a character who was once a thief may still enter the thieves' guild — which
+is the good part of the change and `deviations.md` records it. The
+expression is
+
+```c
+  ((int)GET_REMORT_VECTOR(ch) & (int)pc_class_remort_masks[(int)guild_info[i][0]])
+      != pc_class_remort_masks[(int)guild_info[i][0]]
+```
+
+and with `guild_info[i][0]` of -999 that indexes `pc_class_remort_masks`
+**999 entries before its start**. It is undefined behaviour, it reads
+whatever is in the data segment there, and the answer decides whether the
+Brass Dragon's guard lets you west.
+
+Whatever the garbage `M` is, the test is `(vector & M) != M`. A mortal's
+remort vector is 0 for anybody who has never remorted, so it reduces to
+`0 != M` — true, and the guard blocks, unless the garbage happens to be
+exactly 0. So the archived server almost certainly turned everyone away at
+those two doors, which is the opposite of what a reader of `/* all */`
+expects.
+
+*Reproduced as blocking*, with no -999 anywhere: `internal/game/spec.go`'s
+`guildInfo` carries a `BlocksEveryone bool` instead. Reading undefined
+behaviour is not something a port can reproduce faithfully, so the port
+picks the overwhelmingly likely branch and says so here rather than
+carrying a negative index it would then have to explain.
+
+*Source*: `class.c:196-212`, `spec_procs.c:769-802`.
+
+---
+
 ## What to do about all this
 
 The rule that has worked: **anything with a division, a cast, or a comment

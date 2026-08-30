@@ -80,6 +80,18 @@ const (
 // MaxCondition is the ceiling gain_condition clamps to.
 const MaxCondition int32 = 24
 
+// CondNotApplicable is the value a condition holds when it does not apply
+// to this character at all -- how an immortal's hunger, thirst and
+// drunkenness are stored, so that they never get hungry.
+//
+// It is the C's bare -1 (limits.c:380's `if (GET_COND(ch, condition) == -1)
+// return;`) and it stays -1, because it is written to every player file
+// ever saved: docs/proposals/idiomatic-go.md §4.4's third case, a sentinel
+// that has to survive to disk. What it gets is a name, so that a reader of
+// `Conditions[CondFull] == -1` does not have to guess whether it means
+// "starving" -- which is what 0 means, and is the opposite.
+const CondNotApplicable int32 = -1
+
 // Regenerator supplies what the regeneration formulas need from outside the
 // record: whether the character is a mobile, what they are doing, and where
 // they are standing.
@@ -227,10 +239,10 @@ type ConditionChange struct {
 // GainCondition adjusts hunger, thirst or drunkenness, porting
 // gain_condition (limits.c:380).
 //
-// A value of -1 is not "empty", it is "does not apply": immortals have all
-// three set that way and never get hungry.
+// CondNotApplicable is not "empty", it is "does not apply": immortals have
+// all three set that way and never get hungry.
 func GainCondition(rec *PlayerRecord, cond Condition, delta int32) ConditionChange {
-	if rec.Conditions[cond] == -1 {
+	if rec.Conditions[cond] == CondNotApplicable {
 		return ConditionChange{}
 	}
 

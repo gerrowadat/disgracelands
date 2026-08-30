@@ -136,8 +136,9 @@ type PlayerRecord struct {
 	// mobile's record rather than merely unused.
 	Aliases []Alias
 
-	// Conditions are drunk, full and thirsty, in that order. -1 means the
-	// condition does not apply, which is how immortals are stored.
+	// Conditions are drunk, full and thirsty, in that order.
+	// CondNotApplicable means the condition does not apply, which is how
+	// immortals are stored.
 	Conditions [3]int32
 
 	// DamageDice and DamageSize are a mobile's bare-hand attack, from the
@@ -206,10 +207,20 @@ type Points struct {
 }
 
 // Affect is one spell or effect currently on a character.
+// AffectPermanent is a Duration that never runs out.
+//
+// The C's bare -1 (`if (af->duration >= 1) af->duration--; else if
+// (af->duration == -1) af->duration = -1;`, limits.c's affect_update), and
+// it stays -1: an affect's duration is written to every player file, so
+// this is §4.4's sentinel-that-reaches-disk case and only gains a name.
+// The name is worth having because the branch it guards is otherwise a
+// bare number in a switch between "one or more ticks left" and "expired".
+const AffectPermanent int32 = -1
+
 type Affect struct {
 	// Type is the spell number that caused it.
 	Type SpellID
-	// Duration is how many ticks remain.
+	// Duration is how many ticks remain, or AffectPermanent.
 	Duration int32
 	// Modifier is added to whatever Location names.
 	Modifier int32

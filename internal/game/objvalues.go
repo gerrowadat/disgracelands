@@ -124,11 +124,21 @@ type ArmorValues struct {
 	ACApply int32
 }
 
+// LightEternal is a light that never burns out.
+//
+// The C writes -1 and tests for it nowhere: LitLight asks whether the hours
+// are *non-zero*, and the burnout timer is guarded on `> 0`, so -1 falls
+// through both and the light stays lit forever (handler.c:823). oedit's own
+// prompt says so — "Number of hours (0 = burnt, -1 is infinite)". A world
+// file's number, so it stays -1 and only gains a name
+// (docs/proposals/idiomatic-go.md §4.4).
+const LightEternal int32 = -1
+
 // LightValues is how long a light has left.
 type LightValues struct {
-	// Hours is what remains. Zero is a burnt-out light and **-1 is an
-	// eternal one**: LitLight tests for non-zero rather than positive, and
-	// the burnout timer is guarded on > 0. See light.go.
+	// Hours is what remains. Zero is a burnt-out light and LightEternal is
+	// one that never goes out; see light.go for why both fall out of the
+	// same non-zero test.
 	Hours int32
 }
 
