@@ -8,13 +8,39 @@ package game
 
 // Light, and whether a room is dark enough to stop you seeing.
 
-// Sector types, from structs.h:106. Only the ones the rules ask about by name
-// are here — the two room_is_dark tests, and the one do_simple_move demands a
-// boat for; the rest are indices into sectorNames and stay numbers.
+// Sector is a room's terrain, from structs.h:106. The numbers are the world
+// file's, and are the indices of sector_types[] in constants.c.
+//
+// All ten are named now. Three were, before this became a type — the two
+// room_is_dark tests and the one do_simple_move demands a boat for — with
+// the rest left as bare numbers because nothing asked about them by name.
+// A partial enumeration is exactly what
+// docs/proposals/idiomatic-go.md §3.2 objects to: it invites somebody to
+// invent the next value rather than look it up, and a named constant costs
+// nothing. sectorNames and yamlSectorNames are both ten entries long and
+// bitnames_test.go checks the first against constants.c, so the order here
+// is derived rather than asserted.
+//
+// The zero value is SectorInside, a real sector — as Class's is a real
+// class, and unlike ItemType's.
+type Sector int
+
+// Number is the sector's stored number, for the world files and the
+// value-indexed name tables.
+func (s Sector) Number() int32 { return int32(s) } //nolint:gosec // ten sectors; the format's width
+
+// Sector types, from structs.h:106, in sector_types[] order.
 const (
-	SectorInside      int32 = 0
-	SectorCity        int32 = 1
-	SectorWaterNoSwim int32 = 7
+	SectorInside      Sector = 0
+	SectorCity        Sector = 1
+	SectorField       Sector = 2
+	SectorForest      Sector = 3
+	SectorHills       Sector = 4
+	SectorMountains   Sector = 5
+	SectorWaterSwim   Sector = 6
+	SectorWaterNoSwim Sector = 7
+	SectorFlying      Sector = 8
+	SectorUnderwater  Sector = 9
 )
 
 // LitLight reports whether an object is a light source that is currently

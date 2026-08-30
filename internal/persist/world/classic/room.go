@@ -50,7 +50,7 @@ func (l *loader) parseRoom(r *reader, vnum game.RoomVnum) (*game.RoomDef, error)
 	if !ok {
 		return nil, fmt.Errorf("%s: sector type %q is not a number", r.where(what), fields[2])
 	}
-	room.SectorType = sector
+	room.SectorType = game.Sector(sector)
 
 	for {
 		line, ok := r.getLine()

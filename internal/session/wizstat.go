@@ -199,7 +199,7 @@ func (c *Context) statRoom() {
 	fmt.Fprintf(&b, "Room name: {{cyan}}%s{{/}}\r\n", room.Name)
 	fmt.Fprintf(&b, "Zone: [%3d], VNum: [{{green}}%5d{{/}}], RNum: [%5d], Type: %s\r\n",
 		zoneNumberOf(c.World, room.Vnum), room.Vnum, room.Vnum,
-		game.SprintType(room.SectorType, game.SectorNames()))
+		game.SprintType(room.SectorType.Number(), game.SectorNames()))
 	fmt.Fprintf(&b, "SpecProc: %s, Flags: %s\r\n",
 		existsOrNone(room.Spec != ""), game.SprintBit(room.Flags.Raw(), game.RoomBitNames()))
 

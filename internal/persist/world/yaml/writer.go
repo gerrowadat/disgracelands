@@ -188,7 +188,7 @@ func roomDocFrom(r *game.RoomDef) roomDoc {
 	rd := roomDoc{
 		Vnum:     int32(r.Vnum),
 		Name:     Text(r.Name),
-		Sector:   sectorName(r.SectorType),
+		Sector:   sectorName(r.SectorType.Number()),
 		Flags:    names,
 		FlagsRaw: raw,
 		Desc:     Text(ToStored(r.Description)),

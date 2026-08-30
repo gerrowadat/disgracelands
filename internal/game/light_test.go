@@ -15,7 +15,7 @@ import (
 func darkWorld(t *testing.T) *Live {
 	t.Helper()
 	inside := &RoomDef{Vnum: 3001, Name: "The Temple", SectorType: SectorInside}
-	field := &RoomDef{Vnum: 3002, Name: "A Field", SectorType: 2}
+	field := &RoomDef{Vnum: 3002, Name: "A Field", SectorType: SectorField}
 	cellar := &RoomDef{Vnum: 3003, Name: "A Cellar", SectorType: SectorInside, Flags: NewSet(RoomDark)}
 
 	return NewLive(&World{

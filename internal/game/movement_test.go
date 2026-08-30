@@ -75,19 +75,21 @@ func TestMovementLossMatchesTheCSource(t *testing.T) {
 
 // The average truncates, which is where every surprising cost comes from.
 func TestMovementCostIsTheTruncatedAverage(t *testing.T) {
+	// The named constants rather than a second list of numbers: all ten
+	// sectors have names now, so a local `city = 1` is a copy of one.
 	const (
-		inside     = 0
-		city       = 1
-		field      = 2
-		forest     = 3
-		mountains  = 5
-		underwater = 9
+		inside     = SectorInside
+		city       = SectorCity
+		field      = SectorField
+		forest     = SectorForest
+		mountains  = SectorMountains
+		underwater = SectorUnderwater
 	)
-	room := func(sector int32) *RoomDef { return &RoomDef{SectorType: sector} }
+	room := func(sector Sector) *RoomDef { return &RoomDef{SectorType: sector} }
 
 	for _, tc := range []struct {
 		name     string
-		from, to int32
+		from, to Sector
 		want     int32
 	}{
 		{"city to city", city, city, 1},

@@ -143,7 +143,7 @@ objects:
 	}
 	room := w.Rooms[0]
 	check(t, "room.Flags", room.Flags, game.RoomFlags{})
-	check(t, "room.SectorType", room.SectorType, int32(0))
+	check(t, "room.SectorType", room.SectorType, game.SectorInside)
 	check(t, "room.ExtraDescs", len(room.ExtraDescs), 0)
 	for dir, exit := range room.Exits {
 		if exit != nil {

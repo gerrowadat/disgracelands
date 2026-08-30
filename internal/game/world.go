@@ -14,7 +14,7 @@ type RoomDef struct {
 	Name        string
 	Description string
 	Flags       RoomFlags
-	SectorType  int32
+	SectorType  Sector
 
 	// Exits is indexed by Direction. A nil entry means no exit that way.
 	Exits [NumDirections]*ExitDef
