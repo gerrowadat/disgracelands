@@ -406,7 +406,7 @@ func (c *Context) statCharacter(k *game.Character) {
 	// pools green, the flag words cyan and green and yellow, and each
 	// affecting spell's name cyan.
 	fmt.Fprintf(&b, "%s%s, Lev: [{{yellow}}%2d{{/}}], XP: [{{yellow}}%7d{{/}}], Align: [%4d]\r\n",
-		label, game.SprintType(rec.Class, classNames),
+		label, game.SprintType(rec.Class.Number(), classNames),
 		rec.Level, rec.Points.Exp, rec.Alignment)
 
 	if !k.IsNPC() {

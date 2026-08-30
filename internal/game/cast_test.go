@@ -172,7 +172,7 @@ func TestAGoodPaladinIsLeftAlone(t *testing.T) {
 		t.Error("a paladin at alignment 100 was refused")
 	}
 
-	for _, class := range []int32{ClassMagicUser, ClassCleric, ClassThief, ClassWarrior} {
+	for _, class := range []Class{ClassMagicUser, ClassCleric, ClassThief, ClassWarrior} {
 		rec := &PlayerRecord{Class: class, Alignment: -1000}
 		if verdict := JudgePaladin(rec); !verdict.Allowed {
 			t.Errorf("class %d at alignment -1000 was refused a spell", class)

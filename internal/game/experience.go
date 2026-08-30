@@ -31,7 +31,7 @@ const (
 // requires touching a table. A level outside the range is a caller error in
 // the C, which logs a SYSERR and returns zero; returning zero would make
 // every comparison against it succeed, so this returns the maximum instead.
-func LevelExperience(class, level int32) int32 {
+func LevelExperience(class Class, level int32) int32 {
 	if level < 0 || level > LevelImplementor {
 		return expMax
 	}
@@ -122,7 +122,7 @@ func GainExperience(rec *PlayerRecord, gain int32, r *rng.Rand) ExpGain {
 	return out
 }
 
-var levelExperience = map[int32][]int32{
+var levelExperience = map[Class][]int32{
 	ClassMagicUser: {
 		0, 1, 2500, 5000, // 0-3
 		10000, 20000, 40000, 60000, // 4-7

@@ -12,21 +12,41 @@ import (
 	"github.com/gerrowadat/disgracelands/internal/rng"
 )
 
-// Classes, matching structs.h:122. The numbers are stored in every player
-// record ever written, so they are the format as much as they are an enum.
+// Class is a player class, matching structs.h:122. The numbers are stored
+// in every player record ever written, so they are the format as much as
+// they are an enum — docs/proposals/idiomatic-go.md §4.2 and §2.1.
+//
+// Note that the zero value is ClassMagicUser rather than ClassUndefined,
+// which is the C's numbering and is unchanged by this type: a zero-valued
+// Class has always read as a magic user, and ClassUndefined is -1.
+type Class int
+
+// Classes, matching structs.h:122.
 const (
-	ClassUndefined int32 = -1
-	ClassMagicUser int32 = 0
-	ClassCleric    int32 = 1
-	ClassThief     int32 = 2
-	ClassWarrior   int32 = 3
+	ClassUndefined Class = -1
+	ClassMagicUser Class = 0
+	ClassCleric    Class = 1
+	ClassThief     Class = 2
+	ClassWarrior   Class = 3
 	// ClassPaladin is Disgracelands' own fifth class, not stock CircleMUD.
 	// See docs/investigations/non-stock-features.md.
-	ClassPaladin int32 = 4
+	ClassPaladin Class = 4
 )
 
+// Number is the class's stored number: what every player record holds and
+// what the value-indexed name tables (pc_class_types, the yaml class names)
+// are keyed by.
+//
+// It exists so the narrowing happens in one place with one reasoning,
+// which is the same job Set.Raw does for the flag domains
+// (docs/proposals/idiomatic-go.md §4.1). Class is an `int` and the
+// formats are 8- and 32-bit, so without it every boundary would carry its
+// own G115 suppression; with it there is one, here, and it is trivially
+// true — there are five classes.
+func (c Class) Number() int32 { return int32(c) } //nolint:gosec // five classes; the format's width, not an arithmetic conversion
+
 // ClassNames are the display names from class.c's pc_class_types.
-var ClassNames = map[int32]string{
+var ClassNames = map[Class]string{
 	ClassMagicUser: "Magic User",
 	ClassCleric:    "Cleric",
 	ClassThief:     "Thief",
@@ -35,7 +55,7 @@ var ClassNames = map[int32]string{
 }
 
 // ClassAbbrevs are class.c's class_abbrevs, used by the who-list.
-var ClassAbbrevs = map[int32]string{
+var ClassAbbrevs = map[Class]string{
 	ClassMagicUser: "Mu",
 	ClassCleric:    "Cl",
 	ClassThief:     "Th",
@@ -50,7 +70,7 @@ var ClassAbbrevs = map[int32]string{
 // them — both to match what a god types and to print what a character has
 // become. Note "mage" rather than "Magic User": these are lower-case and
 // short, and `remort bob magic user` does not work.
-var ClassShortNames = map[int32]string{
+var ClassShortNames = map[Class]string{
 	ClassMagicUser: "mage",
 	ClassCleric:    "cleric",
 	ClassThief:     "thief",
@@ -60,13 +80,13 @@ var ClassShortNames = map[int32]string{
 
 // ClassShortNameOrder is the order pc_class_snames is written in, which is
 // also the order `remort` lists a character's classes in.
-var ClassShortNameOrder = []int32{
+var ClassShortNameOrder = []Class{
 	ClassMagicUser, ClassCleric, ClassThief, ClassWarrior, ClassPaladin,
 }
 
 // ParseShortClassName returns the class a `remort` argument names, matching
 // the C's `strcasecmp` against pc_class_snames — a whole name, not a prefix.
-func ParseShortClassName(word string) (int32, bool) {
+func ParseShortClassName(word string) (Class, bool) {
 	for _, class := range ClassShortNameOrder {
 		if strings.EqualFold(ClassShortNames[class], word) {
 			return class, true
@@ -76,7 +96,7 @@ func ParseShortClassName(word string) (int32, bool) {
 }
 
 // ClassName returns a class's display name.
-func ClassName(c int32) string {
+func ClassName(c Class) string {
 	if n, ok := ClassNames[c]; ok {
 		return n
 	}
@@ -107,7 +127,7 @@ const CreationMenu = "\r\nSelect a class:\r\n" +
 // Creation follows the intent and rejects 'p'. ParseClass below keeps the C's
 // behaviour for the places where it is correct: an implementor's `set class`,
 // and remorting.
-func ParseCreationClass(arg byte) int32 {
+func ParseCreationClass(arg byte) Class {
 	switch lower(arg) {
 	case 'm':
 		return ClassMagicUser
@@ -124,7 +144,7 @@ func ParseCreationClass(arg byte) int32 {
 // ParseClass interprets a class letter anywhere it is not character creation:
 // `set class`, and remorting. Matches class.c's parse_class exactly,
 // including Paladin.
-func ParseClass(arg byte) int32 {
+func ParseClass(arg byte) Class {
 	if c := ParseCreationClass(arg); c != ClassUndefined {
 		return c
 	}
@@ -151,7 +171,7 @@ func lower(b byte) byte {
 //
 // Only a warrior with an 18 strength rolls the exceptional-strength
 // percentile, which is why that field is meaningless for everyone else.
-func RollAbilities(class int32, r *rng.Rand) Abilities {
+func RollAbilities(class Class, r *rng.Rand) Abilities {
 	roll := func() int32 {
 		var dice [4]int32
 		lowest := int32(7)
@@ -260,7 +280,7 @@ const (
 
 // StartingSkills are the skills a class begins knowing, from do_start.
 // Only the thief has any; the numbers are the C's.
-func StartingSkills(class int32) map[int32]int32 {
+func StartingSkills(class Class) map[int32]int32 {
 	if class != ClassThief {
 		return nil
 	}
@@ -458,7 +478,7 @@ func randRange(r *rng.Rand, lo, hi int32) int32 { return r.Number(lo, hi) }
 // — your *current* class counts for free, and the vector records the others.
 // So changing the class field without setting the outgoing class's bit would
 // take away the very abilities remorting exists to keep.
-func Remort(rec *PlayerRecord, newClass int32, r *rng.Rand) {
+func Remort(rec *PlayerRecord, newClass Class, r *rng.Rand) {
 	oldClass := rec.Class
 
 	// Keep what they have been. The outgoing class's bit is what stops the
@@ -564,7 +584,7 @@ const maxRolledAbility int32 = 18
 // Paladin's is charisma, which is worth knowing and easy to get wrong: it is
 // the only class whose ordering was ported without ever being reachable at
 // creation, because paladin is remort-only.
-func setPrimeAbility(a *Abilities, class int32, value int32) {
+func setPrimeAbility(a *Abilities, class Class, value int32) {
 	switch class {
 	case ClassMagicUser:
 		a.Intelligence = value
@@ -585,7 +605,7 @@ func setPrimeAbility(a *Abilities, class int32, value int32) {
 // PrimeAbilityName names a class's prime requisite, for a message that has to
 // say which statistic it pinned and why. Same table as setPrimeAbility, which
 // is the one that does it.
-func PrimeAbilityName(class int32) string {
+func PrimeAbilityName(class Class) string {
 	switch class {
 	case ClassMagicUser:
 		return "intelligence"

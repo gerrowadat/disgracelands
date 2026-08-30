@@ -285,7 +285,7 @@ func ShopWillDealWith(shop *ShopDef, c *Character) (bool, string) {
 		return true, ""
 	}
 
-	byClass := map[int32]int32{
+	byClass := map[Class]int32{
 		ClassMagicUser: tradeNoMagicUser,
 		ClassCleric:    tradeNoCleric,
 		ClassThief:     tradeNoThief,

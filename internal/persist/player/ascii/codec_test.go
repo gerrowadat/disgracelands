@@ -88,7 +88,7 @@ func TestDecodeARealFile(t *testing.T) {
 	check("Name", rec.Name, "Zod")
 	check("Title", rec.Title, "the Implementor")
 	check("Sex", rec.Sex, int32(1))
-	check("Class", rec.Class, int32(1))
+	check("Class", rec.Class, game.ClassCleric)
 	check("Level", rec.Level, int32(54))
 	check("Hometown", rec.Hometown, int32(3001))
 	check("Host", rec.Host, "136.206.15.10:4444")

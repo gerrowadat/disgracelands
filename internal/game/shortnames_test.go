@@ -51,7 +51,7 @@ func TestClassShortNamesMatchTheCSource(t *testing.T) {
 // TestParseShortClassName, including that it is a whole name rather than a
 // prefix — the C compares with strcasecmp, not a prefix match.
 func TestParseShortClassName(t *testing.T) {
-	for word, want := range map[string]int32{
+	for word, want := range map[string]Class{
 		"mage": ClassMagicUser, "MAGE": ClassMagicUser,
 		"cleric": ClassCleric, "thief": ClassThief,
 		"warrior": ClassWarrior, "Paladin": ClassPaladin,
@@ -71,7 +71,7 @@ func TestParseShortClassName(t *testing.T) {
 // TestRemortMask. Paladin has a mask in the C's table and no IS_ macro reads
 // it, which is why remorting into paladin lists nothing new.
 func TestRemortMask(t *testing.T) {
-	for class, want := range map[int32]Flags{
+	for class, want := range map[Class]Flags{
 		ClassMagicUser: RemortMagicUser,
 		ClassCleric:    RemortCleric,
 		ClassThief:     RemortThief,

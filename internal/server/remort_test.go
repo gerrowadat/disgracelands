@@ -133,7 +133,7 @@ func TestRemortDoesTheHomework(t *testing.T) {
 	mortal.expect("you still are.")
 
 	var level, maxHit int32
-	var class int32
+	var class game.Class
 	var isWarrior, isMage bool
 	inWorld(t, srv, func(w *game.Live) {
 		rec := w.Find("Bystander").Record
@@ -171,7 +171,7 @@ func TestPaladinTakesAWarriorAndACleric(t *testing.T) {
 	god.send("remort Bystander paladin")
 	god.expect("has not earned paladinhood")
 
-	var class int32
+	var class game.Class
 	inWorld(t, srv, func(w *game.Live) {
 		class = w.Find("Bystander").Record.Class
 	})
@@ -212,7 +212,7 @@ func TestAPaladinCanRemortOnward(t *testing.T) {
 	god.send("remort Bystander thief")
 	god.expect("Bystander remorted to become a thief!")
 
-	var class int32
+	var class game.Class
 	var listed string
 	inWorld(t, srv, func(w *game.Live) {
 		class = w.Find("Bystander").Record.Class
@@ -244,7 +244,7 @@ func TestRemortIntoAClassAlreadyHeld(t *testing.T) {
 	god.send("remort Bystander warrior")
 	god.expect("Bystander remorted to become a warrior!")
 
-	var class int32
+	var class game.Class
 	var isMage bool
 	inWorld(t, srv, func(w *game.Live) {
 		rec := w.Find("Bystander").Record
@@ -369,7 +369,8 @@ func TestRemortFollowsTheHandRunProcedure(t *testing.T) {
 	god.expect("Bystander remorted to become a cleric!")
 
 	var (
-		class, level, lessons    int32
+		class                    game.Class
+		level, lessons           int32
 		maxMana, maxMove         int32
 		strength, strPct, wisdom int32
 		bash                     int32

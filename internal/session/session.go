@@ -1155,7 +1155,7 @@ type CreateRequest struct {
 	Name     string
 	Password string
 	Sex      int32
-	Class    int32
+	Class    game.Class
 }
 
 // flush writes whatever is already queued and gives up on the rest.

@@ -96,7 +96,7 @@ type SpellInfo struct {
 	// MinLevel is the level each class learns it at. A class absent from the
 	// map never learns it: the C fills every slot with LVL_IMMORT first and
 	// only lowers the ones init_spell_levels names.
-	MinLevel map[int32]int32
+	MinLevel map[Class]int32
 }
 
 // Spell returns a spell's row, and whether it exists.
@@ -170,7 +170,7 @@ func SpellNumberFromNameOrNumber(s string) (int32, bool) {
 
 // MinLevelFor is the level a class learns a spell at, or LevelImmortal if it
 // never does.
-func MinLevelFor(info SpellInfo, class int32) int32 {
+func MinLevelFor(info SpellInfo, class Class) int32 {
 	if level, ok := info.MinLevel[class]; ok {
 		return level
 	}
@@ -272,14 +272,14 @@ var spellTable = map[int32]SpellInfo{
 	SkillBackstab: {
 		Name:        "backstab",
 		MinPosition: PosDead,
-		MinLevel: map[int32]int32{
+		MinLevel: map[Class]int32{
 			ClassThief: 3,
 		},
 	},
 	SkillBash: {
 		Name:        "bash",
 		MinPosition: PosDead,
-		MinLevel: map[int32]int32{
+		MinLevel: map[Class]int32{
 			ClassPaladin: 12,
 			ClassWarrior: 12,
 		},
@@ -287,14 +287,14 @@ var spellTable = map[int32]SpellInfo{
 	SkillHide: {
 		Name:        "hide",
 		MinPosition: PosDead,
-		MinLevel: map[int32]int32{
+		MinLevel: map[Class]int32{
 			ClassThief: 5,
 		},
 	},
 	SkillKick: {
 		Name:        "kick",
 		MinPosition: PosDead,
-		MinLevel: map[int32]int32{
+		MinLevel: map[Class]int32{
 			ClassPaladin: 2,
 			ClassWarrior: 1,
 		},
@@ -302,14 +302,14 @@ var spellTable = map[int32]SpellInfo{
 	SkillPickLock: {
 		Name:        "pick lock",
 		MinPosition: PosDead,
-		MinLevel: map[int32]int32{
+		MinLevel: map[Class]int32{
 			ClassThief: 2,
 		},
 	},
 	SkillRescue: {
 		Name:        "rescue",
 		MinPosition: PosDead,
-		MinLevel: map[int32]int32{
+		MinLevel: map[Class]int32{
 			ClassPaladin: 2,
 			ClassWarrior: 3,
 		},
@@ -317,21 +317,21 @@ var spellTable = map[int32]SpellInfo{
 	SkillSneak: {
 		Name:        "sneak",
 		MinPosition: PosDead,
-		MinLevel: map[int32]int32{
+		MinLevel: map[Class]int32{
 			ClassThief: 1,
 		},
 	},
 	SkillSteal: {
 		Name:        "steal",
 		MinPosition: PosDead,
-		MinLevel: map[int32]int32{
+		MinLevel: map[Class]int32{
 			ClassThief: 4,
 		},
 	},
 	SkillTrack: {
 		Name:        "track",
 		MinPosition: PosDead,
-		MinLevel: map[int32]int32{
+		MinLevel: map[Class]int32{
 			ClassThief:   6,
 			ClassWarrior: 9,
 		},
@@ -354,7 +354,7 @@ var spellTable = map[int32]SpellInfo{
 		Violent:     false,
 		Routines:    NewSet(MagAffects),
 		WearOff:     "You feel less protected.",
-		MinLevel: map[int32]int32{
+		MinLevel: map[Class]int32{
 			ClassCleric:    1,
 			ClassMagicUser: 4,
 			ClassPaladin:   9,
@@ -368,7 +368,7 @@ var spellTable = map[int32]SpellInfo{
 		Violent:     false,
 		Routines:    NewSet(MagAffects, MagAlterObjs),
 		WearOff:     "You feel less righteous.",
-		MinLevel: map[int32]int32{
+		MinLevel: map[Class]int32{
 			ClassCleric:  5,
 			ClassPaladin: 5,
 		},
@@ -381,7 +381,7 @@ var spellTable = map[int32]SpellInfo{
 		Violent:     false,
 		Routines:    NewSet(MagAffects),
 		WearOff:     "You feel a cloak of blindness dissolve.",
-		MinLevel: map[int32]int32{
+		MinLevel: map[Class]int32{
 			ClassCleric:    6,
 			ClassMagicUser: 9,
 		},
@@ -393,7 +393,7 @@ var spellTable = map[int32]SpellInfo{
 		Targets:     NewSet(TargetCharRoom, TargetFightVict),
 		Violent:     true,
 		Routines:    NewSet(MagDamage),
-		MinLevel: map[int32]int32{
+		MinLevel: map[Class]int32{
 			ClassMagicUser: 5,
 		},
 	},
@@ -404,7 +404,7 @@ var spellTable = map[int32]SpellInfo{
 		Targets:     NewSet(TargetCharRoom, TargetFightVict),
 		Violent:     true,
 		Routines:    NewSet(MagDamage),
-		MinLevel: map[int32]int32{
+		MinLevel: map[Class]int32{
 			ClassCleric: 15,
 		},
 	},
@@ -416,7 +416,7 @@ var spellTable = map[int32]SpellInfo{
 		Violent:     true,
 		Routines:    NewSet(MagManual),
 		WearOff:     "You feel more self-confident.",
-		MinLevel: map[int32]int32{
+		MinLevel: map[Class]int32{
 			ClassMagicUser: 16,
 		},
 	},
@@ -428,7 +428,7 @@ var spellTable = map[int32]SpellInfo{
 		Violent:     true,
 		Routines:    NewSet(MagDamage, MagAffects),
 		WearOff:     "You feel your strength return.",
-		MinLevel: map[int32]int32{
+		MinLevel: map[Class]int32{
 			ClassMagicUser: 3,
 		},
 	},
@@ -439,7 +439,7 @@ var spellTable = map[int32]SpellInfo{
 		Targets:     NewSet(TargetSelfOnly),
 		Violent:     false,
 		Routines:    NewSet(MagSummons),
-		MinLevel: map[int32]int32{
+		MinLevel: map[Class]int32{
 			ClassMagicUser: 30,
 		},
 	},
@@ -450,7 +450,7 @@ var spellTable = map[int32]SpellInfo{
 		Targets:     NewSet(TargetCharRoom, TargetFightVict),
 		Violent:     true,
 		Routines:    NewSet(MagDamage),
-		MinLevel: map[int32]int32{
+		MinLevel: map[Class]int32{
 			ClassMagicUser: 11,
 		},
 	},
@@ -461,7 +461,7 @@ var spellTable = map[int32]SpellInfo{
 		Targets:     NewSet(TargetIgnore),
 		Violent:     false,
 		Routines:    NewSet(MagManual),
-		MinLevel: map[int32]int32{
+		MinLevel: map[Class]int32{
 			ClassCleric: 17,
 		},
 	},
@@ -472,7 +472,7 @@ var spellTable = map[int32]SpellInfo{
 		Targets:     NewSet(TargetIgnore),
 		Violent:     false,
 		Routines:    NewSet(MagCreations),
-		MinLevel: map[int32]int32{
+		MinLevel: map[Class]int32{
 			ClassCleric:  2,
 			ClassPaladin: 15,
 		},
@@ -484,7 +484,7 @@ var spellTable = map[int32]SpellInfo{
 		Targets:     NewSet(TargetObjInv, TargetObjEquip),
 		Violent:     false,
 		Routines:    NewSet(MagManual),
-		MinLevel: map[int32]int32{
+		MinLevel: map[Class]int32{
 			ClassCleric:  2,
 			ClassPaladin: 15,
 		},
@@ -496,7 +496,7 @@ var spellTable = map[int32]SpellInfo{
 		Targets:     NewSet(TargetCharRoom),
 		Violent:     false,
 		Routines:    NewSet(MagUnaffects),
-		MinLevel: map[int32]int32{
+		MinLevel: map[Class]int32{
 			ClassCleric:  4,
 			ClassPaladin: 13,
 		},
@@ -508,7 +508,7 @@ var spellTable = map[int32]SpellInfo{
 		Targets:     NewSet(TargetCharRoom),
 		Violent:     false,
 		Routines:    NewSet(MagPoints),
-		MinLevel: map[int32]int32{
+		MinLevel: map[Class]int32{
 			ClassCleric: 9,
 		},
 	},
@@ -519,7 +519,7 @@ var spellTable = map[int32]SpellInfo{
 		Targets:     NewSet(TargetCharRoom),
 		Violent:     false,
 		Routines:    NewSet(MagPoints),
-		MinLevel: map[int32]int32{
+		MinLevel: map[Class]int32{
 			ClassCleric:  1,
 			ClassPaladin: 9,
 		},
@@ -532,7 +532,7 @@ var spellTable = map[int32]SpellInfo{
 		Violent:     true,
 		Routines:    NewSet(MagAffects, MagAlterObjs),
 		WearOff:     "You feel more optimistic.",
-		MinLevel: map[int32]int32{
+		MinLevel: map[Class]int32{
 			ClassMagicUser: 14,
 		},
 	},
@@ -544,7 +544,7 @@ var spellTable = map[int32]SpellInfo{
 		Violent:     false,
 		Routines:    NewSet(MagAffects),
 		WearOff:     "You feel less aware.",
-		MinLevel: map[int32]int32{
+		MinLevel: map[Class]int32{
 			ClassCleric:  4,
 			ClassPaladin: 1,
 		},
@@ -557,7 +557,7 @@ var spellTable = map[int32]SpellInfo{
 		Violent:     false,
 		Routines:    NewSet(MagAffects),
 		WearOff:     "Your eyes stop tingling.",
-		MinLevel: map[int32]int32{
+		MinLevel: map[Class]int32{
 			ClassCleric:    6,
 			ClassMagicUser: 2,
 		},
@@ -570,7 +570,7 @@ var spellTable = map[int32]SpellInfo{
 		Violent:     false,
 		Routines:    NewSet(MagAffects),
 		WearOff:     "The detect magic wears off.",
-		MinLevel: map[int32]int32{
+		MinLevel: map[Class]int32{
 			ClassMagicUser: 2,
 		},
 	},
@@ -582,7 +582,7 @@ var spellTable = map[int32]SpellInfo{
 		Violent:     false,
 		Routines:    NewSet(MagManual),
 		WearOff:     "The detect poison wears off.",
-		MinLevel: map[int32]int32{
+		MinLevel: map[Class]int32{
 			ClassCleric:    3,
 			ClassMagicUser: 10,
 		},
@@ -594,7 +594,7 @@ var spellTable = map[int32]SpellInfo{
 		Targets:     NewSet(TargetCharRoom, TargetFightVict),
 		Violent:     true,
 		Routines:    NewSet(MagDamage),
-		MinLevel: map[int32]int32{
+		MinLevel: map[Class]int32{
 			ClassCleric:  14,
 			ClassPaladin: 20,
 		},
@@ -606,7 +606,7 @@ var spellTable = map[int32]SpellInfo{
 		Targets:     NewSet(TargetCharRoom, TargetFightVict),
 		Violent:     true,
 		Routines:    NewSet(MagDamage),
-		MinLevel: map[int32]int32{
+		MinLevel: map[Class]int32{
 			ClassCleric: 14,
 		},
 	},
@@ -625,7 +625,7 @@ var spellTable = map[int32]SpellInfo{
 		Targets:     NewSet(TargetIgnore),
 		Violent:     true,
 		Routines:    NewSet(MagAreas),
-		MinLevel: map[int32]int32{
+		MinLevel: map[Class]int32{
 			ClassCleric: 12,
 		},
 	},
@@ -636,7 +636,7 @@ var spellTable = map[int32]SpellInfo{
 		Targets:     NewSet(TargetObjInv),
 		Violent:     false,
 		Routines:    NewSet(MagManual),
-		MinLevel: map[int32]int32{
+		MinLevel: map[Class]int32{
 			ClassMagicUser: 26,
 		},
 	},
@@ -647,7 +647,7 @@ var spellTable = map[int32]SpellInfo{
 		Targets:     NewSet(TargetCharRoom, TargetFightVict),
 		Violent:     true,
 		Routines:    NewSet(MagDamage, MagManual),
-		MinLevel: map[int32]int32{
+		MinLevel: map[Class]int32{
 			ClassMagicUser: 13,
 		},
 	},
@@ -658,7 +658,7 @@ var spellTable = map[int32]SpellInfo{
 		Targets:     NewSet(TargetIgnore),
 		Violent:     false,
 		Routines:    NewSet(MagGroups),
-		MinLevel: map[int32]int32{
+		MinLevel: map[Class]int32{
 			ClassCleric: 9,
 		},
 	},
@@ -669,7 +669,7 @@ var spellTable = map[int32]SpellInfo{
 		Targets:     NewSet(TargetCharRoom, TargetFightVict),
 		Violent:     true,
 		Routines:    NewSet(MagDamage),
-		MinLevel: map[int32]int32{
+		MinLevel: map[Class]int32{
 			ClassMagicUser: 15,
 		},
 	},
@@ -696,7 +696,7 @@ var spellTable = map[int32]SpellInfo{
 		Targets:     NewSet(TargetIgnore),
 		Violent:     false,
 		Routines:    NewSet(MagGroups),
-		MinLevel: map[int32]int32{
+		MinLevel: map[Class]int32{
 			ClassCleric: 22,
 		},
 	},
@@ -707,7 +707,7 @@ var spellTable = map[int32]SpellInfo{
 		Targets:     NewSet(TargetCharRoom, TargetFightVict),
 		Violent:     true,
 		Routines:    NewSet(MagDamage),
-		MinLevel: map[int32]int32{
+		MinLevel: map[Class]int32{
 			ClassCleric: 19,
 		},
 	},
@@ -718,7 +718,7 @@ var spellTable = map[int32]SpellInfo{
 		Targets:     NewSet(TargetCharRoom),
 		Violent:     false,
 		Routines:    NewSet(MagPoints, MagUnaffects),
-		MinLevel: map[int32]int32{
+		MinLevel: map[Class]int32{
 			ClassCleric: 16,
 		},
 	},
@@ -738,7 +738,7 @@ var spellTable = map[int32]SpellInfo{
 		Violent:     false,
 		Routines:    NewSet(MagAffects),
 		WearOff:     "You feel your holy protection fade.",
-		MinLevel: map[int32]int32{
+		MinLevel: map[Class]int32{
 			ClassPaladin: 5,
 		},
 	},
@@ -750,7 +750,7 @@ var spellTable = map[int32]SpellInfo{
 		Violent:     false,
 		Routines:    NewSet(MagAffects),
 		WearOff:     "You feel less smitey.",
-		MinLevel: map[int32]int32{
+		MinLevel: map[Class]int32{
 			ClassPaladin: 26,
 		},
 	},
@@ -762,7 +762,7 @@ var spellTable = map[int32]SpellInfo{
 		Violent:     false,
 		Routines:    NewSet(MagAffects),
 		WearOff:     "Your night vision seems to fade.",
-		MinLevel: map[int32]int32{
+		MinLevel: map[Class]int32{
 			ClassCleric:    7,
 			ClassMagicUser: 3,
 		},
@@ -775,7 +775,7 @@ var spellTable = map[int32]SpellInfo{
 		Violent:     false,
 		Routines:    NewSet(MagAffects, MagAlterObjs),
 		WearOff:     "You feel yourself exposed.",
-		MinLevel: map[int32]int32{
+		MinLevel: map[Class]int32{
 			ClassMagicUser: 4,
 		},
 	},
@@ -786,7 +786,7 @@ var spellTable = map[int32]SpellInfo{
 		Targets:     NewSet(TargetCharRoom, TargetFightVict),
 		Violent:     true,
 		Routines:    NewSet(MagDamage),
-		MinLevel: map[int32]int32{
+		MinLevel: map[Class]int32{
 			ClassMagicUser: 9,
 		},
 	},
@@ -797,7 +797,7 @@ var spellTable = map[int32]SpellInfo{
 		Targets:     NewSet(TargetObjWorld),
 		Violent:     false,
 		Routines:    NewSet(MagManual),
-		MinLevel: map[int32]int32{
+		MinLevel: map[Class]int32{
 			ClassMagicUser: 6,
 		},
 	},
@@ -808,7 +808,7 @@ var spellTable = map[int32]SpellInfo{
 		Targets:     NewSet(TargetCharRoom, TargetFightVict),
 		Violent:     true,
 		Routines:    NewSet(MagDamage),
-		MinLevel: map[int32]int32{
+		MinLevel: map[Class]int32{
 			ClassMagicUser: 1,
 		},
 	},
@@ -820,7 +820,7 @@ var spellTable = map[int32]SpellInfo{
 		Violent:     true,
 		Routines:    NewSet(MagAffects, MagAlterObjs),
 		WearOff:     "You feel less sick.",
-		MinLevel: map[int32]int32{
+		MinLevel: map[Class]int32{
 			ClassCleric:    8,
 			ClassMagicUser: 14,
 		},
@@ -833,7 +833,7 @@ var spellTable = map[int32]SpellInfo{
 		Violent:     false,
 		Routines:    NewSet(MagAffects),
 		WearOff:     "You feel less protected.",
-		MinLevel: map[int32]int32{
+		MinLevel: map[Class]int32{
 			ClassCleric: 8,
 		},
 	},
@@ -844,7 +844,7 @@ var spellTable = map[int32]SpellInfo{
 		Targets:     NewSet(TargetCharRoom, TargetObjInv, TargetObjEquip),
 		Violent:     false,
 		Routines:    NewSet(MagUnaffects, MagAlterObjs),
-		MinLevel: map[int32]int32{
+		MinLevel: map[Class]int32{
 			ClassCleric: 26,
 		},
 	},
@@ -855,7 +855,7 @@ var spellTable = map[int32]SpellInfo{
 		Targets:     NewSet(TargetCharRoom, TargetObjInv, TargetObjRoom),
 		Violent:     false,
 		Routines:    NewSet(MagUnaffects, MagAlterObjs),
-		MinLevel: map[int32]int32{
+		MinLevel: map[Class]int32{
 			ClassCleric:  10,
 			ClassPaladin: 13,
 		},
@@ -868,7 +868,7 @@ var spellTable = map[int32]SpellInfo{
 		Violent:     false,
 		Routines:    NewSet(MagAffects),
 		WearOff:     "The white aura around your body fades.",
-		MinLevel: map[int32]int32{
+		MinLevel: map[Class]int32{
 			ClassCleric:  15,
 			ClassPaladin: 22,
 		},
@@ -881,7 +881,7 @@ var spellTable = map[int32]SpellInfo{
 		Violent:     false,
 		Routines:    NewSet(MagAffects),
 		WearOff:     "You feel less aware of your surroundings.",
-		MinLevel: map[int32]int32{
+		MinLevel: map[Class]int32{
 			ClassMagicUser: 17,
 		},
 	},
@@ -892,7 +892,7 @@ var spellTable = map[int32]SpellInfo{
 		Targets:     NewSet(TargetCharRoom, TargetFightVict),
 		Violent:     true,
 		Routines:    NewSet(MagDamage),
-		MinLevel: map[int32]int32{
+		MinLevel: map[Class]int32{
 			ClassMagicUser: 7,
 		},
 	},
@@ -913,7 +913,7 @@ var spellTable = map[int32]SpellInfo{
 		Violent:     true,
 		Routines:    NewSet(MagAffects),
 		WearOff:     "You feel less tired.",
-		MinLevel: map[int32]int32{
+		MinLevel: map[Class]int32{
 			ClassMagicUser: 8,
 		},
 	},
@@ -925,7 +925,7 @@ var spellTable = map[int32]SpellInfo{
 		Violent:     false,
 		Routines:    NewSet(MagAffects),
 		WearOff:     "You feel weaker.",
-		MinLevel: map[int32]int32{
+		MinLevel: map[Class]int32{
 			ClassMagicUser: 6,
 		},
 	},
@@ -936,7 +936,7 @@ var spellTable = map[int32]SpellInfo{
 		Targets:     NewSet(TargetCharWorld, TargetNotSelf),
 		Violent:     false,
 		Routines:    NewSet(MagManual),
-		MinLevel: map[int32]int32{
+		MinLevel: map[Class]int32{
 			ClassCleric: 10,
 		},
 	},
@@ -964,7 +964,7 @@ var spellTable = map[int32]SpellInfo{
 		Targets:     NewSet(TargetCharRoom),
 		Violent:     false,
 		Routines:    NewSet(MagManual),
-		MinLevel: map[int32]int32{
+		MinLevel: map[Class]int32{
 			ClassCleric:  12,
 			ClassPaladin: 24,
 		},
@@ -1022,7 +1022,7 @@ var spellTable = map[int32]SpellInfo{
 // Practice parameters, from prac_params (class.c:176). Indexed by class:
 // what counts as learned, the most and least a session teaches, and whether
 // the class calls them spells or skills.
-var practiceParams = map[int32]struct {
+var practiceParams = map[Class]struct {
 	Learned int32
 	Max     int32
 	Min     int32
@@ -1038,7 +1038,7 @@ var practiceParams = map[int32]struct {
 // LearnedLevel is the percentage at which a class stops being able to
 // practise something. A thief tops out at 85 and a warrior at 80 — they
 // never become as sure of a skill as a mage does of a spell.
-func LearnedLevel(class int32) int32 {
+func LearnedLevel(class Class) int32 {
 	if p, ok := practiceParams[class]; ok {
 		return p.Learned
 	}
@@ -1046,7 +1046,7 @@ func LearnedLevel(class int32) int32 {
 }
 
 // PracticeNoun is "spell" or "skill", whichever the class calls them.
-func PracticeNoun(class int32) string {
+func PracticeNoun(class Class) string {
 	if p, ok := practiceParams[class]; ok {
 		return p.Noun
 	}

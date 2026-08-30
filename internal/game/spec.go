@@ -76,7 +76,7 @@ func (o *Object) ObjSpec() string {
 // and the one at 14279 let anybody through — they are doors that need a guard
 // for some other reason. The table ends at a -1 sentinel in the C.
 var guildInfo = []struct {
-	Class int32
+	Class Class
 	Room  RoomVnum
 	Dir   Direction
 }{
@@ -91,7 +91,7 @@ var guildInfo = []struct {
 }
 
 // guildAnyClass is the C's -999.
-const guildAnyClass int32 = -999
+const guildAnyClass Class = -999
 
 // GuildBars reports whether a guild guard should block this character from
 // leaving this room in this direction, porting the loop in

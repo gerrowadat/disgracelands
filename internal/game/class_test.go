@@ -39,7 +39,7 @@ func TestPaladinIsNotSelectableAtCreation(t *testing.T) {
 }
 
 func TestCreationClassLetters(t *testing.T) {
-	for arg, want := range map[byte]int32{
+	for arg, want := range map[byte]Class{
 		'm': ClassMagicUser, 'M': ClassMagicUser,
 		'c': ClassCleric, 'C': ClassCleric,
 		't': ClassThief, 'T': ClassThief,
@@ -66,7 +66,7 @@ func TestCreationClassLetters(t *testing.T) {
 func TestRolledAbilitiesAreInRange(t *testing.T) {
 	// 4d6 drop lowest is 3..18.
 	r := rng.NewRand(rng.NewCircle(1))
-	for _, class := range []int32{ClassMagicUser, ClassCleric, ClassThief, ClassWarrior, ClassPaladin} {
+	for _, class := range []Class{ClassMagicUser, ClassCleric, ClassThief, ClassWarrior, ClassPaladin} {
 		for i := 0; i < 200; i++ {
 			a := RollAbilities(class, r)
 			for name, v := range map[string]int32{
@@ -98,7 +98,7 @@ func TestEachClassGetsItsBestRollWhereItMatters(t *testing.T) {
 	}
 
 	for _, tc := range []struct {
-		class   int32
+		class   Class
 		primary func(Abilities) int32
 		name    string
 	}{
@@ -124,7 +124,7 @@ func TestEachClassGetsItsBestRollWhereItMatters(t *testing.T) {
 // is why a converted record may carry a stale value in it.
 func TestOnlyWarriorsRollExceptionalStrength(t *testing.T) {
 	r := rng.NewRand(rng.NewCircle(7))
-	for _, class := range []int32{ClassMagicUser, ClassCleric, ClassThief, ClassPaladin} {
+	for _, class := range []Class{ClassMagicUser, ClassCleric, ClassThief, ClassPaladin} {
 		for i := 0; i < 300; i++ {
 			if a := RollAbilities(class, r); a.StrengthPercentile != 0 {
 				t.Fatalf("class %d rolled an exceptional-strength percentile of %d",
@@ -166,7 +166,7 @@ func TestParseSex(t *testing.T) {
 // given the maximum.
 func TestPrimeAbilityIsTheOneTheRollFavours(t *testing.T) {
 	classes := []struct {
-		class int32
+		class Class
 		name  string
 	}{
 		{ClassMagicUser, "intelligence"},
@@ -207,7 +207,7 @@ func TestPrimeAbilityIsTheOneTheRollFavours(t *testing.T) {
 // percentile strength with it the way `set str` does.
 func TestSetPrimeAbility(t *testing.T) {
 	for _, tc := range []struct {
-		class int32
+		class Class
 		read  func(Abilities) int32
 	}{
 		{ClassMagicUser, func(a Abilities) int32 { return a.Intelligence }},

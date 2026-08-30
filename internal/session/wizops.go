@@ -76,7 +76,7 @@ type PlayerSummary struct {
 	Name      string
 	Sex       int32
 	Level     int32
-	Class     int32
+	Class     game.Class
 	Gold      int32
 	Bank      int32
 	Exp       int32
@@ -91,7 +91,7 @@ type PlayerSummary struct {
 type LastLogin struct {
 	IDNum int64
 	Level int32
-	Class int32
+	Class game.Class
 	Name  string
 	Host  string
 	When  time.Time
