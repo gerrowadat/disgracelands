@@ -187,23 +187,6 @@ the C never gets there, and a Go string simply ends.
 | **Why** | Integer division. The comment has been wrong since 1993 and the code is what players experienced. Reproduced, and asserted against the C so nobody implements the comment by mistake. |
 | **Where** | `Attack` in `internal/game/fight.go`, `TestThePositionMultiplierIsIntegerDivision`. |
 
-### `cast` with a spell name made only of spaces refuses instead of casting
-
-| | |
-|---|---|
-| **C** | `cast '   '` casts whichever spell sits lowest in `spell_info[]`. `find_skill_num` gets `"   "`, whose `any_one_arg` yields an empty first word, so the word-by-word loop never runs at all — leaving `ok` TRUE and `first2` empty, and `ok && !*first2` matches on the very first table entry (`spell_parser.c`). |
-| **Go** | `ParseCastArgument` trims the name, `SpellNumberByName` refuses an empty one, and the player gets *"Cast what?!?"*. |
-| **Why** | Casting an arbitrary spell because somebody typed spaces between the quotes is not a behaviour anybody designed, and reproducing it means picking a spell by table position — which would then silently change if the table ever gained a lower-numbered entry. Nothing else in the game depends on it and no player was ever relying on it. |
-| **Where** | `ParseCastArgument` and `SpellNumberByName` (`internal/game/cast.go`, `spell.go`); `TestCastArgumentAgainstC` compares the two against `reference/tools/castoracle.c` and flags exactly this shape as the expected difference, so it cannot widen unnoticed. |
-
-Worth knowing how this was found, because the reasoning that missed it was
-written down twice. #355's fix carried a comment saying the C could not
-reach an empty spell name at all — true of `cast ''`, where `strtok` skips
-the quotes it starts on and refuses before `find_skill_num` is called, and
-simply not a statement about `cast '   '`, where the spaces are not
-delimiters and the token is a non-empty string of them. Compiling the C
-settled in a second what two readings had got wrong.
-
 ### `cast` cannot tell an empty argument from an argument of spaces
 
 | | |
@@ -212,6 +195,13 @@ settled in a second what two readings had got wrong.
 | **Go** | Both give *"Cast what where?"*. |
 | **Why** | This port's interpreter trims the argument (`session.split`) where the C's `any_one_arg` leaves the space after the command word. That is a convention the whole command table is written against, and every other command is happier for it; unpicking it for one refusal message would be the wrong trade. Both answers are refusals and neither tells the player anything different in practice. |
 | **Where** | `session.split` (`internal/session/commands.go`), `ParseCastArgument`; counted as a known difference by `TestCastArgumentAgainstC`. |
+
+This is the only one of the four differences `castoracle.c` found that is
+still here. The other three — `cast ''`, `cast '' fido` and an unterminated
+`cast 'armor` — were fixed in #358, and the fourth, a spell name made only
+of spaces, was briefly recorded here as a deliberate deviation and is not
+one: #365 established that the C's answer is reachable, ordinary and worth
+reproducing, and it is reproduced. See `SpellNumberByName`.
 
 ### `practice` was a command and is a guildmaster again
 

@@ -135,12 +135,28 @@ wrong. Every oracle written so far has caught at least one real mistake.
   be a signal that the reading is wrong, and is easy to argue away instead.
   It was read that way twice here before anybody compiled it.
 
-  Writing this file found five differences nobody had noticed, four of them
-  fixed and two documented (#358). The one worth naming: **an unterminated
-  quote is not an error.** `cast 'armor` casts armor on the real server,
-  because `strtok`'s second call runs to the end of the string when it finds
-  no closing delimiter. This port refused it, and a test asserted the
-  refusal.
+  Writing this file found five differences nobody had noticed (#358, #365),
+  all five now reproduced and one documented. Two are worth naming:
+
+  - **An unterminated quote is not an error.** `cast 'armor` casts armor on
+    the real server, because `strtok`'s second call runs to the end of the
+    string when it finds no closing delimiter. This port refused it, and a
+    test asserted the refusal.
+  - **`cast '  '` casts armor**, at level one, for free. Only the quote is a
+    delimiter, so the spaces reach `find_skill_num`, which tokenises them
+    away and answers as it does for an empty name: the first entry in the
+    table. `cast ''` does *not*, because strtok skips a whole run of
+    delimiters and the two quotes collapse. Those two lines differing is the
+    single best argument for compiling this rather than reading it.
+
+  Both this and `skilloracle.c` escape the query they echo (`putesc`, the
+  convention `nameoracle.c` established). They did not, and the corpora paid
+  for it in both directions: the skill sweep had no empty or whitespace
+  query in it, and the cast sweep excluded tabs *deliberately* because an
+  unescaped one would have broken the field split. A tab is whitespace to
+  `any_one_arg`'s `isspace()`, so that exclusion was designing the hard case
+  out of the corpus — the same failure as `isname`'s letters-and-spaces
+  sweep, in the tool built to avoid it.
 
 If you are about to port anything with a division, a cast, or a comment
 describing numbers in it, the next file in this directory is probably the one

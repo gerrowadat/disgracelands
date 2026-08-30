@@ -221,6 +221,72 @@ construction, which the yaml format depends on.
 
 ---
 
+### 4.5 What that fix did not cover: an empty query matches the first spell
+
+Not in this investigation, and found by widening the oracle's corpus
+afterwards. #355's fix agreed with the C on every query the sweep asked;
+the ones it would have got wrong — `""`, `" "`, `"   "` and `"\t"` — were
+not in it.
+
+With no words at all, rule 2's loop never runs, `ok` is still true and
+`!*first2` holds — so `find_skill_num("")` returns **1**, which is armor.
+
+#355 considered this and concluded the C could not reach it, on the
+reasoning that `do_cast` gets the spell name from `strtok(argument, "'")`
+and strtok skips leading delimiters, so `cast ''` never hands an empty name
+over. #358 then decided it *could* be reached, called the difference a
+deviation and refused it on purpose. Both were wrong the same way: only the
+quote is a delimiter, and a space is not.
+
+```
+cast ''             -> "Spell names must be enclosed..."   (the C, and here)
+cast '  '           -> find_skill_num("  ")   ->  armor    (the C, and here)
+```
+
+`any_one_arg` tokenises the two spaces away before either rule sees them, so
+`find_skill_num` cannot tell `"  "` from `""`. **`cast '  '` casts armor on
+the real server**, and now here.
+
+Both readings were reached by reading `strtok` rather than running it, which
+is this document's own §2 lesson arriving in a new place, and the answer to
+it is `reference/tools/castoracle.c` — do_cast's three calls, plus enough of
+`command_interpreter` to produce the argument they actually receive.
+
+Fixing it needed the parser too. This port's `ParseCastArgument` found the
+first quote and then the second, collapsing `cast ''` and `cast '  '` into
+the same empty spell name — so removing the refusal in `SpellNumberByName`
+on its own would have made `cast ''` cast armor, which the C does not. Four
+answers had to move, and #358 moved three of them:
+
+| typed | the C | before #358 | after #365 |
+|---|---|---|---|
+| `cast ''` | "must be enclosed" | "Cast what?!?" | ✅ |
+| `cast '' fido` | spell name is `" fido"` | "Cast what?!?" | ✅ |
+| `cast 'magic missile` | works, no closing quote needed | "must be enclosed" | ✅ |
+| `cast '  '` | casts armor | "Cast what?!?" | ✅ |
+
+And the refusal moved rather than being deleted:
+`SpellNumberFromNameOrNumber`, which is the *format* lookup the yaml readers
+call, refuses an empty name itself — so a blank `spell:` in a file stays an
+error instead of becoming armor. One function serving both a player's typing
+and a file's contents wants different answers for each.
+
+**Both corpora could not express the case, in two different ways.** The
+skill sweep had no empty or whitespace query in it at all. The cast sweep
+excluded tabs *deliberately*, with a comment saying so, because the oracles
+echoed the query unescaped and a tab would have been indistinguishable from
+a field break — which is designing the hard case out of the corpus, this
+document's §4.1 warning applied to itself. Both oracles escape what they
+echo now (`putesc`, the convention `nameoracle.c` established), and both
+ask.
+
+Recorded in `docs/weirdnumbers.md` beside the `isname` entry, whose own
+empty-string case this is deliberately the opposite of. The difference is
+reachability: every `isname` caller checks for an empty argument first;
+`find_skill_num`'s do not all check.
+
+---
+
 ## 5. Rule 5 — `search_block`, and a quirk nobody reproduced
 
 ```c
@@ -317,7 +383,7 @@ matches correctly.
 | 1. `isname` — objects, mobiles, exits | **Correct**, oracle-checked over 1,456 pairings |
 | 2. Command abbreviation | **Correct**, table order re-parsed from `interpreter.c`, level-in-match reproduced |
 | 3. `is_abbrev` | **Correct** |
-| 4. `find_skill_num` — spells | **Broken**: second branch missing, 1,145/1,549 abbreviations refused (#355) |
+| 4. `find_skill_num` — spells | **Was broken** twice: the second matching branch (#355) and the empty query (#365, with do_cast's parse, #358). Both fixed and oracle-checked |
 | 5. `search_block` — fixed tables | **Correct** in shape; empty-argument quirk not reproduced, and unreachable |
 | 0. `fill_word` | **Correct** |
 

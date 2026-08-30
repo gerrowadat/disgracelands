@@ -137,8 +137,44 @@ func TestFindSkillNumAgainstC(t *testing.T) {
 	}
 	// And a handful that should match nothing, so a rule that accepts
 	// everything fails too.
-	for _, q := range []string{"zzz", "magic zzz", "zzz missile", "magic missile zzz", "q q q q"} {
+	//
+	// Then the shapes per-word abbreviation cannot produce, each of which
+	// is a rule of its own rather than a variation on one. The empty and
+	// whitespace ones are here because the corpus without them agreed with
+	// the C on every query it asked and was wrong about exactly those
+	// (#365): a query with no words matches the *first spell in the
+	// table*, and `cast '  '` reaches it, because only the quote is a
+	// strtok delimiter and any_one_arg tokenises the spaces away.
+	for _, q := range []string{
+		"zzz", "magic zzz", "zzz missile", "magic missile zzz", "q q q q",
+
+		"", " ", "   ", "\t", // no words at all, however spelled
+		"magic  missile", // a run of spaces between two words
+		" magic missile", // leading, which rule 1 fails and rule 2 skips
+		"magic missile ", // trailing
+		"MAGIC MISSILE",  // case, on both rules
+		"Magic MiS",      // mixed, on rule 2
+		"armor extra",    // more words than a one-word name
+		"cure light extra",
+		"magic-mis",    // a hyphen is not whitespace: one word, not two
+		"magicmissile", // no separator at all
+		"!",            // is_abbrev's own first character
+		"'",            // what do_cast delimits with
+		"3",            // a digit; no name has one
+	} {
 		if !seen[q] {
+			seen[q] = true
+			queries = append(queries, q)
+		}
+	}
+	// Every full name, which is the property SpellNameOrNumber's round
+	// trip rests on: a name must resolve to its own spell rather than to
+	// an earlier one it happens to abbreviate. Asserted here rather than
+	// left to SpellNumberByName's exact-match preference, so the
+	// preference could be removed without silently changing what a wand
+	// round-trips to.
+	for _, number := range numbers {
+		if q := spellTable[number].Name; !seen[q] {
 			seen[q] = true
 			queries = append(queries, q)
 		}
@@ -162,12 +198,17 @@ func TestFindSkillNumAgainstC(t *testing.T) {
 
 	var mismatches, matched int
 	for i, line := range lines {
+		// The oracle escapes the query it echoes (putesc, the convention
+		// nameoracle.c established), so the first tab is always the field
+		// break however many tabs the query itself contains. Without that
+		// a tab in a query was inexpressible — and a tab is whitespace to
+		// any_one_arg's isspace(), so it is a case worth sweeping.
 		fields := strings.SplitN(line, "\t", 2)
 		if len(fields) != 2 {
 			t.Fatalf("query %q: unparseable oracle line %q", queries[i], line)
 		}
-		if fields[0] != queries[i] {
-			t.Fatalf("the oracle answered %q where %q was asked", fields[0], queries[i])
+		if echoed := unescape(fields[0]); echoed != queries[i] {
+			t.Fatalf("the oracle answered %q where %q was asked", echoed, queries[i])
 		}
 		want, err := strconv.Atoi(fields[1])
 		if err != nil {

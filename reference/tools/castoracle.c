@@ -128,6 +128,28 @@ static int find_skill_num(char *name)
   return (-1);
 }
 
+/* putesc prints s with the escapes the Go side unescapes (the convention
+ * nameoracle.c established), so that a query may contain a tab without
+ * breaking the tab-separated, line-per-row output.
+ *
+ * Escaping rather than excluding those cases is the whole point. A tab is
+ * whitespace to any_one_arg's isspace(), so a query containing one is a
+ * case worth sweeping -- and a corpus that cannot express it is a corpus
+ * with the hard case designed out of it, which is how #355's sweep agreed
+ * with a C it was not testing on the four queries that mattered (#365). */
+static void putesc(const char *s)
+{
+  for (; *s; s++) {
+    switch (*s) {
+    case '\\': fputs("\\\\", stdout); break;
+    case '\n': fputs("\\n", stdout);  break;
+    case '\r': fputs("\\r", stdout);  break;
+    case '\t': fputs("\\t", stdout);  break;
+    default:   putchar(*s);          break;
+    }
+  }
+}
+
 /*
  * do_cast's argument handling, from the point command_interpreter hands
  * over. `typed` is the whole line so that the command word's effect on
@@ -149,24 +171,31 @@ static void do_cast(const char *typed)
   /* spell_parser.c:603-611, verbatim. */
   s = strtok(argument, "'");
   if (s == NULL) {
-    printf("%s\tblank\n", typed);
+    putesc(typed);
+    printf("\tblank\n");
     return;
   }
   s = strtok(NULL, "'");
   if (s == NULL) {
-    printf("%s\tunenclosed\n", typed);
+    putesc(typed);
+    printf("\tunenclosed\n");
     return;
   }
   t = strtok(NULL, "\0");
 
   {
     int n = find_skill_num(s);
-    if (n < 0)
-      printf("%s\tunknown\n", typed);
-    else
-      printf("%s\t%d\t%s\n", typed, n, t ? t : "");
+    putesc(typed);
+    if (n < 0) {
+      printf("\tunknown\n");
+    } else {
+      printf("\t%d\t", n);
+      putesc(t ? t : "");
+      putchar('\n');
+    }
   }
 }
+
 
 static void chomp(char *line)
 {

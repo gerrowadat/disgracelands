@@ -353,8 +353,32 @@ func TestSpellNumberByName(t *testing.T) {
 	if _, ok := SpellNumberByName("frobnicate"); ok {
 		t.Error("an invented spell was found")
 	}
-	if _, ok := SpellNumberByName(""); ok {
-		t.Error("an empty name was found")
+
+	// A name with no words matches the *first* entry in the table, which
+	// is find_skill_num's own answer and not an oversight: is_abbrev
+	// rejects the empty arg1, and the word loop then never runs, so
+	// `ok && !*first2` holds on the first entry. `cast '  '` reaches it.
+	// This asserted a refusal until #365; TestFindSkillNumAgainstC is what
+	// actually proves it, and this says which spell so that a reader does
+	// not have to run the oracle to find out.
+	//
+	// Whitespace is the same thing as empty here, because both this and
+	// any_one_arg tokenise it away before either rule looks at it.
+	lowest := skillNameTable()[0]
+	for _, name := range []string{"", " ", "   ", "\t"} {
+		got, ok := SpellNumberByName(name)
+		if !ok || got != lowest {
+			t.Errorf("SpellNumberByName(%q) = %d, %v; want %d (%s)",
+				name, got, ok, lowest, SpellName(lowest))
+		}
+	}
+
+	// The refusal moved to the format lookup, where an empty name is a
+	// malformed file rather than somebody's typing.
+	for _, name := range []string{"", " ", "\t"} {
+		if _, ok := SpellNumberFromNameOrNumber(name); ok {
+			t.Errorf("SpellNumberFromNameOrNumber(%q) was accepted; a blank spell: in a file must stay an error", name)
+		}
 	}
 
 	// A prefix that matches several is resolved deterministically, not by map

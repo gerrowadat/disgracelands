@@ -94,6 +94,28 @@ static char *any_one_arg(char *argument, char *first_arg)
   return (argument);
 }
 
+/* putesc prints s with the escapes the Go side unescapes (the convention
+ * nameoracle.c established), so that a query may contain a tab without
+ * breaking the tab-separated, line-per-row output.
+ *
+ * Escaping rather than excluding those cases is the whole point. A tab is
+ * whitespace to any_one_arg's isspace(), so a query containing one is a
+ * case worth sweeping -- and a corpus that cannot express it is a corpus
+ * with the hard case designed out of it, which is how #355's sweep agreed
+ * with a C it was not testing on the four queries that mattered (#365). */
+static void putesc(const char *s)
+{
+  for (; *s; s++) {
+    switch (*s) {
+    case '\\': fputs("\\\\", stdout); break;
+    case '\n': fputs("\\n", stdout);  break;
+    case '\r': fputs("\\r", stdout);  break;
+    case '\t': fputs("\\t", stdout);  break;
+    default:   putchar(*s);          break;
+    }
+  }
+}
+
 /*
  * spell_parser.c, with spell_info[index].name replaced by names[index] and
  * the returned index replaced by the number that came with it -- the C
@@ -133,6 +155,7 @@ static int find_skill_num(char *name)
   return (-1);
 }
 
+
 static void chomp(char *line)
 {
   char *nl = strchr(line, '\n');
@@ -170,7 +193,8 @@ int main(void)
     chomp(line);
     strncpy(query, line, sizeof query - 1);
     query[sizeof query - 1] = '\0';
-    printf("%s\t%d\n", line, find_skill_num(query));
+    putesc(line);
+    printf("\t%d\n", find_skill_num(query));
   }
 
   return (0);
