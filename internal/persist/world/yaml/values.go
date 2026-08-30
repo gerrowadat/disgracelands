@@ -23,13 +23,21 @@ import (
 // The rule from §4.3: emit the typed form only when every slot the type
 // does not use is genuinely zero. container.go's containerCorpseValue is
 // the sharpest example of why — a corpse is a container whose fourth value
-// is -1, not 0, and -1 must fall back to the raw form rather than being
-// silently rounded away.
+// is 1, not 0 (make_corpse, fight.c:319; game.corpseIdentifier), and it
+// must fall back to the raw form rather than being silently rounded away.
+// This comment said -1 until step 3 checked it against the C. The code was
+// never wrong: it tests values[3] != 0, which is the real rule.
 //
-// Only the five types §4.3 works through by example get a typed form here.
+// Only the types §4.3 works through by example get a typed form here.
 // Every other type — including the multi-spell scroll/potion case, which
 // the proposal never works out in the same detail — always uses the raw
 // `values:` form. That is a deliberate scope boundary, not an oversight.
+//
+// The slot *layout* no longer lives in this file. It is game/objvalues.go's,
+// per §4.3's "a game-side model that typed them differently would be a
+// second authority": this file decodes and encodes the game's typed values
+// to and from the yaml doc's names, and owns only the question of whether
+// the typed form may be used at all.
 
 // WeaponValues is a weapon's dice and damage type (oedit.c:360-431).
 // Values[0] ("modifier to hitroll... doesn't seem to be used") is the slot
@@ -94,38 +102,49 @@ type ArmorValues struct {
 // supports, or reports ok=false when a slot the type does not use is
 // nonzero — the "junk in the unused slot" case §4.3 says must fall back to
 // the raw form rather than silently discard what is there.
+//
+// The slot numbers are game/objvalues.go's, reached through a throwaway
+// game.Object rather than repeated here. That indirection is the point: it
+// is what stops this file and the game disagreeing about which slot a
+// wand's spell is in.
 func TypedValues(objType game.ItemType, values [game.NumObjValues]int32) (typed any, unusedNonzero bool, ok bool) {
+	obj := &game.Object{Type: objType, Values: values}
+
 	switch objType {
 	case game.ItemWeapon:
+		// Value 0 is the slot a weapon does not use.
 		if values[0] != 0 {
 			return nil, true, false
 		}
-		attackName, known := game.NameByValue(values[3], game.YamlAttackTypeNames())
+		w, _ := obj.WeaponValues()
+		attackName, known := game.NameByValue(w.Damage.Number(), game.YamlAttackTypeNames())
 		if !known {
 			return nil, false, false
 		}
 		return WeaponValues{
-			Dice: formatDice(values[1], values[2]), DamageType: attackName,
+			Dice: formatDice(w.Dice.Number, w.Dice.Size), DamageType: attackName,
 		}, false, true
 
 	case game.ItemArmor:
 		if values[1] != 0 || values[2] != 0 || values[3] != 0 {
 			return nil, true, false
 		}
-		return ArmorValues{ACApply: values[0]}, false, true
+		a, _ := obj.ArmorValues()
+		return ArmorValues{ACApply: a.ACApply}, false, true
 
 	case game.ItemContainer:
+		// Value 3 is the corpse marker; a corpse is not a typed container.
 		if values[3] != 0 {
 			return nil, true, false
 		}
-		flags := game.SetFromRaw[game.ContainerFlag](uint64(uint32(values[1]))) //nolint:gosec // four-bit container flag field, reinterpreted not truncated
+		c, _ := obj.ContainerValues()
 		return ContainerValues{
-			Capacity:  values[0],
-			Closeable: flags.Has(game.ContCloseable),
-			Pickproof: flags.Has(game.ContPickproof),
-			Closed:    flags.Has(game.ContClosed),
-			Locked:    flags.Has(game.ContLocked),
-			Key:       values[2],
+			Capacity:  c.Capacity,
+			Closeable: c.Flags.Has(game.ContCloseable),
+			Pickproof: c.Flags.Has(game.ContPickproof),
+			Closed:    c.Flags.Has(game.ContClosed),
+			Locked:    c.Flags.Has(game.ContLocked),
+			Key:       int32(c.Key),
 		}, false, true
 
 	case game.ItemDrinkCon:
@@ -139,25 +158,28 @@ func TypedValues(objType game.ItemType, values [game.NumObjValues]int32) (typed 
 		if values[3] != 0 && values[3] != 1 {
 			return nil, true, false
 		}
-		liquid, known := game.NameByValue(values[2], game.YamlLiquidNames())
+		d, _ := obj.DrinkValues()
+		liquid, known := game.NameByValue(d.Liquid.Number(), game.YamlLiquidNames())
 		if !known {
 			return nil, false, false
 		}
 		return DrinkValues{
-			Capacity: values[0], Current: values[1], Liquid: liquid,
-			Poisoned: values[3] != 0,
+			Capacity: d.Capacity, Current: d.Filled, Liquid: liquid,
+			Poisoned: d.Poisoned,
 		}, false, true
 
 	case game.ItemLight:
 		if values[0] != 0 || values[1] != 0 || values[3] != 0 {
 			return nil, true, false
 		}
-		return LightValues{Hours: values[2]}, false, true
+		l, _ := obj.LightValues()
+		return LightValues{Hours: l.Hours}, false, true
 
 	case game.ItemWand, game.ItemStaff:
+		c, _ := obj.ChargesValues()
 		return ChargesValues{
-			Level: values[0], Max: values[1], Remaining: values[2],
-			Spell: formatSpellNumber(values[3]),
+			Level: c.Level, Max: c.Max, Remaining: c.Remaining,
+			Spell: formatSpellNumber(c.Spell),
 		}, false, true
 	}
 	return nil, false, false
@@ -176,12 +198,14 @@ func ValuesFromWeapon(v WeaponValues) (values [game.NumObjValues]int32, ok bool)
 	if !dok || !aok {
 		return values, false
 	}
-	values[1], values[2], values[3] = num, size, attack
-	return values, true
+	return game.ValuesOfWeapon(game.WeaponValues{
+		Dice:   game.Dice{Number: num, Size: size},
+		Damage: game.DamageType(attack),
+	}), true
 }
 
 func ValuesFromArmor(v ArmorValues) [game.NumObjValues]int32 {
-	return [game.NumObjValues]int32{v.ACApply, 0, 0, 0}
+	return game.ValuesOfArmor(game.ArmorValues{ACApply: v.ACApply})
 }
 
 func ValuesFromContainer(v ContainerValues) [game.NumObjValues]int32 {
@@ -198,7 +222,12 @@ func ValuesFromContainer(v ContainerValues) [game.NumObjValues]int32 {
 	if v.Locked {
 		flags = flags.With(game.ContLocked)
 	}
-	return [game.NumObjValues]int32{v.Capacity, int32(flags.Raw()), v.Key, 0} //nolint:gosec // four-bit field
+	// The typed form has no corpse marker, by construction: TypedValues
+	// refuses a container whose fourth value is set, so a document that
+	// spells out a container block describes one that is not a corpse.
+	return game.ValuesOfContainer(game.ContainerValues{
+		Capacity: v.Capacity, Flags: flags, Key: game.ObjVnum(v.Key),
+	})
 }
 
 func ValuesFromDrink(v DrinkValues) (values [game.NumObjValues]int32, ok bool) {
@@ -206,15 +235,14 @@ func ValuesFromDrink(v DrinkValues) (values [game.NumObjValues]int32, ok bool) {
 	if !lok {
 		return values, false
 	}
-	poisoned := int32(0)
-	if v.Poisoned {
-		poisoned = 1
-	}
-	return [game.NumObjValues]int32{v.Capacity, v.Current, liquid, poisoned}, true
+	return game.ValuesOfDrink(game.DrinkValues{
+		Capacity: v.Capacity, Filled: v.Current,
+		Liquid: game.Liquid(liquid), Poisoned: v.Poisoned,
+	}), true
 }
 
 func ValuesFromLight(v LightValues) [game.NumObjValues]int32 {
-	return [game.NumObjValues]int32{0, 0, v.Hours, 0}
+	return game.ValuesOfLight(game.LightValues{Hours: v.Hours})
 }
 
 func ValuesFromCharges(v ChargesValues) (values [game.NumObjValues]int32, ok bool) {
@@ -222,7 +250,9 @@ func ValuesFromCharges(v ChargesValues) (values [game.NumObjValues]int32, ok boo
 	if !sok {
 		return values, false
 	}
-	return [game.NumObjValues]int32{v.Level, v.Max, v.Remaining, spell}, true
+	return game.ValuesOfCharges(game.ChargesValues{
+		Level: v.Level, Max: v.Max, Remaining: v.Remaining, Spell: spell,
+	}), true
 }
 
 // RawValues decodes obj.Values into the untyped [4]int32 form every object
@@ -253,12 +283,5 @@ func parseDice(s string) (num, size int32, ok bool) {
 // wrappers rather than replaced at every call site, and shared (not
 // duplicated) with internal/persist/player/yaml, which needs exactly the
 // same name<->number rule for a player's skills.
-//
-// They return and take the stored int32 rather than a game.SpellID, because
-// their callers are object value slots -- a wand's spell lives in
-// Values[3] -- and those are still [4]int32 until step 3 types them.
-func parseSpellNumber(s string) (int32, bool) {
-	n, ok := game.SpellNumberFromNameOrNumber(s)
-	return n.Number(), ok
-}
-func formatSpellNumber(n int32) string { return game.SpellNameOrNumber(game.SpellID(n)) }
+func parseSpellNumber(s string) (game.SpellID, bool) { return game.SpellNumberFromNameOrNumber(s) }
+func formatSpellNumber(n game.SpellID) string        { return game.SpellNameOrNumber(n) }
