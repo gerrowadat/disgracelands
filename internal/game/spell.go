@@ -136,22 +136,45 @@ func SpellName(number SpellID) string {
 	return "!UNUSED!"
 }
 
-// SpellNumberByName finds a spell by name, matching a prefix as the C's
-// find_skill_num does — so `cast 'magic mis'` works.
+// SpellNumberByName finds a spell by name, porting find_skill_num
+// (spell_parser.c) — so `cast 'magic mis'` works, and so does
+// `cast 'mag mis'`.
+//
+// The empty name is refused here, where find_skill_num would answer. That
+// is not a deviation, because the C cannot reach it: find_skill_num("")
+// skips is_abbrev (which rejects an empty arg1) and falls into the word
+// loop, which does not run at all — leaving ok TRUE and first2 empty, so
+// `ok && !*first2` holds and it returns the *first spell in the table* —
+// but do_cast reaches find_skill_num through `strtok(argument, "'")`
+// (spell_parser.c:604), and strtok skips leading delimiters, so `cast ”`
+// gets "Cast what where?" and an empty spell name is never handed over.
+// Refusing it is therefore a free choice, and returning the lowest-
+// numbered spell in the table is not the one to make.
+//
+// This port's ParseCastArgument does *not* reproduce that strtok
+// behaviour: `cast ”` yields an empty spell name here, which this then
+// refuses with do_cast's later "Cast what?!?" rather than its earlier
+// "Cast what where?". Same refusal, different sentence, in an edge case
+// nobody types on purpose. Out of scope for #355; see #358.
 func SpellNumberByName(name string) (SpellID, bool) {
 	name = strings.ToLower(strings.TrimSpace(name))
 	if name == "" {
 		return 0, false
 	}
 
-	// An exact match wins outright; otherwise the lowest-numbered prefix
-	// match, so the answer does not depend on map iteration order.
+	// An exact match wins outright; otherwise the lowest-numbered match,
+	// so the answer does not depend on map iteration order. The C has no
+	// exact-match preference — it takes the first index either rule
+	// matches — and the two agree because no spell name in the table is
+	// reachable from another's whole name by either rule. That is checked
+	// by a test rather than asserted here, because it is a property of the
+	// name table and the table can change.
 	best := SpellID(-1)
 	for number, info := range spellTable {
 		if info.Name == name {
 			return number, true
 		}
-		if strings.HasPrefix(info.Name, name) && (best < 0 || number < best) {
+		if matchesSkillName(name, info.Name) && (best < 0 || number < best) {
 			best = number
 		}
 	}
@@ -159,6 +182,52 @@ func SpellNumberByName(name string) (SpellID, bool) {
 		return 0, false
 	}
 	return best, true
+}
+
+// matchesSkillName is find_skill_num's two matching rules for one table
+// entry (spell_parser.c). Both arguments are already lower-cased.
+//
+// The first rule is `is_abbrev(name, spell_info[index].name)`: the whole
+// typed string against the whole spell name, so "magic mis" reaches
+// "magic missile".
+//
+// The second is the one this port was missing for the whole of its life,
+// and it is the one a caster actually types. It walks both strings a word
+// at a time and requires each typed word to abbreviate the spell-name word
+// in the *same position*, so "mag mis" reaches "magic missile", "b h"
+// reaches "burning hands" and "det inv" reaches "detect invisibility".
+// 1,145 of the 1,549 per-word abbreviations of the game's own 71 spell
+// names were refused without it; see docs/investigations/partial-matching.md
+// and #355.
+func matchesSkillName(typed, spell string) bool {
+	if isAbbrev(typed, spell) {
+		return true
+	}
+
+	// The C's loop stops when *either* string runs out, and its verdict is
+	// `ok && !*first2` — the typed string, not the spell name. So a query
+	// with fewer words than the name matches ("cure" reaches "cure light"
+	// through this branch as well as through is_abbrev) and one with more
+	// words does not, however well the words it does have line up.
+	typedWords, spellWords := strings.Fields(typed), strings.Fields(spell)
+	if len(typedWords) > len(spellWords) {
+		return false
+	}
+	for i, word := range typedWords {
+		if !isAbbrev(word, spellWords[i]) {
+			return false
+		}
+	}
+	return true
+}
+
+// isAbbrev is is_abbrev (interpreter.c:1057): arg1 is a non-empty prefix
+// of arg2, case-insensitively. Both arguments here are already lower-cased,
+// so this is the prefix test and the emptiness rule and nothing else — the
+// emptiness rule being the part worth naming, since it is what stops every
+// spell in the table matching a typed word that is not there.
+func isAbbrev(arg1, arg2 string) bool {
+	return arg1 != "" && strings.HasPrefix(arg2, arg1)
 }
 
 // SpellNameOrNumber names a spell/skill number via SpellName, or formats it
