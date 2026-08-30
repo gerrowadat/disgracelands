@@ -163,7 +163,7 @@ func TestSprintTypeMatchesTheTables(t *testing.T) {
 	if got := SprintType(ItemWeapon.Number(), ItemTypeNames); got != "WEAPON" {
 		t.Errorf("item type 5 is %q", got)
 	}
-	if got := SprintType(ApplyHitRoll, ApplyTypeNames()); got != "HITROLL" {
+	if got := SprintType(ApplyHitRoll.Number(), ApplyTypeNames()); got != "HITROLL" {
 		t.Errorf("apply 18 is %q", got)
 	}
 	if got := SprintType(99, ApplyTypeNames()); got != "UNDEFINED" {

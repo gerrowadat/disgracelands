@@ -135,7 +135,7 @@ func (l *loader) parseObject(r *reader, vnum game.ObjVnum) (*game.ObjDef, error)
 				return nil, fmt.Errorf("%s: %w", r.where(what), err)
 			}
 			obj.Affects = append(obj.Affects, game.ObjAffect{
-				Location: pair[0], Modifier: pair[1],
+				Location: game.Apply(pair[0]), Modifier: pair[1],
 			})
 
 		case '#', '$':

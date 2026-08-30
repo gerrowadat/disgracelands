@@ -214,7 +214,7 @@ type Affect struct {
 	// Modifier is added to whatever Location names.
 	Modifier int32
 	// Location is the APPLY_* constant the modifier applies to.
-	Location int32
+	Location Apply
 	// Bits are the AFF_* flags the affect sets while it lasts.
 	Bits AffectFlags
 }

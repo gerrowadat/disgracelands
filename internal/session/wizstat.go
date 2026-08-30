@@ -326,7 +326,7 @@ func (c *Context) statObject(obj *game.Object) {
 		}
 		found++
 		fmt.Fprintf(&b, " %+d to %s", aff.Modifier,
-			game.SprintType(aff.Location, game.ApplyTypeNames()))
+			game.SprintType(aff.Location.Number(), game.ApplyTypeNames()))
 	}
 	if found == 0 {
 		b.WriteString(" None")
@@ -508,7 +508,7 @@ func (c *Context) statCharacter(k *game.Character) {
 		modifier := ""
 		if aff.Modifier != 0 {
 			modifier = fmt.Sprintf("%+d to %s", aff.Modifier,
-				game.SprintType(aff.Location, game.ApplyTypeNames()))
+				game.SprintType(aff.Location.Number(), game.ApplyTypeNames()))
 			line += modifier
 		}
 		if !aff.Bits.Empty() {

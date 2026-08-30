@@ -198,7 +198,7 @@ func TestSameObjectIgnoresCharges(t *testing.T) {
 		t.Error("two objects with different costs are the same object")
 	}
 	b.Cost = 100
-	b.Affects = []ObjAffect{{Location: 1, Modifier: 2}}
+	b.Affects = []ObjAffect{{Location: Apply(1), Modifier: 2}}
 	if SameObject(a, b) {
 		t.Error("two objects with different affects are the same object")
 	}

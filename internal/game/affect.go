@@ -18,33 +18,47 @@ package game
 // get the arithmetic right when affects can be added and removed in any
 // order.
 
+// Apply is where an affect's modifier lands — an APPLY_* location from
+// structs.h:392. The numbers are in every player record and every object
+// file, so they are the format as much as an enumeration.
+//
+// The zero value *is* a member, and a meaningful one: ApplyNone is how the
+// C says "this affect slot modifies nothing", which is what makes an empty
+// slot in a two-element array distinguishable from one that changes
+// strength by zero.
+type Apply int
+
+// Number is the location's stored number, for the file formats and
+// apply_types[]. The narrowing point, as Class.Number is.
+func (a Apply) Number() int32 { return int32(a) } //nolint:gosec // twenty-five locations; the format's width
+
 // APPLY_* locations, from structs.h:392.
 const (
-	ApplyNone         int32 = 0
-	ApplyStr          int32 = 1
-	ApplyDex          int32 = 2
-	ApplyInt          int32 = 3
-	ApplyWis          int32 = 4
-	ApplyCon          int32 = 5
-	ApplyCha          int32 = 6
-	ApplyClass        int32 = 7 // reserved in the C too
-	ApplyLevel        int32 = 8 // reserved in the C too
-	ApplyAge          int32 = 9
-	ApplyCharWeight   int32 = 10
-	ApplyCharHeight   int32 = 11
-	ApplyMana         int32 = 12
-	ApplyHit          int32 = 13
-	ApplyMove         int32 = 14
-	ApplyGold         int32 = 15 // reserved in the C too
-	ApplyExp          int32 = 16 // reserved in the C too
-	ApplyAC           int32 = 17
-	ApplyHitRoll      int32 = 18
-	ApplyDamRoll      int32 = 19
-	ApplySaveParalyse int32 = 20
-	ApplySaveRod      int32 = 21
-	ApplySavePetrify  int32 = 22
-	ApplySaveBreath   int32 = 23
-	ApplySaveSpell    int32 = 24
+	ApplyNone         Apply = 0
+	ApplyStr          Apply = 1
+	ApplyDex          Apply = 2
+	ApplyInt          Apply = 3
+	ApplyWis          Apply = 4
+	ApplyCon          Apply = 5
+	ApplyCha          Apply = 6
+	ApplyClass        Apply = 7 // reserved in the C too
+	ApplyLevel        Apply = 8 // reserved in the C too
+	ApplyAge          Apply = 9
+	ApplyCharWeight   Apply = 10
+	ApplyCharHeight   Apply = 11
+	ApplyMana         Apply = 12
+	ApplyHit          Apply = 13
+	ApplyMove         Apply = 14
+	ApplyGold         Apply = 15 // reserved in the C too
+	ApplyExp          Apply = 16 // reserved in the C too
+	ApplyAC           Apply = 17
+	ApplyHitRoll      Apply = 18
+	ApplyDamRoll      Apply = 19
+	ApplySaveParalyse Apply = 20
+	ApplySaveRod      Apply = 21
+	ApplySavePetrify  Apply = 22
+	ApplySaveBreath   Apply = 23
+	ApplySaveSpell    Apply = 24
 )
 
 // MaxSpellAffects is MAX_SPELL_AFFECTS: how many separate modifiers one spell
@@ -218,7 +232,7 @@ func RecomputeAffects(rec *PlayerRecord) {
 
 // applyModifier adds one affect's modifier to whatever it names, porting the
 // switch in affect_modify.
-func applyModifier(rec *PlayerRecord, location, modifier int32) {
+func applyModifier(rec *PlayerRecord, location Apply, modifier int32) {
 	switch location {
 	case ApplyStr:
 		rec.Abilities.Strength += modifier

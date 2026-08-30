@@ -217,7 +217,7 @@ func (l *loader) objFromDoc(path string, od objDoc) *game.ObjDef {
 		if !ok {
 			l.errorf("%s: object #%d: unknown affect location %q", path, od.Vnum, ad.Location)
 		}
-		obj.Affects = append(obj.Affects, game.ObjAffect{Location: loc, Modifier: ad.Modifier})
+		obj.Affects = append(obj.Affects, game.ObjAffect{Location: game.Apply(loc), Modifier: ad.Modifier})
 	}
 	for _, ed := range od.ExtraDescs {
 		obj.ExtraDescs = append(obj.ExtraDescs, game.ExtraDesc{
