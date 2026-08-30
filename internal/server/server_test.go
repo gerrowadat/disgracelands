@@ -329,7 +329,7 @@ func testWorld() *game.Live {
 			Weight:      50,
 			Values: [game.NumObjValues]int32{
 				200,
-				int32(game.ContCloseable | game.ContClosed | game.ContLocked),
+				int32(game.NewSet(game.ContCloseable, game.ContClosed, game.ContLocked).Raw()),
 				int32(testKeyVnum),
 				0,
 			},

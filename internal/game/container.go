@@ -17,14 +17,29 @@ import "strings"
 // container's capacity is value 0 and its lock state is value 1, and writing
 // that down once is better than writing `Values[1]` in six places and hoping.
 
-// Container flags, from structs.h:420. These live in value 1, not in the
-// object's extra flags, which is why a container's "closed" bit and its
-// "glowing" bit are stored in completely different places.
+// ContainerFlag is one of the CONT_* bits from structs.h:420, and
+// ContainerFlagSet is a container's set of them.
+//
+// These live in value 1, not in the object's extra flags, which is why a
+// container's "closed" bit and its "glowing" bit are stored in completely
+// different places — and why this domain is a set over an int32 *value
+// slot* rather than over a field of its own. Bit indices, not masks:
+// docs/proposals/idiomatic-go.md §4.1, and §4.1.1 for the trap.
+type ContainerFlag int
+
+// ContainerFlagSet is a set of ContainerFlag.
+//
+// Named for the set rather than as a plural because the accessor below is
+// already called ContainerFlags, and has been since the port: a container's
+// flags are computed from a value slot rather than stored, so the method is
+// the thing callers reach for and it keeps the name.
+type ContainerFlagSet = Set[ContainerFlag]
+
 const (
-	ContCloseable Flags = 1 << 0
-	ContPickproof Flags = 1 << 1
-	ContClosed    Flags = 1 << 2
-	ContLocked    Flags = 1 << 3
+	ContCloseable ContainerFlag = 0
+	ContPickproof ContainerFlag = 1
+	ContClosed    ContainerFlag = 2
+	ContLocked    ContainerFlag = 3
 )
 
 // The value slots a container uses.
@@ -59,27 +74,27 @@ func (o *Object) Capacity() int32 {
 // The C stores these in a signed int and reads them with IS_SET, so a corpse's
 // -1 in value 3 would look like every flag set if it were read from here. It
 // is not; only value 1 is a bitfield.
-func (o *Object) ContainerFlags() Flags {
+func (o *Object) ContainerFlags() ContainerFlagSet {
 	if o == nil {
-		return 0
+		return ContainerFlagSet{}
 	}
-	return Flags(uint32(o.Values[containerFlagsValue])) //nolint:gosec // a bitfield, read as written
+	return SetFromRaw[ContainerFlag](uint64(uint32(o.Values[containerFlagsValue]))) //nolint:gosec // a bitfield, read as written
 }
 
 // SetContainerFlag sets bits in value 1.
-func (o *Object) SetContainerFlag(mask Flags) {
+func (o *Object) SetContainerFlag(flags ...ContainerFlag) {
 	if o == nil {
 		return
 	}
-	o.Values[containerFlagsValue] = int32(o.ContainerFlags().Set(mask)) //nolint:gosec // four bits
+	o.Values[containerFlagsValue] = int32(o.ContainerFlags().With(flags...).Raw()) //nolint:gosec // four bits
 }
 
 // ClearContainerFlag clears bits in value 1.
-func (o *Object) ClearContainerFlag(mask Flags) {
+func (o *Object) ClearContainerFlag(flags ...ContainerFlag) {
 	if o == nil {
 		return
 	}
-	o.Values[containerFlagsValue] = int32(o.ContainerFlags().Clear(mask)) //nolint:gosec // four bits
+	o.Values[containerFlagsValue] = int32(o.ContainerFlags().Without(flags...).Raw()) //nolint:gosec // four bits
 }
 
 // ContainerClosed reports whether the container is shut.

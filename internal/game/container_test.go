@@ -77,9 +77,14 @@ func TestContainerFlagsLiveInValueOne(t *testing.T) {
 		t.Error("a container with no flags starts closed or locked")
 	}
 
-	chest.SetContainerFlag(ContClosed | ContLocked)
-	if chest.Values[containerFlagsValue] != int32(ContClosed|ContLocked) {
-		t.Errorf("value 1 is %d, want %d", chest.Values[containerFlagsValue], ContClosed|ContLocked)
+	chest.SetContainerFlag(ContClosed, ContLocked)
+	// The literal 12 rather than a computed mask, on purpose: value 1 is
+	// the *file format*, so what this test is for is that CONT_CLOSED and
+	// CONT_LOCKED are still bits 2 and 3 in the slot the C reads. A mask
+	// built from the same two constants the implementation uses would
+	// agree with itself whatever they were.
+	if want := int32(1<<ContClosed | 1<<ContLocked); chest.Values[containerFlagsValue] != want || want != 12 {
+		t.Errorf("value 1 is %d, want %d (bits 2 and 3)", chest.Values[containerFlagsValue], want)
 	}
 	if !chest.ContainerClosed() || !chest.ContainerLocked() {
 		t.Error("the flags did not take")

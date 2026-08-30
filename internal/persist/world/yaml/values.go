@@ -118,7 +118,7 @@ func TypedValues(objType int32, values [game.NumObjValues]int32) (typed any, unu
 		if values[3] != 0 {
 			return nil, true, false
 		}
-		flags := game.Flags(values[1]) //nolint:gosec // four-bit container flag field
+		flags := game.SetFromRaw[game.ContainerFlag](uint64(uint32(values[1]))) //nolint:gosec // four-bit container flag field, reinterpreted not truncated
 		return ContainerValues{
 			Capacity:  values[0],
 			Closeable: flags.Has(game.ContCloseable),
@@ -185,20 +185,20 @@ func ValuesFromArmor(v ArmorValues) [game.NumObjValues]int32 {
 }
 
 func ValuesFromContainer(v ContainerValues) [game.NumObjValues]int32 {
-	var flags game.Flags
+	var flags game.ContainerFlagSet
 	if v.Closeable {
-		flags = flags.Set(game.ContCloseable)
+		flags = flags.With(game.ContCloseable)
 	}
 	if v.Pickproof {
-		flags = flags.Set(game.ContPickproof)
+		flags = flags.With(game.ContPickproof)
 	}
 	if v.Closed {
-		flags = flags.Set(game.ContClosed)
+		flags = flags.With(game.ContClosed)
 	}
 	if v.Locked {
-		flags = flags.Set(game.ContLocked)
+		flags = flags.With(game.ContLocked)
 	}
-	return [game.NumObjValues]int32{v.Capacity, int32(flags), v.Key, 0} //nolint:gosec // four-bit field
+	return [game.NumObjValues]int32{v.Capacity, int32(flags.Raw()), v.Key, 0} //nolint:gosec // four-bit field
 }
 
 func ValuesFromDrink(v DrinkValues) (values [game.NumObjValues]int32, ok bool) {
