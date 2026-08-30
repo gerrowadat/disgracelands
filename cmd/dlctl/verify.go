@@ -141,6 +141,9 @@ func verifyAgainst(types []dirType, left, right loadOptions) error {
 		if t == typeState {
 			reportOrphanHouses(out, l, r)
 		}
+		if t == typePfile {
+			reportOrphanPlayerFiles(out, l, r)
+		}
 	}
 
 	if len(failed) > 0 {
@@ -189,6 +192,39 @@ func reportOrphanHouses(out *bufio.Writer, left, right loadOptions) {
 			"record names: %s.\n", "", side.base, len(orphans), strings.Join(orphans, ", "))
 		_, _ = fmt.Fprintf(out, "%-8s       Nothing reads one — every reader starts from the "+
 			"control records — so it is not part of the comparison, and import drops it.\n", "")
+	}
+}
+
+// reportOrphanPlayerFiles prints, beside the pfile verdict, any rent or
+// alias file either directory holds for a character its roster does not
+// have -- and any file in those directories that is not a per-character
+// file at all.
+//
+// The same footnote-not-difference reasoning as reportOrphanHouses above,
+// and the same blindness it was written to fix: this comparison enumerates
+// characters from the roster on both sides, exactly like the importer it
+// exists to check, so a file belonging to nobody is invisible to it and to
+// the import that dropped it (#287). orphanPlayerFiles' doc comment argues
+// why it must stay a note.
+func reportOrphanPlayerFiles(out *bufio.Writer, left, right loadOptions) {
+	for _, side := range []loadOptions{left, right} {
+		orphans, others, err := orphanPlayerFiles(side)
+		if err != nil {
+			_, _ = fmt.Fprintf(out, "%-8s (could not check %s for orphaned rent/alias files: %v)\n",
+				"", side.base, err)
+			continue
+		}
+		if len(orphans) > 0 {
+			_, _ = fmt.Fprintf(out, "%-8s note: %s holds %d rent/alias file(s) for character(s) "+
+				"its roster does not have: %s.\n", "", side.base, len(orphans), strings.Join(orphans, ", "))
+			_, _ = fmt.Fprintf(out, "%-8s       Nothing reads one — both are read only for a "+
+				"character the pfile has already loaded — so it is not part of the "+
+				"comparison, and import drops it.\n", "")
+		}
+		if len(others) > 0 {
+			_, _ = fmt.Fprintf(out, "%-8s note: %s holds %d file(s) under plrobjs/ or plralias/ "+
+				"that are not per-character files: %s.\n", "", side.base, len(others), strings.Join(others, ", "))
+		}
 	}
 }
 

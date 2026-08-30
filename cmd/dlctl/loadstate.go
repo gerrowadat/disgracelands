@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
@@ -215,6 +216,83 @@ func openAliasStore(store player.Store, dir string, o loadOptions) *binary.Alias
 		return nil
 	}
 	return as
+}
+
+// orphanPlayerFiles lists what one side's plrobjs/ and plralias/ hold that
+// belongs to no character on its roster, and what they hold that is not a
+// per-character file at all.
+//
+// Exactly the same judgement as orphanHouseContents above, one subsystem
+// over: it is not part of pfileState, because no server reads either file
+// except for a character the pfile has already loaded (nanny's CON_MENU
+// case '1' calls read_aliases and then Crash_load, interpreter.c:1646 and
+// :1673). Two directories that disagree about them still load to the same
+// state, and making it a difference would stop `dlctl import` -- which
+// verifies itself and refuses to stamp a directory that differs -- from
+// converting any archive whose operator never ran plrobjs/purgeobjs. So it
+// is reported beside the verdict rather than inside it (#287).
+//
+// A yaml side has none by construction and is not looked at: a character's
+// rent file and aliases are fields of their own document
+// (data-format.md §9), so a file belonging to nobody has nowhere to be.
+func orphanPlayerFiles(o loadOptions) (orphans, others []string, err error) {
+	dir, err := resolveDir(typePfile, o.base, o.format)
+	if err != nil {
+		return nil, nil, err
+	}
+	store, err := player.Open(o.format, player.Config{Dir: dir, ReadOnly: true})
+	if err != nil {
+		return nil, nil, err
+	}
+	defer func() { _ = store.Close() }()
+	// A store that carries objects itself is one of the formats that keeps
+	// everything in the character's own file; openAliasStore uses the same
+	// test for the same reason.
+	if _, ok := store.(player.ObjectStore); ok {
+		return nil, nil, nil
+	}
+
+	roster := map[string]bool{}
+	for entry, lerr := range store.List(context.Background()) {
+		if lerr != nil {
+			return nil, nil, lerr
+		}
+		roster[strings.ToLower(strings.TrimSpace(entry.Name))] = true
+	}
+
+	objsDir, _ := resolveSubdir(o.objsDir, dir, "plrobjs")
+	objs, err := binary.NewObjectStore(player.Config{Dir: dir, ObjectsDir: objsDir, ReadOnly: true})
+	if err != nil {
+		return nil, nil, err
+	}
+	objFiles, err := objs.ObjectFiles()
+	if err != nil {
+		return nil, nil, err
+	}
+	aliasDir, _ := resolveSubdir(o.aliasDir, dir, "plralias")
+	aliases, err := binary.NewAliasStore(player.Config{Dir: dir, AliasDir: aliasDir, ReadOnly: true})
+	if err != nil {
+		return nil, nil, err
+	}
+	aliasFiles, err := aliases.AliasFiles()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	for _, f := range []struct {
+		suffix string
+		files  binary.Files
+	}{{"objs", objFiles}, {"alias", aliasFiles}} {
+		for _, name := range f.files.Names {
+			if !roster[name] {
+				orphans = append(orphans, name+"."+f.suffix)
+			}
+		}
+		others = append(others, f.files.Others...)
+	}
+	sort.Strings(orphans)
+	sort.Strings(others)
+	return orphans, others, nil
 }
 
 // stateState is the six subsystems `--type=state` covers, in one value.
