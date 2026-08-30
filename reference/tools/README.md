@@ -114,6 +114,34 @@ wrong. Every oracle written so far has caught at least one real mistake.
   test can feed it the port's own spell table and the two cannot drift apart
   the way they would if the names were duplicated here.
 
+- **`castoracle.c`** — `do_cast`'s argument parsing (`spell_parser.c`), plus
+  enough of `command_interpreter` to produce the argument it actually
+  receives. It takes a name table like `skilloracle` and then whole *typed
+  lines*, command word included, and prints what each one does: which
+  refusal, or which spell at which target.
+
+  The command word is included because what it does to the argument is half
+  of what is being tested. `command_interpreter` does
+  `line = any_one_arg(argument, arg)`, and `any_one_arg` returns a pointer
+  to the character *after* the word it copied — which is the space. So
+  `do_cast` is handed `" 'magic missile' fido"` with a leading space, and
+  because `strtok` skips leading *delimiters* (and a space is not one), its
+  first call returns that space and its **second** returns the spell name.
+
+  Those two facts only make sense together, which is what makes the function
+  so easy to read wrong: assume the argument has no leading space and the
+  same code appears to return the spell name first and the target second —
+  i.e. to cast the target. That prediction is obviously false, which ought to
+  be a signal that the reading is wrong, and is easy to argue away instead.
+  It was read that way twice here before anybody compiled it.
+
+  Writing this file found five differences nobody had noticed, four of them
+  fixed and two documented (#358). The one worth naming: **an unterminated
+  quote is not an error.** `cast 'armor` casts armor on the real server,
+  because `strtok`'s second call runs to the end of the string when it finds
+  no closing delimiter. This port refused it, and a test asserted the
+  refusal.
+
 If you are about to port anything with a division, a cast, or a comment
 describing numbers in it, the next file in this directory is probably the one
 you are about to write. `docs/developer.md` has the pattern.
