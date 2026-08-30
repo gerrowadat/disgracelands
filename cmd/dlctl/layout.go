@@ -8,11 +8,14 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"sort"
 	"strings"
 
 	"github.com/gerrowadat/disgracelands/internal/config"
+	"github.com/gerrowadat/disgracelands/internal/persist/player/ascii"
+	"github.com/gerrowadat/disgracelands/internal/persist/player/binary"
 )
 
 // dirType is one of dlctl's own --type values: which subsystem a verb
@@ -118,6 +121,104 @@ var classicDirs = map[dirType]string{
 var classicPlayerDirs = map[string]string{
 	"binary": "etc",
 	"ascii":  "pfiles",
+}
+
+// classicPlayerMarkers is the file whose presence proves a roster of that
+// format is really there: the C's own `etc/players` database, and this
+// port's `pfiles/plr_index`. Used by detectPlayerFormat, which is what
+// stops the one-pass import silently converting nobody (#314).
+var classicPlayerMarkers = map[string]string{
+	"binary": filepath.Join("etc", binary.FileName),
+	"ascii":  filepath.Join("pfiles", ascii.IndexFile),
+}
+
+// detectPlayerFormat works out which legacy roster a source directory
+// holds, for the one-pass import where no --from-format was given.
+//
+// The roster is the only subsystem with two legacy source formats, and the
+// two live in different directories with differently-named index files, so
+// the layout answers the question on its own — there is nothing to guess
+// at. What there *was*, before #314, was a default of binary applied
+// regardless: an ascii tree has no etc/players, so the importer opened an
+// empty roster, converted nobody, reported "imported 0 character(s)" and
+// exited 0, with the verify pass agreeing that an empty roster matched an
+// empty roster.
+//
+// found is false when there is no roster of either kind, which is not an
+// error and is a real, checked-in case: examples/stock/binary is a fresh
+// stock install with nobody in it, and examples/mini/binary has no etc/ at
+// all. The caller falls back to the historical default and imports
+// nothing — but says out loud that it found no roster, which is the part
+// that was missing. A conversion that quietly drops every player is worth
+// one line of output.
+//
+// Both present is an error, because picking one would be picking which
+// half of somebody's players to lose.
+func detectPlayerFormat(base string) (format string, found bool, err error) {
+	var seen []string
+	for _, f := range sortedKeysOf(classicPlayerMarkers) {
+		if _, err := os.Stat(filepath.Join(base, classicPlayerMarkers[f])); err == nil {
+			seen = append(seen, f)
+		}
+	}
+
+	switch len(seen) {
+	case 1:
+		return seen[0], true, nil
+	case 0:
+		return binary.FormatName, false, nil
+	default:
+		return "", false, fmt.Errorf(
+			"%s holds both a %s and a %s roster; pass --from-format=binary or "+
+				"--from-format=ascii to say which one to import",
+			base, classicPlayerMarkers["binary"], classicPlayerMarkers["ascii"])
+	}
+}
+
+// playerRosterMarkers is the two paths detectPlayerFormat looks for, for a
+// caller that wants to name them in a message.
+func playerRosterMarkers() (binaryPath, asciiPath string) {
+	return classicPlayerMarkers["binary"], classicPlayerMarkers["ascii"]
+}
+
+// isPlayerFormat reports whether a format name is a legacy roster format.
+func isPlayerFormat(format string) bool {
+	_, ok := classicPlayerDirs[format]
+	return ok
+}
+
+// formatForType decides which subsystem one --from-format/--format flag is
+// actually about.
+//
+// There is a single flag and seven subsystems, and a format name says
+// which of the two families it belongs to: `binary` and `ascii` are roster
+// formats and mean nothing to the other six, `classic` is the other six's
+// and means nothing to the roster. So the flag applies to whichever family
+// it names, and is blank for the rest — leaving them to their own
+// defaults, which for the roster means detectPlayerFormat reading the
+// layout.
+//
+// Before #314 this rule existed nowhere. cmdImportAll blanked the flag for
+// every type including the one it was for, so the documented
+// `--from-format=ascii` was accepted and discarded; verifyImport did the
+// opposite, handing "ascii" to every type including world, so the same
+// command's verify pass then failed to read the world. One rule in one
+// place, used by both.
+func formatForType(t dirType, explicit string) string {
+	// yaml is not in either family: it is every subsystem's format, and is
+	// what the destination side of a verify is named with. Blanking it
+	// sends the comparison off to detectPlayerFormat, which finds no
+	// legacy roster in a yaml directory and falls back to binary — so the
+	// converted players read as an empty binary roster and every one of
+	// them is reported missing. Caught by TestImportConvertsEndToEnd on
+	// examples/torture, the one fixture with a roster in it.
+	if explicit == "" || explicit == "yaml" {
+		return explicit
+	}
+	if isPlayerFormat(explicit) != (t == typePfile) {
+		return ""
+	}
+	return explicit
 }
 
 // classicFilenames names the file inside the classic-side directory a type

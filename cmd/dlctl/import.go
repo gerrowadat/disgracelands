@@ -224,7 +224,13 @@ func cmdImportAll(o importOptions) error {
 	for _, t := range allTypes {
 		fmt.Printf("== %s import ==\n", t)
 		step := o
-		step.fromFormat = "" // let each type pick its own default
+		// Per type, because one --from-format cannot mean the right thing
+		// for seven subsystems at once — "classic" is not a roster format
+		// and "ascii" is not a world one. This used to be a flat `= ""`,
+		// which discarded the documented `--from-format=ascii` along with
+		// everything else and is what #314 is; formatForType is the rule,
+		// shared with the verify pass, which had the opposite bug.
+		step.fromFormat = formatForType(t, o.fromFormat)
 		if err := runImport(t, step); err != nil {
 			if !errors.Is(err, errQuiet) {
 				fmt.Fprintf(os.Stderr, "%s import: %v\n", t, err)
@@ -593,9 +599,27 @@ func reportDroppedEspecs(out *bufio.Writer, w *game.World) {
 // an archived tree has them beside etc/ rather than inside it) —
 // --from-objs-dir/--from-alias-dir override either guess.
 func importPfile(o importOptions, w io.Writer) error {
+	// No --from-format means "work it out from the layout", not "assume
+	// binary". The roster is the only subsystem with two legacy source
+	// formats and they live in differently-named directories with
+	// differently-named index files, so there is nothing to guess at —
+	// whereas assuming binary is what made a one-pass import of an ascii
+	// tree convert nobody, report success and exit 0 (#314).
 	fromFormat := o.fromFormat
+	var noRosterNote string
 	if fromFormat == "" {
-		fromFormat = binary.FormatName
+		detected, found, err := detectPlayerFormat(withDefaultBase(o.fromDir))
+		if err != nil {
+			return err
+		}
+		fromFormat = detected
+		if !found {
+			binaryPath, asciiPath := playerRosterMarkers()
+			noRosterNote = fmt.Sprintf(
+				"no roster found under %s: neither %s nor %s is there, so no characters "+
+					"will be imported. Pass --from-format if the roster is somewhere else.",
+				withDefaultBase(o.fromDir), binaryPath, asciiPath)
+		}
 	}
 	enc, ok := convert.Encodings[o.encName]
 	if !ok {
@@ -640,7 +664,7 @@ func importPfile(o importOptions, w io.Writer) error {
 
 	out := bufio.NewWriter(w)
 	defer func() { _ = out.Flush() }()
-	for _, note := range []string{objsNote, aliasNote} {
+	for _, note := range []string{noRosterNote, objsNote, aliasNote} {
 		if note != "" {
 			_, _ = fmt.Fprintln(out, note)
 		}

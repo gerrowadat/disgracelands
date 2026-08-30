@@ -555,6 +555,21 @@ chose. One pass converts the lot:
 they differ only at bytes 0x80–0x9F, which is exactly where the curly
 quotes a word processor inserts live, so the default is usually right.
 
+**The roster's own format is worked out from the layout**, so there is
+nothing to pass for it. A CircleMUD `lib/` keeps its roster in
+`etc/players`; a directory from this port before yaml-only keeps it in
+`pfiles/plr_index`. `import` looks for both and uses whichever is there.
+`--from-format=binary` or `--from-format=ascii` says which one to use, and
+is only *needed* for a tree that somehow holds both — which `import`
+refuses rather than guessing at, since choosing would be choosing which
+half of your players to lose.
+
+If it finds neither, it says so and imports nobody, which is the right
+answer for a `lib/` that never had a player in it. That line is worth
+reading: until #314 it was silent, so a roster it could not find looked
+exactly like a roster that was not there, and the verify pass agreed that
+an empty roster matched an empty roster.
+
 Unlike the directory-level converter this replaced, **the struct-dump
 formats are decoded rather than copied**. The boards, the mail, the house
 contents, the rent files and the house control file all come across as

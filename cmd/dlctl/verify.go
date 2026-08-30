@@ -73,7 +73,7 @@ func cmdVerify(args []string) error {
 		if err != nil {
 			return err
 		}
-		return verifyDecodes(t, *base, defaultFormat(t, *format))
+		return verifyDecodes(t, *base, defaultFormat(t, *format, *base))
 	}
 
 	enc, ok := convert.Encodings[*encName]
@@ -107,11 +107,28 @@ func cmdVerify(args []string) error {
 // everything else, and one --format cannot be both. Getting this wrong is
 // not subtle — `--format=classic` for a whole directory reports "unknown
 // player format" for pfile and nothing at all for the six that worked.
-func defaultFormat(t dirType, explicit string) string {
+// The roster is the one type whose classic-side default cannot be a
+// constant: binary and ascii are both legacy roster formats and they live
+// in different directories, so the answer comes from the layout of base.
+// Getting this wrong is what made `import`'s own verify pass report
+// "pfile identical" over a source it had read as an empty binary roster
+// and a destination it had converted nobody into — true, and useless
+// (#314).
+//
+// A base with no roster at all, or with both, falls back to binary rather
+// than failing: verify only reads, and reporting every character as
+// missing from a directory that has none is a fair answer to a comparison
+// nobody can make. Refusing ambiguity is the *import* side's job, where
+// choosing wrong destroys something, and detectPlayerFormat is where it
+// happens.
+func defaultFormat(t dirType, explicit, base string) string {
 	if explicit != "" {
 		return explicit
 	}
 	if t == typePfile {
+		if format, found, err := detectPlayerFormat(base); err == nil && found {
+			return format
+		}
 		return binary.FormatName
 	}
 	return "classic"
@@ -125,8 +142,8 @@ func verifyAgainst(types []dirType, left, right loadOptions) error {
 	var failed []string
 	for _, t := range types {
 		l, r := left, right
-		l.format = defaultFormat(t, left.format)
-		r.format = defaultFormat(t, right.format)
+		l.format = defaultFormat(t, formatForType(t, left.format), l.base)
+		r.format = defaultFormat(t, formatForType(t, right.format), r.base)
 		diffs, err := compareSubsystem(t, l, r)
 		switch {
 		case err != nil:

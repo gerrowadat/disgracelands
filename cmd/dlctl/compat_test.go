@@ -66,7 +66,7 @@ func TestEveryCorpusConvertsWithNoLoss(t *testing.T) {
 		t.Run(fx.name, func(t *testing.T) {
 			for _, ty := range allTypes {
 				t.Run(string(ty), func(t *testing.T) {
-					left := loadOptions{base: fx.binaryDir, format: defaultFormat(ty, ""), enc: enc}
+					left := loadOptions{base: fx.binaryDir, format: defaultFormat(ty, "", fx.binaryDir), enc: enc}
 					right := loadOptions{base: fx.yamlDir, format: "yaml", enc: enc}
 					diffs, err := compareSubsystem(ty, left, right)
 					if err != nil {
@@ -243,7 +243,7 @@ func TestVerifyAgainstNoticesAnEditedFile(t *testing.T) {
 
 	enc := convert.Encodings[convert.DefaultEncoding]
 	diffs, err := compareSubsystem(typePfile,
-		loadOptions{base: torture + "/binary", format: defaultFormat(typePfile, ""), enc: enc},
+		loadOptions{base: torture + "/binary", format: defaultFormat(typePfile, "", torture+"/binary"), enc: enc},
 		loadOptions{base: to, format: "yaml", enc: enc})
 	if err != nil {
 		t.Fatalf("comparing: %v", err)
@@ -291,7 +291,7 @@ func TestAnOrphanedHouseContentsFileIsNamedAndNoted(t *testing.T) {
 	var note bytes.Buffer
 	noteOut := bufio.NewWriter(&note)
 	reportOrphanHouses(noteOut,
-		loadOptions{base: torture + "/binary", format: defaultFormat(typeState, ""), enc: enc},
+		loadOptions{base: torture + "/binary", format: defaultFormat(typeState, "", torture+"/binary"), enc: enc},
 		loadOptions{base: full, format: "yaml", enc: enc})
 	if err := noteOut.Flush(); err != nil {
 		t.Fatal(err)
@@ -349,7 +349,7 @@ func TestOrphanedRentAndAliasFilesAreNamedAndNoted(t *testing.T) {
 	var note bytes.Buffer
 	noteOut := bufio.NewWriter(&note)
 	reportOrphanPlayerFiles(noteOut,
-		loadOptions{base: torture + "/binary", format: defaultFormat(typePfile, ""), enc: enc},
+		loadOptions{base: torture + "/binary", format: defaultFormat(typePfile, "", torture+"/binary"), enc: enc},
 		loadOptions{base: to, format: "yaml", enc: enc})
 	if err := noteOut.Flush(); err != nil {
 		t.Fatal(err)
