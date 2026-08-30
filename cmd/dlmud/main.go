@@ -500,7 +500,12 @@ func run(args []string) (int, error) {
 	// does.
 	var webServer *http.Server
 	if cfg.WSAddr != "" {
-		handler, err := srv.WebHandler(ctx, cfg.WebPassword, cfg.WebCaptcha, limits)
+		handler, err := srv.WebHandler(ctx, server.WebOptions{
+			Password:          cfg.WebPassword,
+			Captcha:           cfg.WebCaptcha,
+			TrustProxyHeaders: cfg.TrustProxyHeaders,
+			Limits:            limits,
+		})
 		if err != nil {
 			return exitFailed, err
 		}

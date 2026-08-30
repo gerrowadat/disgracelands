@@ -25,8 +25,8 @@ every flag appears here, but it cannot check that the prose is accurate.
 > Phase 6 write-up. Phase 7 (cutover) has not started. Settings marked
 > *(inert)* are accepted and
 > validated but do not yet affect anything, for reasons of their own —
-> `--tls-acme-*` needs an ACME client, `--trust-proxy-headers` needs an
-> actual proxy in front — not because a phase is unfinished. They are here
+> `--tls-acme-*` needs an ACME client — not because a phase is unfinished.
+> They are here
 > because the configuration surface was built first, deliberately — see
 > `docs/proposals/go-port-plan.md` §10.
 
@@ -274,15 +274,38 @@ the new file can't take down a server that's already up (issue #147).
 | `--max-players` | `300` | Maximum simultaneous connections, across every listener. |
 | `--max-connections-per-ip` | `8` | Maximum simultaneous connections from one address. |
 | `--login-grace-time` | `60s` | How long a connection may stay unauthenticated before being dropped. |
-| `--trust-proxy-headers` | `false` | Trust `X-Forwarded-For`. Only enable behind a proxy you control — otherwise clients can forge their apparent address. *(inert)* |
+| `--trust-proxy-headers` | `false` | Trust `X-Forwarded-For` and `X-Forwarded-Proto` on `--listen-ws`. Only enable behind a proxy you control — otherwise clients can forge their apparent address. |
 
 `--max-players`, the per-address limit and the login grace time are all
-enforced, on the web interface exactly as on the telnet listeners. The web
-interface exists now, but `--trust-proxy-headers` is still inert: nothing
-yet reads `X-Forwarded-For`/`X-Forwarded-Proto`, so a `--listen-ws` behind
-a reverse proxy sees the proxy's own address rather than a player's, and
-its captcha-cleared cookie is only ever `Secure` when this process
-terminates the TLS itself (`internal/server/web.go`).
+enforced, on the web interface exactly as on the telnet listeners.
+
+`--trust-proxy-headers` applies to `--listen-ws` only — a telnet
+connection carries no headers to trust. With it on, `/ws` resolves the
+player's address from `X-Forwarded-For` once, at the upgrade, and
+everything downstream follows from that one answer: **site bans**, the
+`last_host` on the player's record, what `users` and the wizlog show, and
+the `--max-connections-per-ip` bucket. `X-Forwarded-Proto: https` also
+makes the captcha-cleared cookie `Secure`, which `r.TLS` alone cannot
+know behind a proxy that terminates the TLS itself.
+
+Two things worth knowing before turning it on:
+
+- **The rightmost entry wins.** `X-Forwarded-For` is a list each proxy
+  appends to, so the last element is the one *your* proxy wrote and
+  everything to its left came from further out. With one proxy in front
+  that is exactly the client; reading the leftmost instead would let any
+  player forge their address, walk past a site ban and reset their
+  per-address count by typing a header. This means the flag assumes **one**
+  hop: with two proxies in front, the address it resolves is the outer
+  proxy's. A boolean cannot express a chain depth, and a deployment with a
+  chain wants a list of trusted proxy addresses rather than a different
+  reading of the header.
+- **Leaving it off behind a proxy is not neutral.** Every web connection
+  then reports the proxy's own address, so `ban site` cannot reach a web
+  player at all, banning the proxy locks out every web player at once, and
+  the default `--max-connections-per-ip 8` caps the entire web interface
+  at eight players sharing one bucket. The server warns at startup when
+  `--listen-ws` has neither TLS nor this flag.
 
 `--max-connections-per-ip` counts an IPv6 address by its own `/64`, not by
 itself — the block an ISP actually hands one subscriber (RFC 6177), so

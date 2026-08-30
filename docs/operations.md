@@ -77,6 +77,46 @@ dlmud \
 `docs/configuration.md`'s own section on the web interface for what each
 actually defends against, which is more modest than either name suggests.
 
+#### Behind a reverse proxy
+
+If something else terminates the TLS — nginx, Caddy, a load balancer —
+run `--listen-ws` in plaintext behind it and **add
+`--trust-proxy-headers`**. Without it every web connection reports the
+proxy's address instead of the player's, and four things quietly stop
+working: `ban site` cannot reach a web player, banning the proxy locks out
+every web player at once, `--max-connections-per-ip` caps the whole web
+interface at one bucket (eight players, by default), and the roster's
+`last_host` and the `users` list name the proxy for everybody.
+
+The proxy has to set both headers. The usual nginx spelling:
+
+```nginx
+location / {
+    proxy_pass http://127.0.0.1:8080;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade    $http_upgrade;   # the WebSocket upgrade
+    proxy_set_header Connection "upgrade";
+    proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+}
+```
+
+`X-Forwarded-Proto` is what makes the captcha's cleared cookie `Secure`;
+the server cannot tell from its own socket that the browser's hop was
+HTTPS.
+
+**Only turn the flag on if a proxy really is in front**, and only one. The
+server reads the *rightmost* `X-Forwarded-For` entry, which is the one your
+proxy appended — anything to its left came from the client and is
+whatever they cared to type. With the flag on and nothing in front, a
+player can pick their own apparent address and walk past a site ban; with
+two proxies in front, the address resolved is the outer proxy's rather
+than the player's.
+
+The server logs a warning once, at the first connection, if the flag is on
+and no `X-Forwarded-For` ever arrives — which is the shape a misconfigured
+proxy takes.
+
 ### If it exits immediately
 
 That is usually deliberate. The server validates its configuration before

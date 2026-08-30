@@ -70,6 +70,17 @@ type webHandler struct {
 	limits   Limits
 	password string
 	captcha  bool
+	// trustProxy is --trust-proxy-headers: believe X-Forwarded-For and
+	// X-Forwarded-Proto on the way in. Off by default, and off is the only
+	// safe default — with nothing in front of this process, a header is
+	// whatever the client typed.
+	trustProxy bool
+	// missingHeader fires the "you turned this on and nothing is setting
+	// it" warning once rather than once per connection. An operator whose
+	// proxy is misconfigured has silently broken their site bans and
+	// collapsed every web player into one --max-connections-per-ip bucket,
+	// which is worth exactly one loud line and no more.
+	missingHeader sync.Once
 
 	secret [32]byte
 
@@ -77,13 +88,33 @@ type webHandler struct {
 	perHost sync.Map
 }
 
+// WebOptions is what the web interface needs beyond the server itself.
+//
+// A struct rather than four positional arguments because two of them are
+// bools: `WebHandler(ctx, "", false, true, limits)` is a call nobody can
+// read, and the second bool was the one being added.
+type WebOptions struct {
+	// Password is HTTP Basic Auth in front of every route, or "" for none.
+	Password string
+	// Captcha requires solving an arithmetic challenge before /ws upgrades.
+	Captcha bool
+	// TrustProxyHeaders is --trust-proxy-headers.
+	TrustProxyHeaders bool
+	// Limits are the connection limits, shared with the telnet listeners.
+	Limits Limits
+}
+
 // WebHandler builds the web interface's http.Handler: / (welcome), /play
 // (the browser terminal, or a captcha challenge in front of it), and /ws
 // (the WebSocket upgrade /play's terminal actually connects to). ctx bounds
 // every session opened through it, exactly as the ctx passed to Accept
 // bounds every telnet one, so a server shutdown reaches web players too.
-func (s *Server) WebHandler(ctx context.Context, password string, captcha bool, limits Limits) (http.Handler, error) {
-	h := &webHandler{s: s, ctx: ctx, limits: limits, password: password, captcha: captcha}
+func (s *Server) WebHandler(ctx context.Context, opts WebOptions) (http.Handler, error) {
+	h := &webHandler{
+		s: s, ctx: ctx, limits: opts.Limits,
+		password: opts.Password, captcha: opts.Captcha,
+		trustProxy: opts.TrustProxyHeaders,
+	}
 	if _, err := rand.Read(h.secret[:]); err != nil {
 		return nil, fmt.Errorf("generating the web interface's signing key: %w", err)
 	}
@@ -95,7 +126,7 @@ func (s *Server) WebHandler(ctx context.Context, password string, captcha bool, 
 	mux.HandleFunc("GET /ws", h.handleWS)
 
 	var handler http.Handler = mux
-	if password != "" {
+	if opts.Password != "" {
 		handler = h.requirePassword(handler)
 	}
 	return handler, nil
@@ -156,18 +187,18 @@ func (h *webHandler) handleCaptchaSubmit(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// Secure is conditional on r.TLS, which is nil behind a
-	// TLS-terminating reverse proxy — the same deployment
-	// Config.Warnings already calls out for --listen-ws itself:
-	// --trust-proxy-headers exists but nothing reads X-Forwarded-Proto
-	// yet, so this cookie is Secure only when this process terminates
-	// the TLS itself.
+	// Secure when this process terminates the TLS, and — with
+	// --trust-proxy-headers on — when a proxy in front of it says it did.
+	// r.TLS alone is nil behind a TLS-terminating reverse proxy, which is
+	// the deployment Config.Warnings calls out for --listen-ws itself, and
+	// a cookie without Secure travelling back over a plaintext hop is
+	// exactly what that warning is about.
 	http.SetCookie(w, &http.Cookie{ //nolint:gosec // Secure is deliberately conditional; see the comment above
 		Name:     captchaCookie,
 		Value:    h.signToken("cleared", "", clearedTTL),
 		Path:     "/",
 		HttpOnly: true,
-		Secure:   r.TLS != nil,
+		Secure:   r.TLS != nil || (h.trustProxy && forwardedHTTPS(r.Header)),
 		SameSite: http.SameSiteLaxMode,
 		MaxAge:   int(clearedTTL.Seconds()),
 	})
@@ -214,6 +245,9 @@ func (h *webHandler) handleWS(w http.ResponseWriter, r *http.Request) {
 		return // Accept has already written its own response.
 	}
 	conn := websocket.NetConn(h.ctx, wc, websocket.MessageText)
+	if h.trustProxy {
+		conn = h.proxied(conn, r)
+	}
 
 	hostKey, ok := h.admitConn(conn)
 	if !ok {
