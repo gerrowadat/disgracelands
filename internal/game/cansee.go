@@ -119,13 +119,12 @@ func (l *Live) CanSeeObj(sub *Character, obj *Object) bool {
 // canSeeCarrier ports CAN_SEE_OBJ_CARRIER. An object lying in a room or inside
 // a container has no holder and passes.
 //
-// The C tests `carried_by` and `worn_by` as two separate members; here they are
-// one Holder plus a Location saying which it is, so the two branches collapse
-// into one.
+// The C tests `carried_by` and `worn_by` as two separate members; here both
+// are placements with a Holder, and HolderOf answers for either — which is
+// the same collapse, now made by the type rather than by an enum test.
 func (l *Live) canSeeCarrier(sub *Character, obj *Object) bool {
-	switch obj.Location {
-	case CarriedBy, WornBy:
-		return l.CanSee(sub, obj.Holder)
+	if holder := obj.HolderOf(); holder != nil {
+		return l.CanSee(sub, holder)
 	}
 	return true
 }

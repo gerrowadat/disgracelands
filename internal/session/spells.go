@@ -508,20 +508,20 @@ func (c *Context) locateObject(target *game.Object, level int32) {
 // tests: carried, on the floor, inside something, worn, and finally the
 // shrug for an object that is nowhere at all.
 func (c *Context) whereIs(obj *game.Object) string {
-	switch obj.Location {
+	switch p := obj.Placement().(type) {
 	case game.CarriedBy:
-		return fmt.Sprintf("%s is being carried by %s.\r\n", obj.Name(), obj.Holder.Name)
+		return fmt.Sprintf("%s is being carried by %s.\r\n", obj.Name(), p.Holder.Name)
 	case game.InRoom:
-		room := c.World.Room(obj.Room)
+		room := c.World.Room(p.Room)
 		name := "somewhere"
 		if room != nil {
 			name = room.Name
 		}
 		return fmt.Sprintf("%s is in %s.\r\n", obj.Name(), name)
-	case game.InObject:
-		return fmt.Sprintf("%s is in %s.\r\n", obj.Name(), obj.Container.Name())
+	case game.InContainer:
+		return fmt.Sprintf("%s is in %s.\r\n", obj.Name(), p.Container.Name())
 	case game.WornBy:
-		return fmt.Sprintf("%s is being worn by %s.\r\n", obj.Name(), obj.Holder.Name)
+		return fmt.Sprintf("%s is being worn by %s.\r\n", obj.Name(), p.Holder.Name)
 	}
 	return fmt.Sprintf("%s's location is uncertain.\r\n", obj.Name())
 }

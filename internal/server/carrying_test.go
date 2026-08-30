@@ -33,8 +33,8 @@ func TestPuttingThingsInABagAndTakingThemOut(t *testing.T) {
 	c.expect("You put a long sword in a bag.")
 
 	inWorld(t, srv, func(_ *game.Live) {
-		if sword.Container != bag {
-			t.Errorf("the sword is not in the bag: %v", sword.Location)
+		if sword.ContainerOf() != bag {
+			t.Errorf("the sword is not in the bag: %T", sword.Placement())
 		}
 	})
 
@@ -54,8 +54,8 @@ func TestPuttingThingsInABagAndTakingThemOut(t *testing.T) {
 	c.expect("You get a long sword from a bag.")
 
 	inWorld(t, srv, func(_ *game.Live) {
-		if sword.Location != game.CarriedBy {
-			t.Errorf("the sword is %v, want carried", sword.Location)
+		if _, ok := sword.Placement().(game.CarriedBy); !ok {
+			t.Errorf("the sword is %T, want carried", sword.Placement())
 		}
 	})
 }
@@ -307,7 +307,7 @@ func TestGivingSomethingToSomebody(t *testing.T) {
 	c.expect("You give a long sword to Bob.")
 
 	inWorld(t, srv, func(_ *game.Live) {
-		if sword.Holder != bob {
+		if sword.HolderOf() != bob {
 			t.Error("the sword did not reach Bob")
 		}
 	})

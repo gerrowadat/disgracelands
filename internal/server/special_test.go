@@ -140,10 +140,10 @@ func TestAJanitorPicksUpTrash(t *testing.T) {
 	}
 
 	inWorld(t, srv, func(_ *game.Live) {
-		if ring.Holder != janitor {
+		if ring.HolderOf() != janitor {
 			t.Error("the janitor left the worthless ring on the floor")
 		}
-		if sword.Location != game.InRoom {
+		if _, ok := sword.Placement().(game.InRoom); !ok {
 			t.Error("the janitor took a hundred-coin sword")
 		}
 	})
@@ -177,8 +177,8 @@ func TestAFidoEatsCorpsesAndLeavesTheContents(t *testing.T) {
 				t.Error("the corpse survived the fido")
 			}
 		}
-		if sword.Location != game.InRoom {
-			t.Errorf("the sword is %v, want left on the floor", sword.Location)
+		if _, ok := sword.Placement().(game.InRoom); !ok {
+			t.Errorf("the sword is %T, want left on the floor", sword.Placement())
 		}
 	})
 }

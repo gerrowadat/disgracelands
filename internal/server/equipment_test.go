@@ -114,8 +114,8 @@ func TestAnObjectThatZapsYou(t *testing.T) {
 		if zod.Equipment[game.WearBody] != nil {
 			t.Error("the plate stayed on")
 		}
-		if plate.Location != game.CarriedBy {
-			t.Errorf("the plate is %v, want back in the inventory", plate.Location)
+		if _, ok := plate.Placement().(game.CarriedBy); !ok {
+			t.Errorf("the plate is %T, want back in the inventory", plate.Placement())
 		}
 	})
 }

@@ -150,12 +150,10 @@ func (l *Live) DecayObjects() []DecayResult {
 		}
 
 		result := DecayResult{Corpse: o, Room: NoRoom}
-		switch o.Location {
-		case InRoom:
-			result.Room = o.Room
-		case CarriedBy, WornBy:
-			result.CarriedBy = o.Holder
+		if room, ok := o.RoomOf(); ok {
+			result.Room = room
 		}
+		result.CarriedBy = o.HolderOf()
 		decayed = append(decayed, result)
 
 		l.ExtractObject(o)
