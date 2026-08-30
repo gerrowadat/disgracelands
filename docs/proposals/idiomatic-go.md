@@ -28,7 +28,7 @@ would notice if the fence were drawn casually.
 > - **Step 1, a type per flag domain — under way.** `Set[T]` and the
 >   raw-bits helper boundary landed with the first domain, room flags.
 >   Read §4.1.1, the OR trap, before converting another one. Done so far:
->   **room**, **exit/door**.
+>   **room**, **exit/door**, **container**.
 
 ---
 
@@ -513,13 +513,18 @@ and it compiles perfectly wherever the surrounding code wants a
 exit.State.Clear(ExitClosed | ExitLocked)       // compiles. index 3.
 ```
 
-Both conversions so far split along exactly that line without anybody
-noticing it *was* a line: room flags produced two silent ones and both
-were `HasAny` calls; exit flags produced seven, of which three were the
-compiler's and four were not. **A clean build is not evidence.** The
-variadic call sites are the whole of the risk surface, and they are easy
-to enumerate — grep the domain's constants for the seven method names
-above before trusting the build.
+Every conversion so far has split along exactly that line: room flags
+produced two silent ones and both were `HasAny` calls; exit flags
+produced seven, of which three were the compiler's and four were not;
+container flags produced four and the compiler caught **none** of them,
+because a container's flags live in an object value slot rather than a
+field, so every site is either a variadic call or an `int32(...)`
+conversion. `go build` and `go vet` were both clean and four assertions
+were about the wrong flag.
+
+**A clean build is not evidence.** The variadic call sites are the whole
+of the risk surface, and they are easy to enumerate — grep the domain's
+constants for the seven method names above before trusting the build.
 
 ### 4.2 Enumerations get types, `String`, and a text marshaller
 
@@ -705,7 +710,7 @@ so that the riskiest step is last and separable.
 | | Step | What it is | Risk |
 | --- | --- | --- | --- |
 | **0** | ~~**The resave fixture**~~ **Done.** | §6's load-and-resave test, over all three corpora and all seven subsystems: `cmd/dlctl`'s `TestFmtLeavesTheCheckedInCorporaAlone`. It failed the first time it ran — `dlctl fmt --type=state` was the only caller in the tree that could bring a `state/bans.yaml` into existence, so formatting a converted directory added a file the conversion had deliberately not written. Fixed in `bans/yaml`'s `Rewrite`, not in the corpus. | None. Do this first; everything after it leans on it. |
-| **1** | **A type per flag domain** — **under way** | §4.1. `Flags` → `Set[RoomFlag]`, `Set[AffectFlag]`, `Set[PlayerFlag]`, … One domain per PR, eleven or so PRs. `Raw()`/`SetFromRaw` at the persistence boundary only. **Done: room flags** (with `Set[T]` itself and the raw-bits helper boundary), **exit/door flags**. | Low, high volume, *and one real hazard*: §4.1.1's OR trap, which the first domain hit twice. The compiler finds every site; it does not find that one. `bitnames_test.go` must still re-parse `constants.c`. |
+| **1** | **A type per flag domain** — **under way** | §4.1. `Flags` → `Set[RoomFlag]`, `Set[AffectFlag]`, `Set[PlayerFlag]`, … One domain per PR, eleven or so PRs. `Raw()`/`SetFromRaw` at the persistence boundary only. **Done: room flags** (with `Set[T]` itself and the raw-bits helper boundary), **exit/door flags**, **container flags**. | Low, high volume, *and one real hazard*: §4.1.1's OR trap, which the first domain hit twice. The compiler finds every site; it does not find that one. `bitnames_test.go` must still re-parse `constants.c`. |
 | **2** | **A type per enumeration** | §4.2. Class, Sex, Race, ItemType, Apply, SpellID, Sector, Liquid, and `MobDef.Position` onto the existing `game.Position`. `RemortVector` becomes `Set[Class]`. | Low, high volume. Watch the table-indexed tests (§5). |
 | **3** | **Typed object values** | §4.3. Lift `values.go`'s taxonomy into `game`, typed accessors, raw kept as the stored truth. 84 positional accesses go. | Medium. The five-types-only rule is a constraint, not a starting point to improve on. |
 | **4** | **Absence over sentinels** | §4.4, in the places §3.4 lists, excluding the vnum sentinels that reach disk. | Medium. Each one is a small semantic argument; do not batch them. |
