@@ -7,6 +7,8 @@
 package session
 
 import (
+	"fmt"
+
 	"github.com/gerrowadat/disgracelands/internal/colour"
 	"github.com/gerrowadat/disgracelands/internal/game"
 	"github.com/gerrowadat/disgracelands/internal/obs"
@@ -110,6 +112,39 @@ func doCast(c *Context) error {
 		return nil
 	}
 
+	// cast_spell's own refusals (spell_parser.c:482-522), in the C's order.
+	// The first two are #306; the three after them were #301.
+	//
+	// The per-spell minimum position, which is *on top of* the cast
+	// command's own POS_SITTING from cmd_info[]. Without it a resting mage
+	// could cast fireball and a fighting one could cast anything, rather
+	// than only the POS_FIGHTING column. The message is chosen by the
+	// caster's position rather than the spell's, and there are five of
+	// them.
+	if c.Character.Position < info.MinPosition {
+		switch c.Character.Position {
+		case game.PosSleeping:
+			c.Send("You dream about great magical powers.\r\n")
+		case game.PosResting:
+			c.Send("You cannot concentrate while resting.\r\n")
+		case game.PosSitting:
+			c.Send("You can't do this sitting!\r\n")
+		case game.PosFighting:
+			c.Send("Impossible!  You can't concentrate enough!\r\n")
+		default:
+			c.Send("You can't do much of anything like this!\r\n")
+		}
+		return nil
+	}
+
+	// A charmed caster will not cast at whoever charmed them. Note it is
+	// the *master* relationship and not the charm alone: a charmed pet can
+	// still cast at anybody else in the room.
+	if rec.AffectFlags.Has(game.AffectCharm) && victim != nil && c.Character.Master == victim {
+		c.Send("You are afraid you might hurt your master!\r\n")
+		return nil
+	}
+
 	// cast_spell's own three refusals (spell_parser.c:506-522). They are
 	// *here*, after the concentration roll and before call_magic, because
 	// that is where the C has them: do_cast rolls, and only then calls
@@ -144,10 +179,91 @@ func doCast(c *Context) error {
 		return nil
 	}
 
+	// Everything above returns 0 in the C; from here the cast happens, and
+	// these two lines are the last thing cast_spell does before call_magic
+	// (spell_parser.c:523-524).
+	// config.c:99: OK is "Okay.", not "Ok." -- same string do_gen_door
+	// sends, for the same reason.
+	c.Send("Okay.\r\n")
+	c.saySpell(info, victim, object)
+
 	if c.castSpell(info, number, victim, object, game.SaveSpell) && mana > 0 {
 		rec.Points.Mana = max(0, min(rec.Points.MaxMana, rec.Points.Mana-mana))
 	}
 	return nil
+}
+
+// saySpell is say_spell (spell_parser.c:116-171): the line everybody else in
+// the room gets when a spell is cast.
+//
+// It is not flavour. It is the only warning a player ever had that something
+// was coming, and it is deliberately partial information: a bystander who
+// shares the caster's class hears the spell's real name, and everybody else
+// hears the syllable table's gibberish (game.ScrambleSpellName). Nobody in
+// the room was told anything at all before this (#306).
+//
+// Four details worth keeping, each of which the C is specific about:
+//
+//   - The audience is the caster's room, minus the caster and the target.
+//     The target gets their own sentence at the end, in the second person.
+//   - Anyone asleep or without a descriptor is skipped -- so mobiles hear
+//     nothing, which is why a charmed mob is not told what its master is
+//     casting.
+//   - The object branch requires the object to be in the caster's room or
+//     carried by them. An object found anywhere in the world (locate
+//     object) leaves the caster staring at nothing, and the C says so by
+//     falling through to the plain sentence.
+//   - say_spell calls perform_act per audience rather than act(), so it
+//     makes no visibility check of its own: an invisible caster's words are
+//     still heard, and $n resolves per audience through the ordinary CAN_SEE
+//     that game.Act already does.
+func (c *Context) saySpell(info game.SpellInfo, victim *game.Character, obj *game.Object) {
+	caster := c.Character
+	sameRoom := victim != nil && victim.Room == caster.Room
+	atObj := obj != nil && !sameRoom && c.objectIsHere(obj)
+
+	format := game.SaySpellFormat(sameRoom && victim == caster, sameRoom && victim != caster, atObj)
+	real := fmt.Sprintf(format, info.Name)
+	scrambled := fmt.Sprintf(format, game.ScrambleSpellName(info.Name))
+
+	args := game.ActArgs{Actor: caster, Obj: obj, Victim: victim}
+	for _, other := range c.World.Occupants(caster.Room) {
+		if other == caster || other == victim || other.IsNPC() || other.Position <= game.PosSleeping {
+			continue
+		}
+		said := scrambled
+		if other.Record != nil && caster.Record != nil && other.Record.Class == caster.Record.Class {
+			said = real
+		}
+		other.Tell("%s", c.World.Act(said, args, other))
+	}
+
+	if sameRoom && victim != caster {
+		name := game.ScrambleSpellName(info.Name)
+		if victim.Record != nil && caster.Record != nil && victim.Record.Class == caster.Record.Class {
+			name = info.Name
+		}
+		victim.Tell("%s", c.World.Act(
+			fmt.Sprintf("$n stares at you and utters the words, '%s'.", name), args, victim))
+	}
+}
+
+// objectIsHere is say_spell's own test for whether the caster can be said to
+// be staring at an object: `IN_ROOM(tobj) == IN_ROOM(ch) || tobj->carried_by
+// == ch` (spell_parser.c:148-149). Equipment is not included, which is the
+// C's omission and not this one's.
+func (c *Context) objectIsHere(obj *game.Object) bool {
+	for _, held := range c.Character.Carrying {
+		if held == obj {
+			return true
+		}
+	}
+	for _, here := range c.World.RoomObjects(c.Character.Room) {
+		if here == obj {
+			return true
+		}
+	}
+	return false
 }
 
 // findSpellTarget resolves what the spell is aimed at, porting the target
