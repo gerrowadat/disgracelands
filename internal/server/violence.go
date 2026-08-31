@@ -10,6 +10,7 @@ import (
 	"github.com/gerrowadat/disgracelands/internal/colour"
 	"github.com/gerrowadat/disgracelands/internal/game"
 	"github.com/gerrowadat/disgracelands/internal/obs"
+	"github.com/gerrowadat/disgracelands/internal/session"
 )
 
 // The combat round, ported from perform_violence and the messaging half of
@@ -309,7 +310,7 @@ func (s *Server) applyDamage(w *game.Live, attacker, victim *game.Character, dam
 		onDamaged()
 	}
 
-	s.announcePosition(w, victim)
+	s.positionAftermath(w, attacker, victim)
 
 	// Somebody stunned or worse stops swinging back.
 	if victim.Position <= game.PosStunned && victim.Fighting != nil {
@@ -393,8 +394,17 @@ func (s *Server) startFighting(w *game.Live, attacker, victim *game.Character) {
 	}
 }
 
-// announcePosition says what a blow did, in the words damage() uses.
-func (s *Server) announcePosition(w *game.Live, victim *game.Character) {
+// positionAftermath is the switch on the victim's position that damage()
+// ends with (fight.c:876-912): what a blow did, in the words damage() uses,
+// and — in the `default` branch, for a victim still on their feet — the two
+// calls to do_flee that make wimpiness mean anything.
+//
+// It was announcePosition and did only the first half until #375. The two
+// belong in one function because the C has them in one switch and because
+// the MOB_WIMPY flee shares its condition with the bleeding warning: split
+// them and the quarter-of-max-hit threshold is written twice, free to
+// drift.
+func (s *Server) positionAftermath(w *game.Live, attacker, victim *game.Character) {
 	switch victim.Position {
 	case game.PosMortallyWounded:
 		victim.Tell("You are mortally wounded, and will die soon, if not aided.\r\n")
@@ -411,14 +421,91 @@ func (s *Server) announcePosition(w *game.Live, victim *game.Character) {
 		victim.Tell("You are dead!  Sorry...\r\n")
 		s.toRoomExcept(w, victim, "%s is dead!  R.I.P.\r\n", victim.Name)
 	default:
+		// >= POS_SLEEPING, which is what the C's `default` covers: every
+		// position above POS_STUNNED, the four below it each having a case
+		// of their own above. Both flees below are inside it, so nobody
+		// stunned or worse runs anywhere.
 		if victim.Record != nil && victim.Record.Points.Hit < victim.Record.Points.MaxHit/4 {
 			// Red, at C_SPR — the lowest threshold there is, so anybody
 			// with colour on at all sees this one (fight.c:851). It is
 			// the warning that you are about to die.
 			victim.TellAt(colour.Sparse,
 				"{{red}}You wish that your wounds would stop BLEEDING so much!{{/}}\r\n")
+
+			// MOB_WIMPY, and it is *inside* the bleeding branch rather
+			// than beside it (fight.c:903-904): a wimpy mobile runs at
+			// the same quarter-of-max-hit mark that prints the warning,
+			// not at a threshold of its own. MOB_FLAGGED is
+			// `IS_NPC(ch) && IS_SET(...)` (utils.h:214), which
+			// HasMobFlag reproduces by way of MobFlags() returning
+			// nothing for a character with no prototype — so this can
+			// never fire for a player.
+			if hitBySomebodyElse(attacker, victim) && victim.HasMobFlag(game.MobWimpy) {
+				s.flee(w, victim)
+			}
+		}
+
+		// The player's own wimp level (fight.c:906-910), and the whole of
+		// #375: `wimpy` set it, `toggle` displayed it and the record saved
+		// it, and nothing in the game ever read it, so a player who had
+		// asked to run away at 30 hit points stood there and died instead.
+		//
+		// Every clause is the C's, including the one that cannot fail.
+		// `GET_HIT(victim) > 0` is redundant here and it is worth knowing
+		// why rather than reading it as a guard against something: this
+		// is the `default` branch, so the position is above POS_STUNNED,
+		// and update_pos only ever returns one of those for a character
+		// with hit points left (game.UpdatePosition's first two cases).
+		// Nought or fewer is POS_STUNNED at best and never arrives here.
+		// Kept because it is the C's and costs nothing to keep.
+		//
+		// `victim != ch` is the clause that does work: it is why hurting
+		// yourself never makes you run away, and it is how point_update's
+		// bleeding and poison are exempt — they are damage(ch, ch, ...)
+		// in the C, and suffer() passes the victim as their own attacker
+		// here for exactly that reason.
+		if !victim.IsNPC() && victim.Record != nil && victim.Record.WimpLevel != 0 &&
+			hitBySomebodyElse(attacker, victim) &&
+			victim.Record.Points.Hit < victim.Record.WimpLevel &&
+			victim.Record.Points.Hit > 0 {
+			victim.Tell("You wimp out, and attempt to flee!\r\n")
+			s.flee(w, victim)
 		}
 	}
+}
+
+// hitBySomebodyElse is the C's `ch != victim` guard on both of the flees
+// above (fight.c:903, :906 — spelled `victim != ch` on the second, the same
+// test written the other way round), plus the one thing the C has no
+// equivalent of.
+//
+// damage() in the C always has an attacker: `ch` is a parameter and every
+// caller passes one, so `ch != victim` is only ever asking "did I do this to
+// myself", which is how point_update's bleeding and poison — damage(ch, ch,
+// TYPE_SUFFERING) — are exempt. This port also allows a nil attacker,
+// meaning "nothing did this to them", and that is the same kind of thing as
+// hurting yourself rather than the opposite of it. Nobody flees from nobody.
+//
+// Behaviour-neutral today: the only nil-attacker caller is `quit` while
+// mortally wounded (session.doQuit), which takes every remaining hit point
+// and one more, so the victim is dead and the switch above never reaches
+// either branch.
+func hitBySomebodyElse(attacker, victim *game.Character) bool {
+	return attacker != nil && attacker != victim
+}
+
+// flee runs do_flee for somebody who did not type it, which is what
+// damage() does at both of the call sites above.
+//
+// The session is fetched rather than passed because only one thing in
+// fleeing wants it — the GMCP room info do_flee's own `look` sends — and
+// the character is the thing both callers have. A mobile has no session
+// and a linkdead player's is gone; both get a nil, which session.Flee
+// takes, and their output falls back to the character's own client the
+// way every other message to a bodiless character does.
+func (s *Server) flee(w *game.Live, who *game.Character) {
+	sess, _ := who.Client.(*session.Session)
+	session.Flee(w, who, sess, s.rng)
 }
 
 // award gives the killer their experience, porting solo_gain — or, if they

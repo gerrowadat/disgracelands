@@ -607,6 +607,15 @@ func exitNames(room *game.RoomDef, width int) []string {
 // sendRoomInfo publishes the room out of band, so a web client can draw a map
 // instead of parsing the description.
 func sendRoomInfo(s *Session, room *game.RoomDef) {
+	// A character with no connection has no GMCP to send. Until #375 there
+	// was no such caller — lookAtRoom was only ever reached from a command,
+	// and a command has a session — but damage() flees a MOB_WIMPY mobile
+	// that is badly hurt, and do_flee looks at the room it lands in. A
+	// mobile has no session at all, so this would have been a nil
+	// dereference on the world goroutine.
+	if s == nil {
+		return
+	}
 	s.SendGMCP("Room.Info", RoomInfo{
 		Vnum:  int32(room.Vnum),
 		Name:  room.Name,
