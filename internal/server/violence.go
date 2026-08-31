@@ -310,7 +310,7 @@ func (s *Server) applyDamage(w *game.Live, attacker, victim *game.Character, dam
 		onDamaged()
 	}
 
-	s.positionAftermath(w, attacker, victim)
+	s.positionAftermath(w, attacker, victim, dam)
 
 	// Somebody stunned or worse stops swinging back.
 	if victim.Position <= game.PosStunned && victim.Fighting != nil {
@@ -404,7 +404,7 @@ func (s *Server) startFighting(w *game.Live, attacker, victim *game.Character) {
 // the MOB_WIMPY flee shares its condition with the bleeding warning: split
 // them and the quarter-of-max-hit threshold is written twice, free to
 // drift.
-func (s *Server) positionAftermath(w *game.Live, attacker, victim *game.Character) {
+func (s *Server) positionAftermath(w *game.Live, attacker, victim *game.Character, dam int32) {
 	switch victim.Position {
 	case game.PosMortallyWounded:
 		victim.Tell("You are mortally wounded, and will die soon, if not aided.\r\n")
@@ -425,6 +425,25 @@ func (s *Server) positionAftermath(w *game.Live, attacker, victim *game.Characte
 		// position above POS_STUNNED, the four below it each having a case
 		// of their own above. Both flees below are inside it, so nobody
 		// stunned or worse runs anywhere.
+
+		// "That really did HURT!" (fight.c:895-896), and the two
+		// quarters in this branch are not the same quarter. This one is
+		// a quarter of your maximum taken *in one blow*, said however
+		// healthy you are; the one below is having less than a quarter
+		// of your maximum *left*, said however small the blow was. A
+		// full-health character taking a huge hit gets the first and not
+		// the second; a nearly-dead one taking a scratch gets the second
+		// and not the first.
+		//
+		// dam is the figure after sanctuary and the rest, which is what
+		// the C compares too: it halves for AFF_SANCTUARY at the top of
+		// damage() and everything downstream sees the reduced number. So
+		// sanctuary can take a blow under the threshold and silence this
+		// line, which is correct and is the same on the real server.
+		if victim.Record != nil && dam > victim.Record.Points.MaxHit/4 {
+			victim.Tell("That really did HURT!\r\n")
+		}
+
 		if victim.Record != nil && victim.Record.Points.Hit < victim.Record.Points.MaxHit/4 {
 			// Red, at C_SPR — the lowest threshold there is, so anybody
 			// with colour on at all sees this one (fight.c:851). It is

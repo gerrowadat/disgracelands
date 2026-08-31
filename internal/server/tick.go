@@ -154,13 +154,21 @@ func (s *Server) suffer(w *game.Live, c *game.Character, amount int32) {
 	// a quieter way to die than being hit — it is the same function — so
 	// "You are dead!  Sorry..." and "$n is dead!  R.I.P." come from here, the
 	// same place they come from in a fight, rather than from die().
-	// The victim as their own attacker, which is what point_update actually
-	// passes: damage(ch, ch, n, TYPE_SUFFERING). It is not a formality —
-	// positionAftermath's two flees are both guarded on `ch != victim`, so
-	// this is exactly what stops poison and bleeding out making a wimpy
-	// character run away. The C gets that for free from the argument it was
-	// always passing; spelling it here keeps the two the same shape.
-	s.positionAftermath(w, c, c)
+	//
+	// Both extra arguments are what damage(ch, ch, n, TYPE_SUFFERING) makes
+	// them, and neither is a formality:
+	//
+	//   - the victim is their own attacker, which is exactly what stops
+	//     poison and bleeding out making a wimpy character run away —
+	//     positionAftermath's two flees are guarded on `ch != victim`;
+	//   - amount is the blow's size, so a large enough tick would say
+	//     "That really did HURT!". None is large enough (poison is two
+	//     points, bleeding one), but that is left to the arithmetic to
+	//     say rather than being decided here.
+	//
+	// The C gets both for free from the arguments it was always passing;
+	// spelling them out here keeps the two the same shape.
+	s.positionAftermath(w, c, c, amount)
 
 	if c.Position == game.PosDead {
 		// No killer: nothing was attacking them. The C spells this as
