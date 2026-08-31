@@ -84,6 +84,13 @@ func TestWizlockLetsInAnybodyAtTheLevel(t *testing.T) {
 	senior.send("quit")
 	senior.expectCount("Make your choice:", 2)
 	senior.close()
+	// The level set above is on the live record, and the record only
+	// reaches disk on the quit — which happens off the world goroutine,
+	// after the menu the expectCount waited for (Server.ExtractCharacter).
+	// Without this the login below could read a level-1 Senior and be
+	// refused by the wizlock, failing the test for the opposite of the
+	// reason it is testing. #373.
+	waitForLogout(t, srv, "Senior")
 	god.settle()
 
 	god.send("wizlock 20")
