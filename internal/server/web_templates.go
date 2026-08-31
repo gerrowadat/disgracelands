@@ -141,8 +141,8 @@ var playTemplate = template.Must(template.New("play").Parse(`<!doctype html>
 	};
 
 	// What the player has typed on the line so far, as they can see it,
-	// and the last line they finished. lastCommand is what up-arrow
-	// repeats.
+	// and the last line they finished. lastCommand is what up-arrow puts
+	// back on the line.
 	//
 	// 'line' is also what the server holds, exactly: every keystroke goes
 	// out as it is typed (see term.onData below; the pager depends on it),
@@ -170,27 +170,48 @@ var playTemplate = template.Must(template.New("play").Parse(`<!doctype html>
 	ws.onopen = function () { term.focus(); };
 	ws.onclose = function () { term.write('\r\n\x1b[31m[connection closed]\x1b[0m\r\n'); };
 	ws.onerror = function () { term.write('\r\n\x1b[31m[connection error]\x1b[0m\r\n'); };
-	// send types a line at the game as if the player had: the text, then
-	// the Enter that runs it. Used by the up-arrow repeat.
-	function send(text) {
+	// typeText types text at the game as if the player had, with no Enter
+	// after it. Used by the up-arrow recall.
+	//
+	// It goes to the server as well as to the screen, and it has to:
+	// every keystroke a player types is forwarded as it is typed, so the
+	// server is holding the same half-finished line the terminal is
+	// showing. Echoing recalled text locally without sending it would
+	// leave the two disagreeing about what is on the line, which is the
+	// bug #233 fixed for backspace.
+	//
+	// One message rather than one per character, unlike real typing. The
+	// server cannot tell the difference -- readLoop walks whatever
+	// arrives byte by byte and only a line ending ends a line -- and a
+	// recall is one action, not a burst of keystrokes.
+	function typeText(text) {
 		if (ws.readyState !== WebSocket.OPEN) return;
-		ws.send(text + '\r');
-		consume(text + '\r', localEcho);
+		ws.send(text);
+		consume(text, localEcho);
 	}
 
-	// repeat is the up-arrow: run the last command again.
+	// recall is the up-arrow: put the last command back on the line,
+	// ready to be edited or run. It does *not* run it -- that was #369.
+	// Sending it outright meant a mistyped command could only be fixed
+	// by typing the whole thing again, and it made up-arrow the one key
+	// on the page that took an irreversible action from a single press.
 	//
-	// Two things stop it. The line must be empty: a repeat is sent as
-	// text plus an Enter, so with a half-typed line already in the
-	// server's buffer the two would run together -- "ki" plus a repeated
+	// Two things stop it. The line must be empty: the text is injected
+	// into whatever the server is already holding, so with a half-typed
+	// line there the two would run together -- "ki" plus a recalled
 	// "look" is the command "kilook". Erasing back to an empty line is
 	// enough now that the server erases too, which it was not before
 	// #233. And local echo must be on: echo is off around a password, so
 	// a password is never recorded as lastCommand and up-arrow can never
-	// replay one in the clear.
-	function repeat() {
+	// put one back on the line in the clear.
+	//
+	// One press, one recall, and no history beyond it: a second press
+	// finds a non-empty line and does nothing. Cycling would need the
+	// line cleared on the server's side as well as the screen's, which
+	// is a bigger change than the issue asked for.
+	function recall() {
 		if (!lastCommand || line !== '' || !localEcho) return;
-		send(lastCommand);
+		typeText(lastCommand);
 	}
 
 	// consume walks what was typed, keeping 'line' and 'lastCommand' up to
@@ -235,7 +256,7 @@ var playTemplate = template.Must(template.New("play").Parse(`<!doctype html>
 		// "constructor" finds a function there, and would be swallowed.
 		var arrow = data.charCodeAt(0) === 27 ? ARROW[data] : undefined;
 		if (arrow !== undefined) {
-			if (arrow === 'up') repeat();
+			if (arrow === 'up') recall();
 			return;
 		}
 		if (ws.readyState === WebSocket.OPEN) ws.send(data);

@@ -276,7 +276,7 @@ as "costs Bystander gold", because the message was concatenated into
 |---|---|
 | **C** | `process_input` stores every line it reads in `history` and `last_input`, and copies every line to a snooper, whatever state the descriptor is in — including the password prompt. So a password went into the five-command history in the clear, where `!p` would find it, echo it back and run it as a command. |
 | **Go** | Nothing is recorded, recalled or relayed while the server has told the client to stop echoing. |
-| **Why** | It is a password. The same rule the browser terminal's up-arrow already follows for the same reason (#235, `internal/server/web_templates.go`: "a password is never recorded as lastCommand and up-arrow can never replay one in the clear"), applied to the server-side history that #238 added. |
+| **Why** | It is a password. The same rule the browser terminal's up-arrow already follows for the same reason (#235, `internal/server/web_templates.go`: "a password is never recorded as lastCommand and up-arrow can never put one back on the line in the clear"), applied to the server-side history that #238 added. |
 | **Where** | `recordable` in `internal/session/input.go`. `TestAPasswordIsNeverPutInTheHistory`. |
 
 Not recalling has a second effect, and it fixes rather than causes a

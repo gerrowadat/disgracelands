@@ -139,6 +139,57 @@ func TestBackspaceErasesAWholeRune(t *testing.T) {
 	}
 }
 
+// TestRecalledTextWaitsForItsEnter is the server-side assumption #369's
+// up-arrow rests on, driven over a real WebSocket for the same reason the
+// backspace tests are.
+//
+// Recall types the last command back at the server without the Enter that
+// would run it, exactly as if the player had typed it again, and then lets
+// them edit it. That only works if two things hold at this end: text with
+// no line ending after it runs nothing, and the Enter that eventually
+// arrives runs the whole accumulated line including whatever was added
+// after the recall. Both are readLoop's own behaviour
+// (internal/session/session.go) rather than anything the browser can
+// arrange, and neither is obvious enough to leave unasserted — the old
+// up-arrow sent its own '\r' precisely because it did not depend on this.
+func TestRecalledTextWaitsForItsEnter(t *testing.T) {
+	srv, _ := newTestServer(t)
+	ts := listeningWeb(t, srv, "", false)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	c, _, err := websocket.Dial(ctx, toWS(t, ts.URL)+"/ws", nil)
+	if err != nil {
+		t.Fatalf("dialing /ws: %v", err)
+	}
+	defer c.Close(websocket.StatusNormalClosure, "")
+
+	conn := websocket.NetConn(ctx, c, websocket.MessageText)
+	buf := make([]byte, 8192)
+	readUntilString(t, conn, "By what name", buf)
+
+	// The recall: characters, no Enter. Nothing should happen yet.
+	if _, err := conn.Write([]byte("Newcome")); err != nil {
+		t.Fatalf("sending recalled text: %v", err)
+	}
+
+	// Then the edit the recall exists to allow, and only then the Enter.
+	if _, err := conn.Write([]byte("r\r\n")); err != nil {
+		t.Fatalf("sending the edit and the Enter: %v", err)
+	}
+	got := readUntilString(t, conn, "(Y/N)", buf)
+	if !strings.Contains(got, "Did I get that right, Newcomer (Y/N)?") {
+		t.Errorf("recalled text plus an edit did not reach the server as one "+
+			"line:\n%s", got)
+	}
+	// And the recall alone must not have run: a premature line would have
+	// asked about "Newcome" first, and that answer would still be sitting
+	// in the transcript ahead of the real one.
+	if strings.Contains(got, "Newcome (Y/N)?") {
+		t.Errorf("text with no line ending after it was run as a command:\n%s", got)
+	}
+}
+
 // TestThePlayPageSwallowsEveryArrowKey is a contract check on the rendered
 // page, not an execution of it: it asserts the eight sequences a cursor key
 // can arrive as are all accounted for.
@@ -169,22 +220,40 @@ func TestThePlayPageSwallowsEveryArrowKey(t *testing.T) {
 	}
 
 	// Up is the only one that does anything, and a password must never
-	// become the thing it repeats — lastCommand is only ever assigned
+	// become the thing it recalls — lastCommand is only ever assigned
 	// under the echo guard.
-	if !strings.Contains(page, "if (arrow === 'up') repeat();") {
-		t.Error("/play does not wire up-arrow, and only up-arrow, to the repeat")
+	if !strings.Contains(page, "if (arrow === 'up') recall();") {
+		t.Error("/play does not wire up-arrow, and only up-arrow, to the recall")
 	}
 	if !strings.Contains(page, "if (echo && line !== '') lastCommand = line;") {
-		t.Error("/play records a command for repeat without checking local echo, " +
-			"which would let up-arrow replay a password in the clear")
+		t.Error("/play records a command for recall without checking local echo, " +
+			"which would let up-arrow put a password back on the line in the clear")
 	}
-	// And a repeat is only injected into an empty line: it is sent as
-	// text plus an Enter, so with a half-typed line already in the
-	// server's buffer the two would run together. Since #233 an erase
-	// takes a character back out of that buffer as well as off the
-	// screen, so 'line' is exactly what the server is holding and there
-	// is nothing else to count.
+	// And a recall is only injected into an empty line: the text lands in
+	// whatever the server is already holding, so with a half-typed line
+	// there the two would run together. Since #233 an erase takes a
+	// character back out of that buffer as well as off the screen, so
+	// 'line' is exactly what the server is holding and there is nothing
+	// else to count.
 	if !strings.Contains(page, "if (!lastCommand || line !== '' || !localEcho) return;") {
-		t.Error("/play does not gate the up-arrow repeat on an empty line")
+		t.Error("/play does not gate the up-arrow recall on an empty line")
+	}
+
+	// #369: up-arrow restores the line for editing, it does not run it.
+	// The recall sends the text and no Enter, which is the whole of the
+	// difference — a `type(lastCommand + '\r')` here would be the old
+	// behaviour spelled differently, so the assertion is on the call
+	// itself rather than on the helper.
+	if !strings.Contains(page, "function typeText(text) {") ||
+		!strings.Contains(page, "\t\tws.send(text);\n\t\tconsume(text, localEcho);") {
+		t.Error("/play does not have a helper that types text with no Enter after it")
+	}
+	if !strings.Contains(page, "\t\ttypeText(lastCommand);\n") {
+		t.Error("/play does not recall the last command as editable text; " +
+			"up-arrow must restore the line, not run it (#369)")
+	}
+	if strings.Contains(page, "lastCommand + '\\r'") {
+		t.Error("/play appends an Enter to the recalled command, which runs it " +
+			"instead of restoring it for editing (#369)")
 	}
 }
