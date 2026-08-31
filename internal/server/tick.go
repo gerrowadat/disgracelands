@@ -157,7 +157,12 @@ func (s *Server) suffer(w *game.Live, c *game.Character, amount int32) {
 	s.announcePosition(w, c)
 
 	if c.Position == game.PosDead {
-		s.die(w, c)
+		// No killer: nothing was attacking them. The C spells this as
+		// damage(ch, ch, ...), so a reader of *its* code would say the
+		// victim killed themselves; the server log says nothing rather
+		// than saying that, because "killed by Bob" for a Bob who bled
+		// out is worse than silence.
+		s.die(w, c, nil)
 	}
 }
 
@@ -191,10 +196,12 @@ func (s *Server) weatherAndTime(w *game.Live) {
 // die leaves a body and puts the character back on their feet somewhere else,
 // porting die() and raw_kill() (fight.c) as far as this phase goes.
 //
-// Experience loss on death and the loss of the killer's alignment are combat's
-// business and arrive with it.
-func (s *Server) die(w *game.Live, c *game.Character) {
-	s.logger.Info("a character died", "character", c.Name, "room", c.Room)
+// killer is whoever brought them down, or nil when nothing did — see
+// logDeath, which is the only thing that reads it. Experience loss on death
+// and the loss of the killer's alignment are combat's business and arrive
+// with it.
+func (s *Server) die(w *game.Live, c *game.Character, killer *game.Character) {
+	s.logDeath(c, killer)
 
 	// death_cry, and *only* death_cry. raw_kill's own announcement
 	// (fight.c:389) is the cry; "$n is dead!  R.I.P." belongs to damage()'s
@@ -230,6 +237,58 @@ func (s *Server) die(w *game.Live, c *game.Character) {
 	if err := w.Enter(c, MortalStartRoom); err != nil {
 		s.logger.Error("moving a dead character to the temple", "character", c.Name, "error", err)
 	}
+}
+
+// logDeath writes the server log's record of a death: what died, where,
+// and who killed it when anybody did.
+//
+// This is the operator's log and not the C's mudlog. The two are
+// complementary and neither replaces the other. fight.c:953's "%s killed by
+// %s at %s" is ported at damage() (violence.go) as a wizlog: it goes to
+// immortals watching the syslog, and it fires only for a dead *player* with
+// a killer, because the C explicitly skips it for a mobile
+// (`if (!IS_NPC(victim))`, fight.c:938) — a fight is mostly dead mobiles and
+// the C did not want its log full of them. This one fires for every death
+// there is, which is why until #370 it read "a character died" for all of
+// them and said nothing else: a log full of dead rats and a log recording
+// that somebody's character had been killed were the same line, and neither
+// named who did it.
+//
+// A mobile is named by its short description, the only name it has, and the
+// prototype vnum goes with it — "the guildmaster" is not unique across the
+// world and 3020 is. The player half needs no vnum: a name is the key.
+//
+// The victim's kind is in the message rather than an attribute, because the
+// message is a field too under --log-format=json, so a `character_type`
+// beside it would say the same thing twice. The killer's kind has to be an
+// attribute; there is nowhere else for it, and it is the difference between
+// a player killed by a mobile and a player killed by another player.
+//
+// A nil killer means nothing was attacking them, which is reachable only
+// from suffer(): poison, or bleeding out.
+func (s *Server) logDeath(victim, killer *game.Character) {
+	message := "a player died"
+	if victim.IsNPC() {
+		message = "a mobile died"
+	}
+
+	attrs := []any{"character", victim.Name, "room", victim.Room}
+	if victim.IsNPC() && victim.MobDef != nil {
+		attrs = append(attrs, "vnum", victim.MobDef.Vnum)
+	}
+
+	if killer != nil {
+		kind := "player"
+		if killer.IsNPC() {
+			kind = "mobile"
+		}
+		attrs = append(attrs, "killer", killer.Name, "killer_type", kind)
+		if killer.IsNPC() && killer.MobDef != nil {
+			attrs = append(attrs, "killer_vnum", killer.MobDef.Vnum)
+		}
+	}
+
+	s.logger.Info(message, attrs...)
 }
 
 // announceDecay says the corpse rotted, in whichever place it was.

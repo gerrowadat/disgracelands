@@ -162,7 +162,13 @@ type Violence interface {
 	// hands out experience, and raw_kill does neither. An implementor's
 	// `kill` is the only caller, and the C reaches raw_kill directly from
 	// it (act.offensive.c:96).
-	RawKill(w *game.Live, victim *game.Character)
+	//
+	// killer is the implementor who typed it, in Damage's own argument
+	// order. The C's raw_kill takes only the victim, and nothing in this
+	// port's raw_kill does anything with the killer either — it is carried
+	// for the server log alone (#370), so that the one death the C never
+	// attributes to anybody is not the one death nobody can trace.
+	RawKill(w *game.Live, killer, victim *game.Character)
 }
 
 // MobReloader hot-reloads a mobile prototype from disk, for `reloadmob`
