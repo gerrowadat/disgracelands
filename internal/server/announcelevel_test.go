@@ -164,6 +164,15 @@ func TestTheAnnounceLevelIsSaved(t *testing.T) {
 	c.send("quit")
 	c.expectCount("Make your choice:", 2)
 	c.close()
+	// The menu is not the save. ExtractCharacter snapshots on the world
+	// goroutine and hands the players.Save to Server.background, and
+	// ReturnToMenu runs straight after it in the same task — so "the menu
+	// arrived" orders nothing at all against "the file exists", and
+	// logging back in below read the record as it was *before* the quit.
+	// waitForLogout is the barrier that means anything here: it polls the
+	// world and then waits for the writes, with the inWorld ahead of it
+	// that makes that Wait safe. #373.
+	waitForLogout(t, srv, "Quiet")
 
 	back := dialClient(t, addr)
 	back.login("Quiet", "leavemealone")
