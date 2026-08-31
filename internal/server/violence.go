@@ -340,7 +340,7 @@ func (s *Server) applyDamage(w *game.Live, attacker, victim *game.Character, dam
 			s.wizlog(obs.LogBrief, game.LevelImmortal, "%s%s killed by %s at %s",
 				prefix, victim.Name, attacker.Name, room)
 		}
-		s.kill(w, victim)
+		s.kill(w, victim, attacker)
 	}
 }
 
@@ -505,7 +505,11 @@ func (s *Server) announceGain(w *game.Live, who *game.Character, out game.ExpGai
 }
 
 // kill removes a dead character from the fight and leaves a body.
-func (s *Server) kill(w *game.Live, victim *game.Character) {
+//
+// killer is carried through to die() for the log and nothing else — every
+// other consequence of who did it (the experience, the alignment, the
+// PKILL line) has already happened in damage() by the time this is called.
+func (s *Server) kill(w *game.Live, victim *game.Character, killer *game.Character) {
 	// Everyone swinging at them stops.
 	for _, c := range w.Combatants() {
 		if c.Fighting == victim {
@@ -514,20 +518,28 @@ func (s *Server) kill(w *game.Live, victim *game.Character) {
 	}
 	w.StopFighting(victim)
 
-	s.die(w, victim)
+	s.die(w, victim, killer)
 }
 
 // RawKill implements session.Violence: raw_kill (fight.c:381).
 //
 // Everything death does with none of what damage() does first — no position
-// announcement, no experience, no alignment change, no attacker at all.
-// `kill` typed by an implementor is the only thing in the C that reaches it
-// this way; everything else arrives through damage().
-func (s *Server) RawKill(w *game.Live, victim *game.Character) {
+// announcement, no experience, no alignment change. `kill` typed by an
+// implementor is the only thing in the C that reaches it this way;
+// everything else arrives through damage().
+//
+// killer is the implementor who typed it. The C has no such argument —
+// raw_kill(victim) is its whole signature — because nothing in the C wanted
+// to know: the one line that names a killer is in damage(), which raw_kill
+// is reached instead of, so an implementor's `kill` is unattributed
+// everywhere the C logs anything. That is exactly the gap #370 is about,
+// and it is a gap in the server's own log rather than in anything a player
+// sees, so closing it takes nothing away from the C's behaviour.
+func (s *Server) RawKill(w *game.Live, killer, victim *game.Character) {
 	if victim == nil {
 		return
 	}
-	s.kill(w, victim)
+	s.kill(w, victim, killer)
 }
 
 // toRoomExcept tells everyone in a character's room except them, and except

@@ -112,7 +112,7 @@ func doKill(c *Context) error {
 	// R.I.P." to the room, "You are dead!  Sorry..." to the victim — and
 	// raw_kill announces nothing but the death cry. Routing this through
 	// Damage printed both, and then die() printed the R.I.P. a second time.
-	c.Violence.RawKill(c.World, victim)
+	c.Violence.RawKill(c.World, c.Character, victim)
 	return nil
 }
 

@@ -16,7 +16,6 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"fmt"
-	"io"
 	"log/slog"
 	"math/big"
 	"net"
@@ -762,7 +761,12 @@ func newTestServerWith(t *testing.T, store player.Store, objects player.ObjectSt
 		}
 	}
 
-	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	// A discard by default, exactly as it was, and a recorder for the tests
+	// whose subject is what the server wrote — see testLog in
+	// deathlog_test.go for why it is one switchable handler rather than a
+	// logger a test swaps in afterwards.
+	logHandler := newTestLog()
+	logger := slog.New(logHandler)
 	eng := engine.New(engine.Options{World: testWorld(), Logger: logger})
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -787,6 +791,11 @@ func newTestServerWith(t *testing.T, store player.Store, objects player.ObjectSt
 		// asleep.
 		RoundLength: testRoundLength,
 	})
+	// New() wraps the logger it is given in obs.WithWizVisEcho, whose
+	// handler type is unexported, so this is the last moment the server and
+	// the handler underneath its logger are both in scope. watchLog looks
+	// the pairing up here rather than unwrapping.
+	registerTestLog(srv, logHandler)
 
 	// Every background write must finish before the test's t.TempDir() is
 	// removed. Without this the cleanup races the saves and fails with
