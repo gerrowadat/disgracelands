@@ -320,6 +320,13 @@ func (s *Server) applyDamage(w *game.Live, attacker, victim *game.Character, dam
 	if victim.Position == game.PosDead {
 		if attacker != nil {
 			s.award(w, attacker, victim)
+			// The grudge is settled by the killing (fight.c:959). Without
+			// this a mobile that has killed you once attacks on sight
+			// forever, which is a different game from the one the flag
+			// describes.
+			if attacker.HasMobFlag(game.MobMemory) {
+				attacker.Forget(victim)
+			}
 		}
 		// mudlog(buf2, BRF, LVL_IMMORT, TRUE) (fight.c:953), and only for
 		// a dead *player* — `if (!IS_NPC(victim))` (fight.c:938) — so the
@@ -390,6 +397,15 @@ func (s *Server) startFighting(w *game.Live, attacker, victim *game.Character) {
 	if victim.Position > game.PosStunned && victim.Fighting == nil {
 		if _, message := w.SetFighting(victim, attacker); message != "" {
 			s.wizlog(obs.LogBrief, game.LevelImmortal, "%s", message)
+		}
+		// MOB_MEMORY, inside the same block and for the same reason the C
+		// puts it there (fight.c:816-818): a mobile remembers whoever
+		// *starts* a fight with it, once, not everybody who lands a blow
+		// during one. `!IS_NPC(ch)` is the C's guard at the call site and
+		// Character.Remember carries its own copy of it, so this reads as
+		// "if it is the sort of mobile that remembers, remember them".
+		if victim.HasMobFlag(game.MobMemory) {
+			victim.Remember(attacker)
 		}
 	}
 }

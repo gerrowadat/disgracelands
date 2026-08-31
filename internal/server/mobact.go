@@ -53,6 +53,7 @@ func (s *Server) mobileActivity(w *game.Live) {
 		s.scavenge(w, mob)
 		s.wander(w, mob)
 		s.beAggressive(w, mob)
+		s.avengeItself(w, mob)
 		s.helpOthers(w, mob)
 	}
 }
@@ -73,9 +74,12 @@ func (s *Server) mobileActivity(w *game.Live) {
 //     (`ch == FIGHTING(vict)`), which would be swinging at the person
 //     already swinging at it.
 //
-// One per pulse, whatever else is going on in the room: the C's loop sets
-// `found` and stops, so a room of five guards takes five pulses to all pile
-// in rather than doing it at once. A blind or charmed helper sits it out.
+// One neighbour per helper per pulse: the C's inner loop sets `found` and
+// stops. That bounds less than it sounds like it does, and the correction
+// belongs here rather than only in the test — `found` is reset once per
+// *mobile*, so it stops one helper joining two fights and does nothing to
+// stop every helper in the room joining the same one. A room of guards
+// really does all pile in at once. A blind or charmed helper sits it out.
 func (s *Server) helpOthers(w *game.Live, mob *game.Character) {
 	if !mob.HasMobFlag(game.MobHelper) ||
 		mob.HasAffect(game.AffectBlind) || mob.HasAffect(game.AffectCharm) {
@@ -93,12 +97,59 @@ func (s *Server) helpOthers(w *game.Live, mob *game.Character) {
 		// act("$n jumps to the aid of $N!", FALSE, ch, 0, vict, TO_ROOM):
 		// everybody in the room except the helper, the one being helped
 		// included. hide_invisible is FALSE, so it is not filtered on
-		// sight — an unseen helper still produces the line, with $n
+		// sight -- an unseen helper still produces the line, with $n
 		// resolving to "someone" for whoever cannot see them, which is
 		// game.Act's own job.
 		s.actToRoomExcept(w, mob, nil,
 			game.ActArgs{Actor: mob, Victim: other}, "$n jumps to the aid of $N!")
 		s.hit(w, mob, other.Fighting)
+		return
+	}
+}
+
+// avengeItself is the "Mob Memory" pass (mobact.c:163-181): a MOB_MEMORY
+// mobile attacks anybody in the room it is holding a grudge against.
+//
+// Before the helper pass and after the aggressive one, which is the C's own
+// order -- so an aggressive mobile that also remembers you picks its target
+// by aggression first, and this only reaches somebody it had no other
+// reason to attack.
+//
+// Three skips, and two of them do work the aggressive pass's do not. CAN_SEE
+// means a mobile cannot avenge itself on somebody it cannot see, so
+// invisibility hides you from a grudge as well as from a wandering monster.
+// PRF_NOHASSLE keeps gods out of it, and is tested here as well as in
+// Character.Remember, because a god can turn it on *after* being remembered
+// -- which is exactly when they would want to.
+//
+// One per pulse, like the helper pass, and with the same caveat: the bound
+// is per mobile, not per room.
+//
+// **What is deliberately not ported** is the local <DoC> extension that
+// follows it (mobact.c:183-215), where mobiles 14217 and 14203 hunt
+// remembered players across the whole descriptor list rather than the room,
+// one time in five, and 14217 summons them. Those vnums live in the real
+// game data, which this repository does not ship (docs/investigations/), so
+// there is nothing here to test it against. See #380.
+func (s *Server) avengeItself(w *game.Live, mob *game.Character) {
+	if !mob.HasMobFlag(game.MobMemory) || len(mob.Memory) == 0 {
+		return
+	}
+
+	for _, other := range w.Occupants(mob.Room) {
+		if other.IsNPC() || !w.CanSee(mob, other) {
+			continue
+		}
+		if other.Record != nil && other.Record.Preferences.Has(game.PrefNoHassle) {
+			continue
+		}
+		if !mob.Remembers(other) {
+			continue
+		}
+
+		s.actToRoomExcept(w, mob, nil, game.ActArgs{Actor: mob},
+			"'Hey!  You're the fiend that attacked me!!!', exclaims $n.")
+		s.hit(w, mob, other)
 		return
 	}
 }
