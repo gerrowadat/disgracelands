@@ -210,15 +210,22 @@ lets the pager answer a single keypress without Enter, and it means the
 page does its own echoing — xterm.js has none, where a telnet client's
 terminal driver would. Two consequences a player notices:
 
-- **The arrow keys do nothing, except up, which repeats the last command
-  you typed.** A cursor key is an escape sequence, not a character; before
-  this the page forwarded it to the game as command text (an arrow at the
-  name prompt answered "Names may only contain letters.") and echoed it
-  back into the terminal, where it moved the cursor. Now it is swallowed
-  in the browser and never reaches either. Up-arrow repeats only when the
-  line is empty — a repeat is sent as text plus an Enter, so it would run
-  into a half-finished line rather than replace it — and never repeats
-  anything typed with echo off, so a password can never be replayed.
+- **The arrow keys do nothing, except up, which puts the last command you
+  typed back on the line.** A cursor key is an escape sequence, not a
+  character; before this the page forwarded it to the game as command text
+  (an arrow at the name prompt answered "Names may only contain letters.")
+  and echoed it back into the terminal, where it moved the cursor. Now it
+  is swallowed in the browser and never reaches either. The recalled
+  command is *not* run: it lands on the line ready to be edited, and the
+  Enter is yours to press (#369 — it used to run outright, which made a
+  mistyped command impossible to fix and made up-arrow the one key on the
+  page that took an irreversible action from a single press). Up-arrow
+  recalls only when the line is empty — the text is injected into whatever
+  the server is already holding, so it would run into a half-finished line
+  rather than replace it — and never recalls anything typed with echo off,
+  so a password can never be put back on the line in the clear. One press
+  gets you the last command and no further: pressing it again finds a
+  non-empty line and does nothing.
 - **Backspace erases, on the screen and in the game.** The byte goes to
   the server like every other keystroke, and the server drops it along
   with the character before it, which is what the C server's own
