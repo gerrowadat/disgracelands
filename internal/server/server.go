@@ -811,6 +811,24 @@ func (s *Server) Enter(ctx context.Context, sess *session.Session, c *game.Chara
 			}
 		}
 	}
+	// PLR_INVSTART, at the moment the C reads it: menu choice '1', before
+	// the character is put in a room and therefore before anybody is told
+	// they arrived (interpreter.c:1646-1648).
+	//
+	//	if (PLR_FLAGGED(d->character, PLR_INVSTART))
+	//	  GET_INVIS_LEV(d->character) = GET_LEVEL(d->character);
+	//
+	// A god with the flag comes in unseen, at their own level, rather than
+	// appearing in the temple and having to type `invis` after everyone has
+	// already watched them arrive — which is the entire point of it. #378.
+	//
+	// Unconditional, as the C's is: a saved invis level is overwritten
+	// rather than preferred, so the flag means "this level, every time"
+	// and not "at least whatever you had".
+	if c.Record != nil && c.Record.PlayerFlags.Has(game.PlayerInvisStart) {
+		c.Record.InvisLevel = c.Record.Level
+	}
+
 	c.Client = sess
 	// The C stores POS_STANDING for everyone on load and lets update_pos
 	// sort out anyone who should not be — which it will, on the next tick,
@@ -832,8 +850,16 @@ func (s *Server) Enter(ctx context.Context, sess *session.Session, c *game.Chara
 			s.logger.Error("entering the world", "character", c.Name, "error", err)
 			return
 		}
+		// act("$n has entered the game.", TRUE, ...) (interpreter.c:1679),
+		// and the TRUE is hide_invisible: act() skips anybody who cannot
+		// see the actor (comm.c:2482, `if (hide_invisible && ch &&
+		// !CAN_SEE(to, ch))`). Without that filter the line is what gives
+		// an invisible arrival away, and it gave every one of them away
+		// here — an invis level survives a logout in the pfile, so this
+		// was already wrong for a god who typed `invis` and quit, before
+		// PLR_INVSTART above gave it a second way to happen.
 		for _, other := range w.Occupants(room) {
-			if other != c {
+			if other != c && w.CanSee(other, c) {
 				other.Tell("%s has entered the game.\r\n", c.Name)
 			}
 		}
