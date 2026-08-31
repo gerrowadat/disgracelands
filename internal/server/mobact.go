@@ -53,6 +53,53 @@ func (s *Server) mobileActivity(w *game.Live) {
 		s.scavenge(w, mob)
 		s.wander(w, mob)
 		s.beAggressive(w, mob)
+		s.helpOthers(w, mob)
+	}
+}
+
+// helpOthers is the "Helper Mobs" pass, the last thing mobile_activity does
+// (mobact.c:259-272), and the whole of MOB_HELPER: a flagged mobile joins a
+// fight one of its neighbours is in.
+//
+// Three of the conditions are the entire character of the flag and are worth
+// reading as rules rather than as guards:
+//
+//   - it helps **mobiles** only (`!IS_NPC(vict)` skips a player), so the
+//     flag never makes a guard rescue an adventurer;
+//   - only against a **player** (`IS_NPC(FIGHTING(vict))` skips a
+//     mob-on-mob fight), so two flagged mobiles fighting each other do not
+//     drag the whole room in;
+//   - and it never joins a fight that is already **against itself**
+//     (`ch == FIGHTING(vict)`), which would be swinging at the person
+//     already swinging at it.
+//
+// One per pulse, whatever else is going on in the room: the C's loop sets
+// `found` and stops, so a room of five guards takes five pulses to all pile
+// in rather than doing it at once. A blind or charmed helper sits it out.
+func (s *Server) helpOthers(w *game.Live, mob *game.Character) {
+	if !mob.HasMobFlag(game.MobHelper) ||
+		mob.HasAffect(game.AffectBlind) || mob.HasAffect(game.AffectCharm) {
+		return
+	}
+
+	for _, other := range w.Occupants(mob.Room) {
+		if other == mob || !other.IsNPC() || other.Fighting == nil {
+			continue
+		}
+		if other.Fighting.IsNPC() || other.Fighting == mob {
+			continue
+		}
+
+		// act("$n jumps to the aid of $N!", FALSE, ch, 0, vict, TO_ROOM):
+		// everybody in the room except the helper, the one being helped
+		// included. hide_invisible is FALSE, so it is not filtered on
+		// sight — an unseen helper still produces the line, with $n
+		// resolving to "someone" for whoever cannot see them, which is
+		// game.Act's own job.
+		s.actToRoomExcept(w, mob, nil,
+			game.ActArgs{Actor: mob, Victim: other}, "$n jumps to the aid of $N!")
+		s.hit(w, mob, other.Fighting)
+		return
 	}
 }
 
