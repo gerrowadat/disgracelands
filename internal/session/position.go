@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/gerrowadat/disgracelands/internal/game"
+	"github.com/gerrowadat/disgracelands/internal/rng"
 )
 
 // The commands that change what a character is doing, ported from
@@ -167,6 +168,33 @@ func (c *Context) wakeSomebody(arg string) error {
 		victim.Position = game.PosSitting
 	}
 	return nil
+}
+
+// Flee runs away on behalf of somebody who did not type it.
+//
+// do_flee is not only a command in the C: damage() calls it directly, for a
+// player whose hit points have fallen below their wimp level and for a
+// MOB_WIMPY mobile that is badly hurt (fight.c:898-912). Those are calls
+// into the same function with the same arguments the command uses
+// (`do_flee(victim, NULL, 0, 0)`), which is why this is one line over
+// doFlee rather than a second implementation of fleeing — a separate one
+// would be free to drift on the exit roll, the experience penalty or the
+// order the messages come out in, and all three are things the parity
+// suite watches.
+//
+// The Context is built here rather than by the dispatcher, the same way
+// specGuild builds one for a command that arrived through a special
+// procedure: same character, same world, and a session only if there is
+// one. A fleeing mobile has none, and Context.Send falls back to the
+// character's own client.
+//
+// It rolls. do_flee draws up to six times from the generator looking for a
+// way out, so a server that never made a wimpy player flee was drawing
+// *fewer* numbers than the C at exactly this point and its RNG stream
+// diverged from the C's from there on. This closes that as well as the
+// gameplay gap. #375.
+func Flee(w *game.Live, who *game.Character, sess *Session, r *rng.Rand) {
+	_ = doFlee(&Context{World: w, Character: who, Session: sess, RNG: r})
 }
 
 // doFlee runs away, porting do_flee (act.offensive.c).
