@@ -424,7 +424,11 @@ func run(args []string) (int, error) {
 		NoSpecials:    cfg.NoSpecials,
 		FreezeMobiles: cfg.FreezeMobiles,
 		FreezeWeather: cfg.FreezeWeather,
-		RNG:           rng.NewRand(source),
+		// One command per pulse, which is what game_loop allows
+		// (session.Session.pace). The same interval the engine ticks on,
+		// because in the C they are the same loop.
+		CommandInterval: cfg.PulseInterval,
+		RNG:             rng.NewRand(source),
 	})
 	// The engine's periodic work belongs to the server, which is the side
 	// that can reach both the world and the player store. Started only now

@@ -37,6 +37,9 @@ const maxNameLength = 20
 
 // handle advances the login state machine by one line of input.
 func (s *Session) handle(ctx context.Context, deps Deps, line string) error {
+	if err := s.pace(ctx, deps.CommandInterval); err != nil {
+		return err
+	}
 	switch s.State() {
 	case StateGetName:
 		return s.handleGetName(ctx, deps, line)
