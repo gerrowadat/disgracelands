@@ -1062,6 +1062,25 @@ port is right and the thing it is compared against is wrong.
   descriptor logged in as the same character (handler.c:925-930).
   `perform_dupe_check` runs at login and already leaves only one, so
   nothing in this tree can reach it.
+- **Two details of the input pacing differ, both in the responsive
+  direction.** `game_loop` allows one command per descriptor per pulse
+  (`GET_WAIT_STATE(d->character) = 1`, comm.c:829), and this port does the
+  same since #386 — but not identically in two places. **The first command
+  after an idle spell is free here**, where the C still waits for the next
+  pass to notice it (0-100ms, 50 on average): that delay is an artifact of
+  polling rather than of the rule, and reproducing it would mean adding
+  latency to reproduce a limitation. **And the lines typed before a
+  character exists are not paced.** The C's guard is `if (d->character)`
+  and so is this port's, but the C allocates a `char_data` at CON_GET_NAME
+  and this port does not build one until the login succeeds — the same
+  difference that makes "Losing descriptor without char" unreachable
+  (above) — so the C paces the name and password lines and this does not.
+  *Ruling (2026-09-01):*
+  **Accepted.** The ceiling the pacing exists to impose — ten commands a
+  second, whatever anybody pastes — is reproduced exactly; what is not is
+  a poll interval and a difference in when a character is allocated, both
+  of which this port already diverges on for reasons written down
+  elsewhere.
 - **The C prepends a CRLF to any output that interrupts a prompt.**
   `process_output` sends its buffer from `i` rather than `i + 2` when
   `has_prompt` is set (comm.c:1459), and a descriptor is born with

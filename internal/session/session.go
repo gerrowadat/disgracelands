@@ -165,6 +165,11 @@ type Session struct {
 	// prompt has one too.
 	loginTime time.Time
 
+	// nextCommand is the earliest moment this connection may act again —
+	// the C's one-command-per-pulse pacing, see pace. Owned by the read
+	// goroutine and touched by nothing else, so it needs no lock.
+	nextCommand time.Time
+
 	out    chan outgoing
 	logger *slog.Logger
 
@@ -363,6 +368,11 @@ type Deps struct {
 	Login LoginHandler
 	// Commands dispatches what a playing character types.
 	Commands CommandHandler
+	// CommandInterval is how often a connection may act: one line per
+	// interval, which is the C's one command per pulse. Zero disables the
+	// pacing, which is what a unit test holding a Session directly wants.
+	// See Session.pace.
+	CommandInterval time.Duration
 }
 
 // TextFiles are the server's canned texts.
@@ -1250,4 +1260,58 @@ func (s *Session) ConnectedName() string {
 		return s.pagerReturn.ConnectedName()
 	}
 	return s.State().ConnectedName()
+}
+
+// pace holds a connection to one command per interval, porting the C's
+// input pacing (comm.c:806-830).
+//
+// game_loop takes **one** command off a descriptor's queue per pass and then
+// does this:
+//
+//	GET_WAIT_STATE(d->character) = 1;
+//
+// so the next pass spends that 1 decrementing back to zero and only the pass
+// after it can dequeue again. At OPT_USEC's 100ms that is a ceiling of ten
+// commands a second, whatever anybody types or pastes — the classic Diku
+// pacing, and a flood limit as much as a rhythm. This port had none: it ran
+// commands as fast as the socket delivered them, five `look`s in 151ms
+// against the C's 603ms (#386).
+//
+// **It does not stack with a skill's own lag, and does not need to.** The C
+// sets the 1 *before* running the command, so `kick` overwrites it with
+// three rounds and the larger simply wins. Here the same thing falls out of
+// the two being measured differently: this is an absolute moment and
+// Character.BusyUntil is another, so a 100ms pace inside a two-second wait
+// is absorbed by it rather than added to it.
+//
+// Reading is not what is paced, in either server. process_input runs every
+// pass regardless, so a player can always type ahead; what is rationed is
+// how fast the queued lines are spent. This port's read loop does block
+// while a line is being handled, so the type-ahead sits in the socket buffer
+// rather than in a queue of the server's own — the same effect from the
+// player's side, and the reason nothing here needs a queue.
+//
+// # Who is paced
+//
+// The C's guard is `if (d->character)`, and so is this: a connection with no
+// character yet is not paced. The two disagree about *when* that becomes
+// true, because the C allocates a char_data at CON_GET_NAME and this port
+// does not build one until the login succeeds (docs/deviations.md — it is
+// why there is no "Losing descriptor without char"). So the C paces the name
+// and password lines and this does not, which is a difference of a few
+// hundred milliseconds during login and nothing else.
+func (s *Session) pace(ctx context.Context, every time.Duration) error {
+	if every <= 0 || s.Character() == nil {
+		return nil
+	}
+
+	if wait := time.Until(s.nextCommand); wait > 0 {
+		select {
+		case <-time.After(wait):
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+	}
+	s.nextCommand = time.Now().Add(every)
+	return nil
 }

@@ -130,6 +130,9 @@ type Server struct {
 	// freezeWeather suppresses weather_and_time, matching the C's -W. See
 	// Options.FreezeWeather.
 	freezeWeather bool
+	// commandEvery is how often a connection may act; see Options.
+	commandEvery time.Duration
+
 	// roundLength is how long a combat round lasts, and so how long a wait
 	// state holds somebody's next command up for. Zero is the real two
 	// seconds; see session.DefaultRoundLength.
@@ -203,6 +206,12 @@ type Options struct {
 	// every caller that is not a test — means the real two seconds, which
 	// is what PULSE_VIOLENCE is. See session.DefaultRoundLength.
 	RoundLength time.Duration
+	// CommandInterval is how often a connection may act — the C's one
+	// command per pulse (session.Session.pace). Zero disables the pacing,
+	// which is what most tests want for the same reason they want a short
+	// RoundLength: a suite that types six lines to log in should not spend
+	// six pulses doing it. cmd/dlmud passes the real pulse interval.
+	CommandInterval time.Duration
 	// RNG is the generator the game rolls on. A nil one gets the modern
 	// generator seeded from the clock.
 	RNG *rng.Rand
@@ -230,6 +239,7 @@ func New(opts Options) *Server {
 		freezeMobiles: opts.FreezeMobiles,
 		freezeWeather: opts.FreezeWeather,
 		roundLength:   opts.RoundLength,
+		commandEvery:  opts.CommandInterval,
 		rng:           opts.RNG,
 	}
 	// `-r` is the C's `circle_restrict = 1` and nothing else (comm.c:329).

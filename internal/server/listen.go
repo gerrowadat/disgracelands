@@ -211,9 +211,10 @@ func (s *Server) serve(ctx context.Context, sess *session.Session, limits Limits
 	}
 
 	sess.Serve(ctx, session.Deps{
-		Logger: s.logger,
-		Text:   s.text,
-		Login:  s,
+		Logger:          s.logger,
+		Text:            s.text,
+		CommandInterval: s.commandEvery,
+		Login:           s,
 		Commands: &session.Dispatcher{
 			Run: func(ctx context.Context, f func(*game.Live)) error {
 				return s.engine.DoSync(ctx, f)

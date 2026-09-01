@@ -686,6 +686,25 @@ func newTestServer(t *testing.T) (*Server, player.Store) {
 	return newTestServerWith(t, store, store, nil, nil, nil, nil)
 }
 
+// testCommandEvery is the command pacing the *next* server built by this
+// harness will use. Zero for every test but the pacing ones, for the reason
+// testRoundLength is short: a suite that types six lines to log in should
+// not spend six pulses doing it. Set through newTestServerPaced, which puts
+// it back afterwards.
+var testCommandEvery time.Duration
+
+// newTestServerPaced is newTestServer with the C's one-command-per-pulse
+// pacing turned on at a chosen interval. See pacing_test.go.
+func newTestServerPaced(t *testing.T, every time.Duration) (*Server, player.Store) {
+	t.Helper()
+
+	previous := testCommandEvery
+	testCommandEvery = every
+	t.Cleanup(func() { testCommandEvery = previous })
+
+	return newTestServer(t)
+}
+
 // newLegacyTestServer builds one on ascii/binary instead, for the handful
 // of tests whose subject *is* a legacy format's behaviour.
 //
@@ -790,6 +809,8 @@ func newTestServerWith(t *testing.T, store player.Store, objects player.ObjectSt
 		// two seconds a round the combat tests spend most of their time
 		// asleep.
 		RoundLength: testRoundLength,
+		// Off unless a test asked for it; see testCommandEvery.
+		CommandInterval: testCommandEvery,
 	})
 	// New() wraps the logger it is given in obs.WithWizVisEcho, whose
 	// handler type is unexported, so this is the last moment the server and
