@@ -80,7 +80,7 @@ func (s *Session) handleMenu(ctx context.Context, deps Deps, line string) error 
 		// background leaves s.State() exactly as StateReadMOTD, set above,
 		// so this only fires when pagination actually happened.
 		if s.State() == StatePaging {
-			s.Send("%s", prompt(s))
+			s.sendPrompt()
 		}
 		return nil
 

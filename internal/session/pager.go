@@ -185,7 +185,7 @@ func (s *Session) handlePaging(line string) error {
 	// Dispatcher.Do's own tail would already show after sendPaged's
 	// first page, kept explicit here since handlePaging never goes
 	// through that tail at all (login.go's handle() calls it directly).
-	s.Send("%s", prompt(s))
+	s.sendPrompt()
 	return nil
 }
 
@@ -199,6 +199,6 @@ func (s *Session) handlePaging(line string) error {
 // playing yet.
 func (s *Session) sendPromptIfPlaying() {
 	if s.State() == StatePlaying {
-		s.Send("%s", prompt(s))
+		s.sendPrompt()
 	}
 }

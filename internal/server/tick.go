@@ -36,6 +36,11 @@ func (s *Server) Periodic() []engine.Periodic {
 		{Name: "mobile-activity", Every: pulseMobile, Run: s.mobileActivity},
 		{Name: "zone-update", Every: pulseZone, Run: s.zoneUpdate},
 		{Name: "point-update", Every: pulseTick, Run: s.pointUpdate},
+		// Every pulse, and last: the C flushes output — appending a prompt
+		// to it — after the commands and the heartbeat of the same pass
+		// (comm.c:851-869), so a prompt reflects everything that happened
+		// in the pulse it follows. See Session.PromptIfOwed. #385.
+		{Name: "prompts", Every: 1, Run: s.flushPrompts},
 	}
 	// --freeze-mobiles drops the pulse rather than making mobileActivity
 	// return early, so the C's `if (!(pulse % PULSE_MOBILE) &&
@@ -46,6 +51,18 @@ func (s *Server) Periodic() []engine.Periodic {
 		p = slices.DeleteFunc(p, func(e engine.Periodic) bool { return e.Name == "mobile-activity" })
 	}
 	return p
+}
+
+// flushPrompts gives a prompt to every connection that has been written to
+// since its last one — the C's output-flush half of game_loop, which is
+// where a prompt comes from for anything the player did not type.
+//
+// On the world goroutine, which is what makes it safe: a prompt is built
+// from live hit points, mana and movement.
+func (s *Server) flushPrompts(_ *game.Live) {
+	for _, sess := range s.connections.list() {
+		sess.PromptIfOwed()
+	}
 }
 
 // regenContext answers what the regeneration formulas need to know about a

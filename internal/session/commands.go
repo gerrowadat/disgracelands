@@ -850,7 +850,12 @@ func (d *Dispatcher) Do(ctx context.Context, s *Session, line string) error {
 		return err
 	}
 	if cmd == nil {
+		// reply already ends in the prompt built on the world goroutine
+		// above ("" for a bare Enter, "Huh?!?" for a word that means
+		// nothing), so the debt is settled here rather than by a second
+		// prompt a pulse later. See Session.sendPrompt.
 		s.Send("%s", reply)
+		s.owesPrompt.Store(false)
 		return nil
 	}
 
@@ -882,7 +887,7 @@ func (d *Dispatcher) Do(ctx context.Context, s *Session, line string) error {
 			s.Send("%s", refusal)
 			if !s.Closed() {
 				s.SendVitals(s.Character())
-				s.Send("%s", prompt(s))
+				s.sendPrompt()
 			}
 			return
 		}
@@ -921,7 +926,7 @@ func (d *Dispatcher) Do(ctx context.Context, s *Session, line string) error {
 			// The same numbers as the prompt, out of band, so a client does
 			// not have to parse them back out of it.
 			s.SendVitals(s.Character())
-			s.Send("%s", prompt(s))
+			s.sendPrompt()
 		}
 	})
 }
