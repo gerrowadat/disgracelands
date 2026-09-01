@@ -987,7 +987,7 @@ func (s *Server) ExtractCharacter(w *game.Live, c *game.Character) {
 	// choose 1 at the menu and be back in the world — writing to the same
 	// record — before a background read of it had run. Copying now closes
 	// that window, and `-race` finds it if it is left open.
-	name, record := c.Name, game.BaseRecord(*c.Record)
+	name, record := c.Name, storedRecord(c.Record)
 	var crash *player.RentFile
 	if s.objects != nil && !c.IsNPC() {
 		crash = crashFileFor(c)
@@ -1018,6 +1018,22 @@ func (s *Server) ExtractCharacter(w *game.Live, c *game.Character) {
 		s.SaveChangedHouses(ctx)
 		s.logger.Info("has quit", "character", name)
 	})
+}
+
+// storedRecord is char_to_store in full: the copy that goes to disk, and the
+// two fields it writes back to the live character on the way past
+// (game.StampSaved).
+//
+// **Only on the world goroutine.** It mutates the record it is given, which
+// is the live one every caller here holds. saveLive does not use it for that
+// reason -- it is reached from the menu and from Enter, off the world
+// goroutine and sometimes before the character is in the world at all -- and
+// it does not need to: what the stamp is for is the moment somebody stops
+// playing, and quitting, an explicit save, link loss and the autosave sweep
+// all come through here.
+func storedRecord(rec *game.PlayerRecord) game.PlayerRecord {
+	game.StampSaved(rec, time.Now().UTC())
+	return game.BaseRecord(*rec)
 }
 
 // saveLive writes the record of a character who is in the world or sitting at
@@ -1058,7 +1074,7 @@ func (s *Server) Save(ctx context.Context, c *game.Character) error {
 	}
 	var snapshot game.PlayerRecord
 	if err := s.engine.DoSync(ctx, func(_ *game.Live) {
-		snapshot = game.BaseRecord(*c.Record)
+		snapshot = storedRecord(c.Record)
 		// LoadRoom is *not* set from the current room. save_char writes
 		// whatever is on the record and nothing else touches it: the
 		// receptionist sets it when you rent (objsave.c:1143), and the entry
@@ -1127,7 +1143,7 @@ func (s *Server) snapshotPlayers(ctx context.Context) ([]playerSnapshot, error) 
 			out = append(out, playerSnapshot{
 				character: c,
 				name:      c.Name,
-				record:    game.BaseRecord(*c.Record),
+				record:    storedRecord(c.Record),
 				linked:    c.Client != nil,
 			})
 		}

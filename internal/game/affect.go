@@ -6,6 +6,8 @@
 
 package game
 
+import "time"
+
 // Affects: the timed modifiers a spell leaves on a character, ported from
 // handler.c's affect_to_char/affect_from_char/affect_join/affect_total and
 // limits.c's affect_update.
@@ -403,4 +405,52 @@ func SnapshotReal(rec *PlayerRecord) {
 	rec.RealMaxMove = rec.Points.MaxMove
 	rec.RealSavingThrows = rec.SavingThrows
 	rec.BaseAffectFlags = rec.AffectFlags
+}
+
+// StampSaved is the half of char_to_store that writes back to the live
+// character (db.c:2337-2342):
+//
+//	st->played = ch->player.time.played;
+//	st->played += time(0) - ch->player.time.logon;
+//	st->last_logon = time(0);
+//
+//	ch->player.time.played = st->played;
+//	ch->player.time.logon = time(0);
+//
+// Both fields matter and neither was ported (#389).
+//
+// **LastLogon is the moment of the last save, not of the login.** That is
+// what makes it mean "how long have they been gone" when the next login
+// reads it — which is the whole basis of the away-an-hour heal in
+// store_to_char (AwayLongEnoughToHeal). Stamping it only at login, as this
+// port did, measured the wrong interval from the wrong end: a player who
+// spent three hours in the world and came back two minutes after logging
+// out was "away" for three hours and was healed for it.
+//
+// It is one field doing two jobs in the C as well — `st->last_logon` and
+// `ch->player.time.logon` are set to the same time(0) — so it is one here
+// too. The autosave writes it every minute for anybody online, which is
+// what keeps it tracking "now" while they are playing and leaves it at the
+// moment they left once they are not.
+//
+// **Played is accumulated here and nowhere else.** Before this the field was
+// only ever read: nothing in the tree wrote it, so every character's total
+// stayed at whatever the pfile was created with and each session's time was
+// lost when it ended. `score` hid that by adding the current session on the
+// fly, which is correct for the session you are in and wrong about every
+// one before it.
+func StampSaved(rec *PlayerRecord, now time.Time) {
+	if rec == nil {
+		return
+	}
+	// A zero LastLogon would make the first save credit the character with
+	// every second since the epoch. The C cannot reach that -- its logon is
+	// always set by store_to_char on the way in -- but a record built in Go
+	// and saved before it has ever entered the world can.
+	if !rec.LastLogon.IsZero() {
+		if elapsed := now.Sub(rec.LastLogon); elapsed > 0 {
+			rec.Played += elapsed
+		}
+	}
+	rec.LastLogon = now
 }
