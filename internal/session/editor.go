@@ -124,7 +124,7 @@ func (s *Session) beginEditorSeeded(maxLength int, seed string, done func(text s
 func (s *Session) handleEditing(ctx context.Context, deps Deps, line string) error {
 	err := s.editLine(ctx, deps, line)
 	if err == nil && s.State() == StateEditing {
-		s.Send("%s", prompt(s))
+		s.sendPrompt()
 	}
 	return err
 }
@@ -971,6 +971,6 @@ func (s *Session) finishEditing(ctx context.Context, deps Deps, saved bool) erro
 		cleanup(nil)
 	}
 
-	s.Send("%s", prompt(s))
+	s.sendPrompt()
 	return nil
 }

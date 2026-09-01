@@ -173,6 +173,10 @@ type Session struct {
 	out    chan outgoing
 	logger *slog.Logger
 
+	// owesPrompt marks output that has gone out with no prompt behind it —
+	// the inverse of the C's `has_prompt` (comm.c). See PromptIfOwed.
+	owesPrompt atomic.Bool
+
 	// state is the connection state, and it is an atomic because it is not
 	// only read by this session's own goroutine. `users` walks every
 	// session and prints each one's state (users.go, do_users'
@@ -723,6 +727,13 @@ func (s *Session) SendAt(want colour.Level, format string, args ...any) {
 // so pagination does not re-render each page (and double-count what
 // next_page's own ANSI-skip logic would otherwise have to undo).
 func (s *Session) sendRendered(text string) {
+	// Every line that reaches a player goes through here, which is what
+	// makes it the place to notice that one has gone out with no prompt
+	// after it. Cleared again by sendPrompt. Telnet and GMCP bytes do not
+	// come this way and do not count, which is right: the C's has_prompt
+	// tracks its *output buffer*, not its negotiation.
+	s.owesPrompt.Store(true)
+
 	select {
 	case s.out <- outgoing{data: []byte(normalise(text))}:
 	case <-s.done:
@@ -1314,4 +1325,56 @@ func (s *Session) pace(ctx context.Context, every time.Duration) error {
 	}
 	s.nextCommand = time.Now().Add(every)
 	return nil
+}
+
+// sendPrompt writes the prompt and settles the debt sendRendered records.
+//
+// Every prompt in the game goes through here for one reason: a prompt is
+// itself output, so a version that did not clear the flag would owe another
+// prompt for having sent one, and PromptIfOwed would send a fresh prompt
+// every pulse forever.
+//
+// **On the world goroutine only.** prompt() reads hit points, mana and
+// movement off the live record.
+func (s *Session) sendPrompt() {
+	s.Send("%s", prompt(s))
+	s.owesPrompt.Store(false)
+}
+
+// PromptIfOwed gives this connection a prompt if something has been said to
+// it since the last one, porting the half of game_loop that has no counterpart
+// in a command (#385).
+//
+// The C sends a prompt after *anything* that writes to you, not only after
+// something you typed. process_output appends make_prompt to whatever it is
+// flushing (comm.c:1469), so every unsolicited line — somebody speaking, a
+// round of combat, a tick — arrives with a fresh prompt behind it, and the
+// loop after it prints one to any descriptor that still has none
+// (comm.c:865-869).
+//
+// That matters more than it sounds, because the prompt is where your hit
+// points are. On the real server a fight is a stream of damage messages each
+// followed by an updated `22H 100M 85V >`, which is how you know when to run
+// — and what `wimpy` (#375) exists to automate. Without this the numbers
+// froze at whatever they were when you last typed something.
+//
+// Called once a pulse for every connection, which is the same rhythm the C
+// flushes on. It sends nothing when nothing has been said, and nothing when
+// prompt() itself is empty — which is the C's answer at the menu and
+// anywhere else that is not playing, editing or paging (docs/deviations.md,
+// "No prompt at the menu").
+//
+// **On the world goroutine only**, for sendPrompt's reason.
+func (s *Session) PromptIfOwed() {
+	if s.Closed() || !s.owesPrompt.Load() {
+		return
+	}
+	if prompt(s) == "" {
+		// Nothing to send, but the debt is settled either way: a menu that
+		// owes a prompt it has no way to write would otherwise be asked
+		// again every pulse for the rest of the connection.
+		s.owesPrompt.Store(false)
+		return
+	}
+	s.sendPrompt()
 }
