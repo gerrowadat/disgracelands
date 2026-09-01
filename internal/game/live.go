@@ -267,6 +267,12 @@ type Character struct {
 	// Fighting is who they are attacking, or nil.
 	Fighting *Character
 
+	// Memory is who this mobile is holding a grudge against, by identity
+	// number — MOB_MEMORY's list (mobact.c's memory_rec). Runtime only and
+	// nil for a player; see mobmemory.go for why it holds numbers rather
+	// than characters.
+	Memory []int64
+
 	// Master is who they are following, and Followers is who follows them.
 	// Runtime only: the C keeps both on char_data and neither is saved, so a
 	// group does not survive a reboot. See follow.go.
