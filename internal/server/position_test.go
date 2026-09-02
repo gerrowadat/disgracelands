@@ -10,6 +10,7 @@ import (
 	"context"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/gerrowadat/disgracelands/internal/game"
 )
@@ -283,6 +284,55 @@ func TestScore(t *testing.T) {
 	// N exp" line.
 	if strings.Contains(got, "to reach your next level") {
 		t.Errorf("an implementor was told how much experience they need:\n%s", got)
+	}
+}
+
+// TestScorePlayedTimeShowsMinutes. The C's line stops at hours because
+// real_time_passed fills a time_info_data (utils.c:309) and that struct has
+// no minutes field (structs.h:745); do_stat_character reports the same play
+// time to the minute (act.wizard.c:2247). This port shows minutes in `score`
+// too -- a deliberate difference, in docs/deviations.md.
+//
+// The record is written from inside the world so nothing else is touching it,
+// and LastLogon is stamped to now so the live session adds nothing: `score`
+// reports Played plus the time since the last save.
+func TestScorePlayedTimeShowsMinutes(t *testing.T) {
+	srv, _ := newTestServer(t)
+	c := dialClient(t, listening(t, srv))
+	c.create("Zod", "swordfish", "m", "w")
+
+	for _, tc := range []struct {
+		name   string
+		played time.Duration
+		want   string
+	}{
+		{"a fresh character", 0, "You have been playing for 0 days, 0 hours and 0 minutes."},
+		{"under an hour", 47 * time.Minute, "You have been playing for 0 days, 0 hours and 47 minutes."},
+		{"the singulars", 25*time.Hour + time.Minute, "You have been playing for 1 day, 1 hour and 1 minute."},
+		{"a long career", 74*time.Hour + 35*time.Minute, "You have been playing for 3 days, 2 hours and 35 minutes."},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			var found bool
+			inWorld(t, srv, func(w *game.Live) {
+				ch := w.Find("Zod")
+				if ch == nil || ch.Record == nil {
+					return
+				}
+				found = true
+				ch.Record.Played = tc.played
+				ch.Record.LastLogon = time.Now()
+			})
+			if !found {
+				t.Fatal("Zod is not in the world")
+			}
+
+			// sendExpectNew, not expect: every run of this loop prints the
+			// same closing line, and expect would match the previous one.
+			got := c.sendExpectNew("score", "You are standing.")
+			if !strings.Contains(got, tc.want) {
+				t.Errorf("score is missing %q:\n%s", tc.want, got)
+			}
+		})
 	}
 }
 

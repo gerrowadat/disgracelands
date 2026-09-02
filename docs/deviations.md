@@ -375,6 +375,22 @@ Two smaller consequences, listed so they are not mistaken for slips:
   get one: it is stock CircleMUD's own help database, unmodified, and
   adding port-specific content to it would stop it being that.
 
+### `score` reports the played time to the minute
+
+| | |
+|---|---|
+| **C** | `do_score` (act.informative.c:769) prints "You have been playing for %d day%s and %d hour%s." and stops there. |
+| **Go** | The same sentence with a third term: "You have been playing for %d day%s, %d hour%s and %d minute%s." |
+| **Why** | The C stops at hours because of what it computes the line from, not because of a decision about what a player wants to know. `real_time_passed` (utils.c:309) fills a `struct time_info_data`, and that struct is the *mud* calendar — `hours, day, month, year` (structs.h:745) — so there is no minutes field to fill; the function does not compute minutes and then discard them. The C is perfectly willing to say the number where it has somewhere to put it: `do_stat_character` prints the same play time as `Played: %3dh %2dm` (act.wizard.c:2247). Below an hour a returning player's score read "0 days and 0 hours" for their whole first session, which is the case this is for. |
+| **Where** | `internal/session/score.go`'s `doScore`; `TestScorePlayedTimeShowsMinutes` in `internal/server/position_test.go`. |
+
+The days and hours are unchanged, including the C's own rounding: hours is
+whole hours modulo 24 and days is whole days, both truncated, so the minutes
+are the remainder that was already being dropped rather than a re-count. The
+serial comma form ("N days, N hours and N minutes") is the only wording
+change; the sentence, its capitalisation and its `plural`-driven singulars
+are the C's.
+
 ---
 
 ## Protocol

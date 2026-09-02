@@ -53,11 +53,18 @@ func doScore(c *Context) error {
 		c.Send("You need %d exp to reach your next level.\r\n", game.ExpToLevel(rec))
 	}
 
+	// The C stops at hours, because real_time_passed fills a
+	// time_info_data (utils.c:309, structs.h:745) and that struct has no
+	// minutes field to fill — not because a shorter session was thought
+	// not worth reporting. do_stat_character prints the same play time to
+	// the minute (act.wizard.c:2247), so the minutes exist everywhere but
+	// here; this line now shows them too. docs/deviations.md has it.
 	played := rec.Played + now.Sub(rec.LastLogon)
 	days := int(played.Hours()) / 24
 	hours := int(played.Hours()) % 24
-	c.Send("You have been playing for %d day%s and %d hour%s.\r\n",
-		days, plural(days), hours, plural(hours))
+	minutes := int(played.Minutes()) % 60
+	c.Send("You have been playing for %d day%s, %d hour%s and %d minute%s.\r\n",
+		days, plural(days), hours, plural(hours), minutes, plural(minutes))
 
 	c.Send("This ranks you as %s %s (level %d).\r\n", c.Character.Name, rec.Title, rec.Level)
 	c.Send("%s", positionLine(c.Character))
