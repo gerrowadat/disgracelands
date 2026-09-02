@@ -122,6 +122,9 @@ func TestMovementAndLooking(t *testing.T) {
 	contains(t, "east from a corridor", c.do("east"), "Alas, you cannot go that way...")
 
 	contains(t, "score", c.do("score"), "You have", "hit,", "mana and", "movement points.",
+		// Minutes, which the C's line stops short of; see docs/deviations.md.
+		// A character made seconds ago is still on the first of them.
+		"You have been playing for 0 days, 0 hours and 0 minutes.",
 		"This ranks you as Tourist", "(level 1)", "You are standing.")
 
 	// Walking costs movement points, and the prompt is where a player sees
