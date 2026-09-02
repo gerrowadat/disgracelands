@@ -107,6 +107,26 @@ var (
 		match: `^\d+H \d+M \d+V >$`,
 		why:   "the prompt: the two servers send one at different moments, so the lines do not pair up; docs/deviations.md",
 	}
+
+	// `score`'s play-time sentence, which #391 gave a third term.
+	//
+	// The C says "N days and N hours" and stops, and that is not a
+	// judgement about what is worth reporting: real_time_passed
+	// (utils.c:309) fills a struct time_info_data, which is the *mud*
+	// calendar and has no minutes field. do_stat_character prints the same
+	// figure to the minute (act.wizard.c:2247), so the number exists
+	// everywhere the C has somewhere to put it. This port says it here
+	// too, which below an hour is the difference between a useful line and
+	// "0 days and 0 hours" for a whole first session.
+	//
+	// Matched on either side, because the two wordings differ from the
+	// verb onwards and the comparison sees them as one differing line.
+	// Every scenario that types `score` needs it; three do.
+	thePlayedTime = known{
+		command: "score",
+		match:   `^You have been playing for .*\.$`,
+		why:     "score says the minutes and the C has nowhere to compute them from (#391); docs/deviations.md",
+	}
 )
 
 // theCommandsListing is `announce`, and it is the one difference in this file
@@ -154,6 +174,7 @@ var scenarios = []scenario{
 		about: "creating a character, and the wording of what a player reads first",
 		known: []known{
 			theVitalsPrompt,
+			thePlayedTime,
 			theCommandsListing,
 		},
 	},
@@ -180,6 +201,7 @@ var scenarios = []scenario{
 		colourGap: true,
 		known: []known{
 			theVitalsPrompt,
+			thePlayedTime,
 		},
 	},
 	{
@@ -302,6 +324,7 @@ var scenarios = []scenario{
 		about: "what a level 1 mortal is told they cannot do",
 		known: []known{
 			theVitalsPrompt,
+			thePlayedTime,
 		},
 	},
 }
