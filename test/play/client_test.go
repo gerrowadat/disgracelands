@@ -61,9 +61,13 @@ func (m *mud) dial() *client {
 	return &client{t: m.t, conn: conn}
 }
 
-// read pulls once from the socket into the transcript.
-func (c *client) read() error {
-	_ = c.conn.SetReadDeadline(time.Now().Add(timeout))
+// read pulls once from the socket into the transcript, waiting up to the
+// suite's ordinary timeout.
+func (c *client) read() error { return c.readWithin(timeout) }
+
+// readWithin is read with a deadline of its own, for the drain below.
+func (c *client) readWithin(d time.Duration) error {
+	_ = c.conn.SetReadDeadline(time.Now().Add(d))
 	buf := make([]byte, 8192)
 	n, err := c.conn.Read(buf)
 	if n > 0 {
@@ -97,23 +101,63 @@ func (c *client) expect(want string) string {
 // (interpreter.c), ported in internal/session.
 const promptMarker = "V > "
 
+// quiet is how long the drain below waits for silence before deciding
+// nothing more is coming.
+//
+// It has to be longer than a pulse. The server's prompt sweep runs once per
+// pulse (100ms), so output said to us a moment ago may still be owed a
+// prompt that has not been written yet; a shorter wait would leave it to
+// arrive in the middle of the next command and be counted as that command's.
+const quiet = 150 * time.Millisecond
+
+// drain reads whatever the server has already said, and keeps reading until
+// it stops, so that the prompt count taken after it is a fact rather than a
+// guess.
+func (c *client) drain() {
+	for c.readWithin(quiet) == nil {
+	}
+}
+
 // do types a command and returns everything printed before the next prompt.
 //
-// This is the primitive the rest of the suite is written in, and it is worth
-// being clear about why it is not `send` + `expect`. The prompt is written
-// after every command completes, whatever the command itself said
-// (command_interpreter, interpreter.c) -- so waiting for a *new* prompt is a
-// real barrier for "this command has finished", including for the commands
-// that print nothing at all and for the ones that impose a wait state, where
-// nothing else works. And slicing the transcript at that barrier means an
-// assertion is about the command just typed rather than about anything the
-// server said earlier: the single most persistent trap in internal/server's
-// suite, where an `expect` written after a second command matches the first
-// command's reply, has recurred at least nine times. Here it cannot.
+// This is the primitive the rest of the suite is written in, and slicing the
+// transcript at a barrier is the point of it: an assertion is then about the
+// command just typed rather than about anything the server said earlier --
+// the single most persistent trap in internal/server's suite, where an
+// `expect` written after a second command matches the first command's reply,
+// has recurred at least nine times.
+//
+// The prompt is still the barrier, and it is still the right one: it is
+// written whatever the command said, which is what makes it work for the
+// commands that print nothing at all and for the ones that impose a wait
+// state, where no text does.
+//
+// **What changed is that the count now needs a baseline, and that is #385's
+// doing.** Until then a prompt was written only when a command finished, so
+// the next one was always yours. The server now sends a prompt after
+// *anything* it says to you, which is what the C has always done, so a
+// neighbour walking into your room produces one too -- and six tests here
+// failed at once, each `do` returning the previous command's output with
+// every assertion in the scenario shifted by one. Draining first is what
+// makes "one more prompt than there were" mean "mine" again: everything
+// already owed has arrived and been counted before the command is sent.
+//
+// A sentinel command was tried instead and is worth not trying again. Typing
+// `time` after each command and reading past its reply is deterministic and
+// needs no waiting, but it puts `time` in the command history -- so `!` and
+// `^old^new` recall it, and the two tests that are *about* the history
+// started failing instead.
 func (c *client) do(command string) string {
 	c.t.Helper()
 
+	// The mark comes *before* the drain, and that is not a detail: what the
+	// drain reads is output the server said before this command -- a
+	// neighbour arriving, somebody speaking -- and half the scenarios in
+	// this suite assert on exactly that. Draining past the mark instead
+	// swallowed it, and ten multi-client tests went red saying the thing
+	// they were watching for had never been said.
 	mark := c.text.Len()
+	c.drain()
 	want := strings.Count(c.text.String(), promptMarker) + 1
 	c.send(command)
 	c.expectCount(promptMarker, want)
