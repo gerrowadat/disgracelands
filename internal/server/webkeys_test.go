@@ -257,3 +257,70 @@ func TestThePlayPageSwallowsEveryArrowKey(t *testing.T) {
 			"instead of restoring it for editing (#369)")
 	}
 }
+
+// TestALeadingBackspaceErasesNothing is the server half of "backspace does
+// not eat the prompt".
+//
+// The page stops drawing the erase once the line is empty, but it still
+// sends the byte -- it has no other way to stay in step with a server that
+// might be holding something it is not. So the two only agree if a
+// backspace against an empty buffer is a no-op at this end too. readLoop
+// guards it with `len(line) > 0` and its comment says erasing nothing is
+// not an error, which is `write_point > tmp` in the C (comm.c:1787); this
+// asserts it rather than trusting the comment, because the page's decision
+// to keep sending depends on it.
+func TestALeadingBackspaceErasesNothing(t *testing.T) {
+	srv, _ := newTestServer(t)
+	ts := listeningWeb(t, srv, "", false)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	c, _, err := websocket.Dial(ctx, toWS(t, ts.URL)+"/ws", nil)
+	if err != nil {
+		t.Fatalf("dialing /ws: %v", err)
+	}
+	defer c.Close(websocket.StatusNormalClosure, "")
+
+	conn := websocket.NetConn(ctx, c, websocket.MessageText)
+	buf := make([]byte, 8192)
+	readUntilString(t, conn, "By what name", buf)
+
+	// Backspace held down at a fresh prompt, then a perfectly good name.
+	if _, err := conn.Write([]byte("\x7f\x7f\x7f\x7fNewcomer\r\n")); err != nil {
+		t.Fatalf("sending backspaces at an empty line: %v", err)
+	}
+	got := readUntilString(t, conn, "(Y/N)", buf)
+	if !strings.Contains(got, "Did I get that right, Newcomer (Y/N)?") {
+		t.Errorf("backspaces against an empty buffer were not ignored:\n%s", got)
+	}
+}
+
+// TestThePlayPageWillNotEraseThePrompt is the browser half of the same
+// thing, and a contract check on the rendered page for the same reason the
+// arrow-key test is one: there is no JavaScript engine here to run it.
+//
+// A backspace at an empty line has nothing of the player's to the left of
+// the cursor, so a '\b \b' walks into the prompt instead -- hold the key
+// down at "By what name do they call you?" and the question goes away a
+// character at a time (#394), which is not something any terminal driver
+// would do.
+// The guard is on the echo, not on the send: the byte still goes out (see
+// TestALeadingBackspaceErasesNothing).
+func TestThePlayPageWillNotEraseThePrompt(t *testing.T) {
+	srv, _ := newTestServer(t)
+	ts := listeningWeb(t, srv, "", false)
+
+	resp, err := http.Get(ts.URL + "/play")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+	body, _ := io.ReadAll(resp.Body)
+	page := string(body)
+
+	if !strings.Contains(page, `if (echo && line !== '') term.write('\b \b');`) {
+		t.Error("/play erases a backspace off the screen without checking that " +
+			"the player has anything on the line, which lets a backspace at " +
+			"an empty prompt eat the prompt itself")
+	}
+}
