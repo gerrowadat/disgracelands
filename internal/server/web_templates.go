@@ -220,9 +220,11 @@ var playTemplate = template.Must(template.New("play").Parse(`<!doctype html>
 	// Echoing is this page's own job: xterm.js has no local echo, unlike a
 	// real telnet client's terminal driver, which echoes by itself and
 	// only stops when told to around a password. Backspace is erased off
-	// the screen the same way that driver would, and the byte still goes
-	// to the server -- which since #233 erases on it as well, so the two
-	// buffers stay in step. readLoop's own comment has the C citation.
+	// the screen the same way that driver would -- including its refusal
+	// to erase past the start of the line, which is the prompt -- and the
+	// byte still goes to the server, which since #233 erases on it as
+	// well, so the two buffers stay in step. readLoop's own comment has
+	// the C citation.
 	//
 	// \r\n is collapsed to \r first so a pasted chunk with Windows line
 	// endings does not echo a blank line, or record an empty command, for
@@ -238,7 +240,21 @@ var playTemplate = template.Must(template.New("play").Parse(`<!doctype html>
 				if (echo && line !== '') lastCommand = line;
 				line = '';
 			} else if (ch === '\x7f' || ch === '\b') {
-				if (echo) term.write('\b \b');
+				// Only erase what the player typed. With an empty line
+				// there is nothing of theirs to the left of the cursor
+				// and the character there belongs to the prompt, so a
+				// '\b \b' would eat the prompt a character at a time --
+				// hold the key down at "By what name do they call you?"
+				// and the question disappears (#394). A real terminal
+				// driver will not erase past where the line began
+				// either.
+				//
+				// The byte still goes to the server, which erases
+				// nothing for it: readLoop guards on len(line) > 0, and
+				// its comment says erasing nothing is not an error. The
+				// two buffers stay in step (#233) because they are both
+				// already empty.
+				if (echo && line !== '') term.write('\b \b');
 				line = line.slice(0, -1);
 			} else {
 				if (echo) term.write(ch);
